@@ -2,27 +2,27 @@
 
 # Cytoid <a href='https://play.google.com/store/apps/details?id=me.tigerhix.cytoid&hl=en'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' width="100"/></a>
 
-> A community version of the rhythm game Cytus.
+> 一个由社区驱动的 Cytus。
 
-**Cytoid** is an open-source alternative to the rhythm game [Cytus](https://www.rayark.com/g/cytus/). 
+**Cytoid** 是一个参照 [Cytus](https://www.rayark.com/g/cytus/) 玩法的开源节奏游戏。
 
-# Backstory
+# 基本信息
 
-Cytus is argubly one of the best rhythm games on a mobile device. While the game is both visually and audibly impressive, it is a shame that the game does not allow user customization like [osu!](https://osu.ppy.sh). Since many years ago, the Cytus community has been constantly finding ways to contribute fanmade content; from [chapter mockups](https://www.youtube.com/watch?v=84Gefg5YdYg&t=453s), [charts](https://www.youtube.com/results?search_query=Cytus+fanmade) to tools like [Cytunity](http://cytus-fanon.wikia.com/wiki/User_blog:JCEXE/List_of_Cytus_simulation_programs:_2017_edition#Cytunity) (a popular chart editor) and [GLCytus](https://github.com/Dewott/GLCytus) (a simulator that looks almost identical to the original game). However, the former ones are often for ornamental purposes only; while the latter ones are, although powerful and can create [amazing results](https://www.youtube.com/watch?v=2sopAxd8MZ0), often too advanced for the normal user. There are also ways to mod the game, but those are way too complicated and probably not legal things to do.
+Cytus 可谓是移动平台上数一数二的节奏游戏了吧。虽然游戏在视觉和音响上都堪称盛宴，遗憾的是它并没有开放类似 [osu!](https://osu.ppy.sh) 的自制谱面功能。从很久以前开始，Cytus 社区就在不断地贡献玩家原创内容：[自制章节](https://www.youtube.com/watch?v=84Gefg5YdYg&t=453s)、 [自制谱面](https://www.youtube.com/results?search_query=Cytus+fanmade) ，甚至有 [Cytunity](http://cytus-fanon.wikia.com/wiki/User_blog:JCEXE/List_of_Cytus_simulation_programs:_2017_edition#Cytunity)（制谱工具）和 [GLCytus](https://github.com/Dewott/GLCytus)（谱面模拟器）这样的专用工具。但是前者常常都只能供观赏用途，而后者又有一定的技术门槛，即使可以做出[非常棒的成果](https://www.youtube.com/watch?v=2sopAxd8MZ0)，普通用户还是望而生畏。虽说还有将自制谱面导入到游戏里的方法，不过还是相当麻烦，也大概不是十分合法的事情。
 
-With the release of the [sequel](https://www.youtube.com/watch?v=rAStr9pjq_A) around the corner, and the fact that Cytus has not been receiving updates for almost a year now, it feels about time for the community to step up and extend the original gameplay together, by encourging all people to create, share and play original fanmade content. *"But modding the game is illegal!"* That's why I present to you Cytoid, a cross-platform Unity game, offering:
+在[续作](https://www.youtube.com/watch?v=rAStr9pjq_A)即将到来，且 Rayark 已有将近一年未有更新 Cytus 的这个时刻，Cytus 的 modding 社区是否可以光明正大地走出来，通过鼓励所有玩家们创作、分享和游玩自制内容，来延伸这个游戏的可玩性呢？ *“可是光明正大搞 mod 会被官方和谐~~点艹~~的啊！”* 这就是这个项目的由来。Cytoid 是一个基于 Unity 引擎的跨平台节奏游戏，特性如下：
 
-* Fully functional Cytus-like gameplay
-* Original visuals and sound fx
-* Easy import of custom levels
-* A touchscreen-friendly chart editor **(WIP)**
+* 复刻 Cytus 的游戏玩法
+* 原创视觉效果和音效
+* 轻松导入自制关卡
+* 触屏上也可以用的谱面编辑器 **（制作中）**
 
-Which means, accordingly:
+代表着：
 
-* (To players) You don't have to sit there and watch fanmade charts; you can now outright play 'em!
-* (To developers) No need to worry about copyright issues anymore!
-* (To chart makers) Test out your charts on devices to ensure they are feasible!
-* (To all) Make your very first chart without getting into unnecessary technical issues! **(WIP)**
+* （对于玩家）不用再呆望着别人家的自制谱面，向谱师拿一份直接开玩！（内心os：其实这才是我做 Cytoid 的原因...）
+* （对于开发者 *其实就是我*）解决版权问题！
+* （对于制谱者）快速在实机上测试你的谱面！实话实说，一玩就会感受到很多问题，比如遮手...
+* （对于所有玩家）自己也可以写谱啦！**（制作中）**
 
 <img src="http://i.imgur.com/QkCV1IW.png" width="800">
 <img src="http://i.imgur.com/ueIS1Eo.png" width="800">
@@ -31,32 +31,32 @@ Which means, accordingly:
 <img src="http://i.imgur.com/uqvBSf5.png" width="800">
 <img src="http://i.imgur.com/UoqjWit.png" width="800">
 
-## Getting Started
+## 开发入门
 
-This project is developed in [Unity](https://unity3d.com/). A rough decision in fact, but comparing to [libgdx](https://libgdx.badlogicgames.com/) which I used in my previous [Cytus simulator project](https://github.com/TigerHix/Pulmusic), Unity allows me to iterate the development process much faster for [many reasons](https://gamedev.stackexchange.com/a/8133). The downside is Unity does not work great when it comes to version control and team collaboration, but hopefully [Github for Unity](https://unity.github.com/) will make the process less painful.
+此项目使用 [Unity](https://unity3d.com/) 引擎开发。说起来是个艰难的决定，但是相比用来制作 [Pulmusic](https://github.com/TigerHix/Pulmusic) 的 [libgdx](https://libgdx.badlogicgames.com/)，Unity 里开发迭代实在[快得令人无法相信](https://gamedev.stackexchange.com/a/8133)。要说缺点就是 Unity 对团队协作和版本控制并不友好，希望 [Github for Unity](https://unity.github.com/) 能解决这个问题吧。
 
 ```
-This section will be updated when source code is released.
+源代码开放的时候会更新此部分。
 ```
 
-## Hmm. You reminded me. Where's the source code?
+## 所以，源代码呢？
 
-I know, I know! I'm currently clearing up the project, mainly refactoring code, but also to remove free/paid [Asset Store](https://www.assetstore.unity3d.com/) assets I used as many as possible. (I used them for quickly prototyping at first, but they are... so convenient!)
+好问题！...其实我还在清理项目代码，重构是一方面，最主要还是尽量将我用的 [Asset Store](https://www.assetstore.unity3d.com/) 资源替换成开源友好的方案。因为实在太方便了，结果醒悟过来的时候项目里全部都是别人的代码了...（逃
 
-If you want to join early, let me know!
+有兴趣加入开发的请敲我邮箱！（拜谢）
 
-## Release History
+## 更新历史
 
 * Beta 2
-    * Import of `.cytoidlevel` files
-    * Bug fixes
+    * 导入 `.cytoidlevel` 文件
+    * 修复若干 bugs
 * Beta 1
-    * It's working!
+    * 一个至少能跑的版本
 
-## License
+## 开源协议
 
 ```
-This section will be updated when source code is released.
+源代码开放的时候会更新此部分。
 ```
 
 ## Meta
@@ -65,7 +65,7 @@ Proudly presented by [Tiger Tang](https://github.com/tigerhix/).
 * Twitter: [@tigerhixtang](https://twitter.com/tigerhixtang)
 * Email: [tigerhix@gmail.com](mailto://tigerhix@gmail.com)
 
-And finally,
+最后当然是，
 ```
 Long Live the Rayark
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM

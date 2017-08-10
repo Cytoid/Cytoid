@@ -31,6 +31,12 @@ Cytus 可谓是移动平台上数一数二的节奏游戏了吧。虽然游戏�
 <img src="http://i.imgur.com/uqvBSf5.png" width="800">
 <img src="http://i.imgur.com/UoqjWit.png" width="800">
 
+## 玩家入门
+
+Cytoid 是由社区驱动的节奏游戏；尽管其内置了[教程关卡](cytoid.io/browse/io.cytoid.glow_dance)，Cytoid 仍然依赖于玩家们（或者你）来创作和分享游戏内容。如果你在寻找新的关卡，不妨到 [CytoidDB](cytoid.io/browse) 看看。
+
+如果你是谱师的话，请到 [wiki](https://github.com/TigerHix/Cytoid/wiki/a.-Creating-a-level) 查看如何创建 Cytoid 关卡，或者将现有的 Cytus 自制谱面转换为 Cytoid 关卡（剧透：几乎不需要改动）。
+
 ## 开发入门
 
 此项目使用 [Unity](https://unity3d.com/) 引擎开发。说起来是个艰难的决定，但是相比用来制作 [Pulmusic](https://github.com/TigerHix/Pulmusic) 的 [libgdx](https://libgdx.badlogicgames.com/)，Unity 里开发迭代实在[快得令人无法相信](https://gamedev.stackexchange.com/a/8133)。要说缺点就是 Unity 对团队协作和版本控制并不友好，希望 [Github for Unity](https://unity.github.com/) 能解决这个问题吧。

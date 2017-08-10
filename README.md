@@ -2,6 +2,8 @@
 
 # Cytoid <a href='https://play.google.com/store/apps/details?id=me.tigerhix.cytoid&hl=en'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' width="100"/></a>
 
+ [中文说明请按这里](https://github.com/TigerHix/Cytoid/blob/master/README_cn.md)
+
 > A community version of the rhythm game Cytus.
 
 **Cytoid** is an open-source alternative to the rhythm game [Cytus](https://www.rayark.com/g/cytus/). 

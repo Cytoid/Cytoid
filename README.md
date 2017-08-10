@@ -33,7 +33,13 @@ Which means, accordingly:
 <img src="http://i.imgur.com/uqvBSf5.png" width="800">
 <img src="http://i.imgur.com/UoqjWit.png" width="800">
 
-## Getting Started
+## Getting Started (For Players)
+
+Cytoid is a community-driven rhythm game; although it has bundled a [tutorial level](cytoid.io/browse/io.cytoid.glow_dance), it depends on the community - or you - to create and share new levels. [CytoidDB](cytoid.io/browse) is a good place to start if you are finding new levels to play.
+
+If you are a charter, please head to the [wiki](https://github.com/TigerHix/Cytoid/wiki/a.-Creating-a-level) for information on creating a Cytoid level / converting a Cytus custom chart into a Cytoid level.
+
+## Getting Started (For Developers)
 
 This project is developed in [Unity](https://unity3d.com/). A rough decision in fact, but comparing to [libgdx](https://libgdx.badlogicgames.com/) which I used in my previous [Cytus simulator project](https://github.com/TigerHix/Pulmusic), Unity allows me to iterate the development process much faster for [many reasons](https://gamedev.stackexchange.com/a/8133). The downside is Unity does not work great when it comes to version control and team collaboration, but hopefully [Github for Unity](https://unity.github.com/) will make the process less painful.
 

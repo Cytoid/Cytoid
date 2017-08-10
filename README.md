@@ -37,7 +37,7 @@ Which means, accordingly:
 
 Cytoid is a community-driven rhythm game; although it comes with a [tutorial level](cytoid.io/browse/io.cytoid.glow_dance), it depends on the community - or you - to create and share new levels. [CytoidDB](cytoid.io/browse) is a good place to start if you are finding new levels to play.
 
-If you are a charter, please head to the [wiki](https://github.com/TigerHix/Cytoid/wiki/a.-Creating-a-level) for information on creating a Cytoid level / converting a Cytus custom chart into a Cytoid level.
+If you are a charter, please head to the [wiki](https://github.com/TigerHix/Cytoid/wiki/a.-Creating-a-level) for information on creating a Cytoid level, or converting a Cytus custom chart into a Cytoid level (spoiler: no effort needed).
 
 ## Getting Started (For Developers)
 

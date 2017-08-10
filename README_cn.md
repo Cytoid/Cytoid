@@ -8,20 +8,20 @@
 
 # 基本信息
 
-Cytus 可谓是移动平台上数一数二的节奏游戏了吧。虽然游戏在视觉和音响上都堪称盛宴，遗憾的是它并没有开放类似 [osu!](https://osu.ppy.sh) 的自制谱面功能。从很久以前开始，Cytus 社区就在不断地贡献玩家原创内容：[自制章节](https://www.youtube.com/watch?v=84Gefg5YdYg&t=453s)、 [自制谱面](https://www.youtube.com/results?search_query=Cytus+fanmade) ，甚至有 [Cytunity](http://cytus-fanon.wikia.com/wiki/User_blog:JCEXE/List_of_Cytus_simulation_programs:_2017_edition#Cytunity)（制谱工具）和 [GLCytus](https://github.com/Dewott/GLCytus)（谱面模拟器）这样的专用工具。但是前者常常都只能供观赏用途，而后者又有一定的技术门槛，即使可以做出[非常棒的成果](https://www.youtube.com/watch?v=2sopAxd8MZ0)，普通用户还是望而生畏。虽说还有将自制谱面导入到游戏里的方法，不过还是相当麻烦，也大概不是十分合法的事情。
+Cytus 可谓是移动平台上数一数二的节奏游戏了吧。虽然游戏在视觉和音响上都堪称盛宴，遗憾的是它并没有开放类似 [osu!](https://osu.ppy.sh) 的自制谱面功能。从很久以前开始，Cytus 社区就在不断地贡献玩家原创内容：[自制章节](https://www.youtube.com/watch?v=84Gefg5YdYg&t=453s)、[自制谱面](https://www.youtube.com/results?search_query=Cytus+fanmade)，甚至有 [Cytunity](http://cytus-fanon.wikia.com/wiki/User_blog:JCEXE/List_of_Cytus_simulation_programs:_2017_edition#Cytunity)（制谱工具）和 [GLCytus](https://github.com/Dewott/GLCytus)（谱面模拟器）这样的专用工具。但是前者常常都只能供观赏用途，而后者又有一定的技术门槛，即使[效果十分完美](https://www.youtube.com/watch?v=2sopAxd8MZ0)，普通用户仍然会望而生畏。虽说还有将自制谱面导入到游戏里的方法，不过还是相当麻烦，也大概不是十分合法的事情。
 
-在[续作](https://www.youtube.com/watch?v=rAStr9pjq_A)即将到来，且 Rayark 已有将近一年未有更新 Cytus 的这个时刻，Cytus 的 modding 社区是否可以光明正大地走出来，通过鼓励所有玩家们创作、分享和游玩自制内容，来延伸这个游戏的可玩性呢？ *“可是光明正大搞 mod 会被官方和谐~~点艹~~的啊！”* 这就是这个项目的由来。Cytoid 是一个基于 Unity 引擎的跨平台节奏游戏，特性如下：
+在[续作](https://www.youtube.com/watch?v=rAStr9pjq_A)即将到来，且 Rayark 已有将近一年未有更新 Cytus 的这个时刻，Cytus 的 modding 社区是否可以光明正大地走出来，通过鼓励自制内容的创作、分享和试玩，来延伸这个游戏的可玩性呢？ *“可是光明正大搞 mod 会被官方和谐~~点艹~~的啊！”* 这就是此项目的由来。Cytoid 是一个基于 Unity 引擎的跨平台节奏游戏，特性如下：
 
 * 复刻 Cytus 的游戏玩法
-* 原创视觉效果和音效
+* 原创~~并且很丑~~的视觉效果
 * 轻松导入自制关卡
 * 触屏上也可以用的谱面编辑器 **（制作中）**
 
 代表着：
 
-* （对于玩家）不用再呆望着别人家的自制谱面，向谱师拿一份直接开玩！（内心os：其实这才是我做 Cytoid 的原因...）
+* （对于玩家）不用再呆望着别人家的自制谱面，向谱师拿一份谱子就可以开玩！*（内心os：其实这才是我做 Cytoid 的原因...）*
 * （对于开发者 *其实就是我*）解决版权问题！
-* （对于制谱者）快速在实机上测试你的谱面！实话实说，一玩就会感受到很多问题，比如遮手...
+* （对于制谱者）快速在实机上测试你的谱面！实话说，一玩就会感受到很多问题，比如遮手...
 * （对于所有玩家）自己也可以写谱啦！**（制作中）**
 
 <img src="http://i.imgur.com/QkCV1IW.png" width="800">
@@ -48,10 +48,10 @@ Cytus 可谓是移动平台上数一数二的节奏游戏了吧。虽然游戏�
 ## 更新历史
 
 * Beta 2
-    * 导入 `.cytoidlevel` 文件
-    * 修复若干 bugs
+    * 导入 `.cytoidlevel` 文件
+    * 修复若干 bugs
 * Beta 1
-    * 一个至少能跑的版本
+    * 一个至少能跑的版本
 
 ## 开源协议
 

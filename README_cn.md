@@ -1,10 +1,12 @@
 <img src="http://i.imgur.com/DrI3FkN.png" width="200">
 
-# Cytoid <a href='https://play.google.com/store/apps/details?id=me.tigerhix.cytoid&hl=en'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' width="100"/></a>
+# Cytoid <a href='https://play.google.com/store/apps/details?id=me.tigerhix.cytoid&hl=en'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' width="100"/></a><a href='https://itunes.apple.com/us/app/cytoid/id1266582726?ls=1&mt=8'><img alt='Download on the App Store' src='https://devimages-cdn.apple.com/app-store/marketing/guidelines/images/badge-download-on-the-app-store.svg' width="100"/></a>
 
 > 一个由社区驱动的 Cytus。
 
 **Cytoid** 是一个参照 [Cytus](https://www.rayark.com/g/cytus/) 玩法的开源节奏游戏。
+
+*用户关卡分享 & 下载：[CytoidIO](http://cytoid.io/browse)*
 
 # 基本信息
 

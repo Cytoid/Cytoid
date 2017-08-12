@@ -1,12 +1,14 @@
 <img src="http://i.imgur.com/DrI3FkN.png" width="200">
 
-# Cytoid <a href='https://play.google.com/store/apps/details?id=me.tigerhix.cytoid&hl=en'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' width="100"/></a>
+# Cytoid <a href='https://play.google.com/store/apps/details?id=me.tigerhix.cytoid&hl=en'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' width="100"/></a><a href='https://itunes.apple.com/us/app/cytoid/id1266582726?ls=1&mt=8'><img alt='Download on the App Store' src='https://devimages-cdn.apple.com/app-store/marketing/guidelines/images/badge-download-on-the-app-store.svg' width="100"/></a>
 
  [中文说明请按这里](https://github.com/TigerHix/Cytoid/blob/master/README_cn.md)
 
 > A community version of the rhythm game Cytus.
 
-**Cytoid** is an open-source alternative to the rhythm game [Cytus](https://www.rayark.com/g/cytus/). 
+**Cytoid** is an open-source alternative to the rhythm game [Cytus](https://www.rayark.com/g/cytus/).
+
+*Visit the level database: [CytoidIO](http://cytoid.io/browse).*
 
 # Backstory
 

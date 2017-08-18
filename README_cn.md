@@ -35,7 +35,7 @@ Cytus 可谓是移动平台上数一数二的节奏游戏了吧。虽然游戏�
 
 ## 玩家入门
 
-Cytoid 是由社区驱动的节奏游戏；尽管其内置了[教程关卡](cytoid.io/browse/io.cytoid.glow_dance)，Cytoid 仍然依赖于玩家们（或者你）来创作和分享游戏内容。如果你在寻找新的关卡，不妨到 [CytoidDB](cytoid.io/browse) 看看。
+Cytoid 是由社区驱动的节奏游戏；尽管其内置了[教程关卡](http://cytoid.io/browse/io.cytoid.glow_dance)，Cytoid 仍然依赖于玩家们（或者你）来创作和分享游戏内容。如果你在寻找新的关卡，不妨到 [CytoidDB](http://cytoid.io/browse) 看看。
 
 如果你是谱师的话，请到 [wiki](https://github.com/TigerHix/Cytoid/wiki/a.-Creating-a-level) 查看如何创建 Cytoid 关卡，或者将现有的 Cytus 自制谱面转换为 Cytoid 关卡（剧透：几乎不需要改动）。
 

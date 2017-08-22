@@ -58,10 +58,12 @@ As of latest version, Cytoid requires following paid/free assets in the project 
 
 Because of license restrictions, it is impossible to include these assets in this repository. Please manually install them by using Unity's built-in Asset Store.
 
-Refer to [this issue](https://github.com/TigerHix/Cytoid/issues/20) for more information.
+Refer to [#20](https://github.com/TigerHix/Cytoid/issues/20) for more information.
 
 ## Release History
 
+* 1.1
+    * Fix severe performance issue
 * 1.0
     * First public release
     * Bug fixes

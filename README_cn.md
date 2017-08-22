@@ -41,20 +41,30 @@ Cytoid 是由社区驱动的节奏游戏；尽管其内置了[教程关卡](http
 
 ## 开发入门
 
-此项目使用 [Unity](https://unity3d.com/) 引擎开发。说起来是个艰难的决定，但是相比用来制作 [Pulmusic](https://github.com/TigerHix/Pulmusic) 的 [libgdx](https://libgdx.badlogicgames.com/)，Unity 里开发迭代实在[快得令人无法相信](https://gamedev.stackexchange.com/a/8133)。要说缺点就是 Unity 对团队协作和版本控制并不友好，希望 [Github for Unity](https://unity.github.com/) 能解决这个问题吧。
+此项目使用 [Unity](https://unity3d.com/) 引擎开发。说起来是个艰难的决定，但是相比用来制作 [Pulmusic](https://github.com/TigerHix/Pulmusic) 的 [libgdx](https://libgdx.badlogicgames.com/)，Unity 里开发迭代实在[快得令人无法相信](https://gamedev.stackexchange.com/a/8133)。要说缺点就是 Unity 对团队协作和版本控制并不友好，而且试用 [Github for Unity](https://unity.github.com/) 后居然将项目给搞坏掉了（...还好有备份）。如果你想为 Cytoid 贡献些什么，欢迎敲我邮箱或者开个 issue，共同商讨怎样将 Cytoid 做得更好玩儿。:)
 
-```
-源代码开放的时候会更新此部分。
-```
+目前，Cytoid 项目需要以下 assets 完成编译：
 
-## 所以，源代码呢？
+- [DOTween](https://www.assetstore.unity3d.com/en/#!/content/27676)，免费
+- [DoozyUI](https://www.assetstore.unity3d.com/en/#!/content/47352)，$50
+- [JsonDotNet](https://www.assetstore.unity3d.com/en/#!/content/11347)，$25
+- [LeanTouch](https://www.assetstore.unity3d.com/en/#!/content/30111)，免费
+- [LunarConsole](https://github.com/SpaceMadness/lunar-unity-console)，免费
+- [Simple UI - Scroll View Extensions](https://www.assetstore.unity3d.com/en/#!/content/93873)，$15
+- [TextMesh Pro](https://www.assetstore.unity3d.com/en/#!/content/84126)，免费
+- [XCode API](https://bitbucket.org/Unity-Technologies/xcodeapi/src/)，免费
 
-好问题！...其实我还在清理项目代码，重构是一方面，最主要还是尽量将我用的 [Asset Store](https://www.assetstore.unity3d.com/) 资源替换成开源友好的方案。因为实在太方便了，结果醒悟过来的时候项目里全部都是别人的代码了...（逃
+由于协议限制，这些 assets 不可能被包括在 repository 里。请使用 Unity 内置的 Asset Store 逐一进行安装。
 
-有兴趣加入开发的请敲我邮箱！（拜谢）
+更多信息请参见 [#20](https://github.com/TigerHix/Cytoid/issues/20)。
 
 ## 更新历史
 
+* 1.1
+    * 修复严重性能问题
+* 1.0
+    * 第一个公开版本
+    * 修复若干 bugs
 * Beta 2
     * 导入 `.cytoidlevel` 文件
     * 修复若干 bugs
@@ -63,15 +73,17 @@ Cytoid 是由社区驱动的节奏游戏；尽管其内置了[教程关卡](http
 
 ## 开源协议
 
-```
-源代码开放的时候会更新此部分。
-```
+源代码（除非另有声明）基于 [MIT](https://opensource.org/licenses/MIT) 协议发布。协议详情请参见 `LICENSE`。
+
+[iamMANOLIS](http://iammanolis.com/) 作曲的 `Glow Dance` 基于 [CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/) 协议发布。
 
 ## Meta
 
 Proudly presented by [Tiger Tang](https://github.com/tigerhix/).
 * Twitter: [@tigerhixtang](https://twitter.com/tigerhixtang)
 * Email: [tigerhix@gmail.com](mailto://tigerhix@gmail.com)
+
+特别感谢 [xuxu9110](http://xuxu9110.github.io/) 大大贡献的 Glow Dance 谱面！ ヾ(　´・◡・｀)ノ
 
 最后当然是，
 ```

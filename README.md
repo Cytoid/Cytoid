@@ -63,7 +63,7 @@ Refer to [#20](https://github.com/TigerHix/Cytoid/issues/20) for more informatio
 ## Release History
 
 * 1.1
-    * Fix severe performance issue
+    * Fix severe performance issue
 * 1.0
     * First public release
     * Bug fixes

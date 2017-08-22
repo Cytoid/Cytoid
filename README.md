@@ -43,7 +43,7 @@ If you are a charter, please head to the [wiki](https://github.com/TigerHix/Cyto
 
 ## Getting Started (For Developers)
 
-This project is developed in [Unity](https://unity3d.com/). A rough decision in fact, but comparing to [libgdx](https://libgdx.badlogicgames.com/) which I used in my previous [Cytus simulator project](https://github.com/TigerHix/Pulmusic), Unity allows me to iterate the development process much faster for [many reasons](https://gamedev.stackexchange.com/a/8133). The downside is Unity does not work great when it comes to version control and team collaboration, and [Github for Unity](https://unity.github.com/) does not seem to work well by now. If you want to contribute in this project, shoot me an e-mail or open an issue so we can get things started.
+This project is developed in [Unity](https://unity3d.com/). A rough decision in fact, but comparing to [libgdx](https://libgdx.badlogicgames.com/) which I used in my previous [Cytus simulator project](https://github.com/TigerHix/Pulmusic), Unity allows me to iterate the development process much faster for [many reasons](https://gamedev.stackexchange.com/a/8133). The downside is Unity does not work great when it comes to version control and team collaboration, and [GitHub for Unity](https://unity.github.com/) does not seem to work well by now. If you want to contribute in this project, shoot me an e-mail or open an issue so we can get things started.
 
 As of latest version, Cytoid requires following paid/free assets in the project in order to build:
 

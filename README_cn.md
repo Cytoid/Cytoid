@@ -41,7 +41,7 @@ Cytoid 是由社区驱动的节奏游戏；尽管其内置了[教程关卡](http
 
 ## 开发入门
 
-此项目使用 [Unity](https://unity3d.com/) 引擎开发。说起来是个艰难的决定，但是相比用来制作 [Pulmusic](https://github.com/TigerHix/Pulmusic) 的 [libgdx](https://libgdx.badlogicgames.com/)，Unity 里开发迭代实在[快得令人无法相信](https://gamedev.stackexchange.com/a/8133)。要说缺点就是 Unity 对团队协作和版本控制并不友好，而且试用 [Github for Unity](https://unity.github.com/) 后居然将项目给搞坏掉了（...还好有备份）。如果你想为 Cytoid 贡献些什么，欢迎敲我邮箱或者开个 issue，共同商讨怎样将 Cytoid 做得更好玩儿。:)
+此项目使用 [Unity](https://unity3d.com/) 引擎开发。说起来是个艰难的决定，但是相比用来制作 [Pulmusic](https://github.com/TigerHix/Pulmusic) 的 [libgdx](https://libgdx.badlogicgames.com/)，Unity 里开发迭代实在[快得令人无法相信](https://gamedev.stackexchange.com/a/8133)。要说缺点就是 Unity 对团队协作和版本控制并不友好，而且试用 [GitHub for Unity](https://unity.github.com/) 后居然将项目给搞坏掉了（...还好有备份）。如果你想为 Cytoid 贡献些什么，欢迎敲我邮箱或者开个 issue，共同商讨怎样将 Cytoid 做得更好玩儿。:)
 
 目前，Cytoid 项目需要以下 assets 完成编译：
 
@@ -75,7 +75,7 @@ Cytoid 是由社区驱动的节奏游戏；尽管其内置了[教程关卡](http
 
 源代码（除非另有声明）基于 [MIT](https://opensource.org/licenses/MIT) 协议发布。协议详情请参见 `LICENSE`。
 
-[iamMANOLIS](http://iammanolis.com/) 作曲的 `Glow Dance` 基于 [CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/) 协议发布。
+由 [iamMANOLIS](http://iammanolis.com/) 作曲的 `Glow Dance` 基于 [CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/) 协议发布。
 
 ## Meta
 

@@ -43,20 +43,28 @@ If you are a charter, please head to the [wiki](https://github.com/TigerHix/Cyto
 
 ## Getting Started (For Developers)
 
-This project is developed in [Unity](https://unity3d.com/). A rough decision in fact, but comparing to [libgdx](https://libgdx.badlogicgames.com/) which I used in my previous [Cytus simulator project](https://github.com/TigerHix/Pulmusic), Unity allows me to iterate the development process much faster for [many reasons](https://gamedev.stackexchange.com/a/8133). The downside is Unity does not work great when it comes to version control and team collaboration, but hopefully [Github for Unity](https://unity.github.com/) will make the process less painful.
+This project is developed in [Unity](https://unity3d.com/). A rough decision in fact, but comparing to [libgdx](https://libgdx.badlogicgames.com/) which I used in my previous [Cytus simulator project](https://github.com/TigerHix/Pulmusic), Unity allows me to iterate the development process much faster for [many reasons](https://gamedev.stackexchange.com/a/8133). The downside is Unity does not work great when it comes to version control and team collaboration, and [Github for Unity](https://unity.github.com/) does not seem to work well by now. If you want to contribute in this project, shoot me an e-mail or open an issue so we can get things started.
 
-```
-This section will be updated when source code is released.
-```
+As of latest version, Cytoid requires following paid/free assets in the project in order to build:
 
-## Hmm. You reminded me. Where's the source code?
+- [DOTween](https://www.assetstore.unity3d.com/en/#!/content/27676), free
+- [DoozyUI](https://www.assetstore.unity3d.com/en/#!/content/47352), $50
+- [JsonDotNet](https://www.assetstore.unity3d.com/en/#!/content/11347), $25
+- [LeanTouch](https://www.assetstore.unity3d.com/en/#!/content/30111), free
+- [LunarConsole](https://github.com/SpaceMadness/lunar-unity-console), free
+- [Simple UI - Scroll View Extensions](https://www.assetstore.unity3d.com/en/#!/content/93873), $15
+- [TextMesh Pro](https://www.assetstore.unity3d.com/en/#!/content/84126), free
+- [XCode API](https://bitbucket.org/Unity-Technologies/xcodeapi/src/), free
 
-I know, I know! I'm currently clearing up the project, mainly refactoring code, but also to remove free/paid [Asset Store](https://www.assetstore.unity3d.com/) assets I used as many as possible. (I used them for quickly prototyping at first, but they are... so convenient!)
+Because of license restrictions, it is impossible to include these assets in this repository. Please manually install them by using Unity's built-in Asset Store.
 
-If you want to join early, let me know!
+Refer to [this issue](https://github.com/TigerHix/Cytoid/issues/20) for more information.
 
 ## Release History
 
+* 1.0
+    * First public release
+    * Bug fixes
 * Beta 2
     * Import of `.cytoidlevel` files
     * Bug fixes
@@ -65,15 +73,17 @@ If you want to join early, let me know!
 
 ## License
 
-```
-This section will be updated when source code is released.
-```
+Source code (unless stated otherwise) is distributed under [MIT](https://opensource.org/licenses/MIT) license. See `LICENSE` for more information.
+
+`Glow Dance` by [iamMANOLIS](http://iammanolis.com/) is licensed under [CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/).
 
 ## Meta
 
 Proudly presented by [Tiger Tang](https://github.com/tigerhix/).
 * Twitter: [@tigerhixtang](https://twitter.com/tigerhixtang)
 * Email: [tigerhix@gmail.com](mailto://tigerhix@gmail.com)
+
+Special thanks to [xuxu9110](http://xuxu9110.github.io/) for his incredible charts.
 
 And finally,
 ```

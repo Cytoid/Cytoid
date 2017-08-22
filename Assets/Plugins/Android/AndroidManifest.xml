@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="me.tigerhix.cytoid" >
+
+    <uses-sdk
+        android:minSdkVersion="16"
+        android:targetSdkVersion="25" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/android_app_icon"
+        android:label="Cytoid"
+        android:supportsRtl="true" >
+        <activity
+            android:name="me.tigerhix.cytoid.CytoidPluginActivity"
+            android:screenOrientation="sensorLandscape"
+            android:configChanges="fontScale|keyboard|keyboardHidden|locale|mnc|mcc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|touchscreen"
+            android:label="Cytoid" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Credits: https://stackoverflow.com/a/26393007/2706176 -->
+
+
+            <!-- Register to handle email attachments -->
+            <!-- WARNING: Do NOT use android:host="*" for these as they will not work properly -->
+            <intent-filter>
+                <data
+                    android:mimeType="application/cytoid"
+                    android:pathPattern=".*\\.cytoidlevel"
+                    android:scheme="content" />
+                <data
+                    android:mimeType="application/octet-stream"
+                    android:pathPattern=".*\\.cytoidlevel"
+                    android:scheme="content" />
+
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+            </intent-filter>
+
+            <!-- Register to handle file opening -->
+            <intent-filter>
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\.cytoidlevel"
+                    android:scheme="file" />
+
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

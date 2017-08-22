@@ -1,0 +1,34 @@
+{
+
+  "version": 1,
+
+  "id": "io.cytoid.glow_dance",
+  
+  "title": "Glow Dance",
+  "artist": "iamMANOLIS",
+  "illustrator": "Cytoid",
+  "charter": "xuxu9110",
+  
+  "music": {
+    "path": "Glow Dance.mp3"
+  },
+  "music_preview": {
+    "path": "preview.mp3"
+  },
+  "background": {
+    "path": "background.jpg"
+  },
+  "charts": [
+    {
+      "type": "easy",
+      "difficulty": 3,
+      "path": "chart.easy.txt"
+    },
+    {
+      "type": "hard",
+      "difficulty": 5,
+      "path": "chart.hard.txt"
+    }
+  ]
+
+}

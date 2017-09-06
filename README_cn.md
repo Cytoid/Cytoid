@@ -86,6 +86,8 @@ Proudly presented by [Tiger Tang](https://github.com/tigerhix/).
 
 特别感谢 [xuxu9110](http://xuxu9110.github.io/) 大大贡献的 Glow Dance 谱面！ ヾ(　´・◡・｀)ノ
 
+另外其实我们有个 Q 群：656330245
+
 最后当然是，
 ```
 Long Live the Rayark

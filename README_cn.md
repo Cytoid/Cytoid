@@ -6,9 +6,9 @@
 
 **Cytoid** 是一个参照 [Cytus](https://www.rayark.com/g/cytus/) 玩法的开源节奏游戏。
 
-*用户关卡分享 & 下载：[CytoidIO](http://cytoid.io/browse)
-*贴吧：[Cytoid吧](https://tieba.baidu.com/Cytoid)
-*Q群：656330245
+* 用户关卡分享 & 下载：[CytoidIO](http://cytoid.io/browse)
+* 贴吧：[Cytoid吧](https://tieba.baidu.com/Cytoid)
+* Q群：656330245
 
 # 基本信息
 

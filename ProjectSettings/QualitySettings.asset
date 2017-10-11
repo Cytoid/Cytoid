@@ -105,13 +105,13 @@ QualitySettings:
     blendWeights: 2
     textureQuality: 0
     anisotropicTextures: 1
-    antiAliasing: 2
+    antiAliasing: 0
     softParticles: 0
     softVegetation: 1
     realtimeReflectionProbes: 0
     billboardsFaceCameraPosition: 0
     vSyncCount: 1
-    lodBias: 0.01
+    lodBias: 0.7
     maximumLODLevel: 0
     particleRaycastBudget: 64
     asyncUploadTimeSlice: 2

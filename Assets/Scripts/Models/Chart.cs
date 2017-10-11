@@ -40,7 +40,7 @@ public class Chart
                     break;
                 case "LINK":
                     var notesInChain = new List<Note>();
-                    for (int i = 1; i < data.Length; i++)
+                    for (var i = 1; i < data.Length; i++)
                     {
                         int id;
                         if (!int.TryParse(data[i], out id)) continue;
@@ -48,7 +48,7 @@ public class Chart
                         note.type = NoteType.Chain;
                         notesInChain.Add(note);
                     }
-                    for (int i = 0; i < notesInChain.Count - 1; i++)
+                    for (var i = 0; i < notesInChain.Count - 1; i++)
                     {
                         notesInChain[i].connectedNote = notesInChain[i + 1];
                     }

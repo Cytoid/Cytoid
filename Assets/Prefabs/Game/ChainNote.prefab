@@ -86,7 +86,7 @@ CircleCollider2D:
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
-  m_Radius: 1.3
+  m_Radius: 0.888
 --- !u!114 &114863026746977544
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -114,8 +114,18 @@ MonoBehaviour:
   cleared: 0
   ringColor: {r: 0, g: 0, b: 0, a: 0}
   fillColor: {r: 0, g: 0, b: 0, a: 0}
+  scanningUpwards: 0
+  ringSpriteRenderer: {fileID: 0}
+  fillSpriteRenderer: {fileID: 0}
+  circleCollider: {fileID: 0}
+  TimeUntil: 0
+  TimeDiff: 0
   chainRendererPrefab: {fileID: 1073454114979038, guid: 5f701bffd909b4fc6bc8b1f832351a6c,
     type: 2}
+  chainHeadPrefab: {fileID: 1137771280273752, guid: bfd12a2a05c894a8fb4e95b7f44d598f,
+    type: 2}
+  chainHead: {fileID: 0}
+  connectedNoteView: {fileID: 0}
 --- !u!212 &212702124115709720
 SpriteRenderer:
   m_ObjectHideFlags: 1

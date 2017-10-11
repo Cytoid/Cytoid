@@ -4,6 +4,7 @@ public class ParticleManager : SingletonMonoBehavior<ParticleManager>
 {
 
     public ParticleSystem clearFX;
+    public ParticleSystem clearChainFX;
     public ParticleSystem missFX;
     public ParticleSystem holdFX;
 
@@ -18,6 +19,11 @@ public class ParticleManager : SingletonMonoBehavior<ParticleManager>
     public void PlayClearFX(NoteView noteView, NoteRanking ranking)
     {
         var at = noteView.transform.position;
+        var clearFX = this.clearFX;
+        if (noteView is ChainNoteView)
+        {
+            clearFX = clearChainFX;
+        }
         if (noteView.note.type == NoteType.Hold)
         {
             at = new Vector3(at.x, ScannerView.Instance.transform.position.y, at.z);
@@ -35,6 +41,9 @@ public class ParticleManager : SingletonMonoBehavior<ParticleManager>
             /*var childFx = fx.transform.GetChild(0).GetComponent<ParticleSystem>();
             var childMainModule = childFx.main;
             childMainModule.startColor = noteView.fillColor;*/
+
+            if (noteView.note.type == NoteType.Chain)
+                fx.transform.localScale = new Vector3(2, 2, 2);
             
             fx.Play();
             Destroy(fx.gameObject, fx.main.duration);
@@ -66,6 +75,9 @@ public class ParticleManager : SingletonMonoBehavior<ParticleManager>
             mainModule.simulationSpeed = speed;
             mainModule.duration = mainModule.duration / speed;
             mainModule.startColor = color;
+            
+            if (noteView.note.type == NoteType.Chain)
+                fx.transform.localScale = new Vector3(3f, 3f, 3f);
             
             /*var childFx = fx.transform.GetChild(0).GetComponent<ParticleSystem>();
             var childMainModule = childFx.main;

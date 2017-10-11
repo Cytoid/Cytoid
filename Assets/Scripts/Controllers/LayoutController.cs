@@ -29,17 +29,17 @@ public class LayoutController : SingletonMonoBehavior<LayoutController>
 
     public float NoteSize
     {
-        get { return Camera.main.orthographicSize * 2.0f * 0.22f; }
+        get { return Camera.main.orthographicSize * 2.0f * 0.22f * 0.9f; }
     }
 
     public float NoteChainSize
     {
-        get { return Camera.main.orthographicSize * 2.0f * 0.08f; }
+        get { return Camera.main.orthographicSize * 2.0f * 0.08f * 1.25f; }
     }
 
     public float NoteChainHeadSize
     {
-        get { return NoteChainSize * 1.6f; }
+        get { return NoteChainSize * 2f; }
     }
 
     public float ScannerHeight

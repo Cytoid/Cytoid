@@ -68,7 +68,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   dynamicScrollPoint: {fileID: 0}
-  minEffectDistance: 0.033
+  minEffectDistance: 0.015
   minEffectValue: 0.2
   maxEffectValue: 1
   interpolation: 0
@@ -100,7 +100,7 @@ MonoBehaviour:
     m_MaxSize: 130
     m_Alignment: 3
     m_AlignByGeometry: 0
-    m_RichText: 1
+    m_RichText: 0
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1

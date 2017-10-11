@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿﻿﻿using System;
 using System.Collections;
 using System.IO;
 using System.Linq;
@@ -26,6 +26,19 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
     [SerializeField] private Text artistText;
     [SerializeField] private Text illustratorText;
     [SerializeField] private Text charterText;
+    [SerializeField] private Text bestText;
+    
+    [SerializeField] private Toggle overrideOptionsToggle;
+    [SerializeField] private InputField localUserOffsetInput;
+    [SerializeField] private Toggle localIsInversedToggle;
+
+    [SerializeField] private InputField userOffsetInput;
+    [SerializeField] private Toggle showScannerToggle;
+    [SerializeField] private Toggle isInversedToggle;
+    [SerializeField] private InputField ringColorInput;
+    [SerializeField] private InputField ringColorAltInput;
+    [SerializeField] private InputField fillColorInput;
+    [SerializeField] private InputField fillColorAltInput;
 
     private ScrollFocusController listScrollFocusController
     {
@@ -57,7 +70,12 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             {
                 foreach (var file in Directory.GetFiles(CytoidApplication.DataPath + "/Inbox/", "*.cytoidlevel"))
                 {
-                    File.Move(file, CytoidApplication.DataPath + "/" + Path.GetFileName(file));
+                    var toPath = CytoidApplication.DataPath + "/" + Path.GetFileName(file);
+                    if (File.Exists(toPath))
+                    {
+                        File.Delete(toPath);
+                    }
+                    File.Move(file, toPath);
                 }
             }
         }
@@ -122,14 +140,102 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
     {
         base.Awake();
 
-        if (PlayerPrefs.HasKey("user_offset"))
+        CytoidApplication.SetAutoRotation(true);
+
+        var userOffsetDef = Application.platform == RuntimePlatform.Android ? 0.12f : 0.2f;
+        var ringColorDef = "#FFFFFF";
+        var ringColorAltDef = "#FFFFFF";
+        var fillColorDef = "#6699CC";
+        var fillColorAltDef = "#FF3C38";
+        
+        SetDefaultPref("user_offset", userOffsetDef);
+        SetDefaultPref("show_scanner", true);
+        SetDefaultPref("inverse", false);
+        SetDefaultPref("ring_color", ringColorDef);
+        SetDefaultPref("ring_color_alt", ringColorAltDef);
+        SetDefaultPref("fill_color", fillColorDef);
+        SetDefaultPref("fill_color_alt", fillColorAltDef);
+        
+        userOffsetInput.text = PlayerPrefs.GetFloat("user_offset").ToString();
+        showScannerToggle.isOn = PlayerPrefsExt.GetBool("show_scanner");
+        isInversedToggle.isOn = PlayerPrefsExt.GetBool("inverse");
+        ringColorInput.text = PlayerPrefs.GetString("ring_color");
+        ringColorAltInput.text = PlayerPrefs.GetString("ring_color_alt");
+        fillColorInput.text = PlayerPrefs.GetString("fill_color");
+        fillColorAltInput.text = PlayerPrefs.GetString("fill_color_alt");
+        
+        userOffsetInput.onEndEdit.AddListener(text =>
         {
-            GetUserOffsetInputField().text = PlayerPrefs.GetFloat("user_offset").ToString();
-        }
-        if (PlayerPrefs.HasKey("show_scanner"))
+            float offset;
+            if (!float.TryParse(text, out offset))
+            {
+                userOffsetInput.text = userOffsetDef.ToString();
+            }
+        });
+        overrideOptionsToggle.onValueChanged.AddListener(selected =>
         {
-            GetShowScannerToggle().isOn = PlayerPrefsExt.GetBool("show_scanner");
-        }
+            ZPlayerPrefs.SetBool(PreferenceKeys.WillOverrideOptions(CytoidApplication.CurrentLevel), selected);
+        });
+        localIsInversedToggle.onValueChanged.AddListener(selected =>
+        {
+            ZPlayerPrefs.SetBool(PreferenceKeys.WillInverse(CytoidApplication.CurrentLevel), selected);
+        });
+        localUserOffsetInput.onEndEdit.AddListener(text =>
+        {
+            float offset;
+            if (!float.TryParse(text, out offset))
+            {
+                localUserOffsetInput.text = userOffsetInput.text;
+            }
+            else
+            {
+                ZPlayerPrefs.SetFloat(PreferenceKeys.NoteDelay(CytoidApplication.CurrentLevel), offset);
+            }
+        });
+        ringColorInput.onEndEdit.AddListener(text =>
+        {
+            try
+            {
+                Convert.HexToColor(text);
+            }
+            catch (Exception)
+            {
+                ringColorInput.text = ringColorDef;
+            }
+        });
+        ringColorAltInput.onEndEdit.AddListener(text =>
+        {
+            try
+            {
+                Convert.HexToColor(text);
+            }
+            catch (Exception)
+            {
+                ringColorAltInput.text = ringColorAltDef;
+            }
+        });
+        fillColorInput.onEndEdit.AddListener(text =>
+        {
+            try
+            {
+                Convert.HexToColor(text);
+            }
+            catch (Exception)
+            {
+                fillColorInput.text = fillColorDef;
+            }
+        });
+        fillColorAltInput.onEndEdit.AddListener(text =>
+        {
+            try
+            {
+                Convert.HexToColor(text);
+            }
+            catch (Exception)
+            {
+                fillColorAltInput.text = fillColorAltDef;
+            }
+        });
 
         // Initialize background
         blackout.SetActive(false);
@@ -149,14 +255,24 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         }
     }
 
-    private InputField GetUserOffsetInputField()
+    private void SetDefaultPref(string key, object value)
     {
-        return GameObject.FindGameObjectWithTag("UserOffsetInput").GetComponent<InputField>();
-    }
-    
-    private Toggle GetShowScannerToggle()
-    {
-        return GameObject.FindGameObjectWithTag("ShowScannerToggle").GetComponent<Toggle>();
+        if (!PlayerPrefs.HasKey(key))
+        {
+            if (value is bool)
+            {
+                PlayerPrefsExt.SetBool(key, (bool) value);
+            } else if (value is float)
+            {
+                PlayerPrefs.SetFloat(key, (float) value);
+            } else if (value is int)
+            {
+                PlayerPrefs.SetInt(key, (int) value);
+            } else if (value is string)
+            {
+                PlayerPrefs.SetString(key, (string) value);
+            }
+        }
     }
 
     private void Start()
@@ -173,8 +289,6 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         // Formula: (Height + Spacing）* (How many entries) + Extra padding
         listRectTransform.ChangeSizeDelta(y: (56 - 6) * CytoidApplication.Levels.Count + 1000);
 
-        DynamicScrollPoint funWillScrollTo = null;
-
         // Add level entries into the list
         for (var index = 0; index < CytoidApplication.Levels.Count; index++)
         {
@@ -188,19 +302,13 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             listScrollFocusController.focusPoints.Add(dynamicScrollPoint);
             if (index == 0) listScrollFocusController.first = dynamicScrollPoint;
             if (CytoidApplication.CurrentLevel == level)
-                funWillScrollTo = dynamicScrollPoint; // Automatically scroll to
+                WillScrollTo = dynamicScrollPoint; // Automatically scroll to
         }
 
         // Reset list position
         listRectTransform.position = new Vector2(0, 0);
 
         ForceLayoutInitialization.Instance.Invalidate();
-        
-        if (funWillScrollTo != null)
-        {
-            funWillScrollTo.Focus();
-            listScrollFocusController.scrollMover.scrollController.CenterOn(funWillScrollTo.Rect);
-        }
     }
 
     private void Update()
@@ -213,13 +321,41 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
             ForceLayoutInitialization.Instance.Invalidate();
         }
+        
+        // Android
+        if (Input.GetKeyDown(KeyCode.Escape)) Application.Quit(); 
     }
 
-    public void LoadLevel(Level level)
+    public void UpdateBestText()
     {
-        WillHideList();
+        if (LoadedLevel == null) return;
+        if (Math.Abs(ZPlayerPrefs.GetFloat(
+                         PreferenceKeys.BestScore(LoadedLevel, CytoidApplication.CurrentChartType),
+                         defaultValue: -1) - (-1)) < 0.000001)
+        {
+            bestText.text = "NO HIGH SCORE YET";
+        }
+        else
+        {
+            bestText.text =
+                "Score " + Mathf.CeilToInt(ZPlayerPrefs.GetFloat(
+                    PreferenceKeys.BestScore(LoadedLevel, CytoidApplication.CurrentChartType),
+                    0)).ToString("D6")
+                + "   Acc. " +
+                ZPlayerPrefs.GetFloat(
+                    PreferenceKeys.BestAccuracy(LoadedLevel, CytoidApplication.CurrentChartType),
+                    0).ToString("0.##") + "%";
+        }
+
+    }
+
+    public IEnumerator LoadLevel(Level level)
+    {
+        if (WillScrollTo != null) yield return null;
         
-        if (LoadedLevel == level) return;
+        WillHideList();
+
+        if (LoadedLevel == level) yield break;
         LoadedLevel = level;
 
         idText.text = level.id ?? "Unknown";
@@ -293,6 +429,23 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
     {
         switchDifficultyView.OnLevelLoaded();
         CytoidApplication.CurrentLevel = LoadedLevel;
+        
+        UpdateBestText();
+
+        var useLocalOptions = ZPlayerPrefs.GetBool(PreferenceKeys.WillOverrideOptions(CytoidApplication.CurrentLevel), false);
+        overrideOptionsToggle.isOn = useLocalOptions;
+
+        localIsInversedToggle.isOn = isInversedToggle.isOn;
+        localUserOffsetInput.text = userOffsetInput.text;
+
+        if (useLocalOptions)
+        {
+            localIsInversedToggle.isOn =
+                ZPlayerPrefs.GetBool(PreferenceKeys.WillInverse(CytoidApplication.CurrentLevel), false);
+            localUserOffsetInput.text =
+                ZPlayerPrefs.GetFloat(PreferenceKeys.NoteDelay(CytoidApplication.CurrentLevel),
+                    PlayerPrefs.GetFloat("user_offset")).ToString();
+        }
     }
 
     public void WillHideList()
@@ -316,7 +469,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
     
     private IEnumerator HideListCoroutine()
     {
-        yield return new WaitForSeconds(3); 
+        yield return new WaitForSeconds(1.5f); 
         while (listCanvasGroup.alpha > 0)
         {
             listCanvasGroup.alpha -= 0.14f;
@@ -332,9 +485,14 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             case Action.Go:
                 print("Loading Game scene.");
 
-                PlayerPrefs.SetFloat("user_offset", float.Parse(GetUserOffsetInputField().text));
-                PlayerPrefsExt.SetBool("show_scanner", GetShowScannerToggle().isOn);
-
+                PlayerPrefs.SetFloat("user_offset", float.Parse(userOffsetInput.text));
+                PlayerPrefsExt.SetBool("show_scanner", showScannerToggle.isOn);
+                PlayerPrefsExt.SetBool("inverse", isInversedToggle.isOn);
+                PlayerPrefs.SetString("ring_color", ringColorInput.text);
+                PlayerPrefs.SetString("ring_color_alt", ringColorAltInput.text);
+                PlayerPrefs.SetString("fill_color", fillColorInput.text);
+                PlayerPrefs.SetString("fill_color_alt", fillColorAltInput.text);
+                
                 BackgroundCanvasHelper.PersistBackgroundCanvas();
                 SceneManager.LoadScene("Game");
                 break;
@@ -343,7 +501,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
     public void OpenAboutPage()
     {
-        Application.OpenURL("https://github.com/TigerHix/Cytoid");
+        Application.OpenURL("https://cytoid.io");
     }
 
     public void SetAction(string action)
@@ -355,4 +513,5 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
     {
         public Level Level;
     }
+    
 }

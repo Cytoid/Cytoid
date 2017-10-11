@@ -86,7 +86,7 @@ CircleCollider2D:
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
-  m_Radius: 0.6
+  m_Radius: 0.666
 --- !u!114 &114189945917268728
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -114,6 +114,8 @@ MonoBehaviour:
   cleared: 0
   ringColor: {r: 0, g: 0, b: 0, a: 0}
   fillColor: {r: 0, g: 0, b: 0, a: 0}
+  TimeUntil: 0
+  TimeDiff: 0
 --- !u!212 &212414577511604458
 SpriteRenderer:
   m_ObjectHideFlags: 1

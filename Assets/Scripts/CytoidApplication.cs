@@ -33,6 +33,7 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 		}
 		DontDestroyOnLoad(gameObject);
 		Application.targetFrameRate = 60;
+		ZPlayerPrefs.Initialize(SecuredConstants.password, SecuredConstants.salt);
 		UseDoozyUI = Type.GetType("DoozyUI.UIElement") != null;
 	}
 
@@ -80,48 +81,71 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 		}
 
 		foreach (var jsonPath in jsonFiles){
-			var info = new FileInfo(jsonPath);
-			var basePath = info.Directory.FullName + "/";
-			print(jsonPath);
-			Level level;
 			try
 			{
-				level = JsonConvert.DeserializeObject<Level>(File.ReadAllText(jsonPath));
-			} catch (Exception e)
+				var info = new FileInfo(jsonPath);
+				var basePath = info.Directory.FullName + "/";
+				print(jsonPath);
+				Level level;
+				try
+				{
+					level = JsonConvert.DeserializeObject<Level>(File.ReadAllText(jsonPath));
+				}
+				catch (Exception e)
+				{
+					print(e.Message);
+					continue;
+				}
+				if (level.id != null && level.id.Contains("io.cytoid"))
+				{
+					level.isInternal = true;
+				}
+				level.basePath = basePath;
+				// LAG HERE
+				level.charts.ForEach(chart => chart.LoadChart(level));
+				// LAG HERE
+				print(JsonConvert.SerializeObject(level));
+				Levels.Add(level);
+			}
+			catch (Exception e)
 			{
 				print(e.Message);
-				continue;
+				Log.e("Could not load " + jsonPath);
 			}
-			if (level.id != null && level.id.Contains("io.cytoid"))
-			{
-				level.isInternal = true;
-			}
-			level.basePath = basePath;
-			// LAG HERE
-			level.charts.ForEach(chart => chart.LoadChart(level));
-			// LAG HERE
-			print(JsonConvert.SerializeObject(level));
-			Levels.Add(level);
 		}
 
-		if (Application.platform == RuntimePlatform.Android)
+		try
 		{
-			var path = Application.streamingAssetsPath + "/Glow Dance/level.json";
-			var www = new WWW(path);
-			while (!www.isDone)
+			if (Application.platform == RuntimePlatform.Android)
 			{
+				var path = Application.streamingAssetsPath + "/Glow Dance/level.json";
+				var www = new WWW(path);
+				while (!www.isDone)
+				{
+				}
+				Level level;
+				level = JsonConvert.DeserializeObject<Level>(Encoding.UTF8.GetString(www.bytes));
+				level.isInternal = true;
+				level.basePath = Application.streamingAssetsPath + "/Glow Dance/";
+				print(level.basePath);
+				level.charts.ForEach(chart => chart.LoadChart(level));
+				print(JsonConvert.SerializeObject(level));
+				Levels.Add(level);
 			}
-			Level level;
-			level = JsonConvert.DeserializeObject<Level>(Encoding.UTF8.GetString(www.bytes));
-			level.isInternal = true;
-			level.basePath = Application.streamingAssetsPath + "/Glow Dance/";
-			print(level.basePath);
-			level.charts.ForEach(chart => chart.LoadChart(level));
-			print(JsonConvert.SerializeObject(level));
-			Levels.Add(level);
+		}
+		catch (Exception e)
+		{
+			print(e.Message);
+			Log.e("Could not load the internal level. Press 'Get levels' to get some levels!");
 		}
 
-		Levels.Sort((a, b) => string.Compare(a.title, b.title, StringComparison.Ordinal));
+		Levels.Sort((a, b) => string.Compare(a.title, b.title, StringComparison.OrdinalIgnoreCase));
+	}
+
+	public static void SetAutoRotation(bool autoRotation)
+	{
+		Screen.autorotateToLandscapeLeft = autoRotation;
+		Screen.autorotateToLandscapeRight = autoRotation;
 	}
 
 	public static AudioClip ReadAudioClipFromWWW(WWW www)
@@ -192,6 +216,11 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 				fileStream.Seek(0, SeekOrigin.Begin);
 
 				zipFile = new ZipFile(fileStream);
+
+				foreach (ZipEntry entry in zipFile)
+				{
+					// Loop through to ensure the file is valid
+				}
 
 			}
 			catch (Exception e)

@@ -43,6 +43,16 @@ public class Level
         }
         return music.path;
     }
+
+    public int GetDifficulty(string chartType)
+    {
+        foreach (var chart in charts)
+        {
+            if (chart.type != chartType) continue;
+            return chart.difficulty;
+        }
+        return -1;
+    }
     
     public class MusicSection
     {

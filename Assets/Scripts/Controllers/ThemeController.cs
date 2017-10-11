@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 public class ThemeController : SingletonMonoBehavior<ThemeController>
 {
@@ -14,38 +15,46 @@ public class ThemeController : SingletonMonoBehavior<ThemeController>
     public Color ringColor2;
     public Color fillColor2;
 
+    public Color ringColor3;
+    public Color fillColor3;
+    
+    public Color ringColor4;
+    public Color fillColor4;
+
     public void Init(Level level)
     {
-        if (level.theme == null) return;
-        if (level.theme.ring_color_1 != null)
+        try
         {
-            ringColor1 = HexToColor(level.theme.ring_color_1);
+            ringColor1 = Convert.HexToColor(PlayerPrefs.GetString("ring_color"));
+            ringColor2 = Convert.HexToColor(PlayerPrefs.GetString("ring_color_alt"));
+            ringColor3 = Convert.HexToColor("#FFFFFF");
+            ringColor4 = Convert.HexToColor("#FFFFFF");
+            fillColor1 = Convert.HexToColor(PlayerPrefs.GetString("fill_color"));
+            fillColor2 = Convert.HexToColor(PlayerPrefs.GetString("fill_color_alt"));
+            fillColor3 = Convert.HexToColor("#FFFFFF");
+            fillColor4 = Convert.HexToColor("#FFFFFF");
+            if (level.theme == null) return;
+            if (level.theme.ring_color_1 != null)
+            {
+                ringColor1 = Convert.HexToColor(level.theme.ring_color_1);
+            }
+            if (level.theme.fill_color_1 != null)
+            {
+                fillColor1 = Convert.HexToColor(level.theme.fill_color_1);
+            }
+            if (level.theme.ring_color_2 != null)
+            {
+                ringColor2 = Convert.HexToColor(level.theme.ring_color_2);
+            }
+            if (level.theme.fill_color_2 != null)
+            {
+                fillColor2 = Convert.HexToColor(level.theme.fill_color_2);
+            }
         }
-        if (level.theme.fill_color_1 != null)
+        catch (Exception)
         {
-            fillColor1 = HexToColor(level.theme.fill_color_1);
-        }
-        if (level.theme.ring_color_2 != null)
-        {
-            ringColor2 = HexToColor(level.theme.ring_color_2);
-        }
-        if (level.theme.fill_color_2 != null)
-        {
-            fillColor2 = HexToColor(level.theme.fill_color_2);
+            // ignored
         }
     }
 
-    private static Color HexToColor(string hex)
-    {
-        hex = hex.Replace("0x", "").Replace("#", "");
-        byte a = 255;
-        var r = byte.Parse(hex.Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
-        var g = byte.Parse(hex.Substring(2, 2), System.Globalization.NumberStyles.HexNumber);
-        var b = byte.Parse(hex.Substring(4, 2), System.Globalization.NumberStyles.HexNumber);
-        if (hex.Length == 8)
-        {
-            a = byte.Parse(hex.Substring(6, 2), System.Globalization.NumberStyles.HexNumber);
-        }
-        return new Color32(r, g, b, a);
-    }
 }

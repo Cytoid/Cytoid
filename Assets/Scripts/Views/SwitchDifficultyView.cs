@@ -2,23 +2,14 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class SwitchDifficultyView : MonoBehaviour
+public class SwitchDifficultyView : DisplayDifficultyView
 {
 
-    public Sprite easy;
-    public Sprite hard;
-    public Sprite extreme;
-
-    private Image image;
-    private Text text;
-
     private Level level;
-    private string selectedChartType = ChartType.Easy;
     
-    protected void Awake()
+    protected override void Awake()
     {
-        image = GetComponentInChildren<Image>();
-        text = GetComponentInChildren<Text>();
+        base.Awake();
         gameObject.SetActive(false);
     }
 
@@ -26,46 +17,33 @@ public class SwitchDifficultyView : MonoBehaviour
     {
         gameObject.SetActive(true);
         level = LevelSelectionController.Instance.LoadedLevel;
+        chartType = CytoidApplication.CurrentChartType;
         var hasType = false;
         foreach (var chart in level.charts)
         {
-            if (chart.type == selectedChartType)
+            if (chart.type == chartType)
             {
-                SwitchDifficulty(selectedChartType);
+                SwitchDifficulty(chartType);
                 hasType = true;
             }
         }
         if (!hasType)
         {
-            selectedChartType = level.charts[0].type;
-            SwitchDifficulty(selectedChartType);
+            chartType = level.charts[0].type;
+            SwitchDifficulty(chartType);
         }
     }
 
     public void SwitchDifficulty(string type)
     {
-        selectedChartType = type;
-        CytoidApplication.CurrentChartType = selectedChartType;
-        Sprite sprite;
-        switch (type)
-        {
-            case ChartType.Easy:
-                sprite = easy;
-                break;
-            case ChartType.Hard:
-                sprite = hard;
-                break;
-            default:
-                sprite = extreme;
-                break;
-        }
-        image.overrideSprite = sprite;
-        text.text = level.charts.Find(chart => chart.type == type).difficulty.ToString();
+        SetDifficulty(type, level.GetDifficulty(type));
+        CytoidApplication.CurrentChartType = type;
+        LevelSelectionController.Instance.UpdateBestText();
     }
 
     public void SwitchDifficulty()
     {
-        var index = level.charts.IndexOf(level.charts.Find(chart => chart.type == selectedChartType));
+        var index = level.charts.IndexOf(level.charts.Find(chart => chart.type == chartType));
         if (index == level.charts.Count - 1) index = 0;
         else index++;
         SwitchDifficulty(level.charts[index].type);

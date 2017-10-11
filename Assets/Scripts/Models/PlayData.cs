@@ -12,6 +12,7 @@ public class PlayData
     private float tpNow;
     public int Combo;
     public int MaxCombo;
+    public bool CanMM = true;
 
     public PlayData(Chart chart)
     {
@@ -25,6 +26,7 @@ public class PlayData
     
     public void ClearNote(int id, NoteRanking ranking)
     {
+        if (ranking != NoteRanking.Perfect && ranking != NoteRanking.Excellent) CanMM = false;
         if (NoteRankings[id] == NoteRanking.Undetermined) NoteCleared++;
         NoteRankings[id] = ranking;
         if (ranking == NoteRanking.Bad || ranking == NoteRanking.Miss) Combo = 0;
@@ -34,7 +36,14 @@ public class PlayData
             if (MaxCombo < Combo) MaxCombo = Combo;
         }
         Score += 900000f / NoteCount * ranking.ScoreWeight() + 100000f / (NoteCount * (float) (NoteCount + 1) / 2f) * Combo;
-        if (Score > 1000000 || 1000000 - Score < 0.00001f) Score = 1000000f;
+        if (Score > 999500)
+        {
+            if (NoteCleared == NoteCount && CanMM)
+            {
+                Score = 1000000;
+            }
+        }
+        if (Score > 1000000) Score = 1000000;
         tpNow += 100f * ranking.TpWeight();
         Tp = tpNow / NoteCleared;
     }

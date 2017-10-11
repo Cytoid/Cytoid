@@ -62,5 +62,13 @@ sysinfo.txt
 /Assets/Plugins/Quick.meta
 /Assets/Plugins/Editor/
 /Assets/Plugins/Editor.meta
+/Assets/Android Native Audio/
+/Assets/Android Native Audio.meta
+/Assets/StreamingAssets/Android Native Audio/
+/Assets/StreamingAssets/Android Native Audio.meta
+/Assets/ZFrame/
+/Assets/ZFrame.meta
 /Assets/Resources/DOTweenSettings.asset
 /Assets/Resources/DOTweenSettings.asset.meta
+/Assets/Scripts/SecuredConstants.cs
+/Assets/Scripts/SecuredConstants.cs.meta

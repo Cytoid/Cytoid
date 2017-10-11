@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -115,6 +116,26 @@ public class HoldNoteView : NoteView
     public override void Touch()
     {
         // Do nothing
+    }
+
+    public List<int> fingers = new List<int>(2);
+
+    public void StartHoldBy(int fingerIndex)
+    {
+        fingers.Add(fingerIndex);
+        if (!isHolding)
+        {
+            StartHolding();
+        }
+    }
+
+    public void StopHoldBy(int fingerIndex)
+    {
+        fingers.Remove(fingerIndex);
+        if (isHolding && fingers.Count == 0)
+        {
+            StopHolding();
+        }
     }
 
     public void StartHolding()

@@ -116,7 +116,7 @@ CircleCollider2D:
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
-  m_Radius: 0.6
+  m_Radius: 0.666
 --- !u!114 &114344285460188230
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -144,6 +144,8 @@ MonoBehaviour:
   cleared: 0
   ringColor: {r: 0, g: 0, b: 0, a: 0}
   fillColor: {r: 0, g: 0, b: 0, a: 0}
+  TimeUntil: 0
+  TimeDiff: 0
   holdRailPrefab: {fileID: 1838093380315680, guid: f72b0fbf59df9458bacde3541aab1837,
     type: 2}
   holdCartPrefab: {fileID: 1838093380315680, guid: ea826c6d44fdd4c4f9d13d3dde3f54d9,

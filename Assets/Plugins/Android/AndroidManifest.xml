@@ -18,16 +18,161 @@
             android:label="Cytoid" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!--
+     Capture content by MIME type, which is how Gmail broadcasts
+     attachment open requests.  pathPattern and file extensions
+     are ignored, so the MIME type *MUST* be explicit, otherwise
+     we will match absolutely every file opened.
+-->
+            <intent-filter
+                android:label="@string/app_name"
+                android:priority="50" >
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+                <data android:mimeType="application/zip" />
+                <data android:mimeType="application/x-zip-compressed" />
+            </intent-filter>
+
+            <!--
+                 Capture file open requests (pathPattern is honoured) where no
+                 MIME type is provided in the Intent.  An Intent with a null
+                 MIME type will never be matched by a filter with a set MIME
+                 type, so we need a second intent-filter if we wish to also
+                 match files with this extension and a non-null MIME type
+                 (even if it is non-null but zero length).
+            -->
+            <intent-filter
+                android:label="@string/app_name"
+                android:priority="50" >
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:scheme="file" />
+                <data android:host="*" />
+
+                <!--
+                     Work around Android's ugly primitive PatternMatcher
+                     implementation that can't cope with finding a . early in
+                     the path unless it's explicitly matched.
+                -->
+                <data android:pathPattern=".*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+            </intent-filter>
+
+            <!--
+                 Capture file open requests (pathPattern is honoured) where a
+                 (possibly blank) MIME type is provided in the Intent.  This
+                 filter may only be necessary for supporting ES File Explorer,
+                 which has the probably buggy behaviour of using an Intent
+                 with a MIME type that is set but zero-length.  It's
+                 impossible to match such a type except by using a global
+                 wildcard.
+            -->
+            <intent-filter
+                android:label="@string/app_name"
+                android:priority="50" >
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:scheme="file" />
+                <data android:host="*" />
+                <data android:mimeType="*/*" />
+
+                <!--
+                     Work around Android's ugly primitive PatternMatcher
+                     implementation that can't cope with finding a . early in
+                     the path unless it's explicitly matched.
+                -->
+                <data android:pathPattern=".*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+            </intent-filter>
+
+            <!--<intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+                <data android:mimeType="*/*" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="file" />
+                <data android:mimeType="*/*" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/zip" />
+                <data android:pathPattern=".*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+            </intent-filter>-->
+
+            <!-- Following are obsolete -->
 
             <!-- Credits: https://stackoverflow.com/a/26393007/2706176 -->
 
 
             <!-- Register to handle email attachments -->
             <!-- WARNING: Do NOT use android:host="*" for these as they will not work properly -->
-            <intent-filter>
+            <!--<intent-filter>
                 <data
                     android:mimeType="application/cytoid"
                     android:pathPattern=".*\\.cytoidlevel"
@@ -41,10 +186,10 @@
 
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-            </intent-filter>
+            </intent-filter>-->
 
             <!-- Register to handle file opening -->
-            <intent-filter>
+            <!--<intent-filter>
                 <data
                     android:host="*"
                     android:mimeType="*/*"
@@ -55,7 +200,7 @@
 
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-            </intent-filter>
+            </intent-filter>-->
         </activity>
     </application>
 

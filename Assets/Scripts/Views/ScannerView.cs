@@ -24,6 +24,7 @@ public class ScannerView : SingletonMonoBehavior<ScannerView>
         {
             spriteRenderer.enabled = false;
         }
+        spriteRenderer.sortingOrder = 30100;
     }
 
     private void Update()
@@ -38,6 +39,10 @@ public class ScannerView : SingletonMonoBehavior<ScannerView>
         else // +y
         {
             y = layout.PlayAreaHeight * ((game.TimeElapsed + game.Chart.pageShift) % game.Chart.pageDuration / game.Chart.pageDuration);
+        }
+        if (game.isInversed)
+        {
+            y = layout.PlayAreaHeight - y;
         }
         y += layout.PlayAreaVerticalMargin;
         if (!game.IsLoaded)

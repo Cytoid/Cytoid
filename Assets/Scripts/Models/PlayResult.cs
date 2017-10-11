@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-public class PlayResult
+﻿public class PlayResult
 {
 
     public float Score;

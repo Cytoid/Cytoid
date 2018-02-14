@@ -13,11 +13,12 @@
         android:supportsRtl="true" >
         <activity
             android:name="me.tigerhix.cytoid.CytoidPluginActivity"
-            android:screenOrientation="sensorLandscape"
             android:configChanges="fontScale|keyboard|keyboardHidden|locale|mnc|mcc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|touchscreen"
-            android:label="Cytoid" >
+            android:label="Cytoid"
+            android:screenOrientation="sensorLandscape" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
@@ -26,7 +27,7 @@
      attachment open requests.  pathPattern and file extensions
      are ignored, so the MIME type *MUST* be explicit, otherwise
      we will match absolutely every file opened.
--->
+            -->
             <intent-filter
                 android:label="@string/app_name"
                 android:priority="50" >
@@ -109,7 +110,8 @@
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
             </intent-filter>
 
-            <!--<intent-filter>
+            <!--
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -163,16 +165,20 @@
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
-            </intent-filter>-->
+            </intent-filter>
+            -->
+
 
             <!-- Following are obsolete -->
+
 
             <!-- Credits: https://stackoverflow.com/a/26393007/2706176 -->
 
 
             <!-- Register to handle email attachments -->
             <!-- WARNING: Do NOT use android:host="*" for these as they will not work properly -->
-            <!--<intent-filter>
+            <!--
+            <intent-filter>
                 <data
                     android:mimeType="application/cytoid"
                     android:pathPattern=".*\\.cytoidlevel"
@@ -186,10 +192,13 @@
 
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-            </intent-filter>-->
+            </intent-filter>
+            -->
+
 
             <!-- Register to handle file opening -->
-            <!--<intent-filter>
+            <!--
+            <intent-filter>
                 <data
                     android:host="*"
                     android:mimeType="*/*"
@@ -200,7 +209,8 @@
 
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-            </intent-filter>-->
+            </intent-filter>
+            -->
         </activity>
     </application>
 

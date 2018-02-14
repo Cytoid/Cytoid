@@ -9,6 +9,7 @@ using LunarConsolePlugin;
 using LunarConsolePluginInternal;
 using Newtonsoft.Json;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 {
@@ -16,6 +17,7 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 	public static List<Level> Levels = new List<Level>();
 	public static Level CurrentLevel;
 	public static string CurrentChartType;
+	public static LevelSelectionController.HitSound CurrentHitSound;
 	public static PlayData CurrentPlayData;
 	public static PlayResult LastPlayResult;
 
@@ -66,6 +68,16 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 		backgroundTexture.Compress(true);
 		
 		ReloadLevels();
+	}
+
+	public static void DeleteLevel(Level level)
+	{
+		if (level.basePath != null)
+		{
+			Directory.Delete(Path.GetDirectoryName(level.basePath), true);
+			Levels.Remove(level);
+			SceneManager.LoadScene("LevelSelection");
+		}
 	}
 
 	public static void ReloadLevels()
@@ -140,6 +152,15 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 		}
 
 		Levels.Sort((a, b) => string.Compare(a.title, b.title, StringComparison.OrdinalIgnoreCase));
+
+		if (PlayerPrefs.HasKey("last_level"))
+		{
+			var lastLevel = PlayerPrefs.GetString("last_level");
+			foreach (var level in Levels)
+			{
+				if (level.id == lastLevel) CurrentLevel = level;
+			}
+		}
 	}
 
 	public static void SetAutoRotation(bool autoRotation)
@@ -160,15 +181,27 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 		return www.GetAudioClip(false, true);
 	}
 	
-	private static string GetAndroidStoragePath()
+	private string GetAndroidStoragePath()
 	{
-		string[] potentialDirectories = {
-			"/mnt/sdcard",
-			"/sdcard",
-			"/storage/sdcard0",
-			"/storage/sdcard1"
-		};
-		return potentialDirectories.First(Directory.Exists);
+		var path = "";
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			try
+			{
+				using (var javaClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+				{
+					using (var activityClass = javaClass.GetStatic<AndroidJavaObject>("currentActivity"))
+					{
+						path = activityClass.Call<AndroidJavaObject>("getAndroidStorageFile").Call<string>("getAbsolutePath");
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				Debug.LogError("Could not get Android storage path: " + e.Message);
+			}
+		}
+		return path;
 	}
 
 	[HideInInspector] public bool LevelsInstalling;

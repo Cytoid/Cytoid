@@ -19,6 +19,8 @@ public class HoldNoteView : NoteView
     private int waitBetweenHoldFX;
     private int maxWaitBetweenHoldFX = 9;
 
+    private bool playedHitSound;
+    
     protected override void Awake()
     {
         base.Awake();
@@ -105,6 +107,11 @@ public class HoldNoteView : NoteView
                 }
                 waitBetweenHoldFX++;
             }
+            if (!playedHitSound && note.time <= game.TimeElapsed)
+            {
+                playedHitSound = true;
+                hitSoundSource.Play();
+            }
             // Already completed?
             if (game.TimeElapsed >= note.time + note.duration)
             {
@@ -151,6 +158,10 @@ public class HoldNoteView : NoteView
         isHolding = false;
         if (note.time < game.TimeElapsed)
         {
+            if (hitSoundSource.clip != null)
+            {
+                hitSoundSource.Play();
+            }
             Clear(CalculateRank());
         }
     }

@@ -54,6 +54,7 @@ GameObject:
   - component: {fileID: 212346055203455210}
   - component: {fileID: 58238459304113400}
   - component: {fileID: 114344285460188230}
+  - component: {fileID: 82316144814753768}
   m_Layer: 0
   m_Name: HoldNote
   m_TagString: Untagged
@@ -117,6 +118,86 @@ CircleCollider2D:
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
   m_Radius: 0.666
+--- !u!82 &82316144814753768
+AudioSource:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1972409087546156}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 0
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 2
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    - serializedVersion: 2
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 2
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 0
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 2
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 0
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 2
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 0
 --- !u!114 &114344285460188230
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -144,6 +225,10 @@ MonoBehaviour:
   cleared: 0
   ringColor: {r: 0, g: 0, b: 0, a: 0}
   fillColor: {r: 0, g: 0, b: 0, a: 0}
+  scanningUpwards: 0
+  ringSpriteRenderer: {fileID: 0}
+  fillSpriteRenderer: {fileID: 0}
+  circleCollider: {fileID: 0}
   TimeUntil: 0
   TimeDiff: 0
   holdRailPrefab: {fileID: 1838093380315680, guid: f72b0fbf59df9458bacde3541aab1837,
@@ -152,6 +237,7 @@ MonoBehaviour:
     type: 2}
   isHolding: 0
   heldDuration: 0
+  fingers: 
 --- !u!212 &212301255254674136
 SpriteRenderer:
   m_ObjectHideFlags: 1

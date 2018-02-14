@@ -1,6 +1,7 @@
 ﻿﻿﻿using System;
 using System.Collections;
-using System.IO;
+  using System.Collections.Generic;
+  using System.IO;
 using System.Linq;
 using SimpleUI.ScrollExtensions;
 using UnityEngine;
@@ -27,6 +28,8 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
     [SerializeField] private Text illustratorText;
     [SerializeField] private Text charterText;
     [SerializeField] private Text bestText;
+    [SerializeField] private Text confirmText;
+    [SerializeField] private GameObject deleteButton;
     
     [SerializeField] private Toggle overrideOptionsToggle;
     [SerializeField] private InputField localUserOffsetInput;
@@ -39,6 +42,8 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
     [SerializeField] private InputField ringColorAltInput;
     [SerializeField] private InputField fillColorInput;
     [SerializeField] private InputField fillColorAltInput;
+    [SerializeField] private Text hitSoundText;
+    [SerializeField] private AudioSource hitSoundPlayer;
 
     private ScrollFocusController listScrollFocusController
     {
@@ -155,6 +160,22 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         SetDefaultPref("ring_color_alt", ringColorAltDef);
         SetDefaultPref("fill_color", fillColorDef);
         SetDefaultPref("fill_color_alt", fillColorAltDef);
+        SetDefaultPref("hit_sound", "None");
+        
+        var list = HitSounds.ToList();
+        list.Insert(0, new HitSound { Name = "None", Clip = null });
+        HitSounds = list.ToArray();
+        UpdateHitSound(HitSounds[1], save: false);
+
+        var userHitSound = PlayerPrefs.GetString("hit_sound");
+        for (var index = 0; index < HitSounds.Length; index++)
+        {
+            if (HitSounds[index].Name == userHitSound)
+            {
+                UpdateHitSound(HitSounds[index]);
+                HitSoundIndex = index;
+            }
+        }
         
         userOffsetInput.text = PlayerPrefs.GetFloat("user_offset").ToString();
         showScannerToggle.isOn = PlayerPrefsExt.GetBool("show_scanner");
@@ -435,9 +456,6 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         var useLocalOptions = ZPlayerPrefs.GetBool(PreferenceKeys.WillOverrideOptions(CytoidApplication.CurrentLevel), false);
         overrideOptionsToggle.isOn = useLocalOptions;
 
-        localIsInversedToggle.isOn = isInversedToggle.isOn;
-        localUserOffsetInput.text = userOffsetInput.text;
-
         if (useLocalOptions)
         {
             localIsInversedToggle.isOn =
@@ -446,6 +464,22 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
                 ZPlayerPrefs.GetFloat(PreferenceKeys.NoteDelay(CytoidApplication.CurrentLevel),
                     PlayerPrefs.GetFloat("user_offset")).ToString();
         }
+        else
+        {
+            localIsInversedToggle.isOn = isInversedToggle.isOn;
+            localUserOffsetInput.text = userOffsetInput.text;
+        }
+
+        confirmText.text = "Are you sure you want to delete\n" + LoadedLevel.id + "?";
+
+        deleteButton.SetActive(!LoadedLevel.isInternal);
+
+        PlayerPrefs.SetString("last_level", LoadedLevel.id);
+    }
+
+    public void DeleteCurrentLevel()
+    {
+        CytoidApplication.DeleteLevel(CytoidApplication.CurrentLevel);
     }
 
     public void WillHideList()
@@ -476,6 +510,45 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             yield return null;
         }
         hideListCoroutine = null;
+    }
+
+    [Serializable]
+    public struct HitSound
+    {
+        public string Name;
+        public AudioClip Clip;
+    }
+
+    [SerializeField] protected HitSound[] HitSounds;
+    protected int HitSoundIndex;
+
+    public void NextHitSound()
+    {
+        HitSoundIndex++;
+        if (HitSoundIndex == HitSounds.Length)
+        {
+            HitSoundIndex = 0;
+        }
+        UpdateHitSound(HitSounds[HitSoundIndex]);
+        hitSoundPlayer.PlayOneShot(HitSounds[HitSoundIndex].Clip);
+    }
+
+    public void PrevHitSound()
+    {
+        HitSoundIndex--;
+        if (HitSoundIndex < 0)
+        {
+            HitSoundIndex = HitSounds.Length - 1;
+        }
+        UpdateHitSound(HitSounds[HitSoundIndex]);
+        hitSoundPlayer.PlayOneShot(HitSounds[HitSoundIndex].Clip);
+    }
+
+    public void UpdateHitSound(HitSound hitSound, bool save = true)
+    {
+        hitSoundText.text = hitSound.Name;
+        CytoidApplication.CurrentHitSound = hitSound;
+        if (save) PlayerPrefs.SetString("hit_sound", hitSound.Name);
     }
 
     public void DoAction()

@@ -31,6 +31,8 @@ public class NoteView : MonoBehaviour
     [HideInInspector] public SpriteRenderer fillSpriteRenderer;
     [HideInInspector] public CircleCollider2D circleCollider;
 
+    protected AudioSource hitSoundSource;
+
     public float TimeUntil;
 
     public float TimeDiff;
@@ -111,6 +113,8 @@ public class NoteView : MonoBehaviour
         circleCollider.enabled = false;
         displayed = false;
         cleared = false;
+        hitSoundSource = GetComponent<AudioSource>();
+        hitSoundSource.clip = CytoidApplication.CurrentHitSound.Clip;
     }
 
     protected bool playedEmergeAnim;
@@ -255,6 +259,10 @@ public class NoteView : MonoBehaviour
     {
         if (!game.IsLoaded || game.IsPaused) return;
         Clear(CalculateRank());
+        if (hitSoundSource.clip != null)
+        {
+            hitSoundSource.Play();
+        }
     }
 
     public virtual NoteRanking CalculateRank()

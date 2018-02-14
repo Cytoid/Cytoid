@@ -90,11 +90,6 @@ public class GameController : SingletonMonoBehavior<GameController>
         if (pauseStatus)
         {
             Pause();
-            if (CytoidApplication.UseDoozyUI)
-            {
-                UIManager.ShowUiElement("PauseBackground", "Game", true);
-                UIManager.ShowUiElement("PauseRoot", "Game", true);
-            }
         }
     }
 
@@ -292,6 +287,11 @@ public class GameController : SingletonMonoBehavior<GameController>
         IsPaused = true;
         willPause = false;
         UnpauseCountdown = -1;
+        if (CytoidApplication.UseDoozyUI)
+        {
+            UIManager.ShowUiElement("PauseBackground", "Game", true);
+            UIManager.ShowUiElement("PauseRoot", "Game", true);
+        }
         if (!CytoidApplication.CurrentLevel.isInternal && Application.platform == RuntimePlatform.Android) ANAMusic.pause(anaId);
         else audioSource.Pause();
         if (!CytoidApplication.CurrentLevel.isInternal && Application.platform == RuntimePlatform.Android) pausedAt = ANAMusic.getCurrentPosition(anaId) / 1000f;

@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using ICSharpCode.SharpZipLib.Zip;
-using LunarConsolePlugin;
 using LunarConsolePluginInternal;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -14,12 +14,25 @@ using UnityEngine.SceneManagement;
 public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 {
 
+#if UNITY_EDITOR
+	public const string host = "https://cytoid.io:8443";
+#else
+	public const string host = "https://cytoid.io:8443";
+#endif
+	
+	
 	public static List<Level> Levels = new List<Level>();
 	public static Level CurrentLevel;
-	public static string CurrentChartType;
+	public static string CurrentChartType = ChartType.Hard;
 	public static LevelSelectionController.HitSound CurrentHitSound;
 	public static PlayData CurrentPlayData;
+	public static RankedPlayData CurrentRankedPlayData;
 	public static PlayResult LastPlayResult;
+
+	public static bool IsReloadingLevels = true;
+	public static string LoadingLevelId;
+	public static int LoadingLevelIndex;
+	public static int TotalLevelsToLoad;
 
 	public static string DataPath;
 	[HideInInspector] public static bool UseDoozyUI;
@@ -37,6 +50,7 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 		Application.targetFrameRate = 60;
 		ZPlayerPrefs.Initialize(SecuredConstants.password, SecuredConstants.salt);
 		UseDoozyUI = Type.GetType("DoozyUI.UIElement") != null;
+		
 	}
 
 	private void Start()
@@ -62,12 +76,22 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 #endif
 #if UNITY_EDITOR
 		DataPath = Application.persistentDataPath;
+		Application.runInBackground = true;
 #endif
 
 		backgroundTexture = new Texture2D(1024, 1024, TextureFormat.RGBA4444, false);
 		backgroundTexture.Compress(true);
-		
-		ReloadLevels();
+
+		if (SceneManager.GetActiveScene().name != "Intro")
+		{
+			ReloadLevels(Application.streamingAssetsPath);
+			RefreshCurrentLevel();
+		}
+		else
+		{
+			var thread = new Thread(ReloadLevels);
+			thread.Start(Application.streamingAssetsPath);
+		}
 	}
 
 	public static void DeleteLevel(Level level)
@@ -80,8 +104,12 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 		}
 	}
 
-	public static void ReloadLevels()
+	public static readonly string[] InternalLevels = {"Intro", "Sky", "Glow Dance"};
+
+	public static void ReloadLevels(object streamingPath)
 	{
+		IsReloadingLevels = true;
+		LoadingLevelIndex = 0;
 		Levels.Clear();
 		
 		// Load levels
@@ -89,15 +117,20 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 
 		if (Application.platform != RuntimePlatform.Android)
 		{
-			jsonFiles.Add(Application.streamingAssetsPath + "/Glow Dance/level.json");
+			foreach (var internalLevel in InternalLevels)
+			{
+				jsonFiles.Add(string.Format(streamingPath + "/{0}/level.json", internalLevel));
+			}
 		}
+		
+		TotalLevelsToLoad = jsonFiles.Count;
 
 		foreach (var jsonPath in jsonFiles){
+			LoadingLevelIndex++;
 			try
 			{
 				var info = new FileInfo(jsonPath);
 				var basePath = info.Directory.FullName + "/";
-				print(jsonPath);
 				Level level;
 				try
 				{
@@ -108,16 +141,13 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 					print(e.Message);
 					continue;
 				}
-				if (level.id != null && level.id.Contains("io.cytoid"))
-				{
-					level.isInternal = true;
-				}
+				
 				level.basePath = basePath;
-				// LAG HERE
-				level.charts.ForEach(chart => chart.LoadChart(level));
-				// LAG HERE
-				print(JsonConvert.SerializeObject(level));
+
+				Debug.Log(level.id);
+				LoadingLevelId = level.id;
 				Levels.Add(level);
+				
 			}
 			catch (Exception e)
 			{
@@ -130,43 +160,47 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 		{
 			if (Application.platform == RuntimePlatform.Android)
 			{
-				var path = Application.streamingAssetsPath + "/Glow Dance/level.json";
-				var www = new WWW(path);
-				while (!www.isDone)
+				foreach (var internalLevel in InternalLevels)
 				{
+					var path = string.Format(streamingPath + "/{0}/level.json", internalLevel);
+					var www = new WWW(path);
+					while (!www.isDone)
+					{
+					}
+					Level level;
+					level = JsonConvert.DeserializeObject<Level>(Encoding.UTF8.GetString(www.bytes));
+					level.basePath = string.Format(Application.streamingAssetsPath + "/{0}/", internalLevel);
+					print(level.basePath);
+					level.charts.ForEach(chart => chart.LoadChart(level));
+					Levels.Add(level);
 				}
-				Level level;
-				level = JsonConvert.DeserializeObject<Level>(Encoding.UTF8.GetString(www.bytes));
-				level.isInternal = true;
-				level.basePath = Application.streamingAssetsPath + "/Glow Dance/";
-				print(level.basePath);
-				level.charts.ForEach(chart => chart.LoadChart(level));
-				print(JsonConvert.SerializeObject(level));
-				Levels.Add(level);
 			}
 		}
 		catch (Exception e)
 		{
 			print(e.Message);
-			Log.e("Could not load the internal level. Press 'Get levels' to get some levels!");
+			Log.e("Intenal levels could not be loaded. Please download levels from CytoidIO!");
 		}
 
 		Levels.Sort((a, b) => string.Compare(a.title, b.title, StringComparison.OrdinalIgnoreCase));
 
-		if (PlayerPrefs.HasKey("last_level"))
-		{
-			var lastLevel = PlayerPrefs.GetString("last_level");
-			foreach (var level in Levels)
-			{
-				if (level.id == lastLevel) CurrentLevel = level;
-			}
-		}
+		IsReloadingLevels = false;
 	}
 
 	public static void SetAutoRotation(bool autoRotation)
 	{
-		Screen.autorotateToLandscapeLeft = autoRotation;
-		Screen.autorotateToLandscapeRight = autoRotation;
+		if (autoRotation)
+		{
+			Screen.autorotateToLandscapeLeft = true;
+			Screen.autorotateToLandscapeRight = true;
+		}
+		else
+		{
+			if (Screen.orientation != ScreenOrientation.LandscapeLeft)
+				Screen.autorotateToLandscapeLeft = false;
+			if (Screen.orientation != ScreenOrientation.LandscapeRight)
+				Screen.autorotateToLandscapeRight = false;
+		}
 	}
 
 	public static AudioClip ReadAudioClipFromWWW(WWW www)
@@ -220,9 +254,35 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 		    StartCoroutine(ExtractZipFile(Path.GetFileName(levelFile), zipFileData, DataPath + "/" + Path.GetFileNameWithoutExtension(levelFile)));
 			while (extracting) yield return null;
 			File.Delete(levelFile);
+			
+			Level level;
+			try
+			{
+				level = JsonConvert.DeserializeObject<Level>(File.ReadAllText(DataPath + "/" + Path.GetFileNameWithoutExtension(levelFile) + "/level.json"));
+			}
+			catch (Exception e)
+			{
+				print(e.Message);
+				continue;
+			}
+			PlayerPrefs.SetString("last_level", level.id);
 		}
-		ReloadLevels();
+		ReloadLevels(Application.streamingAssetsPath);
 		LevelsInstalling = false;
+
+		RefreshCurrentLevel();
+	}
+
+	public static void RefreshCurrentLevel()
+	{
+		if (PlayerPrefs.HasKey("last_level"))
+		{
+			var lastLevel = PlayerPrefs.GetString("last_level");
+			foreach (var level in Levels)
+			{
+				if (level.id == lastLevel) CurrentLevel = level;
+			}
+		}
 	}
 
 	private bool extracting;

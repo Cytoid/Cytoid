@@ -7,15 +7,10 @@ using UnityEngine;
 
 public class Level
 {
-    
-    public static List<string> defaultChartPaths = new List<string> { "chart.txt" };
-    public static List<string> defaultPreviewPaths = new List<string> { "music_preview.mp3" };
-    public static List<string> defaultMusicPaths = new List<string> { "music.mp3" };
-    public static List<string> defaultBackgroundPaths = new List<string> { "background.jpg", "background.png" };
 
     [JsonIgnore] public string basePath;
-    [JsonIgnore] public Dictionary<ChartSection, string> chartMD5s;
-    [JsonIgnore] public bool isInternal;
+
+    public bool ChartsLoaded;
     
     public string format { get; set; }
     public int version { get; set; }
@@ -30,6 +25,16 @@ public class Level
     public BackgroundSection background { get; set; }
     public List<ChartSection> charts { get; set; }
     public ThemeSection theme { get; set; }
+    public bool is_internal { get; set;  }
+
+    public void LoadCharts()
+    {
+        charts.ForEach(chart =>
+        {
+            chart.LoadChart(this);
+        });
+        ChartsLoaded = true;
+    }
 
     public string GetMusicPath(string chartType)
     {
@@ -78,7 +83,7 @@ public class Level
         public void LoadChart(Level level)
         {
             string chartText;
-            if (level.isInternal && Application.platform == RuntimePlatform.Android)
+            if (level.is_internal && Application.platform == RuntimePlatform.Android)
             {
                 var www = new WWW(level.basePath + path);
                 while (!www.isDone)
@@ -88,7 +93,7 @@ public class Level
             }
             else
             {
-                chartText = File.ReadAllText(level.basePath + path);
+                chartText = File.ReadAllText(level.basePath + path, Encoding.UTF8);
             }
             chart = new Chart(chartText);
         }

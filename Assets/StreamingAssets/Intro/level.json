@@ -1,0 +1,30 @@
+{
+  
+  "version": 1,
+  "is_internal": true,
+
+  "id": "io.cytoid.intro",
+  
+  "title": "Intro",
+  "artist": "PTB10",
+  "illustrator": "TigerHix",
+  "charter": "PTB10",
+  
+  "music": {
+    "path": "music.mp3"
+  },
+  "music_preview": {
+    "path": "preview.mp3"
+  },
+  "background": {
+    "path": "background.jpg"
+  },
+  "charts": [
+    {
+      "type": "easy",
+      "difficulty": 1,
+      "path": "chart.easy.txt"
+    }	
+	]
+
+}

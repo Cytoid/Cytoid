@@ -16,7 +16,7 @@ public class ParticleManager : SingletonMonoBehavior<ParticleManager>
         theme = ThemeController.Instance;
     }
 
-    public void PlayClearFX(NoteView noteView, NoteRanking ranking)
+    public void PlayClearFX(NoteView noteView, NoteGrading grading, float timeUntilComplete, bool earlyLateIndicator)
     {
         var at = noteView.transform.position;
         var clearFX = this.clearFX;
@@ -28,7 +28,7 @@ public class ParticleManager : SingletonMonoBehavior<ParticleManager>
         {
             at = new Vector3(at.x, ScannerView.Instance.transform.position.y, at.z);
         }
-        if (ranking == NoteRanking.Miss)
+        if (grading == NoteGrading.Miss)
         {
             var fx = Instantiate(missFX, at, Quaternion.identity);
             fx.Stop();
@@ -52,20 +52,44 @@ public class ParticleManager : SingletonMonoBehavior<ParticleManager>
         {
             var fx = Instantiate(clearFX, at, Quaternion.identity);
             fx.Stop();
+
+            if (!(noteView is ChainNoteView))
+            {
+                if (earlyLateIndicator)
+                {
+                    if (grading != NoteGrading.Perfect)
+                    {
+                        fx.transform.GetChild(0).GetChild(timeUntilComplete > 0 ? 1 : 0).gameObject.SetActive(false);
+                        /*var system = fx.transform.GetChild(0).GetChild(timeUntilComplete > 0 ? 1 : 0).GetComponent<ParticleSystem>();
+                        var colorOverLifetime = system.colorOverLifetime;
+                        colorOverLifetime.color = new ParticleSystem.MinMaxGradient();*/
+                    }
+                    else
+                    {
+                        fx.transform.GetChild(0).GetChild(0).gameObject.SetActive(false);
+                        fx.transform.GetChild(0).GetChild(1).gameObject.SetActive(false);
+                    }
+                }
+                else
+                {
+                    fx.transform.GetChild(0).GetChild(0).gameObject.SetActive(false);
+                    fx.transform.GetChild(0).GetChild(1).gameObject.SetActive(false);
+                }
+            }
             
             var speed = 1f;
             var color = theme.perfectColor;
-            switch (ranking)
+            switch (grading)
             {
-                case NoteRanking.Excellent:
+                case NoteGrading.Great:
                     speed = 0.9f;
-                    color = theme.excellentColor;
+                    color = theme.greatColor;
                     break;
-                case NoteRanking.Good:
+                case NoteGrading.Good:
                     speed = 0.7f;
                     color = theme.goodColor;
                     break;
-                case NoteRanking.Bad:
+                case NoteGrading.Bad:
                     speed = 0.5f;
                     color = theme.badColor;
                     break;

@@ -18,7 +18,7 @@ PlayerSettings:
   m_ShowUnitySplashScreen: 1
   m_ShowUnitySplashLogo: 1
   m_SplashScreenOverlayOpacity: 1
-  m_SplashScreenAnimation: 1
+  m_SplashScreenAnimation: 0
   m_SplashScreenLogoStyle: 1
   m_SplashScreenDrawMode: 0
   m_SplashScreenBackgroundAnimationZoom: 1
@@ -121,7 +121,7 @@ PlayerSettings:
     16:10: 1
     16:9: 1
     Others: 1
-  bundleVersion: 1.3.1
+  bundleVersion: 1.4
   preloadedAssets: []
   metroInputSource: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -143,8 +143,9 @@ PlayerSettings:
   applicationIdentifier:
     Android: me.tigerhix.cytoid
     iOS: me.tigerhix.cytoid
-  buildNumber: {}
-  AndroidBundleVersionCode: 11
+  buildNumber:
+    iOS: 25
+  AndroidBundleVersionCode: 27
   AndroidMinSdkVersion: 16
   AndroidTargetSdkVersion: 0
   AndroidPreferredInstallLocation: 1
@@ -534,9 +535,9 @@ PlayerSettings:
   webGLUseWasm: 0
   webGLCompressionFormat: 1
   scriptingDefineSymbols:
-    1: dUI_DoozyUI
-    4: dUI_DoozyUI
-    7: dUI_DoozyUI
+    1: Controller
+    4: AADOTWEEN;VS_SHARE;Controller;dUI_DoozyUI
+    7: AADOTWEEN;VS_SHARE;Controller;dUI_DoozyUI
   platformArchitecture: {}
   scriptingBackend: {}
   incrementalIl2cppBuild: {}

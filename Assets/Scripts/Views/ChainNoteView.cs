@@ -133,7 +133,7 @@ public class ChainNoteView : NoteView
         }
     }
 
-    public override void Touch()
+    public override void Touch(Vector2 touchScreenPosition)
     {
         if (!game.IsLoaded || game.IsPaused) return;
         // Do not handle touch event if touched too ahead of scanner
@@ -141,7 +141,7 @@ public class ChainNoteView : NoteView
         // Do not handle touch event if in a later page, unless the timing is close (half a screen)
         if (page > game.CurrentPage && note.time - game.TimeElapsed > Chart.pageDuration / 2f) return;
 
-        base.Touch();
+        base.Touch(touchScreenPosition);
     }
 
     protected virtual bool IsMissed()
@@ -149,39 +149,62 @@ public class ChainNoteView : NoteView
         return TimeUntil < -(Mathf.Max(note.isChainHead ? 0.300f : 0.150f, note.duration));
     }
 
-    public override NoteRanking CalculateRank()
+    public override NoteGrading CalculateGrading()
     {
-        var ranking = NoteRanking.Miss;
+        var ranking = NoteGrading.Miss;
         var timeUntil = TimeUntil;
-        if (timeUntil >= 0)
+        if (true || game.IsRanked)
         {
-            if (timeUntil < (note.isChainHead ? 0.800f : 0.400f))
+            if (timeUntil >= 0)
             {
-                ranking = NoteRanking.Excellent;
+                ranking = NoteGrading.Undetermined;
+                if (timeUntil < (note.isChainHead ? 0.500f : 0.250f))
+                {
+                    ranking = NoteGrading.Perfect;
+                }
             }
-            if (timeUntil < 0.200f)
+            else
             {
-                ranking = NoteRanking.Perfect;
+                var timePassed = -timeUntil;
+                if (timePassed < (note.isChainHead ? 0.200f : 0.100f))
+                {
+                    ranking = NoteGrading.Perfect;
+                }
             }
         }
         else
         {
-            var timePassed = -timeUntil;
-            if (timePassed < (note.isChainHead ? 0.300f : 0.150f))
+            if (timeUntil >= 0)
             {
-                ranking = NoteRanking.Excellent;
+                ranking = NoteGrading.Undetermined;
+                if (timeUntil < (note.isChainHead ? 0.800f : 0.400f))
+                {
+                    ranking = NoteGrading.Great;
+                }
+                if (timeUntil < 0.200f)
+                {
+                    ranking = NoteGrading.Perfect;
+                }
             }
-            if (timePassed < 0.100f)
+            else
             {
-                ranking = NoteRanking.Perfect;
+                var timePassed = -timeUntil;
+                if (timePassed < (note.isChainHead ? 0.300f : 0.150f))
+                {
+                    ranking = NoteGrading.Great;
+                }
+                if (timePassed < 0.100f)
+                {
+                    ranking = NoteGrading.Perfect;
+                }
             }
         }
         return ranking;
     }
 
-    public override void Clear(NoteRanking ranking)
+    public override void Clear(NoteGrading grading)
     {
-        base.Clear(ranking);
+        base.Clear(grading);
         if (connectedNoteView == null && chainHead != null) // Last chain note
         {
             Destroy(chainHead.gameObject);

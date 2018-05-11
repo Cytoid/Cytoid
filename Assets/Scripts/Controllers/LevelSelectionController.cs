@@ -1,10 +1,16 @@
-﻿﻿﻿using System;
+﻿using System;
 using System.Collections;
-  using System.Collections.Generic;
-  using System.IO;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
+using DoozyUI;
+using LunarConsolePluginInternal;
+using Newtonsoft.Json;
+using QuickEngine.Extensions;
 using SimpleUI.ScrollExtensions;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -22,21 +28,24 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
     [SerializeField] private SwitchDifficultyView switchDifficultyView;
     [SerializeField] private GameObject blackout;
     [SerializeField] private Text blackoutText;
-    
+
     [SerializeField] private Text idText;
+    [SerializeField] private Text titleText;
     [SerializeField] private Text artistText;
     [SerializeField] private Text illustratorText;
     [SerializeField] private Text charterText;
     [SerializeField] private Text bestText;
     [SerializeField] private Text confirmText;
     [SerializeField] private GameObject deleteButton;
-    
+
     [SerializeField] private Toggle overrideOptionsToggle;
     [SerializeField] private InputField localUserOffsetInput;
     [SerializeField] private Toggle localIsInversedToggle;
 
     [SerializeField] private InputField userOffsetInput;
     [SerializeField] private Toggle showScannerToggle;
+    [SerializeField] private Toggle largerHitboxesToggle;
+    [SerializeField] private Toggle earlyLateIndicatorToggle;
     [SerializeField] private Toggle isInversedToggle;
     [SerializeField] private InputField ringColorInput;
     [SerializeField] private InputField ringColorAltInput;
@@ -44,6 +53,19 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
     [SerializeField] private InputField fillColorAltInput;
     [SerializeField] private Text hitSoundText;
     [SerializeField] private AudioSource hitSoundPlayer;
+
+    [SerializeField] private InputField usernameInput;
+    [SerializeField] private InputField passwordInput;
+
+    [SerializeField] private Image avatarImage;
+
+    [SerializeField] private Text usernameText;
+    [SerializeField] private Text rankText;
+
+    [SerializeField] private Text modStatusText;
+    [SerializeField] private Text rankStatusText;
+
+    private bool isLoggingIn;
 
     private ScrollFocusController listScrollFocusController
     {
@@ -152,7 +174,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         var ringColorAltDef = "#FFFFFF";
         var fillColorDef = "#6699CC";
         var fillColorAltDef = "#FF3C38";
-        
+
         SetDefaultPref("user_offset", userOffsetDef);
         SetDefaultPref("show_scanner", true);
         SetDefaultPref("inverse", false);
@@ -161,9 +183,9 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         SetDefaultPref("fill_color", fillColorDef);
         SetDefaultPref("fill_color_alt", fillColorAltDef);
         SetDefaultPref("hit_sound", "None");
-        
+
         var list = HitSounds.ToList();
-        list.Insert(0, new HitSound { Name = "None", Clip = null });
+        list.Insert(0, new HitSound {Name = "None", Clip = null});
         HitSounds = list.ToArray();
         UpdateHitSound(HitSounds[1], save: false);
 
@@ -176,15 +198,17 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
                 HitSoundIndex = index;
             }
         }
-        
+
         userOffsetInput.text = PlayerPrefs.GetFloat("user_offset").ToString();
         showScannerToggle.isOn = PlayerPrefsExt.GetBool("show_scanner");
+        earlyLateIndicatorToggle.isOn = PlayerPrefsExt.GetBool("early_late_indicator");
+        largerHitboxesToggle.isOn = PlayerPrefsExt.GetBool("larger_hitboxes");
         isInversedToggle.isOn = PlayerPrefsExt.GetBool("inverse");
         ringColorInput.text = PlayerPrefs.GetString("ring_color");
         ringColorAltInput.text = PlayerPrefs.GetString("ring_color_alt");
         fillColorInput.text = PlayerPrefs.GetString("fill_color");
         fillColorAltInput.text = PlayerPrefs.GetString("fill_color_alt");
-        
+
         userOffsetInput.onEndEdit.AddListener(text =>
         {
             float offset;
@@ -257,6 +281,15 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
                 fillColorAltInput.text = fillColorAltDef;
             }
         });
+        usernameInput.text = PlayerPrefs.GetString(PreferenceKeys.LastUsername());
+        passwordInput.text = PlayerPrefs.GetString(PreferenceKeys.LastPassword());
+
+        if (!PlayerPrefs.HasKey(PreferenceKeys.RankedMode()))
+        {
+            PlayerPrefsExt.SetBool(PreferenceKeys.RankedMode(), false);
+        }
+
+        rankStatusText.text = "Off";
 
         // Initialize background
         blackout.SetActive(false);
@@ -276,6 +309,38 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         }
     }
 
+    public void SwitchRankedMode()
+    {
+        if (isLoggingIn)
+        {
+            Popup.Make(this, "Now signing in, please wait...");
+            return;
+        }
+        if (LocalProfile.Exists())
+        {
+            var ranked = PlayerPrefsExt.GetBool(PreferenceKeys.RankedMode(), false);
+            ranked = !ranked;
+            PlayerPrefsExt.SetBool(PreferenceKeys.RankedMode(), ranked);
+            rankStatusText.text = ranked ? "On" : "Off";
+            UpdateBestText();
+            if (ranked && !PlayerPrefsExt.GetBool("dont_show_what_is_ranked_mode_again", false))
+            {
+                UIManager.ShowUiElement("WhatIsRankedModeBackground", "MusicSelection");
+                UIManager.ShowUiElement("WhatIsRankedModeRoot", "MusicSelection");
+            }
+        }
+        else
+        {
+            UIManager.ShowUiElement("LoginRoot", "MusicSelection");
+            UIManager.ShowUiElement("LoginBackground", "MusicSelection");
+        }
+    }
+
+    public void DontShowWhatIsRankedModeAgain()
+    {
+        PlayerPrefsExt.SetBool("dont_show_what_is_ranked_mode_again", true);
+    }
+
     private void SetDefaultPref(string key, object value)
     {
         if (!PlayerPrefs.HasKey(key))
@@ -283,13 +348,16 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             if (value is bool)
             {
                 PlayerPrefsExt.SetBool(key, (bool) value);
-            } else if (value is float)
+            }
+            else if (value is float)
             {
                 PlayerPrefs.SetFloat(key, (float) value);
-            } else if (value is int)
+            }
+            else if (value is int)
             {
                 PlayerPrefs.SetInt(key, (int) value);
-            } else if (value is string)
+            }
+            else if (value is string)
             {
                 PlayerPrefs.SetString(key, (string) value);
             }
@@ -298,8 +366,10 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
     private void Start()
     {
+        CytoidApplication.RefreshCurrentLevel();
         RefreshLevels();
         StartCoroutine(DetectNotInstalledLevels());
+        Login(true);
     }
 
     public void RefreshLevels()
@@ -323,7 +393,9 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             listScrollFocusController.focusPoints.Add(dynamicScrollPoint);
             if (index == 0) listScrollFocusController.first = dynamicScrollPoint;
             if (CytoidApplication.CurrentLevel == level)
+            {
                 WillScrollTo = dynamicScrollPoint; // Automatically scroll to
+            }
         }
 
         // Reset list position
@@ -342,16 +414,17 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
             ForceLayoutInitialization.Instance.Invalidate();
         }
-        
+
         // Android
-        if (Input.GetKeyDown(KeyCode.Escape)) Application.Quit(); 
+        if (Input.GetKeyDown(KeyCode.Escape)) Application.Quit();
     }
 
     public void UpdateBestText()
     {
         if (LoadedLevel == null) return;
+        bool ranked = PlayerPrefsExt.GetBool(PreferenceKeys.RankedMode());
         if (Math.Abs(ZPlayerPrefs.GetFloat(
-                         PreferenceKeys.BestScore(LoadedLevel, CytoidApplication.CurrentChartType),
+                         PreferenceKeys.BestScore(LoadedLevel, CytoidApplication.CurrentChartType, ranked),
                          defaultValue: -1) - (-1)) < 0.000001)
         {
             bestText.text = "NO HIGH SCORE YET";
@@ -359,30 +432,30 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         else
         {
             bestText.text =
-                "Score " + Mathf.CeilToInt(ZPlayerPrefs.GetFloat(
-                    PreferenceKeys.BestScore(LoadedLevel, CytoidApplication.CurrentChartType),
+                (ranked ? "R score" : "Score") + " " + Mathf.CeilToInt(ZPlayerPrefs.GetFloat(
+                    PreferenceKeys.BestScore(LoadedLevel, CytoidApplication.CurrentChartType, ranked),
                     0)).ToString("D6")
-                + "   Acc. " +
+                + "   " + (ranked ? "R acc." : "Acc.") + " " +
                 ZPlayerPrefs.GetFloat(
-                    PreferenceKeys.BestAccuracy(LoadedLevel, CytoidApplication.CurrentChartType),
+                    PreferenceKeys.BestAccuracy(LoadedLevel, CytoidApplication.CurrentChartType, ranked),
                     0).ToString("0.##") + "%";
         }
-
     }
 
     public IEnumerator LoadLevel(Level level)
     {
         if (WillScrollTo != null) yield return null;
-        
+
         WillHideList();
 
         if (LoadedLevel == level) yield break;
         LoadedLevel = level;
 
-        idText.text = level.id ?? "Unknown";
+        idText.text = (level.id ?? "Unknown") + " (v" + level.version + ")";
+        titleText.text = level.title ?? "Unknown";
         artistText.text = level.artist ?? level.composer ?? "Unknown";
-        illustratorText.text = level.illustrator ?? "Unknown";
-        charterText.text = level.charter ?? "Unknown";
+        illustratorText.text = "by " + (level.illustrator ?? "Unknown");
+        charterText.text = "by " + (level.charter ?? "Unknown");
 
         audioSource.Stop();
 
@@ -395,18 +468,21 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         alphaMask.willFadeIn = true;
 
         // Load background sprite
-        var www = new WWW((level.isInternal && Application.platform == RuntimePlatform.Android ? "" : "file://") + level.basePath + level.background.path);
+        var www = new WWW((level.is_internal && Application.platform == RuntimePlatform.Android ? "" : "file://") +
+                          level.basePath + level.background.path);
         yield return www;
 
         while (alphaMask.IsFading) yield return null;
         yield return null; // Wait an extra frame
 
         // if (www.texture == null) yield break;
-        
+
         www.LoadImageIntoTexture(CytoidApplication.backgroundTexture);
 
         var backgroundSprite =
-            Sprite.Create(CytoidApplication.backgroundTexture, new Rect(0, 0, CytoidApplication.backgroundTexture.width, CytoidApplication.backgroundTexture.height), new Vector2(0, 0));
+            Sprite.Create(CytoidApplication.backgroundTexture,
+                new Rect(0, 0, CytoidApplication.backgroundTexture.width, CytoidApplication.backgroundTexture.height),
+                new Vector2(0, 0));
         var background = GameObject.FindGameObjectWithTag("Background");
         background.GetComponent<Image>().sprite = backgroundSprite;
         // background.GetComponent<CanvasRenderer>().SetTexture(CytoidApplication.backgroundTexture);
@@ -428,7 +504,8 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
     public IEnumerator LoadMusicPreview(Level level)
     {
         // Load preview
-        var www = new WWW((level.isInternal && Application.platform == RuntimePlatform.Android ? "" : "file://") + level.basePath + level.music_preview.path);
+        var www = new WWW((level.is_internal && Application.platform == RuntimePlatform.Android ? "" : "file://") +
+                          level.basePath + level.music_preview.path);
         yield return www;
 
         while (alphaMask.IsFading) yield return null;
@@ -440,7 +517,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         audioSource.clip = clip;
         audioSource.loop = true;
         audioSource.Play();
-        
+
         www.Dispose();
 
         OnLevelLoaded();
@@ -450,10 +527,11 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
     {
         switchDifficultyView.OnLevelLoaded();
         CytoidApplication.CurrentLevel = LoadedLevel;
-        
+
         UpdateBestText();
 
-        var useLocalOptions = ZPlayerPrefs.GetBool(PreferenceKeys.WillOverrideOptions(CytoidApplication.CurrentLevel), false);
+        var useLocalOptions =
+            ZPlayerPrefs.GetBool(PreferenceKeys.WillOverrideOptions(CytoidApplication.CurrentLevel), false);
         overrideOptionsToggle.isOn = useLocalOptions;
 
         if (useLocalOptions)
@@ -470,15 +548,16 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             localUserOffsetInput.text = userOffsetInput.text;
         }
 
-        confirmText.text = "Are you sure you want to delete\n" + LoadedLevel.id + "?";
+        // confirmText.text = "Are you sure you want to delete\n" + LoadedLevel.id + "?";
 
-        deleteButton.SetActive(!LoadedLevel.isInternal);
+        deleteButton.SetActive(!LoadedLevel.is_internal);
 
         PlayerPrefs.SetString("last_level", LoadedLevel.id);
     }
 
     public void DeleteCurrentLevel()
     {
+        //DontDestroyOnLoad(GameObject.FindGameObjectWithTag("UIManager"));
         CytoidApplication.DeleteLevel(CytoidApplication.CurrentLevel);
     }
 
@@ -500,10 +579,10 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
     }
 
     private IEnumerator hideListCoroutine;
-    
+
     private IEnumerator HideListCoroutine()
     {
-        yield return new WaitForSeconds(1.5f); 
+        yield return new WaitForSeconds(1.5f);
         while (listCanvasGroup.alpha > 0)
         {
             listCanvasGroup.alpha -= 0.14f;
@@ -560,21 +639,267 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
                 PlayerPrefs.SetFloat("user_offset", float.Parse(userOffsetInput.text));
                 PlayerPrefsExt.SetBool("show_scanner", showScannerToggle.isOn);
+                PlayerPrefsExt.SetBool("early_late_indicator", earlyLateIndicatorToggle.isOn);
+                PlayerPrefsExt.SetBool("larger_hitboxes", largerHitboxesToggle.isOn);
                 PlayerPrefsExt.SetBool("inverse", isInversedToggle.isOn);
                 PlayerPrefs.SetString("ring_color", ringColorInput.text);
                 PlayerPrefs.SetString("ring_color_alt", ringColorAltInput.text);
                 PlayerPrefs.SetString("fill_color", fillColorInput.text);
                 PlayerPrefs.SetString("fill_color_alt", fillColorAltInput.text);
-                
+
                 BackgroundCanvasHelper.PersistBackgroundCanvas();
                 SceneManager.LoadScene("Game");
                 break;
         }
     }
 
-    public void OpenAboutPage()
+    public void DownloadMoreLevels()
     {
-        Application.OpenURL("https://cytoid.io");
+        Application.OpenURL("https://cytoid.io/browse/");
+    }
+
+    public void SupportOnPatreon()
+    {
+        Application.OpenURL("https://www.patreon.com/tigerhix");
+    }
+
+    public void ViewLevelOnIO()
+    {
+        Application.OpenURL("https://cytoid.io/browse/" + LoadedLevel.id);
+    }
+
+    public void ViewProfileOnIO()
+    {
+        Application.OpenURL("https://cytoid.io/profile/" + LocalProfile.Instance.username);
+    }
+
+    public void OnProfilePressed()
+    {
+        if (isLoggingIn)
+        {
+            Popup.Make(this, "Now signing in, please wait...");
+            return;
+        }
+        if (LocalProfile.Exists())
+        {
+            UIManager.ShowUiElement("ProfileRoot", "MusicSelection");
+            UIManager.ShowUiElement("ProfileBackground", "MusicSelection");
+        }
+        else
+        {
+            UIManager.ShowUiElement("LoginRoot", "MusicSelection");
+            UIManager.ShowUiElement("LoginBackground", "MusicSelection");
+        }
+    }
+
+    public void Login(bool auto = false)
+    {
+        if (isLoggingIn) return;
+        if (!auto) // Manual login
+        {
+            if (usernameInput.text.IsNullOrEmpty())
+            {
+                Popup.Make(this, "Please enter username.");
+                return;
+            }
+            if (passwordInput.text.IsNullOrEmpty())
+            {
+                Popup.Make(this, "Please enter password.");
+                return;
+            }
+
+            var username = usernameInput.text.Trim().ToLower();
+            var password = passwordInput.text.Trim();
+            PlayerPrefs.SetString(PreferenceKeys.LastUsername(), username);
+            PlayerPrefs.SetString(PreferenceKeys.LastPassword(), password);
+            UIManager.ShowUiElement("LoggingInRoot", "MusicSelection");
+            UIManager.ShowUiElement("LoggingInBackground", "MusicSelection");
+        }
+        isLoggingIn = true;
+        StartCoroutine("LoginCoroutine");
+    }
+
+    public void Logout()
+    {
+        CancelLogin();
+        PlayerPrefs.DeleteKey(PreferenceKeys.LastUsername());
+        PlayerPrefs.DeleteKey(PreferenceKeys.LastPassword());
+        CloseProfileWindows();
+        avatarImage.overrideSprite = null;
+        LocalProfile.reset();
+        Popup.Make(this, "Signed out.");
+        
+        PlayerPrefsExt.SetBool(PreferenceKeys.RankedMode(), false);
+        rankStatusText.text = "Off";
+    }
+
+    public void CancelLogin()
+    {
+        StopCoroutine("LoginCoroutine");
+        UIManager.HideUiElement("LoggingInRoot", "MusicSelection");
+        UIManager.HideUiElement("LoggingInBackground", "MusicSelection");
+        isLoggingIn = false;
+    }
+
+    public IEnumerator LoginCoroutine()
+    {
+        if (!PlayerPrefs.HasKey(PreferenceKeys.LastUsername()) || !PlayerPrefs.HasKey(PreferenceKeys.LastPassword()))
+        {
+            isLoggingIn = false;
+            yield break;
+        }
+        
+        // If logged in previously
+        if (LocalProfile.Exists())
+        {
+            // Do nothing
+        }
+        else
+        {
+
+            Debug.Log("Logging in");
+            var username = PlayerPrefs.GetString(PreferenceKeys.LastUsername());
+            var password = PlayerPrefs.GetString(PreferenceKeys.LastPassword());
+
+            var request = new UnityWebRequest(CytoidApplication.host + "/auth", "POST") {timeout = 10};
+            var bodyRaw =
+                Encoding.UTF8.GetBytes("{\"user\": \"" + username + "\", \"password\": \"" + password + "\"}");
+            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+
+            yield return request.Send();
+
+            if (request.isNetworkError || request.isHttpError)
+            {
+                Log.e(request.responseCode.ToString());
+                Log.e(request.error);
+                Popup.Make(this, "Could not sign in.");
+                CloseLoginWindows();
+                isLoggingIn = false;
+                yield break;
+            }
+
+            var body = request.downloadHandler.text;
+
+            AuthenticationResult authenticationResult;
+            try
+            {
+                authenticationResult = JsonConvert.DeserializeObject<AuthenticationResult>(body);
+            }
+            catch (Exception e)
+            {
+                Log.e(e.Message);
+                Popup.Make(this, "Could not sign in.");
+                CloseLoginWindows();
+                isLoggingIn = false;
+                yield break;
+            }
+
+            request.Dispose();
+
+            if (authenticationResult.status != 0)
+            {
+                Popup.Make(this, authenticationResult.message);
+
+                if (authenticationResult.status == 1)
+                {
+                    PlayerPrefs.DeleteKey(PreferenceKeys.LastUsername());
+                    PlayerPrefs.DeleteKey(PreferenceKeys.LastPassword());
+                    usernameInput.text = "";
+                    passwordInput.text = "";
+                }
+                else if (authenticationResult.status == 2)
+                {
+                    PlayerPrefs.DeleteKey(PreferenceKeys.LastPassword());
+                    passwordInput.text = "";
+                }
+
+                CloseLoginWindows();
+                isLoggingIn = false;
+                yield break;
+            }
+
+            Popup.Make(this, "Signed in.");
+            
+            var profile = LocalProfile.Init(username, password, authenticationResult.avatarUrl);
+            profile.localVersion++;
+            profile.Save();
+        }
+        
+        CloseLoginWindows();
+        isLoggingIn = false;
+
+        rankStatusText.text = PlayerPrefsExt.GetBool(PreferenceKeys.RankedMode()) ? "On" : "Off";
+        
+        UpdateProfileUi();
+    }
+
+    public void CloseLoginWindows()
+    {
+        UIManager.HideUiElement("LoggingInRoot", "MusicSelection");
+        UIManager.HideUiElement("LoggingInBackground", "MusicSelection");
+        UIManager.HideUiElement("LoginRoot", "MusicSelection");
+        UIManager.HideUiElement("LoginBackground", "MusicSelection");
+    }
+
+    public void CloseProfileWindows()
+    {
+        UIManager.HideUiElement("ProfileRoot", "MusicSelection");
+        UIManager.HideUiElement("ProfileBackground", "MusicSelection");
+    }
+
+    public void UpdateProfileUi()
+    {
+        usernameText.text = "ID: " + LocalProfile.Instance.username;
+        StartCoroutine(LoadAvatarCoroutine());
+    }
+
+    public IEnumerator LoadAvatarCoroutine()
+    {
+        if (LocalProfile.Exists() && LocalProfile.Instance.avatarTexture != null)
+        {
+            // Update avatar from memory
+            var texture = LocalProfile.Instance.avatarTexture;
+            
+            var rect = new Rect(0, 0, texture.width, texture.height);
+            var sprite = Sprite.Create(texture, rect, new Vector2(0.5f, 0.5f), 100);
+
+            avatarImage.overrideSprite = sprite;
+
+            yield return null;
+        }
+        using (var www = new WWW(LocalProfile.Instance.avatarUrl))
+        {
+            yield return www;
+
+            if (!string.IsNullOrEmpty(www.error))
+            {
+                Log.e(www.error);
+                Popup.Make(this, "Could not load avatar.");
+            }
+            Debug.Log("Downloaded avatar");
+
+            var texture = www.texture;
+
+            LocalProfile.Instance.avatarTexture = texture;
+
+            var rect = new Rect(0, 0, texture.width, texture.height);
+            var sprite = Sprite.Create(texture, rect, new Vector2(0.5f, 0.5f), 100);
+
+            avatarImage.overrideSprite = sprite;
+        }
+        /*if (!string.IsNullOrEmpty(www.error))
+        {
+            Log.e(www.error);
+            Popup.Make(this, "Could not load avatar.");
+            yield return null;
+        }*/
+    }
+
+    public void Register()
+    {
+        Application.OpenURL("https://cytoid.io/register");
     }
 
     public void SetAction(string action)
@@ -586,5 +911,4 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
     {
         public Level Level;
     }
-    
 }

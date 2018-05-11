@@ -40,8 +40,14 @@ sysinfo.txt
 .DS_Store
 /.idea/
 /Images/
+/Assets/_AppAdvisory/
+/Assets/_AppAdvisory.meta
+/Assets/PaperPlaneTools/
+/Assets/PaperPlaneTools.meta
 /Assets/Demigiant/
 /Assets/Demigiant.meta
+/Assets/unity-ui-extensions/
+/Assets/unity-ui-extensions.meta
 /Assets/DoozyUI/
 /Assets/DoozyUI.meta
 /Assets/JsonDotNet/
@@ -70,5 +76,4 @@ sysinfo.txt
 /Assets/ZFrame.meta
 /Assets/Resources/DOTweenSettings.asset
 /Assets/Resources/DOTweenSettings.asset.meta
-/Assets/Scripts/SecuredConstants.cs
-/Assets/Scripts/SecuredConstants.cs.meta
+/Assets/Scripts/Secure/

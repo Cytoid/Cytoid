@@ -4,7 +4,7 @@ using UnityEngine;
 public class ThemeController : SingletonMonoBehavior<ThemeController>
 {
     public Color perfectColor;
-    public Color excellentColor;
+    public Color greatColor;
     public Color goodColor;
     public Color badColor;
     public Color missColor;

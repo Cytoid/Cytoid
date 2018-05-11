@@ -6,6 +6,7 @@ public class NoteView : MonoBehaviour
 {
     
     public Note note;
+    public RankedPlayData.Note rankedNoteData = new RankedPlayData.Note();
 
     public Chart Chart;
     public int page;
@@ -36,6 +37,9 @@ public class NoteView : MonoBehaviour
     public float TimeUntil;
 
     public float TimeDiff;
+
+    /** A value to measure the difference between current timing and the "perfect" timing **/
+    public double GreatGradeWeight;
     
     public virtual float Size
     {
@@ -45,6 +49,7 @@ public class NoteView : MonoBehaviour
     public virtual void Init(Chart chart, Note note)
     {
         this.note = note;
+        rankedNoteData.id = note.id;
         this.Chart = chart;
         page = (int) ((note.time + chart.pageShift) / chart.pageDuration);
         x = note.x * layout.PlayAreaWidth + layout.PlayAreaHorizontalMargin;
@@ -111,6 +116,7 @@ public class NoteView : MonoBehaviour
         fillSpriteRenderer.enabled = false;
         circleCollider = transform.GetComponent<CircleCollider2D>();
         circleCollider.enabled = false;
+        circleCollider.radius = circleCollider.radius * game.hitboxMultiplier;
         displayed = false;
         cleared = false;
         hitSoundSource = GetComponent<AudioSource>();
@@ -127,7 +133,7 @@ public class NoteView : MonoBehaviour
         // Check removable
         if (IsMissed())
         {
-            Clear(NoteRanking.Miss);
+            Clear(NoteGrading.Miss);
         }
 
         // Display only if still not clear yet
@@ -140,7 +146,7 @@ public class NoteView : MonoBehaviour
                 if (game.autoPlay && TimeDiff < 0.025f)
                 {
                     if (this is HoldNoteView) (this as HoldNoteView).StartHolding(); 
-                    else Touch();
+                    else Touch(new Vector2(0, 0));
                 }
             }
         }
@@ -255,71 +261,128 @@ public class NoteView : MonoBehaviour
         }
     }
 
-    public virtual void Touch()
+    public virtual void Touch(Vector2 touchScreenPosition)
     {
         if (!game.IsLoaded || game.IsPaused) return;
-        Clear(CalculateRank());
+        if (this is ChainNoteView && CalculateGrading() == NoteGrading.Undetermined) return;
+        rankedNoteData.press_time = TimeExt.Millis();
+        rankedNoteData.press_x = (int) touchScreenPosition.x;
+        rankedNoteData.press_y = (int) touchScreenPosition.y;
+        Clear(CalculateGrading());
         if (hitSoundSource.clip != null)
         {
             hitSoundSource.Play();
         }
     }
 
-    public virtual NoteRanking CalculateRank()
+    public virtual NoteGrading CalculateGrading()
     {
-        var ranking = NoteRanking.Miss;
+        var grading = NoteGrading.Miss;
         var timeUntil = TimeUntil;
-        if (timeUntil >= 0)
+        if (game.IsRanked)
         {
-            if (timeUntil < 0.800f)
+            if (timeUntil >= 0)
             {
-                ranking = NoteRanking.Bad;
+                if (timeUntil < 0.400f)
+                {
+                    grading = NoteGrading.Bad;
+                }
+                if (timeUntil < 0.200f)
+                {
+                    grading = NoteGrading.Good;
+                }
+                if (timeUntil < 0.070f)
+                {
+                    grading = NoteGrading.Great;
+                }
+                if (timeUntil <= 0.040f)
+                {
+                    grading = NoteGrading.Perfect;
+                }
+                if (grading == NoteGrading.Great) {
+                    GreatGradeWeight = 1 - (timeUntil - 0.04) / (0.07 - 0.04);
+                }
             }
-            if (timeUntil < 0.400f)
+            else
             {
-                ranking = NoteRanking.Good;
-            }
-            if (timeUntil < 0.200f)
-            {
-                ranking = NoteRanking.Excellent;
-            }
-            if (timeUntil < 0.070f)
-            {
-                ranking = NoteRanking.Perfect;
+                var timePassed = -timeUntil;
+                if (timePassed < 0.200f)
+                {
+                    grading = NoteGrading.Bad;
+                }
+                if (timePassed < 0.150f)
+                {
+                    grading = NoteGrading.Good;
+                }
+                if (timePassed < 0.070f)
+                {
+                    grading = NoteGrading.Great;
+                }
+                if (timePassed <= 0.040f)
+                {
+                    grading = NoteGrading.Perfect;
+                }
+                if (grading == NoteGrading.Great) {
+                    GreatGradeWeight = 1 - (timePassed - 0.04) / (0.07 - 0.04);
+                }
             }
         }
         else
         {
-            var timePassed = -timeUntil;
-            if (timePassed < 0.300f)
+            if (timeUntil >= 0)
             {
-                ranking = NoteRanking.Bad;
+                if (timeUntil < 0.800f)
+                {
+                    grading = NoteGrading.Bad;
+                }
+                if (timeUntil < 0.400f)
+                {
+                    grading = NoteGrading.Good;
+                }
+                if (timeUntil < 0.200f)
+                {
+                    grading = NoteGrading.Great;
+                }
+                if (timeUntil < 0.070f)
+                {
+                    grading = NoteGrading.Perfect;
+                }
             }
-            if (timePassed < 0.200f)
+            else
             {
-                ranking = NoteRanking.Good;
-            }
-            if (timePassed < 0.150f)
-            {
-                ranking = NoteRanking.Excellent;
-            }
-            if (timePassed < 0.070f)
-            {
-                ranking = NoteRanking.Perfect;
+                var timePassed = -timeUntil;
+                if (timePassed < 0.300f)
+                {
+                    grading = NoteGrading.Bad;
+                }
+                if (timePassed < 0.200f)
+                {
+                    grading = NoteGrading.Good;
+                }
+                if (timePassed < 0.150f)
+                {
+                    grading = NoteGrading.Great;
+                }
+                if (timePassed < 0.070f)
+                {
+                    grading = NoteGrading.Perfect;
+                }
             }
         }
-        return ranking;
+        return grading;
     }
 
-    public virtual void Clear(NoteRanking ranking)
+    public virtual void Clear(NoteGrading grading)
     {
         cleared = true;
         // Add to play data
-        game.PlayData.ClearNote(note.id, ranking);
-        particleManager.PlayClearFX(this, ranking);
+        game.PlayData.ClearNote(this);
+        particleManager.PlayClearFX(this, grading, this is HoldNoteView ? ((HoldNoteView) this).note.time + ((HoldNoteView) this).note.duration - game.TimeElapsed: TimeUntil, game.showEarlyLateIndicator);
         ringSpriteRenderer.enabled = false;
         fillSpriteRenderer.enabled = false;
         circleCollider.enabled = false;
+        // Add to ranked play data
+        game.RankedPlayData.notes.Add(rankedNoteData);
         StartCoroutine(DestroyLater());
     }
 

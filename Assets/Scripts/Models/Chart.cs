@@ -1,21 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
 public class Chart
 {
+
+    public readonly string checksum = "";
 
     public float bpm;
     public float pageDuration;
     public float pageShift;
     public Dictionary<int, Note> notes = new Dictionary<int, Note>();
-    public List<int> chronologicalIds = new List<int>();
+    public List<int> chronologicalIds;
 
     public float offset;
 
     public Chart(string text)
     {
+        var checksumText = string.Empty;
+        
         foreach (var line in text.Split('\n'))
         {
             var data = line.Split((char[]) null, StringSplitOptions.RemoveEmptyEntries);
@@ -28,11 +31,14 @@ public class Chart
                     break;
                 case "PAGE_SIZE":
                     pageDuration = float.Parse(data[1]);
+                    checksumText += data[1];
                     break;
                 case "PAGE_SHIFT":
-                    pageShift = float.Parse(data[1]) + pageDuration;
+                    pageShift = float.Parse(data[1]);
+                    checksumText += data[1];
                     break;
                 case "NOTE":
+                    checksumText += data[1] + data[2] + data[3] + data[4];
                     var note = new Note(int.Parse(data[1]), float.Parse(data[2]), float.Parse(data[3]),
                         float.Parse(data[4]), false);
                     notes.Add(int.Parse(data[1]), note);
@@ -42,6 +48,7 @@ public class Chart
                     var notesInChain = new List<Note>();
                     for (var i = 1; i < data.Length; i++)
                     {
+                        if (data[i] != "LINK") checksumText += data[i];
                         int id;
                         if (!int.TryParse(data[i], out id)) continue;
                         note = notes[id];
@@ -59,10 +66,13 @@ public class Chart
                     break;
             }
         }
+        pageShift += pageDuration;
         // Calculate chronological note ids
         var noteList = notes.Values.ToList();
         noteList.Sort((a, b) => a.time.CompareTo(b.time));
         chronologicalIds = noteList.Select(note => note.id).ToList();
+
+        checksum = Checksum.From(checksumText);
     }
 
 }

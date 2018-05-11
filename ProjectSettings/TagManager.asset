@@ -16,6 +16,10 @@ TagManager:
   - AlphaMask
   - AlphaMask2
   - SceneTransitionMask
+  - UIManager
+  - EL
+  - Early
+  - Late
   layers:
   - Default
   - TransparentFX

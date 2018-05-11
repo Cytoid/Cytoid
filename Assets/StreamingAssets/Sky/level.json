@@ -1,0 +1,23 @@
+{
+    "version": 1,
+    "is_internal": true,
+    "id": "io.cytoid.sky",
+    "title": "Sky",
+    "artist": "Trifect",
+    "illustrator": "chockie",
+    "charter": "Ayl",
+    "music": {
+        "path": "music.mp3"
+    },
+    "music_preview": {
+        "path": "preview.mp3"
+    },
+    "background": {
+        "path": "background.jpg"
+    },
+    "charts": [{
+        "type": "hard",
+        "difficulty": 7,
+        "path": "chart.hard.txt"
+    }]
+}

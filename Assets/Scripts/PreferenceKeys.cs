@@ -1,14 +1,29 @@
 ﻿public static class PreferenceKeys
 {
 
-    public static string BestScore(Level level, string type)
+    public static string RankedMode()
     {
-        return level.id + " : " + type + " : " + "best score";
+        return "ranked_mode";
+    }
+
+    public static string LastUsername()
+    {
+        return "last_username";
+    }
+
+    public static string LastPassword()
+    {
+        return "last_password";
+    }
+
+    public static string BestScore(Level level, string type, bool ranked)
+    {
+        return level.id + " : " + type + " : " + "best score" + (ranked ? " ranked" : "");
     }
     
-    public static string BestAccuracy(Level level, string type)
+    public static string BestAccuracy(Level level, string type, bool ranked)
     {
-        return level.id + " : " + type + " : " + "best accuracy";
+        return level.id + " : " + type + " : " + "best accuracy" + (ranked ? " ranked" : "");
     }
     
     public static string PlayCount(Level level, string type)

@@ -42,7 +42,7 @@ public class ScoreView : MonoBehaviour
 			}
 			return;
 		}
-		var score = Mathf.CeilToInt(game.PlayData.Score).ToString("D6");
+		var score = Mathf.CeilToInt((float) game.PlayData.Score).ToString("D6");
 		if (score != lastScore)
 		{
 			// text.ChangeColor(a: 1);

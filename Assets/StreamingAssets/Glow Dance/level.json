@@ -1,16 +1,17 @@
 {
 
   "version": 1,
+  "is_internal": true,
 
   "id": "io.cytoid.glow_dance",
   
   "title": "Glow Dance",
   "artist": "iamMANOLIS",
-  "illustrator": "Cytoid",
+  "illustrator": "TigerHix",
   "charter": "xuxu9110",
   
   "music": {
-    "path": "Glow Dance.mp3"
+    "path": "music.mp3"
   },
   "music_preview": {
     "path": "preview.mp3"

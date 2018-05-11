@@ -22,7 +22,7 @@ public class ComboView : MonoBehaviour {
 	private void FixedUpdate()
 	{
 		if (game.IsPaused) return;
-		text.text = game.PlayData == null ? "0 Combo" : game.PlayData.Combo + " Combo";
+		text.text = game.PlayData == null ? "0 combo" : game.PlayData.Combo + " combo";
 	}
 	
 }

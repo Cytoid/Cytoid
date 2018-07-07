@@ -1,6 +1,6 @@
 <img src="https://i.imgur.com/D1k6Vx2.png" style="width: 100%">
 
-# Cytoid [![Join the Discord](https://discordapp.com/api/guilds/362884768498712579/widget.png?style=shield)](https://discord.gg/cytoid)
+# Cytoid [![CodeFactor](https://www.codefactor.io/repository/github/tigerhix/cytoid/badge)](https://www.codefactor.io/repository/github/tigerhix/cytoid) [![Join the Discord](https://discordapp.com/api/guilds/362884768498712579/widget.png?style=shield)](https://discord.gg/cytoid)
 
 A community-driven touchscreen music game available on [App Store](https://itunes.apple.com/us/app/cytoid/id1266582726) and [Google Play](https://play.google.com/store/apps/details?id=me.tigerhix.cytoid).
 

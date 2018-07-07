@@ -1,8 +1,7 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
+using DoozyUI;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 public static class BackgroundCanvasHelper
@@ -26,6 +25,7 @@ public static class BackgroundCanvasHelper
     public static void PersistBackgroundCanvas()
     {
         var backgroundCanvas = GameObject.FindGameObjectWithTag("BackgroundCanvas");
+        UIManager.CanvasDatabase.Remove(backgroundCanvas.GetComponent<UICanvas>().canvasName);
         foreach (Transform childTransform in backgroundCanvas.transform)
         {
             if (!childTransform.CompareTag("Background"))

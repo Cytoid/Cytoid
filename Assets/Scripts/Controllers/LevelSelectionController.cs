@@ -364,12 +364,13 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         }
     }
 
-    private void Start()
+    private IEnumerator Start()
     {
         CytoidApplication.RefreshCurrentLevel();
         RefreshLevels();
-        StartCoroutine(DetectNotInstalledLevels());
         Login(true);
+        yield return null; // Wait for one frame
+        StartCoroutine(DetectNotInstalledLevels());
     }
 
     public void RefreshLevels()
@@ -453,7 +454,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
         idText.text = (level.id ?? "Unknown") + " (v" + level.version + ")";
         titleText.text = level.title ?? "Unknown";
-        artistText.text = level.artist ?? level.composer ?? "Unknown";
+        artistText.text = level.artist ?? "Unknown";
         illustratorText.text = "by " + (level.illustrator ?? "Unknown");
         charterText.text = "by " + (level.charter ?? "Unknown");
 
@@ -469,32 +470,28 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
         // Load background sprite
         var www = new WWW((level.is_internal && Application.platform == RuntimePlatform.Android ? "" : "file://") +
-                          level.basePath + level.background.path);
+                          level.BasePath + level.background.path);
         yield return www;
 
         while (alphaMask.IsFading) yield return null;
         yield return null; // Wait an extra frame
-
-        // if (www.texture == null) yield break;
-
-        www.LoadImageIntoTexture(CytoidApplication.backgroundTexture);
+        
+        www.LoadImageIntoTexture(CytoidApplication.BackgroundTexture);
 
         var backgroundSprite =
-            Sprite.Create(CytoidApplication.backgroundTexture,
-                new Rect(0, 0, CytoidApplication.backgroundTexture.width, CytoidApplication.backgroundTexture.height),
+            Sprite.Create(CytoidApplication.BackgroundTexture,
+                new Rect(0, 0, CytoidApplication.BackgroundTexture.width, CytoidApplication.BackgroundTexture.height),
                 new Vector2(0, 0));
         var background = GameObject.FindGameObjectWithTag("Background");
         background.GetComponent<Image>().sprite = backgroundSprite;
-        // background.GetComponent<CanvasRenderer>().SetTexture(CytoidApplication.backgroundTexture);
 
-        // Destroy(www.texture);
         www.Dispose();
 
         Resources.UnloadUnusedAssets();
 
         // Fill the screen by adapting to the aspect ratio
         background.GetComponent<AspectRatioFitter>().aspectRatio =
-            (float) CytoidApplication.backgroundTexture.width / CytoidApplication.backgroundTexture.height;
+            (float) CytoidApplication.BackgroundTexture.width / CytoidApplication.BackgroundTexture.height;
 
         yield return null;
 
@@ -505,13 +502,13 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
     {
         // Load preview
         var www = new WWW((level.is_internal && Application.platform == RuntimePlatform.Android ? "" : "file://") +
-                          level.basePath + level.music_preview.path);
+                          level.BasePath + level.music_preview.path);
         yield return www;
 
         while (alphaMask.IsFading) yield return null;
         yield return null; // Wait an extra frame
 
-        var clip = CytoidApplication.ReadAudioClipFromWWW(www);
+        var clip = www.GetAudioClip(false, true);
         if (clip == null) yield break;
 
         audioSource.clip = clip;
@@ -648,7 +645,16 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
                 PlayerPrefs.SetString("fill_color_alt", fillColorAltInput.text);
 
                 BackgroundCanvasHelper.PersistBackgroundCanvas();
-                SceneManager.LoadScene("Game");
+
+                var level = CytoidApplication.CurrentLevel;
+                if (level.Format == LevelFormat.Cytus2)
+                {
+                    SceneManager.LoadScene("CytusGame");
+                }
+                else
+                {
+                    SceneManager.LoadScene("Game");
+                }
                 break;
         }
     }
@@ -761,7 +767,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             var username = PlayerPrefs.GetString(PreferenceKeys.LastUsername());
             var password = PlayerPrefs.GetString(PreferenceKeys.LastPassword());
 
-            var request = new UnityWebRequest(CytoidApplication.host + "/auth", "POST") {timeout = 10};
+            var request = new UnityWebRequest(CytoidApplication.Host + "/auth", "POST") {timeout = 10};
             var bodyRaw =
                 Encoding.UTF8.GetBytes("{\"user\": \"" + username + "\", \"password\": \"" + password + "\"}");
             request.uploadHandler = new UploadHandlerRaw(bodyRaw);

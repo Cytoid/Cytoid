@@ -8,13 +8,13 @@ public class ChainHeadView : MonoBehaviour
     public SpriteRenderer fillRenderer;
     
     [HideInInspector] public GameController game;
-    [HideInInspector] public ScannerView scanner;
+    [HideInInspector] public OldScannerView scanner;
     [HideInInspector] public ChainNoteView previousNoteView;
     [HideInInspector] public ChainNoteView nextNoteView;
 
     private void Start()
     {
-        scanner = ScannerView.Instance;
+        scanner = OldScannerView.Instance;
         backRenderer.color = new Color(backRenderer.color.r, backRenderer.color.g, backRenderer.color.b, 0);
         fillRenderer.color = new Color(fillRenderer.color.r, fillRenderer.color.g, fillRenderer.color.b, 0);
         backRenderer.sortingOrder = nextNoteView.ringSpriteRenderer.sortingOrder + 1;

@@ -16,7 +16,7 @@ public class ParticleManager : SingletonMonoBehavior<ParticleManager>
         theme = ThemeController.Instance;
     }
 
-    public void PlayClearFX(NoteView noteView, NoteGrading grading, float timeUntilComplete, bool earlyLateIndicator)
+    public void PlayClearFX(OldNoteView noteView, NoteGrading grading, float timeUntilComplete, bool earlyLateIndicator)
     {
         var at = noteView.transform.position;
         var clearFX = this.clearFX;
@@ -24,9 +24,9 @@ public class ParticleManager : SingletonMonoBehavior<ParticleManager>
         {
             clearFX = clearChainFX;
         }
-        if (noteView.note.type == NoteType.Hold)
+        if (noteView.note.type == OldNoteType.Hold)
         {
-            at = new Vector3(at.x, ScannerView.Instance.transform.position.y, at.z);
+            at = new Vector3(at.x, OldScannerView.Instance.transform.position.y, at.z);
         }
         if (grading == NoteGrading.Miss)
         {
@@ -42,7 +42,7 @@ public class ParticleManager : SingletonMonoBehavior<ParticleManager>
             var childMainModule = childFx.main;
             childMainModule.startColor = noteView.fillColor;*/
 
-            if (noteView.note.type == NoteType.Chain)
+            if (noteView.note.type == OldNoteType.Chain)
                 fx.transform.localScale = new Vector3(2, 2, 2);
             
             fx.Play();
@@ -100,7 +100,7 @@ public class ParticleManager : SingletonMonoBehavior<ParticleManager>
             mainModule.duration = mainModule.duration / speed;
             mainModule.startColor = color;
             
-            if (noteView.note.type == NoteType.Chain)
+            if (noteView.note.type == OldNoteType.Chain)
                 fx.transform.localScale = new Vector3(3f, 3f, 3f);
             
             /*var childFx = fx.transform.GetChild(0).GetComponent<ParticleSystem>();
@@ -112,7 +112,7 @@ public class ParticleManager : SingletonMonoBehavior<ParticleManager>
         }
     }
 
-    public void PlayHoldFX(NoteView noteView)
+    public void PlayHoldFX(OldNoteView noteView)
     {
         var fx = Instantiate(holdFX, noteView.transform);
 

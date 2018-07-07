@@ -20,6 +20,7 @@ TagManager:
   - EL
   - Early
   - Late
+  - Note
   layers:
   - Default
   - TransparentFX
@@ -54,6 +55,36 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: GameBackground
+    uniqueID: 2484185983
+    locked: 0
+  - name: Storyboard1
+    uniqueID: 1989023277
+    locked: 0
+  - name: HoldLine
+    uniqueID: 3177744129
+    locked: 0
+  - name: LongHoldLine
+    uniqueID: 2816363085
+    locked: 0
+  - name: DragLine
+    uniqueID: 684845201
+    locked: 0
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: GameContent
+    uniqueID: 1359788907
+    locked: 0
+  - name: Storyboard2
+    uniqueID: 948448045
+    locked: 0
+  - name: GameUI
+    uniqueID: 1973791693
+    locked: 0
+  - name: UpperGameUI
+    uniqueID: 1977794997
+    locked: 0
+  - name: Storyboard3
+    uniqueID: 2590665569
     locked: 0

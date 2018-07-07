@@ -33,23 +33,6 @@ public class ThemeController : SingletonMonoBehavior<ThemeController>
             fillColor2 = Convert.HexToColor(PlayerPrefs.GetString("fill_color_alt"));
             fillColor3 = Convert.HexToColor("#FFFFFF");
             fillColor4 = Convert.HexToColor("#FFFFFF");
-            if (level.theme == null) return;
-            if (level.theme.ring_color_1 != null)
-            {
-                ringColor1 = Convert.HexToColor(level.theme.ring_color_1);
-            }
-            if (level.theme.fill_color_1 != null)
-            {
-                fillColor1 = Convert.HexToColor(level.theme.fill_color_1);
-            }
-            if (level.theme.ring_color_2 != null)
-            {
-                ringColor2 = Convert.HexToColor(level.theme.ring_color_2);
-            }
-            if (level.theme.fill_color_2 != null)
-            {
-                fillColor2 = Convert.HexToColor(level.theme.fill_color_2);
-            }
         }
         catch (Exception)
         {

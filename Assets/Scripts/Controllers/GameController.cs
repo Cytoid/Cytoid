@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Net;
+using Cytus.Models;
 using DoozyUI;
 using Lean.Touch;
 using MoreLinq;
@@ -44,22 +45,21 @@ public class GameController : SingletonMonoBehavior<GameController>
 
     public float StartTime { get; private set; }
 
-    [SerializeField]
-    public float TimeElapsed { get; private set; }
+    [SerializeField] public float TimeElapsed { get; private set; }
 
     [SerializeField]
     public int CurrentPage
     {
-        get { return (int) ((TimeElapsed + Chart.pageShift) / Chart.pageDuration); }
+        get { return (int) ((TimeElapsed + Chart.PageShift) / Chart.PageDuration); }
     }
 
     public float CurrentPageUnfloored
     {
-        get { return (TimeElapsed + Chart.pageShift) / Chart.pageDuration; }
+        get { return (TimeElapsed + Chart.PageShift) / Chart.PageDuration; }
     }
-    
+
     public Chart Chart { get; private set; }
-    public PlayData PlayData { get; private set; }
+    public BasePlayData PlayData { get; private set; }
     public OrderedDictionary NoteViews = new OrderedDictionary();
 
     [SerializeField] private GameObject singleNotePrefab;
@@ -74,19 +74,16 @@ public class GameController : SingletonMonoBehavior<GameController>
     [SerializeField] private Text titleText;
     [SerializeField] private GameObject rankedIndicator;
     [SerializeField] private GameObject levelInfoIndicator;
-    
-    private GameObject background;
+
     private AudioClip clip;
     private int anaId = -1;
 
-    [SerializeField]
-    public bool IsLoaded { get; private set; }
+    [SerializeField] public bool IsLoaded { get; private set; }
 
-    [SerializeField]
-    public bool IsEnded { get; private set; }
+    [SerializeField] public bool IsEnded { get; private set; }
 
     public bool IsRanked { get; private set; }
-    
+
     public readonly RankedPlayData RankedPlayData = new RankedPlayData();
 
     protected override void Awake()
@@ -113,7 +110,7 @@ public class GameController : SingletonMonoBehavior<GameController>
             levelInfoIndicator.transform.SetLocalX(rankedIndicator.transform.localPosition.x);
             rankedIndicator.SetActive(false);
         }
-        
+
         if (PlayerPrefs.GetInt("autoplay") == 1 && !IsRanked) autoPlay = true;
         if (PlayerPrefsExt.GetBool("larger_hitboxes")) hitboxMultiplier = 1.33f;
         showEarlyLateIndicator = PlayerPrefsExt.GetBool("early_late_indicator");
@@ -122,45 +119,82 @@ public class GameController : SingletonMonoBehavior<GameController>
 
         SetAllowPause(false);
 
-        OnScreenChainNotes = new List<NoteView>();
-        OnScreenHoldNotes = new List<NoteView>();
-        OnScreenRegularAndHoldNotes = new List<NoteView>();
+        OnScreenChainNotes = new List<OldNoteView>();
+        OnScreenHoldNotes = new List<OldNoteView>();
+        OnScreenRegularAndHoldNotes = new List<OldNoteView>();
 
-#if UNITY_EDITOR
-        autoPlay = true;
-        if (!string.IsNullOrEmpty(editorLevelOverride))
-        {
-            CytoidApplication.CurrentLevel = CytoidApplication.Levels.Find(it =>
-                string.Equals(it.title, editorLevelOverride, StringComparison.OrdinalIgnoreCase));
-            CytoidApplication.CurrentChartType = editorChartTypeOverride;
-        }
-        // Still null? Fallback
-        if (CytoidApplication.CurrentLevel == null)
-        {
-            CytoidApplication.CurrentLevel = CytoidApplication.Levels.Find(it =>
-                string.Equals(it.title, editorLevelFallback, StringComparison.OrdinalIgnoreCase));
-            CytoidApplication.CurrentChartType = editorChartTypeFallback;
-        }
-        if (Math.Abs(editorStartAtOverride - startAt) > 0.00001f)
-        {
-            startAt = editorStartAtOverride;
-        }
-#endif
+        Level level;
 
-        var level = CytoidApplication.CurrentLevel;
-
-        if (!level.ChartsLoaded)
+        if (CytoidApplication.CurrentLevel != null)
         {
-            level.LoadCharts();
+            level = CytoidApplication.CurrentLevel;
+        }
+        else
+        {
+            CytoidApplication.CurrentChartType = "extreme";
+
+            level = new Level();
+            level.BasePath = Application.persistentDataPath + "/c1/";
+            level.format = "c1";
+            level.version = 1;
+            level.id = "io.cytoid.test";
+            level.title = "Test";
+            level.artist = "Cytoid";
+            level.illustrator = "Cytoid";
+            level.charter = "Cytoid";
+            level.music = new Level.MusicSection
+            {
+                path = "music.mp3"
+            };
+            level.background = new Level.BackgroundSection
+            {
+                path = "background.jpg"
+            };
+            level.charts = new List<Level.ChartSection>();
+            level.charts.Add(new Level.ChartSection
+            {
+                type = "extreme",
+                difficulty = 15,
+                path = "chart.txt"
+            });
+
+            var www = new WWW("file://" + level.BasePath + level.background.path);
+            yield return www;
+            yield return null; // Wait an extra frame
+
+            www.LoadImageIntoTexture(CytoidApplication.BackgroundTexture);
+
+            var backgroundSprite =
+                Sprite.Create(CytoidApplication.BackgroundTexture,
+                    new Rect(0, 0, CytoidApplication.BackgroundTexture.width,
+                        CytoidApplication.BackgroundTexture.height),
+                    new Vector2(0, 0));
+            var background = GameObject.FindGameObjectWithTag("Background");
+            background.GetComponent<Image>().sprite = backgroundSprite;
+
+            www.Dispose();
+            Resources.UnloadUnusedAssets();
+
+            // Fill the screen by adapting to the aspect ratio
+            background.GetComponent<AspectRatioFitter>().aspectRatio =
+                (float) CytoidApplication.BackgroundTexture.width / CytoidApplication.BackgroundTexture.height;
+            yield return null; // Wait an extra frame
+
+            CytoidApplication.CurrentLevel = level;
+        }
+
+        if (!level.IsLoadedIntoMemory)
+        {
+            level.LoadChartsIntoMemory();
         }
 
         ThemeController.Instance.Init(level);
         DisplayDifficultyView.Instance.SetDifficulty(CytoidApplication.CurrentChartType,
             level.GetDifficulty(CytoidApplication.CurrentChartType));
         titleText.text = level.title;
-        
+
         isInversed = PlayerPrefsExt.GetBool("inverse");
-        
+
         // Override options?
         if (ZPlayerPrefs.GetBool(PreferenceKeys.WillOverrideOptions(level)))
         {
@@ -170,20 +204,20 @@ public class GameController : SingletonMonoBehavior<GameController>
         // Chart and background are already loaded
 
         if (CytoidApplication.CurrentChartType == null) CytoidApplication.CurrentChartType = level.charts[0].type;
-        Chart = level.charts.Find(it => it.type == CytoidApplication.CurrentChartType).chart;
-        PlayData = new PlayData(Chart, IsRanked);
+        Chart = (Chart) level.charts.Find(it => it.type == CytoidApplication.CurrentChartType).chart;
+        PlayData = new PlayData(IsRanked, Chart);
         CytoidApplication.CurrentPlayData = PlayData;
-        
+
         if (IsRanked) CytoidApplication.CurrentRankedPlayData = RankedPlayData;
-        
+
 
         // Load audio clip
         if (level.is_internal || Application.platform != RuntimePlatform.Android)
         {
             var www = new WWW((level.is_internal && Application.platform == RuntimePlatform.Android ? "" : "file://") +
-                              level.basePath + level.GetMusicPath(CytoidApplication.CurrentChartType));
+                              level.BasePath + level.GetMusicPath(CytoidApplication.CurrentChartType));
             yield return www;
-            clip = CytoidApplication.ReadAudioClipFromWWW(www);
+            clip = www.GetAudioClip(false, true);
             audioSource.clip = clip;
         }
 
@@ -194,26 +228,27 @@ public class GameController : SingletonMonoBehavior<GameController>
 
         // Init notes
         NoteViews = new OrderedDictionary();
-        foreach (var id in Chart.chronologicalIds)
+        foreach (var id in Chart.ChronologicalIds)
         {
-            var note = Chart.notes[id];
+            var note = Chart.Notes[id];
             // if (note.time <= startAt) continue;
             var prefab = singleNotePrefab;
             switch (note.type)
             {
-                case NoteType.Hold:
+                case OldNoteType.Hold:
                     prefab = holdNotePrefab;
                     break;
-                case NoteType.Chain:
+                case OldNoteType.Chain:
                     prefab = chainNotePrefab;
                     break;
             }
-            var noteView = Instantiate(prefab, transform).GetComponent<NoteView>();
+
+            var noteView = Instantiate(prefab, transform).GetComponent<OldNoteView>();
             noteView.Init(Chart, note);
             NoteViews.Add(id, noteView);
         }
-        
-        foreach (NoteView note in NoteViews.Values)
+
+        foreach (OldNoteView note in NoteViews.Values)
         {
             note.OnAllNotesInitialized();
         }
@@ -244,17 +279,14 @@ public class GameController : SingletonMonoBehavior<GameController>
             const float delay = 1f;
             audioSource.PlayDelayed(delay);
 
-            StartTime = Time.time + Chart.offset + userOffset + delay;
+            StartTime = Time.time + Chart.Offset + userOffset + delay;
         }
         else
         {
-            anaId = ANAMusic.load(level.basePath + level.GetMusicPath(CytoidApplication.CurrentChartType), true, true,
-                id =>
-                {
-                    StartCoroutine(OnAndroidPlayerLoaded());
-                });
+            anaId = ANAMusic.load(level.BasePath + level.GetMusicPath(CytoidApplication.CurrentChartType), true, true,
+                id => { StartCoroutine(OnAndroidPlayerLoaded()); });
         }
-        
+
         // Ranked
         if (!LocalProfile.Exists())
         {
@@ -266,6 +298,7 @@ public class GameController : SingletonMonoBehavior<GameController>
             RankedPlayData.user = LocalProfile.Instance.username;
             RankedPlayData.password = LocalProfile.Instance.password;
         }
+
         RankedPlayData.start = TimeExt.Millis();
         RankedPlayData.id = level.id;
         RankedPlayData.type = CytoidApplication.CurrentChartType;
@@ -283,12 +316,6 @@ public class GameController : SingletonMonoBehavior<GameController>
 #endif*/
     }
 
-    private IEnumerator EndGame()
-    {
-        yield return new WaitForSeconds(30);
-        End();
-    }
-
     private IEnumerator OnAndroidPlayerLoaded()
     {
         if (Math.Abs(startAt) > 0.00001) ANAMusic.seekTo(anaId, (int) (startAt * 1000));
@@ -296,48 +323,53 @@ public class GameController : SingletonMonoBehavior<GameController>
         ANAMusic.play(anaId);
 
         var userOffset = PlayerPrefs.GetFloat("user_offset", 0.12f);
-        
+
         // Override options?
         if (ZPlayerPrefs.GetBool(PreferenceKeys.WillOverrideOptions(CytoidApplication.CurrentLevel)))
         {
             userOffset = ZPlayerPrefs.GetFloat(PreferenceKeys.NoteDelay(CytoidApplication.CurrentLevel));
         }
-        
-        
-        StartTime = Time.time + Chart.offset + userOffset;
+
+
+        StartTime = Time.time + Chart.Offset + userOffset;
     }
 
     private void Update()
     {
+        if (CytoidApplication.CurrentLevel == null) return;
+        
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             NotifyWillPause();
-            if (CytoidApplication.UseDoozyUI)
+            if (CytoidApplication.UseDoozyUi)
             {
                 UIManager.ShowUiElement("PauseBackground", "Game", false);
                 UIManager.ShowUiElement("PauseRoot", "Game", false);
             }
         }
-        
+
         TimeElapsed = IsLoaded ? Time.time - StartTime + startAt : 0;
         UpdateNoteViews();
         if (!IsLoaded && audioSource != null &&
-            ((!CytoidApplication.CurrentLevel.is_internal && Application.platform == RuntimePlatform.Android && anaId != -1 && ANAMusic.isPlaying(anaId)) ||
+            (!CytoidApplication.CurrentLevel.is_internal && Application.platform == RuntimePlatform.Android &&
+             anaId != -1 && ANAMusic.isPlaying(anaId) ||
              audioSource.time > 0.001f))
         {
             IsLoaded = true;
             SetAllowPause(true); // Enable pausing
         }
+
         if (willPause)
         {
             Pause();
         }
+
         /*if (IsLoaded && !IsPaused && (audioSource.clip.length <= audioSource.time || audioSource.clip.length - audioSource.time < 0.001f))
         {
             print("Mark end");
             End();
         }*/
-        if (PlayData.NoteCleared == Chart.notes.Count)
+        if (PlayData.NoteCleared == Chart.Notes.Count)
         {
             End();
         }
@@ -345,7 +377,7 @@ public class GameController : SingletonMonoBehavior<GameController>
 
     /*
         Because notes use FixedUpdate() to update their states, we use FixedUpdate() to handle the pause.
-        (Note that however, the scanner uses Update() for smoother transitions)
+        (Note that however, the scanner uses UpdCate() for smoother transitions)
     */
     private void FixedUpdate()
     {
@@ -358,24 +390,28 @@ public class GameController : SingletonMonoBehavior<GameController>
     private void Pause()
     {
         if (CytoidApplication.CurrentLevel == null || IsEnded) return;
-        RankedPlayData.pauses.Add(new RankedPlayData.Pause { start = TimeExt.Millis() });
+        RankedPlayData.pauses.Add(new RankedPlayData.Pause {start = TimeExt.Millis()});
         IsPaused = true;
         willPause = false;
         UnpauseCountdown = -1;
-        if (CytoidApplication.UseDoozyUI)
+        if (CytoidApplication.UseDoozyUi)
         {
             UIManager.ShowUiElement("PauseBackground", "Game", true);
             UIManager.ShowUiElement("PauseRoot", "Game", true);
         }
-        if (!CytoidApplication.CurrentLevel.is_internal && Application.platform == RuntimePlatform.Android) ANAMusic.pause(anaId);
+
+        if (!CytoidApplication.CurrentLevel.is_internal && Application.platform == RuntimePlatform.Android)
+            ANAMusic.pause(anaId);
         else audioSource.Pause();
-        if (!CytoidApplication.CurrentLevel.is_internal && Application.platform == RuntimePlatform.Android) pausedAt = ANAMusic.getCurrentPosition(anaId) / 1000f;
+        if (!CytoidApplication.CurrentLevel.is_internal && Application.platform == RuntimePlatform.Android)
+            pausedAt = ANAMusic.getCurrentPosition(anaId) / 1000f;
         else pausedAt = audioSource.time;
         foreach (var fingerIndex in holdingNotes.Keys)
         {
             var holdNote = holdingNotes[fingerIndex];
             holdNote.StopHolding();
         }
+
         holdingNotes.Clear();
         SetAllowPause(false);
         if (unpauseCoroutine != null) StopCoroutine(unpauseCoroutine);
@@ -401,7 +437,8 @@ public class GameController : SingletonMonoBehavior<GameController>
         UnpauseCountdown = 1;
         yield return new WaitForSeconds(1f);
         IsPaused = false;
-        if (!CytoidApplication.CurrentLevel.is_internal && Application.platform == RuntimePlatform.Android) ANAMusic.play(anaId);
+        if (!CytoidApplication.CurrentLevel.is_internal && Application.platform == RuntimePlatform.Android)
+            ANAMusic.play(anaId);
         else audioSource.UnPause();
         SetAllowPause(true);
         pausedAt = 0;
@@ -433,7 +470,7 @@ public class GameController : SingletonMonoBehavior<GameController>
         yield return new WaitForSeconds(6f);
         RankedPlayData.end = TimeExt.Millis();
         action = Action.Result;
-        if (CytoidApplication.UseDoozyUI)
+        if (CytoidApplication.UseDoozyUi)
         {
             // Comment out this section and the import if DoozyUI not used
             UIManager.HideUiElement("ScoreText", "Game");
@@ -454,6 +491,7 @@ public class GameController : SingletonMonoBehavior<GameController>
         {
             ANAMusic.release(anaId);
         }
+
         switch (action)
         {
             case Action.Back:
@@ -484,16 +522,17 @@ public class GameController : SingletonMonoBehavior<GameController>
         while (sceneTransitionMask.IsFading) yield return null;
         foreach (DictionaryEntry entry in NoteViews)
         {
-            var noteView = entry.Value as NoteView;
+            var noteView = entry.Value as OldNoteView;
             if (noteView == null) continue; // Already cleared/destroyed
             Destroy(noteView.gameObject);
         }
+
         SceneManager.LoadScene("LevelSelection");
     }
 
-    private List<NoteView> OnScreenRegularAndHoldNotes;
-    private List<NoteView> OnScreenChainNotes;
-    private List<NoteView> OnScreenHoldNotes;
+    private List<OldNoteView> OnScreenRegularAndHoldNotes;
+    private List<OldNoteView> OnScreenChainNotes;
+    private List<OldNoteView> OnScreenHoldNotes;
 
     private void UpdateNoteViews()
     {
@@ -502,20 +541,23 @@ public class GameController : SingletonMonoBehavior<GameController>
         OnScreenHoldNotes.Clear();
         foreach (DictionaryEntry entry in NoteViews)
         {
-            var noteView = entry.Value as NoteView;
+            var noteView = entry.Value as OldNoteView;
             if (noteView == null) continue;
             var timeUntil = noteView.note.time - TimeElapsed;
             noteView.TimeUntil = timeUntil;
             noteView.TimeDiff = Math.Abs(timeUntil);
-            if (noteView.note.type != NoteType.Chain && noteView.displayed && !noteView.cleared)
+            if (noteView.note.type != OldNoteType.Chain && noteView.displayed && !noteView.cleared)
             {
                 OnScreenRegularAndHoldNotes.Add(noteView);
             }
-            if (noteView.note.type == NoteType.Chain && noteView.displayed && !noteView.cleared)
+
+            if (noteView.note.type == OldNoteType.Chain && noteView.displayed && !noteView.cleared)
             {
                 OnScreenChainNotes.Add(noteView);
             }
-            if (noteView.note.type == NoteType.Hold && !((HoldNoteView) noteView).isHolding && noteView.displayed &&
+
+            if (noteView.note.type == OldNoteType.Hold && !((OldHoldNoteView) noteView).isHolding &&
+                noteView.displayed &&
                 !noteView.cleared)
             {
                 OnScreenHoldNotes.Add(noteView);
@@ -523,14 +565,14 @@ public class GameController : SingletonMonoBehavior<GameController>
         }
     }
 
-    private readonly Dictionary<int, HoldNoteView> holdingNotes = new Dictionary<int, HoldNoteView>();
+    private readonly Dictionary<int, OldHoldNoteView> holdingNotes = new Dictionary<int, OldHoldNoteView>();
 
     private void OnFingerDown(LeanFinger finger)
     {
         var pos = Camera.main.ScreenToWorldPoint(finger.ScreenPosition);
 
         var touchedChain = false;
-        
+
         // Query chain notes
         foreach (var noteView in OnScreenChainNotes)
         {
@@ -542,25 +584,23 @@ public class GameController : SingletonMonoBehavior<GameController>
                 break; // Note that we want to query hold notes as well so break only
             }
         }
-        
+
         foreach (var noteView in OnScreenRegularAndHoldNotes)
         {
             if (noteView == null) continue;
             if (noteView.OverlapPoint(pos))
             {
-                if (touchedChain && noteView.TimeDiff > Chart.pageDuration / 8) continue;
+                if (touchedChain && noteView.TimeDiff > Chart.PageDuration / 8) continue;
                 noteView.Touch(finger.ScreenPosition);
                 return;
             }
         }
-
     }
-
 
     private void OnFingerSet(LeanFinger finger)
     {
         var pos = Camera.main.ScreenToWorldPoint(finger.ScreenPosition);
-        
+
         // Query chain notes
         foreach (var noteView in OnScreenChainNotes)
         {
@@ -581,12 +621,13 @@ public class GameController : SingletonMonoBehavior<GameController>
                 if (noteView == null) continue;
                 if (noteView.OverlapPoint(pos))
                 {
-                    holdingNotes.Add(finger.Index, (HoldNoteView) noteView);
-                    ((HoldNoteView) noteView).StartHoldBy(finger.Index);
+                    holdingNotes.Add(finger.Index, (OldHoldNoteView) noteView);
+                    ((OldHoldNoteView) noteView).StartHoldBy(finger.Index);
                     newHold = true;
                     break;
                 }
             }
+
             if (!newHold)
             {
                 foreach (var entry in holdingNotes)
@@ -612,8 +653,9 @@ public class GameController : SingletonMonoBehavior<GameController>
             {
                 holdingNotes.Remove(finger.Index);
                 released = true;
-            } else 
-            // If holding elsewhere
+            }
+            else
+                // If holding elsewhere
             if (!holdNote.OverlapPoint(pos))
             {
                 holdNote.StopHoldBy(finger.Index);
@@ -654,7 +696,9 @@ public class GameController : SingletonMonoBehavior<GameController>
 
     public void SetAllowPause(bool allowPause)
     {
-        pauseButton.gameObject.SetActive(allowPause);
+        if (pauseButton != null)
+        {
+            pauseButton.gameObject.SetActive(allowPause);
+        }
     }
-    
 }

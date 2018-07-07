@@ -1,3 +1,5 @@
+.DS_Store
+
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/
@@ -26,7 +28,6 @@ ExportedObj/
 *.svd
 *.pdb
 
-
 # Unity3D generated meta files
 *.pidb.meta
 
@@ -37,43 +38,86 @@ sysinfo.txt
 *.apk
 *.unitypackage
 
-.DS_Store
-/.idea/
-/Images/
+# Required plugins
+
+# Very Simple Share ($15)
 /Assets/_AppAdvisory/
 /Assets/_AppAdvisory.meta
-/Assets/PaperPlaneTools/
-/Assets/PaperPlaneTools.meta
+
+# DOTween (Free)
 /Assets/Demigiant/
 /Assets/Demigiant.meta
-/Assets/unity-ui-extensions/
-/Assets/unity-ui-extensions.meta
+/Assets/Resources/DOTweenSettings.asset
+/Assets/Resources/DOTweenSettings.asset.meta
+
+# Doozy UI ($50)
 /Assets/DoozyUI/
 /Assets/DoozyUI.meta
-/Assets/JsonDotNet/
-/Assets/JsonDotNet.meta
-/Assets/LeanTouch/
-/Assets/LeanTouch.meta
-/Assets/LunarConsole/
-/Assets/LunarConsole.meta
-/Assets/Simple UI/
-/Assets/Simple UI.meta
-/Assets/TextMesh Pro/
-/Assets/TextMesh Pro.meta
-/Assets/Editor/Instant Screenshot/
-/Assets/Editor/Instant Screenshot.meta
-/Assets/Editor/Xcode/
-/Assets/Editor/Xcode.meta
 /Assets/Plugins/Quick/
 /Assets/Plugins/Quick.meta
-/Assets/Plugins/Editor/
-/Assets/Plugins/Editor.meta
+
+# Json .NET (Free)
+/Assets/JsonDotNet/
+/Assets/JsonDotNet.meta
+
+# LeanTouch (Free)
+/Assets/LeanTouch/
+/Assets/LeanTouch.meta
+
+# Lunar Console (Free)
+/Assets/LunarConsole/
+/Assets/LunarConsole.meta
+
+# Simple UI - Scroll View Extensions ($15)
+/Assets/Simple UI/
+/Assets/Simple UI.meta
+
+# TextMesh Pro (Free)
+/Assets/TextMesh Pro/
+/Assets/TextMesh Pro.meta
+
+# Android Native Audio ($10)
 /Assets/Android Native Audio/
 /Assets/Android Native Audio.meta
 /Assets/StreamingAssets/Android Native Audio/
 /Assets/StreamingAssets/Android Native Audio.meta
+
+# Secured Player Prefs (Free)
 /Assets/ZFrame/
 /Assets/ZFrame.meta
-/Assets/Resources/DOTweenSettings.asset
-/Assets/Resources/DOTweenSettings.asset.meta
+
+# Camera Filter Pack ($50)
+/Assets/Camera Filter Pack.meta
+/Assets/Camera Filter Pack/
+
+# PRISM ($25)
+/Assets/PRISM.meta
+/Assets/PRISM/
+
+# Secured Cytoid scripts
 /Assets/Scripts/Secure/
+
+# Optional plugins
+
+# Editor Instant Screenshot (Free)
+/Assets/Editor/Instant Screenshot/
+/Assets/Editor/Instant Screenshot.meta
+
+# Turbo Switch ($29.9)
+/Assets/Plugins/crosstales.meta
+/Assets/Plugins/crosstales/
+
+# JetBrains Rider Plugin (Free)
+/Assets/Plugins/Editor/
+/Assets/Plugins/Editor.meta
+
+# Scripts and files for my personal use
+/.idea/
+/Images/
+/TPS_cache/
+/Assets/_Me
+/Assets/_Me.meta
+/Assets/Editor Default Resources.meta
+/Assets/Editor Default Resources/
+/Assets/Editor/Xcode/
+/Assets/Editor/Xcode.meta

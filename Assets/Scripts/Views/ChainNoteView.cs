@@ -2,7 +2,7 @@
 using QuickEngine.Extensions;
 using UnityEngine;
 
-public class ChainNoteView : NoteView
+public class ChainNoteView : OldNoteView
 {
     public GameObject chainRendererPrefab;
     public GameObject chainHeadPrefab;
@@ -139,7 +139,7 @@ public class ChainNoteView : NoteView
         // Do not handle touch event if touched too ahead of scanner
         if (note.time - game.TimeElapsed > 0.31f) return;
         // Do not handle touch event if in a later page, unless the timing is close (half a screen)
-        if (page > game.CurrentPage && note.time - game.TimeElapsed > Chart.pageDuration / 2f) return;
+        if (page > game.CurrentPage && note.time - game.TimeElapsed > Chart.PageDuration / 2f) return;
 
         base.Touch(touchScreenPosition);
     }

@@ -5,6 +5,11 @@ using UnityEngine.UI;
 public static class ColorExt
 {
     
+    public static Color WithAlpha(this Color color, float alpha)
+    {
+        return new Color(color.r, color.g, color.b, alpha);
+    }
+    
     public static void ChangeColor(this Text text, float r = float.NaN, float g = float.NaN, float b = float.NaN, float a = float.NaN)
     {
         var newR = float.IsNaN(r) ? text.color.r : r;

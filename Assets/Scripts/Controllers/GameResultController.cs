@@ -142,7 +142,15 @@ public class GameResultController : MonoBehaviour
 		switch (action)
 		{
 			case Action.Retry:
-				SceneManager.LoadScene("Game");
+				switch (CytoidApplication.CurrentLevel.Format)
+				{
+					case LevelFormat.Cytus2:
+						SceneManager.LoadScene("CytusGame");
+						break;
+					case LevelFormat.Cytus:
+						SceneManager.LoadScene("Game");
+						break;
+				}
 				break;
 			case Action.Next:
 				SceneManager.LoadScene("LevelSelection");
@@ -181,7 +189,7 @@ public class GameResultController : MonoBehaviour
 
 		yield return new WaitForSeconds(1);
 
-        var request = new UnityWebRequest(CytoidApplication.host + "/rank/post", "POST") {timeout = 10};
+        var request = new UnityWebRequest(CytoidApplication.Host + "/rank/post", "POST") {timeout = 10};
 
         var bodyRaw = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(CytoidApplication.CurrentRankedPlayData));
 		print("Body: " + JsonConvert.SerializeObject(CytoidApplication.CurrentRankedPlayData));

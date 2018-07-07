@@ -30,6 +30,7 @@ public class ScoreView : MonoBehaviour
 
 	private void FixedUpdate()
 	{
+		if (game.PlayData == null) return;
 		if (game.IsPaused)
 		{
 			if (game.UnpauseCountdown != -1)

@@ -2,6 +2,8 @@
 
 # Cytoid [![Join the Discord](https://discordapp.com/api/guilds/362884768498712579/widget.png?style=shield)](https://discord.gg/cytoid)
 
+A community-driven touchscreen music game available on [App Store](https://itunes.apple.com/us/app/cytoid/id1266582726) and [Google Play](https://play.google.com/store/apps/details?id=me.tigerhix.cytoid).
+
 ## Getting Started
 
 Cytoid is built in C# with [Unity 2018.1.6f1 (Personal)](https://unity3d.com).

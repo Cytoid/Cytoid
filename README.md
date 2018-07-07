@@ -1,10 +1,12 @@
 <img src="https://i.imgur.com/D1k6Vx2.png" style="width: 100%">
 
-# Cytoid <a href='https://play.google.com/store/apps/details?id=me.tigerhix.cytoid&hl=en'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' width="100"/></a><a href='https://itunes.apple.com/us/app/cytoid/id1266582726?ls=1&mt=8'><img alt='Download on the App Store' src='https://devimages-cdn.apple.com/app-store/marketing/guidelines/images/badge-download-on-the-app-store.svg' width="100"/></a>
+# Cytoid [![Join the Discord](https://discordapp.com/api/guilds/362884768498712579/widget.png?style=shield)](https://discord.gg/cytoid)
 
 ## Getting Started
 
-Because of license restrictions, it is impossible to include some plugins/assets in this repository. Please see the [.gitignore](https://github.com/TigerHix/Cytoid/blob/master/.gitignore) for more information.
+Cytoid is built in C# with [Unity 2018.1.6f1 (Personal)](https://unity3d.com).
+
+Because of license restrictions, some plugins/assets used in the project are not included in this repository. View the [.gitignore](https://github.com/TigerHix/Cytoid/blob/master/.gitignore) for more information.
 
 ## License
 
@@ -16,6 +18,7 @@ Source code (unless stated otherwise) is distributed under [MIT](https://opensou
 
 Proudly presented by [Tiger Tang](https://github.com/tigerhix/).
 * Twitter: [@tigerhixtang](https://twitter.com/tigerhixtang)
+* Patreon: [TigerHix](https://www.patreon.com/tigerhix)
 * Email: [tigerhix@gmail.com](mailto://tigerhix@gmail.com)
 
 Special thanks to [xuxu9110](http://xuxu9110.github.io/), suconh, and PTB10 for their incredible charts.

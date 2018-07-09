@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using CodeStage.AdvancedFPSCounter;
 using Cytoid.Storyboard;
 using Cytus2.Models;
 using Lean.Touch;
@@ -21,7 +22,7 @@ namespace Cytus2.Controllers
             yield return StartCoroutine(base.Start());
             GameOptions.Instance.WillAutoPlay = true;
             GameOptions.Instance.ChartOffset = 0;
-            
+
             SeekSlider.onValueChanged.AddListener(Seek);
 
             Application.runInBackground = true;

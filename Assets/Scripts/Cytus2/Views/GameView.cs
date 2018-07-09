@@ -29,7 +29,11 @@ namespace Cytus2.Views
 
         public void OnAwake()
         {
-            
+            var fpsCounter = GameObject.FindGameObjectWithTag("FpsCounter");
+            if (fpsCounter != null)
+            {
+                fpsCounter.SetActive(PlayerPrefsExt.GetBool("fps counter"));
+            }
         }
 
         public void OnStart()

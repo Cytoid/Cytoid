@@ -40,17 +40,10 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
     [SerializeField] private Toggle overrideOptionsToggle;
     [SerializeField] private InputField localUserOffsetInput;
-    [SerializeField] private Toggle localIsInversedToggle;
 
     [SerializeField] private InputField userOffsetInput;
-    [SerializeField] private Toggle showScannerToggle;
     [SerializeField] private Toggle largerHitboxesToggle;
     [SerializeField] private Toggle earlyLateIndicatorToggle;
-    [SerializeField] private Toggle isInversedToggle;
-    [SerializeField] private InputField ringColorInput;
-    [SerializeField] private InputField ringColorAltInput;
-    [SerializeField] private InputField fillColorInput;
-    [SerializeField] private InputField fillColorAltInput;
     [SerializeField] private Text hitSoundText;
     [SerializeField] private AudioSource hitSoundPlayer;
 
@@ -168,6 +161,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         base.Awake();
 
         CytoidApplication.SetAutoRotation(true);
+        CytoidApplication.ResetResolution();
 
         var userOffsetDef = Application.platform == RuntimePlatform.Android ? 0.12f : 0.2f;
         var ringColorDef = "#FFFFFF";
@@ -200,14 +194,8 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         }
 
         userOffsetInput.text = PlayerPrefs.GetFloat("user_offset").ToString();
-        showScannerToggle.isOn = PlayerPrefsExt.GetBool("show_scanner");
         earlyLateIndicatorToggle.isOn = PlayerPrefsExt.GetBool("early_late_indicator");
         largerHitboxesToggle.isOn = PlayerPrefsExt.GetBool("larger_hitboxes");
-        isInversedToggle.isOn = PlayerPrefsExt.GetBool("inverse");
-        ringColorInput.text = PlayerPrefs.GetString("ring_color");
-        ringColorAltInput.text = PlayerPrefs.GetString("ring_color_alt");
-        fillColorInput.text = PlayerPrefs.GetString("fill_color");
-        fillColorAltInput.text = PlayerPrefs.GetString("fill_color_alt");
 
         userOffsetInput.onEndEdit.AddListener(text =>
         {
@@ -221,10 +209,6 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         {
             ZPlayerPrefs.SetBool(PreferenceKeys.WillOverrideOptions(CytoidApplication.CurrentLevel), selected);
         });
-        localIsInversedToggle.onValueChanged.AddListener(selected =>
-        {
-            ZPlayerPrefs.SetBool(PreferenceKeys.WillInverse(CytoidApplication.CurrentLevel), selected);
-        });
         localUserOffsetInput.onEndEdit.AddListener(text =>
         {
             float offset;
@@ -237,50 +221,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
                 ZPlayerPrefs.SetFloat(PreferenceKeys.NoteDelay(CytoidApplication.CurrentLevel), offset);
             }
         });
-        ringColorInput.onEndEdit.AddListener(text =>
-        {
-            try
-            {
-                Convert.HexToColor(text);
-            }
-            catch (Exception)
-            {
-                ringColorInput.text = ringColorDef;
-            }
-        });
-        ringColorAltInput.onEndEdit.AddListener(text =>
-        {
-            try
-            {
-                Convert.HexToColor(text);
-            }
-            catch (Exception)
-            {
-                ringColorAltInput.text = ringColorAltDef;
-            }
-        });
-        fillColorInput.onEndEdit.AddListener(text =>
-        {
-            try
-            {
-                Convert.HexToColor(text);
-            }
-            catch (Exception)
-            {
-                fillColorInput.text = fillColorDef;
-            }
-        });
-        fillColorAltInput.onEndEdit.AddListener(text =>
-        {
-            try
-            {
-                Convert.HexToColor(text);
-            }
-            catch (Exception)
-            {
-                fillColorAltInput.text = fillColorAltDef;
-            }
-        });
+        
         usernameInput.text = PlayerPrefs.GetString(PreferenceKeys.LastUsername());
         passwordInput.text = PlayerPrefs.GetString(PreferenceKeys.LastPassword());
 
@@ -533,15 +474,12 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
         if (useLocalOptions)
         {
-            localIsInversedToggle.isOn =
-                ZPlayerPrefs.GetBool(PreferenceKeys.WillInverse(CytoidApplication.CurrentLevel), false);
             localUserOffsetInput.text =
                 ZPlayerPrefs.GetFloat(PreferenceKeys.NoteDelay(CytoidApplication.CurrentLevel),
                     PlayerPrefs.GetFloat("user_offset")).ToString();
         }
         else
         {
-            localIsInversedToggle.isOn = isInversedToggle.isOn;
             localUserOffsetInput.text = userOffsetInput.text;
         }
 
@@ -635,26 +573,12 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
                 print("Loading Game scene.");
 
                 PlayerPrefs.SetFloat("user_offset", float.Parse(userOffsetInput.text));
-                PlayerPrefsExt.SetBool("show_scanner", showScannerToggle.isOn);
                 PlayerPrefsExt.SetBool("early_late_indicator", earlyLateIndicatorToggle.isOn);
                 PlayerPrefsExt.SetBool("larger_hitboxes", largerHitboxesToggle.isOn);
-                PlayerPrefsExt.SetBool("inverse", isInversedToggle.isOn);
-                PlayerPrefs.SetString("ring_color", ringColorInput.text);
-                PlayerPrefs.SetString("ring_color_alt", ringColorAltInput.text);
-                PlayerPrefs.SetString("fill_color", fillColorInput.text);
-                PlayerPrefs.SetString("fill_color_alt", fillColorAltInput.text);
 
                 BackgroundCanvasHelper.PersistBackgroundCanvas();
 
-                var level = CytoidApplication.CurrentLevel;
-                if (level.Format == LevelFormat.Cytus2)
-                {
-                    SceneManager.LoadScene("CytusGame");
-                }
-                else
-                {
-                    SceneManager.LoadScene("Game");
-                }
+                SceneManager.LoadScene("CytusGame");
                 break;
         }
     }

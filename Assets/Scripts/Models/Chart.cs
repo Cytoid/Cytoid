@@ -20,6 +20,7 @@ namespace Cytus.Models
 
         public override string Parse(string text)
         {
+            var notes = new Dictionary<int, Note>();
             var checksumSource = string.Empty;
 
             foreach (var line in text.Split('\n'))
@@ -41,7 +42,7 @@ namespace Cytus.Models
                         checksumSource += data[1] + data[2] + data[3] + data[4];
                         var note = new Note(int.Parse(data[1]), float.Parse(data[2]), float.Parse(data[3]),
                             float.Parse(data[4]), false);
-                        Notes.Add(int.Parse(data[1]), note);
+                        notes.Add(int.Parse(data[1]), note);
                         if (note.duration > 0) note.type = OldNoteType.Hold;
                         break;
                     case "LINK":
@@ -51,7 +52,7 @@ namespace Cytus.Models
                             if (data[i] != "LINK") checksumSource += data[i];
                             int id;
                             if (!int.TryParse(data[i], out id)) continue;
-                            note = Notes[id];
+                            note = notes[id];
                             note.type = OldNoteType.Chain;
                             notesInChain.Add(note);
                         }
@@ -72,10 +73,26 @@ namespace Cytus.Models
             PageShift += PageDuration;
             
             // Calculate chronological note ids
-            var noteList = Notes.Values.ToList();
+            var noteList = notes.Values.ToList();
             noteList.Sort((a, b) => a.time.CompareTo(b.time));
-            ChronologicalIds = noteList.Select(note => note.id).ToList();
-
+            ChronologicalIds = noteList.Select(note => note.originalId).ToList();
+            
+            // Recalculate note ids from original ids
+            var newId = 0;
+            foreach (var noteId in ChronologicalIds)
+            {
+                notes[noteId].id = newId;
+                Notes[newId] = notes[noteId];
+                newId++;
+            }
+            
+            // Reset chronological ids
+            ChronologicalIds.Clear();
+            for (var i = 0; i < notes.Count; i++)
+            {
+                ChronologicalIds.Add(i);
+            }
+            
             return checksumSource;
         }
         

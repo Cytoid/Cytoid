@@ -16,17 +16,19 @@ namespace Cytus2.Models
         public float start_offset_time;
         public List<ChartPage> page_list;
         public List<ChartTempo> tempo_list;
-        public List<ChartEventOrder> event_order_list;
+        public List<ChartEventOrder> event_order_list = new List<ChartEventOrder>();
         public List<ChartAnimation> animation_list = new List<ChartAnimation>();
         public List<ChartNote> note_list;
-        
+
+        public float music_offset;
+
     }
 
     [System.Serializable]
     public class ChartPage
     {
-        public int start_tick;
-        public int end_tick;
+        public float start_tick;
+        public float end_tick;
         public int scan_line_direction;
         public float start_time;
         public float end_time;
@@ -40,8 +42,8 @@ namespace Cytus2.Models
     [System.Serializable]
     public class ChartTempo
     {
-        public int tick;
-        public int value;
+        public float tick;
+        public float value;
     }
 
     [System.Serializable]
@@ -75,10 +77,10 @@ namespace Cytus2.Models
         public int page_index;
         public int type;
         public int id;
-        public int tick;
+        public float tick;
         public float x;
         public bool has_sibling;
-        public int hold_tick;
+        public float hold_tick;
         public int next_id;
         public bool is_forward;
         public float start_time;

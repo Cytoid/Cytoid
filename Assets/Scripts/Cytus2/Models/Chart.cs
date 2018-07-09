@@ -1,5 +1,5 @@
 ﻿using System;
-using Cytus2.Models;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -11,6 +11,7 @@ namespace Cytus2.Models
         
         public ChartRoot Root;
         public int CurrentPageId;
+        public float MusicOffset;
         private float baseSize;
         private float offset;
         
@@ -21,7 +22,16 @@ namespace Cytus2.Models
         public override string Parse(string text)
         {
             Root = new ChartRoot();
-            Root = JsonConvert.DeserializeObject<ChartRoot>(text);
+
+            try
+            {
+                // C2/Cytoid format
+                Root = JsonConvert.DeserializeObject<ChartRoot>(text);
+            } catch (JsonReaderException)
+            {
+                // C1 format
+                Root = FromCytus1Chart(text);
+            }
 
             baseSize = Camera.main.orthographicSize;
             offset = -Camera.main.orthographicSize * 0.04f;
@@ -133,6 +143,9 @@ namespace Cytus2.Models
                                    (noteNext.position.y - noteThis.position.y)) / Mathf.PI * 180f +
                         (noteNext.position.y > noteThis.position.y ? 0 : 180);
             }
+
+            MusicOffset = Root.music_offset;
+            
             return string.Empty;
         }
 
@@ -140,7 +153,7 @@ namespace Cytus2.Models
         {
             float result = 0;
 
-            var currentTick = 0;
+            var currentTick = 0f;
             var currentTimeZone = 0;
 
             for (var i = 1; i < Root.tempo_list.Count; i++)
@@ -219,6 +232,82 @@ namespace Cytus2.Models
                     1.0f / (Root.page_list[CurrentPageId].end_time - Root.page_list[CurrentPageId].start_time))
                 
                     + offset;
+        }
+
+        public ChartRoot FromCytus1Chart(string text)
+        {
+            var chart = new Cytus.Models.Chart(text);
+            
+            const int timeBase = 480;
+
+            var root = new ChartRoot();
+            root.format_version = 0;
+            root.time_base = 480;
+            root.start_offset_time = 0;
+
+            var tempo = new ChartTempo();
+            tempo.tick = 0;
+            var tempoValue = chart.PageDuration * 1000000;
+            tempo.value = tempoValue;
+            root.tempo_list = new List<ChartTempo> { tempo };
+
+            if (chart.PageShift < 0) chart.PageShift = chart.PageShift + 2 * chart.PageDuration;
+            
+            var pageShiftTickOffset = chart.PageShift / chart.PageDuration * timeBase;
+
+            var noteList = new List<ChartNote>();
+            var page = 0;
+            foreach (var note in chart.Notes.Values)
+            {
+                var obj = new ChartNote();
+                obj.id = note.id;
+                switch (note.type)
+                {
+                    case OldNoteType.Single:
+                        obj.type = NoteType.Click;
+                        break;
+                    case OldNoteType.Chain:
+                        obj.type = note.isChainHead ? NoteType.DragHead : NoteType.DragChild;
+                        break;
+                    case OldNoteType.Hold:
+                        obj.type = NoteType.Hold;
+                        break;
+                }
+                obj.x = note.x;
+                var ti = note.time * timeBase * 1000000 / tempoValue + pageShiftTickOffset;
+                obj.tick = ti;
+                obj.hold_tick = note.duration * timeBase * 1000000 / tempoValue;
+                page = Mathf.FloorToInt(ti / timeBase);
+                obj.page_index = page;
+                if (note.type == OldNoteType.Chain)
+                {
+                    obj.next_id = note.connectedNote != null ? note.connectedNote.id : -1;
+                }
+                else
+                {
+                    obj.next_id = 0;
+                }
+                noteList.Add(obj);
+            }
+            root.note_list = noteList;
+            
+            var pageList = new List<ChartPage>();
+            var direction = false;
+            var t = 0;
+            for (var i = 0; i <= page; i++)
+            {
+                var obj = new ChartPage();
+                obj.scan_line_direction = direction ? 1 : -1;
+                direction = !direction;
+                obj.start_tick = t;
+                t += timeBase;
+                obj.end_tick = t;
+                pageList.Add(obj);
+            }
+            root.page_list = pageList;
+            
+            root.music_offset = pageShiftTickOffset / timeBase / 1000000 * tempoValue;
+            return root;
         }
 
     }

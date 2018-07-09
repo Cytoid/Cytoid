@@ -90,6 +90,10 @@ sysinfo.txt
 /Assets/Camera Filter Pack.meta
 /Assets/Camera Filter Pack/
 
+# Sleek Render ($17)
+/Assets/Plugins/Sleek Render.meta
+/Assets/Plugins/Sleek Render/
+
 # PRISM ($25)
 /Assets/PRISM.meta
 /Assets/PRISM/
@@ -110,6 +114,10 @@ sysinfo.txt
 # JetBrains Rider Plugin (Free)
 /Assets/Plugins/Editor/
 /Assets/Plugins/Editor.meta
+
+# FPS Counter
+/Assets/Plugins/CodeStage/
+/Assets/Plugins/CodeStage.meta
 
 # Scripts and files for my personal use
 /.idea/

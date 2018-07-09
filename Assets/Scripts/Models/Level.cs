@@ -1,28 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Cytus2.Models;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class Level
 {
 
-    [JsonIgnore]
-    public LevelFormat Format
-    {
-        get
-        {
-            if (format == null)
-            {
-                return LevelFormat.Cytus;
-            }
-            if (format.ToLower() == "cytus2" || format.ToLower() == "c2")
-            {
-                return LevelFormat.Cytus2;
-            }
-            return LevelFormat.Cytus;
-        }
-    }
     [JsonIgnore] public string BasePath;
     [JsonIgnore] public bool IsLoadedIntoMemory;
     
@@ -88,7 +73,7 @@ public class Level
         public string path { get; set; }
         public MusicSection music_override { get; set; }
         
-        [JsonIgnore] public BaseChart chart;
+        [JsonIgnore] public Chart chart;
 
         // C#: can't access outer members...
         // I miss Java and Kotlin
@@ -108,14 +93,7 @@ public class Level
                 chartText = File.ReadAllText(level.BasePath + path, Encoding.UTF8);
             }
 
-            if (level.Format == LevelFormat.Cytus2)
-            {
-                chart = new Cytus2.Models.Chart(chartText);
-            }
-            else
-            {
-                chart = new Cytus.Models.Chart(chartText);
-            }
+            chart = new Chart(chartText);
         } 
     }
 
@@ -128,10 +106,4 @@ public class ChartType
     public const string Hard = "hard";
     public const string Extreme = "extreme";
     
-}
-
-public enum LevelFormat
-{
-    Cytus,
-    Cytus2
 }

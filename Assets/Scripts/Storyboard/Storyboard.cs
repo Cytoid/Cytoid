@@ -34,7 +34,7 @@ namespace Cytoid.Storyboard
                     Templates[templateProperty.Name] = templateProperty.Value.ToObject<JObject>();
                 }
 
-                Templates.Keys.ToList().ForEach(key => Debug.Log(JsonConvert.SerializeObject(Templates[key])));
+                // Templates.Keys.ToList().ForEach(key => Debug.Log(JsonConvert.SerializeObject(Templates[key])));
             }
 
             // Text
@@ -49,7 +49,7 @@ namespace Cytoid.Storyboard
                     }
                 }
 
-                Texts.ForEach(text => Debug.Log(JsonConvert.SerializeObject(text)));
+                // Texts.ForEach(text => Debug.Log(JsonConvert.SerializeObject(text)));
             }
 
             // Sprite
@@ -64,7 +64,7 @@ namespace Cytoid.Storyboard
                     }
                 }
 
-                Sprites.ForEach(sprite => Debug.Log(JsonConvert.SerializeObject(sprite)));
+                // Sprites.ForEach(sprite => Debug.Log(JsonConvert.SerializeObject(sprite)));
             }
 
             // Controller
@@ -79,7 +79,7 @@ namespace Cytoid.Storyboard
                     }
                 }
                 
-                Controllers.ForEach(controller => Debug.Log(JsonConvert.SerializeObject(controller)));
+                // Controllers.ForEach(controller => Debug.Log(JsonConvert.SerializeObject(controller)));
             }
 
             // Trigger
@@ -196,7 +196,6 @@ namespace Cytoid.Storyboard
                 var lastTime = baseTime;
 
                 var allStates = new JArray();
-                Debug.Log(rootObject["states"].Type.ToString());
                 foreach (var childToken in (JArray) rootObject["states"])
                 {
                     foreach (var child in PopulateJObjects((JObject) childToken))

@@ -15,9 +15,6 @@ EditorBuildSettings:
     path: Assets/Scenes/LevelSelection.unity
     guid: 3eba094fcdbf848249cf9c58c21586ce
   - enabled: 0
-    path: Assets/Scenes/Game.unity
-    guid: 5533a284d8a36439bb58426eaaf32402
-  - enabled: 0
     path: Assets/Scenes/CytusGame.unity
     guid: 03c16ae10fa9140c0b0d8c940582f883
   - enabled: 0

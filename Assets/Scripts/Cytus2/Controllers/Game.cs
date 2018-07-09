@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using CodeStage.AdvancedFPSCounter;
 using Cytus2.Models;
 using Cytus2.Views;
 using Lean.Touch;
@@ -70,7 +71,7 @@ namespace Cytus2.Controllers
         {
             base.Awake();
             
-            Application.targetFrameRate = 60;
+            Application.targetFrameRate = 120;
 
             IsLoaded = false;
             IsPlaying = false;
@@ -143,7 +144,7 @@ namespace Cytus2.Controllers
                 CytoidApplication.CurrentChartType = Level.charts[0].type;
             }
             
-            Chart = (Chart) Level.charts.Find(it => it.type == CytoidApplication.CurrentChartType).chart;
+            Chart = Level.charts.Find(it => it.type == CytoidApplication.CurrentChartType).chart;
             
             // Load audio
             var audioPath = Level.BasePath + Level.GetMusicPath(CytoidApplication.CurrentChartType);
@@ -250,14 +251,14 @@ namespace Cytus2.Controllers
 
                 if (GameOptions.Instance.UseAndroidNativeAudio)
                 {
-                    Time = UnityEngine.Time.time - StartTime + GameOptions.Instance.StartAt - 
-                           GameOptions.Instance.ChartOffset - PauseDuration;
+                    Time = UnityEngine.Time.time - StartTime + GameOptions.Instance.StartAt -
+                           GameOptions.Instance.ChartOffset + Chart.MusicOffset - PauseDuration;
                     AudioPercentage = Time / ANAMusic.getDuration(nativeAudioId);
                 }
                 else
                 {
                     Time = AudioSource.timeSamples * 1.0f / AudioSource.clip.frequency -
-                           GameOptions.Instance.ChartOffset;
+                           GameOptions.Instance.ChartOffset + Chart.MusicOffset;
                     AudioPercentage = Time / AudioSource.clip.length;
                 }
 
@@ -304,7 +305,7 @@ namespace Cytus2.Controllers
                     switch (notes[currentNoteId].type)
                     {
                         case NoteType.DragHead:
-                            int id = currentNoteId;
+                            var id = currentNoteId;
                             while (notes[id].next_id > 0)
                             {
                                 SpawnDragLine(notes[id], notes[notes[id].next_id]);

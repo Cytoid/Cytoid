@@ -31,6 +31,9 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
     public static string DataPath;
     [HideInInspector] public static bool UseDoozyUi;
 
+    public static int OriginalWidth;
+    public static int OriginalHeight;
+
     public static Texture2D BackgroundTexture;
 
     protected override void Awake()
@@ -45,12 +48,12 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 
         DontDestroyOnLoad(gameObject);
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
-        Application.targetFrameRate = 60;
-        #if UNITY_STANDALONE
         Application.targetFrameRate = 120;
-        #endif
         ZPlayerPrefs.Initialize(SecuredConstants.password, SecuredConstants.salt);
         UseDoozyUi = Type.GetType("DoozyUI.UIElement") != null;
+        
+        OriginalWidth = Screen.width;
+        OriginalHeight = Screen.height;
     }
 
     private void Start()
@@ -281,6 +284,11 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
                 if (level.id == lastLevel) CurrentLevel = level;
             }
         }
+    }
+
+    public static void ResetResolution()
+    {
+        Screen.SetResolution(OriginalWidth, OriginalHeight, true);
     }
 
     private bool extracting;

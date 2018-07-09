@@ -36,6 +36,8 @@ public class GameResultController : MonoBehaviour
 	
 	private void Start()
 	{
+		CytoidApplication.ResetResolution();
+		
 		IsUploading = false;
 		
 		BackgroundCanvasHelper.SetupBackgroundCanvas(gameObject.scene);
@@ -142,15 +144,7 @@ public class GameResultController : MonoBehaviour
 		switch (action)
 		{
 			case Action.Retry:
-				switch (CytoidApplication.CurrentLevel.Format)
-				{
-					case LevelFormat.Cytus2:
-						SceneManager.LoadScene("CytusGame");
-						break;
-					case LevelFormat.Cytus:
-						SceneManager.LoadScene("Game");
-						break;
-				}
+				SceneManager.LoadScene("CytusGame");
 				break;
 			case Action.Next:
 				SceneManager.LoadScene("LevelSelection");

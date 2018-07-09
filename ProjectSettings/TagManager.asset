@@ -21,6 +21,7 @@ TagManager:
   - Early
   - Late
   - Note
+  - FpsCounter
   layers:
   - Default
   - TransparentFX

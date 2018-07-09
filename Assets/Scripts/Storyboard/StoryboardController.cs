@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using Cytus2.Controllers;
 using QuickEngine.Extensions;
+using SleekRender;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -13,13 +14,15 @@ namespace Cytoid.Storyboard
 {
     public class StoryboardController : SingletonMonoBehavior<StoryboardController>
     {
+
+        public bool ShowEffects = true;
         
         private FileSystemWatcher watcher;
 
         public UnityEngine.UI.Text TextPrefab;
         public Image SpritePrefab;
         public PrismEffects Prism;
-        public CameraFilterPack_Blur_Radial RadialBlur;
+        public CameraFilterPack_Blur_Radial_Fast RadialBlur;
         public CameraFilterPack_Color_BrightContrastSaturation ColorAdjustment;
         public CameraFilterPack_Color_GrayScale GrayScale;
         public CameraFilterPack_Color_Noise Noise;
@@ -34,8 +37,9 @@ namespace Cytoid.Storyboard
         public CameraFilterPack_TV_ARCADE_2 Arcade;
         public CameraFilterPack_TV_Chromatical Chromatical;
         public CameraFilterPack_TV_Videoflip Tape;
+        public SleekRenderPostProcess Sleek;
         public Canvas Canvas;
-
+        
         [HideInInspector] public Rect CanvasRect;
 
         [HideInInspector] public Storyboard Storyboard;
@@ -46,7 +50,7 @@ namespace Cytoid.Storyboard
         [HideInInspector] public Dictionary<Image, Sprite> SpriteViews = new Dictionary<Image, Sprite>();
         [HideInInspector] public List<Controller> Controllers = new List<Controller>();
         [HideInInspector] public List<Trigger> Triggers = new List<Trigger>();
-        
+
         public static float Time
         {
             get { return Game.Instance.Time; }
@@ -62,12 +66,14 @@ namespace Cytoid.Storyboard
                 text.color = UnityEngine.Color.white;
                 text.GetComponent<CanvasGroup>().alpha = 0;
             }
+
             foreach (var sprite in SpriteViews.Keys)
             {
                 sprite.color = UnityEngine.Color.white;
                 sprite.preserveAspect = true;
                 sprite.GetComponent<CanvasGroup>().alpha = 0;
             }
+
             Camera.main.transform.position = new Vector3(0, 0, -10);
             Camera.main.transform.eulerAngles = Vector3.zero;
             Camera.main.orthographic = true;
@@ -127,15 +133,15 @@ namespace Cytoid.Storyboard
             {
                 yield return null;
             }
-            
+
             CanvasRect = Canvas.GetComponent<RectTransform>().rect;
-            
+
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
             Environment.SetEnvironmentVariable("MONO_MANAGED_WATCHER", "enabled");
 #endif
 
             var path = Game.Instance.Level.BasePath + "/storyboard.json";
-            
+
             if (!File.Exists(path))
             {
                 enabled = false;
@@ -152,16 +158,32 @@ namespace Cytoid.Storyboard
                 watcher.NotifyFilter = NotifyFilters.LastWrite;
                 watcher.Changed += delegate
                 {
-                    UnityMainThreadDispatcher.Instance().Enqueue(() =>
-                    {
-                        StartCoroutine(Reload(path));
-                    });
+                    UnityMainThreadDispatcher.Instance().Enqueue(() => { StartCoroutine(Reload(path)); });
                 };
                 watcher.EnableRaisingEvents = true;
             }
-            
+
             // Listen to events
             EventKit.Subscribe<GameNote>("note clear", OnNoteClear);
+            
+            // Effect settings
+            switch (PlayerPrefs.GetString("storyboard effects"))
+            {
+                case "High":
+                    Screen.SetResolution(CytoidApplication.OriginalWidth, CytoidApplication.OriginalHeight, true);
+                    break;
+                case "Medium":
+                    Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.75),
+                        (int) (CytoidApplication.OriginalHeight * 0.75), true);
+                    break;
+                case "Low":
+                    Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.5),
+                        (int) (CytoidApplication.OriginalHeight * 0.5), true);
+                    break;
+                case "None":
+                    ShowEffects = false;
+                    break;
+            }
 
             yield return Reload(path);
         }
@@ -186,7 +208,7 @@ namespace Cytoid.Storyboard
 
             // Clear scene
             Controllers.Clear();
-            
+
             // Clear triggers
             Triggers.Clear();
 
@@ -207,7 +229,7 @@ namespace Cytoid.Storyboard
 
             // Create scene
             Controllers = Storyboard.Controllers;
-            
+
             // Initialize triggers
             Triggers = Storyboard.Triggers;
 
@@ -217,6 +239,11 @@ namespace Cytoid.Storyboard
         private void Update()
         {
             if (Time < 0) return;
+            if (!Game.Instance.IsPlaying)
+            {
+                Reset();
+                return;
+            }
 
             #region Text
 
@@ -285,7 +312,9 @@ namespace Cytoid.Storyboard
                 // Color
                 if (a.Color != null)
                 {
-                    textView.color = b.Color == null ? a.Color.ToUnityColor() : UnityEngine.Color.Lerp(a.Color.ToUnityColor(), b.Color.ToUnityColor(), Ease(0, 1));
+                    textView.color = b.Color == null
+                        ? a.Color.ToUnityColor()
+                        : UnityEngine.Color.Lerp(a.Color.ToUnityColor(), b.Color.ToUnityColor(), Ease(0, 1));
                 }
 
                 // Opacity
@@ -437,7 +466,7 @@ namespace Cytoid.Storyboard
                 {
                     spriteView.rectTransform.SetHeight(EaseCanvasY(a.Height, b.Height));
                 }
-                
+
                 // Preserve aspect
                 if (a.PreserveAspect != null)
                 {
@@ -460,340 +489,344 @@ namespace Cytoid.Storyboard
                     stateA = a;
                     stateB = b;
                     ease = a.Easing;
-                    
-                    // Bloom
 
-                    if (a.Bloom != null)
+                    if (!Testing && ShowEffects)
                     {
-                        Prism.useBloom = (bool) a.Bloom;
-                        if ((bool) a.Bloom)
-                        {
+                        // Bloom
 
-                            // Bloom Intensity
-                            if (a.BloomIntensity != float.MinValue)
+                        if (a.Bloom != null)
+                        {
+                            Sleek.settings.bloomEnabled = (bool) a.Bloom;
+                            Sleek.enabled = Sleek.settings.bloomEnabled;
+                            if ((bool) a.Bloom)
                             {
-                                Prism.bloomIntensity = Ease(a.BloomIntensity, b.BloomIntensity);
+                                // Bloom Intensity
+                                if (a.BloomIntensity != float.MinValue)
+                                {
+                                    Sleek.settings.bloomIntensity = Ease(a.BloomIntensity, b.BloomIntensity);
+                                }
                             }
+                        }
+
+                        // Vignette
+
+                        if (a.Vignette != null)
+                        {
+                            Prism.useVignette = (bool) a.Vignette;
+                            if ((bool) a.Vignette)
+                            {
+                                // Vignette Intensity
+                                if (a.VignetteIntensity != float.MinValue)
+                                {
+                                    Prism.vignetteStrength = Ease(a.VignetteIntensity, b.VignetteIntensity);
+                                }
+
+                                // Vignette Color
+                                if (a.VignetteColor != null)
+                                {
+                                    Prism.vignetteColor = b.VignetteColor == null
+                                        ? a.VignetteColor.ToUnityColor()
+                                        : UnityEngine.Color.Lerp(a.VignetteColor.ToUnityColor(),
+                                            b.VignetteColor.ToUnityColor(), Ease(0, 1));
+                                }
+
+                                // Vignette Start
+                                if (a.VignetteStart != float.MinValue)
+                                {
+                                    Prism.vignetteStart = Ease(a.VignetteStart, b.VignetteStart);
+                                }
+
+                                // Vignette End
+                                if (a.VignetteEnd != float.MinValue)
+                                {
+                                    Prism.vignetteEnd = Ease(a.VignetteEnd, b.VignetteEnd);
+                                }
+                            }
+                        }
+
+                        // Chromatic
+                        if (a.Chromatic != null)
+                        {
+                            Prism.useChromaticAberration = (bool) a.Chromatic;
+                            if ((bool) a.Chromatic)
+                            {
+                                // Chromatic Intensity
+                                if (a.ChromaticIntensity != float.MinValue)
+                                {
+                                    Prism.chromaticIntensity = Ease(a.ChromaticIntensity, b.ChromaticIntensity);
+                                }
+
+                                // Chromatic Start
+                                if (a.ChromaticStart != float.MinValue)
+                                {
+                                    Prism.chromaticDistanceOne = Ease(a.ChromaticStart, b.ChromaticStart);
+                                }
+
+                                // Chromatic End
+                                if (a.ChromaticEnd != float.MinValue)
+                                {
+                                    Prism.chromaticDistanceTwo = Ease(a.ChromaticEnd, b.ChromaticEnd);
+                                }
+                            }
+                        }
+
+                        if (a.RadialBlur != null)
+                        {
+                            RadialBlur.enabled = (bool) a.RadialBlur;
+                            if ((bool) a.RadialBlur)
+                            {
+                                if (a.RadialBlurIntensity != float.MinValue)
+                                {
+                                    RadialBlur.Intensity = Ease(a.RadialBlurIntensity, b.RadialBlurIntensity);
+                                }
+                            }
+                        }
+
+                        if (a.ColorAdjustment != null)
+                        {
+                            ColorAdjustment.enabled = (bool) a.ColorAdjustment;
+                            if ((bool) a.ColorAdjustment)
+                            {
+                                if (a.Brightness != float.MinValue)
+                                {
+                                    ColorAdjustment.Brightness = Ease(a.Brightness, b.Brightness);
+                                }
+
+                                if (a.Saturation != float.MinValue)
+                                {
+                                    ColorAdjustment.Saturation = Ease(a.Saturation, b.Saturation);
+                                }
+
+                                if (a.Contrast != float.MinValue)
+                                {
+                                    ColorAdjustment.Contrast = Ease(a.Contrast, b.Contrast);
+                                }
+                            }
+                        }
+
+                        if (a.ColorFilter != null)
+                        {
+                            ColorFilter.enabled = (bool) a.ColorFilter;
+                            if ((bool) a.ColorFilter)
+                            {
+                                if (a.ColorFilterColor != null)
+                                {
+                                    ColorFilter.ColorRGB = b.ColorFilterColor == null
+                                        ? a.ColorFilterColor.ToUnityColor()
+                                        : UnityEngine.Color.Lerp(a.ColorFilterColor.ToUnityColor(),
+                                            b.ColorFilterColor.ToUnityColor(), Ease(0, 1));
+                                }
+                            }
+                        }
+
+                        if (a.GrayScale != null)
+                        {
+                            GrayScale.enabled = (bool) a.GrayScale;
+                            if ((bool) a.GrayScale)
+                            {
+                                if (a.GrayScaleIntensity != float.MinValue)
+                                {
+                                    GrayScale._Fade = Ease(a.GrayScaleIntensity, b.GrayScaleIntensity);
+                                }
+                            }
+                        }
+
+                        if (a.Noise != null)
+                        {
+                            Noise.enabled = (bool) a.Noise;
+                            if ((bool) a.Noise)
+                            {
+                                if (a.NoiseIntensity != float.MinValue)
+                                {
+                                    Noise.Noise = Ease(a.NoiseIntensity, b.NoiseIntensity);
+                                }
+                            }
+                        }
+
+                        if (a.Sepia != null)
+                        {
+                            Sepia.enabled = (bool) a.Sepia;
+                            if ((bool) a.Sepia)
+                            {
+                                if (a.SepiaIntensity != float.MinValue)
+                                {
+                                    Sepia._Fade = Ease(a.SepiaIntensity, b.SepiaIntensity);
+                                }
+                            }
+                        }
+
+                        if (a.Dream != null)
+                        {
+                            Dream.enabled = (bool) a.Dream;
+                            if ((bool) a.Dream)
+                            {
+                                if (a.DreamIntensity != float.MinValue)
+                                {
+                                    Dream.Distortion = Ease(a.DreamIntensity, b.DreamIntensity);
+                                }
+                            }
+                        }
+
+                        if (a.Fisheye != null)
+                        {
+                            Fisheye.enabled = (bool) a.Fisheye;
+                            if ((bool) a.Fisheye)
+                            {
+                                if (a.FisheyeIntensity != float.MinValue)
+                                {
+                                    Fisheye.Distortion = Ease(a.FisheyeIntensity, b.FisheyeIntensity);
+                                }
+                            }
+                        }
+
+                        if (a.Shockwave != null)
+                        {
+                            Shockwave.enabled = (bool) a.Shockwave;
+                            if ((bool) a.Shockwave)
+                            {
+                                if (a.ShockwaveSpeed != float.MinValue)
+                                {
+                                    Shockwave.Speed = Ease(a.ShockwaveSpeed, b.ShockwaveSpeed);
+                                }
+                            }
+                            else
+                            {
+                                Shockwave.TimeX = 1.0f; // Reset shock wave position
+                            }
+                        }
+
+                        if (a.Focus != null)
+                        {
+                            Focus.enabled = (bool) a.Focus;
+                            if ((bool) a.Focus)
+                            {
+                                if (a.FocusIntensity != float.MinValue)
+                                {
+                                    Focus.Intensity = Ease(a.FocusIntensity, b.FocusIntensity);
+                                }
+
+                                if (a.FocusSize != float.MinValue)
+                                {
+                                    Focus.Size = Ease(a.FocusSize, b.FocusSize);
+                                }
+
+                                if (a.FocusSpeed != float.MinValue)
+                                {
+                                    Focus.Speed = Ease(a.FocusSpeed, b.FocusSpeed);
+                                }
+
+                                if (a.FocusColor != null)
+                                {
+                                    Focus.Color = b.FocusColor == null
+                                        ? a.FocusColor.ToUnityColor()
+                                        : UnityEngine.Color.Lerp(a.FocusColor.ToUnityColor(),
+                                            b.FocusColor.ToUnityColor(),
+                                            Ease(0, 1));
+                                }
+                            }
+                        }
+
+                        if (a.Glitch != null)
+                        {
+                            Glitch.enabled = (bool) a.Glitch;
+                            if ((bool) a.Glitch)
+                            {
+                                if (a.GlitchIntensity != float.MinValue)
+                                {
+                                    Glitch.Glitch = Ease(a.GlitchIntensity, b.GlitchIntensity);
+                                }
+                            }
+                        }
+
+                        if (a.Artifact != null)
+                        {
+                            Artifact.enabled = (bool) a.Artifact;
+                            if ((bool) a.Artifact)
+                            {
+                                if (a.ArtifactIntensity != float.MinValue)
+                                {
+                                    Artifact.Fade = Ease(a.ArtifactIntensity, b.ArtifactIntensity);
+                                }
+
+                                if (a.ArtifactColorisation != float.MinValue)
+                                {
+                                    Artifact.Colorisation = Ease(a.ArtifactColorisation, b.ArtifactColorisation);
+                                }
+
+                                if (a.ArtifactParasite != float.MinValue)
+                                {
+                                    Artifact.Parasite = Ease(a.ArtifactParasite, b.ArtifactParasite);
+                                }
+
+                                if (a.ArtifactNoise != null)
+                                {
+                                    Artifact.Noise = Ease(a.ArtifactNoise, b.ArtifactNoise);
+                                }
+                            }
+                        }
+
+                        if (a.Arcade != null)
+                        {
+                            Arcade.enabled = (bool) a.Arcade;
+                            if ((bool) a.Arcade)
+                            {
+                                if (a.ArcadeIntensity != float.MinValue)
+                                {
+                                    Arcade.Fade = Ease(a.ArcadeIntensity, b.ArcadeIntensity);
+                                }
+
+                                if (a.ArcadeInterferanceSize != float.MinValue)
+                                {
+                                    Arcade.Interferance_Size = Ease(a.ArcadeInterferanceSize, b.ArcadeInterferanceSize);
+                                }
+
+                                if (a.ArcadeInterferanceSpeed != float.MinValue)
+                                {
+                                    Arcade.Interferance_Speed =
+                                        Ease(a.ArcadeInterferanceSpeed, b.ArcadeInterferanceSpeed);
+                                }
+
+                                if (a.ArcadeContrast != float.MinValue)
+                                {
+                                    Arcade.Contrast = Ease(a.ArcadeContrast, b.ArcadeContrast);
+                                }
+                            }
+                        }
+
+                        if (a.Chromatical != null)
+                        {
+                            Chromatical.enabled = (bool) a.Chromatical;
+                            if ((bool) a.Chromatical)
+                            {
+                                if (a.ChromaticalFade != float.MinValue)
+                                {
+                                    Chromatical.Fade = Ease(a.ChromaticalFade, b.ChromaticalFade);
+                                }
+
+                                if (a.ChromaticalIntensity != float.MinValue)
+                                {
+                                    Chromatical.Intensity = Ease(a.ChromaticalIntensity, b.ChromaticalIntensity);
+                                }
+
+                                if (a.ChromaticalSpeed != float.MinValue)
+                                {
+                                    Chromatical.Speed = Ease(a.ChromaticalSpeed, b.ChromaticalSpeed);
+                                }
+                            }
+                            else
+                            {
+                                Chromatical.SetTimeX(1.0f);
+                            }
+                        }
+
+                        if (a.Tape != null)
+                        {
+                            Tape.enabled = (bool) a.Tape;
                         }
                     }
 
-                    // Vignette
+                    var camera = Camera.main;
 
-                    if (a.Vignette != null)
-                    {
-                        Prism.useVignette = (bool) a.Vignette;
-                        if ((bool) a.Vignette)
-                        {
-
-                            // Vignette Intensity
-                            if (a.VignetteIntensity != float.MinValue)
-                            {
-                                Prism.vignetteStrength = Ease(a.VignetteIntensity, b.VignetteIntensity);
-                            }
-
-                            // Vignette Color
-                            if (a.VignetteColor != null)
-                            {
-                                Prism.vignetteColor = b.VignetteColor == null
-                                    ? a.VignetteColor.ToUnityColor()
-                                    : UnityEngine.Color.Lerp(a.VignetteColor.ToUnityColor(),
-                                        b.VignetteColor.ToUnityColor(), Ease(0, 1));
-                            }
-
-                            // Vignette Start
-                            if (a.VignetteStart != float.MinValue)
-                            {
-                                Prism.vignetteStart = Ease(a.VignetteStart, b.VignetteStart);
-                            }
-
-                            // Vignette End
-                            if (a.VignetteEnd != float.MinValue)
-                            {
-                                Prism.vignetteEnd = Ease(a.VignetteEnd, b.VignetteEnd);
-                            }
-                        }
-                    }
-
-                    // Chromatic
-                    if (a.Chromatic != null)
-                    {
-                        Prism.useChromaticAberration = (bool) a.Chromatic;
-                        if ((bool) a.Chromatic)
-                        {
-                            // Chromatic Intensity
-                            if (a.ChromaticIntensity != float.MinValue)
-                            {
-                                Prism.chromaticIntensity = Ease(a.ChromaticIntensity, b.ChromaticIntensity);
-                            }
-
-                            // Chromatic Start
-                            if (a.ChromaticStart != float.MinValue)
-                            {
-                                Prism.chromaticDistanceOne = Ease(a.ChromaticStart, b.ChromaticStart);
-                            }
-
-                            // Chromatic End
-                            if (a.ChromaticEnd != float.MinValue)
-                            {
-                                Prism.chromaticDistanceTwo = Ease(a.ChromaticEnd, b.ChromaticEnd);
-                            }
-                        }
-                    }
-
-                    if (a.RadialBlur != null)
-                    {
-                        RadialBlur.enabled = (bool) a.RadialBlur;
-                        if ((bool) a.RadialBlur)
-                        {
-                            if (a.RadialBlurIntensity != float.MinValue)
-                            {
-                                RadialBlur.Intensity = Ease(a.RadialBlurIntensity, b.RadialBlurIntensity);
-                            }
-                        }
-                    }
-
-                    if (a.ColorAdjustment != null)
-                    {
-                        ColorAdjustment.enabled = (bool) a.ColorAdjustment;
-                        if ((bool) a.ColorAdjustment)
-                        {
-                            if (a.Brightness != float.MinValue)
-                            {
-                                ColorAdjustment.Brightness = Ease(a.Brightness, b.Brightness);
-                            }
-
-                            if (a.Saturation != float.MinValue)
-                            {
-                                ColorAdjustment.Saturation = Ease(a.Saturation, b.Saturation);
-                            }
-
-                            if (a.Contrast != float.MinValue)
-                            {
-                                ColorAdjustment.Contrast = Ease(a.Contrast, b.Contrast);
-                            }
-                        }
-                    }
-
-                    if (a.ColorFilter != null)
-                    {
-                        ColorFilter.enabled = (bool) a.ColorFilter;
-                        if ((bool) a.ColorFilter)
-                        {
-                            if (a.ColorFilterColor != null)
-                            {
-                                ColorFilter.ColorRGB = b.ColorFilterColor == null
-                                    ? a.ColorFilterColor.ToUnityColor()
-                                    : UnityEngine.Color.Lerp(a.ColorFilterColor.ToUnityColor(),
-                                        b.ColorFilterColor.ToUnityColor(), Ease(0, 1));
-                            }
-                        }
-                    }
-
-                    if (a.GrayScale != null)
-                    {
-                        GrayScale.enabled = (bool) a.GrayScale;
-                        if ((bool) a.GrayScale)
-                        {
-                            if (a.GrayScaleIntensity != float.MinValue)
-                            {
-                                GrayScale._Fade = Ease(a.GrayScaleIntensity, b.GrayScaleIntensity);
-                            }
-                        }
-                    }
-
-                    if (a.Noise != null)
-                    {
-                        Noise.enabled = (bool) a.Noise;
-                        if ((bool) a.Noise)
-                        {
-                            if (a.NoiseIntensity != float.MinValue)
-                            {
-                                Noise.Noise = Ease(a.NoiseIntensity, b.NoiseIntensity);
-                            }
-                        }
-                    }
-
-                    if (a.Sepia != null)
-                    {
-                        Sepia.enabled = (bool) a.Sepia;
-                        if ((bool) a.Sepia)
-                        {
-                            if (a.SepiaIntensity != float.MinValue)
-                            {
-                                Sepia._Fade = Ease(a.SepiaIntensity, b.SepiaIntensity);
-                            }
-                        }
-                    }
-
-                    if (a.Dream != null)
-                    {
-                        Dream.enabled = (bool) a.Dream;
-                        if ((bool) a.Dream)
-                        {
-                            if (a.DreamIntensity != float.MinValue)
-                            {
-                                Dream.Distortion = Ease(a.DreamIntensity, b.DreamIntensity);
-                            }
-                        }
-                    }
-
-                    if (a.Fisheye != null)
-                    {
-                        Fisheye.enabled = (bool) a.Fisheye;
-                        if ((bool) a.Fisheye)
-                        {
-                            if (a.FisheyeIntensity != float.MinValue)
-                            {
-                                Fisheye.Distortion = Ease(a.FisheyeIntensity, b.FisheyeIntensity);
-                            }
-                        }
-                    }
-
-                    if (a.Shockwave != null)
-                    {
-                        Shockwave.enabled = (bool) a.Shockwave;
-                        if ((bool) a.Shockwave)
-                        {
-                            if (a.ShockwaveSpeed != float.MinValue)
-                            {
-                                Shockwave.Speed = Ease(a.ShockwaveSpeed, b.ShockwaveSpeed);
-                            }
-                        }
-                        else
-                        {
-                            Shockwave.TimeX = 1.0f; // Reset shock wave position
-                        }
-                    }
-
-                    if (a.Focus != null)
-                    {
-                        Focus.enabled = (bool) a.Focus;
-                        if ((bool) a.Focus)
-                        {
-                            if (a.FocusIntensity != float.MinValue)
-                            {
-                                Focus.Intensity = Ease(a.FocusIntensity, b.FocusIntensity);
-                            }
-
-                            if (a.FocusSize != float.MinValue)
-                            {
-                                Focus.Size = Ease(a.FocusSize, b.FocusSize);
-                            }
-
-                            if (a.FocusSpeed != float.MinValue)
-                            {
-                                Focus.Speed = Ease(a.FocusSpeed, b.FocusSpeed);
-                            }
-
-                            if (a.FocusColor != null)
-                            {
-                                Focus.Color = b.FocusColor == null
-                                    ? a.FocusColor.ToUnityColor()
-                                    : UnityEngine.Color.Lerp(a.FocusColor.ToUnityColor(), b.FocusColor.ToUnityColor(),
-                                        Ease(0, 1));
-                            }
-                        }
-                    }
-
-                    if (a.Glitch != null)
-                    {
-                        Glitch.enabled = (bool) a.Glitch;
-                        if ((bool) a.Glitch)
-                        {
-                            if (a.GlitchIntensity != float.MinValue)
-                            {
-                                Glitch.Glitch = Ease(a.GlitchIntensity, b.GlitchIntensity);
-                            }
-                        }
-                    }
-
-                    if (a.Artifact != null)
-                    {
-                        Artifact.enabled = (bool) a.Artifact;
-                        if ((bool) a.Artifact)
-                        {
-                            if (a.ArtifactIntensity != float.MinValue)
-                            {
-                                Artifact.Fade = Ease(a.ArtifactIntensity, b.ArtifactIntensity);
-                            }
-
-                            if (a.ArtifactColorisation != float.MinValue)
-                            {
-                                Artifact.Colorisation = Ease(a.ArtifactColorisation, b.ArtifactColorisation);
-                            }
-
-                            if (a.ArtifactParasite != float.MinValue)
-                            {
-                                Artifact.Parasite = Ease(a.ArtifactParasite, b.ArtifactParasite);
-                            }
-
-                            if (a.ArtifactNoise != null)
-                            {
-                                Artifact.Noise = Ease(a.ArtifactNoise, b.ArtifactNoise);
-                            }
-                        }
-                    }
-
-                    if (a.Arcade != null)
-                    {
-                        Arcade.enabled = (bool) a.Arcade;
-                        if ((bool) a.Arcade)
-                        {
-                            if (a.ArcadeIntensity != float.MinValue)
-                            {
-                                Arcade.Fade = Ease(a.ArcadeIntensity, b.ArcadeIntensity);
-                            }
-
-                            if (a.ArcadeInterferanceSize != float.MinValue)
-                            {
-                                Arcade.Interferance_Size = Ease(a.ArcadeInterferanceSize, b.ArcadeInterferanceSize);
-                            }
-
-                            if (a.ArcadeInterferanceSpeed != float.MinValue)
-                            {
-                                Arcade.Interferance_Speed = Ease(a.ArcadeInterferanceSpeed, b.ArcadeInterferanceSpeed);
-                            }
-
-                            if (a.ArcadeContrast != float.MinValue)
-                            {
-                                Arcade.Contrast = Ease(a.ArcadeContrast, b.ArcadeContrast);
-                            }
-                        }
-                    }
-
-                    if (a.Chromatical != null)
-                    {
-                        Chromatical.enabled = (bool) a.Chromatical;
-                        if ((bool) a.Chromatical)
-                        {
-                            if (a.ChromaticalFade != float.MinValue)
-                            {
-                                Chromatical.Fade = Ease(a.ChromaticalFade, b.ChromaticalFade);
-                            }
-
-                            if (a.ChromaticalIntensity != float.MinValue)
-                            {
-                                Chromatical.Intensity = Ease(a.ChromaticalIntensity, b.ChromaticalIntensity);
-                            }
-
-                            if (a.ChromaticalSpeed != float.MinValue)
-                            {
-                                Chromatical.Speed = Ease(a.ChromaticalSpeed, b.ChromaticalSpeed);
-                            }
-                        }
-                        else
-                        {
-                            Chromatical.SetTimeX(1.0f);
-                        }
-                    }
-
-                    if (a.Tape != null)
-                    {
-                        Tape.enabled = (bool) a.Tape;
-                    }
-
-                    var camera = UnityEngine.Camera.main;
-                    
                     // X
                     if (a.X != float.MinValue)
                     {
@@ -829,7 +862,7 @@ namespace Cytoid.Storyboard
                         eulerAngles.z = Ease(a.RotZ, b.RotZ);
                         camera.transform.eulerAngles = eulerAngles;
                     }
-                    
+
                     // Perspective
                     if (a.Perspective != null)
                     {
@@ -848,6 +881,52 @@ namespace Cytoid.Storyboard
             }
 
             #endregion
+
+            if (Testing)
+            {
+                Prism.useBloom = BloomPrismToggle.isOn;
+                Prism.useVignette = VignettePrismToggle.isOn;
+                Prism.useChromaticAberration = ChromaticToggle.isOn;
+                Chromatical.enabled = ChromaticalToggle.isOn;
+                RadialBlur.enabled = RadialBlurToggle.isOn;
+                ColorAdjustment.enabled = ColorAdjustmentToggle.isOn;
+                ColorFilter.enabled = ColorFilterCfpToggle.isOn;
+                GrayScale.enabled = GrayScaleToggle.isOn;
+                Noise.enabled = NoiseToggle.isOn;
+                Sepia.enabled = SepiaToggle.isOn;
+                Dream.enabled = DreamToggle.isOn;
+                Fisheye.enabled = FisheyeToggle.isOn;
+                Shockwave.enabled = ShockwaveToggle.isOn;
+                Focus.enabled = FocusToggle.isOn;
+                Glitch.enabled = GlitchToggle.isOn;
+                Arcade.enabled = ArcadeToggle.isOn;
+                Tape.enabled = TapeToggle.isOn;
+                if (LowestResToggle.isOn)
+                {
+                    Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.5), (int) (CytoidApplication.OriginalHeight * 0.5), true);
+                }
+                else if (LowerResToggle.isOn)
+                {
+                    Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.8),
+                        (int) (CytoidApplication.OriginalHeight * 0.8), true);
+                }
+                else
+                {
+                    Screen.SetResolution(CytoidApplication.OriginalWidth, CytoidApplication.OriginalHeight, true);
+                }
+
+                if (BloomSleekToggle.isOn || VignetteSleekToggle.isOn || ColorFilterSleekToggle.isOn)
+                {
+                    Sleek.enabled = true;
+                    Sleek.settings.bloomEnabled = BloomSleekToggle.isOn;
+                    Sleek.settings.vignetteEnabled = VignetteSleekToggle.isOn;
+                    Sleek.settings.colorizeEnabled = ColorFilterSleekToggle.isOn;
+                }
+                else
+                {
+                    Sleek.enabled = false;
+                }
+            }
         }
 
         public void OnNoteClear(GameNote note)
@@ -864,7 +943,6 @@ namespace Cytoid.Storyboard
 
         public void OnTrigger(Trigger trigger)
         {
-            
             // Spawn objects
             if (trigger.Spawn != null)
             {
@@ -892,6 +970,7 @@ namespace Cytoid.Storyboard
                 Spawn(text);
                 break;
             }
+
             foreach (var child in Storyboard.Sprites)
             {
                 if (child.Id != id) continue;
@@ -932,7 +1011,7 @@ namespace Cytoid.Storyboard
         public void RecalculateTime<T>(Object<T> obj) where T : ObjectState
         {
             var baseTime = Time;
-            
+
             if (obj.States[0].Time != float.MaxValue)
             {
                 baseTime = obj.States[0].Time;
@@ -941,7 +1020,7 @@ namespace Cytoid.Storyboard
             {
                 obj.States[0].Time = baseTime;
             }
-            
+
             var lastTime = baseTime;
             foreach (var state in obj.States)
             {
@@ -958,7 +1037,7 @@ namespace Cytoid.Storyboard
                 lastTime = state.Time;
             }
         }
-        
+
         private ObjectState stateA;
         private ObjectState stateB;
         private EasingFunction.Ease ease;
@@ -983,17 +1062,18 @@ namespace Cytoid.Storyboard
             if (j == float.MinValue) return i;
             return Ease(i / 600 * CanvasRect.height, j / 600 * CanvasRect.height);
         }
-        
+
         private float EaseOrthographicX(float i, float j)
         {
             if (j == float.MinValue) return i;
-            return Ease(i * UnityEngine.Camera.main.orthographicSize / Screen.height * Screen.width, j * UnityEngine.Camera.main.orthographicSize / Screen.height * Screen.width);
+            return Ease(i * Camera.main.orthographicSize / Screen.height * Screen.width,
+                j * Camera.main.orthographicSize / Screen.height * Screen.width);
         }
-        
+
         private float EaseOrthographicY(float i, float j)
         {
             if (j == float.MinValue) return i;
-            return Ease(i * UnityEngine.Camera.main.orthographicSize, j * UnityEngine.Camera.main.orthographicSize);
+            return Ease(i * Camera.main.orthographicSize, j * Camera.main.orthographicSize);
         }
 
         private void FindStates<T>(List<T> states, out T currentState, out T nextState) where T : ObjectState
@@ -1019,5 +1099,31 @@ namespace Cytoid.Storyboard
             currentState = states.Last();
             nextState = currentState;
         }
+        
+        public bool Testing = true;
+
+        public Toggle BloomPrismToggle;
+        public Toggle BloomSleekToggle;
+        public Toggle VignettePrismToggle;
+        public Toggle VignetteSleekToggle;
+        public Toggle ChromaticToggle;
+        public Toggle ChromaticalToggle;
+        public Toggle RadialBlurToggle;
+        public Toggle ColorAdjustmentToggle;
+        public Toggle ColorFilterCfpToggle;
+        public Toggle ColorFilterSleekToggle;
+        public Toggle GrayScaleToggle;
+        public Toggle NoiseToggle;
+        public Toggle SepiaToggle;
+        public Toggle DreamToggle;
+        public Toggle FisheyeToggle;
+        public Toggle ShockwaveToggle;
+        public Toggle FocusToggle;
+        public Toggle GlitchToggle;
+        public Toggle ArcadeToggle;
+        public Toggle TapeToggle;
+        public Toggle LowerResToggle;
+        public Toggle LowestResToggle;
+        
     }
 }

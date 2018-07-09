@@ -153,8 +153,8 @@ PlayerSettings:
     Android: me.tigerhix.cytoid
     iOS: me.tigerhix.cytoid
   buildNumber:
-    iOS: 32
-  AndroidBundleVersionCode: 32
+    iOS: 41
+  AndroidBundleVersionCode: 41
   AndroidMinSdkVersion: 16
   AndroidTargetSdkVersion: 0
   AndroidPreferredInstallLocation: 1
@@ -775,7 +775,7 @@ PlayerSettings:
   scriptingDefineSymbols:
     1: Controller;dUI_DoozyUI;CT_TPS
     4: AADOTWEEN;VS_SHARE;Controller;dUI_DoozyUI;CT_TPS
-    7: AADOTWEEN;VS_SHARE;Controller;dUI_DoozyUI
+    7: AADOTWEEN;VS_SHARE;Controller;dUI_DoozyUI;CT_TPS
   platformArchitecture: {}
   scriptingBackend: {}
   il2cppCompilerConfiguration: {}

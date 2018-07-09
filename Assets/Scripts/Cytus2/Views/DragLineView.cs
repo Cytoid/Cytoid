@@ -14,6 +14,9 @@ namespace Cytus2.Views
         public float IntroRatio;
         public float OutroRatio;
 
+        public float Start;
+        public float End;
+
         public float Length;
 
         private Game game;

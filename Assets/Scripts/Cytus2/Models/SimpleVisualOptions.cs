@@ -1,6 +1,9 @@
 ﻿using System;
+using Cytoid.Storyboard;
+using Cytus2.Controllers;
 using Cytus2.Views;
 using UnityEngine;
+using Color = UnityEngine.Color;
 
 namespace Cytus2.Models
 {
@@ -16,6 +19,53 @@ namespace Cytus2.Models
             HoldSize = ClickSize;
             LongHoldSize = ClickSize;
             FlickSize = ClickSize * 1.125f;
+
+            if (!(Game.Instance is StoryboardGame))
+            {
+
+                var color = Convert.HexToColor(PlayerPrefs.GetString("ring color"));
+                RingColorClick1 = color;
+                RingColorClick2 = color;
+                RingColorDrag1 = color;
+                RingColorDrag2 = color;
+                RingColorHold1 = color;
+                RingColorHold2 = color;
+                RingColorLongHold1 = color;
+                RingColorLongHold2 = color;
+                RingColorFlick1 = color;
+                RingColorFlick2 = color;
+
+                color = Convert.HexToColor(PlayerPrefs.GetString("fill color (click 1)"));
+                FillColorClick1 = color;
+
+                color = Convert.HexToColor(PlayerPrefs.GetString("fill color (click 2)"));
+                FillColorClick2 = color;
+
+                color = Convert.HexToColor(PlayerPrefs.GetString("fill color (drag 1)"));
+                FillColorDrag1 = color;
+
+                color = Convert.HexToColor(PlayerPrefs.GetString("fill color (drag 2)"));
+                FillColorDrag2 = color;
+
+                color = Convert.HexToColor(PlayerPrefs.GetString("fill color (hold 1)"));
+                FillColorHold1 = color;
+
+                color = Convert.HexToColor(PlayerPrefs.GetString("fill color (hold 2)"));
+                FillColorHold2 = color;
+
+                color = Convert.HexToColor(PlayerPrefs.GetString("fill color (long hold 1)"));
+                FillColorLongHold1 = color;
+
+                color = Convert.HexToColor(PlayerPrefs.GetString("fill color (long hold 2)"));
+                FillColorLongHold2 = color;
+
+                color = Convert.HexToColor(PlayerPrefs.GetString("fill color (flick 1)"));
+                FillColorFlick1 = color;
+
+                color = Convert.HexToColor(PlayerPrefs.GetString("fill color (flick 2)"));
+                FillColorFlick2 = color;
+
+            }
         }
         
         public bool OpaqueDragLine = true;

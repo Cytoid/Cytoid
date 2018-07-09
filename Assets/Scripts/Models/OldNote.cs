@@ -5,6 +5,7 @@ public class Note
 {
 
     public int id;
+    public int originalId;
     public float time;
     public float x;
     public float duration;
@@ -15,9 +16,9 @@ public class Note
     public Note connectedNote;
     public bool isChainHead;
 
-    public Note(int id, float time, float x, float duration, bool isChainHead)
+    public Note(int originalId, float time, float x, float duration, bool isChainHead)
     {
-        this.id = id;
+        this.originalId = originalId;
         this.time = time;
         this.x = x;
         this.duration = duration;

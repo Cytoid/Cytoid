@@ -153,8 +153,8 @@ PlayerSettings:
     Android: me.tigerhix.cytoid
     iOS: me.tigerhix.cytoid
   buildNumber:
-    iOS: 41
-  AndroidBundleVersionCode: 41
+    iOS: 42
+  AndroidBundleVersionCode: 42
   AndroidMinSdkVersion: 16
   AndroidTargetSdkVersion: 0
   AndroidPreferredInstallLocation: 1

@@ -225,9 +225,9 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         usernameInput.text = PlayerPrefs.GetString(PreferenceKeys.LastUsername());
         passwordInput.text = PlayerPrefs.GetString(PreferenceKeys.LastPassword());
 
-        if (!PlayerPrefs.HasKey(PreferenceKeys.RankedMode()))
+        if (!PlayerPrefs.HasKey("ranked"))
         {
-            PlayerPrefsExt.SetBool(PreferenceKeys.RankedMode(), false);
+            PlayerPrefsExt.SetBool("ranked", false);
         }
 
         rankStatusText.text = "Off";
@@ -257,11 +257,11 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             Popup.Make(this, "Now signing in, please wait...");
             return;
         }
-        if (LocalProfile.Exists())
+        if (User.Exists())
         {
-            var ranked = PlayerPrefsExt.GetBool(PreferenceKeys.RankedMode(), false);
+            var ranked = PlayerPrefsExt.GetBool("ranked", false);
             ranked = !ranked;
-            PlayerPrefsExt.SetBool(PreferenceKeys.RankedMode(), ranked);
+            PlayerPrefsExt.SetBool("ranked", ranked);
             rankStatusText.text = ranked ? "On" : "Off";
             UpdateBestText();
             if (ranked && !PlayerPrefsExt.GetBool("dont_show_what_is_ranked_mode_again", false))
@@ -364,7 +364,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
     public void UpdateBestText()
     {
         if (LoadedLevel == null) return;
-        bool ranked = PlayerPrefsExt.GetBool(PreferenceKeys.RankedMode());
+        bool ranked = PlayerPrefsExt.GetBool("ranked");
         if (Math.Abs(ZPlayerPrefs.GetFloat(
                          PreferenceKeys.BestScore(LoadedLevel, CytoidApplication.CurrentChartType, ranked),
                          defaultValue: -1) - (-1)) < 0.000001)
@@ -600,7 +600,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
     public void ViewProfileOnIO()
     {
-        Application.OpenURL("https://cytoid.io/profile/" + LocalProfile.Instance.username);
+        Application.OpenURL("https://cytoid.io/profile/" + User.Instance.username);
     }
 
     public void OnProfilePressed()
@@ -610,7 +610,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             Popup.Make(this, "Now signing in, please wait...");
             return;
         }
-        if (LocalProfile.Exists())
+        if (User.Exists())
         {
             UIManager.ShowUiElement("ProfileRoot", "MusicSelection");
             UIManager.ShowUiElement("ProfileBackground", "MusicSelection");
@@ -656,10 +656,10 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         PlayerPrefs.DeleteKey(PreferenceKeys.LastPassword());
         CloseProfileWindows();
         avatarImage.overrideSprite = null;
-        LocalProfile.reset();
+        User.reset();
         Popup.Make(this, "Signed out.");
         
-        PlayerPrefsExt.SetBool(PreferenceKeys.RankedMode(), false);
+        PlayerPrefsExt.SetBool("ranked", false);
         rankStatusText.text = "Off";
     }
 
@@ -680,7 +680,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         }
         
         // If logged in previously
-        if (LocalProfile.Exists())
+        if (User.Exists())
         {
             // Do nothing
         }
@@ -752,7 +752,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
             Popup.Make(this, "Signed in.");
             
-            var profile = LocalProfile.Init(username, password, authenticationResult.avatarUrl);
+            var profile = User.Init(username, password, authenticationResult.avatarUrl);
             profile.localVersion++;
             profile.Save();
         }
@@ -760,7 +760,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         CloseLoginWindows();
         isLoggingIn = false;
 
-        rankStatusText.text = PlayerPrefsExt.GetBool(PreferenceKeys.RankedMode()) ? "On" : "Off";
+        rankStatusText.text = PlayerPrefsExt.GetBool("ranked") ? "On" : "Off";
         
         UpdateProfileUi();
     }
@@ -781,16 +781,16 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
     public void UpdateProfileUi()
     {
-        usernameText.text = "ID: " + LocalProfile.Instance.username;
+        usernameText.text = "Player ID: " + User.Instance.username;
         StartCoroutine(LoadAvatarCoroutine());
     }
 
     public IEnumerator LoadAvatarCoroutine()
     {
-        if (LocalProfile.Exists() && LocalProfile.Instance.avatarTexture != null)
+        if (User.Exists() && User.Instance.avatarTexture != null)
         {
             // Update avatar from memory
-            var texture = LocalProfile.Instance.avatarTexture;
+            var texture = User.Instance.avatarTexture;
             
             var rect = new Rect(0, 0, texture.width, texture.height);
             var sprite = Sprite.Create(texture, rect, new Vector2(0.5f, 0.5f), 100);
@@ -799,7 +799,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
             yield return null;
         }
-        using (var www = new WWW(LocalProfile.Instance.avatarUrl))
+        using (var www = new WWW(User.Instance.avatarUrl))
         {
             yield return www;
 
@@ -812,19 +812,13 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
             var texture = www.texture;
 
-            LocalProfile.Instance.avatarTexture = texture;
+            User.Instance.avatarTexture = texture;
 
             var rect = new Rect(0, 0, texture.width, texture.height);
             var sprite = Sprite.Create(texture, rect, new Vector2(0.5f, 0.5f), 100);
 
             avatarImage.overrideSprite = sprite;
         }
-        /*if (!string.IsNullOrEmpty(www.error))
-        {
-            Log.e(www.error);
-            Popup.Make(this, "Could not load avatar.");
-            yield return null;
-        }*/
     }
 
     public void Register()

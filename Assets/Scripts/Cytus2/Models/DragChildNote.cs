@@ -51,7 +51,6 @@ namespace Cytus2.Models
             {
                 yield return null;
             }
-            Game.GameNotes.Remove(Note.id);
             Destroy(gameObject);
         }
 

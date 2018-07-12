@@ -30,6 +30,11 @@ namespace Cytus2.Views
             {
                 Ring.enabled = true;
                 Fill.enabled = true;
+                if (Mod.HideNotes.IsEnabled())
+                {
+                    Ring.enabled = false;
+                    Fill.enabled = false;
+                }
             }
             base.OnRender();
         }
@@ -51,6 +56,7 @@ namespace Cytus2.Views
                     {
                         if (!note.Game.GameNotes.ContainsKey(note.ToNote.id))
                         {
+                            if (!note.IsCleared) note.Clear(NoteGrading.Miss);
                             Object.Destroy(note.gameObject);
                             return;
                         }
@@ -67,6 +73,7 @@ namespace Cytus2.Views
                         }
                         else
                         {
+                            if (!note.IsCleared) note.Clear(NoteGrading.Miss);
                             Object.Destroy(note.gameObject);
                         }
                     }

@@ -1,11 +1,6 @@
 ﻿public static class PreferenceKeys
 {
-
-    public static string RankedMode()
-    {
-        return "ranked_mode";
-    }
-
+    
     public static string LastUsername()
     {
         return "last_username";
@@ -39,11 +34,6 @@
     public static string NoteDelay(Level level)
     {
         return level.id + " : " + "note delay";
-    }
-    
-    public static string WillInverse(Level level)
-    {
-        return level.id + " : " + "inverse";
     }
     
 }

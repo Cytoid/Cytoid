@@ -37,9 +37,9 @@ namespace Cytus2.Views
                 }
                 return;
             }
-            var score = Mathf.CeilToInt((float) game.PlayData.Score).ToString("D6");
+            var score = Mathf.CeilToInt((float) game.Play.Score).ToString("D6");
             lastScore = score;
-            text.text = game.PlayData == null ? "000000" : lastScore;
+            text.text = game.Play == null ? "000000" : lastScore;
         }
 	
     }

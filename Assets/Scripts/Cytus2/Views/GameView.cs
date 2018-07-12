@@ -19,25 +19,15 @@ namespace Cytus2.Views
         private AlphaMask backgroundOverlayMask;
         private AlphaMask sceneTransitionMask;
         private Text titleText;
-        private GameObject rankedIndicator;
-        private GameObject levelInfoIndicator;
         
         public GameView(Game game)
         {
             Game = game;
         }
 
-        public void OnAwake()
-        {
-            var fpsCounter = GameObject.FindGameObjectWithTag("FpsCounter");
-            if (fpsCounter != null)
-            {
-                fpsCounter.SetActive(PlayerPrefsExt.GetBool("fps counter"));
-            }
-        }
-
         public void OnStart()
         {
+            
             background = GameObject.FindGameObjectWithTag("Background");
             backgroundOverlayMask = GameObject.Find("BackgroundOverlayMask").GetComponent<AlphaMask>();
             
@@ -53,19 +43,10 @@ namespace Cytus2.Views
             }
 
             titleText = GameObject.Find("TitleText").GetComponent<Text>();
-            rankedIndicator = GameObject.Find("RankedIndicator");
-            levelInfoIndicator = GameObject.Find("LevelInfoIndicator"); 
-            
             canvas = background.GetComponent<Canvas>() == null ? background.AddComponent<Canvas>() : background.GetComponent<Canvas>();
             canvas.overrideSorting = true;
             canvas.sortingLayerName = "GameBackground";
             canvas.sortingOrder = 0;
-            
-            if (!GameOptions.Instance.IsRanked)
-            {
-                levelInfoIndicator.transform.SetLocalX(rankedIndicator.transform.localPosition.x);
-                rankedIndicator.SetActive(false);
-            }
 
             var level = CytoidApplication.CurrentLevel;
             DisplayDifficultyView.Instance.SetDifficulty(CytoidApplication.CurrentChartType,

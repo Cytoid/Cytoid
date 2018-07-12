@@ -3,14 +3,18 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using CodeStage.AdvancedFPSCounter;
+using System.Text;
+using Cytoid.Storyboard;
 using Cytus2.Models;
 using Cytus2.Views;
+using DoozyUI;
 using Lean.Touch;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Sprite = UnityEngine.Sprite;
+using Text = UnityEngine.UI.Text;
 
 namespace Cytus2.Controllers
 {
@@ -21,7 +25,8 @@ namespace Cytus2.Controllers
         public Level Level;
         public Chart Chart;
         public Dictionary<int, GameNote> GameNotes = new Dictionary<int, GameNote>();
-        public PlayData PlayData;
+        public Play Play;
+        public RankedModeData RankData;
         
         [SerializeField] protected GameObject ClickNotePrefab;
         [SerializeField] protected GameObject HoldNotePrefab;
@@ -30,6 +35,7 @@ namespace Cytus2.Controllers
         [SerializeField] protected GameObject DragChildNotePrefab;
         [SerializeField] protected GameObject FlickNotePrefab;
         [SerializeField] protected GameObject DragLinePrefab;
+        [SerializeField] protected Canvas InfoCanvas;
         [SerializeField] protected AudioSource AudioSource;
         [SerializeField] protected ScannerView Scanner;
 
@@ -48,6 +54,7 @@ namespace Cytus2.Controllers
         public bool IsLoaded { get; protected set; }
         public bool IsPlaying { get; protected set; }
         public bool IsCompleted { get; protected set; }
+        public bool IsFailed { get; protected set; }
 
         public int UnpauseCountdown;
 
@@ -76,19 +83,32 @@ namespace Cytus2.Controllers
             IsLoaded = false;
             IsPlaying = false;
             IsCompleted = false;
+            IsFailed = false;
             UnpauseCountdown = -1;
             PauseTime = -1;
             PauseDuration = 0;
             PauseAt = -1;
+            
+            // Play data
+            var isRanked = PlayerPrefsExt.GetBool("ranked") && User.Exists();
+            Play = new Play(isRanked);
+            Play.Mods = new HashSet<Mod>(PlayerPrefsExt.GetStringArray("mods", new string[0]).ToList().ConvertAll(mod => (Mod) Enum.Parse(typeof(Mod), mod)));
+            CytoidApplication.CurrentPlay = Play;
 
             View = new GameView(this);
-            View.OnAwake();
+            
+            // Enable/disable FPS counter
+            var fpsCounter = GameObject.FindGameObjectWithTag("FpsCounter");
+            if (fpsCounter != null)
+            {
+                fpsCounter.SetActive(PlayerPrefsExt.GetBool("fps counter"));
+            }
+            
+            BackgroundCanvasHelper.SetupBackgroundCanvas(gameObject.scene);
         }
 
         protected virtual IEnumerator Start()
         {
-            BackgroundCanvasHelper.SetupBackgroundCanvas(gameObject.scene);
-
             // Load level
             if (CytoidApplication.CurrentLevel != null)
             {
@@ -134,17 +154,32 @@ namespace Cytus2.Controllers
             }
             
             // Load chart
-            if (!Level.IsLoadedIntoMemory)
-            {
-                Level.LoadChartsIntoMemory();
-            }
-
             if (CytoidApplication.CurrentChartType == null)
             {
                 CytoidApplication.CurrentChartType = Level.charts[0].type;
             }
             
-            Chart = Level.charts.Find(it => it.type == CytoidApplication.CurrentChartType).chart;
+            var chartSection = Level.charts.Find(it => it.type == CytoidApplication.CurrentChartType);
+            
+            string chartText;
+            if (Level.is_internal && Application.platform == RuntimePlatform.Android)
+            {
+                var www = new WWW(Level.BasePath + chartSection.path);
+                while (!www.isDone)
+                {
+                }
+                chartText = Encoding.UTF8.GetString(www.bytes);
+            }
+            else
+            {
+                chartText = File.ReadAllText(Level.BasePath + chartSection.path, Encoding.UTF8);
+            }
+
+            Chart = new Chart(
+                chartText, 
+                0.8f + (5 - (int) PlayerPrefs.GetFloat("horizontal margin", 3) - 1) * 0.025f, 
+                (5.5f + (5 - (int) PlayerPrefs.GetFloat("vertical margin", 3)) * 0.5f) / 9.0f
+            );
             
             // Load audio
             var audioPath = Level.BasePath + Level.GetMusicPath(CytoidApplication.CurrentChartType);
@@ -169,12 +204,7 @@ namespace Cytus2.Controllers
             LeanTouch.OnFingerUp += OnFingerUp;
             
             // Game options
-            // TODO: Inverse
             var options = GameOptions.Instance;
-#if UNITY_EDITOR
-            options.WillAutoPlay = true;
-#endif
-            options.IsRanked = false; // TODO
             options.HitboxMultiplier = PlayerPrefsExt.GetBool("larger_hitboxes") ? 1.5555f : 1.3333f;
             options.ShowEarlyLateIndicator = PlayerPrefsExt.GetBool("early_late_indicator");
             options.ChartOffset = PlayerPrefs.GetFloat("user_offset", 0.08f);
@@ -183,15 +213,58 @@ namespace Cytus2.Controllers
                 options.ChartOffset = ZPlayerPrefs.GetFloat(PreferenceKeys.NoteDelay(Level));
             }
             
-            // Play data
-            PlayData = new PlayData(false, Chart); // TODO
-            CytoidApplication.CurrentPlayData = PlayData;
+            switch (PlayerPrefs.GetString("storyboard effects"))
+            {
+                case "High":
+                    Screen.SetResolution(CytoidApplication.OriginalWidth, CytoidApplication.OriginalHeight, true);
+                    break;
+                case "Medium":
+                    Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.75),
+                        (int) (CytoidApplication.OriginalHeight * 0.75), true);
+                    break;
+                case "Low":
+                    Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.5),
+                        (int) (CytoidApplication.OriginalHeight * 0.5), true);
+                    break;
+                case "None":
+                    StoryboardController.Instance.ShowEffects = false;
+                    break;
+            }
+
+            if (PlayerPrefsExt.GetBool("low res"))
+            {
+                Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.5), (int) (CytoidApplication.OriginalHeight * 0.5), true);
+            }
+
+            Play.Init(Chart);
             
-            yield return null;
+            // Rank data
+            if (Play.IsRanked)
+            {
+                RankData = new RankedModeData();
+                RankData.user = User.Instance.username;
+                RankData.password = User.Instance.password;
+                RankData.start = TimeExt.Millis();
+                RankData.id = Level.id;
+                RankData.type = CytoidApplication.CurrentChartType;
+                RankData.mods = string.Join(",", Array.ConvertAll(Play.Mods.ToArray(), mod => mod.ToString()));
+                RankData.version = Level.version;
+                RankData.chart_checksum = Chart.Checksum;
+                print("Chart checksum: " + Chart.Checksum);
+                RankData.device.width = Screen.width;
+                RankData.device.height = Screen.height;
+                RankData.device.dpi = (int) Screen.dpi;
+                RankData.device.model = SystemInfo.deviceModel;
+                CytoidApplication.CurrentRankedModeData = RankData;
+            }
+            else
+            {
+                CytoidApplication.CurrentRankedModeData = null;
+            }
+
+            yield return new WaitForSeconds(0.5f);
             
             View.OnStart();
-            
-            // TODO: Rank data
             
             IsLoaded = true;
 
@@ -205,8 +278,17 @@ namespace Cytus2.Controllers
             IsPlaying = true;
 
             lastNoteId = Chart.Root.note_list.Last().id;
+
+            if (Mod.HideScanline.IsEnabled())
+            {
+                Scanner.GetComponent<LineRenderer>().enabled = false;
+            }
             
             Scanner.PlayEnter();
+            
+            Play.MaxHp = Level.GetDifficulty(CytoidApplication.CurrentChartType) * 75;
+            if (Play.MaxHp <= 0) Play.MaxHp = 1000;
+            Play.Hp = Play.MaxHp;
 
             if (GameOptions.Instance.UseAndroidNativeAudio)
             {
@@ -239,10 +321,15 @@ namespace Cytus2.Controllers
                 return;
             }
 
+            if (IsFailed)
+            {
+                AudioSource.volume -= 1f / 120f;
+            }
+
             if (IsPlaying)
             {
                 
-                if (PlayData.NoteCleared >= Chart.Root.note_list.Count)
+                if (Play.NoteCleared >= Chart.Root.note_list.Count)
                 {
                     Complete();
                 }
@@ -356,6 +443,8 @@ namespace Cytus2.Controllers
 
         protected virtual void OnFingerDown(LeanFinger finger)
         {
+            if (IsCompleted || IsFailed) return;
+            
             var pos = Camera.main.orthographic ? Camera.main.ScreenToWorldPoint(finger.ScreenPosition) : Camera.main.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
 
             var touchedDrag = false;
@@ -396,6 +485,8 @@ namespace Cytus2.Controllers
 
         protected virtual void OnFingerSet(LeanFinger finger)
         {
+            if (IsCompleted || IsFailed) return;
+            
             var pos = Camera.main.orthographic ? Camera.main.ScreenToWorldPoint(finger.ScreenPosition) : Camera.main.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
             
             // Query flick note
@@ -472,13 +563,17 @@ namespace Cytus2.Controllers
 
                 if (released)
                 {
-                    // TODO: Rank data
+                    holdNote.RankData.release_time = TimeExt.Millis();
+                    holdNote.RankData.release_x = (int) finger.ScreenPosition.x;
+                    holdNote.RankData.release_y = (int) finger.ScreenPosition.y;
                 }
             }
         }
 
         protected virtual void OnFingerUp(LeanFinger finger)
         {
+            if (IsCompleted || IsFailed) return;
+
             if (holdingNotes.ContainsKey(finger.Index))
             {
                 var holdNote = holdingNotes[finger.Index];
@@ -494,11 +589,16 @@ namespace Cytus2.Controllers
 
         public void Pause()
         {
-            if (!IsLoaded || IsCompleted) return;
+            if (!IsLoaded || IsCompleted || IsFailed) return;
             if (!IsPlaying) return;
-            // TODO: Rank data
+            
             IsPlaying = false;
 
+            if (RankData != null)
+            {
+                RankData.pauses.Add(new RankedModeData.Pause { start = TimeExt.Millis() });
+            }
+            
             if (GameOptions.Instance.UseAndroidNativeAudio)
             {
                 ANAMusic.pause(nativeAudioId);
@@ -524,11 +624,9 @@ namespace Cytus2.Controllers
 
         public void Unpause()
         {
-            if (!IsLoaded || IsCompleted) return;
+            if (!IsLoaded || IsCompleted || IsFailed) return;
             if (IsPlaying) return;
-
-            // TODO: Rank data
-
+            
             View.OnUnpause();
             unpauseCoroutine = StartCoroutine(UnpauseCoroutine());
         }
@@ -550,6 +648,11 @@ namespace Cytus2.Controllers
         {
             IsPlaying = true;
 
+            if (RankData != null)
+            {
+                RankData.pauses.Last().end = TimeExt.Millis();
+            }
+
             if (GameOptions.Instance.UseAndroidNativeAudio)
             {
                 ANAMusic.seekTo(nativeAudioId, (int) (PauseAt * 1000f));
@@ -565,29 +668,39 @@ namespace Cytus2.Controllers
             PauseAt = -1;
         }
 
+        public void Fail()
+        {
+            if (IsFailed) return;
+            IsFailed = true;
+
+            UIManager.ShowUiElement("FailBackground", "Game");
+            UIManager.ShowUiElement("FailRoot", "Game");
+        }
+
         public virtual void Complete()
         {
-            if (IsCompleted) return;
+            if (IsCompleted || IsFailed) return;
             IsCompleted = true;
             
             Scanner.PlayExit();
 
-            var result = new PlayResult
+            if (Mod.Auto.IsEnabled() || Mod.AutoDrag.IsEnabled() || Mod.AutoFlick.IsEnabled() ||
+                Mod.AutoHold.IsEnabled())
             {
-                Ranked = false, // TODO
-                Score = PlayData.Score,
-                Tp = PlayData.Tp,
-                MaxCombo = PlayData.MaxCombo,
-                PerfectCount = PlayData.NoteRankings.Values.Count(ranking => ranking == NoteGrading.Perfect),
-                GreatCount = PlayData.NoteRankings.Values.Count(ranking => ranking == NoteGrading.Great),
-                GoodCount = PlayData.NoteRankings.Values.Count(ranking => ranking == NoteGrading.Good),
-                BadCount = PlayData.NoteRankings.Values.Count(ranking => ranking == NoteGrading.Bad),
-                MissCount = PlayData.NoteRankings.Values.Count(ranking => ranking == NoteGrading.Miss)
-            };
-            CytoidApplication.LastPlayResult = result;
-
-            action = Action.Result;
-            StartCoroutine(ProceedToResultCoroutine());
+                action = Action.Back;
+                StartCoroutine(BackCoroutine());
+            }
+            else
+            {
+                action = Action.Result;
+                StartCoroutine(ProceedToResultCoroutine());
+            }
+        }
+        
+        private IEnumerator BackCoroutine()
+        {
+            yield return new WaitForSeconds(1f);
+            DoAction();
         }
 
         private IEnumerator ProceedToResultCoroutine()
@@ -606,7 +719,23 @@ namespace Cytus2.Controllers
                     yield return null;
                 }
             }
-            
+
+            if (RankData != null)
+            {
+                RankData.end = TimeExt.Millis();
+                
+                RankData.score = (long) Play.Score;
+                RankData.accuracy = (int) (Play.Tp * 1000000);
+                RankData.max_combo = Play.MaxCombo;
+                RankData.perfect = Play.NoteRankings.Values.Count(grading => grading == NoteGrading.Perfect);
+                RankData.great = Play.NoteRankings.Values.Count(grading => grading == NoteGrading.Great);
+                RankData.good = Play.NoteRankings.Values.Count(grading => grading == NoteGrading.Good);
+                RankData.bad = Play.NoteRankings.Values.Count(grading => grading == NoteGrading.Bad);
+                RankData.miss = Play.NoteRankings.Values.Count(grading => grading == NoteGrading.Miss);
+                
+                RankData.checksum = Checksum.From(RankData);
+            }
+
             // Destroy all game notes
             foreach (var entry in GameNotes)
             {
@@ -614,8 +743,7 @@ namespace Cytus2.Controllers
                 if (note == null) continue;
                 Destroy(note.gameObject);
             }
-
-            // TODO: Rank data
+            
             View.OnProceedToResult();
         }
 
@@ -649,6 +777,14 @@ namespace Cytus2.Controllers
 
             gameNote.Init(Chart.Root, note);
             GameNotes.Add(note.id, gameNote);
+            
+            // Generate note id holder
+
+            if (this is StoryboardGame || PlayerPrefsExt.GetBool("note ids"))
+            {
+                var canvas = Instantiate(InfoCanvas, GameNotes[note.id].transform.Find("NoteFill"));
+                canvas.GetComponentInChildren<Text>().text = "" + note.id;
+            }
         }
 
         public void SpawnDragLine(ChartNote from, ChartNote to)
@@ -658,9 +794,9 @@ namespace Cytus2.Controllers
             dragLineView.ToNote = to;
         }
 
-        public void Clear(GameNote note)
+        public void OnClear(GameNote note)
         {
-            PlayData.Clear(note.Note.id, note.CalculateGrading(), note.GreatGradeWeight);
+            Play.OnClear(note.Note.id, note.CalculateGrading(), note.GreatGradeWeight);
         }
         
         // TODO: Get away, Doozy UI

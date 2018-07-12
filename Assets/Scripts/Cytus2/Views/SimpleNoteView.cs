@@ -51,6 +51,12 @@ namespace Cytus2.Views
                 Ring.enabled = true;
                 Fill.enabled = true;
                 Collider.enabled = true;
+
+                if (Mod.HideNotes.IsEnabled())
+                {
+                    Ring.enabled = false;
+                    Fill.enabled = false;
+                }
             }
 
             RenderComponents();

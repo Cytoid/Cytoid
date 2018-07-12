@@ -14,8 +14,8 @@ namespace Cytus2.Models
         protected override void Awake()
         {
             ClickSize = Camera.main.orthographicSize * 2.0f * 7.0f / 9.0f / 5.0f * 1.2675f;
-            DragHeadSize = ClickSize * 0.75f;
-            DragChildSize = ClickSize * 0.625f;
+            DragHeadSize = ClickSize * 0.8f;
+            DragChildSize = ClickSize * 0.65f;
             HoldSize = ClickSize;
             LongHoldSize = ClickSize;
             FlickSize = ClickSize * 1.125f;

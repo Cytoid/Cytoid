@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using Cytus2.Models;
 using ICSharpCode.SharpZipLib.Zip;
 using LunarConsolePluginInternal;
 using Newtonsoft.Json;
@@ -19,9 +20,8 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
     public static Level CurrentLevel;
     public static string CurrentChartType = ChartType.Hard;
     public static LevelSelectionController.HitSound CurrentHitSound;
-    public static BasePlayData CurrentPlayData;
-    public static RankedPlayData CurrentRankedPlayData;
-    public static PlayResult LastPlayResult;
+    public static Play CurrentPlay;
+    public static RankedModeData CurrentRankedModeData;
 
     public static bool IsReloadingLevels = true;
     public static string LoadingLevelId;
@@ -178,7 +178,6 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
                     level = JsonConvert.DeserializeObject<Level>(Encoding.UTF8.GetString(www.bytes));
                     level.BasePath = string.Format(Application.streamingAssetsPath + "/{0}/", internalLevel);
                     print(level.BasePath);
-                    level.charts.ForEach(chart => chart.LoadChartIntoMemory(level));
                     Levels.Add(level);
                 }
             }

@@ -108,7 +108,7 @@ namespace Cytus2.Models
                 grading = NoteGrading.Bad;
             }
 
-            if (GameOptions.Instance.IsRanked)
+            if (Game.Play.IsRanked)
             {
                 if (HoldingStartTime > Note.start_time)
                 {
@@ -149,7 +149,7 @@ namespace Cytus2.Models
                 }
             }
 
-            if (GameOptions.Instance.IsRanked && rankGrading > grading)
+            if (Game.Play.IsRanked && rankGrading > grading)
                 return rankGrading; // Return the "worse" ranking (Note miss > bad > good > great > perfect)
             return grading;
         }

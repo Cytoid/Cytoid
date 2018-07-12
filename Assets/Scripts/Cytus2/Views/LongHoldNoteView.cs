@@ -46,6 +46,12 @@ namespace Cytus2.Views
                 Line2.enabled = true;
                 CompletedLine2.enabled = true;
                 CompletedLine2.size = new Vector2(1, 0);
+                
+                if (Mod.HideNotes.IsEnabled())
+                {
+                    Line2.enabled = false;
+                    CompletedLine2.enabled = false;
+                }
             }
             base.OnRender();
         }

@@ -37,6 +37,11 @@ namespace Cytus2.Views
             {
                 leftArrow.enabled = true;
                 rightArrow.enabled = true;
+                if (Mod.HideNotes.IsEnabled())
+                {
+                    leftArrow.enabled = false;
+                    rightArrow.enabled = false;
+                }
             }
             base.OnRender();
         }

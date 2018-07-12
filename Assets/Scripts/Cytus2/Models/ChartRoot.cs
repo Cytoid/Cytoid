@@ -14,11 +14,11 @@ namespace Cytus2.Models
         public int time_base;
 
         public float start_offset_time;
-        public List<ChartPage> page_list;
-        public List<ChartTempo> tempo_list;
+        public List<ChartTempo> tempo_list = new List<ChartTempo>();
+        public List<ChartPage> page_list = new List<ChartPage>();
+        public List<ChartNote> note_list = new List<ChartNote>();
         public List<ChartEventOrder> event_order_list = new List<ChartEventOrder>();
         public List<ChartAnimation> animation_list = new List<ChartAnimation>();
-        public List<ChartNote> note_list;
 
         public float music_offset;
 
@@ -30,6 +30,7 @@ namespace Cytus2.Models
         public float start_tick;
         public float end_tick;
         public int scan_line_direction;
+        
         public float start_time;
         public float end_time;
 
@@ -78,11 +79,14 @@ namespace Cytus2.Models
         public int type;
         public int id;
         public float tick;
-        public float x;
+        public double x;
         public bool has_sibling;
         public float hold_tick;
         public int next_id;
         public bool is_forward;
+        
+        public double approach_rate = 1f;
+        
         public float start_time;
         public float end_time;
         public Vector3 position;

@@ -9,7 +9,6 @@ public class Level
 {
 
     [JsonIgnore] public string BasePath;
-    [JsonIgnore] public bool IsLoadedIntoMemory;
     
     public string format { get; set; }
     public int version { get; set; }
@@ -23,15 +22,6 @@ public class Level
     public BackgroundSection background { get; set; }
     public List<ChartSection> charts { get; set; }
     public bool is_internal { get; set;  }
-
-    public void LoadChartsIntoMemory()
-    {
-        charts.ForEach(chart =>
-        {
-            chart.LoadChartIntoMemory(this);
-        });
-        IsLoadedIntoMemory = true;
-    }
 
     public string GetMusicPath(string chartType)
     {
@@ -72,29 +62,6 @@ public class Level
         public int difficulty { get; set; }
         public string path { get; set; }
         public MusicSection music_override { get; set; }
-        
-        [JsonIgnore] public Chart chart;
-
-        // C#: can't access outer members...
-        // I miss Java and Kotlin
-        public void LoadChartIntoMemory(Level level)
-        {
-            string chartText;
-            if (level.is_internal && Application.platform == RuntimePlatform.Android)
-            {
-                var www = new WWW(level.BasePath + path);
-                while (!www.isDone)
-                {
-                }
-                chartText = Encoding.UTF8.GetString(www.bytes);
-            }
-            else
-            {
-                chartText = File.ReadAllText(level.BasePath + path, Encoding.UTF8);
-            }
-
-            chart = new Chart(chartText);
-        } 
     }
 
 }

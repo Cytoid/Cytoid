@@ -49,6 +49,12 @@ namespace Cytus2.Views
 
         private void Update()
         {
+            if (Mod.HideNotes.IsEnabled())
+            {
+                Destroy(gameObject);
+                return;
+            }
+            
             if (game is StoryboardGame)
             {
                 spriteRenderer.enabled = OutroRatio < 1;

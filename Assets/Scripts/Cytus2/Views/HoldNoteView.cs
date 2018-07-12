@@ -64,6 +64,12 @@ namespace Cytus2.Views
                 Triangle.enabled = true;
                 Mask.enabled = true;
                 SpriteMask.enabled = true;
+                if (Mod.HideNotes.IsEnabled())
+                {
+                    Line.enabled = false;
+                    CompletedLine.enabled = false;
+                    Triangle.enabled = false;
+                }
             }
             
             base.OnRender();
@@ -108,7 +114,7 @@ namespace Cytus2.Views
                 CompletedLine.sortingOrder = Ring.sortingOrder + 1;
                 SpriteMask.frontSortingOrder = Line.sortingOrder;
                 SpriteMask.backSortingOrder = Line.sortingOrder - 1;
-                if (Note.Game.Time > Note.Note.start_time)
+                if (Note.Game.Time < Note.Note.start_time)
                 {
                     SpriteMask.isCustomRangeActive = false;
                 }

@@ -78,9 +78,13 @@ namespace Cytoid.Storyboard
             Camera.main.transform.eulerAngles = Vector3.zero;
             Camera.main.orthographic = true;
             Camera.main.fieldOfView = 53.2f;
-            Prism.useBloom = false;
+            
+            Prism.SetPrismPreset(null);
             Prism.useVignette = false;
             Prism.useChromaticAberration = false;
+            Sleek.settings.bloomEnabled = false;
+            Sleek.settings.bloomIntensity = 0;
+            
             RadialBlur.enabled = false;
             RadialBlur.Intensity = 0.025f;
             ColorAdjustment.enabled = false;
@@ -166,23 +170,11 @@ namespace Cytoid.Storyboard
             // Listen to events
             EventKit.Subscribe<GameNote>("note clear", OnNoteClear);
             
-            // Effect settings
-            switch (PlayerPrefs.GetString("storyboard effects"))
+            // Disable PRISM if unsupported
+            if (!Prism.m_Shader.isSupported || !Prism.m_Shader2.isSupported || !Prism.m_Shader3.isSupported)
             {
-                case "High":
-                    Screen.SetResolution(CytoidApplication.OriginalWidth, CytoidApplication.OriginalHeight, true);
-                    break;
-                case "Medium":
-                    Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.75),
-                        (int) (CytoidApplication.OriginalHeight * 0.75), true);
-                    break;
-                case "Low":
-                    Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.5),
-                        (int) (CytoidApplication.OriginalHeight * 0.5), true);
-                    break;
-                case "None":
-                    ShowEffects = false;
-                    break;
+                print("PRISM is not compatiable with this device. Disabled.");
+                Prism.enabled = false;
             }
 
             yield return Reload(path);

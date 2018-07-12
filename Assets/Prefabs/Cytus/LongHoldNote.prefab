@@ -172,15 +172,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Game: {fileID: 0}
+  RankData:
+    id: 0
+    press_time: 0
+    press_x: 0
+    press_y: 0
+    release_time: 0
+    release_x: 0
+    release_y: 0
   Chart:
     format_version: 0
     time_base: 0
     start_offset_time: 0
-    page_list: []
     tempo_list: []
+    page_list: []
+    note_list: []
     event_order_list: []
     animation_list: []
-    note_list: []
+    music_offset: 0
   Note:
     page_index: 0
     type: 0
@@ -191,6 +200,7 @@ MonoBehaviour:
     hold_tick: 0
     next_id: 0
     is_forward: 0
+    approach_rate: 1
     start_time: 0
     end_time: 0
     position: {x: 0, y: 0, z: 0}
@@ -208,10 +218,11 @@ MonoBehaviour:
     scan_line_direction: 0
     start_time: 0
     end_time: 0
+  MaxMissThreshold: 0
   TimeUntilStart: 0
   TimeUntilEnd: 0
-  IsEmerged: 0
   IsCleared: 0
+  GreatGradeWeight: 0
   IsHolding: 0
   HoldingStartTime: 0
   HeldDuration: 0
@@ -341,7 +352,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 2
-  m_Sprite: {fileID: 21300000, guid: 9198146fa2a0340d782b2ecd67d5ffae, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 5a9953840ab58476a8ebd77932a88083, type: 3}
   m_Color: {r: 0.27058825, g: 0.40784314, b: 0.8627451, a: 0.347}
   m_FlipX: 0
   m_FlipY: 0
@@ -411,8 +422,8 @@ SpriteMask:
   m_MaskAlphaCutoff: 0.39
   m_FrontSortingLayerID: -1478604211
   m_BackSortingLayerID: -1478604211
-  m_FrontSortingLayer: 5
-  m_BackSortingLayer: 5
+  m_FrontSortingLayer: -2
+  m_BackSortingLayer: -2
   m_FrontSortingOrder: 0
   m_BackSortingOrder: 0
   m_IsCustomRangeActive: 1

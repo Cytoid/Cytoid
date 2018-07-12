@@ -52,7 +52,7 @@ namespace Cytus2.Models
             var grading = NoteGrading.Miss;
             var timeUntil = TimeUntilStart;
 
-            if (GameOptions.Instance.IsRanked)
+            if (Game.Play.IsRanked)
             {
                 if (timeUntil >= 0)
                 {

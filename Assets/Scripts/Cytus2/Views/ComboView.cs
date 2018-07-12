@@ -24,7 +24,7 @@ namespace Cytus2.Views
         private void LateUpdate()
         {
             if (!game.IsPlaying) return;
-            text.text = game.PlayData == null ? "0 combo" : game.PlayData.Combo + " combo";
+            text.text = game.Play == null ? "0 combo" : game.Play.Combo + " combo";
         }
 	
     }

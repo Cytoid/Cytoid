@@ -75,7 +75,7 @@ namespace Cytus2.Models
         {
             // Do not handle touch event if touched too ahead of scanner
             if (Note.start_time - Game.Time > 0.31f) return;
-            // Do not handle touch event if in a later page, unless the timing is close (half a screen)
+            // Do not handle touch event if in a later page, unless the timing is close (half a screen) TODO: Fix inaccurate algorithm
             if (Note.page_index > Game.CurrentPageId && Note.start_time - Game.Time > Page.Duration / 2f) return;
             base.Touch(screenPos);
         }

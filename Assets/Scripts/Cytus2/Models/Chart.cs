@@ -1,25 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 using UnityEngine;
 
 namespace Cytus2.Models
 {
-
-    public class Chart : BaseChart
+    public class Chart
     {
-        
         public ChartRoot Root;
         public int CurrentPageId;
         public float MusicOffset;
+
         private float baseSize;
         private float offset;
-        
-        public Chart(string text) : base(text)
+        private float horizontalRatio;
+        private float verticalRatio;
+
+        public string Checksum
         {
+            get { return global::Checksum.From(checksumSource); }
         }
 
-        public override string Parse(string text)
+        private string checksumSource = string.Empty;
+
+        public Chart(string text, float horizontalRatio = 0.85f, float verticalRatio = 7.0f / 9.0f)
         {
             Root = new ChartRoot();
 
@@ -27,7 +32,8 @@ namespace Cytus2.Models
             {
                 // C2/Cytoid format
                 Root = JsonConvert.DeserializeObject<ChartRoot>(text);
-            } catch (JsonReaderException)
+            }
+            catch (JsonReaderException)
             {
                 // C1 format
                 Root = FromCytus1Chart(text);
@@ -35,6 +41,15 @@ namespace Cytus2.Models
 
             baseSize = Camera.main.orthographicSize;
             offset = -Camera.main.orthographicSize * 0.04f;
+            this.horizontalRatio = horizontalRatio;
+            this.verticalRatio = verticalRatio;
+
+            var thisChecksumSource = string.Empty;
+
+            foreach (var tempo in Root.tempo_list)
+            {
+                thisChecksumSource += "tempo " + ((int) tempo.tick).ToString() + " " + ((int) (tempo.value)).ToString();
+            }
 
             // Convert tick to absolute time
 
@@ -52,6 +67,12 @@ namespace Cytus2.Models
             {
                 page.start_time = ConvertToTime(page.start_tick);
                 page.end_time = ConvertToTime(page.end_tick);
+                thisChecksumSource += "page " + ((int) page.start_tick).ToString() + " " +
+                                      ((int) page.end_tick).ToString();
+                if (Mod.FlipY.IsEnabled() || Mod.FlipAll.IsEnabled())
+                {
+                    page.scan_line_direction = page.scan_line_direction == 1 ? -1 : 1;
+                }
             }
 
             for (var i = 0; i < Root.note_list.Count; i++)
@@ -61,33 +82,38 @@ namespace Cytus2.Models
 
                 note.direction = page.scan_line_direction;
                 note.speed = note.page_index == 0 ? 1.0f : CalculateNoteSpeed(i);
+                note.speed *= (float) note.approach_rate;
+
+                var modSpeed = 1f;
+                if (Mod.Fast.IsEnabled()) modSpeed = 1.5f;
+                if (Mod.Slow.IsEnabled()) modSpeed = 0.75f;
+                note.speed *= modSpeed;
 
                 note.start_time = ConvertToTime(note.tick);
                 note.end_time = ConvertToTime(note.tick + note.hold_tick);
 
+                var flip = (Mod.FlipX.IsEnabled() || Mod.FlipAll.IsEnabled()) ? -1 : 1;
+
                 note.position = new Vector3(
-
-                    (note.x * 1.7f - 0.85f) * baseSize * Screen.width /
-                    Screen.height,
-
-                    7.0f / 9.0f * page.scan_line_direction *
+                    ((float) note.x * 2 * horizontalRatio - horizontalRatio) * baseSize * Screen.width /
+                    Screen.height
+                    * flip,
+                    verticalRatio * page.scan_line_direction *
                     (-baseSize + 2.0f *
                      baseSize *
                      (note.tick - page.start_tick) * 1.0f /
                      (page.end_tick - page.start_tick))
-                    
                     + offset
-
                 );
 
                 note.end_position = new Vector3(
-                    (note.x * 1.7f - 0.85f) * baseSize * Screen.width /
-                    Screen.height, 
-                    
+                    ((float) note.x * 2 * horizontalRatio - horizontalRatio) * baseSize * Screen.width /
+                    Screen.height
+                    * flip,
                     GetNotePosition(note.tick + note.hold_tick)
                 );
 
-                note.holdlength = 7.0f / 9.0f * 2.0f * baseSize *
+                note.holdlength = verticalRatio * 2.0f * baseSize *
                                   note.hold_tick /
                                   (page.end_tick -
                                    page.start_tick);
@@ -122,6 +148,24 @@ namespace Cytus2.Models
                         note.tint = note.direction == 1 ? 1.00f : 1.30f;
                         break;
                 }
+
+                var lx = note.x;
+                if (lx != 0f)
+                {
+                    while (lx < 10000)
+                    {
+                        lx *= 10;
+                    }
+                }
+
+                thisChecksumSource += "note " + note.id.ToString() + " "
+                                      + note.page_index.ToString() + " "
+                                      + note.type.ToString() + " "
+                                      + ((int) note.tick).ToString() + " "
+                                      + ((int) lx).ToString() + " "
+                                      + ((int) note.hold_tick).ToString() + " "
+                                      + note.next_id.ToString() + " "
+                                      + ((int) (note.approach_rate * 100)).ToString();
             }
 
             foreach (var note in Root.note_list)
@@ -145,8 +189,14 @@ namespace Cytus2.Models
             }
 
             MusicOffset = Root.music_offset;
-            
-            return string.Empty;
+
+            // Set checksum if not a converted chart
+            if (checksumSource == string.Empty)
+            {
+                checksumSource = thisChecksumSource;
+            }
+
+            Debug.Log(checksumSource);
         }
 
         private float ConvertToTime(float tick)
@@ -191,22 +241,20 @@ namespace Cytus2.Models
 
             if (targetPageId == Root.page_list.Count)
             {
-                return -7.0f / 9.0f * Root.page_list[targetPageId - 1].scan_line_direction *
+                return -verticalRatio * Root.page_list[targetPageId - 1].scan_line_direction *
                        (-baseSize + 2.0f *
                         baseSize *
                         (tick - Root.page_list[targetPageId - 1].end_tick) *
                         1.0f / (Root.page_list[targetPageId - 1].end_tick -
                                 Root.page_list[targetPageId - 1].start_tick))
-                    
-                        + offset;
+                       + offset;
             }
 
-            return 7.0f / 9.0f * Root.page_list[targetPageId].scan_line_direction *
+            return verticalRatio * Root.page_list[targetPageId].scan_line_direction *
                    (-baseSize + 2.0f *
                     baseSize * (tick - Root.page_list[targetPageId].start_tick) *
                     1.0f / (Root.page_list[targetPageId].end_tick - Root.page_list[targetPageId].start_tick))
-                
-                    + offset;
+                   + offset;
         }
 
         public float GetScannerPosition(float time)
@@ -216,7 +264,7 @@ namespace Cytus2.Models
                 CurrentPageId++;
             if (CurrentPageId == Root.page_list.Count)
             {
-                return -7.0f / 9.0f * Root.page_list[CurrentPageId - 1].scan_line_direction *
+                return -verticalRatio * Root.page_list[CurrentPageId - 1].scan_line_direction *
                        (-baseSize + 2.0f *
                         baseSize *
                         (time - Root.page_list[CurrentPageId - 1].end_time) *
@@ -225,19 +273,93 @@ namespace Cytus2.Models
                        + offset;
             }
 
-            return 7.0f / 9.0f * Root.page_list[CurrentPageId].scan_line_direction *
+            return verticalRatio * Root.page_list[CurrentPageId].scan_line_direction *
                    (-baseSize + 2.0f *
                     baseSize *
                     (time - Root.page_list[CurrentPageId].start_time) *
                     1.0f / (Root.page_list[CurrentPageId].end_time - Root.page_list[CurrentPageId].start_time))
-                
-                    + offset;
+                   + offset;
         }
 
         public ChartRoot FromCytus1Chart(string text)
         {
-            var chart = new Cytus.Models.Chart(text);
-            
+            // Parse
+
+            var pageDuration = 0f;
+            var pageShift = 0f;
+            var tmpNotes = new Dictionary<int, C1Note>();
+
+            foreach (var line in text.Split('\n'))
+            {
+                var data = line.Split((char[]) null, StringSplitOptions.RemoveEmptyEntries);
+                if (data.Length == 0) continue;
+                var type = data[0];
+                switch (type)
+                {
+                    case "PAGE_SIZE":
+                        pageDuration = float.Parse(data[1]);
+                        checksumSource += data[1];
+                        break;
+                    case "PAGE_SHIFT":
+                        pageShift = float.Parse(data[1]);
+                        checksumSource += data[1];
+                        break;
+                    case "NOTE":
+                        checksumSource += data[1] + data[2] + data[3] + data[4];
+                        var note = new C1Note(int.Parse(data[1]), float.Parse(data[2]), float.Parse(data[3]),
+                            float.Parse(data[4]), false);
+                        tmpNotes.Add(int.Parse(data[1]), note);
+                        if (note.Duration > 0) note.Type = C1NoteType.Hold;
+                        break;
+                    case "LINK":
+                        var notesInChain = new List<C1Note>();
+                        for (var i = 1; i < data.Length; i++)
+                        {
+                            if (data[i] != "LINK") checksumSource += data[i];
+                            int id;
+                            if (!int.TryParse(data[i], out id)) continue;
+                            note = tmpNotes[id];
+                            note.Type = C1NoteType.Chain;
+                            notesInChain.Add(note);
+                        }
+
+                        for (var i = 0; i < notesInChain.Count - 1; i++)
+                        {
+                            notesInChain[i].ConnectedNote = notesInChain[i + 1];
+                        }
+
+                        notesInChain[0].IsChainHead = true;
+                        break;
+                }
+            }
+
+            pageShift += pageDuration;
+
+            // Calculate chronological note ids
+            var sortedNotes = tmpNotes.Values.ToList();
+            sortedNotes.Sort((a, b) => a.Time.CompareTo(b.Time));
+            var chronologicalIds = sortedNotes.Select(note => note.OriginalId).ToList();
+
+            var notes = new Dictionary<int, C1Note>();
+
+            // Recalculate note ids from original ids
+            var newId = 0;
+            foreach (var noteId in chronologicalIds)
+            {
+                tmpNotes[noteId].Id = newId;
+                notes[newId] = tmpNotes[noteId];
+                newId++;
+            }
+
+            // Reset chronological ids
+            chronologicalIds.Clear();
+            for (var i = 0; i < tmpNotes.Count; i++)
+            {
+                chronologicalIds.Add(i);
+            }
+
+            // Convert
+
             const int timeBase = 480;
 
             var root = new ChartRoot();
@@ -247,50 +369,53 @@ namespace Cytus2.Models
 
             var tempo = new ChartTempo();
             tempo.tick = 0;
-            var tempoValue = chart.PageDuration * 1000000;
+            var tempoValue = pageDuration * 1000000;
             tempo.value = tempoValue;
-            root.tempo_list = new List<ChartTempo> { tempo };
+            root.tempo_list = new List<ChartTempo> {tempo};
 
-            if (chart.PageShift < 0) chart.PageShift = chart.PageShift + 2 * chart.PageDuration;
-            
-            var pageShiftTickOffset = chart.PageShift / chart.PageDuration * timeBase;
+            if (pageShift < 0) pageShift = pageShift + 2 * pageDuration;
+
+            var pageShiftTickOffset = pageShift / pageDuration * timeBase;
 
             var noteList = new List<ChartNote>();
             var page = 0;
-            foreach (var note in chart.Notes.Values)
+            foreach (var note in notes.Values)
             {
                 var obj = new ChartNote();
-                obj.id = note.id;
-                switch (note.type)
+                obj.id = note.Id;
+                switch (note.Type)
                 {
-                    case OldNoteType.Single:
+                    case C1NoteType.Single:
                         obj.type = NoteType.Click;
                         break;
-                    case OldNoteType.Chain:
-                        obj.type = note.isChainHead ? NoteType.DragHead : NoteType.DragChild;
+                    case C1NoteType.Chain:
+                        obj.type = note.IsChainHead ? NoteType.DragHead : NoteType.DragChild;
                         break;
-                    case OldNoteType.Hold:
+                    case C1NoteType.Hold:
                         obj.type = NoteType.Hold;
                         break;
                 }
-                obj.x = note.x;
-                var ti = note.time * timeBase * 1000000 / tempoValue + pageShiftTickOffset;
+
+                obj.x = note.X;
+                var ti = note.Time * timeBase * 1000000 / tempoValue + pageShiftTickOffset;
                 obj.tick = ti;
-                obj.hold_tick = note.duration * timeBase * 1000000 / tempoValue;
+                obj.hold_tick = note.Duration * timeBase * 1000000 / tempoValue;
                 page = Mathf.FloorToInt(ti / timeBase);
                 obj.page_index = page;
-                if (note.type == OldNoteType.Chain)
+                if (note.Type == C1NoteType.Chain)
                 {
-                    obj.next_id = note.connectedNote != null ? note.connectedNote.id : -1;
+                    obj.next_id = note.ConnectedNote != null ? note.ConnectedNote.Id : -1;
                 }
                 else
                 {
                     obj.next_id = 0;
                 }
+
                 noteList.Add(obj);
             }
+
             root.note_list = noteList;
-            
+
             var pageList = new List<ChartPage>();
             var direction = false;
             var t = 0;
@@ -304,12 +429,42 @@ namespace Cytus2.Models
                 obj.end_tick = t;
                 pageList.Add(obj);
             }
+
             root.page_list = pageList;
-            
+
             root.music_offset = pageShiftTickOffset / timeBase / 1000000 * tempoValue;
             return root;
         }
 
-    }
+        [Serializable]
+        public class C1Note
+        {
+            public int Id;
+            public int OriginalId;
+            public float Time;
+            public float X;
+            public float Duration;
 
+            public C1NoteType Type = C1NoteType.Single;
+
+            [NonSerialized] public C1Note ConnectedNote;
+            public bool IsChainHead;
+
+            public C1Note(int originalId, float time, float x, float duration, bool isChainHead)
+            {
+                OriginalId = originalId;
+                Time = time;
+                X = x;
+                Duration = duration;
+                IsChainHead = isChainHead;
+            }
+        }
+
+        public enum C1NoteType
+        {
+            Single,
+            Chain,
+            Hold
+        }
+    }
 }

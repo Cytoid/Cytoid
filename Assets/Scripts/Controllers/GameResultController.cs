@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Linq;
 using System.Text;
 using AppAdvisory.SharingSystem;
 using LunarConsolePluginInternal;
@@ -29,8 +30,6 @@ public class GameResultController : MonoBehaviour
 	[SerializeField] private Button nextButton;
 	[SerializeField] private Button retryButton;
 	[SerializeField] private Button uploadButton;
-	[SerializeField] private GameObject rankedIndicator;
-	[SerializeField] private GameObject levelInfoIndicator;
 
 	public bool IsUploading { get; private set; }
 	
@@ -47,10 +46,12 @@ public class GameResultController : MonoBehaviour
 		// HIGHLIGHT
 
 		StartCoroutine(AutoUpload());
+		
+		var play = CytoidApplication.CurrentPlay;
 
-		var score = CytoidApplication.LastPlayResult.Score;
-		var tp = CytoidApplication.LastPlayResult.Tp;
-		var maxCombo = CytoidApplication.LastPlayResult.MaxCombo;
+		var score = play.Score;
+		var tp = play.Tp;
+		var maxCombo = play.MaxCombo;
 
 		titleText.text = CytoidApplication.CurrentLevel.title;
 
@@ -60,25 +61,28 @@ public class GameResultController : MonoBehaviour
 		{
 			scoreText.color = Convert.HexToColor("#FDE74C");
 		}
-
-		var result = CytoidApplication.LastPlayResult;
 		
 		var text = "";
 		if (Math.Abs(tp - 100) < 0.000001) text += "Full accuracy";
 		else text += tp.ToString("0.##") + "% accuracy";
 		text += " / ";
-		if (maxCombo == result.TotalCount) text += "Full combo";
+		if (maxCombo == play.NoteCleared) text += "Full combo";
 		else text += maxCombo + " max combo";
 
 		tpComboText.text = text;
-
 		
-		var info = string.Format("<b>Perfect </b> {0}      <b>Great </b> {1}      <b>Good </b> {2}      <b>Bad </b> {3}      <b>Miss </b> {4}", result.PerfectCount, result.GreatCount, result.GoodCount, result.BadCount, result.MissCount);
+		var info = string.Format("<b>Perfect </b> {0}      <b>Great </b> {1}      <b>Good </b> {2}      <b>Bad </b> {3}      <b>Miss </b> {4}", 
+			play.NoteRankings.Values.Count(grading => grading == NoteGrading.Perfect), 
+			play.NoteRankings.Values.Count(grading => grading == NoteGrading.Great),
+			play.NoteRankings.Values.Count(grading => grading == NoteGrading.Good), 
+			play.NoteRankings.Values.Count(grading => grading == NoteGrading.Bad), 
+			play.NoteRankings.Values.Count(grading => grading == NoteGrading.Miss)
+		);
 		infoText.text = info;
 		
 		DisplayDifficultyView.Instance.SetDifficulty(CytoidApplication.CurrentChartType, CytoidApplication.CurrentLevel.GetDifficulty(CytoidApplication.CurrentChartType));
 
-		var ranked = result.Ranked;
+		var ranked = CytoidApplication.CurrentRankedModeData != null;
 		
 		// Save stats
 		var oldScore = ZPlayerPrefs.GetFloat(PreferenceKeys.BestScore(CytoidApplication.CurrentLevel,
@@ -99,29 +103,6 @@ public class GameResultController : MonoBehaviour
 			ZPlayerPrefs.GetInt(PreferenceKeys.PlayCount(CytoidApplication.CurrentLevel, CytoidApplication.CurrentChartType), defaultValue: 0);
 		
 		ZPlayerPrefs.SetInt(PreferenceKeys.PlayCount(CytoidApplication.CurrentLevel, CytoidApplication.CurrentChartType), playCount + 1);
-
-		if (ranked)
-		{
-
-			var rankedPlayData = CytoidApplication.CurrentRankedPlayData;
-
-			rankedPlayData.score = (long) score;
-			rankedPlayData.accuracy = (int) (tp * 1000000);
-			rankedPlayData.max_combo = maxCombo;
-			rankedPlayData.perfect = result.PerfectCount;
-			rankedPlayData.great = result.GreatCount;
-			rankedPlayData.good = result.GoodCount;
-			rankedPlayData.bad = result.BadCount;
-			rankedPlayData.miss = result.MissCount;
-
-			rankedPlayData.checksum = Checksum.From(rankedPlayData);
-
-		}
-		else
-		{
-			levelInfoIndicator.transform.SetLocalX(rankedIndicator.transform.localPosition.x);
-			rankedIndicator.SetActive(false);
-		}
 	}
 
 	public IEnumerator AutoUpload()
@@ -129,7 +110,7 @@ public class GameResultController : MonoBehaviour
 		uploadButton.interactable = false;
 		yield return new WaitForSeconds(1);
 		
-		if (CytoidApplication.LastPlayResult.Ranked) PostRankingData();
+		if (CytoidApplication.CurrentRankedModeData != null) PostRankingData();
 	}
 
 	public void SetAction(string action)
@@ -159,7 +140,7 @@ public class GameResultController : MonoBehaviour
 
 	public void PostRankingData()
 	{
-		if (!CytoidApplication.LastPlayResult.Ranked || !LocalProfile.Exists())
+		if (CytoidApplication.CurrentRankedModeData == null || !User.Exists())
 		{
 			Popup.Make(this, "ERROR: You haven't signed in.");
 			return;
@@ -185,8 +166,8 @@ public class GameResultController : MonoBehaviour
 
         var request = new UnityWebRequest(CytoidApplication.Host + "/rank/post", "POST") {timeout = 10};
 
-        var bodyRaw = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(CytoidApplication.CurrentRankedPlayData));
-		print("Body: " + JsonConvert.SerializeObject(CytoidApplication.CurrentRankedPlayData));
+        var bodyRaw = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(CytoidApplication.CurrentRankedModeData));
+		print("Body: " + JsonConvert.SerializeObject(CytoidApplication.CurrentRankedModeData));
         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
         request.downloadHandler = new DownloadHandlerBuffer();
         request.SetRequestHeader("Content-Type", "application/json");
@@ -204,7 +185,7 @@ public class GameResultController : MonoBehaviour
 			        break;
 		        case 401:
 			        Popup.Make(this, "ERROR: " + "You haven't signed in.");
-			        LocalProfile.reset();
+			        User.reset();
 			        break;
 		        case 403:
 			        Popup.Make(this, "ERROR: " + request.downloadHandler.text);
@@ -251,6 +232,5 @@ public class GameResultController : MonoBehaviour
 	{
 		VSSHARE.DOShareScreenshot(VSSHARE.self.customShareText, ShareType.Native);
 	}
-	
 	
 }

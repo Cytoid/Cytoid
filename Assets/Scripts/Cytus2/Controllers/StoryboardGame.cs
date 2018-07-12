@@ -1,26 +1,27 @@
 ﻿using System.Collections;
 using CodeStage.AdvancedFPSCounter;
 using Cytoid.Storyboard;
+using Cytoid.UI;
 using Cytus2.Models;
 using Lean.Touch;
 using UnityEngine;
-using Slider = Cytoid.UI.Slider;
 using Text = UnityEngine.UI.Text;
 
 namespace Cytus2.Controllers
 {
     public class StoryboardGame : Game
     {
-
-        public Canvas InfoCanvas;
-        public Slider SeekSlider;
+        
+        public DirectSlider SeekSlider;
 
         public bool HideUi;
         
         protected override IEnumerator Start()
         {
             yield return StartCoroutine(base.Start());
-            GameOptions.Instance.WillAutoPlay = true;
+            
+            Play.Mods.Add(Mod.Auto);
+            
             GameOptions.Instance.ChartOffset = 0;
 
             SeekSlider.onValueChanged.AddListener(Seek);
@@ -62,14 +63,6 @@ namespace Cytus2.Controllers
                     SeekSlider.gameObject.SetActive(false);
                 }
             }
-        }
-
-        public override void SpawnNote(ChartNote note)
-        {
-            base.SpawnNote(note);
-            // Generate note id holder
-            var canvas = Instantiate(InfoCanvas, GameNotes[note.id].transform.Find("NoteFill"));
-            canvas.GetComponentInChildren<Text>().text = "" + note.id;
         }
 
         protected override void UpdateOnScreenNotes()

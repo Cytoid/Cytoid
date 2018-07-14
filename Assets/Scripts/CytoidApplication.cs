@@ -18,7 +18,7 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 
     public static List<Level> Levels = new List<Level>();
     public static Level CurrentLevel;
-    public static string CurrentChartType = ChartType.Hard;
+    public static string CurrentChartType = Level.Hard;
     public static LevelSelectionController.HitSound CurrentHitSound;
     public static Play CurrentPlay;
     public static RankedModeData CurrentRankedModeData;

@@ -80,8 +80,7 @@ public class GameResultController : MonoBehaviour
         );
         infoText.text = info;
 
-        DisplayDifficultyView.Instance.SetDifficulty(CytoidApplication.CurrentChartType,
-            CytoidApplication.CurrentLevel.GetDifficulty(CytoidApplication.CurrentChartType));
+        DisplayDifficultyView.Instance.SetDifficulty(CytoidApplication.CurrentLevel.charts.Find(it => it.type == CytoidApplication.CurrentChartType));
 
         var ranked = CytoidApplication.CurrentRankedModeData != null;
 

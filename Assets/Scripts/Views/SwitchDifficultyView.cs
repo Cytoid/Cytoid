@@ -36,7 +36,7 @@ public class SwitchDifficultyView : DisplayDifficultyView
 
     public void SwitchDifficulty(string type)
     {
-        SetDifficulty(type, level.GetDifficulty(type));
+        SetDifficulty(level.charts.Find(it => it.type == type));
         CytoidApplication.CurrentChartType = type;
         LevelSelectionController.Instance.UpdateBestText();
     }

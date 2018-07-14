@@ -119,9 +119,9 @@ namespace Cytus2.Models
                                    page.start_tick);
 
                 if (note.type == 3 || note.type == 4)
-                    note.intro_time = note.start_time - 1.175f / note.speed;
+                    note.intro_time = note.start_time - (1.175f / note.speed);
                 else
-                    note.intro_time = note.start_time - 1.367f / note.speed;
+                    note.intro_time = note.start_time - (1.367f / note.speed);
 
                 switch (note.type)
                 {

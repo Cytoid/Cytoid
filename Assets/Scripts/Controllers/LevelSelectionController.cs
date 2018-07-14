@@ -325,7 +325,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
         // Expand the list height
         // Formula: (Height + Spacing）* (How many entries) + Extra padding
-        listRectTransform.ChangeSizeDelta(y: (56 - 6) * CytoidApplication.Levels.Count + 1000);
+        listRectTransform.ChangeSizeDelta(y: ((56 - 6) * CytoidApplication.Levels.Count) + 1000);
 
         // Add level entries into the list
         for (var index = 0; index < CytoidApplication.Levels.Count; index++)

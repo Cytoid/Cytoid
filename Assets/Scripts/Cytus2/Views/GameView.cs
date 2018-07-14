@@ -48,8 +48,7 @@ namespace Cytus2.Views
             canvas.sortingOrder = 0;
 
             var level = CytoidApplication.CurrentLevel;
-            DisplayDifficultyView.Instance.SetDifficulty(CytoidApplication.CurrentChartType,
-                level.GetDifficulty(CytoidApplication.CurrentChartType));
+            DisplayDifficultyView.Instance.SetDifficulty(level.charts.Find(it => it.type == CytoidApplication.CurrentChartType));
             titleText.text = level.title;
             backgroundOverlayMask.willFadeIn = true;
         }

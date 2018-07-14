@@ -1,5 +1,4 @@
-﻿using QuickEngine.Common;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 public class DisplayDifficultyView : SingletonMonoBehavior<DisplayDifficultyView>
@@ -12,7 +11,7 @@ public class DisplayDifficultyView : SingletonMonoBehavior<DisplayDifficultyView
 
     protected Image image;
 
-    protected string chartType = ChartType.Easy;
+    protected string chartType = Level.Easy;
     protected int chartLevel = 1;
 
     protected override void Awake()
@@ -22,18 +21,18 @@ public class DisplayDifficultyView : SingletonMonoBehavior<DisplayDifficultyView
         image = GetComponentInChildren<Image>();
     }
 
-    public void SetDifficulty(string type, int level)
+    public void SetDifficulty(Level.ChartSection section)
     {
-        chartType = type;
-        chartLevel = level;
+        chartType = section.type;
+        chartLevel = section.difficulty;
         Sprite sprite;
-        switch (type)
+        switch (section.type)
         {
-            case ChartType.Easy:
+            case Level.Easy:
                 sprite = easy;
                 typeText.text = "Easy";
                 break;
-            case ChartType.Hard:
+            case Level.Hard:
                 sprite = hard;
                 typeText.text = "Hard";
                 break;
@@ -43,7 +42,12 @@ public class DisplayDifficultyView : SingletonMonoBehavior<DisplayDifficultyView
                 break;
         }
 
+        if (section.name != null)
+        {
+            typeText.text = section.name;
+        }
+
         image.overrideSprite = sprite;
-        levelText.text = "LV." + level;
+        levelText.text = "LV." + section.difficulty;
     }
 }

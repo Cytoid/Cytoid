@@ -345,7 +345,6 @@ namespace Cytus2.Controllers
                        chart.event_order_list[currentEventId].time < Time)
                 {
                     // TODO: Speed up text
-                    // TODO: Clean up this mess
                     if (chart.event_order_list[currentEventId].event_list[0].type == 0)
                     {
                         Scanline.PlaySpeedUp();
@@ -391,8 +390,6 @@ namespace Cytus2.Controllers
                             currentNoteId++;
                             break;
                     }
-
-                    // TODO: Complete
                 }
             }
         }

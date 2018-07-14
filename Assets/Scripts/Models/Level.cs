@@ -8,11 +8,10 @@ using UnityEngine;
 
 public class Level
 {
-    
     public const string Easy = "easy";
     public const string Hard = "hard";
     public const string Extreme = "extreme";
-    
+
     [JsonIgnore] public string BasePath;
 
     public string level_format { get; set; }

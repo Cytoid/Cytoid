@@ -513,7 +513,6 @@ public static class PlayerPrefsExt
     public static Vector3[] GetVector3Array(String key, Vector3 defaultValue, int defaultSize)
     {
         if (PlayerPrefs.HasKey(key))
-
         {
             return GetVector3Array(key);
         }

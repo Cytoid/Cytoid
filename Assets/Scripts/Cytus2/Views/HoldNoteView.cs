@@ -113,10 +113,9 @@ namespace Cytus2.Views
                 CompletedLine.sortingOrder = Ring.sortingOrder + 1;
                 SpriteMask.frontSortingOrder = Line.sortingOrder;
                 SpriteMask.backSortingOrder = Line.sortingOrder - 1;
-                if (Note.Game.Time < Note.Note.start_time)
-                {
-                    SpriteMask.isCustomRangeActive = false;
-                }
+               
+                SpriteMask.enabled = Game.Time >= Note.Note.intro_time;
+                SpriteMask.isCustomRangeActive = SpriteMask.enabled;
 
                 if (Note.IsHolding)
                 {

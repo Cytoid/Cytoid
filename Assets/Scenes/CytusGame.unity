@@ -6065,7 +6065,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   willFadeIn: 0
   willFadeOut: 0
-  max: 0.85
+  max: 0.9
   min: 0
   speed: 0.04
 --- !u!114 &471899827

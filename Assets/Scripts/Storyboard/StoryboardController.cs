@@ -129,6 +129,13 @@ namespace Cytoid.Storyboard
             Tape.enabled = false;
         }
 
+        private new void Awake()
+        {
+#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+            Environment.SetEnvironmentVariable("MONO_MANAGED_WATCHER", "enabled");
+#endif
+        }
+
         private IEnumerator Start()
         {
             // Don't proceed until game chart is ready
@@ -138,10 +145,6 @@ namespace Cytoid.Storyboard
             }
 
             CanvasRect = Canvas.GetComponent<RectTransform>().rect;
-
-#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-            Environment.SetEnvironmentVariable("MONO_MANAGED_WATCHER", "enabled");
-#endif
 
             var level = Game.Instance.Level;
             var chartSection = level.charts.Find(it => it.type == CytoidApplication.CurrentChartType);
@@ -157,17 +160,7 @@ namespace Cytoid.Storyboard
 
             if (SceneManager.GetActiveScene().name == "Storyboard")
             {
-                path = Application.persistentDataPath + "/player/storyboard.json";
-                // Watch for file changes
-                watcher = new FileSystemWatcher();
-                watcher.Filter = Path.GetFileName(path);
-                watcher.Path = Path.GetDirectoryName(path);
-                watcher.NotifyFilter = NotifyFilters.LastWrite;
-                watcher.Changed += delegate
-                {
-                    UnityMainThreadDispatcher.Instance().Enqueue(() => { StartCoroutine(Reload(path)); });
-                };
-                watcher.EnableRaisingEvents = true;
+                WatchFileUpdate();
             }
 
             // Listen to events
@@ -210,6 +203,23 @@ namespace Cytoid.Storyboard
                 Prism.enabled = true;
                 Prism.EnableEffects();
             }
+        }
+
+        public void WatchFileUpdate()
+        {
+            var path = Application.persistentDataPath + "/player/storyboard.json";
+            // Watch for file changes
+            watcher = new FileSystemWatcher
+            {
+                Filter = Path.GetFileName(path),
+                Path = Path.GetDirectoryName(path),
+                NotifyFilter = NotifyFilters.LastWrite
+            };
+            watcher.Changed += delegate
+            {
+                UnityMainThreadDispatcher.Instance().Enqueue(() => { StartCoroutine(Reload(path)); });
+            };
+            watcher.EnableRaisingEvents = true;
         }
 
         public IEnumerator Reload(string path)
@@ -269,8 +279,20 @@ namespace Cytoid.Storyboard
                 return;
             }
 
-            #region Text
+            UpdateTexts();
 
+            UpdateSprites();
+
+            UpdateControllers();
+
+            if (Testing)
+            {
+                UpdateTestViews();
+            }
+        }
+
+        protected virtual void UpdateTexts()
+        {
             foreach (var textView in TextViews.Keys.ToList())
             {
                 var text = TextViews[textView];
@@ -392,11 +414,10 @@ namespace Cytoid.Storyboard
                         (TextAnchor) Enum.Parse(typeof(TextAnchor), a.Align, true);
                 }
             }
+        }
 
-            #endregion
-
-            #region Sprite
-
+        protected virtual void UpdateSprites()
+        {
             foreach (var spriteView in SpriteViews.Keys.ToList())
             {
                 var sprite = SpriteViews[spriteView];
@@ -497,11 +518,10 @@ namespace Cytoid.Storyboard
                     spriteView.preserveAspect = (bool) a.PreserveAspect;
                 }
             }
+        }
 
-            #endregion
-
-            #region Scene
-
+        protected virtual void UpdateControllers()
+        {
             foreach (var controller in Controllers)
             {
                 ControllerState a;
@@ -903,54 +923,52 @@ namespace Cytoid.Storyboard
                     }
                 }
             }
+        }
 
-            #endregion
-
-            if (Testing)
+        protected virtual void UpdateTestViews()
+        {
+            Prism.useBloom = BloomPrismToggle.isOn;
+            Prism.useVignette = VignettePrismToggle.isOn;
+            Prism.useChromaticAberration = ChromaticToggle.isOn;
+            Chromatical.enabled = ChromaticalToggle.isOn;
+            RadialBlur.enabled = RadialBlurToggle.isOn;
+            ColorAdjustment.enabled = ColorAdjustmentToggle.isOn;
+            ColorFilter.enabled = ColorFilterCfpToggle.isOn;
+            GrayScale.enabled = GrayScaleToggle.isOn;
+            Noise.enabled = NoiseToggle.isOn;
+            Sepia.enabled = SepiaToggle.isOn;
+            Dream.enabled = DreamToggle.isOn;
+            Fisheye.enabled = FisheyeToggle.isOn;
+            Shockwave.enabled = ShockwaveToggle.isOn;
+            Focus.enabled = FocusToggle.isOn;
+            Glitch.enabled = GlitchToggle.isOn;
+            Arcade.enabled = ArcadeToggle.isOn;
+            Tape.enabled = TapeToggle.isOn;
+            if (LowestResToggle.isOn)
             {
-                Prism.useBloom = BloomPrismToggle.isOn;
-                Prism.useVignette = VignettePrismToggle.isOn;
-                Prism.useChromaticAberration = ChromaticToggle.isOn;
-                Chromatical.enabled = ChromaticalToggle.isOn;
-                RadialBlur.enabled = RadialBlurToggle.isOn;
-                ColorAdjustment.enabled = ColorAdjustmentToggle.isOn;
-                ColorFilter.enabled = ColorFilterCfpToggle.isOn;
-                GrayScale.enabled = GrayScaleToggle.isOn;
-                Noise.enabled = NoiseToggle.isOn;
-                Sepia.enabled = SepiaToggle.isOn;
-                Dream.enabled = DreamToggle.isOn;
-                Fisheye.enabled = FisheyeToggle.isOn;
-                Shockwave.enabled = ShockwaveToggle.isOn;
-                Focus.enabled = FocusToggle.isOn;
-                Glitch.enabled = GlitchToggle.isOn;
-                Arcade.enabled = ArcadeToggle.isOn;
-                Tape.enabled = TapeToggle.isOn;
-                if (LowestResToggle.isOn)
-                {
-                    Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.5),
-                        (int) (CytoidApplication.OriginalHeight * 0.5), true);
-                }
-                else if (LowerResToggle.isOn)
-                {
-                    Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.8),
-                        (int) (CytoidApplication.OriginalHeight * 0.8), true);
-                }
-                else
-                {
-                    Screen.SetResolution(CytoidApplication.OriginalWidth, CytoidApplication.OriginalHeight, true);
-                }
+                Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.5),
+                    (int) (CytoidApplication.OriginalHeight * 0.5), true);
+            }
+            else if (LowerResToggle.isOn)
+            {
+                Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.8),
+                    (int) (CytoidApplication.OriginalHeight * 0.8), true);
+            }
+            else
+            {
+                Screen.SetResolution(CytoidApplication.OriginalWidth, CytoidApplication.OriginalHeight, true);
+            }
 
-                if (BloomSleekToggle.isOn || VignetteSleekToggle.isOn || ColorFilterSleekToggle.isOn)
-                {
-                    Sleek.enabled = true;
-                    Sleek.settings.bloomEnabled = BloomSleekToggle.isOn;
-                    Sleek.settings.vignetteEnabled = VignetteSleekToggle.isOn;
-                    Sleek.settings.colorizeEnabled = ColorFilterSleekToggle.isOn;
-                }
-                else
-                {
-                    Sleek.enabled = false;
-                }
+            if (BloomSleekToggle.isOn || VignetteSleekToggle.isOn || ColorFilterSleekToggle.isOn)
+            {
+                Sleek.enabled = true;
+                Sleek.settings.bloomEnabled = BloomSleekToggle.isOn;
+                Sleek.settings.vignetteEnabled = VignetteSleekToggle.isOn;
+                Sleek.settings.colorizeEnabled = ColorFilterSleekToggle.isOn;
+            }
+            else
+            {
+                Sleek.enabled = false;
             }
         }
 

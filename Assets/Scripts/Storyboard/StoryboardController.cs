@@ -168,8 +168,11 @@ namespace Cytoid.Storyboard
 
             yield return Reload(path);
 
-            // Performance settings
+            SetupGraphics();
+        }
 
+        public void SetupGraphics()
+        {
             if (Controllers.Count > 0)
             {
                 switch (PlayerPrefs.GetString("storyboard effects"))

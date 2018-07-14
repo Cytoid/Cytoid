@@ -54,7 +54,7 @@ namespace Cytus2.Views
                 Destroy(gameObject);
                 return;
             }
-            
+
             if (game is StoryboardGame)
             {
                 spriteRenderer.enabled = OutroRatio < 1;

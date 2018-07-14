@@ -39,7 +39,7 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
     protected override void Awake()
     {
         base.Awake();
-        
+
         if (GameObject.FindGameObjectsWithTag("ApplicationObject").Length > 1)
         {
             Destroy(gameObject);
@@ -51,7 +51,7 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
         Application.targetFrameRate = 120;
         ZPlayerPrefs.Initialize(SecuredConstants.password, SecuredConstants.salt);
         UseDoozyUi = Type.GetType("DoozyUI.UIElement") != null;
-        
+
         OriginalWidth = Screen.width;
         OriginalHeight = Screen.height;
     }

@@ -14,9 +14,8 @@ namespace Cytoid.Storyboard
 {
     public class StoryboardController : SingletonMonoBehavior<StoryboardController>
     {
-
         public bool ShowEffects = true;
-        
+
         private FileSystemWatcher watcher;
 
         public UnityEngine.UI.Text TextPrefab;
@@ -39,7 +38,7 @@ namespace Cytoid.Storyboard
         public CameraFilterPack_TV_Videoflip Tape;
         public SleekRenderPostProcess Sleek;
         public Canvas Canvas;
-        
+
         [HideInInspector] public Rect CanvasRect;
 
         [HideInInspector] public Storyboard Storyboard;
@@ -78,13 +77,13 @@ namespace Cytoid.Storyboard
             Camera.main.transform.eulerAngles = Vector3.zero;
             Camera.main.orthographic = true;
             Camera.main.fieldOfView = 53.2f;
-            
+
             Prism.SetPrismPreset(null);
             Prism.useVignette = false;
             Prism.useChromaticAberration = false;
             Sleek.settings.bloomEnabled = false;
             Sleek.settings.bloomIntensity = 0;
-            
+
             RadialBlur.enabled = false;
             RadialBlur.Intensity = 0.025f;
             ColorAdjustment.enabled = false;
@@ -147,7 +146,8 @@ namespace Cytoid.Storyboard
             var level = Game.Instance.Level;
             var chartSection = level.charts.Find(it => it.type == CytoidApplication.CurrentChartType);
 
-            var path = level.BasePath + "/" + (chartSection.storyboard != null ? chartSection.storyboard.path : "storyboard.json");
+            var path = level.BasePath + "/" +
+                       (chartSection.storyboard != null ? chartSection.storyboard.path : "storyboard.json");
 
             if (!File.Exists(path))
             {
@@ -171,10 +171,10 @@ namespace Cytoid.Storyboard
             }
 
             // Listen to events
-            EventKit.Subscribe<GameNote>("note clear", OnNoteClear);        
-            
+            EventKit.Subscribe<GameNote>("note clear", OnNoteClear);
+
             yield return Reload(path);
-            
+
             // Performance settings
 
             if (Controllers.Count > 0)
@@ -200,9 +200,10 @@ namespace Cytoid.Storyboard
 
             if (PlayerPrefsExt.GetBool("low res"))
             {
-                Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.5), (int) (CytoidApplication.OriginalHeight * 0.5), true);
+                Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.5),
+                    (int) (CytoidApplication.OriginalHeight * 0.5), true);
             }
-            
+
             // Enable PRISM only if supported
             if (Prism.m_Shader.isSupported && Prism.m_Shader2.isSupported && Prism.m_Shader3.isSupported)
             {
@@ -252,7 +253,7 @@ namespace Cytoid.Storyboard
 
             // Create scene
             Controllers = Storyboard.Controllers;
-            
+
             // Initialize triggers
             Triggers = Storyboard.Triggers;
 
@@ -926,7 +927,8 @@ namespace Cytoid.Storyboard
                 Tape.enabled = TapeToggle.isOn;
                 if (LowestResToggle.isOn)
                 {
-                    Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.5), (int) (CytoidApplication.OriginalHeight * 0.5), true);
+                    Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.5),
+                        (int) (CytoidApplication.OriginalHeight * 0.5), true);
                 }
                 else if (LowerResToggle.isOn)
                 {
@@ -1122,7 +1124,7 @@ namespace Cytoid.Storyboard
             currentState = states.Last();
             nextState = currentState;
         }
-        
+
         public bool Testing = true;
 
         public Toggle BloomPrismToggle;
@@ -1147,6 +1149,5 @@ namespace Cytoid.Storyboard
         public Toggle TapeToggle;
         public Toggle LowerResToggle;
         public Toggle LowestResToggle;
-        
     }
 }

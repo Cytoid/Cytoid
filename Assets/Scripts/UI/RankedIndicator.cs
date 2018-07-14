@@ -13,5 +13,4 @@ namespace Cytoid.UI
             gameObject.SetActive(CytoidApplication.CurrentPlay.IsRanked);
         }
     }
-    
 }

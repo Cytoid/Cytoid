@@ -1,15 +1,12 @@
-﻿
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
 
 namespace Cytus2.Models
 {
-
     [System.Serializable]
     public class ChartRoot
     {
-
         public int format_version;
         public int time_base;
 
@@ -21,7 +18,6 @@ namespace Cytus2.Models
         public List<ChartAnimation> animation_list = new List<ChartAnimation>();
 
         public float music_offset;
-
     }
 
     [System.Serializable]
@@ -30,7 +26,7 @@ namespace Cytus2.Models
         public float start_tick;
         public float end_tick;
         public int scan_line_direction;
-        
+
         public float start_time;
         public float end_time;
 
@@ -84,9 +80,9 @@ namespace Cytus2.Models
         public float hold_tick;
         public int next_id;
         public bool is_forward;
-        
+
         public double approach_rate = 1f;
-        
+
         public float start_time;
         public float end_time;
         public Vector3 position;
@@ -103,7 +99,5 @@ namespace Cytus2.Models
         {
             get { return end_time - start_time; }
         }
-        
     }
-
 }

@@ -71,9 +71,9 @@ namespace Cytus2.Views
                     Triangle.enabled = false;
                 }
             }
-            
+
             base.OnRender();
-            
+
             Mask.color = Fill.color.WithAlpha(0.35f);
         }
 
@@ -104,7 +104,6 @@ namespace Cytus2.Views
 
             if (!Note.IsCleared)
             {
-                
                 Mask.enabled = Note.IsHolding;
                 Line.flipY = Note.Note.direction == -1;
                 CompletedLine.flipY = Line.flipY;
@@ -118,7 +117,7 @@ namespace Cytus2.Views
                 {
                     SpriteMask.isCustomRangeActive = false;
                 }
-                
+
                 if (Note.IsHolding)
                 {
                     if (Note.Game.Time > Note.Note.start_time)
@@ -137,7 +136,6 @@ namespace Cytus2.Views
                         TicksUntilHoldFx++;
                     }
                 }
-                
             }
         }
 
@@ -173,6 +171,5 @@ namespace Cytus2.Views
                 Object.Destroy(SpriteMask.gameObject);
             }
         }
-        
     }
 }

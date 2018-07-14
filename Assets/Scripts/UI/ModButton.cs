@@ -42,5 +42,4 @@ namespace Cytoid.UI
             button.colors = colors;
         }
     }
-    
 }

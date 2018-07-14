@@ -10,7 +10,7 @@ namespace Cytoid.UI
 
         private InputField text;
         private string defaultValue;
-        
+
         private void Awake()
         {
             text = GetComponent<InputField>();
@@ -20,6 +20,7 @@ namespace Cytoid.UI
             {
                 PlayerPrefs.SetString(Key, defaultValue);
             }
+
             text.text = PlayerPrefs.GetString(Key);
         }
 

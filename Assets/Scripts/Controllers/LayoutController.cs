@@ -2,7 +2,6 @@
 
 public class LayoutController : SingletonMonoBehavior<LayoutController>
 {
-
     public float PlayAreaHeight
     {
         get { return Camera.main.orthographicSize * 2.0f * 0.67f; }
@@ -15,7 +14,11 @@ public class LayoutController : SingletonMonoBehavior<LayoutController>
 
     public float PlayAreaVerticalMargin
     {
-        get { return (Camera.main.orthographicSize * 2.0f * 0.15f) - Camera.main.orthographicSize - Camera.main.orthographicSize * 2.0f * 0.02f; }
+        get
+        {
+            return (Camera.main.orthographicSize * 2.0f * 0.15f) - Camera.main.orthographicSize -
+                   Camera.main.orthographicSize * 2.0f * 0.02f;
+        }
     }
 
     public float PlayAreaHorizontalMargin
@@ -46,5 +49,4 @@ public class LayoutController : SingletonMonoBehavior<LayoutController>
     {
         get { return Camera.main.orthographicSize * 2.0f * 0.012f; }
     }
-
 }

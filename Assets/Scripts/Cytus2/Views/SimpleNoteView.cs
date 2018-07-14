@@ -7,10 +7,8 @@ using UnityEngine;
 
 namespace Cytus2.Views
 {
-
     public class SimpleNoteView : NoteView
     {
-        
         public readonly Game Game;
 
         protected float Size;
@@ -24,7 +22,7 @@ namespace Cytus2.Views
         public SimpleNoteView(GameNote note) : base(note)
         {
             Game = note.Game;
-            
+
             Ring = Note.transform.Find("NoteRing").GetComponent<SpriteRenderer>();
             Fill = Note.transform.Find("NoteFill").GetComponent<SpriteRenderer>();
 
@@ -35,7 +33,7 @@ namespace Cytus2.Views
         public override void OnInit(ChartRoot chart, ChartNote note)
         {
             Size = SimpleVisualOptions.Instance.GetSize(this);
-            
+
             Ring.color = SimpleVisualOptions.Instance.GetRingColor(this);
             Fill.color = SimpleVisualOptions.Instance.GetFillColor(this);
 
@@ -72,11 +70,12 @@ namespace Cytus2.Views
         protected virtual void RenderTransform()
         {
             // Scale whole transform
-            
+
             var minPercentageSize = 0.4f;
             var timeRequired = 1.367f / Note.Note.speed;
-            var timeScaledSize = Size * minPercentageSize + Size * (1 - minPercentageSize) * Mathf.Clamp((Game.Time - Note.Note.intro_time) / timeRequired, 0f, 1f);
-            
+            var timeScaledSize = Size * minPercentageSize + Size * (1 - minPercentageSize) *
+                                 Mathf.Clamp((Game.Time - Note.Note.intro_time) / timeRequired, 0f, 1f);
+
             Note.transform.localScale = new Vector3(timeScaledSize, timeScaledSize, Note.transform.localScale.z);
         }
 
@@ -85,7 +84,9 @@ namespace Cytus2.Views
             // Scale fill
 
             float t;
-            if (Note.TimeUntilStart > 0) t = Mathf.Clamp((Game.Time - Note.Note.intro_time) / (Note.Note.start_time - Note.Note.intro_time), 0f, 1f);
+            if (Note.TimeUntilStart > 0)
+                t = Mathf.Clamp((Game.Time - Note.Note.intro_time) / (Note.Note.start_time - Note.Note.intro_time), 0f,
+                    1f);
             else t = 1f;
 
             var z = Fill.transform.localScale.z;
@@ -93,27 +94,30 @@ namespace Cytus2.Views
         }
 
         protected float EasedOpacity;
-        
+
         protected virtual void RenderOpacity()
         {
-            if (Note.TimeUntilStart > 0) EasedOpacity = Mathf.Clamp((Game.Time - Note.Note.intro_time) / (Note.Note.start_time - Note.Note.intro_time) * 2f, 0f, 1f);
+            if (Note.TimeUntilStart > 0)
+                EasedOpacity =
+                    Mathf.Clamp((Game.Time - Note.Note.intro_time) / (Note.Note.start_time - Note.Note.intro_time) * 2f,
+                        0f, 1f);
             else EasedOpacity = 1f;
-            
+
             Ring.color = Ring.color.WithAlpha(EasedOpacity);
             Fill.color = Fill.color.WithAlpha(EasedOpacity);
         }
-        
+
         public override void OnClear(NoteGrading grading)
         {
             SimpleEffects.Instance.PlayClearFx(
                 this,
                 grading,
-                Note.TimeUntilEnd, 
+                Note.TimeUntilEnd,
                 GameOptions.Instance.ShowEarlyLateIndicator
             );
 
             rendered = false;
-            
+
             Ring.enabled = false;
             Fill.enabled = false;
             Collider.enabled = false;
@@ -123,12 +127,10 @@ namespace Cytus2.Views
                 Note.StopCoroutine(emergeAnimCoroutine);
             }
         }
-        
+
         public override bool IsRendered()
         {
             return rendered;
         }
-
     }
-
 }

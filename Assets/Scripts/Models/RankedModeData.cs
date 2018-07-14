@@ -4,7 +4,6 @@ using System.Collections.Generic;
 [Serializable]
 public class RankedModeData
 {
-
     public string user;
     public string password;
     public long start;
@@ -13,7 +12,7 @@ public class RankedModeData
     public string type;
     public int version;
     public string mods;
-    
+
     public long score;
     public int accuracy;
     public int max_combo;
@@ -25,9 +24,9 @@ public class RankedModeData
 
     public List<Note> notes = new List<Note>();
     public List<Pause> pauses = new List<Pause>();
-    
+
     public Device device = new Device();
-    
+
     public string chart_checksum;
     public string checksum;
 
@@ -49,7 +48,7 @@ public class RankedModeData
         public long start;
         public long end;
     }
-    
+
     [Serializable]
     public class Device
     {
@@ -58,5 +57,4 @@ public class RankedModeData
         public int dpi;
         public string model;
     }
-    
 }

@@ -78,7 +78,7 @@ namespace Cytoid.Storyboard
                         if (controller != null) Controllers.Add(controller);
                     }
                 }
-                
+
                 // Controllers.ForEach(controller => Debug.Log(JsonConvert.SerializeObject(controller)));
             }
 

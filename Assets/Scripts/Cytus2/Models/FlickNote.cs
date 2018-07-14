@@ -4,10 +4,8 @@ using UnityEngine;
 
 namespace Cytus2.Models
 {
-
     public class FlickNote : GameNote
     {
-
         public bool IsFlicking;
         public float FlickingStartTime;
         public Vector2 FlickingStartPosition;
@@ -44,6 +42,7 @@ namespace Cytus2.Models
                 Clear(CalculateGrading());
                 return true;
             }
+
             return false;
         }
 
@@ -60,11 +59,12 @@ namespace Cytus2.Models
                     {
                         grading = NoteGrading.Great;
                     }
+
                     if (timeUntil <= 0.200f)
                     {
                         grading = NoteGrading.Perfect;
                     }
-                } 
+                }
                 else
                 {
                     var timePassed = -timeUntil;
@@ -72,6 +72,7 @@ namespace Cytus2.Models
                     {
                         grading = NoteGrading.Great;
                     }
+
                     if (timePassed <= 0.100f)
                     {
                         grading = NoteGrading.Perfect;
@@ -86,11 +87,12 @@ namespace Cytus2.Models
                     {
                         grading = NoteGrading.Great;
                     }
+
                     if (timeUntil <= 0.120f)
                     {
                         grading = NoteGrading.Perfect;
                     }
-                } 
+                }
                 else
                 {
                     var timePassed = -timeUntil;
@@ -98,15 +100,15 @@ namespace Cytus2.Models
                     {
                         grading = NoteGrading.Great;
                     }
+
                     if (timePassed <= 0.060f)
                     {
                         grading = NoteGrading.Perfect;
                     }
                 }
             }
+
             return grading;
         }
-
     }
-
 }

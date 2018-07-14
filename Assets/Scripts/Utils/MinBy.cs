@@ -1,4 +1,5 @@
 ﻿#region License and Terms
+
 // MoreLINQ - Extensions to LINQ to Objects
 // Copyright (c) 2008 Jonathan Skeet. All rights reserved.
 // 
@@ -13,6 +14,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #endregion
 
 namespace MoreLinq
@@ -39,7 +41,6 @@ namespace MoreLinq
         /// <returns>The minimal element, according to the projection.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="source"/> or <paramref name="selector"/> is null</exception>
         /// <exception cref="InvalidOperationException"><paramref name="source"/> is empty</exception>
-        
         public static TSource MinBy<TSource, TKey>(this IEnumerable<TSource> source,
             Func<TSource, TKey> selector)
         {
@@ -64,7 +65,6 @@ namespace MoreLinq
         /// <exception cref="ArgumentNullException"><paramref name="source"/>, <paramref name="selector"/> 
         /// or <paramref name="comparer"/> is null</exception>
         /// <exception cref="InvalidOperationException"><paramref name="source"/> is empty</exception>
-
         public static TSource MinBy<TSource, TKey>(this IEnumerable<TSource> source,
             Func<TSource, TKey> selector, IComparer<TKey> comparer)
         {
@@ -78,6 +78,7 @@ namespace MoreLinq
                 {
                     throw new InvalidOperationException("Sequence contains no elements");
                 }
+
                 var min = sourceIterator.Current;
                 var minKey = selector(min);
                 while (sourceIterator.MoveNext())
@@ -90,6 +91,7 @@ namespace MoreLinq
                         minKey = candidateProjected;
                     }
                 }
+
                 return min;
             }
         }

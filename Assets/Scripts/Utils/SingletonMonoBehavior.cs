@@ -1,24 +1,22 @@
 ﻿using UnityEngine;
- 
+
 public class SingletonMonoBehavior<T> : MonoBehaviour where T : MonoBehaviour
 {
-	
-	private static T instance;
- 
-	public static T Instance
-	{
-		get { return instance ?? (instance = FindObjectOfType(typeof(T)) as T); }
-		set { instance = value; }
-	}
+    private static T instance;
 
-	protected virtual void Awake()
-	{
-		instance = this as T;
-	}
+    public static T Instance
+    {
+        get { return instance ?? (instance = FindObjectOfType(typeof(T)) as T); }
+        set { instance = value; }
+    }
 
-	protected virtual void OnDestroy()
-	{
-		instance = null;
-	}
-	
+    protected virtual void Awake()
+    {
+        instance = this as T;
+    }
+
+    protected virtual void OnDestroy()
+    {
+        instance = null;
+    }
 }

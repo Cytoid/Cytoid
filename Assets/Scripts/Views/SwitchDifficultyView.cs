@@ -4,9 +4,8 @@ using UnityEngine.UI;
 
 public class SwitchDifficultyView : DisplayDifficultyView
 {
-
     private Level level;
-    
+
     protected override void Awake()
     {
         base.Awake();
@@ -27,6 +26,7 @@ public class SwitchDifficultyView : DisplayDifficultyView
                 hasType = true;
             }
         }
+
         if (!hasType)
         {
             chartType = level.charts[0].type;
@@ -48,5 +48,4 @@ public class SwitchDifficultyView : DisplayDifficultyView
         else index++;
         SwitchDifficulty(level.charts[index].type);
     }
-    
 }

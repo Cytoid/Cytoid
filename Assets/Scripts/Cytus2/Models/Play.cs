@@ -4,25 +4,23 @@ using Cytus2.Controllers;
 
 namespace Cytus2.Models
 {
-    
     [Serializable]
     public class Play
     {
-        
         public bool IsRanked;
         public HashSet<Mod> Mods = new HashSet<Mod>();
-        
+
         public Dictionary<int, NoteGrading> NoteRankings;
         public int NoteCount;
         public int NoteCleared;
-        
+
         public double Score;
         public double Tp;
         public int Combo;
         public int MaxCombo;
         public float Hp;
         public float MaxHp;
-        
+
         public double ComboMultiplier = 1.0f;
 
         private bool isMillionMasterPossible = true;
@@ -41,13 +39,13 @@ namespace Cytus2.Models
             {
                 NoteRankings[note.id] = NoteGrading.Undetermined;
             }
+
             NoteCount = chart.Root.note_list.Count;
             magicNumber = Math.Sqrt(NoteCount) / 3.0;
         }
 
         public void OnClear(GameNote note, NoteGrading grading, double greatGradeWeight)
         {
-            
             if (grading == NoteGrading.Undetermined) throw new InvalidOperationException("Note grading undetermined");
 
             if (!IsRanked)
@@ -98,14 +96,11 @@ namespace Cytus2.Models
             // Score
             if (!IsRanked)
             {
-
                 Score += 900000f / NoteCount * grading.ScoreWeight(ranked: false) +
                          100000f / (NoteCount * (double) (NoteCount + 1) / 2f) * Combo;
-
             }
             else
             {
-
                 var maxNoteScore = 1000000.0 / NoteCount;
 
                 double noteScore;
@@ -125,7 +120,6 @@ namespace Cytus2.Models
                 noteScore *= ComboMultiplier;
 
                 Score += noteScore;
-
             }
 
             if (Score > 999500)
@@ -141,7 +135,7 @@ namespace Cytus2.Models
             // TP
             currentTp += 100f * grading.TpWeight();
             Tp = currentTp / NoteCleared;
-            
+
             // HP
             if (Mods.Contains(Mod.Hard) || Mods.Contains(Mod.ExHard))
             {
@@ -162,7 +156,7 @@ namespace Cytus2.Models
                         Hp += (mod.Value / NoteCount) / 100f * MaxHp;
                         break;
                 }
-                
+
                 if (Hp > MaxHp) Hp = MaxHp;
                 if (Hp < 0) Game.Instance.Fail();
             }
@@ -176,25 +170,25 @@ namespace Cytus2.Models
                 Game.Instance.Fail();
             }
         }
-        
+
         public static Dictionary<NoteGrading, int> UnrankedGradingIndices = new Dictionary<NoteGrading, int>
         {
-            { NoteGrading.Perfect, 0 },
-            { NoteGrading.Great, 2 },
-            { NoteGrading.Good, 3 },
-            { NoteGrading.Bad, 4 },
-            { NoteGrading.Miss, 5 }
+            {NoteGrading.Perfect, 0},
+            {NoteGrading.Great, 2},
+            {NoteGrading.Good, 3},
+            {NoteGrading.Bad, 4},
+            {NoteGrading.Miss, 5}
         };
-        
+
         public static Dictionary<NoteGrading, int> RankedGradingIndices = new Dictionary<NoteGrading, int>
         {
-            { NoteGrading.Perfect, 0 },
-            { NoteGrading.Great, 1 },
-            { NoteGrading.Good, 2 },
-            { NoteGrading.Bad, 3 },
-            { NoteGrading.Miss, 5 }
+            {NoteGrading.Perfect, 0},
+            {NoteGrading.Great, 1},
+            {NoteGrading.Good, 2},
+            {NoteGrading.Bad, 3},
+            {NoteGrading.Miss, 5}
         };
-        
+
         public static ModeHpMod HardHpMods = new ModeHpMod(new Dictionary<int, NoteHpMod>
         {
             {
@@ -264,7 +258,7 @@ namespace Cytus2.Models
                 })
             }
         });
-        
+
         public static ModeHpMod ExHardHpMods = new ModeHpMod(new Dictionary<int, NoteHpMod>
         {
             {
@@ -365,13 +359,13 @@ namespace Cytus2.Models
                 Value = value;
                 Type = type;
             }
-            
-        }
-        
-        public enum HpModType
-        {
-            Absolute, Percentage, DivideByNoteCount
         }
 
+        public enum HpModType
+        {
+            Absolute,
+            Percentage,
+            DivideByNoteCount
+        }
     }
 }

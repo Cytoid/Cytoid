@@ -2,7 +2,6 @@
 
 public static class Convert
 {
-    
     public static Color HexToColor(string hex)
     {
         hex = hex.Replace("0x", "").Replace("#", "");
@@ -14,7 +13,7 @@ public static class Convert
         {
             a = byte.Parse(hex.Substring(6, 2), System.Globalization.NumberStyles.HexNumber);
         }
+
         return new Color32(r, g, b, a);
     }
-    
 }

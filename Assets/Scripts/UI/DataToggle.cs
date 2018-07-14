@@ -8,7 +8,7 @@ namespace Cytoid.UI
         public string Key;
 
         private Toggle toggle;
-        
+
         private void Awake()
         {
             toggle = GetComponentInChildren<Toggle>();
@@ -17,6 +17,7 @@ namespace Cytoid.UI
             {
                 PlayerPrefsExt.SetBool(Key, toggle.isOn);
             }
+
             toggle.isOn = PlayerPrefsExt.GetBool(Key);
         }
 

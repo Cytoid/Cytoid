@@ -6,7 +6,6 @@ using Object = UnityEngine.Object;
 
 public static class BackgroundCanvasHelper
 {
-
     public static GameObject SetupBackgroundCanvas(Scene scene)
     {
         var background = GameObject.FindGameObjectWithTag("Background");
@@ -17,6 +16,7 @@ public static class BackgroundCanvasHelper
             background.transform.localScale = Vector3.one;
             background.GetComponent<RectTransform>().ChangeLocalPosition(z: 0);
         }
+
         GameObject.FindGameObjectsWithTag("BackgroundCanvas").Where(it => it.scene != scene).ToList()
             .ForEach(Object.Destroy);
         return background;
@@ -33,7 +33,7 @@ public static class BackgroundCanvasHelper
                 Object.Destroy(childTransform.gameObject);
             }
         }
+
         Object.DontDestroyOnLoad(backgroundCanvas);
     }
-    
 }

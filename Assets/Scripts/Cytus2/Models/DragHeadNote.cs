@@ -7,13 +7,12 @@ namespace Cytus2.Models
 {
     public class DragHeadNote : GameNote
     {
-
         public bool IsMoving { get; private set; }
-        
+
         // Drag head is constantly moving from drag note to drag note
         public ChartNote FromNote;
         public ChartNote ToNote;
-        
+
         protected override void Awake()
         {
             base.Awake();
@@ -85,7 +84,7 @@ namespace Cytus2.Models
             // Do nothing; drag head should be destroyed when last drag note is cleared
             yield return null;
         }
-        
+
         public override NoteGrading CalculateGrading()
         {
             var ranking = NoteGrading.Miss;
@@ -105,8 +104,8 @@ namespace Cytus2.Models
                     ranking = NoteGrading.Perfect;
                 }
             }
+
             return ranking;
         }
-        
     }
 }

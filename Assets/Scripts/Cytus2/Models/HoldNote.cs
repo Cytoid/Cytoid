@@ -6,7 +6,6 @@ namespace Cytus2.Models
 {
     public class HoldNote : GameNote
     {
-        
         public bool IsHolding;
         public float HoldingStartTime;
         public float HeldDuration;
@@ -153,7 +152,5 @@ namespace Cytus2.Models
                 return rankGrading; // Return the "worse" ranking (Note miss > bad > good > great > perfect)
             return grading;
         }
-        
     }
-    
 }

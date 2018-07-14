@@ -5,10 +5,8 @@ using UnityEngine;
 
 namespace Cytus2.Views
 {
-
     public class LongHoldNoteView : HoldNoteView
     {
-
         public SpriteRenderer Line2;
         public SpriteRenderer CompletedLine2;
 
@@ -19,20 +17,24 @@ namespace Cytus2.Views
         protected override void InitViews()
         {
             // Override base view
-            
+
             var provider = LongHoldNoteViewProvider.Instance;
             Line = Object.Instantiate(provider.LinePrefab, Note.transform, false).GetComponent<SpriteRenderer>();
             Line.color = Line.color.WithAlpha(0);
             Line2 = Object.Instantiate(provider.LinePrefab, Note.transform, false).GetComponent<SpriteRenderer>();
             Line2.color = Line2.color.WithAlpha(0);
-            CompletedLine = Object.Instantiate(provider.CompletedLinePrefab, Note.transform, false).GetComponent<SpriteRenderer>();
-            CompletedLine2 = Object.Instantiate(provider.CompletedLinePrefab, Note.transform, false).GetComponent<SpriteRenderer>();
-            ProgressRing = Object.Instantiate(provider.ProgressRingPrefab, Note.transform, false).GetComponent<ProgressRingView>();
+            CompletedLine = Object.Instantiate(provider.CompletedLinePrefab, Note.transform, false)
+                .GetComponent<SpriteRenderer>();
+            CompletedLine2 = Object.Instantiate(provider.CompletedLinePrefab, Note.transform, false)
+                .GetComponent<SpriteRenderer>();
+            ProgressRing = Object.Instantiate(provider.ProgressRingPrefab, Note.transform, false)
+                .GetComponent<ProgressRingView>();
             Triangle = Object.Instantiate(provider.TrianglePrefab).GetComponent<TriangleView>();
             ProgressRing.MaxCutoff = 0;
             ProgressRing.FillCutoff = 0;
-            ProgressRing.gameObject.GetComponent<SpriteRenderer>().material.renderQueue = 3000 + Note.Note.id; // TODO: 3000?
-            CompletedLine.size = new Vector2 (1, 0);
+            ProgressRing.gameObject.GetComponent<SpriteRenderer>().material.renderQueue =
+                3000 + Note.Note.id; // TODO: 3000?
+            CompletedLine.size = new Vector2(1, 0);
             CompletedLine2.size = new Vector2(1, 0);
             Mask = Note.transform.Find("Mask").GetComponent<SpriteRenderer>();
             Mask.enabled = false;
@@ -46,13 +48,14 @@ namespace Cytus2.Views
                 Line2.enabled = true;
                 CompletedLine2.enabled = true;
                 CompletedLine2.size = new Vector2(1, 0);
-                
+
                 if (Mod.HideNotes.IsEnabled())
                 {
                     Line2.enabled = false;
                     CompletedLine2.enabled = false;
                 }
             }
+
             base.OnRender();
         }
 
@@ -66,7 +69,7 @@ namespace Cytus2.Views
             {
                 Triangle.IsShowing = false;
             }
-            
+
             if (!Note.IsCleared)
             {
                 Mask.enabled = Note.IsHolding;
@@ -88,7 +91,7 @@ namespace Cytus2.Views
                 {
                     SpriteMask.isCustomRangeActive = false;
                 }
-                
+
                 if (Note.IsHolding)
                 {
                     if (Note.Game.Time > Note.Note.start_time)
@@ -109,8 +112,10 @@ namespace Cytus2.Views
                             bottomLine = CompletedLine2;
                         }
 
-                        topLine.size = new Vector2(1, (Camera.main.orthographicSize - Note.transform.position.y) * Note.Progress);
-                        bottomLine.size = new Vector2(1, -(-Camera.main.orthographicSize - Note.transform.position.y) * Note.Progress);
+                        topLine.size = new Vector2(1,
+                            (Camera.main.orthographicSize - Note.transform.position.y) * Note.Progress);
+                        bottomLine.size = new Vector2(1,
+                            -(-Camera.main.orthographicSize - Note.transform.position.y) * Note.Progress);
 
                         if (TicksUntilHoldFx == MaxTicksBetweenHoldFx)
                         {
@@ -122,9 +127,8 @@ namespace Cytus2.Views
                     }
                 }
             }
-            
         }
-        
+
         protected override void RenderTransform()
         {
             Ring.transform.localScale = new Vector3(Size, Size, Ring.transform.localScale.z);
@@ -146,14 +150,12 @@ namespace Cytus2.Views
             base.OnClear(grading);
             Line2.enabled = false;
             CompletedLine2.enabled = false;
-            
+
             if (!(Game is StoryboardGame))
             {
                 Object.Destroy(Line2.gameObject);
                 Object.Destroy(CompletedLine2.gameObject);
             }
         }
-       
     }
-
 }

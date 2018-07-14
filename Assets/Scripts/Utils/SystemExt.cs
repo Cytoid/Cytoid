@@ -10,7 +10,7 @@ public static class SystemExt
     /// <param name="source">The object instance to copy.</param>
     /// <returns>The copied object.</returns>
     public static T Clone<T>(this T source)
-    {            
+    {
         // Don't serialize a null object, simply return the default for that object
         if (ReferenceEquals(source, null))
         {

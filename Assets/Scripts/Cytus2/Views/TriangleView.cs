@@ -5,7 +5,6 @@ namespace Cytus2.Views
 {
     public class TriangleView : MonoBehaviour
     {
-
         public ChartNote Note;
         public bool IsShowing;
 
@@ -58,15 +57,19 @@ namespace Cytus2.Views
                 mesh.vertices = new[]
                 {
                     Note.position,
-                    new Vector3(-mainCamera.orthographicSize * Screen.width / Screen.height, scanline.transform.position.y),
-                    new Vector3(mainCamera.orthographicSize * Screen.width / Screen.height, scanline.transform.position.y)
+                    new Vector3(-mainCamera.orthographicSize * Screen.width / Screen.height,
+                        scanline.transform.position.y),
+                    new Vector3(mainCamera.orthographicSize * Screen.width / Screen.height,
+                        scanline.transform.position.y)
                 };
 
                 mesh.uv = new[]
                 {
                     new Vector2(Note.position.x, Note.position.y),
-                    new Vector2(-mainCamera.orthographicSize * Screen.width / Screen.height, scanline.transform.position.y),
-                    new Vector2(mainCamera.orthographicSize * Screen.width / Screen.height, scanline.transform.position.y)
+                    new Vector2(-mainCamera.orthographicSize * Screen.width / Screen.height,
+                        scanline.transform.position.y),
+                    new Vector2(mainCamera.orthographicSize * Screen.width / Screen.height,
+                        scanline.transform.position.y)
                 };
                 mesh.triangles = new[] {0, 1, 2};
             }
@@ -88,5 +91,4 @@ namespace Cytus2.Views
             }
         }
     }
-    
 }

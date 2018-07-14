@@ -42,28 +42,32 @@ public class ToastUtil : MonoBehaviour
         if (textFont)
             t.font = textFont;
         else
-            t.font = (Font)Resources.GetBuiltinResource(typeof(Font), "Arial.ttf");
+            t.font = (Font) Resources.GetBuiltinResource(typeof(Font), "Arial.ttf");
         t.fontSize = fontSize;
         t.text = msg;
         t.enabled = true;
         t.color = textColor;
 
         g3.GetComponent<RectTransform>().sizeDelta = new Vector2(t.preferredWidth, t.preferredHeight);
-        g3.GetComponent<RectTransform>().sizeDelta = new Vector2(t.preferredWidth, t.preferredHeight);//2回必要
+        g3.GetComponent<RectTransform>().sizeDelta = new Vector2(t.preferredWidth, t.preferredHeight); //2回必要
         g2.GetComponent<RectTransform>().sizeDelta = new Vector2(t.preferredWidth + pad, t.preferredHeight + pad);
 
         mb.StartCoroutine(
-          DoToast(
-            g2.GetComponent<RectTransform>(), (endPos - startPos) * (1f / moveFrame), g
-          )
+            DoToast(
+                g2.GetComponent<RectTransform>(), (endPos - startPos) * (1f / moveFrame), g
+            )
         );
     }
-    
+
     static IEnumerator DoToast(RectTransform rec, Vector2 dif, GameObject g)
     {
-        for (var i = 1; i <= moveFrame; i++) { rec.anchoredPosition += dif; yield return null; }
+        for (var i = 1; i <= moveFrame; i++)
+        {
+            rec.anchoredPosition += dif;
+            yield return null;
+        }
+
         for (var i = 1; i <= waitFrame; i++) yield return null;
         Destroy(g);
     }
-    
 }

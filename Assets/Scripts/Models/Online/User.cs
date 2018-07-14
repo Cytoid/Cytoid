@@ -2,15 +2,14 @@
 
 public class User
 {
-
     public string username;
     public string password;
     public string avatarUrl;
-    
+
     public Texture2D avatarTexture;
-    
+
     public int localVersion;
-    
+
     private User()
     {
         localVersion = PlayerPrefs.HasKey(Keys.LocalVersion) ? PlayerPrefs.GetInt(Keys.LocalVersion) : 0;
@@ -63,5 +62,4 @@ public class User
         public const string AvatarUrl = "profile_avatar_url";
         public const string LocalVersion = "profile_local_version";
     }
-
 }

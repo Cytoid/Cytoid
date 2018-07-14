@@ -6,14 +6,13 @@ namespace Cytus2.Models
 {
     public class DragChildNote : GameNote
     {
-        
         protected override void Awake()
         {
             base.Awake();
             View = new DragChildNoteView(this);
             MaxMissThreshold = 0.150f;
         }
-        
+
         public override void Touch(Vector2 screenPos)
         {
             // Do not handle touch event if touched too ahead of scanner
@@ -22,7 +21,7 @@ namespace Cytus2.Models
             if (Note.page_index > Game.CurrentPageId && Note.start_time - Game.Time > Page.Duration / 2f) return;
             base.Touch(screenPos);
         }
-        
+
         public override NoteGrading CalculateGrading()
         {
             var ranking = NoteGrading.Miss;
@@ -42,17 +41,18 @@ namespace Cytus2.Models
                     ranking = NoteGrading.Perfect;
                 }
             }
+
             return ranking;
         }
-        
+
         protected override IEnumerator DestroyLater()
         {
             while (Game.Time < Note.start_time)
             {
                 yield return null;
             }
+
             Destroy(gameObject);
         }
-
     }
 }

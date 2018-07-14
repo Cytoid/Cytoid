@@ -23,7 +23,7 @@ namespace Cytus2.Controllers
             bool earlyLateIndicator)
         {
             if (grading == NoteGrading.Undetermined) return;
-            
+
             var at = noteView.Note.Note.position;
             var clearFx = ClearFx;
             if (noteView is DragChildNoteView || noteView is DragHeadNoteView)
@@ -126,6 +126,5 @@ namespace Cytus2.Controllers
             fx.Play();
             Destroy(fx.gameObject, fx.main.duration);
         }
-        
     }
 }

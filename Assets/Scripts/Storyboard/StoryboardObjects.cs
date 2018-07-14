@@ -6,7 +6,6 @@ using UnityEngine;
 
 namespace Cytoid.Storyboard
 {
-
     [System.Serializable]
     public class Object<T> where T : ObjectState
     {
@@ -18,21 +17,24 @@ namespace Cytoid.Storyboard
     public class Text : Object<TextState>
     {
     }
-    
+
     [System.Serializable]
     public class Sprite : Object<SpriteState>
     {
     }
-    
+
     [System.Serializable]
     public class Controller : Object<ControllerState>
     {
     }
-    
+
     [System.Serializable]
     public class ObjectState
     {
-        public float Time = float.MaxValue; // If time is not defined, this object is never rendered - unless cloned and recalculated by a trigger
+        public float
+            Time = float
+                .MaxValue; // If time is not defined, this object is never rendered - unless cloned and recalculated by a trigger
+
         public float RelativeTime = float.MinValue;
         public float AddTime = float.MinValue;
         public EasingFunction.Ease Easing;
@@ -41,26 +43,24 @@ namespace Cytoid.Storyboard
     [System.Serializable]
     public class SceneObjectState : ObjectState
     {
-        
         public float X = float.MinValue;
         public float Y = float.MinValue;
         public float RotX = float.MinValue;
         public float RotY = float.MinValue;
         public float RotZ = float.MinValue;
-        
+
         public float ScaleX = float.MinValue;
         public float ScaleY = float.MinValue;
-        
+
         public float Opacity = float.MinValue;
-        
+
         public float PivotX = float.MinValue;
         public float PivotY = float.MinValue;
-        
+
         public float Width = float.MinValue;
         public float Height = float.MinValue;
-        
     }
-    
+
     [System.Serializable]
     public class TextState : SceneObjectState
     {
@@ -89,10 +89,10 @@ namespace Cytoid.Storyboard
         public float RotX = float.MinValue;
         public float RotY = float.MinValue;
         public float RotZ = float.MinValue;
-        
+
         public bool? Bloom = null;
         public float BloomIntensity = float.MinValue; // Range: 0~5
-        
+
         public bool? Vignette = null;
         public float VignetteIntensity = float.MinValue; // Range: 0~1
 
@@ -161,7 +161,6 @@ namespace Cytoid.Storyboard
         public float ChromaticalSpeed = float.MinValue; // Range: 0~3
 
         public bool? Tape = null;
-
     }
 
     [System.Serializable]
@@ -176,10 +175,13 @@ namespace Cytoid.Storyboard
 
         [JsonIgnore] public GameNote Triggerer;
     }
-    
+
     public enum TriggerType
     {
-        NoteClear, Combo, Score, None
+        NoteClear,
+        Combo,
+        Score,
+        None
     }
 
     [System.Serializable]
@@ -195,5 +197,4 @@ namespace Cytoid.Storyboard
             return new UnityEngine.Color(R, G, B, A);
         }
     }
-    
 }

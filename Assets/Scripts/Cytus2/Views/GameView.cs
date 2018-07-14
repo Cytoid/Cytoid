@@ -9,17 +9,15 @@ using UnityEngine.UI;
 
 namespace Cytus2.Views
 {
-
     public class GameView
     {
-       
         public readonly Game Game;
 
         private GameObject background;
         private AlphaMask backgroundOverlayMask;
         private AlphaMask sceneTransitionMask;
         private Text titleText;
-        
+
         public GameView(Game game)
         {
             Game = game;
@@ -27,10 +25,9 @@ namespace Cytus2.Views
 
         public void OnStart()
         {
-            
             background = GameObject.FindGameObjectWithTag("Background");
             backgroundOverlayMask = GameObject.Find("BackgroundOverlayMask").GetComponent<AlphaMask>();
-            
+
             var canvas = backgroundOverlayMask.GetComponent<Canvas>();
             canvas.overrideSorting = true;
             canvas.sortingLayerName = "GameBackground";
@@ -43,7 +40,9 @@ namespace Cytus2.Views
             }
 
             titleText = GameObject.Find("TitleText").GetComponent<Text>();
-            canvas = background.GetComponent<Canvas>() == null ? background.AddComponent<Canvas>() : background.GetComponent<Canvas>();
+            canvas = background.GetComponent<Canvas>() == null
+                ? background.AddComponent<Canvas>()
+                : background.GetComponent<Canvas>();
             canvas.overrideSorting = true;
             canvas.sortingLayerName = "GameBackground";
             canvas.sortingOrder = 0;
@@ -73,7 +72,7 @@ namespace Cytus2.Views
             UIManager.HideUiElement("TitleText", "Game");
             UIManager.HideUiElement("Mask", "Game");
         }
-        
+
         public IEnumerator ReturnToLevelSelectionCoroutine()
         {
             if (sceneTransitionMask != null)
@@ -85,7 +84,5 @@ namespace Cytus2.Views
 
             SceneManager.LoadScene("LevelSelection");
         }
-
     }
-
 }

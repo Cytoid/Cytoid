@@ -12,7 +12,6 @@ public enum NoteGrading
 
 public static class RankExtensions
 {
-
     public static float ScoreWeight(this NoteGrading grading, bool ranked)
     {
         if (!ranked)
@@ -47,14 +46,15 @@ public static class RankExtensions
                     return 0f;
             }
         }
+
         return 0f;
     }
-    
+
     public static float TpWeight(this NoteGrading grading)
     {
         switch (grading)
         {
-            case NoteGrading.Perfect: 
+            case NoteGrading.Perfect:
                 return 1f;
             case NoteGrading.Great:
                 return 0.7f;
@@ -65,7 +65,7 @@ public static class RankExtensions
             case NoteGrading.Miss:
                 return 0f;
         }
+
         return 0f;
     }
-    
 }

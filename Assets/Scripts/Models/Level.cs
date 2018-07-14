@@ -8,9 +8,8 @@ using UnityEngine;
 
 public class Level
 {
-
     [JsonIgnore] public string BasePath;
-    
+
     public string level_format { get; set; }
     public int version { get; set; }
     public string id { get; set; }
@@ -24,7 +23,7 @@ public class Level
     public MusicSection music_preview { get; set; }
     public BackgroundSection background { get; set; }
     public List<ChartSection> charts { get; set; }
-    public bool is_internal { get; set;  }
+    public bool is_internal { get; set; }
 
     public string GetMusicPath(string chartType)
     {
@@ -36,6 +35,7 @@ public class Level
                 return chart.music_override.path;
             }
         }
+
         return music.path;
     }
 
@@ -46,9 +46,10 @@ public class Level
             if (chart.type != chartType) continue;
             return chart.difficulty;
         }
+
         return -1;
     }
-    
+
     public class MusicSection
     {
         public string path { get; set; }
@@ -61,7 +62,7 @@ public class Level
 
     public class ChartSection
     {
-        public string type { get; set; } 
+        public string type { get; set; }
         public int difficulty { get; set; }
         public string path { get; set; }
         public MusicSection music_override { get; set; }
@@ -73,14 +74,11 @@ public class Level
         public string path = "storyboard.json";
         public bool epilepsy_warning = true;
     }
-
 }
 
 public class ChartType
 {
-    
     public const string Easy = "easy";
     public const string Hard = "hard";
     public const string Extreme = "extreme";
-    
 }

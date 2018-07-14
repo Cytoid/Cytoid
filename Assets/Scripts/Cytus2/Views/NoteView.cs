@@ -3,10 +3,8 @@ using UnityEngine;
 
 namespace Cytus2.Views
 {
-
     public class NoteView
     {
-
         public GameNote Note;
         protected CircleCollider2D Collider;
 
@@ -25,7 +23,7 @@ namespace Cytus2.Views
         public virtual void OnRender()
         {
         }
-        
+
         public virtual void OnLateUpdate()
         {
         }
@@ -43,7 +41,5 @@ namespace Cytus2.Views
         {
             return Collider.OverlapPoint(pos);
         }
-
     }
-
 }

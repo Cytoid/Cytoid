@@ -4,13 +4,11 @@ using UnityEngine.UI;
 
 namespace Cytus2.Views
 {
-
     public class ScoreView : MonoBehaviour
     {
-
         private Text text;
         private string lastScore = "000000";
-	
+
         private Game game;
 
         private void Awake()
@@ -35,13 +33,13 @@ namespace Cytus2.Views
                 {
                     text.text = lastScore;
                 }
+
                 return;
             }
+
             var score = Mathf.CeilToInt((float) game.Play.Score).ToString("D6");
             lastScore = score;
             text.text = game.Play == null ? "000000" : lastScore;
         }
-	
     }
-
 }

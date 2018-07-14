@@ -11,17 +11,16 @@ namespace Cytus2.Controllers
 {
     public class StoryboardGame : Game
     {
-        
         public DirectSlider SeekSlider;
 
         public bool HideUi;
-        
+
         protected override IEnumerator Start()
         {
             yield return StartCoroutine(base.Start());
-            
+
             Play.Mods.Add(Mod.Auto);
-            
+
             GameOptions.Instance.ChartOffset = 0;
 
             SeekSlider.onValueChanged.AddListener(Seek);
@@ -50,6 +49,7 @@ namespace Cytus2.Controllers
                     AudioSource.Play();
                 }
             }
+
             if (Input.GetKeyDown(KeyCode.LeftShift))
             {
                 if (HideUi)
@@ -72,11 +72,11 @@ namespace Cytus2.Controllers
         protected override void OnFingerDown(LeanFinger finger)
         {
         }
-        
+
         protected override void OnFingerSet(LeanFinger finger)
         {
         }
-        
+
         protected override void OnFingerUp(LeanFinger finger)
         {
         }
@@ -94,6 +94,5 @@ namespace Cytus2.Controllers
         public override void Complete()
         {
         }
-        
     }
 }

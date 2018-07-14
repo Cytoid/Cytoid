@@ -4,7 +4,6 @@ using UnityEngine.UI;
 
 public class DisplayDifficultyView : SingletonMonoBehavior<DisplayDifficultyView>
 {
-
     public Sprite easy;
     public Sprite hard;
     public Sprite extreme;
@@ -15,7 +14,7 @@ public class DisplayDifficultyView : SingletonMonoBehavior<DisplayDifficultyView
 
     protected string chartType = ChartType.Easy;
     protected int chartLevel = 1;
-    
+
     protected override void Awake()
     {
         base.Awake();
@@ -43,8 +42,8 @@ public class DisplayDifficultyView : SingletonMonoBehavior<DisplayDifficultyView
                 typeText.text = "EX";
                 break;
         }
+
         image.overrideSprite = sprite;
         levelText.text = "LV." + level;
     }
-    
 }

@@ -8,7 +8,7 @@ namespace Cytoid.UI
         public string Key;
 
         private Slider slider;
-        
+
         private void Awake()
         {
             slider = GetComponentInChildren<Slider>();
@@ -17,6 +17,7 @@ namespace Cytoid.UI
             {
                 PlayerPrefs.SetFloat(Key, slider.value);
             }
+
             slider.value = PlayerPrefs.GetFloat(Key);
         }
 

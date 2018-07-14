@@ -4,11 +4,10 @@ using UnityEngine.UI;
 
 namespace Cytus2.Views
 {
-    
-    public class ComboView : MonoBehaviour {
-
+    public class ComboView : MonoBehaviour
+    {
         private Text text;
-	
+
         private Game game;
 
         private void Awake()
@@ -26,7 +25,5 @@ namespace Cytus2.Views
             if (!game.IsPlaying) return;
             text.text = game.Play == null ? "0 combo" : game.Play.Combo + " combo";
         }
-	
     }
-
 }

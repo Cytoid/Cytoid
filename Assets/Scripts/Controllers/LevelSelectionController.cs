@@ -95,10 +95,12 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
                     {
                         File.Delete(toPath);
                     }
+
                     File.Move(file, toPath);
                 }
             }
         }
+
         string[] levelFiles;
         try
         {
@@ -110,6 +112,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             // Ignored
             yield break;
         }
+
         if (levelFiles.Length > 0)
         {
             blackout.SetActive(true);
@@ -152,6 +155,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
                 blackoutTextFadingIn = true;
             }
         }
+
         yield return new WaitForSeconds(0.01f);
         yield return StartCoroutine(BlackoutTextAnim());
     }
@@ -221,7 +225,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
                 ZPlayerPrefs.SetFloat(PreferenceKeys.NoteDelay(CytoidApplication.CurrentLevel), offset);
             }
         });
-        
+
         usernameInput.text = PlayerPrefs.GetString(PreferenceKeys.LastUsername());
         passwordInput.text = PlayerPrefs.GetString(PreferenceKeys.LastPassword());
 
@@ -257,6 +261,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             Popup.Make(this, "Now signing in, please wait...");
             return;
         }
+
         if (User.Exists())
         {
             var ranked = PlayerPrefsExt.GetBool("ranked", false);
@@ -427,7 +432,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
         while (alphaMask.IsFading) yield return null;
         yield return null; // Wait an extra frame
-        
+
         www.LoadImageIntoTexture(CytoidApplication.BackgroundTexture);
 
         var backgroundSprite =
@@ -521,6 +526,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             StopCoroutine(hideListCoroutine);
             hideListCoroutine = null;
         }
+
         listCanvasGroup.alpha = 1;
     }
 
@@ -534,6 +540,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             listCanvasGroup.alpha -= 0.14f;
             yield return null;
         }
+
         hideListCoroutine = null;
     }
 
@@ -554,6 +561,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         {
             HitSoundIndex = 0;
         }
+
         UpdateHitSound(HitSounds[HitSoundIndex]);
         hitSoundPlayer.PlayOneShot(HitSounds[HitSoundIndex].Clip);
     }
@@ -565,6 +573,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         {
             HitSoundIndex = HitSounds.Length - 1;
         }
+
         UpdateHitSound(HitSounds[HitSoundIndex]);
         hitSoundPlayer.PlayOneShot(HitSounds[HitSoundIndex].Clip);
     }
@@ -621,6 +630,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             Popup.Make(this, "Now signing in, please wait...");
             return;
         }
+
         if (User.Exists())
         {
             UIManager.ShowUiElement("ProfileRoot", "MusicSelection");
@@ -643,6 +653,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
                 Popup.Make(this, "Please enter username.");
                 return;
             }
+
             if (passwordInput.text.IsNullOrEmpty())
             {
                 Popup.Make(this, "Please enter password.");
@@ -656,6 +667,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             UIManager.ShowUiElement("LoggingInRoot", "MusicSelection");
             UIManager.ShowUiElement("LoggingInBackground", "MusicSelection");
         }
+
         isLoggingIn = true;
         StartCoroutine("LoginCoroutine");
     }
@@ -669,7 +681,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         avatarImage.overrideSprite = null;
         User.reset();
         Popup.Make(this, "Signed out.");
-        
+
         PlayerPrefsExt.SetBool("ranked", false);
         rankStatusText.text = "Off";
     }
@@ -689,7 +701,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             isLoggingIn = false;
             yield break;
         }
-        
+
         // If logged in previously
         if (User.Exists())
         {
@@ -697,7 +709,6 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         }
         else
         {
-
             Debug.Log("Logging in");
             var username = PlayerPrefs.GetString(PreferenceKeys.LastUsername());
             var password = PlayerPrefs.GetString(PreferenceKeys.LastPassword());
@@ -762,17 +773,17 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             }
 
             Popup.Make(this, "Signed in.");
-            
+
             var profile = User.Init(username, password, authenticationResult.avatarUrl);
             profile.localVersion++;
             profile.Save();
         }
-        
+
         CloseLoginWindows();
         isLoggingIn = false;
 
         rankStatusText.text = PlayerPrefsExt.GetBool("ranked") ? "On" : "Off";
-        
+
         UpdateProfileUi();
     }
 
@@ -802,7 +813,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         {
             // Update avatar from memory
             var texture = User.Instance.avatarTexture;
-            
+
             var rect = new Rect(0, 0, texture.width, texture.height);
             var sprite = Sprite.Create(texture, rect, new Vector2(0.5f, 0.5f), 100);
 
@@ -810,6 +821,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
             yield return null;
         }
+
         using (var www = new WWW(User.Instance.avatarUrl))
         {
             yield return www;
@@ -819,6 +831,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
                 Log.e(www.error);
                 Popup.Make(this, "Could not load avatar.");
             }
+
             Debug.Log("Downloaded avatar");
 
             var texture = www.texture;

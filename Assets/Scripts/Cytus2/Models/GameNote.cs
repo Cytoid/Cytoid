@@ -112,7 +112,7 @@ public class GameNote : MonoBehaviour
                     || (Mod.AutoDrag.IsEnabled() && (this is DragChildNote || this is DragHeadNote))
                     || (Mod.AutoHold.IsEnabled() && this is HoldNote)
                     || (Mod.AutoFlick.IsEnabled() && this is FlickNote)
-                    )
+                )
                 {
                     Clear(NoteGrading.Perfect);
                 }
@@ -175,7 +175,7 @@ public class GameNote : MonoBehaviour
             || (Mod.AutoHold.IsEnabled() && (this is HoldNote))
             || (Mod.AutoFlick.IsEnabled() && this is FlickNote))
             return NoteGrading.Perfect;
-        
+
         var grading = NoteGrading.Miss;
         var timeUntil = TimeUntilStart;
 

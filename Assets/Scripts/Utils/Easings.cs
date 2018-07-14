@@ -101,7 +101,7 @@ public class EasingFunction
     //
     // Easing functions
     //
-    
+
     public static float None(float start, float end, float value)
     {
         return start;
@@ -115,7 +115,8 @@ public class EasingFunction
     public static float Spring(float start, float end, float value)
     {
         value = Mathf.Clamp01(value);
-        value = (Mathf.Sin(value * Mathf.PI * (0.2f + 2.5f * value * value * value)) * Mathf.Pow(1f - value, 2.2f) + value) * (1f + (1.2f * (1f - value)));
+        value = (Mathf.Sin(value * Mathf.PI * (0.2f + 2.5f * value * value * value)) * Mathf.Pow(1f - value, 2.2f) +
+                 value) * (1f + (1.2f * (1f - value)));
         return start + (end - start) * value;
     }
 
@@ -333,6 +334,7 @@ public class EasingFunction
             s *= (1.525f);
             return end * 0.5f * (value * value * (((s) + 1) * value - s)) + start;
         }
+
         value -= 2;
         s *= (1.525f);
         return end * 0.5f * ((value) * value * (((s) + 1) * value + s) + 2) + start;
@@ -413,8 +415,11 @@ public class EasingFunction
             s = p / (2 * Mathf.PI) * Mathf.Asin(end / a);
         }
 
-        if (value < 1) return -0.5f * (a * Mathf.Pow(2, 10 * (value -= 1)) * Mathf.Sin((value * d - s) * (2 * Mathf.PI) / p)) + start;
-        return a * Mathf.Pow(2, -10 * (value -= 1)) * Mathf.Sin((value * d - s) * (2 * Mathf.PI) / p) * 0.5f + end + start;
+        if (value < 1)
+            return -0.5f * (a * Mathf.Pow(2, 10 * (value -= 1)) * Mathf.Sin((value * d - s) * (2 * Mathf.PI) / p)) +
+                   start;
+        return a * Mathf.Pow(2, -10 * (value -= 1)) * Mathf.Sin((value * d - s) * (2 * Mathf.PI) / p) * 0.5f + end +
+               start;
     }
 
     //
@@ -554,6 +559,7 @@ public class EasingFunction
         end -= start;
         return end * 0.5f * Mathf.PI * Mathf.Cos(Mathf.PI * value);
     }
+
     public static float EaseInExpoD(float start, float end, float value)
     {
         return (10f * NATURAL_LOG_OF_2 * (end - start) * Mathf.Pow(2f, 10f * (value - 1)));
@@ -712,8 +718,8 @@ public class EasingFunction
 
         // From an online derivative calculator, kinda hoping it is right.
         return ((-a) * d * c * Mathf.Cos((c * (d * (value - 1f) - s)) / p)) / p -
-            5f * NATURAL_LOG_OF_2 * a * Mathf.Sin((c * (d * (value - 1f) - s)) / p) *
-            Mathf.Pow(2f, 10f * (value - 1f) + 1f);
+               5f * NATURAL_LOG_OF_2 * a * Mathf.Sin((c * (d * (value - 1f) - s)) / p) *
+               Mathf.Pow(2f, 10f * (value - 1f) + 1f);
     }
 
     public static float EaseOutElasticD(float start, float end, float value)
@@ -736,8 +742,8 @@ public class EasingFunction
         }
 
         return (a * Mathf.PI * d * Mathf.Pow(2f, 1f - 10f * value) *
-            Mathf.Cos((2f * Mathf.PI * (d * value - s)) / p)) / p - 5f * NATURAL_LOG_OF_2 * a *
-            Mathf.Pow(2f, 1f - 10f * value) * Mathf.Sin((2f * Mathf.PI * (d * value - s)) / p);
+                Mathf.Cos((2f * Mathf.PI * (d * value - s)) / p)) / p - 5f * NATURAL_LOG_OF_2 * a *
+               Mathf.Pow(2f, 1f - 10f * value) * Mathf.Sin((2f * Mathf.PI * (d * value - s)) / p);
     }
 
     public static float EaseInOutElasticD(float start, float end, float value)
@@ -763,14 +769,16 @@ public class EasingFunction
         {
             value -= 1;
 
-            return -5f * NATURAL_LOG_OF_2 * a * Mathf.Pow(2f, 10f * value) * Mathf.Sin(2 * Mathf.PI * (d * value - 2f) / p) -
-                a * Mathf.PI * d * Mathf.Pow(2f, 10f * value) * Mathf.Cos(2 * Mathf.PI * (d * value - s) / p) / p;
+            return -5f * NATURAL_LOG_OF_2 * a * Mathf.Pow(2f, 10f * value) *
+                   Mathf.Sin(2 * Mathf.PI * (d * value - 2f) / p) -
+                   a * Mathf.PI * d * Mathf.Pow(2f, 10f * value) * Mathf.Cos(2 * Mathf.PI * (d * value - s) / p) / p;
         }
 
         value -= 1;
 
         return a * Mathf.PI * d * Mathf.Cos(2f * Mathf.PI * (d * value - s) / p) / (p * Mathf.Pow(2f, 10f * value)) -
-            5f * NATURAL_LOG_OF_2 * a * Mathf.Sin(2f * Mathf.PI * (d * value - s) / p) / (Mathf.Pow(2f, 10f * value));
+               5f * NATURAL_LOG_OF_2 * a * Mathf.Sin(2f * Mathf.PI * (d * value - s) / p) /
+               (Mathf.Pow(2f, 10f * value));
     }
 
     public static float SpringD(float start, float end, float value)
@@ -780,12 +788,17 @@ public class EasingFunction
 
         // Damn... Thanks http://www.derivative-calculator.net/
         return end * (6f * (1f - value) / 5f + 1f) * (-2.2f * Mathf.Pow(1f - value, 1.2f) *
-            Mathf.Sin(Mathf.PI * value * (2.5f * value * value * value + 0.2f)) + Mathf.Pow(1f - value, 2.2f) *
-            (Mathf.PI * (2.5f * value * value * value + 0.2f) + 7.5f * Mathf.PI * value * value * value) *
-            Mathf.Cos(Mathf.PI * value * (2.5f * value * value * value + 0.2f)) + 1f) -
-            6f * end * (Mathf.Pow(1 - value, 2.2f) * Mathf.Sin(Mathf.PI * value * (2.5f * value * value * value + 0.2f)) + value
-            / 5f);
-
+                                                      Mathf.Sin(
+                                                          Mathf.PI * value * (2.5f * value * value * value + 0.2f)) +
+                                                      Mathf.Pow(1f - value, 2.2f) *
+                                                      (Mathf.PI * (2.5f * value * value * value + 0.2f) +
+                                                       7.5f * Mathf.PI * value * value * value) *
+                                                      Mathf.Cos(
+                                                          Mathf.PI * value * (2.5f * value * value * value + 0.2f)) +
+                                                      1f) -
+               6f * end * (Mathf.Pow(1 - value, 2.2f) *
+                           Mathf.Sin(Mathf.PI * value * (2.5f * value * value * value + 0.2f)) + value
+                           / 5f);
     }
 
     public delegate float Function(float s, float e, float v);
@@ -802,7 +815,7 @@ public class EasingFunction
         {
             return None;
         }
-        
+
         if (easingFunction == Ease.EaseInQuad)
         {
             return EaseInQuad;

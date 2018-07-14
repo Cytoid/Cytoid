@@ -90,7 +90,7 @@ namespace Cytoid.Storyboard
                     Triggers.Add(LoadTrigger(objectToken));
                 }
 
-                Triggers.ForEach(trigger => Debug.Log(JsonConvert.SerializeObject(trigger)));
+                // Triggers.ForEach(trigger => Debug.Log(JsonConvert.SerializeObject(trigger)));
             }
         }
 

@@ -10,7 +10,7 @@ namespace Cytus2.Views
         public bool IsShowing;
 
         private Mesh mesh;
-        private ScannerView scanner;
+        private ScanlineView scanline;
         private Camera mainCamera;
 
         private void OnEnable()
@@ -30,7 +30,7 @@ namespace Cytus2.Views
                 new Vector2()
             };
             mesh.triangles = new[] {0, 1, 2};
-            scanner = ScannerView.Instance;
+            scanline = ScanlineView.Instance;
             mainCamera = Camera.main;
         }
 
@@ -58,15 +58,15 @@ namespace Cytus2.Views
                 mesh.vertices = new[]
                 {
                     Note.position,
-                    new Vector3(-mainCamera.orthographicSize * Screen.width / Screen.height, scanner.transform.position.y),
-                    new Vector3(mainCamera.orthographicSize * Screen.width / Screen.height, scanner.transform.position.y)
+                    new Vector3(-mainCamera.orthographicSize * Screen.width / Screen.height, scanline.transform.position.y),
+                    new Vector3(mainCamera.orthographicSize * Screen.width / Screen.height, scanline.transform.position.y)
                 };
 
                 mesh.uv = new[]
                 {
                     new Vector2(Note.position.x, Note.position.y),
-                    new Vector2(-mainCamera.orthographicSize * Screen.width / Screen.height, scanner.transform.position.y),
-                    new Vector2(mainCamera.orthographicSize * Screen.width / Screen.height, scanner.transform.position.y)
+                    new Vector2(-mainCamera.orthographicSize * Screen.width / Screen.height, scanline.transform.position.y),
+                    new Vector2(mainCamera.orthographicSize * Screen.width / Screen.height, scanline.transform.position.y)
                 };
                 mesh.triangles = new[] {0, 1, 2};
             }

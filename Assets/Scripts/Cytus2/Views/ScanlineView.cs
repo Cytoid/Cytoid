@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Cytus2.Models
 {
 
-	public class ScannerView : SingletonMonoBehavior<ScannerView>
+	public class ScanlineView : SingletonMonoBehavior<ScanlineView>
 	{
 		public LineRenderer LineRenderer;
 		public float AnimationDuration;

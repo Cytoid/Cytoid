@@ -10372,7 +10372,7 @@ MonoBehaviour:
   InfoCanvas: {fileID: 223031401084416314, guid: 65e1891bc634e4ac580f2b7532d95965,
     type: 2}
   AudioSource: {fileID: 923194760}
-  Scanner: {fileID: 1160427698}
+  Scanline: {fileID: 1160427698}
   UnpauseCountdown: 0
 --- !u!114 &923194763
 MonoBehaviour:
@@ -12604,7 +12604,7 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1175824542}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0247cc23c066a0549a9906c534207546, type: 3}
   m_Name: 
@@ -15671,6 +15671,10 @@ Prefab:
     - target: {fileID: 4612988860141188, guid: 8a8f83a62a9d948d1be23a9dc4dd508e, type: 2}
       propertyPath: m_RootOrder
       value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 1562558743190208, guid: 8a8f83a62a9d948d1be23a9dc4dd508e, type: 2}
+      propertyPath: m_Name
+      value: Scanline
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 8a8f83a62a9d948d1be23a9dc4dd508e, type: 2}

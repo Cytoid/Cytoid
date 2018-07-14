@@ -45,7 +45,7 @@ namespace Cytus2.Models
             magicNumber = Math.Sqrt(NoteCount) / 3.0;
         }
 
-        public void OnClear(int id, NoteGrading grading, double greatGradeWeight)
+        public void OnClear(GameNote note, NoteGrading grading, double greatGradeWeight)
         {
             
             if (grading == NoteGrading.Undetermined) throw new InvalidOperationException("Note grading undetermined");
@@ -59,8 +59,8 @@ namespace Cytus2.Models
                 if (grading != NoteGrading.Perfect) isMillionMasterPossible = false;
             }
 
-            if (NoteRankings[id] == NoteGrading.Undetermined) NoteCleared++;
-            NoteRankings[id] = grading;
+            if (NoteRankings[note.Note.id] == NoteGrading.Undetermined) NoteCleared++;
+            NoteRankings[note.Note.id] = grading;
 
             // Combo
             if (grading == NoteGrading.Bad || grading == NoteGrading.Miss) Combo = 0;
@@ -145,25 +145,24 @@ namespace Cytus2.Models
             // HP
             if (Mods.Contains(Mod.Hard) || Mods.Contains(Mod.ExHard))
             {
-                var ex = Mods.Contains(Mod.ExHard);
-                switch (grading)
+                var mods = Mods.Contains(Mod.ExHard) ? ExHardHpMods : HardHpMods;
+
+                var mod = mods.Select[note.Note.type]
+                    .Select[IsRanked ? RankedGradingIndices[grading] : UnrankedGradingIndices[grading]];
+
+                switch (mod.Type)
                 {
-                    case NoteGrading.Perfect:
-                        Hp += ex ? 1f : 2f;
+                    case HpModType.Absolute:
+                        Hp += mod.Value;
                         break;
-                    case NoteGrading.Great:
-                        Hp -= (ex ? 0.04f : 0.01f) * MaxHp;
+                    case HpModType.Percentage:
+                        Hp += mod.Value / 100f * MaxHp;
                         break;
-                    case NoteGrading.Good:
-                        Hp -= (ex ? 0.08f : 0.03f) * MaxHp;
-                        break;
-                    case NoteGrading.Bad:
-                        Hp -= (ex ? 0.15f : 0.06f) * MaxHp;
-                        break;
-                    case NoteGrading.Miss:
-                        Hp -= (ex ? 0.20f : 0.08f) * MaxHp;
+                    case HpModType.DivideByNoteCount:
+                        Hp += (mod.Value / NoteCount) / 100f * MaxHp;
                         break;
                 }
+                
                 if (Hp > MaxHp) Hp = MaxHp;
                 if (Hp < 0) Game.Instance.Fail();
             }
@@ -176,6 +175,202 @@ namespace Cytus2.Models
             {
                 Game.Instance.Fail();
             }
+        }
+        
+        public static Dictionary<NoteGrading, int> UnrankedGradingIndices = new Dictionary<NoteGrading, int>
+        {
+            { NoteGrading.Perfect, 0 },
+            { NoteGrading.Great, 2 },
+            { NoteGrading.Good, 3 },
+            { NoteGrading.Bad, 4 },
+            { NoteGrading.Miss, 5 }
+        };
+        
+        public static Dictionary<NoteGrading, int> RankedGradingIndices = new Dictionary<NoteGrading, int>
+        {
+            { NoteGrading.Perfect, 0 },
+            { NoteGrading.Great, 1 },
+            { NoteGrading.Good, 2 },
+            { NoteGrading.Bad, 3 },
+            { NoteGrading.Miss, 5 }
+        };
+        
+        public static ModeHpMod HardHpMods = new ModeHpMod(new Dictionary<int, NoteHpMod>
+        {
+            {
+                NoteType.Click, new NoteHpMod(new List<HpMod>
+                {
+                    new HpMod(2, HpModType.Absolute),
+                    new HpMod(0.5f, HpModType.Absolute),
+                    new HpMod(-1, HpModType.Percentage),
+                    new HpMod(-3, HpModType.Percentage),
+                    new HpMod(-6, HpModType.Percentage),
+                    new HpMod(-8, HpModType.Percentage)
+                })
+            },
+            {
+                NoteType.Hold, new NoteHpMod(new List<HpMod>
+                {
+                    new HpMod(1, HpModType.Absolute),
+                    new HpMod(0.25f, HpModType.Absolute),
+                    new HpMod(-1.5f, HpModType.Percentage),
+                    new HpMod(-4, HpModType.Percentage),
+                    new HpMod(-9, HpModType.Percentage),
+                    new HpMod(-12, HpModType.Percentage)
+                })
+            },
+            {
+                NoteType.LongHold, new NoteHpMod(new List<HpMod>
+                {
+                    new HpMod(1, HpModType.Absolute),
+                    new HpMod(0.25f, HpModType.Absolute),
+                    new HpMod(-1.5f, HpModType.Percentage),
+                    new HpMod(-4, HpModType.Percentage),
+                    new HpMod(-9, HpModType.Percentage),
+                    new HpMod(-12, HpModType.Percentage)
+                })
+            },
+            {
+                NoteType.DragHead, new NoteHpMod(new List<HpMod>
+                {
+                    new HpMod(0.4f, HpModType.Absolute),
+                    new HpMod(0, HpModType.Absolute),
+                    new HpMod(0, HpModType.Absolute),
+                    new HpMod(0, HpModType.Absolute),
+                    new HpMod(0, HpModType.Absolute),
+                    new HpMod(-8, HpModType.Percentage)
+                })
+            },
+            {
+                NoteType.DragChild, new NoteHpMod(new List<HpMod>
+                {
+                    new HpMod(0.2f, HpModType.Absolute),
+                    new HpMod(0, HpModType.Absolute),
+                    new HpMod(0, HpModType.Absolute),
+                    new HpMod(0, HpModType.Absolute),
+                    new HpMod(0, HpModType.Absolute),
+                    new HpMod(-2.4f, HpModType.Percentage)
+                })
+            },
+            {
+                NoteType.Flick, new NoteHpMod(new List<HpMod>
+                {
+                    new HpMod(2, HpModType.Absolute),
+                    new HpMod(0.5f, HpModType.Absolute),
+                    new HpMod(-0.75f, HpModType.Percentage),
+                    new HpMod(-2.25f, HpModType.Percentage),
+                    new HpMod(-4, HpModType.Percentage),
+                    new HpMod(-6, HpModType.Percentage)
+                })
+            }
+        });
+        
+        public static ModeHpMod ExHardHpMods = new ModeHpMod(new Dictionary<int, NoteHpMod>
+        {
+            {
+                NoteType.Click, new NoteHpMod(new List<HpMod>
+                {
+                    new HpMod(1, HpModType.Absolute),
+                    new HpMod(0, HpModType.Absolute),
+                    new HpMod(-4, HpModType.Percentage),
+                    new HpMod(-8, HpModType.Percentage),
+                    new HpMod(-15, HpModType.Percentage),
+                    new HpMod(-20, HpModType.Percentage)
+                })
+            },
+            {
+                NoteType.Hold, new NoteHpMod(new List<HpMod>
+                {
+                    new HpMod(0.5f, HpModType.Absolute),
+                    new HpMod(0, HpModType.Absolute),
+                    new HpMod(-6, HpModType.Percentage),
+                    new HpMod(-12, HpModType.Percentage),
+                    new HpMod(-20, HpModType.Percentage),
+                    new HpMod(-25, HpModType.Percentage)
+                })
+            },
+            {
+                NoteType.LongHold, new NoteHpMod(new List<HpMod>
+                {
+                    new HpMod(0.5f, HpModType.Absolute),
+                    new HpMod(0, HpModType.Absolute),
+                    new HpMod(-6, HpModType.Percentage),
+                    new HpMod(-12, HpModType.Percentage),
+                    new HpMod(-20, HpModType.Percentage),
+                    new HpMod(-25, HpModType.Percentage)
+                })
+            },
+            {
+                NoteType.DragHead, new NoteHpMod(new List<HpMod>
+                {
+                    new HpMod(0.2f, HpModType.Absolute),
+                    new HpMod(0, HpModType.Absolute),
+                    new HpMod(0, HpModType.Absolute),
+                    new HpMod(0, HpModType.Absolute),
+                    new HpMod(0, HpModType.Absolute),
+                    new HpMod(-20, HpModType.Percentage)
+                })
+            },
+            {
+                NoteType.DragChild, new NoteHpMod(new List<HpMod>
+                {
+                    new HpMod(0.1f, HpModType.Absolute),
+                    new HpMod(0, HpModType.Absolute),
+                    new HpMod(0, HpModType.Absolute),
+                    new HpMod(0, HpModType.Absolute),
+                    new HpMod(0, HpModType.Absolute),
+                    new HpMod(-6, HpModType.Percentage)
+                })
+            },
+            {
+                NoteType.Flick, new NoteHpMod(new List<HpMod>
+                {
+                    new HpMod(1, HpModType.Absolute),
+                    new HpMod(0, HpModType.Absolute),
+                    new HpMod(-3, HpModType.Percentage),
+                    new HpMod(-6, HpModType.Percentage),
+                    new HpMod(-12, HpModType.Percentage),
+                    new HpMod(-15, HpModType.Percentage)
+                })
+            }
+        });
+
+        public class ModeHpMod
+        {
+            public readonly Dictionary<int, NoteHpMod> Select;
+
+            public ModeHpMod(Dictionary<int, NoteHpMod> select)
+            {
+                Select = select;
+            }
+        }
+
+        public class NoteHpMod
+        {
+            public readonly List<HpMod> Select;
+
+            public NoteHpMod(List<HpMod> select)
+            {
+                Select = select;
+            }
+        }
+
+        public class HpMod
+        {
+            public float Value;
+            public HpModType Type;
+
+            public HpMod(float value, HpModType type)
+            {
+                Value = value;
+                Type = type;
+            }
+            
+        }
+        
+        public enum HpModType
+        {
+            Absolute, Percentage, DivideByNoteCount
         }
 
     }

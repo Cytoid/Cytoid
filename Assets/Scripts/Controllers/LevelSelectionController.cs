@@ -329,7 +329,18 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
             var entryObject = Instantiate(entryPrefab, listRectTransform.transform);
             entryObject.AddComponent<LevelEntry>().Level = level;
-            entryObject.GetComponent<Text>().text = level.title;
+            var text = entryObject.GetComponent<Text>();
+            if (level.title_localized != null)
+            {
+                text.supportRichText = true;
+                text.verticalOverflow = VerticalWrapMode.Overflow;
+                text.lineSpacing = 0.4f;
+                text.text = level.title + "\n<size=12>" + level.title_localized + "</size>";
+            }
+            else
+            {
+                text.text = level.title;
+            }
 
             var dynamicScrollPoint = entryObject.GetComponent<DynamicScrollPoint>();
             listScrollFocusController.focusPoints.Add(dynamicScrollPoint);

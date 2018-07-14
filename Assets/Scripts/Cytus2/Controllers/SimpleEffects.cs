@@ -33,7 +33,7 @@ namespace Cytus2.Controllers
 
             if (noteView.Note.Note.type == NoteType.Hold)
             {
-                at = new Vector3(at.x, ScannerView.Instance.transform.position.y, at.z);
+                at = new Vector3(at.x, ScanlineView.Instance.transform.position.y, at.z);
             }
 
             if (grading == NoteGrading.Miss)

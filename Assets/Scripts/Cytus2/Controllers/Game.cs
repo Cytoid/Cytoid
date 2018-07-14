@@ -7,6 +7,7 @@ using System.Text;
 using Cytoid.Storyboard;
 using Cytus2.Models;
 using Cytus2.Views;
+using DG.Tweening;
 using DoozyUI;
 using Lean.Touch;
 using Newtonsoft.Json;
@@ -37,7 +38,7 @@ namespace Cytus2.Controllers
         [SerializeField] protected GameObject DragLinePrefab;
         [SerializeField] protected Canvas InfoCanvas;
         [SerializeField] protected AudioSource AudioSource;
-        [SerializeField] protected ScannerView Scanner;
+        [SerializeField] protected ScanlineView Scanline;
 
         public float Time { get; protected set; }
         public float StartTime { get; protected set; }
@@ -145,7 +146,6 @@ namespace Cytus2.Controllers
                 CytoidApplication.CurrentLevel = Level;
             }
             
-            
             // System settings
             CytoidApplication.SetAutoRotation(false);
             if (Application.platform == RuntimePlatform.Android && !Level.is_internal)
@@ -190,7 +190,7 @@ namespace Cytus2.Controllers
             }
             else
             {
-                var www = new WWW("file://" + audioPath);
+                var www = new WWW((Level.is_internal && Application.platform == RuntimePlatform.Android) ? "" : "file://" + audioPath);
                 yield return www;
 
                 AudioSource.clip = www.GetAudioClip();
@@ -211,29 +211,6 @@ namespace Cytus2.Controllers
             if (ZPlayerPrefs.GetBool(PreferenceKeys.WillOverrideOptions(Level)))
             {
                 options.ChartOffset = ZPlayerPrefs.GetFloat(PreferenceKeys.NoteDelay(Level));
-            }
-            
-            switch (PlayerPrefs.GetString("storyboard effects"))
-            {
-                case "High":
-                    Screen.SetResolution(CytoidApplication.OriginalWidth, CytoidApplication.OriginalHeight, true);
-                    break;
-                case "Medium":
-                    Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.75),
-                        (int) (CytoidApplication.OriginalHeight * 0.75), true);
-                    break;
-                case "Low":
-                    Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.5),
-                        (int) (CytoidApplication.OriginalHeight * 0.5), true);
-                    break;
-                case "None":
-                    StoryboardController.Instance.ShowEffects = false;
-                    break;
-            }
-
-            if (PlayerPrefsExt.GetBool("low res"))
-            {
-                Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.5), (int) (CytoidApplication.OriginalHeight * 0.5), true);
             }
 
             Play.Init(Chart);
@@ -281,10 +258,10 @@ namespace Cytus2.Controllers
 
             if (Mod.HideScanline.IsEnabled())
             {
-                Scanner.GetComponent<LineRenderer>().enabled = false;
+                Scanline.GetComponent<LineRenderer>().enabled = false;
             }
             
-            Scanner.PlayEnter();
+            Scanline.PlayEnter();
             
             Play.MaxHp = Level.GetDifficulty(CytoidApplication.CurrentChartType) * 75;
             if (Play.MaxHp <= 0) Play.MaxHp = 1000;
@@ -352,8 +329,9 @@ namespace Cytus2.Controllers
                 var chart = Chart.Root;
                 var notes = chart.note_list;
 
-                Scanner.transform.position = new Vector3(0, Chart.GetScannerPosition(Time));
-                Scanner.Direction = Chart.CurrentPageId < chart.page_list.Count
+                Scanline.transform.DOMoveY(Chart.GetScannerPosition(Time), UnityEngine.Time.deltaTime).SetEase(Ease.Linear);
+                // Scanline.transform.position = new Vector3(0, Chart.GetScannerPosition(Time));
+                Scanline.Direction = Chart.CurrentPageId < chart.page_list.Count
                     ? chart.page_list[Chart.CurrentPageId].scan_line_direction
                     : -chart.page_list[Chart.CurrentPageId - 1].scan_line_direction;
 
@@ -364,11 +342,11 @@ namespace Cytus2.Controllers
                     // TODO: Clean up this mess
                     if (chart.event_order_list[currentEventId].event_list[0].type == 0)
                     {
-                        Scanner.PlaySpeedUp();
+                        Scanline.PlaySpeedUp();
                     }
                     else
                     {
-                        Scanner.PlaySpeedDown();
+                        Scanline.PlaySpeedDown();
                     }
 
                     currentEventId++;
@@ -682,7 +660,7 @@ namespace Cytus2.Controllers
             if (IsCompleted || IsFailed) return;
             IsCompleted = true;
             
-            Scanner.PlayExit();
+            Scanline.PlayExit();
 
             if (Mod.Auto.IsEnabled() || Mod.AutoDrag.IsEnabled() || Mod.AutoFlick.IsEnabled() ||
                 Mod.AutoHold.IsEnabled())
@@ -796,7 +774,7 @@ namespace Cytus2.Controllers
 
         public void OnClear(GameNote note)
         {
-            Play.OnClear(note.Note.id, note.CalculateGrading(), note.GreatGradeWeight);
+            Play.OnClear(note, note.CalculateGrading(), note.GreatGradeWeight);
         }
         
         // TODO: Get away, Doozy UI

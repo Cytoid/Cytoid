@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Cytoid.Storyboard;
 using Cytus2.Models;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -10,11 +11,13 @@ public class Level
 
     [JsonIgnore] public string BasePath;
     
-    public string format { get; set; }
+    public string level_format { get; set; }
     public int version { get; set; }
     public string id { get; set; }
     public string title { get; set; }
+    public string title_localized;
     public string artist { get; set; }
+    public string artist_localized;
     public string illustrator { get; set; }
     public string charter { get; set; }
     public MusicSection music { get; set; }
@@ -62,6 +65,13 @@ public class Level
         public int difficulty { get; set; }
         public string path { get; set; }
         public MusicSection music_override { get; set; }
+        public StoryboardSection storyboard { get; set; }
+    }
+
+    public class StoryboardSection
+    {
+        public string path = "storyboard.json";
+        public bool epilepsy_warning = true;
     }
 
 }

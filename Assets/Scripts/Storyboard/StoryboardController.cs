@@ -144,7 +144,10 @@ namespace Cytoid.Storyboard
             Environment.SetEnvironmentVariable("MONO_MANAGED_WATCHER", "enabled");
 #endif
 
-            var path = Game.Instance.Level.BasePath + "/storyboard.json";
+            var level = Game.Instance.Level;
+            var chartSection = level.charts.Find(it => it.type == CytoidApplication.CurrentChartType);
+
+            var path = level.BasePath + "/" + (chartSection.storyboard != null ? chartSection.storyboard.path : "storyboard.json");
 
             if (!File.Exists(path))
             {
@@ -168,16 +171,44 @@ namespace Cytoid.Storyboard
             }
 
             // Listen to events
-            EventKit.Subscribe<GameNote>("note clear", OnNoteClear);
+            EventKit.Subscribe<GameNote>("note clear", OnNoteClear);        
             
-            // Disable PRISM if unsupported
-            if (!Prism.m_Shader.isSupported || !Prism.m_Shader2.isSupported || !Prism.m_Shader3.isSupported)
+            yield return Reload(path);
+            
+            // Performance settings
+
+            if (Controllers.Count > 0)
             {
-                print("PRISM is not compatiable with this device. Disabled.");
-                Prism.enabled = false;
+                switch (PlayerPrefs.GetString("storyboard effects"))
+                {
+                    case "High":
+                        Screen.SetResolution(CytoidApplication.OriginalWidth, CytoidApplication.OriginalHeight, true);
+                        break;
+                    case "Medium":
+                        Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.75),
+                            (int) (CytoidApplication.OriginalHeight * 0.75), true);
+                        break;
+                    case "Low":
+                        Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.5),
+                            (int) (CytoidApplication.OriginalHeight * 0.5), true);
+                        break;
+                    case "None":
+                        ShowEffects = false;
+                        break;
+                }
             }
 
-            yield return Reload(path);
+            if (PlayerPrefsExt.GetBool("low res"))
+            {
+                Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.5), (int) (CytoidApplication.OriginalHeight * 0.5), true);
+            }
+            
+            // Enable PRISM only if supported
+            if (Prism.m_Shader.isSupported && Prism.m_Shader2.isSupported && Prism.m_Shader3.isSupported)
+            {
+                Prism.enabled = true;
+                Prism.EnableEffects();
+            }
         }
 
         public IEnumerator Reload(string path)
@@ -221,7 +252,7 @@ namespace Cytoid.Storyboard
 
             // Create scene
             Controllers = Storyboard.Controllers;
-
+            
             // Initialize triggers
             Triggers = Storyboard.Triggers;
 

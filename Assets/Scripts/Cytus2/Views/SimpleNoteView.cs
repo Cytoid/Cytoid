@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections;
-using Cytus2.Controllers;
+﻿using Cytus2.Controllers;
 using Cytus2.Models;
-using QuickEngine.Extensions;
 using UnityEngine;
 
 namespace Cytus2.Views
@@ -16,8 +13,6 @@ namespace Cytus2.Views
 
         public readonly SpriteRenderer Ring;
         public readonly SpriteRenderer Fill;
-
-        private Coroutine emergeAnimCoroutine;
 
         public SimpleNoteView(GameNote note) : base(note)
         {
@@ -33,7 +28,7 @@ namespace Cytus2.Views
         public override void OnInit(ChartRoot chart, ChartNote note)
         {
             Size = SimpleVisualOptions.Instance.GetSize(this);
-
+            
             Ring.color = SimpleVisualOptions.Instance.GetRingColor(this);
             Fill.color = SimpleVisualOptions.Instance.GetFillColor(this);
 
@@ -107,24 +102,22 @@ namespace Cytus2.Views
             Fill.color = Fill.color.WithAlpha(EasedOpacity);
         }
 
-        public override void OnClear(NoteGrading grading)
+        public override void OnClear(NoteGrade grade)
         {
             SimpleEffects.Instance.PlayClearFx(
                 this,
-                grading,
+                grade,
                 Note.TimeUntilEnd,
                 GameOptions.Instance.ShowEarlyLateIndicator
             );
 
             rendered = false;
 
-            Ring.enabled = false;
-            Fill.enabled = false;
-            Collider.enabled = false;
-
-            if (emergeAnimCoroutine != null)
+            if (Ring != null)
             {
-                Note.StopCoroutine(emergeAnimCoroutine);
+                Ring.enabled = false;
+                Fill.enabled = false;
+                Collider.enabled = false;
             }
         }
 

@@ -9,19 +9,23 @@ using Cytus2.Models;
 using ICSharpCode.SharpZipLib.Zip;
 using LunarConsolePluginInternal;
 using Newtonsoft.Json;
+using Unicache;
+using Unicache.Plugin;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 {
     public const string Host = "https://cytoid.io:8443";
+    public static IUnicache cache;
 
     public static List<Level> Levels = new List<Level>();
     public static Level CurrentLevel;
     public static string CurrentChartType = Level.Hard;
     public static LevelSelectionController.HitSound CurrentHitSound;
     public static Play CurrentPlay;
-    public static RankedModeData CurrentRankedModeData;
+    public static RankedPlayData CurrentRankedPlayData;
+    public static UnrankedPlayData CurrentUnrankedPlayData;
 
     public static bool IsReloadingLevels = true;
     public static string LoadingLevelId;
@@ -39,6 +43,11 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
     protected override void Awake()
     {
         base.Awake();
+
+        if (cache == null) cache = new MemoryCache();
+        cache.Handler = new SimpleDownloadHandler();
+        cache.UrlLocator = new SimpleUrlLocator();
+        cache.CacheLocator = new SimpleCacheLocator();
 
         if (GameObject.FindGameObjectsWithTag("ApplicationObject").Length > 1)
         {
@@ -151,7 +160,6 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 
                 level.BasePath = basePath;
 
-                Debug.Log(level.id);
                 LoadingLevelId = level.id;
                 Levels.Add(level);
             }
@@ -275,13 +283,14 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 
     public static void RefreshCurrentLevel()
     {
-        if (PlayerPrefs.HasKey("last_level"))
+        if (!PlayerPrefs.HasKey("last_level"))
         {
-            var lastLevel = PlayerPrefs.GetString("last_level");
-            foreach (var level in Levels)
-            {
-                if (level.id == lastLevel) CurrentLevel = level;
-            }
+            PlayerPrefs.SetString("last_level", "io.cytoid.intro");
+        }
+        var lastLevel = PlayerPrefs.GetString("last_level");
+        foreach (var level in Levels)
+        {
+            if (level.id == lastLevel) CurrentLevel = level;
         }
     }
 
@@ -345,7 +354,7 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
                 }
                 catch (Exception e)
                 {
-                    Log.e("Cannot extract " + entry.Name + ". Is the .zip archive file valid?");
+                    Log.e("Cannot extract " + entry.Name + ". Is it a valid .zip archive file?");
                     Log.e(e.Message);
                     extracting = false;
                 }

@@ -85,15 +85,15 @@ namespace Cytus2.Models
             yield return null;
         }
 
-        public override NoteGrading CalculateGrading()
+        public override NoteGrade CalculateGrading()
         {
-            var ranking = NoteGrading.Miss;
+            var ranking = NoteGrade.Miss;
             if (TimeUntilStart >= 0)
             {
-                ranking = NoteGrading.Undetermined;
+                ranking = NoteGrade.Undetermined;
                 if (TimeUntilStart < 0.500f)
                 {
-                    ranking = NoteGrading.Perfect;
+                    ranking = NoteGrade.Perfect;
                 }
             }
             else
@@ -101,7 +101,7 @@ namespace Cytus2.Models
                 var timePassed = -TimeUntilStart;
                 if (timePassed < 0.200f)
                 {
-                    ranking = NoteGrading.Perfect;
+                    ranking = NoteGrade.Perfect;
                 }
             }
 

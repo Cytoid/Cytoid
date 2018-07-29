@@ -922,19 +922,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e6fd155ac5844138ab556f2912413900, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  perfectColor: {r: 0.35686275, g: 0.7529412, b: 0.92156863, a: 1}
-  greatColor: {r: 0.99215686, g: 0.90588236, b: 0.29803923, a: 1}
-  goodColor: {r: 0.60784316, g: 0.77254903, b: 0.23921569, a: 1}
-  badColor: {r: 0.8980392, g: 0.34901962, b: 0.20392157, a: 1}
-  missColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
-  ringColor1: {r: 1, g: 1, b: 1, a: 1}
-  fillColor1: {r: 0.20784314, g: 0.654902, b: 1, a: 1}
-  ringColor2: {r: 1, g: 1, b: 1, a: 1}
-  fillColor2: {r: 1, g: 0.34901962, b: 0.39215687, a: 1}
-  ringColor3: {r: 0, g: 0, b: 0, a: 0}
-  fillColor3: {r: 0, g: 0, b: 0, a: 0}
-  ringColor4: {r: 0, g: 0, b: 0, a: 0}
-  fillColor4: {r: 0, g: 0, b: 0, a: 0}
 --- !u!114 &923194762
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -946,6 +933,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3af47f4113994bcbb921c97b1bab00c8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Play:
+    IsRanked: 0
+    NoteCount: 0
+    NoteCleared: 0
+    Score: 0
+    Tp: 0
+    Combo: 0
+    MaxCombo: 0
+    Hp: 0
+    MaxHp: 0
+    ComboMultiplier: 0
   RankData:
     user: 
     password: 
@@ -989,7 +987,7 @@ MonoBehaviour:
   InfoCanvas: {fileID: 223031401084416314, guid: 65e1891bc634e4ac580f2b7532d95965,
     type: 2}
   AudioSource: {fileID: 923194760}
-  Scanner: {fileID: 1160427698}
+  Scanline: {fileID: 1160427698}
   UnpauseCountdown: 0
   SeekSlider: {fileID: 1067731251}
   HideUi: 0
@@ -1004,8 +1002,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f73d7fe7106645ceaadcd94c2c279dab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  IsRanked: 0
-  WillAutoPlay: 1
   ShowEarlyLateIndicator: 1
   UseAndroidNativeAudio: 0
   HitboxMultiplier: 1.333
@@ -1577,7 +1573,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ae0f3a7e2d72c1428326c5518fdc2f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  settings: {fileID: 0}
+  settings: {fileID: 11400000, guid: be2120d8dbb123647827ad8fd5937bd2, type: 2}
 --- !u!114 &1241569757
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2540,6 +2536,10 @@ Prefab:
     - target: {fileID: 4612988860141188, guid: 8a8f83a62a9d948d1be23a9dc4dd508e, type: 2}
       propertyPath: m_RootOrder
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1562558743190208, guid: 8a8f83a62a9d948d1be23a9dc4dd508e, type: 2}
+      propertyPath: m_Name
+      value: Scanline
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 8a8f83a62a9d948d1be23a9dc4dd508e, type: 2}

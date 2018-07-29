@@ -1,10 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using Cytoid.Storyboard;
-using Cytus2.Models;
 using Newtonsoft.Json;
-using UnityEngine;
 
 public class Level
 {
@@ -14,20 +9,23 @@ public class Level
 
     [JsonIgnore] public string BasePath;
 
-    public string level_format { get; set; }
-    public int version { get; set; }
-    public string id { get; set; }
-    public string title { get; set; }
+    public int schema_version = 1;
+    public int version = 1;
+    public string id;
+    public string title;
     public string title_localized;
-    public string artist { get; set; }
+    public string artist;
     public string artist_localized;
-    public string illustrator { get; set; }
-    public string charter { get; set; }
-    public MusicSection music { get; set; }
-    public MusicSection music_preview { get; set; }
-    public BackgroundSection background { get; set; }
-    public List<ChartSection> charts { get; set; }
-    public bool is_internal { get; set; }
+    public string artist_source;
+    public string illustrator;
+    public string illustrator_source;
+    public string charter;
+    public string storyboarder;
+    public MusicSection music;
+    public MusicSection music_preview;
+    public BackgroundSection background;
+    public List<ChartSection> charts = new List<ChartSection>();
+    public bool is_internal;
 
     public string GetMusicPath(string chartType)
     {
@@ -42,6 +40,17 @@ public class Level
 
         return music.path;
     }
+    
+    public ChartSection GetChartSection(string chartType)
+    {
+        foreach (var chart in charts)
+        {
+            if (chart.type != chartType) continue;
+            return chart;
+        }
+
+        return null;
+    }
 
     public int GetDifficulty(string chartType)
     {
@@ -52,6 +61,46 @@ public class Level
         }
 
         return -1;
+    }
+
+    public string GetDisplayDifficulty(ChartSection section)
+    {
+        if (schema_version == 1)
+        {
+            switch (section.difficulty)
+            {
+                case 1:
+                    return "2";
+                case 2:
+                    return "3";
+                case 3:
+                    return "4";
+                case 4:
+                    return "6";
+                case 5:
+                    return "8";
+                case 6:
+                    return "10";
+                case 7:
+                    return "11";
+                case 8:
+                    return "12";
+                case 9:
+                    return "14";
+            }
+
+            if (section.difficulty >= 10 && section.difficulty <= 12)
+            {
+                return "15";
+            }
+
+            return section.difficulty >= 13 ? "15+" : "?";
+        }
+
+        if (section.difficulty >= 16) {
+            return "15+";
+        }
+        return section.difficulty <= 0 ? "?" : section.difficulty.ToString();
     }
 
     public class MusicSection
@@ -66,11 +115,11 @@ public class Level
 
     public class ChartSection
     {
-        public string type { get; set; }
+        public string type;
         public string name;
-        public int difficulty { get; set; }
-        public string path { get; set; }
-        public MusicSection music_override { get; set; }
+        public int difficulty;
+        public string path;
+        public MusicSection music_override;
         public StoryboardSection storyboard;
     }
 

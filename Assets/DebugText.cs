@@ -40,7 +40,7 @@ public class DebugText : MonoBehaviour
                 continue;
             }
 
-            if (game.Play.NoteRankings[i] == NoteGrading.Undetermined)
+            if (game.Play.NoteRankings[i] == NoteGrade.Undetermined)
                 text.text += i + " ";
         }
     }

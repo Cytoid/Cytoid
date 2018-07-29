@@ -48,9 +48,9 @@ namespace Cytus2.Models
 
             foreach (var tempo in Root.tempo_list)
             {
-                thisChecksumSource += "tempo " + ((int) tempo.tick).ToString() + " " + ((int) (tempo.value)).ToString();
+                thisChecksumSource += "tempo " + ((int) tempo.tick).ToString() + " " + (tempo.value).ToString();
             }
-
+            
             // Convert tick to absolute time
 
             foreach (var eventOrder in Root.event_order_list)
@@ -63,12 +63,25 @@ namespace Cytus2.Models
                 anim.time = ConvertToTime(anim.tick);
             }
 
-            foreach (var page in Root.page_list)
+            for (var index = 0; index < Root.page_list.Count; index++)
             {
+                var page = Root.page_list[index];
                 page.start_time = ConvertToTime(page.start_tick);
                 page.end_time = ConvertToTime(page.end_tick);
                 thisChecksumSource += "page " + ((int) page.start_tick).ToString() + " " +
                                       ((int) page.end_tick).ToString();
+
+                if (index != 0)
+                {
+                    page.actual_start_tick = Root.page_list[index - 1].end_tick;
+                    page.actual_start_time = Root.page_list[index - 1].end_time;
+                }
+                else
+                {
+                    page.actual_start_tick = 0;
+                    page.actual_start_time = 0;
+                }
+                
                 if (Mod.FlipY.IsEnabled() || Mod.FlipAll.IsEnabled())
                 {
                     page.scan_line_direction = page.scan_line_direction == 1 ? -1 : 1;
@@ -81,7 +94,7 @@ namespace Cytus2.Models
                 var page = Root.page_list[note.page_index];
 
                 note.direction = page.scan_line_direction;
-                note.speed = note.page_index == 0 ? 1.0f : CalculateNoteSpeed(i);
+                note.speed = note.page_index == 0 ? 1.0f : CalculateNoteSpeed(note);
                 note.speed *= (float) note.approach_rate;
 
                 var modSpeed = 1f;
@@ -123,36 +136,10 @@ namespace Cytus2.Models
                 else
                     note.intro_time = note.start_time - (1.367f / note.speed);
 
-                switch (note.type)
-                {
-                    case 0:
-                        note.tint = note.direction == 1 ? 0.94f : 1.06f;
-                        break;
-                    case 1:
-                        note.tint = note.direction == 1 ? 0.94f : 1.06f;
-                        break;
-                    case 2:
-                        note.tint = note.direction == 1 ? 0.94f : 1.06f;
-                        break;
-                    case 3:
-                        note.tint = note.direction == 1 ? 0.94f : 1.06f;
-                        note.nextdraglinestarttime =
-                            note.start_time - 1.175f / note.speed - 0.133f;
-                        break;
-                    case 4:
-                        note.tint = note.direction == 1 ? 0.94f : 1.06f;
-                        if (note.next_id > 0)
-                            note.nextdraglinestarttime = note.intro_time - 0.2f;
-                        break;
-                    case 5:
-                        note.tint = note.direction == 1 ? 1.00f : 1.30f;
-                        break;
-                }
-
                 var lx = note.x;
                 if (lx != 0f)
                 {
-                    while (lx < 10000)
+                    while (Mathf.Abs((float) lx) < 10000)
                     {
                         lx *= 10;
                     }
@@ -166,6 +153,41 @@ namespace Cytus2.Models
                                       + ((int) note.hold_tick).ToString() + " "
                                       + note.next_id.ToString() + " "
                                       + ((int) (note.approach_rate * 100)).ToString();
+            }
+
+            foreach (var note in Root.note_list)
+            {
+                switch (note.type)
+                {
+                    case 0:
+                        note.tint = note.direction == 1 ? 0.94f : 1.06f;
+                        break;
+                    case 1:
+                        note.tint = note.direction == 1 ? 0.94f : 1.06f;
+                        break;
+                    case 2:
+                        note.tint = note.direction == 1 ? 0.94f : 1.06f;
+                        break;
+                    case 3:
+                        note.tint = note.direction == 1 ? 0.94f : 1.06f;
+                        if (note.next_id > 0)
+                        {
+	                        note.nextdraglinestarttime = note.intro_time - 0.133f;
+	                        note.nextdraglinestoptime = Root.note_list[note.next_id].intro_time - 0.132f;
+	                    }
+                        break;
+                    case 4:
+                        note.tint = note.direction == 1 ? 0.94f : 1.06f;
+                        if (note.next_id > 0)
+                        {
+                            note.nextdraglinestarttime = note.intro_time - 0.133f;
+                            note.nextdraglinestoptime = Root.note_list[note.next_id].intro_time - 0.132f;
+                        }
+                        break;
+                    case 5:
+                        note.tint = note.direction == 1 ? 1.00f : 1.30f;
+                        break;
+                }
             }
 
             foreach (var note in Root.note_list)
@@ -195,13 +217,11 @@ namespace Cytus2.Models
             {
                 checksumSource = thisChecksumSource;
             }
-
-            Debug.Log(checksumSource);
         }
 
         private float ConvertToTime(float tick)
         {
-            float result = 0;
+            double result = 0;
 
             var currentTick = 0f;
             var currentTimeZone = 0;
@@ -209,28 +229,30 @@ namespace Cytus2.Models
             for (var i = 1; i < Root.tempo_list.Count; i++)
             {
                 if (Root.tempo_list[i].tick >= tick) break;
-                result += (Root.tempo_list[i].tick - currentTick) * 1e-6f * Root.tempo_list[i - 1].value /
+                result += (Root.tempo_list[i].tick - currentTick) * 1e-6 * Root.tempo_list[i - 1].value /
                           Root.time_base;
                 currentTick = Root.tempo_list[i].tick;
                 currentTimeZone++;
             }
 
-            result += (tick - currentTick) * 1e-6f * Root.tempo_list[currentTimeZone].value / Root.time_base;
-            return result;
+            result += (tick - currentTick) * 1e-6 * Root.tempo_list[currentTimeZone].value / Root.time_base;
+            return (float) result;
         }
 
-        public float CalculateNoteSpeed(int id)
+        public float CalculateNoteSpeed(ChartNote note)
         {
+            var page = Root.page_list[note.page_index];
+            var previousPage = Root.page_list[note.page_index - 1];
             var pageRatio =
-                1.0f * (Root.note_list[id].tick - Root.page_list[Root.note_list[id].page_index].start_tick) /
-                (Root.page_list[Root.note_list[id].page_index].end_tick -
-                 Root.page_list[Root.note_list[id].page_index].start_tick);
+                1.0f * (note.tick - page.actual_start_tick) /
+                (page.end_tick -
+                 page.actual_start_tick);
             var tempo =
-                (Root.page_list[Root.note_list[id].page_index].end_time -
-                 Root.page_list[Root.note_list[id].page_index].start_time) * pageRatio +
-                (Root.page_list[Root.note_list[id].page_index - 1].end_time -
-                 Root.page_list[Root.note_list[id].page_index - 1].start_time) * (1.0f - pageRatio);
-            return tempo >= 1 ? 1.0f : 1.0f / tempo;
+                (page.end_time -
+                 page.actual_start_time) * pageRatio +
+                (previousPage.end_time -
+                 previousPage.actual_start_time) * (1.367f - pageRatio);
+            return tempo >= 1.367f ? 1.0f : 1.367f / tempo;
         }
 
         public float GetNotePosition(float tick)
@@ -280,6 +302,13 @@ namespace Cytus2.Models
                     1.0f / (Root.page_list[CurrentPageId].end_time - Root.page_list[CurrentPageId].start_time))
                    + offset;
         }
+        
+        public float GetEdgePosition(bool bottom)
+        {
+            return verticalRatio * (bottom ? 1 : -1) *
+                   -baseSize
+                   + offset;
+        }
 
         public ChartRoot FromCytus1Chart(string text)
         {
@@ -320,7 +349,8 @@ namespace Cytus2.Models
                             if (!int.TryParse(data[i], out id)) continue;
                             note = tmpNotes[id];
                             note.Type = C1NoteType.Chain;
-                            notesInChain.Add(note);
+                            
+                            if (!notesInChain.Contains(note)) notesInChain.Add(note);
                         }
 
                         for (var i = 0; i < notesInChain.Count - 1; i++)
@@ -369,7 +399,7 @@ namespace Cytus2.Models
 
             var tempo = new ChartTempo();
             tempo.tick = 0;
-            var tempoValue = pageDuration * 1000000;
+            var tempoValue = (long) (pageDuration * 1000000f);
             tempo.value = tempoValue;
             root.tempo_list = new List<ChartTempo> {tempo};
 

@@ -4,7 +4,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Cytoid.UI;
+using DG.Tweening;
 using DoozyUI;
+using E7.Native;
 using LunarConsolePluginInternal;
 using Newtonsoft.Json;
 using QuickEngine.Extensions;
@@ -17,6 +20,7 @@ using UnityEngine.UI;
 public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionController>
 {
     public Level LoadedLevel { get; private set; }
+    public bool LoadedAvatar;
     [HideInInspector] public DynamicScrollPoint WillScrollTo;
 
     [SerializeField] private GameObject entryPrefab;
@@ -25,37 +29,22 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
     [SerializeField] private CanvasGroup listCanvasGroup;
     [SerializeField] private RectTransform scrollRectTransform;
     [SerializeField] private RectTransform listRectTransform;
-    [SerializeField] private SwitchDifficultyView switchDifficultyView;
     [SerializeField] private GameObject blackout;
     [SerializeField] private Text blackoutText;
 
-    [SerializeField] private Text idText;
-    [SerializeField] private Text titleText;
-    [SerializeField] private Text artistText;
-    [SerializeField] private Text illustratorText;
-    [SerializeField] private Text charterText;
-    [SerializeField] private Text bestText;
-    [SerializeField] private Text confirmText;
     [SerializeField] private GameObject deleteButton;
 
-    [SerializeField] private Toggle overrideOptionsToggle;
-    [SerializeField] private InputField localUserOffsetInput;
+    [SerializeField] private InputField chartRelativeOffsetInput;
+    [SerializeField] private InputField headsetOffsetInput;
 
-    [SerializeField] private InputField userOffsetInput;
+    [SerializeField] private InputField mainOffsetInput;
     [SerializeField] private Toggle largerHitboxesToggle;
     [SerializeField] private Toggle earlyLateIndicatorToggle;
     [SerializeField] private Text hitSoundText;
-    [SerializeField] private AudioSource hitSoundPlayer;
 
     [SerializeField] private InputField usernameInput;
     [SerializeField] private InputField passwordInput;
 
-    [SerializeField] private Image avatarImage;
-
-    [SerializeField] private Text usernameText;
-    [SerializeField] private Text rankText;
-
-    [SerializeField] private Text modStatusText;
     [SerializeField] private Text rankStatusText;
 
     private bool isLoggingIn;
@@ -167,13 +156,13 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         CytoidApplication.SetAutoRotation(true);
         CytoidApplication.ResetResolution();
 
-        var userOffsetDef = Application.platform == RuntimePlatform.Android ? 0.12f : 0.2f;
         var ringColorDef = "#FFFFFF";
         var ringColorAltDef = "#FFFFFF";
         var fillColorDef = "#6699CC";
         var fillColorAltDef = "#FF3C38";
 
-        SetDefaultPref("user_offset", userOffsetDef);
+        SetDefaultPref("main offset", Application.platform == RuntimePlatform.Android ? 0f : 0.1f);
+        SetDefaultPref("headset offset", -0.05f);
         SetDefaultPref("show_scanner", true);
         SetDefaultPref("inverse", false);
         SetDefaultPref("ring_color", ringColorDef);
@@ -183,7 +172,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         SetDefaultPref("hit_sound", "None");
 
         var list = HitSounds.ToList();
-        list.Insert(0, new HitSound {Name = "None", Clip = null});
+        list.Insert(0, new HitSound {Name = "None"});
         HitSounds = list.ToArray();
         UpdateHitSound(HitSounds[1], save: false);
 
@@ -197,32 +186,44 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             }
         }
 
-        userOffsetInput.text = PlayerPrefs.GetFloat("user_offset").ToString();
+        mainOffsetInput.text = PlayerPrefs.GetFloat("main offset").ToString();
+        headsetOffsetInput.text = PlayerPrefs.GetFloat("headset offset").ToString();
         earlyLateIndicatorToggle.isOn = PlayerPrefsExt.GetBool("early_late_indicator");
         largerHitboxesToggle.isOn = PlayerPrefsExt.GetBool("larger_hitboxes");
 
-        userOffsetInput.onEndEdit.AddListener(text =>
+        mainOffsetInput.onEndEdit.AddListener(text =>
         {
             float offset;
             if (!float.TryParse(text, out offset))
             {
-                userOffsetInput.text = userOffsetDef.ToString();
+                mainOffsetInput.text = PlayerPrefs.GetFloat("main offset").ToString();
+            } else
+            {
+                PlayerPrefs.SetFloat("main offset", offset);
             }
         });
-        overrideOptionsToggle.onValueChanged.AddListener(selected =>
-        {
-            ZPlayerPrefs.SetBool(PreferenceKeys.WillOverrideOptions(CytoidApplication.CurrentLevel), selected);
-        });
-        localUserOffsetInput.onEndEdit.AddListener(text =>
+        chartRelativeOffsetInput.onEndEdit.AddListener(text =>
         {
             float offset;
             if (!float.TryParse(text, out offset))
             {
-                localUserOffsetInput.text = userOffsetInput.text;
+                chartRelativeOffsetInput.text = ZPlayerPrefs.GetFloat(PreferenceKeys.ChartRelativeOffset(CytoidApplication.CurrentLevel.id)).ToString();
             }
             else
             {
-                ZPlayerPrefs.SetFloat(PreferenceKeys.NoteDelay(CytoidApplication.CurrentLevel), offset);
+                ZPlayerPrefs.SetFloat(PreferenceKeys.ChartRelativeOffset(CytoidApplication.CurrentLevel.id), offset);
+            }
+        });
+        headsetOffsetInput.onEndEdit.AddListener(text =>
+        {
+            float offset;
+            if (!float.TryParse(text, out offset))
+            {
+                headsetOffsetInput.text = PlayerPrefs.GetFloat("headset offset").ToString();
+            }
+            else
+            {
+                PlayerPrefs.SetFloat("headset offset", offset);
             }
         });
 
@@ -234,7 +235,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             PlayerPrefsExt.SetBool("ranked", false);
         }
 
-        rankStatusText.text = "Off";
+        rankStatusText.text = OnlinePlayer.Authenticated && PlayerPrefsExt.GetBool("ranked") ? "On" : "Off";
 
         // Initialize background
         blackout.SetActive(false);
@@ -252,6 +253,19 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         {
             BackgroundCanvasHelper.SetupBackgroundCanvas(gameObject.scene);
         }
+
+        if (OnlinePlayer.Authenticated && OnlinePlayer.AvatarTexture != null)
+        {
+            LoadedAvatar = true;
+        }
+
+        EventKit.Subscribe<string>("meta reloaded", OnLevelMetaReloaded);
+    }
+
+    protected override void OnDestroy()
+    {
+        base.OnDestroy();
+        EventKit.Unsubscribe<string>("meta reloaded", OnLevelMetaReloaded);
     }
 
     public void SwitchRankedMode()
@@ -262,7 +276,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             return;
         }
 
-        if (User.Exists())
+        if (OnlinePlayer.Authenticated)
         {
             var ranked = PlayerPrefsExt.GetBool("ranked", false);
             ranked = !ranked;
@@ -273,6 +287,11 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             {
                 UIManager.ShowUiElement("WhatIsRankedModeBackground", "MusicSelection");
                 UIManager.ShowUiElement("WhatIsRankedModeRoot", "MusicSelection");
+            }
+
+            if (ranked)
+            {
+                EventKit.Broadcast("reload rankings");
             }
         }
         else
@@ -315,6 +334,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         CytoidApplication.RefreshCurrentLevel();
         RefreshLevels();
         Login(true);
+        StartCoroutine(LoadAvatarCoroutine());
         yield return null; // Wait for one frame
         StartCoroutine(DetectNotInstalledLevels());
     }
@@ -335,7 +355,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             var entryObject = Instantiate(entryPrefab, listRectTransform.transform);
             entryObject.AddComponent<LevelEntry>().Level = level;
             var text = entryObject.GetComponent<Text>();
-            if (level.title_localized != null)
+            if (!string.IsNullOrEmpty(level.title_localized))
             {
                 text.supportRichText = true;
                 text.verticalOverflow = VerticalWrapMode.Overflow;
@@ -346,6 +366,9 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             {
                 text.text = level.title;
             }
+
+            var entry = entryObject.AddComponent<LevelEntryComponent>();
+            entry.Id = level.id;
 
             var dynamicScrollPoint = entryObject.GetComponent<DynamicScrollPoint>();
             listScrollFocusController.focusPoints.Add(dynamicScrollPoint);
@@ -360,6 +383,36 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         listRectTransform.position = new Vector2(0, 0);
 
         ForceLayoutInitialization.Instance.Invalidate();
+    }
+
+    public void OnLevelMetaReloaded(string levelId)
+    {
+        Popup.Make(this, "Updated level meta.");
+        foreach (var entry in listRectTransform.gameObject.GetComponentsInChildren<LevelEntryComponent>())
+        {
+            if (entry.Id == levelId)
+            {
+                var level = CytoidApplication.Levels.Find(it => it.id == levelId);
+
+                if (level == null) return;
+                
+                var text = entry.GetComponent<Text>();
+                
+                if (!string.IsNullOrEmpty(level.title_localized))
+                {
+                    text.supportRichText = true;
+                    text.verticalOverflow = VerticalWrapMode.Overflow;
+                    text.lineSpacing = 0.4f;
+                    text.text = level.title + "\n<size=12>" + level.title_localized + "</size>";
+                }
+                else
+                {
+                    text.text = level.title;
+                }
+
+                return;
+            }
+        }
     }
 
     private void Update()
@@ -380,24 +433,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
     public void UpdateBestText()
     {
         if (LoadedLevel == null) return;
-        bool ranked = PlayerPrefsExt.GetBool("ranked");
-        if (Math.Abs(ZPlayerPrefs.GetFloat(
-                         PreferenceKeys.BestScore(LoadedLevel, CytoidApplication.CurrentChartType, ranked),
-                         defaultValue: -1) - (-1)) < 0.000001)
-        {
-            bestText.text = "NO HIGH SCORE YET";
-        }
-        else
-        {
-            bestText.text =
-                (ranked ? "R score" : "Score") + " " + Mathf.CeilToInt(ZPlayerPrefs.GetFloat(
-                    PreferenceKeys.BestScore(LoadedLevel, CytoidApplication.CurrentChartType, ranked),
-                    0)).ToString("D6")
-                + "   " + (ranked ? "R acc." : "Acc.") + " " +
-                ZPlayerPrefs.GetFloat(
-                    PreferenceKeys.BestAccuracy(LoadedLevel, CytoidApplication.CurrentChartType, ranked),
-                    0).ToString("0.##") + "%";
-        }
+        BestScoreText.WillInvalidate = true;
     }
 
     public IEnumerator LoadLevel(Level level)
@@ -408,12 +444,6 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
         if (LoadedLevel == level) yield break;
         LoadedLevel = level;
-
-        idText.text = (level.id ?? "Unknown") + " (v" + level.version + ")";
-        titleText.text = level.title ?? "Unknown";
-        artistText.text = level.artist ?? "Unknown";
-        illustratorText.text = "by " + (level.illustrator ?? "Unknown");
-        charterText.text = "by " + (level.charter ?? "Unknown");
 
         audioSource.Stop();
 
@@ -479,31 +509,24 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
     public void OnLevelLoaded()
     {
-        switchDifficultyView.OnLevelLoaded();
+        EventKit.Broadcast("level loaded");
         CytoidApplication.CurrentLevel = LoadedLevel;
 
         UpdateBestText();
 
-        var useLocalOptions =
-            ZPlayerPrefs.GetBool(PreferenceKeys.WillOverrideOptions(CytoidApplication.CurrentLevel), false);
-        overrideOptionsToggle.isOn = useLocalOptions;
-
-        if (useLocalOptions)
-        {
-            localUserOffsetInput.text =
-                ZPlayerPrefs.GetFloat(PreferenceKeys.NoteDelay(CytoidApplication.CurrentLevel),
-                    PlayerPrefs.GetFloat("user_offset")).ToString();
-        }
-        else
-        {
-            localUserOffsetInput.text = userOffsetInput.text;
-        }
-
-        // confirmText.text = "Are you sure you want to delete\n" + LoadedLevel.id + "?";
+        chartRelativeOffsetInput.text =
+            ZPlayerPrefs.GetFloat(PreferenceKeys.ChartRelativeOffset(CytoidApplication.CurrentLevel.id), 0f).ToString();
 
         deleteButton.SetActive(!LoadedLevel.is_internal);
 
         PlayerPrefs.SetString("last_level", LoadedLevel.id);
+
+        if (PlayerPrefsExt.GetBool("ranked"))
+        {
+            EventKit.Broadcast("reload rankings");
+        }
+
+        StartCoroutine(OnlineMeta.FetchMeta(LoadedLevel.id));
     }
 
     public void DeleteCurrentLevel()
@@ -548,7 +571,6 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
     public struct HitSound
     {
         public string Name;
-        public AudioClip Clip;
     }
 
     [SerializeField] protected HitSound[] HitSounds;
@@ -563,7 +585,10 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         }
 
         UpdateHitSound(HitSounds[HitSoundIndex]);
-        hitSoundPlayer.PlayOneShot(HitSounds[HitSoundIndex].Clip);
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
+        var pointer = NativeAudio.Load("Hits/" + HitSounds[HitSoundIndex].Name + ".wav");
+        pointer.Play();
+#endif
     }
 
     public void PrevHitSound()
@@ -575,7 +600,11 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         }
 
         UpdateHitSound(HitSounds[HitSoundIndex]);
-        hitSoundPlayer.PlayOneShot(HitSounds[HitSoundIndex].Clip);
+
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
+        var pointer = NativeAudio.Load("Hits/" + HitSounds[HitSoundIndex].Name + ".wav");
+        pointer.Play();
+#endif
     }
 
     public void UpdateHitSound(HitSound hitSound, bool save = true)
@@ -583,6 +612,11 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         hitSoundText.text = hitSound.Name;
         CytoidApplication.CurrentHitSound = hitSound;
         if (save) PlayerPrefs.SetString("hit_sound", hitSound.Name);
+    }
+    
+    public void HideListImmediately()
+    {
+        listCanvasGroup.DOFade(0, 0.5f);
     }
 
     public void DoAction()
@@ -592,7 +626,6 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             case Action.Go:
                 print("Loading Game scene.");
 
-                PlayerPrefs.SetFloat("user_offset", float.Parse(userOffsetInput.text));
                 PlayerPrefsExt.SetBool("early_late_indicator", earlyLateIndicatorToggle.isOn);
                 PlayerPrefsExt.SetBool("larger_hitboxes", largerHitboxesToggle.isOn);
 
@@ -620,7 +653,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
     public void ViewProfileOnIO()
     {
-        Application.OpenURL("https://cytoid.io/profile/" + User.Instance.username);
+        Application.OpenURL("https://cytoid.io/profile/" + OnlinePlayer.Name);
     }
 
     public void OnProfilePressed()
@@ -631,10 +664,19 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             return;
         }
 
-        if (User.Exists())
+        if (OnlinePlayer.Authenticated)
         {
-            UIManager.ShowUiElement("ProfileRoot", "MusicSelection");
-            UIManager.ShowUiElement("ProfileBackground", "MusicSelection");
+            if (UIManager.GetUiElements("ProfileRoot", "MusicSelection")[0].isVisible)
+            {
+                UIManager.HideUiElement("ProfileRoot", "MusicSelection");
+                UIManager.HideUiElement("ProfileBackground", "MusicSelection");
+            }
+            else
+            {
+                UIManager.ShowUiElement("ProfileRoot", "MusicSelection");
+                UIManager.ShowUiElement("ProfileBackground", "MusicSelection");
+                EventKit.Broadcast("reload player rankings");
+            }
         }
         else
         {
@@ -678,8 +720,9 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         PlayerPrefs.DeleteKey(PreferenceKeys.LastUsername());
         PlayerPrefs.DeleteKey(PreferenceKeys.LastPassword());
         CloseProfileWindows();
-        avatarImage.overrideSprite = null;
-        User.reset();
+
+        OnlinePlayer.Invalidate();
+        LoadedAvatar = false;
         Popup.Make(this, "Signed out.");
 
         PlayerPrefsExt.SetBool("ranked", false);
@@ -696,95 +739,51 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
     public IEnumerator LoginCoroutine()
     {
-        if (!PlayerPrefs.HasKey(PreferenceKeys.LastUsername()) || !PlayerPrefs.HasKey(PreferenceKeys.LastPassword()))
+        if (OnlinePlayer.Authenticated || !PlayerPrefs.HasKey(PreferenceKeys.LastUsername()) ||
+            !PlayerPrefs.HasKey(PreferenceKeys.LastPassword()))
         {
             isLoggingIn = false;
             yield break;
         }
 
-        // If logged in previously
-        if (User.Exists())
-        {
-            // Do nothing
-        }
-        else
-        {
-            Debug.Log("Logging in");
-            var username = PlayerPrefs.GetString(PreferenceKeys.LastUsername());
-            var password = PlayerPrefs.GetString(PreferenceKeys.LastPassword());
-
-            var request = new UnityWebRequest(CytoidApplication.Host + "/auth", "POST") {timeout = 10};
-            var bodyRaw =
-                Encoding.UTF8.GetBytes("{\"user\": \"" + username + "\", \"password\": \"" + password + "\"}");
-            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-            request.downloadHandler = new DownloadHandlerBuffer();
-            request.SetRequestHeader("Content-Type", "application/json");
-
-            yield return request.Send();
-
-            if (request.isNetworkError || request.isHttpError)
-            {
-                Log.e(request.responseCode.ToString());
-                Log.e(request.error);
-                Popup.Make(this, "Could not sign in.");
-                CloseLoginWindows();
-                isLoggingIn = false;
-                yield break;
-            }
-
-            var body = request.downloadHandler.text;
-
-            AuthenticationResult authenticationResult;
-            try
-            {
-                authenticationResult = JsonConvert.DeserializeObject<AuthenticationResult>(body);
-            }
-            catch (Exception e)
-            {
-                Log.e(e.Message);
-                Popup.Make(this, "Could not sign in.");
-                CloseLoginWindows();
-                isLoggingIn = false;
-                yield break;
-            }
-
-            request.Dispose();
-
-            if (authenticationResult.status != 0)
-            {
-                Popup.Make(this, authenticationResult.message);
-
-                if (authenticationResult.status == 1)
-                {
-                    PlayerPrefs.DeleteKey(PreferenceKeys.LastUsername());
-                    PlayerPrefs.DeleteKey(PreferenceKeys.LastPassword());
-                    usernameInput.text = "";
-                    passwordInput.text = "";
-                }
-                else if (authenticationResult.status == 2)
-                {
-                    PlayerPrefs.DeleteKey(PreferenceKeys.LastPassword());
-                    passwordInput.text = "";
-                }
-
-                CloseLoginWindows();
-                isLoggingIn = false;
-                yield break;
-            }
-
-            Popup.Make(this, "Signed in.");
-
-            var profile = User.Init(username, password, authenticationResult.avatarUrl);
-            profile.localVersion++;
-            profile.Save();
-        }
-
+        // If not logged in previously
+        yield return OnlinePlayer.Authenticate();
         CloseLoginWindows();
         isLoggingIn = false;
 
-        rankStatusText.text = PlayerPrefsExt.GetBool("ranked") ? "On" : "Off";
+        var authenticationResult = OnlinePlayer.LastAuthenticationResult;
 
-        UpdateProfileUi();
+        switch (authenticationResult.status)
+        {
+            case 0:
+                Popup.Make(this, "Signed in.");
+                rankStatusText.text = PlayerPrefsExt.GetBool("ranked") ? "On" : "Off";
+                StartCoroutine(LoadAvatarCoroutine());
+                if (PlayerPrefsExt.GetBool("ranked"))
+                {
+                    EventKit.Broadcast("reload rankings");
+                }
+
+                break;
+            case -1:
+                LoadedAvatar = true;
+                Popup.Make(this, "Could not fetch player data.");
+                break;
+            case 1: // User not exist
+                LoadedAvatar = true;
+                Popup.Make(this, authenticationResult.message);
+                PlayerPrefs.DeleteKey(PreferenceKeys.LastUsername());
+                PlayerPrefs.DeleteKey(PreferenceKeys.LastPassword());
+                usernameInput.text = "";
+                passwordInput.text = "";
+                break;
+            case 2: // Incorrect password
+                LoadedAvatar = true;
+                Popup.Make(this, authenticationResult.message);
+                PlayerPrefs.DeleteKey(PreferenceKeys.LastPassword());
+                passwordInput.text = "";
+                break;
+        }
     }
 
     public void CloseLoginWindows()
@@ -801,47 +800,33 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         UIManager.HideUiElement("ProfileBackground", "MusicSelection");
     }
 
-    public void UpdateProfileUi()
-    {
-        usernameText.text = "Player ID: " + User.Instance.username;
-        StartCoroutine(LoadAvatarCoroutine());
-    }
-
     public IEnumerator LoadAvatarCoroutine()
     {
-        if (User.Exists() && User.Instance.avatarTexture != null)
+        if (!OnlinePlayer.Authenticated || (OnlinePlayer.Authenticated && OnlinePlayer.AvatarTexture != null))
         {
-            // Update avatar from memory
-            var texture = User.Instance.avatarTexture;
-
-            var rect = new Rect(0, 0, texture.width, texture.height);
-            var sprite = Sprite.Create(texture, rect, new Vector2(0.5f, 0.5f), 100);
-
-            avatarImage.overrideSprite = sprite;
-
-            yield return null;
+            yield break;
         }
 
-        using (var www = new WWW(User.Instance.avatarUrl))
+        using (var www = new WWW(OnlinePlayer.AvatarUrl))
         {
+            Debug.Log("Downloading avatar");
+
             yield return www;
+
+            LoadedAvatar = true;
 
             if (!string.IsNullOrEmpty(www.error))
             {
                 Log.e(www.error);
-                Popup.Make(this, "Could not load avatar.");
+                Popup.Make(this, "Could not download avatar.");
+                yield break;
             }
 
             Debug.Log("Downloaded avatar");
 
             var texture = www.texture;
 
-            User.Instance.avatarTexture = texture;
-
-            var rect = new Rect(0, 0, texture.width, texture.height);
-            var sprite = Sprite.Create(texture, rect, new Vector2(0.5f, 0.5f), 100);
-
-            avatarImage.overrideSprite = sprite;
+            OnlinePlayer.AvatarTexture = texture;
         }
     }
 

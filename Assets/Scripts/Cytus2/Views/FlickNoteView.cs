@@ -22,9 +22,9 @@ namespace Cytus2.Views
             rightArrow.color = rightArrow.color.WithAlpha(0);
         }
 
-        public override void OnClear(NoteGrading grading)
+        public override void OnClear(NoteGrade grade)
         {
-            base.OnClear(grading);
+            base.OnClear(grade);
             leftArrow.enabled = false;
             rightArrow.enabled = false;
         }

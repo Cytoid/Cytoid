@@ -19,10 +19,10 @@ namespace Cytus2.Controllers
             options = SimpleVisualOptions.Instance;
         }
 
-        public void PlayClearFx(SimpleNoteView noteView, NoteGrading grading, float timeUntilComplete,
+        public void PlayClearFx(SimpleNoteView noteView, NoteGrade grade, float timeUntilEnd,
             bool earlyLateIndicator)
         {
-            if (grading == NoteGrading.Undetermined) return;
+            if (grade == NoteGrade.Undetermined) return;
 
             var at = noteView.Note.Note.position;
             var clearFx = ClearFx;
@@ -36,7 +36,7 @@ namespace Cytus2.Controllers
                 at = new Vector3(at.x, ScanlineView.Instance.transform.position.y, at.z);
             }
 
-            if (grading == NoteGrading.Miss)
+            if (grade == NoteGrade.Miss)
             {
                 var fx = Instantiate(MissFx, at, Quaternion.identity);
                 fx.Stop();
@@ -61,9 +61,9 @@ namespace Cytus2.Controllers
                 {
                     if (earlyLateIndicator)
                     {
-                        if (grading != NoteGrading.Perfect)
+                        if (grade != NoteGrade.Perfect)
                         {
-                            fx.transform.GetChild(0).GetChild(timeUntilComplete > 0 ? 1 : 0).gameObject
+                            fx.transform.GetChild(0).GetChild(timeUntilEnd > 0 ? 1 : 0).gameObject
                                 .SetActive(false);
                         }
                         else
@@ -81,17 +81,17 @@ namespace Cytus2.Controllers
 
                 var speed = 1f;
                 var color = options.PerfectColor;
-                switch (grading)
+                switch (grade)
                 {
-                    case NoteGrading.Great:
+                    case NoteGrade.Great:
                         speed = 0.9f;
                         color = options.GreatColor;
                         break;
-                    case NoteGrading.Good:
+                    case NoteGrade.Good:
                         speed = 0.7f;
                         color = options.GoodColor;
                         break;
-                    case NoteGrading.Bad:
+                    case NoteGrade.Bad:
                         speed = 0.5f;
                         color = options.BadColor;
                         break;

@@ -29,6 +29,8 @@ namespace Cytus2.Models
 
         public float start_time;
         public float end_time;
+        public float actual_start_tick;
+        public float actual_start_time;
 
         public float Duration
         {
@@ -40,7 +42,7 @@ namespace Cytus2.Models
     public class ChartTempo
     {
         public float tick;
-        public float value;
+        public long value;
     }
 
     [System.Serializable]
@@ -94,6 +96,7 @@ namespace Cytus2.Models
         public float rotation;
         public float tint;
         public float nextdraglinestarttime;
+        public float nextdraglinestoptime;
 
         public float Duration
         {

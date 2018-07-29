@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Cytus2.Controllers;
+using UnityEngine;
 
 namespace Cytus2.Models
 {
@@ -10,9 +11,23 @@ namespace Cytus2.Models
         public bool IsRanked;
         public HashSet<Mod> Mods = new HashSet<Mod>();
 
-        public Dictionary<int, NoteGrading> NoteRankings;
+        public Dictionary<int, NoteGrade> NoteRankings;
         public int NoteCount;
         public int NoteCleared;
+        public int Early;
+        public int Late;
+        public float TotalTimeOff;
+        public float TotalTimeOffSquared;
+
+        public float AvgTimeOff
+        {
+            get { return TotalTimeOff / NoteCount; }
+        }
+
+        public float StandardTimeOff
+        {
+            get { return Mathf.Sqrt(TotalTimeOffSquared / NoteCount); }
+        }
 
         public double Score;
         public double Tp;
@@ -34,34 +49,44 @@ namespace Cytus2.Models
 
         public void Init(Chart chart)
         {
-            NoteRankings = new Dictionary<int, NoteGrading>();
+            NoteRankings = new Dictionary<int, NoteGrade>();
             foreach (var note in chart.Root.note_list)
             {
-                NoteRankings[note.id] = NoteGrading.Undetermined;
+                NoteRankings[note.id] = NoteGrade.Undetermined;
             }
 
             NoteCount = chart.Root.note_list.Count;
             magicNumber = Math.Sqrt(NoteCount) / 3.0;
         }
 
-        public void OnClear(GameNote note, NoteGrading grading, double greatGradeWeight)
+        public void OnClear(GameNote note, NoteGrade grade, float timeUntilEnd, double greatGradeWeight)
         {
-            if (grading == NoteGrading.Undetermined) throw new InvalidOperationException("Note grading undetermined");
+            if (grade == NoteGrade.Undetermined) throw new InvalidOperationException("Note grading undetermined");
+            if (NoteRankings[note.Note.id] != NoteGrade.Undetermined) return;
 
             if (!IsRanked)
             {
-                if (grading != NoteGrading.Perfect && grading != NoteGrading.Great) isMillionMasterPossible = false;
+                if (grade != NoteGrade.Perfect && grade != NoteGrade.Great) isMillionMasterPossible = false;
             }
             else
             {
-                if (grading != NoteGrading.Perfect) isMillionMasterPossible = false;
+                if (grade != NoteGrade.Perfect) isMillionMasterPossible = false;
             }
 
-            if (NoteRankings[note.Note.id] == NoteGrading.Undetermined) NoteCleared++;
-            NoteRankings[note.Note.id] = grading;
+            NoteCleared++;
+            NoteRankings[note.Note.id] = grade;
+
+            if (grade != NoteGrade.Perfect && grade != NoteGrade.Miss)
+            {
+                if (timeUntilEnd > 0) Early++;
+                else Late++;
+            }
+
+            TotalTimeOff += timeUntilEnd;
+            TotalTimeOffSquared += timeUntilEnd * timeUntilEnd;
 
             // Combo
-            if (grading == NoteGrading.Bad || grading == NoteGrading.Miss) Combo = 0;
+            if (grade == NoteGrade.Bad || grade == NoteGrade.Miss) Combo = 0;
             else
             {
                 Combo++;
@@ -70,21 +95,21 @@ namespace Cytus2.Models
 
             if (IsRanked)
             {
-                switch (grading)
+                switch (grade)
                 {
-                    case NoteGrading.Perfect:
+                    case NoteGrade.Perfect:
                         ComboMultiplier += 0.002D * magicNumber;
                         break;
-                    case NoteGrading.Great:
+                    case NoteGrade.Great:
                         ComboMultiplier += 0.0005D * magicNumber;
                         break;
-                    case NoteGrading.Good:
+                    case NoteGrade.Good:
                         ComboMultiplier -= -0.005D * magicNumber;
                         break;
-                    case NoteGrading.Bad:
+                    case NoteGrade.Bad:
                         ComboMultiplier -= 0.025D * magicNumber;
                         break;
-                    case NoteGrading.Miss:
+                    case NoteGrade.Miss:
                         ComboMultiplier -= 0.05D * magicNumber;
                         break;
                 }
@@ -96,7 +121,7 @@ namespace Cytus2.Models
             // Score
             if (!IsRanked)
             {
-                Score += 900000f / NoteCount * grading.ScoreWeight(ranked: false) +
+                Score += 900000f / NoteCount * grade.ScoreWeight(ranked: false) +
                          100000f / (NoteCount * (double) (NoteCount + 1) / 2f) * Combo;
             }
             else
@@ -105,16 +130,16 @@ namespace Cytus2.Models
 
                 double noteScore;
 
-                if (grading == NoteGrading.Great)
+                if (grade == NoteGrade.Great)
                 {
-                    noteScore = maxNoteScore * (NoteGrading.Great.ScoreWeight(ranked: true) +
-                                                (NoteGrading.Perfect.ScoreWeight(ranked: true) -
-                                                 NoteGrading.Great.ScoreWeight(ranked: true)) *
+                    noteScore = maxNoteScore * (NoteGrade.Great.ScoreWeight(ranked: true) +
+                                                (NoteGrade.Perfect.ScoreWeight(ranked: true) -
+                                                 NoteGrade.Great.ScoreWeight(ranked: true)) *
                                                 greatGradeWeight);
                 }
                 else
                 {
-                    noteScore = maxNoteScore * grading.ScoreWeight(ranked: true);
+                    noteScore = maxNoteScore * grade.ScoreWeight(ranked: true);
                 }
 
                 noteScore *= ComboMultiplier;
@@ -133,7 +158,15 @@ namespace Cytus2.Models
             if (Score > 1000000) Score = 1000000;
 
             // TP
-            currentTp += 100f * grading.TpWeight();
+            if (!IsRanked || grade != NoteGrade.Great)
+            {
+                currentTp += 100f * grade.TpWeight();
+            }
+            else
+            {
+                currentTp += 100f * (NoteGrade.Great.TpWeight() +
+                             (NoteGrade.Perfect.TpWeight() - NoteGrade.Great.TpWeight()) * greatGradeWeight);
+            }
             Tp = currentTp / NoteCleared;
 
             // HP
@@ -142,7 +175,7 @@ namespace Cytus2.Models
                 var mods = Mods.Contains(Mod.ExHard) ? ExHardHpMods : HardHpMods;
 
                 var mod = mods.Select[note.Note.type]
-                    .Select[IsRanked ? RankedGradingIndices[grading] : UnrankedGradingIndices[grading]];
+                    .Select[IsRanked ? RankedGradingIndices[grade] : UnrankedGradingIndices[grade]];
 
                 switch (mod.Type)
                 {
@@ -162,31 +195,31 @@ namespace Cytus2.Models
             }
 
             if (
-                (Mods.Contains(Mod.AP) && grading != NoteGrading.Perfect)
+                (Mods.Contains(Mod.AP) && grade != NoteGrade.Perfect)
                 ||
-                (Mods.Contains(Mod.FC) && (grading == NoteGrading.Bad || grading == NoteGrading.Miss))
+                (Mods.Contains(Mod.FC) && (grade == NoteGrade.Bad || grade == NoteGrade.Miss))
             )
             {
                 Game.Instance.Fail();
             }
         }
 
-        public static Dictionary<NoteGrading, int> UnrankedGradingIndices = new Dictionary<NoteGrading, int>
+        public static Dictionary<NoteGrade, int> UnrankedGradingIndices = new Dictionary<NoteGrade, int>
         {
-            {NoteGrading.Perfect, 0},
-            {NoteGrading.Great, 2},
-            {NoteGrading.Good, 3},
-            {NoteGrading.Bad, 4},
-            {NoteGrading.Miss, 5}
+            {NoteGrade.Perfect, 0},
+            {NoteGrade.Great, 2},
+            {NoteGrade.Good, 3},
+            {NoteGrade.Bad, 4},
+            {NoteGrade.Miss, 5}
         };
 
-        public static Dictionary<NoteGrading, int> RankedGradingIndices = new Dictionary<NoteGrading, int>
+        public static Dictionary<NoteGrade, int> RankedGradingIndices = new Dictionary<NoteGrade, int>
         {
-            {NoteGrading.Perfect, 0},
-            {NoteGrading.Great, 1},
-            {NoteGrading.Good, 2},
-            {NoteGrading.Bad, 3},
-            {NoteGrading.Miss, 5}
+            {NoteGrade.Perfect, 0},
+            {NoteGrade.Great, 1},
+            {NoteGrade.Good, 2},
+            {NoteGrade.Bad, 3},
+            {NoteGrade.Miss, 5}
         };
 
         public static ModeHpMod HardHpMods = new ModeHpMod(new Dictionary<int, NoteHpMod>

@@ -40,15 +40,19 @@ namespace Cytus2.Views
             }
 
             titleText = GameObject.Find("TitleText").GetComponent<Text>();
-            canvas = background.GetComponent<Canvas>() == null
-                ? background.AddComponent<Canvas>()
-                : background.GetComponent<Canvas>();
-            canvas.overrideSorting = true;
-            canvas.sortingLayerName = "GameBackground";
-            canvas.sortingOrder = 0;
+
+            if (background != null)
+            {
+                canvas = background.GetComponent<Canvas>() == null
+                    ? background.AddComponent<Canvas>()
+                    : background.GetComponent<Canvas>();
+                canvas.overrideSorting = true;
+                canvas.sortingLayerName = "GameBackground";
+                canvas.sortingOrder = 0;
+            }
 
             var level = CytoidApplication.CurrentLevel;
-            DisplayDifficultyView.Instance.SetDifficulty(level.charts.Find(it => it.type == CytoidApplication.CurrentChartType));
+            DisplayDifficultyView.Instance.SetDifficulty(level, level.charts.Find(it => it.type == CytoidApplication.CurrentChartType));
             titleText.text = level.title;
             backgroundOverlayMask.willFadeIn = true;
         }
@@ -70,6 +74,8 @@ namespace Cytus2.Views
             UIManager.HideUiElement("TpText", "Game");
             UIManager.HideUiElement("TitleText", "Game");
             UIManager.HideUiElement("Mask", "Game");
+            UIManager.HideUiElement("HP", "Game");
+            UIManager.HideUiElement("PauseButton", "Game");
         }
 
         public IEnumerator ReturnToLevelSelectionCoroutine()

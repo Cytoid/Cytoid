@@ -46,9 +46,11 @@ namespace Cytus2.Models
             return false;
         }
 
-        public override NoteGrading CalculateGrading()
+        public override NoteGrade CalculateGrading()
         {
-            var grading = NoteGrading.Miss;
+            if (IsMissed()) return NoteGrade.Miss;
+
+            var grading = NoteGrade.Undetermined;
             var timeUntil = TimeUntilStart;
 
             if (Game.Play.IsRanked)
@@ -57,12 +59,12 @@ namespace Cytus2.Models
                 {
                     if (timeUntil < 0.800f)
                     {
-                        grading = NoteGrading.Great;
+                        grading = NoteGrade.Great;
                     }
 
                     if (timeUntil <= 0.200f)
                     {
-                        grading = NoteGrading.Perfect;
+                        grading = NoteGrade.Perfect;
                     }
                 }
                 else
@@ -70,12 +72,12 @@ namespace Cytus2.Models
                     var timePassed = -timeUntil;
                     if (timePassed < 0.300f)
                     {
-                        grading = NoteGrading.Great;
+                        grading = NoteGrade.Great;
                     }
 
                     if (timePassed <= 0.100f)
                     {
-                        grading = NoteGrading.Perfect;
+                        grading = NoteGrade.Perfect;
                     }
                 }
             }
@@ -85,12 +87,12 @@ namespace Cytus2.Models
                 {
                     if (timeUntil < 0.400f)
                     {
-                        grading = NoteGrading.Great;
+                        grading = NoteGrade.Great;
                     }
 
                     if (timeUntil <= 0.120f)
                     {
-                        grading = NoteGrading.Perfect;
+                        grading = NoteGrade.Perfect;
                     }
                 }
                 else
@@ -98,12 +100,12 @@ namespace Cytus2.Models
                     var timePassed = -timeUntil;
                     if (timePassed < 0.150f)
                     {
-                        grading = NoteGrading.Great;
+                        grading = NoteGrade.Great;
                     }
 
                     if (timePassed <= 0.060f)
                     {
-                        grading = NoteGrading.Perfect;
+                        grading = NoteGrade.Perfect;
                     }
                 }
             }

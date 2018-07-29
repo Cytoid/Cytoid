@@ -35,7 +35,14 @@ namespace Cytus2.Models
 
             if (Note.start_time < Game.Time)
             {
-                Clear(CalculateGrading());
+                if (Mod.Auto.IsEnabled() || Mod.AutoHold.IsEnabled())
+                {
+                    Clear(NoteGrade.Perfect);
+                }
+                else
+                {
+                    Clear(CalculateGrading());
+                }
             }
         }
 
@@ -86,25 +93,25 @@ namespace Cytus2.Models
             }
         }
 
-        public override NoteGrading CalculateGrading()
+        public override NoteGrade CalculateGrading()
         {
-            var grading = NoteGrading.Miss;
-            var rankGrading = NoteGrading.Miss;
+            var grading = NoteGrade.Miss;
+            var rankGrading = NoteGrade.Miss;
             if (HeldDuration > Note.Duration - 0.05f)
             {
-                grading = NoteGrading.Perfect;
+                grading = NoteGrade.Perfect;
             }
             else if (HeldDuration > Note.Duration * 0.7f)
             {
-                grading = NoteGrading.Great;
+                grading = NoteGrade.Great;
             }
             else if (HeldDuration > Note.Duration * 0.5f)
             {
-                grading = NoteGrading.Good;
+                grading = NoteGrade.Good;
             }
             else if (HeldDuration > Note.Duration * 0.3f)
             {
-                grading = NoteGrading.Bad;
+                grading = NoteGrade.Bad;
             }
 
             if (Game.Play.IsRanked)
@@ -114,25 +121,25 @@ namespace Cytus2.Models
                     var lateBy = HoldingStartTime - Note.start_time;
                     if (lateBy < 0.200f)
                     {
-                        rankGrading = NoteGrading.Bad;
+                        rankGrading = NoteGrade.Bad;
                     }
 
                     if (lateBy < 0.150f)
                     {
-                        rankGrading = NoteGrading.Good;
+                        rankGrading = NoteGrade.Good;
                     }
 
                     if (lateBy < 0.070f)
                     {
-                        rankGrading = NoteGrading.Great;
+                        rankGrading = NoteGrade.Great;
                     }
 
                     if (lateBy <= 0.040f)
                     {
-                        rankGrading = NoteGrading.Perfect;
+                        rankGrading = NoteGrade.Perfect;
                     }
 
-                    if (rankGrading == NoteGrading.Great)
+                    if (rankGrading == NoteGrade.Great)
                     {
                         GreatGradeWeight = 1.0f - (lateBy - 0.040f) / (0.070f - 0.040f);
                     }
@@ -140,7 +147,7 @@ namespace Cytus2.Models
                 else
                 {
                     rankGrading = grading;
-                    if (rankGrading == NoteGrading.Great)
+                    if (rankGrading == NoteGrade.Great)
                     {
                         GreatGradeWeight = 1.0f - (HeldDuration - Note.Duration * 0.70f) /
                                            (Note.Duration - 0.050f - Note.Duration * 0.70f);

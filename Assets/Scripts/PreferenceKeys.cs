@@ -10,28 +10,28 @@
         return "last_password";
     }
 
-    public static string BestScore(Level level, string type, bool ranked)
+    public static string BestScore(string level, string type, bool ranked)
     {
-        return level.id + " : " + type + " : " + "best score" + (ranked ? " ranked" : "");
+        return level + " : " + type + " : " + "best score" + (ranked ? " ranked" : "");
     }
 
-    public static string BestAccuracy(Level level, string type, bool ranked)
+    public static string BestAccuracy(string level, string type, bool ranked)
     {
-        return level.id + " : " + type + " : " + "best accuracy" + (ranked ? " ranked" : "");
+        return level + " : " + type + " : " + "best accuracy" + (ranked ? " ranked" : "");
+    }
+    
+    public static string BestClearType(string level, string type, bool ranked)
+    {
+        return level + " : " + type + " : " + "best clear type" + (ranked ? " ranked" : "");
     }
 
-    public static string PlayCount(Level level, string type)
+    public static string PlayCount(string level, string type)
     {
-        return level.id + " : " + type + " : " + "play count";
+        return level + " : " + type + " : " + "play count";
     }
 
-    public static string WillOverrideOptions(Level level)
+    public static string ChartRelativeOffset(string level)
     {
-        return level.id + " : " + "override options";
-    }
-
-    public static string NoteDelay(Level level)
-    {
-        return level.id + " : " + "note delay";
+        return level + " : " + "relative offset";
     }
 }

@@ -21,7 +21,7 @@ public class DisplayDifficultyView : SingletonMonoBehavior<DisplayDifficultyView
         image = GetComponentInChildren<Image>();
     }
 
-    public void SetDifficulty(Level.ChartSection section)
+    public void SetDifficulty(Level level, Level.ChartSection section)
     {
         chartType = section.type;
         chartLevel = section.difficulty;
@@ -48,6 +48,6 @@ public class DisplayDifficultyView : SingletonMonoBehavior<DisplayDifficultyView
         }
 
         image.overrideSprite = sprite;
-        levelText.text = "LV." + section.difficulty;
+        levelText.text = "LV." + level.GetDisplayDifficulty(section);
     }
 }

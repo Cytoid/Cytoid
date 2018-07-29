@@ -2,6 +2,7 @@
 using DoozyUI;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 public static class BackgroundCanvasHelper
@@ -15,6 +16,10 @@ public static class BackgroundCanvasHelper
             background.transform.SetAsFirstSibling();
             background.transform.localScale = Vector3.one;
             background.GetComponent<RectTransform>().ChangeLocalPosition(z: 0);
+            var rectTransform = background.GetComponent<RectTransform>();
+            rectTransform.anchoredPosition = new Vector2(0, 0);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
+            rectTransform.anchoredPosition = new Vector2(0, 0);
         }
 
         GameObject.FindGameObjectsWithTag("BackgroundCanvas").Where(it => it.scene != scene).ToList()

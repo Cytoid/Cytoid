@@ -8,7 +8,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: -395462249, guid: 89f0137620f6af44b9ba852b4190e64e, type: 3}
+  m_Script: {fileID: 11500000, guid: 2705215ac5b84b70bacc50632be6e391, type: 3}
   m_Name: TMP Settings
   m_EditorClassIdentifier: 
   m_enableWordWrapping: 1
@@ -28,12 +28,12 @@ MonoBehaviour:
   m_autoSizeTextContainer: 0
   m_fallbackFontAssets: []
   m_matchMaterialPreset: 1
-  m_defaultSpriteAsset: {fileID: 11400000, guid: 9a952e2781ef26940ae089f1053ef4ef,
+  m_defaultSpriteAsset: {fileID: 11400000, guid: c41005c129ba4d66911b75229fd70b45,
     type: 2}
   m_defaultSpriteAssetPath: Sprite Assets/
   m_enableEmojiSupport: 1
-  m_defaultStyleSheet: {fileID: 11400000, guid: 54d1085f9a2fdea4587fcfc7dddcd4bc,
+  m_defaultStyleSheet: {fileID: 11400000, guid: f952c082cb03451daed3ee968ac6c63e,
     type: 2}
-  m_leadingCharacters: {fileID: 4900000, guid: 8d713940fcbede142ae4a33ea0062b33, type: 3}
-  m_followingCharacters: {fileID: 4900000, guid: 312ba5b9e90627940866e19549a788cf,
+  m_leadingCharacters: {fileID: 4900000, guid: d82c1b31c7e74239bff1220585707d2b, type: 3}
+  m_followingCharacters: {fileID: 4900000, guid: fade42e8bc714b018fac513c043d323b,
     type: 3}

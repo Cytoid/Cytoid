@@ -67,23 +67,20 @@ namespace Cytus2.Views
                 }
             }
 
-            if (!SimpleVisualOptions.Instance.OpaqueDragLine)
+            if (gameNote == null && game.GameNotes.ContainsKey(FromNote.id))
             {
-                if (gameNote == null && game.GameNotes.ContainsKey(ToNote.id))
-                {
-                    gameNote = game.GameNotes[ToNote.id];
-                }
-
-                if (gameNote != null)
-                {
-                    var fill = ((SimpleNoteView) gameNote.View).Fill;
-                    spriteRenderer.color = spriteRenderer.color.WithAlpha(fill.enabled ? fill.color.a : 0);
-                }
+                gameNote = game.GameNotes[FromNote.id];
             }
 
+            if (gameNote != null)
+            {
+                var fill = ((SimpleNoteView) gameNote.View).Fill;
+                spriteRenderer.color = spriteRenderer.color.WithAlpha(fill.enabled ? fill.color.a : 0);
+            }   
+
             var time = game.Time;
-            IntroRatio = (ToNote.intro_time - time - 0.133f) /
-                         (ToNote.intro_time - FromNote.nextdraglinestarttime - 0.133f);
+            IntroRatio = (FromNote.nextdraglinestoptime - time) /
+                         (FromNote.nextdraglinestoptime - FromNote.nextdraglinestarttime);
             OutroRatio = (time - FromNote.start_time) / (ToNote.start_time - FromNote.start_time);
 
             if (IntroRatio > 0 && IntroRatio < 1)
@@ -102,14 +99,6 @@ namespace Cytus2.Views
             if (OutroRatio > 0 && OutroRatio < 1)
             {
                 spriteRenderer.material.SetFloat("_Start", OutroRatio);
-            }
-            else if (OutroRatio <= 0)
-            {
-                spriteRenderer.material.SetFloat("_Start", 0.0f);
-            }
-            else
-            {
-                spriteRenderer.material.SetFloat("_Start", 1.0f);
             }
         }
     }

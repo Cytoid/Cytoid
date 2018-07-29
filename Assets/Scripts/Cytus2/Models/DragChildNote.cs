@@ -22,15 +22,15 @@ namespace Cytus2.Models
             base.Touch(screenPos);
         }
 
-        public override NoteGrading CalculateGrading()
+        public override NoteGrade CalculateGrading()
         {
-            var ranking = NoteGrading.Miss;
+            var ranking = NoteGrade.Miss;
             if (TimeUntilStart >= 0)
             {
-                ranking = NoteGrading.Undetermined;
+                ranking = NoteGrade.Undetermined;
                 if (TimeUntilStart < 0.250f)
                 {
-                    ranking = NoteGrading.Perfect;
+                    ranking = NoteGrade.Perfect;
                 }
             }
             else
@@ -38,7 +38,7 @@ namespace Cytus2.Models
                 var timePassed = -TimeUntilStart;
                 if (timePassed < 0.100f)
                 {
-                    ranking = NoteGrading.Perfect;
+                    ranking = NoteGrade.Perfect;
                 }
             }
 

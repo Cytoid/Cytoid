@@ -26,7 +26,7 @@ namespace Cytus2.Views
             if (!game.IsPlaying) return;
             text.text = game.Play == null || game.Play.NoteCleared == 0 || Math.Abs(game.Play.Tp - 100) < 0.0001
                 ? "100% accuracy"
-                : game.Play.Tp.ToString("0.##") + "% accuracy";
+                : game.Play.Tp.ToString("0.00") + "% accuracy";
         }
     }
 }

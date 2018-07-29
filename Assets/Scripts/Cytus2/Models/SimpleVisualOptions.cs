@@ -11,6 +11,8 @@ namespace Cytus2.Models
     {
         protected override void Awake()
         {
+            SizeMultiplier = 1 + ((int) PlayerPrefs.GetFloat("note size", 3) - 3) * 0.1f;
+            
             ClickSize = Camera.main.orthographicSize * 2.0f * 7.0f / 9.0f / 5.0f * 1.2675f;
             DragHeadSize = ClickSize * 0.8f;
             DragChildSize = ClickSize * 0.65f;
@@ -64,7 +66,7 @@ namespace Cytus2.Models
             }
         }
 
-        public bool OpaqueDragLine = true;
+        public float SizeMultiplier = 1;
 
         [HideInInspector] public float ClickSize;
         [HideInInspector] public float DragHeadSize;
@@ -111,12 +113,12 @@ namespace Cytus2.Models
 
         public float GetSize(NoteView noteView)
         {
-            if (noteView is ClickNoteView) return ClickSize;
-            if (noteView is DragHeadNoteView) return DragHeadSize;
-            if (noteView is DragChildNoteView) return DragChildSize;
-            if (noteView is LongHoldNoteView) return LongHoldSize;
-            if (noteView is HoldNoteView) return HoldSize;
-            if (noteView is FlickNoteView) return FlickSize;
+            if (noteView is ClickNoteView) return ClickSize * SizeMultiplier;
+            if (noteView is DragHeadNoteView) return DragHeadSize * SizeMultiplier;
+            if (noteView is DragChildNoteView) return DragChildSize * SizeMultiplier;
+            if (noteView is LongHoldNoteView) return LongHoldSize * SizeMultiplier;
+            if (noteView is HoldNoteView) return HoldSize * SizeMultiplier;
+            if (noteView is FlickNoteView) return FlickSize * SizeMultiplier;
 
             throw new NotImplementedException();
         }
@@ -137,6 +139,7 @@ namespace Cytus2.Models
         public Color GetFillColor(NoteView noteView)
         {
             var alt = noteView.Note.Note.direction > 0;
+            if (noteView.Note.Note.is_forward) alt = !alt;
             if (noteView is ClickNoteView) return alt ? FillColorClick1 : FillColorClick2;
             if (noteView is DragHeadNoteView) return alt ? FillColorDrag1 : FillColorDrag2;
             if (noteView is DragChildNoteView) return alt ? RingColorDrag1 : RingColorDrag2;

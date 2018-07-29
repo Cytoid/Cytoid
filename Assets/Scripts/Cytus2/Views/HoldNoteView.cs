@@ -14,10 +14,11 @@ namespace Cytus2.Views
         public ProgressRingView ProgressRing;
         public TriangleView Triangle;
 
-        protected SpriteRenderer Mask;
         protected SpriteMask SpriteMask;
         protected int TicksUntilHoldFx;
         protected const int MaxTicksBetweenHoldFx = 9;
+
+        private bool playedEarlyHitSound;
 
         public HoldNoteView(HoldNote holdNote) : base(holdNote)
         {
@@ -41,8 +42,6 @@ namespace Cytus2.Views
                 3000 + Note.Note.id; // TODO: 3000?
             CompletedLine.size = new Vector2(1, 0);
 
-            Mask = Note.transform.Find("Mask").GetComponent<SpriteRenderer>();
-            Mask.enabled = false;
             SpriteMask = Note.transform.GetComponentInChildren<SpriteMask>();
         }
 
@@ -62,7 +61,6 @@ namespace Cytus2.Views
                 CompletedLine.size = new Vector2(1, 0);
                 ProgressRing.enabled = true;
                 Triangle.enabled = true;
-                Mask.enabled = true;
                 SpriteMask.enabled = true;
                 if (Mod.HideNotes.IsEnabled())
                 {
@@ -73,8 +71,6 @@ namespace Cytus2.Views
             }
 
             base.OnRender();
-
-            Mask.color = Fill.color.WithAlpha(0.35f);
         }
 
         protected override void RenderOpacity()
@@ -104,23 +100,27 @@ namespace Cytus2.Views
 
             if (!Note.IsCleared)
             {
-                Mask.enabled = Note.IsHolding;
                 Line.flipY = Note.Note.direction == -1;
                 CompletedLine.flipY = Line.flipY;
-                Line.size = new Vector2(1, 0.21f * Mathf.Floor(Note.Note.holdlength / 0.21f));
                 CompletedLine.color = Fill.color;
                 Line.sortingOrder = Ring.sortingOrder;
                 CompletedLine.sortingOrder = Ring.sortingOrder + 1;
-                SpriteMask.frontSortingOrder = Line.sortingOrder;
+                SpriteMask.frontSortingOrder = CompletedLine.sortingOrder + 1;
                 SpriteMask.backSortingOrder = Line.sortingOrder - 1;
                
                 SpriteMask.enabled = Game.Time >= Note.Note.intro_time;
-                SpriteMask.isCustomRangeActive = SpriteMask.enabled;
 
                 if (Note.IsHolding)
                 {
                     if (Note.Game.Time > Note.Note.start_time)
                     {
+                        if (!playedEarlyHitSound && PlayerPrefsExt.GetBool("early hit sounds"))
+                        {
+                            playedEarlyHitSound = true;
+                            
+                            Note.PlayHitSound();
+                        }
+                        
                         ProgressRing.FillColor = Fill.color;
                         ProgressRing.MaxCutoff = Mathf.Min(1, 1.333f * Note.Progress);
                         ProgressRing.FillCutoff = Mathf.Min(1, Note.Progress);
@@ -140,24 +140,38 @@ namespace Cytus2.Views
 
         protected override void RenderTransform()
         {
-            Ring.transform.localScale = new Vector3(Size, Size, Ring.transform.localScale.z);
-            Fill.transform.localScale = new Vector3(Size, Size, Fill.transform.localScale.z);
+            // Scale whole transform
+
+            var minPercentageSize = 0.4f;
+            var timeRequired = 1.367f / Note.Note.speed;
+            var timeScaledSize = Size * minPercentageSize + Size * (1 - minPercentageSize) *
+                                 Mathf.Clamp((Game.Time - Note.Note.intro_time) / timeRequired, 0f, 1f);
+            var minPercentageLineSize = 0.0f;
+            var timeScaledLineSize = minPercentageLineSize + (1 - minPercentageLineSize) *
+                                 Mathf.Clamp((Game.Time - Note.Note.intro_time) / timeRequired, 0f, 1f);
+            var timeScaledLineSizeY = Mathf.Clamp((Game.Time - Note.Note.intro_time) * 2 / timeRequired, 0f, 1f);
+            
+            Ring.transform.localScale = new Vector3(timeScaledSize, timeScaledSize, Ring.transform.localScale.z);
+            Fill.transform.localScale = new Vector3(timeScaledSize, timeScaledSize, Fill.transform.localScale.z);
+            SpriteMask.transform.localScale = new Vector3(timeScaledSize, timeScaledSize, SpriteMask.transform.localScale.z);
+
+            Line.transform.localScale = new Vector2(timeScaledLineSize, Line.transform.localScale.y);
+            Line.size = new Vector2(1, 0.21f * Mathf.Floor(Note.Note.holdlength / 0.21f) /* * timeScaledLineSizeY */);
         }
 
         protected override void RenderFill()
         {
         }
 
-        public override void OnClear(NoteGrading grading)
+        public override void OnClear(NoteGrade grade)
         {
-            base.OnClear(grading);
+            base.OnClear(grade);
             Line.enabled = false;
             CompletedLine.enabled = false;
             ProgressRing.Reset();
             ProgressRing.enabled = false;
             Triangle.Reset();
             Triangle.enabled = false;
-            Mask.enabled = false;
             SpriteMask.enabled = false;
 
             if (!(Game is StoryboardGame))
@@ -166,7 +180,6 @@ namespace Cytus2.Views
                 Object.Destroy(CompletedLine.gameObject);
                 Object.Destroy(ProgressRing.gameObject);
                 Object.Destroy(Triangle.gameObject);
-                Object.Destroy(Mask.gameObject);
                 Object.Destroy(SpriteMask.gameObject);
             }
         }

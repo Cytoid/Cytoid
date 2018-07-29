@@ -1,4 +1,6 @@
-﻿namespace Cytus2.Models
+﻿using E7.Native;
+
+namespace Cytus2.Models
 {
     public class GameOptions : SingletonMonoBehavior<GameOptions>
     {
@@ -7,5 +9,6 @@
         public float HitboxMultiplier = 1.3333f;
         public float StartAt;
         public float ChartOffset;
+        public NativeAudioPointer HitSound;
     }
 }

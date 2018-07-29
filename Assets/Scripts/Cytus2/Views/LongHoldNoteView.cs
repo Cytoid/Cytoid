@@ -36,8 +36,6 @@ namespace Cytus2.Views
                 3000 + Note.Note.id; // TODO: 3000?
             CompletedLine.size = new Vector2(1, 0);
             CompletedLine2.size = new Vector2(1, 0);
-            Mask = Note.transform.Find("Mask").GetComponent<SpriteRenderer>();
-            Mask.enabled = false;
             SpriteMask = Note.transform.GetComponentInChildren<SpriteMask>();
         }
 
@@ -72,7 +70,6 @@ namespace Cytus2.Views
 
             if (!Note.IsCleared)
             {
-                Mask.enabled = Note.IsHolding;
                 Line.flipY = Note.Note.direction == -1;
                 Line2.flipY = !Line.flipY;
                 CompletedLine.flipY = Line.flipY;
@@ -85,12 +82,10 @@ namespace Cytus2.Views
                 Line2.sortingOrder = Ring.sortingOrder;
                 CompletedLine.sortingOrder = Ring.sortingOrder + 1;
                 CompletedLine2.sortingOrder = Ring.sortingOrder + 1;
-                SpriteMask.frontSortingOrder = Line.sortingOrder;
+                SpriteMask.frontSortingOrder = CompletedLine.sortingOrder + 1;
                 SpriteMask.backSortingOrder = Line.sortingOrder - 1;
-                if (Note.Game.Time > Note.Note.start_time)
-                {
-                    SpriteMask.isCustomRangeActive = false;
-                }
+                
+                SpriteMask.enabled = Game.Time >= Note.Note.intro_time;
 
                 if (Note.IsHolding)
                 {
@@ -131,12 +126,16 @@ namespace Cytus2.Views
 
         protected override void RenderTransform()
         {
-            Ring.transform.localScale = new Vector3(Size, Size, Ring.transform.localScale.z);
-            Fill.transform.localScale = new Vector3(Size, Size, Fill.transform.localScale.z);
-        }
-
-        protected override void RenderFill()
-        {
+            base.RenderTransform();
+            
+            var timeRequired = 1.367f / Note.Note.speed;
+            var minPercentageLineSize = 0.0f;
+            var timeScaledLineSize = minPercentageLineSize + (1 - minPercentageLineSize) *
+                                     Mathf.Clamp((Game.Time - Note.Note.intro_time) / timeRequired, 0f, 1f);
+            var timeScaledLineSizeY = Mathf.Clamp((Game.Time - Note.Note.intro_time) * 2 / timeRequired, 0f, 1f);
+            
+            Line2.transform.localScale = new Vector2(timeScaledLineSize, Line2.transform.localScale.y);
+            Line2.size = new Vector2(1, 0.21f * Mathf.Floor(Note.Note.holdlength / 0.21f) /* * timeScaledLineSizeY */);
         }
 
         protected override void RenderOpacity()
@@ -145,9 +144,9 @@ namespace Cytus2.Views
             Line2.color = Line2.color.WithAlpha(EasedOpacity);
         }
 
-        public override void OnClear(NoteGrading grading)
+        public override void OnClear(NoteGrade grade)
         {
-            base.OnClear(grading);
+            base.OnClear(grade);
             Line2.enabled = false;
             CompletedLine2.enabled = false;
 

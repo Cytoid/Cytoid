@@ -9,6 +9,7 @@ using Cytus2.Models;
 using Cytus2.Views;
 using DG.Tweening;
 using DoozyUI;
+using E7.Native;
 using Lean.Touch;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -27,7 +28,8 @@ namespace Cytus2.Controllers
         public Chart Chart;
         public Dictionary<int, GameNote> GameNotes = new Dictionary<int, GameNote>();
         public Play Play;
-        public RankedModeData RankData;
+        public RankedPlayData RankedPlayData;
+        public UnrankedPlayData UnrankedPlayData;
 
         [SerializeField] protected GameObject ClickNotePrefab;
         [SerializeField] protected GameObject HoldNotePrefab;
@@ -39,7 +41,13 @@ namespace Cytus2.Controllers
         [SerializeField] protected Canvas InfoCanvas;
         [SerializeField] protected AudioSource AudioSource;
         [SerializeField] protected ScanlineView Scanline;
+        [SerializeField] protected GameObject BoundaryTop;
+        [SerializeField] protected GameObject BoundaryBottom;
 
+        private Animator boundaryTopAnimator;
+        private Animator boundaryBottomAnimator;
+
+        public float Length { get; protected set; }
         public float Time { get; protected set; }
         public float StartTime { get; protected set; }
         public float PauseTime { get; protected set; }
@@ -91,7 +99,7 @@ namespace Cytus2.Controllers
             PauseAt = -1;
 
             // Play data
-            var isRanked = PlayerPrefsExt.GetBool("ranked") && User.Exists();
+            var isRanked = PlayerPrefsExt.GetBool("ranked") && OnlinePlayer.Authenticated;
             Play = new Play(isRanked);
             Play.Mods = new HashSet<Mod>(PlayerPrefsExt.GetStringArray("mods", new string[0]).ToList()
                 .ConvertAll(mod => (Mod) Enum.Parse(typeof(Mod), mod)));
@@ -104,6 +112,14 @@ namespace Cytus2.Controllers
             if (fpsCounter != null)
             {
                 fpsCounter.SetActive(PlayerPrefsExt.GetBool("fps counter"));
+            }
+
+            boundaryTopAnimator = BoundaryTop.GetComponentInChildren<Animator>();
+            boundaryBottomAnimator = BoundaryBottom.GetComponentInChildren<Animator>();
+            if (!PlayerPrefsExt.GetBool("boundaries"))
+            {
+                BoundaryTop.GetComponentInChildren<SpriteRenderer>().enabled = false;
+                BoundaryBottom.GetComponentInChildren<SpriteRenderer>().enabled = false;
             }
 
             BackgroundCanvasHelper.SetupBackgroundCanvas(gameObject.scene);
@@ -135,15 +151,18 @@ namespace Cytus2.Controllers
                             CytoidApplication.BackgroundTexture.height),
                         new Vector2(0, 0));
                 var background = GameObject.FindGameObjectWithTag("Background");
-                background.GetComponent<Image>().sprite = backgroundSprite;
+                if (background != null)
+                {
+                    background.GetComponent<Image>().sprite = backgroundSprite;
 
+                    // Fill the screen by adapting to the aspect ratio
+                    background.GetComponent<AspectRatioFitter>().aspectRatio =
+                        (float) CytoidApplication.BackgroundTexture.width / CytoidApplication.BackgroundTexture.height;
+                    yield return null; // Wait an extra frame
+                }
+                
                 www.Dispose();
                 Resources.UnloadUnusedAssets();
-
-                // Fill the screen by adapting to the aspect ratio
-                background.GetComponent<AspectRatioFitter>().aspectRatio =
-                    (float) CytoidApplication.BackgroundTexture.width / CytoidApplication.BackgroundTexture.height;
-                yield return null; // Wait an extra frame
 
                 CytoidApplication.CurrentLevel = Level;
             }
@@ -152,10 +171,13 @@ namespace Cytus2.Controllers
             CytoidApplication.SetAutoRotation(false);
             if (Application.platform == RuntimePlatform.Android && !Level.is_internal)
             {
+                print("Using Android Native Audio");
                 GameOptions.Instance.UseAndroidNativeAudio = true;
             }
 
             // Load chart
+            print("Loading chart");
+
             if (CytoidApplication.CurrentChartType == null)
             {
                 CytoidApplication.CurrentChartType = Level.charts[0].type;
@@ -164,14 +186,13 @@ namespace Cytus2.Controllers
             var chartSection = Level.charts.Find(it => it.type == CytoidApplication.CurrentChartType);
 
             string chartText;
-            if (Level.is_internal && Application.platform == RuntimePlatform.Android)
-            {
-                var www = new WWW(Level.BasePath + chartSection.path);
-                while (!www.isDone)
-                {
-                }
 
-                chartText = Encoding.UTF8.GetString(www.bytes);
+            if (Application.platform == RuntimePlatform.Android && Level.is_internal)
+            {
+                var chartWww = new WWW(Level.BasePath + chartSection.path);
+                yield return chartWww;
+
+                chartText = Encoding.UTF8.GetString(chartWww.bytes);
             }
             else
             {
@@ -185,63 +206,88 @@ namespace Cytus2.Controllers
             );
 
             // Load audio
+            print("Loading audio");
+
             var audioPath = Level.BasePath + Level.GetMusicPath(CytoidApplication.CurrentChartType);
 
             if (GameOptions.Instance.UseAndroidNativeAudio)
             {
-                nativeAudioId = ANAMusic.load(audioPath, true); // This would ensure the audio gets loaded
+                NativeAudioId = ANAMusic.load(audioPath, true);
+                Length = ANAMusic.getDuration(NativeAudioId);
             }
             else
             {
-                var www = new WWW((Level.is_internal && Application.platform == RuntimePlatform.Android)
-                    ? ""
-                    : "file://" + audioPath);
+                var www = new WWW(
+                    (Level.is_internal && Application.platform == RuntimePlatform.Android ? "" : "file://") +
+                    audioPath);
                 yield return www;
 
                 AudioSource.clip = www.GetAudioClip();
+                Length = AudioSource.clip.length;
 
                 www.Dispose();
             }
-
-            // Touch handlers
-            LeanTouch.OnFingerDown += OnFingerDown;
-            LeanTouch.OnFingerSet += OnFingerSet;
-            LeanTouch.OnFingerUp += OnFingerUp;
 
             // Game options
             var options = GameOptions.Instance;
             options.HitboxMultiplier = PlayerPrefsExt.GetBool("larger_hitboxes") ? 1.5555f : 1.3333f;
             options.ShowEarlyLateIndicator = PlayerPrefsExt.GetBool("early_late_indicator");
-            options.ChartOffset = PlayerPrefs.GetFloat("user_offset", 0.08f);
-            if (ZPlayerPrefs.GetBool(PreferenceKeys.WillOverrideOptions(Level)))
+            options.ChartOffset = PlayerPrefs.GetFloat("main offset", 0);
+            options.ChartOffset += ZPlayerPrefs.GetFloat(PreferenceKeys.ChartRelativeOffset(Level.id), 0);
+
+            if (Headset.Detect())
             {
-                options.ChartOffset = ZPlayerPrefs.GetFloat(PreferenceKeys.NoteDelay(Level));
+                options.ChartOffset += ZPlayerPrefs.GetFloat("headset offset");
+            }
+
+            if (CytoidApplication.CurrentHitSound.Name != "None")
+            {
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
+                options.HitSound = NativeAudio.Load("Hits/" + CytoidApplication.CurrentHitSound.Name + ".wav");
+#endif
             }
 
             Play.Init(Chart);
 
+            print("Chart checksum: " + Chart.Checksum);
             // Rank data
             if (Play.IsRanked)
             {
-                RankData = new RankedModeData();
-                RankData.user = User.Instance.username;
-                RankData.password = User.Instance.password;
-                RankData.start = TimeExt.Millis();
-                RankData.id = Level.id;
-                RankData.type = CytoidApplication.CurrentChartType;
-                RankData.mods = string.Join(",", Array.ConvertAll(Play.Mods.ToArray(), mod => mod.ToString()));
-                RankData.version = Level.version;
-                RankData.chart_checksum = Chart.Checksum;
-                print("Chart checksum: " + Chart.Checksum);
-                RankData.device.width = Screen.width;
-                RankData.device.height = Screen.height;
-                RankData.device.dpi = (int) Screen.dpi;
-                RankData.device.model = SystemInfo.deviceModel;
-                CytoidApplication.CurrentRankedModeData = RankData;
+                RankedPlayData = new RankedPlayData();
+                RankedPlayData.user = OnlinePlayer.Name;
+                RankedPlayData.password = OnlinePlayer.Password;
+                RankedPlayData.start = TimeExt.Millis();
+                RankedPlayData.id = Level.id;
+                RankedPlayData.type = CytoidApplication.CurrentChartType;
+                RankedPlayData.mods = string.Join(",", Array.ConvertAll(Play.Mods.ToArray(), mod => mod.ToString()));
+                RankedPlayData.version = Level.version;
+                RankedPlayData.chart_checksum = Chart.Checksum;
+                RankedPlayData.device.width = Screen.width;
+                RankedPlayData.device.height = Screen.height;
+                RankedPlayData.device.dpi = (int) Screen.dpi;
+                RankedPlayData.device.model = SystemInfo.deviceModel;
+                CytoidApplication.CurrentRankedPlayData = RankedPlayData;
+                CytoidApplication.CurrentUnrankedPlayData = null;
             }
             else
             {
-                CytoidApplication.CurrentRankedModeData = null;
+                UnrankedPlayData = new UnrankedPlayData();
+                UnrankedPlayData.user = OnlinePlayer.Authenticated ? OnlinePlayer.Name : "local";
+                UnrankedPlayData.password = OnlinePlayer.Authenticated ? OnlinePlayer.Password : "";
+                UnrankedPlayData.id = Level.id;
+                UnrankedPlayData.type = CytoidApplication.CurrentChartType;
+                UnrankedPlayData.version = Level.version;
+                UnrankedPlayData.chart_checksum = Chart.Checksum;
+                CytoidApplication.CurrentRankedPlayData = null;
+                CytoidApplication.CurrentUnrankedPlayData = UnrankedPlayData;
+            }
+
+            // Touch handlers
+            if (!Mod.Auto.IsEnabled())
+            {
+                LeanTouch.OnFingerDown += OnFingerDown;
+                LeanTouch.OnFingerSet += OnFingerSet;
+                LeanTouch.OnFingerUp += OnFingerUp;
             }
 
             yield return new WaitForSeconds(0.5f);
@@ -276,10 +322,10 @@ namespace Cytus2.Controllers
             {
                 if (GameOptions.Instance.StartAt > 0.00001)
                 {
-                    ANAMusic.seekTo(nativeAudioId, (int) (GameOptions.Instance.StartAt * 1000f));
+                    ANAMusic.seekTo(NativeAudioId, (int) (GameOptions.Instance.StartAt * 1000f));
                 }
 
-                ANAMusic.play(nativeAudioId);
+                ANAMusic.play(NativeAudioId);
             }
             else
             {
@@ -289,6 +335,12 @@ namespace Cytus2.Controllers
 
             StartTime = UnityEngine.Time.time;
         }
+
+        private float lastSynchorized;
+        private float synchorizedCount;
+
+        private float truePlayTime = -1f;
+        private float audioPlayTime = -1f;
 
         protected virtual void Update()
         {
@@ -318,18 +370,42 @@ namespace Cytus2.Controllers
 
                 UpdateOnScreenNotes();
 
-                if (GameOptions.Instance.UseAndroidNativeAudio)
+                if (synchorizedCount < 5 && UnityEngine.Time.time - lastSynchorized > 0.1)
                 {
-                    Time = UnityEngine.Time.time - StartTime + GameOptions.Instance.StartAt -
-                           GameOptions.Instance.ChartOffset + Chart.MusicOffset - PauseDuration;
-                    AudioPercentage = Time / ANAMusic.getDuration(nativeAudioId);
+                    lastSynchorized = UnityEngine.Time.time;
+                    synchorizedCount++;
+                    if (GameOptions.Instance.UseAndroidNativeAudio)
+                    {
+                        Time = ANAMusic.getCurrentPosition(NativeAudioId) / 1000f
+                               - GameOptions.Instance.ChartOffset + Chart.MusicOffset;
+                    }
+                    else
+                    {
+                        Time = AudioSource.timeSamples * 1.0f / AudioSource.clip.frequency
+                               - GameOptions.Instance.ChartOffset + Chart.MusicOffset;
+                    }
                 }
                 else
                 {
-                    Time = AudioSource.timeSamples * 1.0f / AudioSource.clip.frequency -
-                           GameOptions.Instance.ChartOffset + Chart.MusicOffset;
-                    AudioPercentage = Time / AudioSource.clip.length;
+                    if (truePlayTime == -1f)
+                    {
+                        if (GameOptions.Instance.UseAndroidNativeAudio)
+                        {
+                            audioPlayTime = ANAMusic.getCurrentPosition(NativeAudioId) / 1000f;
+                        }
+                        else
+                        {
+                            audioPlayTime = AudioSource.timeSamples * 1.0f / AudioSource.clip.frequency;
+                        }
+
+                        truePlayTime = UnityEngine.Time.time;
+                    }
+
+                    Time = audioPlayTime + UnityEngine.Time.time - truePlayTime
+                                                                 - GameOptions.Instance.ChartOffset + Chart.MusicOffset;
                 }
+
+                AudioPercentage = Time / Length;
 
                 var chart = Chart.Root;
                 var notes = chart.note_list;
@@ -340,6 +416,21 @@ namespace Cytus2.Controllers
                 Scanline.Direction = Chart.CurrentPageId < chart.page_list.Count
                     ? chart.page_list[Chart.CurrentPageId].scan_line_direction
                     : -chart.page_list[Chart.CurrentPageId - 1].scan_line_direction;
+
+                if (Chart.CurrentPageId < chart.page_list.Count)
+                {
+                    boundaryTopAnimator.speed =
+                        chart.tempo_list[0].value / 1000000f / (chart.page_list[Chart.CurrentPageId].end_time - chart.page_list[Chart.CurrentPageId].start_time);
+                    boundaryBottomAnimator.speed = boundaryTopAnimator.speed;
+                }
+                else
+                {
+                    boundaryTopAnimator.speed = 1;
+                    boundaryBottomAnimator.speed = boundaryTopAnimator.speed;
+                }
+
+                BoundaryTop.transform.position = new Vector3(0, Chart.GetEdgePosition(false), 0);
+                BoundaryBottom.transform.position = new Vector3(0, Chart.GetEdgePosition(true), 0);
 
                 while (currentEventId < chart.event_order_list.Count &&
                        chart.event_order_list[currentEventId].time < Time)
@@ -366,7 +457,10 @@ namespace Cytus2.Controllers
 
                 while (currentPageId < chart.page_list.Count && chart.page_list[currentPageId].end_time <= Time)
                 {
-                    // TODO: Boundary animations
+                    if (chart.page_list[currentPageId].scan_line_direction == 1)
+                        boundaryTopAnimator.Play("Boundary_Bound");
+                    else
+                        boundaryBottomAnimator.Play("Boundary_Bound");
                     currentPageId++;
                 }
 
@@ -579,17 +673,18 @@ namespace Cytus2.Controllers
             if (!IsLoaded || IsCompleted || IsFailed) return;
             if (!IsPlaying) return;
 
+            lastSynchorized = 0;
             IsPlaying = false;
 
-            if (RankData != null)
+            if (RankedPlayData != null)
             {
-                RankData.pauses.Add(new RankedModeData.Pause {start = TimeExt.Millis()});
+                // RankedPlayData.pauses.Add(new RankedPlayData.Pause {start = TimeExt.Millis()}); // Removed in 1.5
             }
 
             if (GameOptions.Instance.UseAndroidNativeAudio)
             {
-                ANAMusic.pause(nativeAudioId);
-                PauseAt = ANAMusic.getCurrentPosition(nativeAudioId) / 1000f;
+                ANAMusic.pause(NativeAudioId);
+                PauseAt = ANAMusic.getCurrentPosition(NativeAudioId) / 1000f;
             }
             else
             {
@@ -635,15 +730,15 @@ namespace Cytus2.Controllers
         {
             IsPlaying = true;
 
-            if (RankData != null)
+            if (RankedPlayData != null)
             {
-                RankData.pauses.Last().end = TimeExt.Millis();
+                RankedPlayData.pauses.Last().end = TimeExt.Millis();
             }
 
             if (GameOptions.Instance.UseAndroidNativeAudio)
             {
-                ANAMusic.seekTo(nativeAudioId, (int) (PauseAt * 1000f));
-                ANAMusic.play(nativeAudioId);
+                ANAMusic.seekTo(NativeAudioId, (int) (PauseAt * 1000f));
+                ANAMusic.play(NativeAudioId);
             }
             else
             {
@@ -653,6 +748,10 @@ namespace Cytus2.Controllers
             PauseDuration += UnityEngine.Time.time - PauseTime;
             PauseTime = -1;
             PauseAt = -1;
+
+            synchorizedCount = 0; // Re-synchorize level with music
+            truePlayTime = -1f;
+            audioPlayTime = -1f;
         }
 
         public void Fail()
@@ -694,7 +793,7 @@ namespace Cytus2.Controllers
         {
             if (GameOptions.Instance.UseAndroidNativeAudio)
             {
-                while (ANAMusic.isPlaying(nativeAudioId))
+                while (ANAMusic.isPlaying(NativeAudioId))
                 {
                     yield return null;
                 }
@@ -707,20 +806,33 @@ namespace Cytus2.Controllers
                 }
             }
 
-            if (RankData != null)
+            if (Play.IsRanked)
             {
-                RankData.end = TimeExt.Millis();
+                RankedPlayData.end = TimeExt.Millis();
 
-                RankData.score = (long) Play.Score;
-                RankData.accuracy = (int) (Play.Tp * 1000000);
-                RankData.max_combo = Play.MaxCombo;
-                RankData.perfect = Play.NoteRankings.Values.Count(grading => grading == NoteGrading.Perfect);
-                RankData.great = Play.NoteRankings.Values.Count(grading => grading == NoteGrading.Great);
-                RankData.good = Play.NoteRankings.Values.Count(grading => grading == NoteGrading.Good);
-                RankData.bad = Play.NoteRankings.Values.Count(grading => grading == NoteGrading.Bad);
-                RankData.miss = Play.NoteRankings.Values.Count(grading => grading == NoteGrading.Miss);
+                RankedPlayData.score = (long) Play.Score;
+                RankedPlayData.accuracy = (int) (Play.Tp * 1000000);
+                RankedPlayData.max_combo = Play.MaxCombo;
+                RankedPlayData.perfect = Play.NoteRankings.Values.Count(grading => grading == NoteGrade.Perfect);
+                RankedPlayData.great = Play.NoteRankings.Values.Count(grading => grading == NoteGrade.Great);
+                RankedPlayData.good = Play.NoteRankings.Values.Count(grading => grading == NoteGrade.Good);
+                RankedPlayData.bad = Play.NoteRankings.Values.Count(grading => grading == NoteGrade.Bad);
+                RankedPlayData.miss = Play.NoteRankings.Values.Count(grading => grading == NoteGrade.Miss);
 
-                RankData.checksum = Checksum.From(RankData);
+                RankedPlayData.checksum = Checksum.From(RankedPlayData);
+            }
+            else
+            {
+                UnrankedPlayData.score = (long) Play.Score;
+                UnrankedPlayData.accuracy = (int) (Play.Tp * 1000000);
+                UnrankedPlayData.max_combo = Play.MaxCombo;
+                UnrankedPlayData.perfect = Play.NoteRankings.Values.Count(grading => grading == NoteGrade.Perfect);
+                UnrankedPlayData.great = Play.NoteRankings.Values.Count(grading => grading == NoteGrade.Great);
+                UnrankedPlayData.good = Play.NoteRankings.Values.Count(grading => grading == NoteGrade.Good);
+                UnrankedPlayData.bad = Play.NoteRankings.Values.Count(grading => grading == NoteGrade.Bad);
+                UnrankedPlayData.miss = Play.NoteRankings.Values.Count(grading => grading == NoteGrade.Miss);
+
+                UnrankedPlayData.checksum = Checksum.From(UnrankedPlayData);
             }
 
             // Destroy all game notes
@@ -783,7 +895,7 @@ namespace Cytus2.Controllers
 
         public void OnClear(GameNote note)
         {
-            Play.OnClear(note, note.CalculateGrading(), note.GreatGradeWeight);
+            Play.OnClear(note, note.CalculateGrading(), note.TimeUntilEnd, note.GreatGradeWeight);
         }
 
         // TODO: Get away, Doozy UI
@@ -806,7 +918,7 @@ namespace Cytus2.Controllers
         {
             if (GameOptions.Instance.UseAndroidNativeAudio)
             {
-                ANAMusic.release(nativeAudioId);
+                ANAMusic.release(NativeAudioId);
             }
 
             switch (action)
@@ -827,8 +939,8 @@ namespace Cytus2.Controllers
             }
         }
 
-        // SECTION: Android Native Audio
+        // SECTION: Native Audio
 
-        protected int nativeAudioId;
+        protected int NativeAudioId;
     }
 }

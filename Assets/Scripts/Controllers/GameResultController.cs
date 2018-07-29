@@ -3,7 +3,9 @@ using System.Collections;
 using System.Linq;
 using System.Text;
 using AppAdvisory.SharingSystem;
+using Cytus2.Models;
 using LunarConsolePluginInternal;
+using Models;
 using Newtonsoft.Json;
 using QuickEngine.Extensions;
 using TMPro;
@@ -12,7 +14,7 @@ using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class GameResultController : MonoBehaviour
+public class GameResultController : SingletonMonoBehavior<GameResultController>
 {
     private string action = Action.Next;
 
@@ -31,12 +33,14 @@ public class GameResultController : MonoBehaviour
     [SerializeField] private Button uploadButton;
 
     public bool IsUploading { get; private set; }
+    public bool SuccessfullyUploaded { get; private set; }
 
     private void Start()
     {
         CytoidApplication.ResetResolution();
 
         IsUploading = false;
+        SuccessfullyUploaded = false;
 
         BackgroundCanvasHelper.SetupBackgroundCanvas(gameObject.scene);
 
@@ -44,7 +48,14 @@ public class GameResultController : MonoBehaviour
         Resources.UnloadUnusedAssets();
         // HIGHLIGHT
 
-        StartCoroutine(AutoUpload());
+        if (OnlinePlayer.Authenticated)
+        {
+            StartCoroutine(AutoUpload());
+        }
+        else
+        {
+            uploadButton.gameObject.SetActive(false);
+        }
 
         var play = CytoidApplication.CurrentPlay;
 
@@ -54,16 +65,19 @@ public class GameResultController : MonoBehaviour
 
         titleText.text = CytoidApplication.CurrentLevel.title;
 
-        var intScore = Mathf.CeilToInt((float) score);
+        var intScore = Mathf.FloorToInt((float) score);
         scoreText.text = intScore.ToString("D6");
         if (intScore == 1000000)
         {
-            scoreText.color = Convert.HexToColor("#FDE74C");
+            scoreText.color = Convert.HexToColor("#ffc107");
+        } else if (intScore > 999000)
+        {
+            scoreText.color = Convert.HexToColor("#007bff");
         }
 
         var text = "";
         if (Math.Abs(tp - 100) < 0.000001) text += "Full accuracy";
-        else text += tp.ToString("0.##") + "% accuracy";
+        else text += (Math.Floor(tp * 100) / 100).ToString("0.00") + "% accuracy";
         text += " / ";
         if (maxCombo == play.NoteCleared) text += "Full combo";
         else text += maxCombo + " max combo";
@@ -71,55 +85,73 @@ public class GameResultController : MonoBehaviour
         tpComboText.text = text;
 
         var info = string.Format(
-            "<b>Perfect </b> {0}      <b>Great </b> {1}      <b>Good </b> {2}      <b>Bad </b> {3}      <b>Miss </b> {4}",
-            play.NoteRankings.Values.Count(grading => grading == NoteGrading.Perfect),
-            play.NoteRankings.Values.Count(grading => grading == NoteGrading.Great),
-            play.NoteRankings.Values.Count(grading => grading == NoteGrading.Good),
-            play.NoteRankings.Values.Count(grading => grading == NoteGrading.Bad),
-            play.NoteRankings.Values.Count(grading => grading == NoteGrading.Miss)
+            "<b>Perfect</b> {0}      <b>Great</b> {1}      <b>Good</b> {2}      <b>Bad</b> {3}      <b>Miss</b> {4}",
+            play.NoteRankings.Values.Count(grading => grading == NoteGrade.Perfect),
+            play.NoteRankings.Values.Count(grading => grading == NoteGrade.Great),
+            play.NoteRankings.Values.Count(grading => grading == NoteGrade.Good),
+            play.NoteRankings.Values.Count(grading => grading == NoteGrade.Bad),
+            play.NoteRankings.Values.Count(grading => grading == NoteGrade.Miss)
         );
+
+        if (PlayerPrefsExt.GetBool("early_late_indicator"))
+        {
+            info += string.Format("\n<alpha=#38>( <b>Early</b> {0}      <b>Late</b> {1}      <b>Average Timing Error</b> {2}{3:0.000}s      <b>Standard Timing Error</b> {4:0.000}s )",
+                play.Early, play.Late, play.AvgTimeOff > 0 ? "+" : "", play.AvgTimeOff, play.StandardTimeOff);
+        }
         infoText.text = info;
 
-        DisplayDifficultyView.Instance.SetDifficulty(CytoidApplication.CurrentLevel.charts.Find(it => it.type == CytoidApplication.CurrentChartType));
+        DisplayDifficultyView.Instance.SetDifficulty(CytoidApplication.CurrentLevel, CytoidApplication.CurrentLevel.charts.Find(it => it.type == CytoidApplication.CurrentChartType));
 
-        var ranked = CytoidApplication.CurrentRankedModeData != null;
+        var ranked = CytoidApplication.CurrentRankedPlayData != null;
 
         // Save stats
-        var oldScore = ZPlayerPrefs.GetFloat(PreferenceKeys.BestScore(CytoidApplication.CurrentLevel,
+        var oldScore = ZPlayerPrefs.GetFloat(PreferenceKeys.BestScore(CytoidApplication.CurrentLevel.id,
             CytoidApplication.CurrentChartType, ranked));
-        var oldTp = ZPlayerPrefs.GetFloat(PreferenceKeys.BestAccuracy(CytoidApplication.CurrentLevel,
+        var oldAccuracy = ZPlayerPrefs.GetFloat(PreferenceKeys.BestAccuracy(CytoidApplication.CurrentLevel.id,
             CytoidApplication.CurrentChartType, ranked));
 
-        if (score > oldScore)
+        if (score > oldScore || (score == oldScore && tp > oldAccuracy))
         {
+            EventKit.Broadcast("new best");
+            
             ZPlayerPrefs.SetFloat(
-                PreferenceKeys.BestScore(CytoidApplication.CurrentLevel, CytoidApplication.CurrentChartType, ranked),
+                PreferenceKeys.BestScore(CytoidApplication.CurrentLevel.id, CytoidApplication.CurrentChartType, ranked),
                 (float) score);
-        }
-
-        if (tp > oldTp)
-        {
             ZPlayerPrefs.SetFloat(
-                PreferenceKeys.BestAccuracy(CytoidApplication.CurrentLevel, CytoidApplication.CurrentChartType, ranked),
+                PreferenceKeys.BestAccuracy(CytoidApplication.CurrentLevel.id, CytoidApplication.CurrentChartType, ranked),
                 (float) tp);
+            var clearType = string.Empty;
+            if (play.Mods.Contains(Mod.AP)) clearType = "AP";
+            if (play.Mods.Contains(Mod.FC)) clearType = "FC";
+            if (play.Mods.Contains(Mod.Hard)) clearType = "Hard";
+            if (play.Mods.Contains(Mod.ExHard)) clearType = "ExHard";
+            ZPlayerPrefs.SetString(
+                PreferenceKeys.BestClearType(CytoidApplication.CurrentLevel.id, CytoidApplication.CurrentChartType,
+                    ranked),
+                clearType
+            );
         }
 
         var playCount =
             ZPlayerPrefs.GetInt(
-                PreferenceKeys.PlayCount(CytoidApplication.CurrentLevel, CytoidApplication.CurrentChartType),
+                PreferenceKeys.PlayCount(CytoidApplication.CurrentLevel.id, CytoidApplication.CurrentChartType),
                 defaultValue: 0);
 
         ZPlayerPrefs.SetInt(
-            PreferenceKeys.PlayCount(CytoidApplication.CurrentLevel, CytoidApplication.CurrentChartType),
+            PreferenceKeys.PlayCount(CytoidApplication.CurrentLevel.id, CytoidApplication.CurrentChartType),
             playCount + 1);
     }
 
     public IEnumerator AutoUpload()
     {
         uploadButton.interactable = false;
-        yield return new WaitForSeconds(1);
+        
+        yield return null;
 
-        if (CytoidApplication.CurrentRankedModeData != null) PostRankingData();
+        if (OnlinePlayer.Authenticated)
+        {
+            PostPlayData();
+        }
     }
 
     public void SetAction(string action)
@@ -142,23 +174,22 @@ public class GameResultController : MonoBehaviour
         }
     }
 
-    public void CloseUploadWindow()
+    public void PostPlayData()
     {
-    }
-
-    public void PostRankingData()
-    {
-        if (CytoidApplication.CurrentRankedModeData == null || !User.Exists())
+        if (!OnlinePlayer.Authenticated)
         {
-            Popup.Make(this, "ERROR: You haven't signed in.");
+            Popup.Make(this, "ERROR: You are not signed in.");
             return;
         }
 
         uploadButton.interactable = false;
-        StartCoroutine(PostRankingDataCoroutine());
+        retryButton.interactable = false;
+        nextButton.interactable = false;
+        
+        StartCoroutine(PostPlayDataCoroutine());
     }
 
-    public IEnumerator PostRankingDataCoroutine()
+    public IEnumerator PostPlayDataCoroutine()
     {
         if (IsUploading)
         {
@@ -167,55 +198,44 @@ public class GameResultController : MonoBehaviour
 
         IsUploading = true;
 
-        Debug.Log("Posting ranking data");
+        EventKit.Broadcast("reload rankings");
+
+        Debug.Log("Posting play data");
 
         Popup.Make(this, "Uploading play data...");
 
-        yield return new WaitForSeconds(1);
+        yield return OnlinePlayer.PostPlayData(CytoidApplication.CurrentPlay.IsRanked
+            ? (IPlayData) CytoidApplication.CurrentRankedPlayData
+            : CytoidApplication.CurrentUnrankedPlayData);
 
-        var request = new UnityWebRequest(CytoidApplication.Host + "/rank/post", "POST") {timeout = 10};
-
-        var bodyRaw = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(CytoidApplication.CurrentRankedModeData));
-        print("Body: " + JsonConvert.SerializeObject(CytoidApplication.CurrentRankedModeData));
-        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-        request.downloadHandler = new DownloadHandlerBuffer();
-        request.SetRequestHeader("Content-Type", "application/json");
-
-        yield return request.Send();
-
-        var response = request.responseCode;
-
-        if (response != 200 || request.isNetworkError || request.isHttpError)
+        switch (OnlinePlayer.LastPostResult.status)
         {
-            switch (response)
-            {
-                case 400:
-                    Popup.Make(this, "ERROR: " + "Invalid play data.");
-                    break;
-                case 401:
-                    Popup.Make(this, "ERROR: " + "You haven't signed in.");
-                    User.reset();
-                    break;
-                case 403:
-                    Popup.Make(this, "ERROR: " + request.downloadHandler.text);
-                    break;
-                default:
-                    Popup.Make(this, "ERROR: " + request.error + ".");
-                    break;
-            }
-
-            CloseUploadWindow();
-            IsUploading = false;
-            request.Dispose();
-            uploadButton.interactable = true;
-            yield break;
+            case 200:
+                Popup.Make(this, "Uploaded play data.");
+                EventKit.Broadcast("profile update");
+                SuccessfullyUploaded = true;
+                break;
+            case 400:
+                Popup.Make(this, "ERROR: " + "Invalid play data.");
+                uploadButton.interactable = true;
+                SuccessfullyUploaded = false;
+                break;
+            case 401:
+                Popup.Make(this, "ERROR: " + "You haven't signed in.");
+                OnlinePlayer.Invalidate();
+                uploadButton.interactable = true;
+                SuccessfullyUploaded = false;
+                break;
+            default:
+                Popup.Make(this, "ERROR: " + OnlinePlayer.LastPostResult.message);
+                uploadButton.interactable = true;
+                SuccessfullyUploaded = false;
+                break;
         }
 
-        Popup.Make(this, "Uploaded play data.");
-
-        CloseUploadWindow();
         IsUploading = false;
-        request.Dispose();
+        retryButton.interactable = true;
+        nextButton.interactable = true;
     }
 
     public void OnSharePressed()
@@ -235,7 +255,7 @@ public class GameResultController : MonoBehaviour
             return;
         }
 
-        PostRankingData();
+        PostPlayData();
     }
 
     void ShareScreenshot(Texture2D tex)

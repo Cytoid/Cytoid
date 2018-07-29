@@ -1,0 +1,6 @@
+Medium text: Regular 24px
+Emphasized text: ExtraLight 80px
+Title text: SemiBold 48px
+
+Normal text: Light 16px
+Normal weighted text: Bold 16px

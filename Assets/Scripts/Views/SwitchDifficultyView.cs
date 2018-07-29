@@ -10,9 +10,23 @@ public class SwitchDifficultyView : DisplayDifficultyView
     {
         base.Awake();
         gameObject.SetActive(false);
+        EventKit.Subscribe("level loaded", OnLevelLoaded);
+        EventKit.Subscribe<string>("meta reloaded", OnLevelMetaReloaded);
     }
 
-    public void OnLevelLoaded()
+    protected override void OnDestroy()
+    {
+        base.OnDestroy();
+        EventKit.Unsubscribe("level loaded", OnLevelLoaded);
+        EventKit.Unsubscribe<string>("meta reloaded", OnLevelMetaReloaded);
+    }
+
+    public void OnLevelMetaReloaded(string levelId)
+    {
+        OnLevelLoaded();
+    }
+
+    private void OnLevelLoaded()
     {
         gameObject.SetActive(true);
         level = LevelSelectionController.Instance.LoadedLevel;
@@ -22,7 +36,7 @@ public class SwitchDifficultyView : DisplayDifficultyView
         {
             if (chart.type == chartType)
             {
-                SwitchDifficulty(chartType);
+                SwitchDifficulty(chartType, true);
                 hasType = true;
             }
         }
@@ -30,15 +44,21 @@ public class SwitchDifficultyView : DisplayDifficultyView
         if (!hasType)
         {
             chartType = level.charts[0].type;
-            SwitchDifficulty(chartType);
+            SwitchDifficulty(chartType, true);
         }
     }
 
-    public void SwitchDifficulty(string type)
+    public void SwitchDifficulty(string type, bool newLevel)
     {
-        SetDifficulty(level.charts.Find(it => it.type == type));
+        if (CytoidApplication.CurrentChartType == type && !newLevel) return;
+        SetDifficulty(level, level.charts.Find(it => it.type == type));
         CytoidApplication.CurrentChartType = type;
         LevelSelectionController.Instance.UpdateBestText();
+
+        if (PlayerPrefsExt.GetBool("ranked"))
+        {
+            EventKit.Broadcast("reload rankings");
+        }
     }
 
     public void SwitchDifficulty()
@@ -46,6 +66,6 @@ public class SwitchDifficultyView : DisplayDifficultyView
         var index = level.charts.IndexOf(level.charts.Find(chart => chart.type == chartType));
         if (index == level.charts.Count - 1) index = 0;
         else index++;
-        SwitchDifficulty(level.charts[index].type);
+        SwitchDifficulty(level.charts[index].type, false);
     }
 }

@@ -3,13 +3,14 @@ using System.Collections;
 using Cytus2.Controllers;
 using Cytus2.Models;
 using Cytus2.Views;
+using E7.Native;
 using UnityEngine;
 using UnityEngine.Assertions;
 
 public class GameNote : MonoBehaviour
 {
     public Game Game;
-    public RankedModeData.Note RankData;
+    public RankedPlayData.Note RankData;
 
     public ChartRoot Chart;
     public ChartNote Note;
@@ -45,9 +46,9 @@ public class GameNote : MonoBehaviour
 
         if (Game.Play.IsRanked)
         {
-            RankData = new RankedModeData.Note();
+            RankData = new RankedPlayData.Note();
             RankData.id = note.id;
-            Game.RankData.notes.Add(RankData);
+            // Game.RankedPlayData.notes.Add(RankData); // Removed in 1.5
         }
     }
 
@@ -56,13 +57,13 @@ public class GameNote : MonoBehaviour
         Game = Game.Instance;
     }
 
-    public virtual void Clear(NoteGrading grading)
+    public virtual void Clear(NoteGrade grade)
     {
-        if (grading == NoteGrading.Undetermined) throw new InvalidOperationException("Note grading undetermined");
+        if (IsCleared || grade == NoteGrade.Undetermined) return;
 
         IsCleared = true;
         Game.OnClear(this);
-        View.OnClear(grading);
+        View.OnClear(grade);
 
         if (!(Game.Instance is StoryboardGame))
         {
@@ -73,9 +74,25 @@ public class GameNote : MonoBehaviour
         {
             EventKit.Broadcast("note clear", this);
         }
+        
+        // Hit sound
+        if (grade != NoteGrade.Miss && (!(this is HoldNote) || !PlayerPrefsExt.GetBool("early hit sounds")))
+        {    
+            PlayHitSound();
+        }
 
         // gameObject.GetComponent<SpriteRenderer> ().material.SetFloat("_HRate", 1.0f);
         // Animation speed = 1.0f;
+    }
+
+    public void PlayHitSound()
+    {
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
+        if (GameOptions.Instance.HitSound != null)
+        {
+            GameOptions.Instance.HitSound.Play(NativeAudio.PlayOptions.defaultOptions).SetVolume(1);
+        }
+#endif
     }
 
     protected virtual void LateUpdate()
@@ -114,14 +131,14 @@ public class GameNote : MonoBehaviour
                     || (Mod.AutoFlick.IsEnabled() && this is FlickNote)
                 )
                 {
-                    Clear(NoteGrading.Perfect);
+                    Clear(NoteGrade.Perfect);
                 }
             }
 
             // Check removable
             if (IsMissed())
             {
-                Clear(NoteGrading.Miss);
+                Clear(NoteGrade.Miss);
             }
 
             // If still not cleared, render
@@ -135,7 +152,7 @@ public class GameNote : MonoBehaviour
                 {
                     if (Game is StoryboardGame)
                     {
-                        View.OnClear(NoteGrading.Undetermined);
+                        View.OnClear(NoteGrade.Undetermined);
                     }
                 }
             }
@@ -159,7 +176,7 @@ public class GameNote : MonoBehaviour
     {
         if (!Game.IsLoaded || !Game.IsPlaying) return;
         var grading = CalculateGrading();
-        if (grading == NoteGrading.Undetermined) return;
+        if (grading == NoteGrade.Undetermined) return;
 
         RankData.press_time = TimeExt.Millis();
         RankData.press_x = (int) screenPos.x;
@@ -168,15 +185,17 @@ public class GameNote : MonoBehaviour
         Clear(grading);
     }
 
-    public virtual NoteGrading CalculateGrading()
+    public virtual NoteGrade CalculateGrading()
     {
         if (Mod.Auto.IsEnabled()
             || (Mod.AutoDrag.IsEnabled() && (this is DragHeadNote || this is DragChildNote))
             || (Mod.AutoHold.IsEnabled() && (this is HoldNote))
             || (Mod.AutoFlick.IsEnabled() && this is FlickNote))
-            return NoteGrading.Perfect;
+            return NoteGrade.Perfect;
 
-        var grading = NoteGrading.Miss;
+        if (IsMissed()) return NoteGrade.Miss;
+
+        var grading = NoteGrade.Undetermined;
         var timeUntil = TimeUntilStart;
 
         if (Game.Play.IsRanked)
@@ -185,25 +204,25 @@ public class GameNote : MonoBehaviour
             {
                 if (timeUntil < 0.400f)
                 {
-                    grading = NoteGrading.Bad;
+                    grading = NoteGrade.Bad;
                 }
 
                 if (timeUntil < 0.200f)
                 {
-                    grading = NoteGrading.Good;
+                    grading = NoteGrade.Good;
                 }
 
                 if (timeUntil < 0.070f)
                 {
-                    grading = NoteGrading.Great;
+                    grading = NoteGrade.Great;
                 }
 
                 if (timeUntil <= 0.040f)
                 {
-                    grading = NoteGrading.Perfect;
+                    grading = NoteGrade.Perfect;
                 }
 
-                if (grading == NoteGrading.Great)
+                if (grading == NoteGrade.Great)
                 {
                     GreatGradeWeight = 1.0f - (timeUntil - 0.040f) / (0.070f - 0.040f);
                 }
@@ -213,25 +232,25 @@ public class GameNote : MonoBehaviour
                 var timePassed = -timeUntil;
                 if (timePassed < 0.200f)
                 {
-                    grading = NoteGrading.Bad;
+                    grading = NoteGrade.Bad;
                 }
 
                 if (timePassed < 0.150f)
                 {
-                    grading = NoteGrading.Good;
+                    grading = NoteGrade.Good;
                 }
 
                 if (timePassed < 0.070f)
                 {
-                    grading = NoteGrading.Great;
+                    grading = NoteGrade.Great;
                 }
 
                 if (timePassed <= 0.040f)
                 {
-                    grading = NoteGrading.Perfect;
+                    grading = NoteGrade.Perfect;
                 }
 
-                if (grading == NoteGrading.Great)
+                if (grading == NoteGrade.Great)
                 {
                     GreatGradeWeight = 1.0f - (timePassed - 0.040f) / (0.070f - 0.040f);
                 }
@@ -243,22 +262,22 @@ public class GameNote : MonoBehaviour
             {
                 if (timeUntil < 0.800f)
                 {
-                    grading = NoteGrading.Bad;
+                    grading = NoteGrade.Bad;
                 }
 
                 if (timeUntil < 0.400f)
                 {
-                    grading = NoteGrading.Good;
+                    grading = NoteGrade.Good;
                 }
 
                 if (timeUntil < 0.200f)
                 {
-                    grading = NoteGrading.Great;
+                    grading = NoteGrade.Great;
                 }
 
                 if (timeUntil < 0.070f)
                 {
-                    grading = NoteGrading.Perfect;
+                    grading = NoteGrade.Perfect;
                 }
             }
             else
@@ -266,22 +285,22 @@ public class GameNote : MonoBehaviour
                 var timePassed = -timeUntil;
                 if (timePassed < 0.300f)
                 {
-                    grading = NoteGrading.Bad;
+                    grading = NoteGrade.Bad;
                 }
 
                 if (timePassed < 0.200f)
                 {
-                    grading = NoteGrading.Good;
+                    grading = NoteGrade.Good;
                 }
 
                 if (timePassed < 0.150f)
                 {
-                    grading = NoteGrading.Great;
+                    grading = NoteGrade.Great;
                 }
 
                 if (timePassed < 0.070f)
                 {
-                    grading = NoteGrading.Perfect;
+                    grading = NoteGrade.Perfect;
                 }
             }
         }

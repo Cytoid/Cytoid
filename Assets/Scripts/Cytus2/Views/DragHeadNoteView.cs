@@ -9,19 +9,19 @@ namespace Cytus2.Views
 {
     public class DragHeadNoteView : SimpleNoteView
     {
-        private SpriteMask spriteMask;
+        protected SpriteMask SpriteMask;
 
         public DragHeadNoteView(DragHeadNote dragHeadNote) : base(dragHeadNote)
         {
-            spriteMask = Note.transform.GetComponentInChildren<SpriteMask>();
+            SpriteMask = Note.transform.GetComponentInChildren<SpriteMask>();
         }
 
         public override void OnInit(ChartRoot chart, ChartNote note)
         {
             base.OnInit(chart, note);
             Fill.sortingOrder = Ring.sortingOrder + 1;
-            spriteMask.frontSortingOrder = note.id + 1;
-            spriteMask.backSortingOrder = note.id - 2;
+            SpriteMask.frontSortingOrder = note.id + 1;
+            SpriteMask.backSortingOrder = note.id - 2;
         }
 
         public override void OnRender()
@@ -44,10 +44,12 @@ namespace Cytus2.Views
         {
             base.OnLateUpdate();
 
-            DragHeadNote note = (DragHeadNote) Note;
+            var note = (DragHeadNote) Note;
 
-            spriteMask.enabled = Game.Time >= Note.Note.intro_time;
-            spriteMask.isCustomRangeActive = spriteMask.enabled;
+            if (!Note.IsCleared)
+            {
+                SpriteMask.enabled = Game.Time >= Note.Note.intro_time;
+            }
 
             if (Game.Time >= note.Note.start_time)
             {
@@ -57,8 +59,8 @@ namespace Cytus2.Views
                     {
                         if (!note.Game.GameNotes.ContainsKey(note.ToNote.id))
                         {
-                            if (!note.IsCleared) note.Clear(NoteGrading.Miss);
-                            Object.Destroy(note.gameObject);
+                            if (!note.IsCleared && note.IsMissed()) note.Clear(NoteGrade.Miss);
+                            if (note.IsCleared) Object.Destroy(note.gameObject);
                             return;
                         }
                     }
@@ -74,8 +76,8 @@ namespace Cytus2.Views
                         }
                         else
                         {
-                            if (!note.IsCleared) note.Clear(NoteGrading.Miss);
-                            Object.Destroy(note.gameObject);
+                            if (!note.IsCleared && note.IsMissed()) note.Clear(NoteGrade.Miss);
+                            if (note.IsCleared) Object.Destroy(note.gameObject);
                         }
                     }
                 }
@@ -96,9 +98,9 @@ namespace Cytus2.Views
         {
         }
 
-        public override void OnClear(NoteGrading grading)
+        public override void OnClear(NoteGrade grade)
         {
-            base.OnClear(grading);
+            base.OnClear(grade);
 
             // They still display
             Ring.enabled = true;

@@ -98,6 +98,18 @@ sysinfo.txt
 /Assets/PRISM.meta
 /Assets/PRISM/
 
+# Native Audio (#20)
+/Assets/NativeAudio/
+/Assets/NativeAudio.meta
+
+# UniRx
+/Assets/Plugins/UniRx
+/Assets/Plugins/UniRx.meta
+
+# Unicache
+/Assets/Plugins/Unicache
+/Assets/Plugins/Unicache.meta
+
 # Secured Cytoid scripts
 /Assets/Scripts/Secure/
 

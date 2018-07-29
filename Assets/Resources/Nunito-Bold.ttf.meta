@@ -1,0 +1,32 @@
+fileFormatVersion: 2
+guid: 66e1831303aee411d9e1d332e4b3ae49
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: Nunito
+  fontNames:
+  - Nunito
+  - Rounded M+ 1c
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 334e63a0c84a04c44b4a7da791e86b58, type: 3}
+  - {fileID: 12800000, guid: fbc0c9c013c904ea3a99a38d8c4e4c09, type: 3}
+  - {fileID: 12800000, guid: 48fac6d0a31234643ad20a85e9c88c25, type: 3}
+  - {fileID: 12800000, guid: 1973e3a7d95a24657a95d26808274fec, type: 3}
+  - {fileID: 12800000, guid: 512286c99a26f4710931f87535cbe5ca, type: 3}
+  - {fileID: 12800000, guid: 96c8161a06cee40228d9aa53ca5def4d, type: 3}
+  - {fileID: 12800000, guid: 2701ef9ac017d40e69a1d48eaded5e82, type: 3}
+  - {fileID: 12800000, guid: fb6bbcbc41f104dcda0718716a7add43, type: 3}
+  - {fileID: 12800000, guid: fff90e7fe9ac4470498db10f13f216cf, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

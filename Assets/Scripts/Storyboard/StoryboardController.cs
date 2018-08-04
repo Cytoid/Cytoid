@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Cytus2.Controllers;
+using Newtonsoft.Json;
 using QuickEngine.Extensions;
 using SleekRender;
 using UnityEngine;
@@ -53,6 +54,13 @@ namespace Cytoid.Storyboard
         public static float Time
         {
             get { return Game.Instance.Time; }
+        }
+
+        public void CompileStoryboard()
+        {
+            var level = Game.Instance.Level;
+            var path = level.BasePath + "/storyboard_compiled.json";
+            File.WriteAllText(path, JsonConvert.SerializeObject(Storyboard.Compile()));
         }
 
         public void Reset()

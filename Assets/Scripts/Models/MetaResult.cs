@@ -3,6 +3,7 @@
     public int status;
     public string message;
 
+    public int version = 1;
     public int schema_version = 1;    
     
     public string title;

@@ -17,7 +17,7 @@ using UnityEngine.SceneManagement;
 public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 {
     public const string Host = "https://cytoid.io:8443";
-    public static IUnicache cache;
+    public static IUnicache Cache;
 
     public static List<Level> Levels = new List<Level>();
     public static Level CurrentLevel;
@@ -44,10 +44,10 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
     {
         base.Awake();
 
-        if (cache == null) cache = new MemoryCache();
-        cache.Handler = new SimpleDownloadHandler();
-        cache.UrlLocator = new SimpleUrlLocator();
-        cache.CacheLocator = new SimpleCacheLocator();
+        if (Cache == null) Cache = new MemoryCache();
+        Cache.Handler = new SimpleDownloadHandler();
+        Cache.UrlLocator = new SimpleUrlLocator();
+        Cache.CacheLocator = new SimpleCacheLocator();
 
         if (GameObject.FindGameObjectsWithTag("ApplicationObject").Length > 1)
         {
@@ -119,7 +119,7 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
         }
     }
 
-    public static readonly string[] InternalLevels = {"Intro", "Sky", "Glow Dance"};
+    public static readonly string[] InternalLevels = {"Intro", "Sky", "Glow Dance", "Ecstatic"};
 
     public static void ReloadLevels(object streamingPath)
     {
@@ -129,12 +129,13 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 
         // Load levels
         var jsonFiles = Directory.GetFiles(DataPath, "level.json", SearchOption.AllDirectories).ToList();
-
+        var internalJsonFiles = new List<string>();
+        
         if (Application.platform != RuntimePlatform.Android)
         {
             foreach (var internalLevel in InternalLevels)
             {
-                jsonFiles.Add(string.Format(streamingPath + "/{0}/level.json", internalLevel));
+                internalJsonFiles.Add(string.Format(streamingPath + "/{0}/level.json", internalLevel));
             }
         }
 
@@ -145,23 +146,21 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
             LoadingLevelIndex++;
             try
             {
-                var info = new FileInfo(jsonPath);
-                var basePath = info.Directory.FullName + "/";
-                Level level;
-                try
-                {
-                    level = JsonConvert.DeserializeObject<Level>(File.ReadAllText(jsonPath));
-                }
-                catch (Exception e)
-                {
-                    print(e.Message);
-                    continue;
-                }
-
-                level.BasePath = basePath;
-
-                LoadingLevelId = level.id;
-                Levels.Add(level);
+                LoadLevel(jsonPath, false);
+            }
+            catch (Exception e)
+            {
+                print(e.Message);
+                Log.e("Could not load " + jsonPath);
+            }
+        }
+        
+        foreach (var jsonPath in internalJsonFiles)
+        {
+            LoadingLevelIndex++;
+            try
+            {
+                LoadLevel(jsonPath, true);
             }
             catch (Exception e)
             {
@@ -170,6 +169,7 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
             }
         }
 
+        // Workaround for loading internal levels on Android
         try
         {
             if (Application.platform == RuntimePlatform.Android)
@@ -184,6 +184,7 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
 
                     Level level;
                     level = JsonConvert.DeserializeObject<Level>(Encoding.UTF8.GetString(www.bytes));
+                    level.IsInternal = true;
                     level.BasePath = string.Format(Application.streamingAssetsPath + "/{0}/", internalLevel);
                     print(level.BasePath);
                     Levels.Add(level);
@@ -199,6 +200,27 @@ public class CytoidApplication : SingletonMonoBehavior<CytoidApplication>
         Levels.Sort((a, b) => string.Compare(a.title, b.title, StringComparison.OrdinalIgnoreCase));
 
         IsReloadingLevels = false;
+    }
+
+    private static void LoadLevel(string jsonPath, bool isInternal)
+    {
+        var info = new FileInfo(jsonPath);
+        var basePath = info.Directory.FullName + "/";
+        Level level;
+        try
+        {
+            level = JsonConvert.DeserializeObject<Level>(File.ReadAllText(jsonPath));
+            if (isInternal) level.IsInternal = true;
+        }
+        catch (Exception e)
+        {
+            print(e.Message);
+            return;
+        }
+        level.BasePath = basePath;
+
+        LoadingLevelId = level.id;
+        Levels.Add(level);
     }
 
     public static void SetAutoRotation(bool autoRotation)

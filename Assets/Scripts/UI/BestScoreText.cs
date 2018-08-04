@@ -17,7 +17,7 @@ namespace Cytoid.UI
                 
                 WillInvalidate = false;
 
-                var ranked = PlayerPrefsExt.GetBool("ranked");
+                var ranked = PlayerPrefsExt.GetBool("ranked") && OnlinePlayer.Authenticated;
                 var bestScore = ZPlayerPrefs.GetFloat(
                     PreferenceKeys.BestScore(LevelSelectionController.Instance.LoadedLevel.id,
                         CytoidApplication.CurrentChartType, ranked),

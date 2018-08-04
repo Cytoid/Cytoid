@@ -1,0 +1,52 @@
+{
+  
+  "version": 1,
+  "schema_version": 2,
+
+  "id": "io.cytoid.ecstatic",
+  
+  "title": "Ecstatic",
+  "artist": "Delos",
+  "artist_source": "https://music.163.com/#/user/home?id=51829132",
+  "illustrator": "Gilse[ぎるせ]",
+  "illustrator_source": "https://www.pixiv.net/member_illust.php?mode=medium&illust_id=62678056",
+  "charter": "Lumixanth vs. Rballance vs. Ayl",
+  "storyboarder": "TigerHix",
+  
+  "music": {
+    "path": "music.mp3"
+  },
+  "music_preview": {
+    "path": "preview.mp3"
+  },
+  "background": {
+    "path": "background.jpg"
+  },
+  "charts": [
+    {
+      "type": "easy",
+      "difficulty": 3,
+      "path": "chart.easy.txt",
+      "storyboard": {
+        "path": "storyboard.json"
+      }
+    },
+    {
+      "type": "hard",
+      "difficulty": 8,
+      "path": "chart.hard.txt",
+      "storyboard": {
+        "path": "storyboard.json"
+      }
+    },
+    {
+      "type": "extreme",
+      "difficulty": 13,
+      "path": "chart.ex.txt",
+      "storyboard": {
+        "path": "storyboard.json"
+      }
+    }
+  ]
+  
+}

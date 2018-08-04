@@ -1,15 +1,17 @@
 {
-  
-  "version": 1,
-  "is_internal": true,
+  "schema_version": 2,
+  "version": 2,
 
   "id": "io.cytoid.intro",
-  
   "title": "Intro",
+
   "artist": "PTB10",
+  "artist_source": "https://www.youtube.com/watch?v=_DAxWoPY2TE",
   "illustrator": "TigerHix",
-  "charter": "PTB10",
-  
+  "illustrator_source": "https://cytoid.io/profile/tigerhix",
+  "charter": "PTB10 vs. yyao",
+  "storyboarder": "PTB10",
+
   "music": {
     "path": "music.mp3"
   },
@@ -19,12 +21,22 @@
   "background": {
     "path": "background.jpg"
   },
-  "charts": [
-    {
+  "charts": [{
       "type": "easy",
       "difficulty": 1,
-      "path": "chart.easy.txt"
-    }	
-	]
-
+      "path": "chart.easy.txt",
+      "storyboard": {
+        "path": "storyboard_easy.json"
+      }
+    },
+    {
+      "type": "extreme",
+      "name": "Remix",
+      "difficulty": 14,
+      "path": "chart.ex.txt",
+      "music_override": {
+        "path": "ex.mp3"
+      }
+    }
+  ]
 }

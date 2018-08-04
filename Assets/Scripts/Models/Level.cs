@@ -8,6 +8,7 @@ public class Level
     public const string Extreme = "extreme";
 
     [JsonIgnore] public string BasePath;
+    [JsonIgnore] public bool IsInternal;
 
     public int schema_version = 1;
     public int version = 1;
@@ -25,7 +26,6 @@ public class Level
     public MusicSection music_preview;
     public BackgroundSection background;
     public List<ChartSection> charts = new List<ChartSection>();
-    public bool is_internal;
 
     public string GetMusicPath(string chartType)
     {

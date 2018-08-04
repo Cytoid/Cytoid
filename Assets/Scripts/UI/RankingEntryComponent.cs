@@ -21,7 +21,7 @@ namespace Cytoid.UI
             NameText.text = Ranking.player;
             var grade = ScoreGrades.From(Ranking.score);
             PerformanceText.text = string.Format("<b><color=#{0}>{1}</color></b> {2} / {3:0.00}%", ColorUtility.ToHtmlStringRGB(grade.Color()), grade, Mathf.FloorToInt(Ranking.score), Math.Floor((float) Ranking.accuracy / 100 * 100) / 100);
-            CytoidApplication.cache.Fetch(Ranking.avatar_url)
+            CytoidApplication.Cache.Fetch(Ranking.avatar_url)
                 .DoOnError(error => { })
                 .ByteToTexture2D()
                 .Subscribe(texture =>

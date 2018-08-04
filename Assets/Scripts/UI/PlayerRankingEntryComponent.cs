@@ -20,7 +20,7 @@ namespace Cytoid.UI
             PositionText.text = "#" + Ranking.rank;
             NameText.text = Ranking.player;
             DataText.text = string.Format(Ranking.data);
-            CytoidApplication.cache.Fetch(Ranking.avatar_url)
+            CytoidApplication.Cache.Fetch(Ranking.avatar_url)
                 .ByteToTexture2D()
                 .Subscribe(texture =>
                 {

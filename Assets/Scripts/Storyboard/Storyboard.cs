@@ -18,9 +18,11 @@ namespace Cytoid.Storyboard
 
         public Dictionary<string, JObject> Templates = new Dictionary<string, JObject>();
 
+        private JObject rootObject;
+
         public Storyboard(string content)
         {
-            var rootObject = JObject.Parse(content);
+            rootObject = JObject.Parse(content);
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings
             {
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore
@@ -91,6 +93,48 @@ namespace Cytoid.Storyboard
                 }
 
                 // Triggers.ForEach(trigger => Debug.Log(JsonConvert.SerializeObject(trigger)));
+            }
+        }
+
+        public JObject Compile()
+        {
+            RecursivelyParseTime(rootObject);
+            return rootObject;
+        }
+
+        private void RecursivelyParseTime(JObject obj)
+        {
+            foreach (var x in obj)
+            {
+                var name = x.Key;
+                var value = x.Value;
+                if (name == "time")
+                {
+                    value.Replace(ParseTime(value));
+                }
+                else if (value is JArray)
+                {
+                    RecursivelyParseTime((JArray) value);
+                }
+                else if (value is JObject)
+                {
+                    RecursivelyParseTime((JObject) value);
+                }
+            }
+        }
+
+        private void RecursivelyParseTime(JArray array)
+        {
+            foreach (var x in array)
+            {
+                if (x is JArray)
+                {
+                    RecursivelyParseTime((JArray) x);
+                }
+                else if (x is JObject)
+                {
+                    RecursivelyParseTime((JObject) x);
+                }
             }
         }
 
@@ -191,7 +235,7 @@ namespace Cytoid.Storyboard
         {
             var baseTime = ParseTime(rootObject.SelectToken("time")) ?? rootBaseTime ?? 0;
 
-            if (rootObject["states"].Type != JTokenType.Null)
+            if (rootObject.SelectToken("states").Type != JTokenType.Null)
             {
                 var lastTime = baseTime;
 

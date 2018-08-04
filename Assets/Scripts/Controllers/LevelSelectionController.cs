@@ -259,6 +259,12 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
             LoadedAvatar = true;
         }
 
+        if (Application.platform == RuntimePlatform.Android)
+        {
+            headsetOffsetInput.gameObject.SetActive(false);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(headsetOffsetInput.transform.parent.GetComponent<RectTransform>());
+        }
+
         EventKit.Subscribe<string>("meta reloaded", OnLevelMetaReloaded);
     }
 
@@ -456,7 +462,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         alphaMask.willFadeIn = true;
 
         // Load background sprite
-        var www = new WWW((level.is_internal && Application.platform == RuntimePlatform.Android ? "" : "file://") +
+        var www = new WWW((level.IsInternal && Application.platform == RuntimePlatform.Android ? "" : "file://") +
                           level.BasePath + level.background.path);
         yield return www;
 
@@ -488,7 +494,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
     public IEnumerator LoadMusicPreview(Level level)
     {
         // Load preview
-        var www = new WWW((level.is_internal && Application.platform == RuntimePlatform.Android ? "" : "file://") +
+        var www = new WWW((level.IsInternal && Application.platform == RuntimePlatform.Android ? "" : "file://") +
                           level.BasePath + level.music_preview.path);
         yield return www;
 
@@ -517,7 +523,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         chartRelativeOffsetInput.text =
             ZPlayerPrefs.GetFloat(PreferenceKeys.ChartRelativeOffset(CytoidApplication.CurrentLevel.id), 0f).ToString();
 
-        deleteButton.SetActive(!LoadedLevel.is_internal);
+        deleteButton.SetActive(!LoadedLevel.IsInternal);
 
         PlayerPrefs.SetString("last_level", LoadedLevel.id);
 
@@ -727,6 +733,8 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
         PlayerPrefsExt.SetBool("ranked", false);
         rankStatusText.text = "Off";
+        
+        UpdateBestText();
     }
 
     public void CancelLogin()
@@ -763,6 +771,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
                 {
                     EventKit.Broadcast("reload rankings");
                 }
+                BestScoreText.WillInvalidate = true;
 
                 break;
             case -1:

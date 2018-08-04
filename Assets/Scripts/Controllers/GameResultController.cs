@@ -110,7 +110,7 @@ public class GameResultController : SingletonMonoBehavior<GameResultController>
         var oldAccuracy = ZPlayerPrefs.GetFloat(PreferenceKeys.BestAccuracy(CytoidApplication.CurrentLevel.id,
             CytoidApplication.CurrentChartType, ranked));
 
-        if (score > oldScore || (score == oldScore && tp > oldAccuracy))
+        if (score > oldScore || ((int) score == (int) oldScore && tp > oldAccuracy))
         {
             EventKit.Broadcast("new best");
             

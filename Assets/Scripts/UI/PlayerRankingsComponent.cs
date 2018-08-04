@@ -114,8 +114,9 @@ namespace Cytoid.UI
 
             var toY = 0;
 
-            foreach (var ranking in result.rankings)
+            for (var index = 0; index < result.rankings.Length; index++)
             {
+                var ranking = result.rankings[index];
                 var entry = Instantiate(EntryPrefab, EntryHolder).GetComponent<PlayerRankingEntryComponent>();
 
                 entry.Ranking = ranking;
@@ -123,11 +124,10 @@ namespace Cytoid.UI
 
                 if (entry.Ranking.player == OnlinePlayer.Name)
                 {
-                    toY = -50 + ranking.rank * 50;
-                    print(toY);
+                    toY = index * 50;
                 }
             }
-           
+
             MessageText.gameObject.SetActive(false);
             
             LayoutRebuilder.ForceRebuildLayoutImmediate(ContentTransform.GetComponent<RectTransform>());

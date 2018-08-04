@@ -16,7 +16,8 @@ namespace Cytoid.UI
 
             if (SceneManager.GetActiveScene().name == "GameResult" && !OnlinePlayer.Authenticated)
             {
-                Destroy(transform.parent);
+                image.color = Color.clear;
+                transform.parent.GetComponent<Image>().color = Color.clear;
             }
         }
 

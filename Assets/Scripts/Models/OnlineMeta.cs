@@ -48,6 +48,12 @@ public class OnlineMeta
                     if (level == null) yield break;
 
                     var willInvalidate = false;
+
+                    if (level.version > LastMetaResult.version)
+                    {
+                        // Intended; version info would not be persisted
+                        yield break;
+                    }
                     
                     if (level.schema_version != LastMetaResult.schema_version)
                     {

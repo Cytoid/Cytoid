@@ -77,10 +77,10 @@ namespace Cytus2.Controllers
         private readonly Dictionary<int, HoldNote> holdingNotes = new Dictionary<int, HoldNote>();
         private readonly Dictionary<int, FlickNote> flickingNotes = new Dictionary<int, FlickNote>();
 
-        private readonly List<GameNote> touchableNormalNotes = new List<GameNote>(); // Click, Hold, Long hold
+        private readonly List<GameNote> touchableNormalNotes = new List<GameNote>(); // Click, Hold, Long hold, Flick
         private readonly List<GameNote> touchableDragNotes = new List<GameNote>(); // Drag head, Drag child
         private readonly List<HoldNote> touchableHoldNotes = new List<HoldNote>(); // Hold, Long hold
-
+        
         private Coroutine unpauseCoroutine;
 
         protected override void Awake()
@@ -169,7 +169,7 @@ namespace Cytus2.Controllers
 
             // System settings
             CytoidApplication.SetAutoRotation(false);
-            if (Application.platform == RuntimePlatform.Android && !Level.is_internal)
+            if (Application.platform == RuntimePlatform.Android && !Level.IsInternal)
             {
                 print("Using Android Native Audio");
                 GameOptions.Instance.UseAndroidNativeAudio = true;
@@ -187,7 +187,7 @@ namespace Cytus2.Controllers
 
             string chartText;
 
-            if (Application.platform == RuntimePlatform.Android && Level.is_internal)
+            if (Application.platform == RuntimePlatform.Android && Level.IsInternal)
             {
                 var chartWww = new WWW(Level.BasePath + chartSection.path);
                 yield return chartWww;
@@ -218,7 +218,7 @@ namespace Cytus2.Controllers
             else
             {
                 var www = new WWW(
-                    (Level.is_internal && Application.platform == RuntimePlatform.Android ? "" : "file://") +
+                    (Level.IsInternal && Application.platform == RuntimePlatform.Android ? "" : "file://") +
                     audioPath);
                 yield return www;
 
@@ -235,7 +235,7 @@ namespace Cytus2.Controllers
             options.ChartOffset = PlayerPrefs.GetFloat("main offset", 0);
             options.ChartOffset += ZPlayerPrefs.GetFloat(PreferenceKeys.ChartRelativeOffset(Level.id), 0);
 
-            if (Headset.Detect())
+            if (Application.platform != RuntimePlatform.Android && Headset.Detect())
             {
                 options.ChartOffset += ZPlayerPrefs.GetFloat("headset offset");
             }
@@ -370,39 +370,48 @@ namespace Cytus2.Controllers
 
                 UpdateOnScreenNotes();
 
-                if (synchorizedCount < 5 && UnityEngine.Time.time - lastSynchorized > 0.1)
+                if (this is StoryboardGame)
                 {
-                    lastSynchorized = UnityEngine.Time.time;
-                    synchorizedCount++;
-                    if (GameOptions.Instance.UseAndroidNativeAudio)
-                    {
-                        Time = ANAMusic.getCurrentPosition(NativeAudioId) / 1000f
-                               - GameOptions.Instance.ChartOffset + Chart.MusicOffset;
-                    }
-                    else
-                    {
-                        Time = AudioSource.timeSamples * 1.0f / AudioSource.clip.frequency
-                               - GameOptions.Instance.ChartOffset + Chart.MusicOffset;
-                    }
+                    Time = AudioSource.timeSamples * 1.0f / AudioSource.clip.frequency
+                            - GameOptions.Instance.ChartOffset + Chart.MusicOffset;
                 }
                 else
                 {
-                    if (truePlayTime == -1f)
+                    if (synchorizedCount < 5 && UnityEngine.Time.time - lastSynchorized > 0.1)
                     {
+                        lastSynchorized = UnityEngine.Time.time;
+                        synchorizedCount++;
                         if (GameOptions.Instance.UseAndroidNativeAudio)
                         {
-                            audioPlayTime = ANAMusic.getCurrentPosition(NativeAudioId) / 1000f;
+                            Time = ANAMusic.getCurrentPosition(NativeAudioId) / 1000f
+                                   - GameOptions.Instance.ChartOffset + Chart.MusicOffset;
                         }
                         else
                         {
-                            audioPlayTime = AudioSource.timeSamples * 1.0f / AudioSource.clip.frequency;
+                            Time = AudioSource.timeSamples * 1.0f / AudioSource.clip.frequency
+                                   - GameOptions.Instance.ChartOffset + Chart.MusicOffset;
+                        }
+                    }
+                    else
+                    {
+                        if (truePlayTime == -1f)
+                        {
+                            if (GameOptions.Instance.UseAndroidNativeAudio)
+                            {
+                                audioPlayTime = ANAMusic.getCurrentPosition(NativeAudioId) / 1000f;
+                            }
+                            else
+                            {
+                                audioPlayTime = AudioSource.timeSamples * 1.0f / AudioSource.clip.frequency;
+                            }
+
+                            truePlayTime = UnityEngine.Time.time;
                         }
 
-                        truePlayTime = UnityEngine.Time.time;
+                        Time = audioPlayTime + UnityEngine.Time.time - truePlayTime
+                                                                     - GameOptions.Instance.ChartOffset +
+                               Chart.MusicOffset;
                     }
-
-                    Time = audioPlayTime + UnityEngine.Time.time - truePlayTime
-                                                                 - GameOptions.Instance.ChartOffset + Chart.MusicOffset;
                 }
 
                 AudioPercentage = Time / Length;
@@ -545,7 +554,6 @@ namespace Cytus2.Controllers
                 if (note == null) continue;
                 if (note.DoesCollide(pos))
                 {
-                    if (touchedDrag && Math.Abs(note.TimeUntilStart) > note.Page.Duration / 8f) continue;
                     if (note is FlickNote)
                     {
                         if (flickingNotes.ContainsKey(finger.Index) || flickingNotes.ContainsValue((FlickNote) note))
@@ -555,9 +563,13 @@ namespace Cytus2.Controllers
                     }
                     else
                     {
+
+                        if (touchedDrag && Math.Abs(note.TimeUntilStart) > note.Page.Duration / 8f) continue;
+                        if (note.Note.page_index > Chart.CurrentPageId &&
+                            note.Note.start_time - Time >
+                            Chart.Root.page_list[CurrentPageId].Duration * 0.5f) continue;
                         note.Touch(finger.ScreenPosition);
                     }
-
                     return;
                 }
             }
@@ -732,7 +744,7 @@ namespace Cytus2.Controllers
 
             if (RankedPlayData != null)
             {
-                RankedPlayData.pauses.Last().end = TimeExt.Millis();
+                // RankedPlayData.pauses.Last().end = TimeExt.Millis(); // Removed in 1.5
             }
 
             if (GameOptions.Instance.UseAndroidNativeAudio)
@@ -800,7 +812,8 @@ namespace Cytus2.Controllers
             }
             else
             {
-                while (AudioSource.isPlaying)
+                var exitTime = UnityEngine.Time.time;
+                while (AudioSource.isPlaying && UnityEngine.Time.time - exitTime < 10)
                 {
                     yield return null;
                 }

@@ -25,8 +25,11 @@ namespace Cytus2.Views
 
         public void OnStart()
         {
+            var level = CytoidApplication.CurrentLevel;
+
             background = GameObject.FindGameObjectWithTag("Background");
             backgroundOverlayMask = GameObject.Find("BackgroundOverlayMask").GetComponent<AlphaMask>();
+            backgroundOverlayMask.willFadeIn = true;
 
             var canvas = backgroundOverlayMask.GetComponent<Canvas>();
             canvas.overrideSorting = true;
@@ -39,7 +42,13 @@ namespace Cytus2.Views
                 sceneTransitionMask = GameObject.Find("SceneTransitionMask").GetComponent<AlphaMask>();
             }
 
-            titleText = GameObject.Find("TitleText").GetComponent<Text>();
+            gameObject = GameObject.Find("TitleText");
+
+            if (gameObject != null)
+            {
+                titleText = gameObject.GetComponent<Text>();
+                titleText.text = level.title;
+            }
 
             if (background != null)
             {
@@ -51,10 +60,11 @@ namespace Cytus2.Views
                 canvas.sortingOrder = 0;
             }
 
-            var level = CytoidApplication.CurrentLevel;
-            DisplayDifficultyView.Instance.SetDifficulty(level, level.charts.Find(it => it.type == CytoidApplication.CurrentChartType));
-            titleText.text = level.title;
-            backgroundOverlayMask.willFadeIn = true;
+            if (DisplayDifficultyView.Instance != null)
+            {
+                DisplayDifficultyView.Instance.SetDifficulty(level,
+                    level.charts.Find(it => it.type == CytoidApplication.CurrentChartType));
+            }
         }
 
         public void OnPause()

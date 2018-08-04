@@ -66,14 +66,14 @@ namespace Cytus2.Models
             for (var index = 0; index < Root.page_list.Count; index++)
             {
                 var page = Root.page_list[index];
-                page.start_time = ConvertToTime(page.start_tick);
-                page.end_time = ConvertToTime(page.end_tick);
+                page.start_time = ConvertToTime((float) page.start_tick);
+                page.end_time = ConvertToTime((float) page.end_tick);
                 thisChecksumSource += "page " + ((int) page.start_tick).ToString() + " " +
                                       ((int) page.end_tick).ToString();
 
                 if (index != 0)
                 {
-                    page.actual_start_tick = Root.page_list[index - 1].end_tick;
+                    page.actual_start_tick = (float) Root.page_list[index - 1].end_tick;
                     page.actual_start_time = Root.page_list[index - 1].end_time;
                 }
                 else
@@ -102,8 +102,8 @@ namespace Cytus2.Models
                 if (Mod.Slow.IsEnabled()) modSpeed = 0.75f;
                 note.speed *= modSpeed;
 
-                note.start_time = ConvertToTime(note.tick);
-                note.end_time = ConvertToTime(note.tick + note.hold_tick);
+                note.start_time = ConvertToTime((float) note.tick);
+                note.end_time = ConvertToTime((float) (note.tick + note.hold_tick));
 
                 var flip = (Mod.FlipX.IsEnabled() || Mod.FlipAll.IsEnabled()) ? -1 : 1;
 
@@ -111,25 +111,26 @@ namespace Cytus2.Models
                     ((float) note.x * 2 * horizontalRatio - horizontalRatio) * baseSize * Screen.width /
                     Screen.height
                     * flip,
+                    (float) (
                     verticalRatio * page.scan_line_direction *
                     (-baseSize + 2.0f *
                      baseSize *
                      (note.tick - page.start_tick) * 1.0f /
                      (page.end_tick - page.start_tick))
-                    + offset
+                    + offset)
                 );
 
                 note.end_position = new Vector3(
                     ((float) note.x * 2 * horizontalRatio - horizontalRatio) * baseSize * Screen.width /
                     Screen.height
                     * flip,
-                    GetNotePosition(note.tick + note.hold_tick)
+                    GetNotePosition((float) (note.tick + note.hold_tick))
                 );
 
-                note.holdlength = verticalRatio * 2.0f * baseSize *
+                note.holdlength = (float) (verticalRatio * 2.0f * baseSize *
                                   note.hold_tick /
                                   (page.end_tick -
-                                   page.start_tick);
+                                   page.start_tick));
 
                 if (note.type == 3 || note.type == 4)
                     note.intro_time = note.start_time - (1.175f / note.speed);
@@ -210,7 +211,7 @@ namespace Cytus2.Models
                         (noteNext.position.y > noteThis.position.y ? 0 : 180);
             }
 
-            MusicOffset = Root.music_offset;
+            MusicOffset = (float) Root.music_offset;
 
             // Set checksum if not a converted chart
             if (checksumSource == string.Empty)
@@ -230,12 +231,12 @@ namespace Cytus2.Models
             {
                 if (Root.tempo_list[i].tick >= tick) break;
                 result += (Root.tempo_list[i].tick - currentTick) * 1e-6 * Root.tempo_list[i - 1].value /
-                          Root.time_base;
-                currentTick = Root.tempo_list[i].tick;
+                          (float) Root.time_base;
+                currentTick = (float) Root.tempo_list[i].tick;
                 currentTimeZone++;
             }
 
-            result += (tick - currentTick) * 1e-6 * Root.tempo_list[currentTimeZone].value / Root.time_base;
+            result += (tick - currentTick) * 1e-6 * Root.tempo_list[currentTimeZone].value / (float) Root.time_base;
             return (float) result;
         }
 
@@ -243,10 +244,10 @@ namespace Cytus2.Models
         {
             var page = Root.page_list[note.page_index];
             var previousPage = Root.page_list[note.page_index - 1];
-            var pageRatio =
+            var pageRatio = (float) (
                 1.0f * (note.tick - page.actual_start_tick) /
                 (page.end_tick -
-                 page.actual_start_tick);
+                 page.actual_start_tick));
             var tempo =
                 (page.end_time -
                  page.actual_start_time) * pageRatio +
@@ -263,20 +264,22 @@ namespace Cytus2.Models
 
             if (targetPageId == Root.page_list.Count)
             {
-                return -verticalRatio * Root.page_list[targetPageId - 1].scan_line_direction *
+                return (float) (
+                    -verticalRatio * Root.page_list[targetPageId - 1].scan_line_direction *
                        (-baseSize + 2.0f *
                         baseSize *
                         (tick - Root.page_list[targetPageId - 1].end_tick) *
                         1.0f / (Root.page_list[targetPageId - 1].end_tick -
                                 Root.page_list[targetPageId - 1].start_tick))
-                       + offset;
+                       + offset);
             }
 
-            return verticalRatio * Root.page_list[targetPageId].scan_line_direction *
+            return (float) (
+                verticalRatio * Root.page_list[targetPageId].scan_line_direction *
                    (-baseSize + 2.0f *
                     baseSize * (tick - Root.page_list[targetPageId].start_tick) *
                     1.0f / (Root.page_list[targetPageId].end_tick - Root.page_list[targetPageId].start_tick))
-                   + offset;
+                   + offset);
         }
 
         public float GetScannerPosition(float time)

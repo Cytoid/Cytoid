@@ -37,7 +37,7 @@ namespace Cytus2.Models
         {
             if (IsCleared) return true;
             var swipeVector = screenPos - FlickingStartPosition;
-            if (Math.Abs(swipeVector.x) > Camera.main.orthographicSize * 0.05f)
+            if (Math.Abs(swipeVector.x) > Camera.main.orthographicSize * 0.01f)
             {
                 Clear(CalculateGrading());
                 return true;

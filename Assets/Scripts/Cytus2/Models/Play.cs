@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Cytus2.Controllers;
 using UnityEngine;
 
@@ -16,17 +17,21 @@ namespace Cytus2.Models
         public int NoteCleared;
         public int Early;
         public int Late;
-        public float TotalTimeOff;
-        public float TotalTimeOffSquared;
+        private readonly List<float> timeOffs = new List<float>();
 
         public float AvgTimeOff
         {
-            get { return TotalTimeOff / NoteCount; }
+            get { return timeOffs.Sum() / timeOffs.Count; }
         }
 
         public float StandardTimeOff
         {
-            get { return Mathf.Sqrt(TotalTimeOffSquared / NoteCount); }
+            get
+            {
+                var difference = 0f;
+                timeOffs.ForEach(it => difference += Mathf.Pow(AvgTimeOff - it, 2));
+                return Mathf.Sqrt(difference / timeOffs.Count);
+            }
         }
 
         public double Score;
@@ -61,7 +66,7 @@ namespace Cytus2.Models
 
         public void OnClear(GameNote note, NoteGrade grade, float timeUntilEnd, double greatGradeWeight)
         {
-            if (grade == NoteGrade.Undetermined) throw new InvalidOperationException("Note grading undetermined");
+            if (grade == NoteGrade.Undetermined) return;
             if (NoteRankings[note.Note.id] != NoteGrade.Undetermined) return;
 
             if (!IsRanked)
@@ -81,9 +86,8 @@ namespace Cytus2.Models
                 if (timeUntilEnd > 0) Early++;
                 else Late++;
             }
-
-            TotalTimeOff += timeUntilEnd;
-            TotalTimeOffSquared += timeUntilEnd * timeUntilEnd;
+            
+            timeOffs.Add(timeUntilEnd);
 
             // Combo
             if (grade == NoteGrade.Bad || grade == NoteGrade.Miss) Combo = 0;
@@ -227,7 +231,7 @@ namespace Cytus2.Models
             {
                 NoteType.Click, new NoteHpMod(new List<HpMod>
                 {
-                    new HpMod(2, HpModType.Absolute),
+                    new HpMod(1, HpModType.Absolute),
                     new HpMod(0.5f, HpModType.Absolute),
                     new HpMod(-1, HpModType.Percentage),
                     new HpMod(-3, HpModType.Percentage),
@@ -238,7 +242,7 @@ namespace Cytus2.Models
             {
                 NoteType.Hold, new NoteHpMod(new List<HpMod>
                 {
-                    new HpMod(1, HpModType.Absolute),
+                    new HpMod(0.5f, HpModType.Absolute),
                     new HpMod(0.25f, HpModType.Absolute),
                     new HpMod(-1.5f, HpModType.Percentage),
                     new HpMod(-4, HpModType.Percentage),
@@ -249,7 +253,7 @@ namespace Cytus2.Models
             {
                 NoteType.LongHold, new NoteHpMod(new List<HpMod>
                 {
-                    new HpMod(1, HpModType.Absolute),
+                    new HpMod(0.5f, HpModType.Absolute),
                     new HpMod(0.25f, HpModType.Absolute),
                     new HpMod(-1.5f, HpModType.Percentage),
                     new HpMod(-4, HpModType.Percentage),
@@ -260,7 +264,7 @@ namespace Cytus2.Models
             {
                 NoteType.DragHead, new NoteHpMod(new List<HpMod>
                 {
-                    new HpMod(0.4f, HpModType.Absolute),
+                    new HpMod(0.2f, HpModType.Absolute),
                     new HpMod(0, HpModType.Absolute),
                     new HpMod(0, HpModType.Absolute),
                     new HpMod(0, HpModType.Absolute),
@@ -271,7 +275,7 @@ namespace Cytus2.Models
             {
                 NoteType.DragChild, new NoteHpMod(new List<HpMod>
                 {
-                    new HpMod(0.2f, HpModType.Absolute),
+                    new HpMod(0.1f, HpModType.Absolute),
                     new HpMod(0, HpModType.Absolute),
                     new HpMod(0, HpModType.Absolute),
                     new HpMod(0, HpModType.Absolute),
@@ -282,7 +286,7 @@ namespace Cytus2.Models
             {
                 NoteType.Flick, new NoteHpMod(new List<HpMod>
                 {
-                    new HpMod(2, HpModType.Absolute),
+                    new HpMod(1, HpModType.Absolute),
                     new HpMod(0.5f, HpModType.Absolute),
                     new HpMod(-0.75f, HpModType.Percentage),
                     new HpMod(-2.25f, HpModType.Percentage),

@@ -1,0 +1,117 @@
+{
+  "texts": [
+      {
+		"text": "Welcome to Cytoid!",
+		"time": 2.4,
+		"template": "fadeInOut"
+	  },
+	  {
+		"text": "To play, hit notes when\nthe line crosses them.",
+		"time": 6.1,
+		"template": "fadeInOut"
+	  },
+	  {
+		"text": "Let's meet the note types.",
+		"time": 9.8,
+		"template": "fadeInOut"
+	  },
+	  {
+		"text": "First up, tap these notes!",
+		"time": 13.5,
+		"template": "fadeInOut"
+	  },
+	  {
+		"text": "Press and hold!",
+		"time": 29.9,
+		"template": "fadeInOutShort"
+	  },
+      {
+		"text": "You can remove your finger\nonce the meter is full.",
+		"time": 32.9,
+		"template": "fadeInOut"
+	  },
+      {
+		"text": "Slide along the line!",
+		"time": 45.2,
+		"template": "fadeInOutShort"
+	  },
+      {
+		"text": "Now let's try it all\ntogether - good luck!",
+		"time": 60.9,
+		"template": "fadeInOutShort"
+	  },
+      {
+		"text": "Great job!",
+		"time": 105.9,
+		"y": 0,
+		"template": "fadeInOutShort"
+	  },
+	  {
+		"text": "In more difficult levels,\nyou'll find other note types,\nsuch as flick notes, but\ndon't worry about them for now!",
+		"time": 108.3,
+		"template": "fadeInOutLong"
+	  }
+	],
+	"templates": {
+		"fadeInOut": {
+			"text": "placeholder text",
+			"size": 36,
+			"y": 210,
+			"opacity": 0,
+			"easing": "EaseInOutQuad",
+			"states": [
+				{
+					"opacity": 1,
+					"add_time": 0.5,
+				},
+				{
+					"add_time": 2.7
+				},
+				{
+					"opacity": 0,
+					"add_time": 0.5
+				}
+			]
+		},
+		"fadeInOutLong": {
+			"text": "placeholder text",
+			"size": 36,
+			"y": 0,
+			"opacity": 0,
+			"easing": "EaseInOutQuad",
+			"states": [
+				{
+					"opacity": 1,
+					"add_time": 0.5,
+				},
+				{
+					"add_time": 5.9
+				},
+				{
+					"opacity": 0,
+					"add_time": 0.5
+				}
+			]
+		},
+		"fadeInOutShort": {
+			"text": "placeholder text",
+			"size": 36,
+			"y": 210,
+			"opacity": 0,
+			"easing": "EaseInOutQuad",
+			"states": [
+				{
+					"opacity": 1,
+					"add_time": 0.5,
+				},
+				{
+					"add_time": 1.2
+				},
+				{
+					"opacity": 0,
+					"add_time": 0.5
+				}
+			]
+		}
+	}
+} 

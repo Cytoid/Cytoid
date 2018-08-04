@@ -928,7 +928,8 @@ MonoBehaviour:
       xAdvance: 0
       yAdvance: 0
     xOffset: 0
-  fallbackFontAssets: []
+  fallbackFontAssets:
+  - {fileID: 0}
   m_CreationSettings:
     sourceFontFileName: 
     sourceFontFileGUID: fbc0c9c013c904ea3a99a38d8c4e4c09

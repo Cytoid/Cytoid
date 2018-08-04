@@ -1,11 +1,15 @@
 {
-    "version": 1,
-    "is_internal": true,
+    "version": 2,
+    "schema_version": 2,
+
     "id": "io.cytoid.sky",
     "title": "Sky",
     "artist": "Trifect",
+    "artist_source": "https://trifect.bandcamp.com/track/sky",
     "illustrator": "chockie",
+    "illustrator_source": "https://www.deviantart.com/coolgaltw/art/sora-626922235",
     "charter": "Ayl",
+
     "music": {
         "path": "music.mp3"
     },
@@ -15,9 +19,11 @@
     "background": {
         "path": "background.jpg"
     },
+
     "charts": [{
         "type": "hard",
-        "difficulty": 7,
+        "difficulty": 10,
         "path": "chart.hard.txt"
     }]
+
 }

@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using DG.Tweening;
 using Newtonsoft.Json;
 using SimpleUI;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Cytoid.Storyboard
 {
@@ -11,6 +13,11 @@ namespace Cytoid.Storyboard
     {
         public string Id;
         public List<T> States = new List<T>();
+
+        public bool IsManuallySpawned()
+        {
+            return States[0].Time == float.MaxValue;
+        }
     }
 
     [System.Serializable]
@@ -38,6 +45,7 @@ namespace Cytoid.Storyboard
         public float RelativeTime = float.MinValue;
         public float AddTime = float.MinValue;
         public EasingFunction.Ease Easing;
+        public bool Destroy = false;
     }
 
     [System.Serializable]
@@ -59,6 +67,9 @@ namespace Cytoid.Storyboard
 
         public float Width = float.MinValue;
         public float Height = float.MinValue;
+
+        public int Layer = int.MinValue;
+        public int Order = int.MinValue;
     }
 
     [System.Serializable]
@@ -81,6 +92,11 @@ namespace Cytoid.Storyboard
     [System.Serializable]
     public class ControllerState : ObjectState
     {
+        public float StoryboardOpacity = float.MinValue;
+        public float UiOpacity = float.MinValue;
+        public float ScanlineOpacity = float.MinValue;
+        public float BackgroundDim = float.MinValue;
+        
         public float Size = float.MinValue; // Camera.main.orthographicSize Default: 5
         public float Fov = float.MinValue; // Field of View Default: 53.2
         public bool? Perspective = null;
@@ -89,6 +105,11 @@ namespace Cytoid.Storyboard
         public float RotX = float.MinValue;
         public float RotY = float.MinValue;
         public float RotZ = float.MinValue;
+
+        public Color ScanlineColor = null;
+        public float NoteOpacityMultiplier = float.MinValue;
+        public Color NoteRingColor = null;
+        public Color[] NoteFillColors = new Color[10];
 
         public bool? Bloom = null;
         public float BloomIntensity = float.MinValue; // Range: 0~5
@@ -166,12 +187,15 @@ namespace Cytoid.Storyboard
     [System.Serializable]
     public class Trigger
     {
-        public TriggerType Type;
-        public int Uses;
+        public TriggerType Type = TriggerType.None;
+        public int Uses = int.MinValue;
         [JsonIgnore] public int CurrentUses;
 
-        public List<int> Notes;
-        public List<string> Spawn;
+        public List<int> Notes = new List<int>();
+        public List<string> Spawn  = new List<string>();
+        public List<string> Destroy  = new List<string>();
+        public int Combo = int.MinValue;
+        public int Score = int.MinValue;
 
         [JsonIgnore] public GameNote Triggerer;
     }

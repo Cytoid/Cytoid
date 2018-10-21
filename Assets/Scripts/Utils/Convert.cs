@@ -1,9 +1,12 @@
-﻿using UnityEngine;
+﻿using QuickEngine.Extensions;
+using UnityEngine;
 
 public static class Convert
 {
     public static Color HexToColor(string hex)
     {
+        if (hex.IsNullOrEmpty()) return Color.clear;
+        
         hex = hex.Replace("0x", "").Replace("#", "");
         byte a = 255;
         var r = byte.Parse(hex.Substring(0, 2), System.Globalization.NumberStyles.HexNumber);

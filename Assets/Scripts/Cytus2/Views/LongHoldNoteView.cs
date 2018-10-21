@@ -142,6 +142,7 @@ namespace Cytus2.Views
         {
             base.RenderOpacity();
             Line2.color = Line2.color.WithAlpha(EasedOpacity);
+            CompletedLine2.color = CompletedLine2.color.WithAlpha(EasedOpacity);
         }
 
         public override void OnClear(NoteGrade grade)

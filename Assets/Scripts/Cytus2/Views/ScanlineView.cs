@@ -1,10 +1,15 @@
 ﻿using System.Collections;
+using QuickEngine.Extensions;
 using UnityEngine;
 
 namespace Cytus2.Models
 {
     public class ScanlineView : SingletonMonoBehavior<ScanlineView>
     {
+
+        public Color ColorOverride = Color.clear;
+        public float Opacity = 1f;
+        
         public LineRenderer LineRenderer;
         public float AnimationDuration;
         public int Direction;
@@ -20,7 +25,7 @@ namespace Cytus2.Models
             LineRenderer.SetPosition(1, new Vector3(0, 0, 0));
             gameObject.GetComponent<LineRenderer>().startColor = new Color(1f, 1f, 1f);
             gameObject.GetComponent<LineRenderer>().startColor = new Color(1f, 1f, 1f);
-            colorNext = new Color(1f, 1f, 1f);
+            colorNext = new Color(1f, 1f, 1f, Opacity);
             colorNextSpeed = 9.0f;
         }
 
@@ -142,12 +147,22 @@ namespace Cytus2.Models
 
         void FixedUpdate()
         {
-            Color currColor = gameObject.GetComponent<LineRenderer>().startColor;
-            currColor = new Color((currColor.r * colorNextSpeed + colorNext.r) / (1 + colorNextSpeed),
-                (currColor.g * colorNextSpeed + colorNext.g) / (1 + colorNextSpeed),
-                (currColor.b * colorNextSpeed + colorNext.b) / (1 + colorNextSpeed));
-            gameObject.GetComponent<LineRenderer>().startColor = currColor;
-            gameObject.GetComponent<LineRenderer>().endColor = currColor;
+            Color color;
+            if (ColorOverride == Color.clear)
+            {
+                color = gameObject.GetComponent<LineRenderer>().startColor;
+                color = new Color((color.r * colorNextSpeed + colorNext.r) / (1 + colorNextSpeed),
+                    (color.g * colorNextSpeed + colorNext.g) / (1 + colorNextSpeed),
+                    (color.b * colorNextSpeed + colorNext.b) / (1 + colorNextSpeed));
+            }
+            else
+            {
+                color = ColorOverride;
+            }
+
+            color = color.WithAlpha(Opacity);
+            gameObject.GetComponent<LineRenderer>().startColor = color;
+            gameObject.GetComponent<LineRenderer>().endColor = color;
         }
     }
 }

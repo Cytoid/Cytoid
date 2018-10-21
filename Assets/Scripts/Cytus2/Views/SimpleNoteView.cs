@@ -1,11 +1,13 @@
 ﻿using Cytus2.Controllers;
 using Cytus2.Models;
+using DG.Tweening;
 using UnityEngine;
 
 namespace Cytus2.Views
 {
     public class SimpleNoteView : NoteView
     {
+        
         public readonly Game Game;
 
         protected float Size;
@@ -28,9 +30,6 @@ namespace Cytus2.Views
         public override void OnInit(ChartRoot chart, ChartNote note)
         {
             Size = SimpleVisualOptions.Instance.GetSize(this);
-            
-            Ring.color = SimpleVisualOptions.Instance.GetRingColor(this);
-            Fill.color = SimpleVisualOptions.Instance.GetFillColor(this);
 
             Ring.sortingOrder = (chart.note_list.Count - note.id) * 3;
             Fill.sortingOrder = Ring.sortingOrder - 1;
@@ -57,6 +56,9 @@ namespace Cytus2.Views
 
         public virtual void RenderComponents()
         {
+            Ring.color = SimpleVisualOptions.Instance.GetRingColor(this);
+            Fill.color = SimpleVisualOptions.Instance.GetFillColor(this);
+
             RenderTransform();
             RenderFill();
             RenderOpacity();
@@ -70,7 +72,7 @@ namespace Cytus2.Views
             var timeRequired = 1.367f / Note.Note.speed;
             var timeScaledSize = Size * minPercentageSize + Size * (1 - minPercentageSize) *
                                  Mathf.Clamp((Game.Time - Note.Note.intro_time) / timeRequired, 0f, 1f);
-
+            
             Note.transform.localScale = new Vector3(timeScaledSize, timeScaledSize, Note.transform.localScale.z);
         }
 
@@ -92,11 +94,19 @@ namespace Cytus2.Views
 
         protected virtual void RenderOpacity()
         {
+            var maxOpacity = (float) Game.Chart.Root.opacity;
+            if (Note.Note.opacity != double.MinValue)
+            {
+                maxOpacity = (float) Note.Note.opacity;
+            }
+
             if (Note.TimeUntilStart > 0)
                 EasedOpacity =
                     Mathf.Clamp((Game.Time - Note.Note.intro_time) / (Note.Note.start_time - Note.Note.intro_time) * 2f,
-                        0f, 1f);
-            else EasedOpacity = 1f;
+                        0f, maxOpacity);
+            else EasedOpacity = maxOpacity;
+
+            EasedOpacity *= SimpleVisualOptions.Instance.GlobalOpacityMultiplier;
 
             Ring.color = Ring.color.WithAlpha(EasedOpacity);
             Fill.color = Fill.color.WithAlpha(EasedOpacity);

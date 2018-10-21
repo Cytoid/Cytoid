@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Cytus2.Controllers;
+using Cytus2.Models;
 using Newtonsoft.Json;
 using QuickEngine.Extensions;
 using SleekRender;
@@ -17,6 +18,7 @@ namespace Cytoid.Storyboard
     {
         public bool ShowEffects = true;
 
+        private string lastPath;
         private FileSystemWatcher watcher;
 
         public UnityEngine.UI.Text TextPrefab;
@@ -39,7 +41,10 @@ namespace Cytoid.Storyboard
         public CameraFilterPack_TV_Videoflip Tape;
         public SleekRenderPostProcess Sleek;
         public Canvas Canvas;
+        public CanvasGroup UiCanvasGroup;
+        public Image BackgroundOverlayMask;
 
+        [HideInInspector] public CanvasGroup CanvasGroup;
         [HideInInspector] public Rect CanvasRect;
 
         [HideInInspector] public Storyboard Storyboard;
@@ -152,6 +157,7 @@ namespace Cytoid.Storyboard
                 yield return null;
             }
 
+            CanvasGroup = Canvas.GetComponent<CanvasGroup>();
             CanvasRect = Canvas.GetComponent<RectTransform>().rect;
 
             var level = Game.Instance.Level;
@@ -233,8 +239,11 @@ namespace Cytoid.Storyboard
             watcher.EnableRaisingEvents = true;
         }
 
-        public IEnumerator Reload(string path)
+        public IEnumerator Reload(string path = null)
         {
+            if (path == null) path = lastPath;
+            lastPath = path;
+
             // Clear texts
             foreach (var textView in TextViews.Keys)
             {
@@ -263,13 +272,13 @@ namespace Cytoid.Storyboard
             // Create texts
             foreach (var text in Storyboard.Texts)
             {
-                Spawn(text);
+                if (!text.IsManuallySpawned()) Spawn(text);
             }
 
             // Create sprites
             foreach (var sprite in Storyboard.Sprites)
             {
-                yield return Spawn(sprite);
+                if (!sprite.IsManuallySpawned()) yield return Spawn(sprite);
             }
 
             // Create scene
@@ -320,6 +329,14 @@ namespace Cytoid.Storyboard
                 stateA = a;
                 stateB = b;
                 ease = a.Easing;
+
+                // Destroy
+                if (a.Destroy)
+                {
+                    Destroy(textView.gameObject);
+                    TextViews.Remove(textView);
+                    continue;
+                }
 
                 // X
                 if (a.X != float.MinValue)
@@ -424,6 +441,24 @@ namespace Cytoid.Storyboard
                     textView.alignment =
                         (TextAnchor) Enum.Parse(typeof(TextAnchor), a.Align, true);
                 }
+
+                Canvas canvas = null;
+
+                // Layer
+                if (a.Layer != int.MinValue)
+                {
+                    a.Layer = Mathf.Clamp(a.Layer, 0, 2);
+                    canvas = textView.GetComponent<Canvas>();
+                    canvas.overrideSorting = true;
+                    canvas.sortingLayerName = "Storyboard" + (a.Layer + 1);
+                }
+
+                // Order
+                if (a.Order != int.MinValue)
+                {
+                    if (canvas == null) canvas = textView.GetComponent<Canvas>();
+                    canvas.sortingOrder = a.Order;
+                }
             }
         }
 
@@ -445,6 +480,14 @@ namespace Cytoid.Storyboard
                 stateA = a;
                 stateB = b;
                 ease = a.Easing;
+
+                // Destroy
+                if (a.Destroy)
+                {
+                    Destroy(spriteView.gameObject);
+                    SpriteViews.Remove(spriteView);
+                    continue;
+                }
 
                 // X
                 if (a.X != float.MinValue)
@@ -528,6 +571,24 @@ namespace Cytoid.Storyboard
                 {
                     spriteView.preserveAspect = (bool) a.PreserveAspect;
                 }
+
+                Canvas canvas = null;
+
+                // Layer
+                if (a.Layer != int.MinValue)
+                {
+                    a.Layer = Mathf.Clamp(a.Layer, 0, 2);
+                    canvas = spriteView.GetComponent<Canvas>();
+                    canvas.overrideSorting = true;
+                    canvas.sortingLayerName = "Storyboard" + (a.Layer + 1);
+                }
+
+                // Order
+                if (a.Order != int.MinValue)
+                {
+                    if (canvas == null) canvas = spriteView.GetComponent<Canvas>();
+                    canvas.sortingOrder = a.Order;
+                }
             }
         }
 
@@ -545,7 +606,88 @@ namespace Cytoid.Storyboard
                     stateB = b;
                     ease = a.Easing;
 
-                    if (!Testing && ShowEffects)
+                    // Storyboard opacity
+                    if (a.StoryboardOpacity != float.MinValue)
+                    {
+                        CanvasGroup.alpha = Ease(a.StoryboardOpacity, b.StoryboardOpacity);
+                    }
+
+                    // UI opacity
+                    if (a.UiOpacity != float.MinValue)
+                    {
+                        if (UiCanvasGroup != null)
+                            UiCanvasGroup.alpha = Ease(a.UiOpacity, b.UiOpacity);
+                    }
+                    
+                    // Scanline opacity
+                    if (a.ScanlineOpacity != float.MinValue)
+                    {
+                        ScanlineView.Instance.Opacity = Ease(a.ScanlineOpacity, b.ScanlineOpacity);
+                    }
+
+                    // Background dim
+                    if (a.BackgroundDim != float.MinValue)
+                    {
+                        BackgroundOverlayMask.color =
+                            BackgroundOverlayMask.color.WithAlpha(Ease(a.BackgroundDim, b.BackgroundDim));
+                    }
+
+                    // Note opacity
+                    if (a.NoteOpacityMultiplier != float.MinValue)
+                    {
+                        var easedOpacity = Ease(a.NoteOpacityMultiplier, b.NoteOpacityMultiplier);
+                        SimpleVisualOptions.Instance.GlobalOpacityMultiplier = easedOpacity;
+                    }
+
+                    // Scanline color
+                    if (a.ScanlineColor != null)
+                    {
+                        var easedColor = b.ScanlineColor == null
+                            ? a.ScanlineColor.ToUnityColor()
+                            : UnityEngine.Color.Lerp(a.ScanlineColor.ToUnityColor(),
+                                b.ScanlineColor.ToUnityColor(), Ease(0, 1));
+
+                        ScanlineView.Instance.ColorOverride = easedColor;
+                    }
+                    
+                    // Ring color
+                    if (a.NoteRingColor != null)
+                    {
+                        var easedColor = b.NoteRingColor == null
+                            ? a.NoteRingColor.ToUnityColor()
+                            : UnityEngine.Color.Lerp(a.NoteRingColor.ToUnityColor(),
+                                b.NoteRingColor.ToUnityColor(), Ease(0, 1));
+
+                        SimpleVisualOptions.Instance.GlobalRingColorOverride = easedColor;
+                    }
+
+                    // Fill colors
+                    if (a.NoteFillColors.Length > 0)
+                    {
+                        UnityEngine.Color[] easedColors = new UnityEngine.Color[10];
+                        for (var i = 0; i < a.NoteFillColors.Length; i++)
+                        {
+                            if (a.NoteFillColors[i] == null)
+                            {
+                                easedColors[i] = UnityEngine.Color.clear;
+                                continue;
+                            }
+
+                            if (b.NoteFillColors[i] != null)
+                            {
+                                easedColors[i] = UnityEngine.Color.Lerp(a.NoteFillColors[i].ToUnityColor(),
+                                    b.NoteFillColors[i].ToUnityColor(), Ease(0, 1));
+                            }
+                            else
+                            {
+                                easedColors[i] = a.NoteFillColors[i].ToUnityColor();
+                            }
+                        }
+
+                        SimpleVisualOptions.Instance.GlobalFillColorsOverride = easedColors;
+                    }
+
+                    if (!Testing && (Game.Instance is StoryboardGame || ShowEffects))
                     {
                         // Bloom
 
@@ -992,6 +1134,19 @@ namespace Cytoid.Storyboard
                     trigger.Triggerer = note;
                     OnTrigger(trigger);
                 }
+
+                if (trigger.Type == TriggerType.Combo && Game.Instance.Play.Combo == trigger.Combo)
+                {
+                    trigger.Triggerer = note;
+                    OnTrigger(trigger);
+                }
+
+                if (trigger.Type == TriggerType.Score && Game.Instance.Play.Score >= trigger.Score)
+                {
+                    trigger.Triggerer = note;
+                    OnTrigger(trigger);
+                    Triggers.Remove(trigger);
+                }
             }
         }
 
@@ -1003,6 +1158,15 @@ namespace Cytoid.Storyboard
                 foreach (var id in trigger.Spawn)
                 {
                     Spawn(id);
+                }
+            }
+
+            // Destroy objects
+            if (trigger.Destroy != null)
+            {
+                foreach (var id in trigger.Destroy)
+                {
+                    Destroy(id);
                 }
             }
 
@@ -1033,6 +1197,14 @@ namespace Cytoid.Storyboard
                 StartCoroutine(Spawn(sprite));
                 break;
             }
+        }
+
+        public void Destroy(string id)
+        {
+            var textToDestroy = TextViews.Where(it => it.Value.Id == id).Take(1).ToList();
+            if (textToDestroy.Count > 0) Destroy(textToDestroy[0].Key.gameObject);
+            var spriteToDestroy = SpriteViews.Where(it => it.Value.Id == id).Take(1).ToList();
+            if (spriteToDestroy.Count > 0) Destroy(spriteToDestroy[0].Key.gameObject);
         }
 
         public void Spawn(Text text)
@@ -1154,7 +1326,7 @@ namespace Cytoid.Storyboard
             nextState = currentState;
         }
 
-        public bool Testing = true;
+        public bool Testing = false;
 
         public Toggle BloomPrismToggle;
         public Toggle BloomSleekToggle;

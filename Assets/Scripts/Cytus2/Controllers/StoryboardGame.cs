@@ -12,6 +12,7 @@ namespace Cytus2.Controllers
     public class StoryboardGame : Game
     {
         public DirectSlider SeekSlider;
+        public CanvasGroup UICanvasGroup;
 
         public bool HideUi;
 
@@ -55,12 +56,12 @@ namespace Cytus2.Controllers
                 if (HideUi)
                 {
                     HideUi = false;
-                    SeekSlider.gameObject.SetActive(true);
+                    UICanvasGroup.alpha = 1;
                 }
                 else
                 {
                     HideUi = true;
-                    SeekSlider.gameObject.SetActive(false);
+                    UICanvasGroup.alpha = 0;
                 }
             }
         }

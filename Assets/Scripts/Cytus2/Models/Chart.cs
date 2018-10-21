@@ -444,6 +444,15 @@ namespace Cytus2.Models
                     obj.next_id = 0;
                 }
 
+                if (obj.ring_color != null)
+                {
+                    obj.ParsedRingColor = Convert.HexToColor(obj.ring_color);
+                }
+                if (obj.fill_color != null)
+                {
+                    obj.ParsedFillColor = Convert.HexToColor(obj.fill_color);
+                }
+
                 noteList.Add(obj);
             }
 

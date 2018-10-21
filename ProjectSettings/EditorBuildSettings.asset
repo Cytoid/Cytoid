@@ -8,19 +8,19 @@ EditorBuildSettings:
   - enabled: 0
     path: 
     guid: 00000000000000000000000000000000
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Intro.unity
     guid: b8d3def60d694425f8c856370c1b7df9
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/LevelSelection.unity
     guid: 3eba094fcdbf848249cf9c58c21586ce
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/CytusGame.unity
     guid: 03c16ae10fa9140c0b0d8c940582f883
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/GameResult.unity
     guid: e506a704e1dea47e5b266196044d7009
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/Storyboard.unity
     guid: 4491b7f4a99ed478d88d2a6edd6cd288
   m_configObjects: {}

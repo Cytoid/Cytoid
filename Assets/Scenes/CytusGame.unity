@@ -10762,8 +10762,6 @@ MonoBehaviour:
     NoteCleared: 0
     Early: 0
     Late: 0
-    TotalTimeOff: 0
-    TotalTimeOffSquared: 0
     Score: 0
     Tp: 0
     Combo: 0
@@ -10861,6 +10859,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cee21c9887af4239b9fb1e6e539e8953, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  GlobalOpacityMultiplier: 1
+  GlobalRingColorOverride: {r: 0, g: 0, b: 0, a: 0}
+  GlobalFillColorsOverride:
+  - {r: 0, g: 0, b: 0, a: 0}
+  - {r: 0, g: 0, b: 0, a: 0}
+  - {r: 0, g: 0, b: 0, a: 0}
+  - {r: 0, g: 0, b: 0, a: 0}
+  - {r: 0, g: 0, b: 0, a: 0}
+  - {r: 0, g: 0, b: 0, a: 0}
+  - {r: 0, g: 0, b: 0, a: 0}
+  - {r: 0, g: 0, b: 0, a: 0}
+  - {r: 0, g: 0, b: 0, a: 0}
+  - {r: 0, g: 0, b: 0, a: 0}
   SizeMultiplier: 1
   ClickSize: 0
   DragHeadSize: 0
@@ -12178,6 +12189,9 @@ MonoBehaviour:
   Tape: {fileID: 1175824543}
   Sleek: {fileID: 1175824567}
   Canvas: {fileID: 1158803970}
+  UiCanvasGroup: {fileID: 1512481022}
+  BackgroundOverlayMask: {fileID: 471899827}
+  CanvasGroup: {fileID: 0}
   CanvasRect:
     serializedVersion: 2
     x: 0
@@ -12711,6 +12725,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1158803967}
   - component: {fileID: 1158803970}
+  - component: {fileID: 1158803971}
   - component: {fileID: 1158803969}
   - component: {fileID: 1158803968}
   m_Layer: 5
@@ -12795,6 +12810,17 @@ Canvas:
   m_SortingLayerID: 1989023277
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!225 &1158803971
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1158803966}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!114 &1160427698 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 114604711661988876, guid: 8a8f83a62a9d948d1be23a9dc4dd508e,
@@ -18097,7 +18123,7 @@ GameObject:
   - component: {fileID: 1512481021}
   - component: {fileID: 1512481022}
   m_Layer: 5
-  m_Name: GameObject
+  m_Name: UICanvasGroup
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -23464,7 +23490,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 274.90256}
+  m_SizeDelta: {x: 0, y: 230.74689}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2013653755
 MonoBehaviour:

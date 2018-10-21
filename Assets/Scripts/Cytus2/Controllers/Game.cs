@@ -296,7 +296,7 @@ namespace Cytus2.Controllers
 
             IsLoaded = true;
 
-            EventKit.Broadcast("game start");
+            EventKit.Broadcast("game loaded");
 
             StartGame();
         }
@@ -344,7 +344,7 @@ namespace Cytus2.Controllers
 
         protected virtual void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Escape))
+            if (Input.GetKeyDown(KeyCode.Escape) && !(this is StoryboardGame))
             {
                 Pause();
                 return;

@@ -18,6 +18,10 @@ namespace Cytus2.Models
         public List<ChartAnimation> animation_list = new List<ChartAnimation>();
 
         public double music_offset;
+        public double size = 1.0;
+        public double opacity = 1.0;
+        public string ring_color;
+        public string[] fill_colors = new string[10];
     }
 
     [System.Serializable]
@@ -83,7 +87,13 @@ namespace Cytus2.Models
         public int next_id;
         public bool is_forward;
 
-        public double approach_rate = 1f;
+        public double approach_rate = 1.0;
+        public double size = double.MinValue;
+        public string ring_color = null;
+        [JsonIgnore] public Color ParsedRingColor;
+        public string fill_color = null;
+        [JsonIgnore] public Color ParsedFillColor;
+        public double opacity = double.MinValue;
 
         public float start_time;
         public float end_time;

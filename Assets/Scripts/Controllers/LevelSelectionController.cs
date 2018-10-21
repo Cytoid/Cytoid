@@ -593,7 +593,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
         UpdateHitSound(HitSounds[HitSoundIndex]);
 #if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
         var pointer = NativeAudio.Load("Hits/" + HitSounds[HitSoundIndex].Name + ".wav");
-        pointer.Play();
+        if (pointer != null) pointer.Play();
 #endif
     }
 
@@ -609,7 +609,7 @@ public class LevelSelectionController : SingletonMonoBehavior<LevelSelectionCont
 
 #if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
         var pointer = NativeAudio.Load("Hits/" + HitSounds[HitSoundIndex].Name + ".wav");
-        pointer.Play();
+        if (pointer != null) pointer.Play();
 #endif
     }
 

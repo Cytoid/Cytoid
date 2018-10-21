@@ -76,12 +76,15 @@ namespace Cytoid.Storyboard
                 {
                     foreach (var objectToken in PopulateJObjects((JObject) childToken))
                     {
+                        // Controllers must have a time
+                        if (objectToken["time"] == null) objectToken["time"] = 0;
+                        
                         var controller = LoadObject<Controller, ControllerState>(objectToken);
                         if (controller != null) Controllers.Add(controller);
                     }
                 }
 
-                // Controllers.ForEach(controller => Debug.Log(JsonConvert.SerializeObject(controller)));
+                Controllers.ForEach(controller => Debug.Log(JsonConvert.SerializeObject(controller)));
             }
 
             // Trigger
@@ -189,11 +192,14 @@ namespace Cytoid.Storyboard
             trigger.Type = json["type"] != null
                 ? (TriggerType) Enum.Parse(typeof(TriggerType), (string) json["type"], true)
                 : TriggerType.None;
-            trigger.Uses = (int?) json.SelectToken("repeat") ?? 0;
+            trigger.Uses = (int?) json.SelectToken("uses") ?? trigger.Uses;
 
             trigger.Notes = json["notes"] != null ? json.SelectToken("notes").Values<int>().ToList() : trigger.Notes;
             trigger.Spawn = json["spawn"] != null ? json.SelectToken("spawn").Values<string>().ToList() : trigger.Spawn;
-
+            trigger.Destroy = json["destroy"] != null ? json.SelectToken("destroy").Values<string>().ToList() : trigger.Destroy;
+            trigger.Combo = (int?) json.SelectToken("combo") ?? trigger.Combo;
+            trigger.Score = (int?) json.SelectToken("score") ?? trigger.Score;
+            
             return trigger;
         }
 
@@ -233,9 +239,9 @@ namespace Cytoid.Storyboard
         private void AddStates<T>(List<T> states, T baseState, JObject rootObject, float? rootBaseTime)
             where T : ObjectState
         {
-            var baseTime = ParseTime(rootObject.SelectToken("time")) ?? rootBaseTime ?? 0;
+            var baseTime = ParseTime(rootObject.SelectToken("time")) ?? rootBaseTime ?? float.MaxValue;
 
-            if (rootObject.SelectToken("states").Type != JTokenType.Null)
+            if (rootObject["states"] != null && rootObject["states"].Type != JTokenType.Null)
             {
                 var lastTime = baseTime;
 
@@ -395,6 +401,7 @@ namespace Cytoid.Storyboard
             state.Easing = json["easing"] != null
                 ? (EasingFunction.Ease) Enum.Parse(typeof(EasingFunction.Ease), (string) json["easing"], true)
                 : EasingFunction.Ease.Linear;
+            state.Destroy = (bool?) json.SelectToken("destroy") ?? state.Destroy;
         }
 
         private void ParseSceneObjectState(SceneObjectState state, JObject json)
@@ -420,6 +427,9 @@ namespace Cytoid.Storyboard
 
             state.Width = (float?) json.SelectToken("width") ?? state.Width;
             state.Height = (float?) json.SelectToken("height") ?? state.Height;
+
+            state.Layer = (int?) json.SelectToken("layer") ?? state.Layer;
+            state.Order = (int?) json.SelectToken("order") ?? state.Order;
         }
 
         private void ParseTextState(TextState state, JObject json)
@@ -446,6 +456,12 @@ namespace Cytoid.Storyboard
         private void ParseControllerState(ControllerState state, JObject json)
         {
             ParseObjectState(state, json);
+            UnityEngine.Color tmp;
+
+            state.StoryboardOpacity = (float?) json.SelectToken("storyboard_opacity") ?? state.StoryboardOpacity;
+            state.UiOpacity = (float?) json.SelectToken("ui_opacity") ?? state.UiOpacity;
+            state.ScanlineOpacity = (float?) json.SelectToken("scanline_opacity") ?? state.ScanlineOpacity;
+            state.BackgroundDim = (float?) json.SelectToken("background_dim") ?? state.BackgroundDim;
 
             state.Size = (float?) json.SelectToken("size") ?? state.Size;
             state.Fov = (float?) json.SelectToken("fov") ?? state.Fov;
@@ -456,12 +472,25 @@ namespace Cytoid.Storyboard
             state.RotY = (float?) json.SelectToken("rot_y") ?? state.RotY;
             state.RotZ = (float?) json.SelectToken("rot_z") ?? state.RotZ;
 
+            if (ColorUtility.TryParseHtmlString((string) json.SelectToken("scanline_color"), out tmp))
+                state.ScanlineColor = new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a};
+            state.NoteOpacityMultiplier = (float?) json.SelectToken("note_opacity_multiplier") ?? state.NoteOpacityMultiplier;
+            if (ColorUtility.TryParseHtmlString((string) json.SelectToken("note_ring_color"), out tmp))
+                state.NoteRingColor = new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a};
+            var fillColors = json["note_fill_colors"] != null ? json.SelectToken("note_fill_colors").Values<string>().ToList() : new List<string>();
+            for (var i = 0; i < fillColors.Count; i++)
+            {
+                var fillColor = fillColors[i];
+                if (ColorUtility.TryParseHtmlString(fillColor, out tmp))
+                    state.NoteFillColors[i] = new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a};
+            }
+
             state.Bloom = (bool?) json.SelectToken("bloom") ?? state.Bloom;
             state.BloomIntensity = (float?) json.SelectToken("bloom_intensity") ?? state.BloomIntensity;
 
             state.Vignette = (bool?) json.SelectToken("vignette") ?? state.Vignette;
             state.VignetteIntensity = (float?) json.SelectToken("vignette_intensity") ?? state.VignetteIntensity;
-            UnityEngine.Color tmp;
+            
             if (ColorUtility.TryParseHtmlString((string) json.SelectToken("vignette_color"), out tmp))
                 state.VignetteColor = new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a};
             state.VignetteStart = (float?) json.SelectToken("vignette_start") ?? state.VignetteStart;

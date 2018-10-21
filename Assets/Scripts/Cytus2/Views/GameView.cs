@@ -29,6 +29,7 @@ namespace Cytus2.Views
 
             background = GameObject.FindGameObjectWithTag("Background");
             backgroundOverlayMask = GameObject.Find("BackgroundOverlayMask").GetComponent<AlphaMask>();
+            backgroundOverlayMask.max = (int) PlayerPrefs.GetFloat("background dim", 17) / 20.0f;
             backgroundOverlayMask.willFadeIn = true;
 
             var canvas = backgroundOverlayMask.GetComponent<Canvas>();

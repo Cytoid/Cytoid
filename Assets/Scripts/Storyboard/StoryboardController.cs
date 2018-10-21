@@ -571,6 +571,17 @@ namespace Cytoid.Storyboard
                 {
                     spriteView.preserveAspect = (bool) a.PreserveAspect;
                 }
+                
+                // Color tint
+                if (a.Color != null)
+                {
+                    var easedColor = b.Color == null
+                        ? a.Color.ToUnityColor()
+                        : UnityEngine.Color.Lerp(a.Color.ToUnityColor(),
+                            b.Color.ToUnityColor(), Ease(0, 1));
+
+                    spriteView.color = easedColor;
+                }
 
                 Canvas canvas = null;
 

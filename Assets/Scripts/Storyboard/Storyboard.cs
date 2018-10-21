@@ -78,7 +78,7 @@ namespace Cytoid.Storyboard
                     {
                         // Controllers must have a time
                         if (objectToken["time"] == null) objectToken["time"] = 0;
-                        
+
                         var controller = LoadObject<Controller, ControllerState>(objectToken);
                         if (controller != null) Controllers.Add(controller);
                     }
@@ -196,10 +196,12 @@ namespace Cytoid.Storyboard
 
             trigger.Notes = json["notes"] != null ? json.SelectToken("notes").Values<int>().ToList() : trigger.Notes;
             trigger.Spawn = json["spawn"] != null ? json.SelectToken("spawn").Values<string>().ToList() : trigger.Spawn;
-            trigger.Destroy = json["destroy"] != null ? json.SelectToken("destroy").Values<string>().ToList() : trigger.Destroy;
+            trigger.Destroy = json["destroy"] != null
+                ? json.SelectToken("destroy").Values<string>().ToList()
+                : trigger.Destroy;
             trigger.Combo = (int?) json.SelectToken("combo") ?? trigger.Combo;
             trigger.Score = (int?) json.SelectToken("score") ?? trigger.Score;
-            
+
             return trigger;
         }
 
@@ -243,12 +245,13 @@ namespace Cytoid.Storyboard
 
             if (rootObject["states"] != null && rootObject["states"].Type != JTokenType.Null)
             {
-                var lastTime = baseTime;
-
+                float lastTime = baseTime;
+                
                 var allStates = new JArray();
                 foreach (var childToken in (JArray) rootObject["states"])
                 {
-                    foreach (var child in PopulateJObjects((JObject) childToken))
+                    var populatedChildren = PopulateJObjects((JObject) childToken);
+                    foreach (var child in populatedChildren)
                     {
                         allStates.Add(child);
                     }
@@ -334,8 +337,8 @@ namespace Cytoid.Storyboard
             if (type == typeof(TextState))
             {
                 var state = baseState != null ? (baseState as TextState).Clone() : new TextState();
-                if (templateObject != null) ParseTextState(state, templateObject);
-                ParseTextState(state, stateObject);
+                if (templateObject != null) ParseTextState(state, templateObject, baseState as TextState);
+                ParseTextState(state, stateObject, baseState as TextState);
 
                 return state;
             }
@@ -343,16 +346,16 @@ namespace Cytoid.Storyboard
             if (type == typeof(SpriteState))
             {
                 var state = baseState != null ? (baseState as SpriteState).Clone() : new SpriteState();
-                if (templateObject != null) ParseSpriteState(state, templateObject);
-                ParseSpriteState(state, stateObject);
+                if (templateObject != null) ParseSpriteState(state, templateObject, baseState as SpriteState);
+                ParseSpriteState(state, stateObject, baseState as SpriteState);
                 return state;
             }
 
             if (type == typeof(ControllerState))
             {
                 var state = baseState != null ? (baseState as ControllerState).Clone() : new ControllerState();
-                if (templateObject != null) ParseControllerState(state, templateObject);
-                ParseControllerState(state, stateObject);
+                if (templateObject != null) ParseControllerState(state, templateObject, baseState as ControllerState);
+                ParseControllerState(state, stateObject, baseState as ControllerState);
                 return state;
             }
 
@@ -393,7 +396,7 @@ namespace Cytoid.Storyboard
             return null;
         }
 
-        private void ParseObjectState(ObjectState state, JObject json)
+        private void ParseObjectState(ObjectState state, JObject json, ObjectState baseState)
         {
             var token = json.SelectToken("time");
             state.Time = ParseTime(token) ?? state.Time;
@@ -404,12 +407,27 @@ namespace Cytoid.Storyboard
             state.Destroy = (bool?) json.SelectToken("destroy") ?? state.Destroy;
         }
 
-        private void ParseSceneObjectState(SceneObjectState state, JObject json)
+        private void ParseSceneObjectState(SceneObjectState state, JObject json, SceneObjectState baseState)
         {
-            ParseObjectState(state, json);
+            ParseObjectState(state, json, baseState);
 
             state.X = (float?) json.SelectToken("x") ?? state.X;
             state.Y = (float?) json.SelectToken("y") ?? state.Y;
+
+            if (baseState != null)
+            {
+                var baseX = baseState.X;
+                if (baseX == float.MinValue) baseX = 0;
+                var baseY = baseState.Y;
+                if (baseY == float.MinValue) baseY = 0;
+                
+                var dx = (float?) json.SelectToken("dx");
+                var dy = (float?) json.SelectToken("dy");
+
+                if (dx != null) state.X = baseX + (float) dx;
+                if (dy != null) state.Y = baseY + (float) dy;
+            }
+
             state.RotX = (float?) json.SelectToken("rot_x") ?? state.RotX;
             state.RotY = (float?) json.SelectToken("rot_y") ?? state.RotY;
             state.RotZ = (float?) json.SelectToken("rot_z") ?? state.RotZ;
@@ -432,9 +450,9 @@ namespace Cytoid.Storyboard
             state.Order = (int?) json.SelectToken("order") ?? state.Order;
         }
 
-        private void ParseTextState(TextState state, JObject json)
+        private void ParseTextState(TextState state, JObject json, TextState baseState)
         {
-            ParseSceneObjectState(state, json);
+            ParseSceneObjectState(state, json, baseState);
 
             state.Font = (string) json.SelectToken("font") ?? state.Font;
             UnityEngine.Color tmp;
@@ -445,17 +463,20 @@ namespace Cytoid.Storyboard
             state.Align = (string) json.SelectToken("align") ?? state.Align;
         }
 
-        private void ParseSpriteState(SpriteState state, JObject json)
+        private void ParseSpriteState(SpriteState state, JObject json, SpriteState baseState)
         {
-            ParseSceneObjectState(state, json);
+            ParseSceneObjectState(state, json, baseState);
 
             state.Path = (string) json.SelectToken("path") ?? state.Path;
             state.PreserveAspect = (bool?) json.SelectToken("preserve_aspect") ?? state.PreserveAspect;
+            UnityEngine.Color tmp;
+            if (ColorUtility.TryParseHtmlString((string) json.SelectToken("color"), out tmp))
+                state.Color = new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a};
         }
 
-        private void ParseControllerState(ControllerState state, JObject json)
+        private void ParseControllerState(ControllerState state, JObject json, ControllerState baseState)
         {
-            ParseObjectState(state, json);
+            ParseObjectState(state, json, baseState);
             UnityEngine.Color tmp;
 
             state.StoryboardOpacity = (float?) json.SelectToken("storyboard_opacity") ?? state.StoryboardOpacity;
@@ -474,10 +495,13 @@ namespace Cytoid.Storyboard
 
             if (ColorUtility.TryParseHtmlString((string) json.SelectToken("scanline_color"), out tmp))
                 state.ScanlineColor = new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a};
-            state.NoteOpacityMultiplier = (float?) json.SelectToken("note_opacity_multiplier") ?? state.NoteOpacityMultiplier;
+            state.NoteOpacityMultiplier =
+                (float?) json.SelectToken("note_opacity_multiplier") ?? state.NoteOpacityMultiplier;
             if (ColorUtility.TryParseHtmlString((string) json.SelectToken("note_ring_color"), out tmp))
                 state.NoteRingColor = new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a};
-            var fillColors = json["note_fill_colors"] != null ? json.SelectToken("note_fill_colors").Values<string>().ToList() : new List<string>();
+            var fillColors = json["note_fill_colors"] != null
+                ? json.SelectToken("note_fill_colors").Values<string>().ToList()
+                : new List<string>();
             for (var i = 0; i < fillColors.Count; i++)
             {
                 var fillColor = fillColors[i];
@@ -490,7 +514,7 @@ namespace Cytoid.Storyboard
 
             state.Vignette = (bool?) json.SelectToken("vignette") ?? state.Vignette;
             state.VignetteIntensity = (float?) json.SelectToken("vignette_intensity") ?? state.VignetteIntensity;
-            
+
             if (ColorUtility.TryParseHtmlString((string) json.SelectToken("vignette_color"), out tmp))
                 state.VignetteColor = new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a};
             state.VignetteStart = (float?) json.SelectToken("vignette_start") ?? state.VignetteStart;

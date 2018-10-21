@@ -87,6 +87,7 @@ namespace Cytoid.Storyboard
     {
         public string Path;
         public bool? PreserveAspect = null;
+        public Color Color = null;
     }
 
     [System.Serializable]

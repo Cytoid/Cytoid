@@ -305,6 +305,13 @@ namespace Cytus2.Models
                     1.0f / (Root.page_list[CurrentPageId].end_time - Root.page_list[CurrentPageId].start_time))
                    + offset;
         }
+
+        public float GetScannerPosition01(float percentage)
+        {
+            return verticalRatio *
+                   (-baseSize + 2.0f * baseSize * percentage)
+                   + offset;
+        }
         
         public float GetEdgePosition(bool bottom)
         {

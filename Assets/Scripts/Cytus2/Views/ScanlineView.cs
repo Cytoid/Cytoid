@@ -8,6 +8,7 @@ namespace Cytus2.Models
     {
 
         public Color ColorOverride = Color.clear;
+        public float PosOverride = float.MinValue;
         public float Opacity = 1f;
         
         public LineRenderer LineRenderer;

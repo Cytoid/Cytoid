@@ -661,6 +661,19 @@ namespace Cytoid.Storyboard
                         ScanlineView.Instance.ColorOverride = easedColor;
                     }
                     
+                    // Scanline position
+                    if (a.OverrideScanlinePos != null)
+                    {
+                        if ((bool) a.OverrideScanlinePos)
+                        {
+                            ScanlineView.Instance.PosOverride = Ease(a.ScanlinePos, b.ScanlinePos);
+                        }
+                        else
+                        {
+                            ScanlineView.Instance.PosOverride = float.MinValue;
+                        }
+                    }
+                    
                     // Ring color
                     if (a.NoteRingColor != null)
                     {

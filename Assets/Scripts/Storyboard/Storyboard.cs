@@ -495,6 +495,8 @@ namespace Cytoid.Storyboard
 
             if (ColorUtility.TryParseHtmlString((string) json.SelectToken("scanline_color"), out tmp))
                 state.ScanlineColor = new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a};
+            state.OverrideScanlinePos = (bool?) json.SelectToken("override_scanline_pos") ?? state.OverrideScanlinePos;
+            state.ScanlinePos = (float?) json.SelectToken("scanline_pos") ?? state.ScanlinePos;
             state.NoteOpacityMultiplier =
                 (float?) json.SelectToken("note_opacity_multiplier") ?? state.NoteOpacityMultiplier;
             if (ColorUtility.TryParseHtmlString((string) json.SelectToken("note_ring_color"), out tmp))

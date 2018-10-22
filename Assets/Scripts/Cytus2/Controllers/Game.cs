@@ -12,6 +12,7 @@ using DoozyUI;
 using E7.Native;
 using Lean.Touch;
 using Newtonsoft.Json;
+using QuickEngine.Extensions;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -419,8 +420,16 @@ namespace Cytus2.Controllers
                 var chart = Chart.Root;
                 var notes = chart.note_list;
 
-                Scanline.transform.DOMoveY(Chart.GetScannerPosition(Time), UnityEngine.Time.deltaTime)
-                    .SetEase(Ease.Linear);
+                if (Scanline.PosOverride != float.MinValue)
+                {
+                    Scanline.transform.SetY(Chart.GetScannerPosition01(Scanline.PosOverride));
+                }
+                else
+                {
+                    Scanline.transform.DOMoveY(Chart.GetScannerPosition(Time), UnityEngine.Time.deltaTime)
+                        .SetEase(Ease.Linear);
+                }
+
                 // Scanline.transform.position = new Vector3(0, Chart.GetScannerPosition(Time));
                 Scanline.Direction = Chart.CurrentPageId < chart.page_list.Count
                     ? chart.page_list[Chart.CurrentPageId].scan_line_direction

@@ -108,6 +108,8 @@ namespace Cytoid.Storyboard
         public float RotZ = float.MinValue;
 
         public Color ScanlineColor = null;
+        public bool? OverrideScanlinePos = null;
+        public float ScanlinePos = float.MinValue;
         public float NoteOpacityMultiplier = float.MinValue;
         public Color NoteRingColor = null;
         public Color[] NoteFillColors = new Color[10];

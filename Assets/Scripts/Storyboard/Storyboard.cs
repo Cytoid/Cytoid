@@ -5,6 +5,7 @@ using System.Linq;
 using Cytus2.Controllers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using QuickEngine.Extensions;
 using UnityEngine;
 
 namespace Cytoid.Storyboard
@@ -66,7 +67,7 @@ namespace Cytoid.Storyboard
                     }
                 }
 
-                // Sprites.ForEach(sprite => Debug.Log(JsonConvert.SerializeObject(sprite)));
+                Sprites.ForEach(sprite => Debug.Log(JsonConvert.SerializeObject(sprite)));
             }
 
             // Controller
@@ -84,7 +85,7 @@ namespace Cytoid.Storyboard
                     }
                 }
 
-                Controllers.ForEach(controller => Debug.Log(JsonConvert.SerializeObject(controller)));
+                // Controllers.ForEach(controller => Debug.Log(JsonConvert.SerializeObject(controller)));
             }
 
             // Trigger
@@ -382,14 +383,17 @@ namespace Cytoid.Storyboard
                 }
 
                 var id = int.Parse(split[1]);
+                var note = Game.Instance.Chart.Root.note_list[id];
                 switch (type)
                 {
                     case "intro":
-                        return Game.Instance.Chart.Root.note_list[id].intro_time + offset;
+                        return note.intro_time + offset;
                     case "start":
-                        return Game.Instance.Chart.Root.note_list[id].start_time + offset;
+                        return note.start_time + offset;
                     case "end":
-                        return Game.Instance.Chart.Root.note_list[id].end_time + offset;
+                        return note.end_time + offset;
+                    case "at":
+                        return note.start_time + (note.end_time - note.start_time) * offset;
                 }
             }
 
@@ -445,6 +449,7 @@ namespace Cytoid.Storyboard
 
             state.Width = (float?) json.SelectToken("width") ?? state.Width;
             state.Height = (float?) json.SelectToken("height") ?? state.Height;
+            state.FillWidth = (bool?) json.SelectToken("fill_width") ?? state.FillWidth;
 
             state.Layer = (int?) json.SelectToken("layer") ?? state.Layer;
             state.Order = (int?) json.SelectToken("order") ?? state.Order;
@@ -501,14 +506,23 @@ namespace Cytoid.Storyboard
                 (float?) json.SelectToken("note_opacity_multiplier") ?? state.NoteOpacityMultiplier;
             if (ColorUtility.TryParseHtmlString((string) json.SelectToken("note_ring_color"), out tmp))
                 state.NoteRingColor = new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a};
-            var fillColors = json["note_fill_colors"] != null
+            var fillColors = (json.SelectToken("note_fill_colors") != null && json.SelectToken("note_fill_colors").Type != JTokenType.Null)
                 ? json.SelectToken("note_fill_colors").Values<string>().ToList()
                 : new List<string>();
-            for (var i = 0; i < fillColors.Count; i++)
+            if (!fillColors.IsNullOrEmpty())
             {
-                var fillColor = fillColors[i];
-                if (ColorUtility.TryParseHtmlString(fillColor, out tmp))
-                    state.NoteFillColors[i] = new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a};
+                state.NoteFillColors = new List<Color>();
+                for (var i = 0; i < 10; i++)
+                {
+                    if (i >= fillColors.Count)
+                    {
+                        state.NoteFillColors.Add(null);
+                        continue;
+                    }
+                    var fillColor = fillColors[i];
+                    if (ColorUtility.TryParseHtmlString(fillColor, out tmp))
+                        state.NoteFillColors.Add(new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a});
+                }
             }
 
             state.Bloom = (bool?) json.SelectToken("bloom") ?? state.Bloom;

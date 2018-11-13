@@ -291,13 +291,18 @@ namespace Cytus2.Controllers
                 LeanTouch.OnFingerUp += OnFingerUp;
             }
 
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.2f);
 
             View.OnStart();
 
             IsLoaded = true;
 
             EventKit.Broadcast("game loaded");
+            
+            // Wait for Storyboard
+            while (!StoryboardController.Instance.Loaded) yield return null;
+
+            yield return new WaitForSeconds(0.3f);
 
             StartGame();
         }

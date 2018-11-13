@@ -67,6 +67,7 @@ namespace Cytoid.Storyboard
 
         public float Width = float.MinValue;
         public float Height = float.MinValue;
+        public bool? FillWidth = null;
 
         public int Layer = int.MinValue;
         public int Order = int.MinValue;
@@ -112,7 +113,7 @@ namespace Cytoid.Storyboard
         public float ScanlinePos = float.MinValue;
         public float NoteOpacityMultiplier = float.MinValue;
         public Color NoteRingColor = null;
-        public Color[] NoteFillColors = new Color[10];
+        public List<Color> NoteFillColors = null;
 
         public bool? Bloom = null;
         public float BloomIntensity = float.MinValue; // Range: 0~5

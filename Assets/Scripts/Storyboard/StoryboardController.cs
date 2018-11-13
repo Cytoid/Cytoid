@@ -16,6 +16,7 @@ namespace Cytoid.Storyboard
 {
     public class StoryboardController : SingletonMonoBehavior<StoryboardController>
     {
+        public bool Loaded = false;
         public bool ShowEffects = true;
 
         private string lastPath;
@@ -169,6 +170,7 @@ namespace Cytoid.Storyboard
             if (!File.Exists(path))
             {
                 enabled = false;
+                Loaded = true;
                 yield break;
             }
 
@@ -288,6 +290,8 @@ namespace Cytoid.Storyboard
             Triggers = Storyboard.Triggers;
 
             Resources.UnloadUnusedAssets();
+
+            Loaded = true;
         }
 
         private void Update()
@@ -411,16 +415,25 @@ namespace Cytoid.Storyboard
                         new Vector2(textView.rectTransform.pivot.x, Ease(a.PivotY, b.PivotY));
                 }
 
-                // Width
-                if (a.Width != float.MinValue)
+                // Fill Width
+                if (a.FillWidth != null && (bool) a.FillWidth)
                 {
-                    textView.rectTransform.SetWidth(EaseCanvasX(a.Width, b.Width));
+                    textView.rectTransform.SetWidth(CanvasRect.width);
+                    textView.rectTransform.SetHeight(10000);
                 }
-
-                // Height
-                if (a.Height != float.MinValue)
+                else
                 {
-                    textView.rectTransform.SetHeight(EaseCanvasY(a.Height, b.Height));
+                    // Width
+                    if (a.Width != float.MinValue)
+                    {
+                        textView.rectTransform.SetWidth(EaseCanvasX(a.Width, b.Width));
+                    }
+
+                    // Height
+                    if (a.Height != float.MinValue)
+                    {
+                        textView.rectTransform.SetHeight(EaseCanvasY(a.Height, b.Height));
+                    }
                 }
 
                 // Text
@@ -554,10 +567,25 @@ namespace Cytoid.Storyboard
                         new Vector2(spriteView.rectTransform.pivot.x, Ease(a.PivotY, b.PivotY));
                 }
 
-                // Width
-                if (a.Width != float.MinValue)
+                // Fill Width
+                if (a.FillWidth != null && (bool) a.FillWidth)
                 {
-                    spriteView.rectTransform.SetWidth(EaseCanvasX(a.Width, b.Width));
+                    spriteView.rectTransform.SetWidth(CanvasRect.width);
+                    spriteView.rectTransform.SetHeight(10000);
+                }
+                else
+                {
+                    // Width
+                    if (a.Width != float.MinValue)
+                    {
+                        spriteView.rectTransform.SetWidth(EaseCanvasX(a.Width, b.Width));
+                    }
+
+                    // Height
+                    if (a.Height != float.MinValue)
+                    {
+                        spriteView.rectTransform.SetHeight(EaseCanvasY(a.Height, b.Height));
+                    }
                 }
 
                 // Height
@@ -571,7 +599,7 @@ namespace Cytoid.Storyboard
                 {
                     spriteView.preserveAspect = (bool) a.PreserveAspect;
                 }
-                
+
                 // Color tint
                 if (a.Color != null)
                 {
@@ -629,7 +657,7 @@ namespace Cytoid.Storyboard
                         if (UiCanvasGroup != null)
                             UiCanvasGroup.alpha = Ease(a.UiOpacity, b.UiOpacity);
                     }
-                    
+
                     // Scanline opacity
                     if (a.ScanlineOpacity != float.MinValue)
                     {
@@ -660,7 +688,7 @@ namespace Cytoid.Storyboard
 
                         ScanlineView.Instance.ColorOverride = easedColor;
                     }
-                    
+
                     // Scanline position
                     if (a.OverrideScanlinePos != null)
                     {
@@ -673,7 +701,7 @@ namespace Cytoid.Storyboard
                             ScanlineView.Instance.PosOverride = float.MinValue;
                         }
                     }
-                    
+
                     // Ring color
                     if (a.NoteRingColor != null)
                     {
@@ -686,29 +714,25 @@ namespace Cytoid.Storyboard
                     }
 
                     // Fill colors
-                    if (a.NoteFillColors.Length > 0)
+                    if (a.NoteFillColors != null)
                     {
-                        UnityEngine.Color[] easedColors = new UnityEngine.Color[10];
-                        for (var i = 0; i < a.NoteFillColors.Length; i++)
+                        for (var i = 0; i < 10; i++)
                         {
                             if (a.NoteFillColors[i] == null)
                             {
-                                easedColors[i] = UnityEngine.Color.clear;
                                 continue;
                             }
 
                             if (b.NoteFillColors[i] != null)
                             {
-                                easedColors[i] = UnityEngine.Color.Lerp(a.NoteFillColors[i].ToUnityColor(),
+                                SimpleVisualOptions.Instance.GlobalFillColorsOverride[i] = UnityEngine.Color.Lerp(a.NoteFillColors[i].ToUnityColor(),
                                     b.NoteFillColors[i].ToUnityColor(), Ease(0, 1));
                             }
                             else
                             {
-                                easedColors[i] = a.NoteFillColors[i].ToUnityColor();
+                                SimpleVisualOptions.Instance.GlobalFillColorsOverride[i] = a.NoteFillColors[i].ToUnityColor();
                             }
                         }
-
-                        SimpleVisualOptions.Instance.GlobalFillColorsOverride = easedColors;
                     }
 
                     if (!Testing && (Game.Instance is StoryboardGame || ShowEffects))

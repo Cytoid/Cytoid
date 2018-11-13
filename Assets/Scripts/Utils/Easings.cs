@@ -94,6 +94,7 @@ public class EasingFunction
         EaseInElastic,
         EaseOutElastic,
         EaseInOutElastic,
+        Blink
     }
 
     private const float NATURAL_LOG_OF_2 = 0.693147181f;
@@ -420,6 +421,19 @@ public class EasingFunction
                    start;
         return a * Mathf.Pow(2, -10 * (value -= 1)) * Mathf.Sin((value * d - s) * (2 * Mathf.PI) / p) * 0.5f + end +
                start;
+    }
+
+    public static float Blink(float start, float end, float value)
+    {
+        const float d = 0.005f;
+        value = 1 - value;
+        if (value >= 1 / 21f - d && value <= 1 / 21f + d) return end;
+        if (value >= 3 / 21f - d && value <= 3 / 21f + d) return end;
+        if (value >= 6 / 21f - d && value <= 6 / 21f + d) return end;
+        if (value >= 10 / 21f - d && value <= 10 / 21f + d) return end;
+        if (value >= 15 / 21f - d && value <= 15 / 21f + d) return end;
+
+        return start;
     }
 
     //
@@ -974,6 +988,11 @@ public class EasingFunction
         if (easingFunction == Ease.EaseInOutElastic)
         {
             return EaseInOutElastic;
+        }
+
+        if (easingFunction == Ease.Blink)
+        {
+            return Blink;
         }
 
         return null;

@@ -53,6 +53,8 @@ namespace Cytus2.Views
 
             if (Game.Time >= note.Note.start_time)
             {
+                RenderComponents();
+                
                 if (note.ToNote.next_id <= 0)
                 {
                     if (!(Game is StoryboardGame))

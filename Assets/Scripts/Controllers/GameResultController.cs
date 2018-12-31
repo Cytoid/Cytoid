@@ -110,16 +110,16 @@ public class GameResultController : SingletonMonoBehavior<GameResultController>
         var oldAccuracy = ZPlayerPrefs.GetFloat(PreferenceKeys.BestAccuracy(CytoidApplication.CurrentLevel.id,
             CytoidApplication.CurrentChartType, ranked));
 
-        if (score > oldScore || ((int) score == (int) oldScore && tp > oldAccuracy))
+        var newBest = false;
+
+        if (score > oldScore)
         {
-            EventKit.Broadcast("new best");
+            newBest = true;
             
-            ZPlayerPrefs.SetFloat(
+            ZPlayerPrefs.SetFloat( 
                 PreferenceKeys.BestScore(CytoidApplication.CurrentLevel.id, CytoidApplication.CurrentChartType, ranked),
                 (float) score);
-            ZPlayerPrefs.SetFloat(
-                PreferenceKeys.BestAccuracy(CytoidApplication.CurrentLevel.id, CytoidApplication.CurrentChartType, ranked),
-                (float) tp);
+            
             var clearType = string.Empty;
             if (play.Mods.Contains(Mod.AP)) clearType = "AP";
             if (play.Mods.Contains(Mod.FC)) clearType = "FC";
@@ -130,6 +130,20 @@ public class GameResultController : SingletonMonoBehavior<GameResultController>
                     ranked),
                 clearType
             );
+        }
+
+        if (tp > oldAccuracy)
+        {
+            newBest = true;
+            
+            ZPlayerPrefs.SetFloat(
+                PreferenceKeys.BestAccuracy(CytoidApplication.CurrentLevel.id, CytoidApplication.CurrentChartType, ranked),
+                (float) tp);
+        }
+
+        if (newBest)
+        {
+            EventKit.Broadcast("new best");
         }
 
         var playCount =

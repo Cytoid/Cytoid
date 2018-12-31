@@ -6,7 +6,7 @@ A community-driven touchscreen music game available on [App Store](https://itune
 
 ## Getting Started
 
-Cytoid is built in C# with [Unity 2018.1.6f1 (Personal)](https://unity3d.com).
+Cytoid is built in C# with [Unity 2018.2.12f1 (Personal)](https://unity3d.com).
 
 Because of license restrictions, some plugins/assets used in the project are not included in this repository. View the [.gitignore](https://github.com/TigerHix/Cytoid/blob/master/.gitignore) for more information.
 

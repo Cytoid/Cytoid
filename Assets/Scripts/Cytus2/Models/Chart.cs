@@ -8,21 +8,23 @@ namespace Cytus2.Models
 {
     public class Chart
     {
-        public ChartRoot Root;
-        public int CurrentPageId;
-        public float MusicOffset;
-
-        private float baseSize;
-        private float offset;
-        private float horizontalRatio;
-        private float verticalRatio;
-
-        public string Checksum
+        public enum C1NoteType
         {
-            get { return global::Checksum.From(checksumSource); }
+            Single,
+            Chain,
+            Hold
         }
 
+        private readonly float baseSize;
+        private readonly float offset;
+        private readonly float verticalRatio;
+
         private string checksumSource = string.Empty;
+        public int CurrentPageId;
+        private float horizontalRatio;
+        public float MusicOffset;
+        public ChartRoot Root;
+        public bool ScanlineSmoothing = false;
 
         public Chart(string text, float horizontalRatio = 0.85f, float verticalRatio = 7.0f / 9.0f)
         {
@@ -47,29 +49,21 @@ namespace Cytus2.Models
             var thisChecksumSource = string.Empty;
 
             foreach (var tempo in Root.tempo_list)
-            {
-                thisChecksumSource += "tempo " + ((int) tempo.tick).ToString() + " " + (tempo.value).ToString();
-            }
-            
+                thisChecksumSource += "tempo " + (int) tempo.tick + " " + tempo.value;
+
             // Convert tick to absolute time
 
-            foreach (var eventOrder in Root.event_order_list)
-            {
-                eventOrder.time = ConvertToTime(eventOrder.tick);
-            }
+            foreach (var eventOrder in Root.event_order_list) eventOrder.time = ConvertToTime(eventOrder.tick);
 
-            foreach (var anim in Root.animation_list)
-            {
-                anim.time = ConvertToTime(anim.tick);
-            }
+            foreach (var anim in Root.animation_list) anim.time = ConvertToTime(anim.tick);
 
             for (var index = 0; index < Root.page_list.Count; index++)
             {
                 var page = Root.page_list[index];
                 page.start_time = ConvertToTime((float) page.start_tick);
                 page.end_time = ConvertToTime((float) page.end_tick);
-                thisChecksumSource += "page " + ((int) page.start_tick).ToString() + " " +
-                                      ((int) page.end_tick).ToString();
+                thisChecksumSource += "page " + (int) page.start_tick + " " +
+                                      (int) page.end_tick;
 
                 if (index != 0)
                 {
@@ -81,11 +75,9 @@ namespace Cytus2.Models
                     page.actual_start_tick = 0;
                     page.actual_start_time = 0;
                 }
-                
+
                 if (Mod.FlipY.IsEnabled() || Mod.FlipAll.IsEnabled())
-                {
                     page.scan_line_direction = page.scan_line_direction == 1 ? -1 : 1;
-                }
             }
 
             for (var i = 0; i < Root.note_list.Count; i++)
@@ -105,19 +97,19 @@ namespace Cytus2.Models
                 note.start_time = ConvertToTime((float) note.tick);
                 note.end_time = ConvertToTime((float) (note.tick + note.hold_tick));
 
-                var flip = (Mod.FlipX.IsEnabled() || Mod.FlipAll.IsEnabled()) ? -1 : 1;
+                var flip = Mod.FlipX.IsEnabled() || Mod.FlipAll.IsEnabled() ? -1 : 1;
 
                 note.position = new Vector3(
                     ((float) note.x * 2 * horizontalRatio - horizontalRatio) * baseSize * Screen.width /
                     Screen.height
                     * flip,
                     (float) (
-                    verticalRatio * page.scan_line_direction *
-                    (-baseSize + 2.0f *
-                     baseSize *
-                     (note.tick - page.start_tick) * 1.0f /
-                     (page.end_tick - page.start_tick))
-                    + offset)
+                        verticalRatio * page.scan_line_direction *
+                        (-baseSize + 2.0f *
+                         baseSize *
+                         (note.tick - page.start_tick) * 1.0f /
+                         (page.end_tick - page.start_tick))
+                        + offset)
                 );
 
                 note.end_position = new Vector3(
@@ -128,36 +120,31 @@ namespace Cytus2.Models
                 );
 
                 note.holdlength = (float) (verticalRatio * 2.0f * baseSize *
-                                  note.hold_tick /
-                                  (page.end_tick -
-                                   page.start_tick));
+                                           note.hold_tick /
+                                           (page.end_tick -
+                                            page.start_tick));
 
                 if (note.type == 3 || note.type == 4)
-                    note.intro_time = note.start_time - (1.175f / note.speed);
+                    note.intro_time = note.start_time - 1.175f / note.speed;
                 else
-                    note.intro_time = note.start_time - (1.367f / note.speed);
+                    note.intro_time = note.start_time - 1.367f / note.speed;
 
                 var lx = note.x;
                 if (lx != 0f)
-                {
                     while (Mathf.Abs((float) lx) < 10000)
-                    {
                         lx *= 10;
-                    }
-                }
 
-                thisChecksumSource += "note " + note.id.ToString() + " "
-                                      + note.page_index.ToString() + " "
-                                      + note.type.ToString() + " "
-                                      + ((int) note.tick).ToString() + " "
-                                      + ((int) lx).ToString() + " "
-                                      + ((int) note.hold_tick).ToString() + " "
-                                      + note.next_id.ToString() + " "
-                                      + ((int) (note.approach_rate * 100)).ToString();
+                thisChecksumSource += "note " + note.id + " "
+                                      + note.page_index + " "
+                                      + note.type + " "
+                                      + (int) note.tick + " "
+                                      + (int) lx + " "
+                                      + (int) note.hold_tick + " "
+                                      + note.next_id + " "
+                                      + (int) (note.approach_rate * 100);
             }
 
             foreach (var note in Root.note_list)
-            {
                 switch (note.type)
                 {
                     case 0:
@@ -173,9 +160,10 @@ namespace Cytus2.Models
                         note.tint = note.direction == 1 ? 0.94f : 1.06f;
                         if (note.next_id > 0)
                         {
-	                        note.nextdraglinestarttime = note.intro_time - 0.133f;
-	                        note.nextdraglinestoptime = Root.note_list[note.next_id].intro_time - 0.132f;
-	                    }
+                            note.nextdraglinestarttime = note.intro_time - 0.133f;
+                            note.nextdraglinestoptime = Root.note_list[note.next_id].intro_time - 0.132f;
+                        }
+
                         break;
                     case 4:
                         note.tint = note.direction == 1 ? 0.94f : 1.06f;
@@ -184,12 +172,12 @@ namespace Cytus2.Models
                             note.nextdraglinestarttime = note.intro_time - 0.133f;
                             note.nextdraglinestoptime = Root.note_list[note.next_id].intro_time - 0.132f;
                         }
+
                         break;
                     case 5:
                         note.tint = note.direction == 1 ? 1.00f : 1.30f;
                         break;
                 }
-            }
 
             foreach (var note in Root.note_list)
             {
@@ -214,10 +202,12 @@ namespace Cytus2.Models
             MusicOffset = (float) Root.music_offset;
 
             // Set checksum if not a converted chart
-            if (checksumSource == string.Empty)
-            {
-                checksumSource = thisChecksumSource;
-            }
+            if (checksumSource == string.Empty) checksumSource = thisChecksumSource;
+        }
+
+        public string Checksum
+        {
+            get { return global::Checksum.From(checksumSource); }
         }
 
         private float ConvertToTime(float tick)
@@ -238,6 +228,31 @@ namespace Cytus2.Models
 
             result += (tick - currentTick) * 1e-6 * Root.tempo_list[currentTimeZone].value / (float) Root.time_base;
             return (float) result;
+        }
+
+        private int ConvertToTick(float time)
+        {
+            var currentTime = 0.0;
+            var currentTick = 0.0;
+            int i;
+            for (i = 1; i < Root.tempo_list.Count; i++)
+            {
+                var delta = (Root.tempo_list[i].tick - Root.tempo_list[i - 1].tick) / Root.time_base *
+                            Root.tempo_list[i - 1].value * 1e-6;
+                if (currentTime + delta < time)
+                {
+                    currentTime += delta;
+                    currentTick = Root.tempo_list[i].tick;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return Mathf.RoundToInt((float) (currentTick +
+                                             (time - currentTime) / Root.tempo_list[i - 1].value * 1e6f *
+                                             Root.time_base));
         }
 
         public float CalculateNoteSpeed(ChartNote note)
@@ -263,32 +278,38 @@ namespace Cytus2.Models
                 targetPageId++;
 
             if (targetPageId == Root.page_list.Count)
-            {
                 return (float) (
                     -verticalRatio * Root.page_list[targetPageId - 1].scan_line_direction *
-                       (-baseSize + 2.0f *
-                        baseSize *
-                        (tick - Root.page_list[targetPageId - 1].end_tick) *
-                        1.0f / (Root.page_list[targetPageId - 1].end_tick -
-                                Root.page_list[targetPageId - 1].start_tick))
-                       + offset);
-            }
+                    (-baseSize + 2.0f *
+                     baseSize *
+                     (tick - Root.page_list[targetPageId - 1].end_tick) *
+                     1.0f / (Root.page_list[targetPageId - 1].end_tick -
+                             Root.page_list[targetPageId - 1].start_tick))
+                    + offset);
 
             return (float) (
                 verticalRatio * Root.page_list[targetPageId].scan_line_direction *
-                   (-baseSize + 2.0f *
-                    baseSize * (tick - Root.page_list[targetPageId].start_tick) *
-                    1.0f / (Root.page_list[targetPageId].end_tick - Root.page_list[targetPageId].start_tick))
-                   + offset);
+                (-baseSize + 2.0f *
+                 baseSize * (tick - Root.page_list[targetPageId].start_tick) *
+                 1.0f / (Root.page_list[targetPageId].end_tick - Root.page_list[targetPageId].start_tick))
+                + offset);
         }
 
-        public float GetScannerPosition(float time)
+        public float GetScanlinePosition(float time)
         {
             CurrentPageId = 0;
             while (CurrentPageId < Root.page_list.Count && time > Root.page_list[CurrentPageId].end_time)
                 CurrentPageId++;
             if (CurrentPageId == Root.page_list.Count)
             {
+                if (ScanlineSmoothing)
+                    return (float) (-verticalRatio * Root.page_list[CurrentPageId - 1].scan_line_direction *
+                                    (-baseSize + 2.0f *
+                                     baseSize *
+                                     (ConvertToTick(time) - Root.page_list[CurrentPageId - 1].end_tick) *
+                                     1.0f / (Root.page_list[CurrentPageId - 1].end_tick -
+                                             Root.page_list[CurrentPageId - 1].start_tick))
+                                    + offset);
                 return -verticalRatio * Root.page_list[CurrentPageId - 1].scan_line_direction *
                        (-baseSize + 2.0f *
                         baseSize *
@@ -298,6 +319,14 @@ namespace Cytus2.Models
                        + offset;
             }
 
+            if (ScanlineSmoothing)
+                return (float) (verticalRatio * Root.page_list[CurrentPageId].scan_line_direction *
+                                (-baseSize + 2.0f *
+                                 baseSize *
+                                 (ConvertToTick(time) - Root.page_list[CurrentPageId].start_tick) *
+                                 1.0f / (Root.page_list[CurrentPageId].end_tick -
+                                         Root.page_list[CurrentPageId].start_tick))
+                                + offset);
             return verticalRatio * Root.page_list[CurrentPageId].scan_line_direction *
                    (-baseSize + 2.0f *
                     baseSize *
@@ -306,13 +335,13 @@ namespace Cytus2.Models
                    + offset;
         }
 
-        public float GetScannerPosition01(float percentage)
+        public float GetScanlinePosition01(float percentage)
         {
             return verticalRatio *
                    (-baseSize + 2.0f * baseSize * percentage)
                    + offset;
         }
-        
+
         public float GetEdgePosition(bool bottom)
         {
             return verticalRatio * (bottom ? 1 : -1) *
@@ -359,14 +388,12 @@ namespace Cytus2.Models
                             if (!int.TryParse(data[i], out id)) continue;
                             note = tmpNotes[id];
                             note.Type = C1NoteType.Chain;
-                            
+
                             if (!notesInChain.Contains(note)) notesInChain.Add(note);
                         }
 
                         for (var i = 0; i < notesInChain.Count - 1; i++)
-                        {
                             notesInChain[i].ConnectedNote = notesInChain[i + 1];
-                        }
 
                         notesInChain[0].IsChainHead = true;
                         break;
@@ -393,10 +420,7 @@ namespace Cytus2.Models
 
             // Reset chronological ids
             chronologicalIds.Clear();
-            for (var i = 0; i < tmpNotes.Count; i++)
-            {
-                chronologicalIds.Add(i);
-            }
+            for (var i = 0; i < tmpNotes.Count; i++) chronologicalIds.Add(i);
 
             // Convert
 
@@ -443,22 +467,12 @@ namespace Cytus2.Models
                 page = Mathf.FloorToInt(ti / timeBase);
                 obj.page_index = page;
                 if (note.Type == C1NoteType.Chain)
-                {
                     obj.next_id = note.ConnectedNote != null ? note.ConnectedNote.Id : -1;
-                }
                 else
-                {
                     obj.next_id = 0;
-                }
 
-                if (obj.ring_color != null)
-                {
-                    obj.ParsedRingColor = Convert.HexToColor(obj.ring_color);
-                }
-                if (obj.fill_color != null)
-                {
-                    obj.ParsedFillColor = Convert.HexToColor(obj.fill_color);
-                }
+                if (obj.ring_color != null) obj.ParsedRingColor = Convert.HexToColor(obj.ring_color);
+                if (obj.fill_color != null) obj.ParsedFillColor = Convert.HexToColor(obj.fill_color);
 
                 noteList.Add(obj);
             }
@@ -488,16 +502,15 @@ namespace Cytus2.Models
         [Serializable]
         public class C1Note
         {
+            [NonSerialized] public C1Note ConnectedNote;
+            public float Duration;
             public int Id;
+            public bool IsChainHead;
             public int OriginalId;
             public float Time;
-            public float X;
-            public float Duration;
 
             public C1NoteType Type = C1NoteType.Single;
-
-            [NonSerialized] public C1Note ConnectedNote;
-            public bool IsChainHead;
+            public float X;
 
             public C1Note(int originalId, float time, float x, float duration, bool isChainHead)
             {
@@ -507,13 +520,6 @@ namespace Cytus2.Models
                 Duration = duration;
                 IsChainHead = isChainHead;
             }
-        }
-
-        public enum C1NoteType
-        {
-            Single,
-            Chain,
-            Hold
         }
     }
 }

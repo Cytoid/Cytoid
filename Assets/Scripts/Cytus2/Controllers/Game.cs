@@ -9,7 +9,6 @@ using Cytus2.Models;
 using Cytus2.Views;
 using DG.Tweening;
 using DoozyUI;
-using E7.Native;
 using Lean.Touch;
 using Newtonsoft.Json;
 using QuickEngine.Extensions;
@@ -23,30 +22,62 @@ namespace Cytus2.Controllers
 {
     public class Game : SingletonMonoBehavior<Game>
     {
-        public GameView View;
+        private readonly Dictionary<int, FlickNote> flickingNotes = new Dictionary<int, FlickNote>();
 
-        public Level Level;
-        public Chart Chart;
-        public Dictionary<int, GameNote> GameNotes = new Dictionary<int, GameNote>();
-        public Play Play;
-        public RankedPlayData RankedPlayData;
-        public UnrankedPlayData UnrankedPlayData;
+        private readonly Dictionary<int, HoldNote> holdingNotes = new Dictionary<int, HoldNote>();
+        private readonly List<GameNote> touchableDragNotes = new List<GameNote>(); // Drag head, Drag child
+        private readonly List<HoldNote> touchableHoldNotes = new List<HoldNote>(); // Hold, Long hold
 
-        [SerializeField] protected GameObject ClickNotePrefab;
-        [SerializeField] protected GameObject HoldNotePrefab;
-        [SerializeField] protected GameObject LongHoldNotePrefab;
-        [SerializeField] protected GameObject DragHeadNotePrefab;
-        [SerializeField] protected GameObject DragChildNotePrefab;
-        [SerializeField] protected GameObject FlickNotePrefab;
-        [SerializeField] protected GameObject DragLinePrefab;
-        [SerializeField] protected Canvas InfoCanvas;
+        private readonly List<GameNote> touchableNormalNotes = new List<GameNote>(); // Click, Hold, Long hold, Flick
+
+        // TODO: Get away, Doozy UI
+
+        private string action = Action.Result;
+        private float audioPlayTime = -1f;
         [SerializeField] protected AudioSource AudioSource;
-        [SerializeField] protected ScanlineView Scanline;
-        [SerializeField] protected GameObject BoundaryTop;
         [SerializeField] protected GameObject BoundaryBottom;
+        private Animator boundaryBottomAnimator;
+        [SerializeField] protected GameObject BoundaryTop;
 
         private Animator boundaryTopAnimator;
-        private Animator boundaryBottomAnimator;
+        public Chart Chart;
+
+        [SerializeField] protected GameObject ClickNotePrefab;
+        private int currentAnimId;
+        private int currentEventId;
+
+        private int currentNoteId;
+        private int currentPageId;
+        [SerializeField] protected GameObject DragChildNotePrefab;
+        [SerializeField] protected GameObject DragHeadNotePrefab;
+        [SerializeField] protected GameObject DragLinePrefab;
+        [SerializeField] protected GameObject FlickNotePrefab;
+        public Dictionary<int, GameNote> GameNotes = new Dictionary<int, GameNote>();
+        [SerializeField] protected GameObject HoldNotePrefab;
+        [SerializeField] protected Canvas InfoCanvas;
+
+        private int lastNoteId;
+
+        private float lastSynchorized;
+
+        public Level Level;
+        [SerializeField] protected GameObject LongHoldNotePrefab;
+
+        // SECTION: Native Audio
+
+        protected int NativeAudioId;
+        public Play Play;
+        public RankedPlayData RankedPlayData;
+        [SerializeField] protected ScanlineView Scanline;
+        private float synchorizedCount;
+
+        private float truePlayTime = -1f;
+
+        private Coroutine unpauseCoroutine;
+
+        public int UnpauseCountdown;
+        public UnrankedPlayData UnrankedPlayData;
+        public GameView View;
 
         public float Length { get; protected set; }
         public float Time { get; protected set; }
@@ -65,24 +96,6 @@ namespace Cytus2.Controllers
         public bool IsPlaying { get; protected set; }
         public bool IsCompleted { get; protected set; }
         public bool IsFailed { get; protected set; }
-
-        public int UnpauseCountdown;
-
-        private int currentNoteId;
-        private int currentEventId;
-        private int currentAnimId;
-        private int currentPageId;
-
-        private int lastNoteId;
-
-        private readonly Dictionary<int, HoldNote> holdingNotes = new Dictionary<int, HoldNote>();
-        private readonly Dictionary<int, FlickNote> flickingNotes = new Dictionary<int, FlickNote>();
-
-        private readonly List<GameNote> touchableNormalNotes = new List<GameNote>(); // Click, Hold, Long hold, Flick
-        private readonly List<GameNote> touchableDragNotes = new List<GameNote>(); // Drag head, Drag child
-        private readonly List<HoldNote> touchableHoldNotes = new List<HoldNote>(); // Hold, Long hold
-        
-        private Coroutine unpauseCoroutine;
 
         protected override void Awake()
         {
@@ -110,10 +123,7 @@ namespace Cytus2.Controllers
 
             // Enable/disable FPS counter
             var fpsCounter = GameObject.FindGameObjectWithTag("FpsCounter");
-            if (fpsCounter != null)
-            {
-                fpsCounter.SetActive(PlayerPrefsExt.GetBool("fps counter"));
-            }
+            if (fpsCounter != null) fpsCounter.SetActive(PlayerPrefsExt.GetBool("fps counter"));
 
             boundaryTopAnimator = BoundaryTop.GetComponentInChildren<Animator>();
             boundaryBottomAnimator = BoundaryBottom.GetComponentInChildren<Animator>();
@@ -161,7 +171,7 @@ namespace Cytus2.Controllers
                         (float) CytoidApplication.BackgroundTexture.width / CytoidApplication.BackgroundTexture.height;
                     yield return null; // Wait an extra frame
                 }
-                
+
                 www.Dispose();
                 Resources.UnloadUnusedAssets();
 
@@ -179,10 +189,7 @@ namespace Cytus2.Controllers
             // Load chart
             print("Loading chart");
 
-            if (CytoidApplication.CurrentChartType == null)
-            {
-                CytoidApplication.CurrentChartType = Level.charts[0].type;
-            }
+            if (CytoidApplication.CurrentChartType == null) CytoidApplication.CurrentChartType = Level.charts[0].type;
 
             var chartSection = Level.charts.Find(it => it.type == CytoidApplication.CurrentChartType);
 
@@ -237,9 +244,7 @@ namespace Cytus2.Controllers
             options.ChartOffset += ZPlayerPrefs.GetFloat(PreferenceKeys.ChartRelativeOffset(Level.id), 0);
 
             if (Application.platform != RuntimePlatform.Android && Headset.Detect())
-            {
                 options.ChartOffset += ZPlayerPrefs.GetFloat("headset offset");
-            }
 
             if (CytoidApplication.CurrentHitSound.Name != "None")
             {
@@ -298,7 +303,7 @@ namespace Cytus2.Controllers
             IsLoaded = true;
 
             EventKit.Broadcast("game loaded");
-            
+
             // Wait for Storyboard
             while (!StoryboardController.Instance.Loaded) yield return null;
 
@@ -313,10 +318,7 @@ namespace Cytus2.Controllers
 
             lastNoteId = Chart.Root.note_list.Last().id;
 
-            if (Mod.HideScanline.IsEnabled())
-            {
-                Scanline.GetComponent<LineRenderer>().enabled = false;
-            }
+            if (Mod.HideScanline.IsEnabled()) Scanline.GetComponent<LineRenderer>().enabled = false;
 
             Scanline.PlayEnter();
 
@@ -327,9 +329,7 @@ namespace Cytus2.Controllers
             if (GameOptions.Instance.UseAndroidNativeAudio)
             {
                 if (GameOptions.Instance.StartAt > 0.00001)
-                {
                     ANAMusic.seekTo(NativeAudioId, (int) (GameOptions.Instance.StartAt * 1000f));
-                }
 
                 ANAMusic.play(NativeAudioId);
             }
@@ -342,14 +342,17 @@ namespace Cytus2.Controllers
             StartTime = UnityEngine.Time.time;
         }
 
-        private float lastSynchorized;
-        private float synchorizedCount;
-
-        private float truePlayTime = -1f;
-        private float audioPlayTime = -1f;
-
         protected virtual void Update()
         {
+            // UI Opacity Workaround
+            if (!StoryboardController.Instance.ControllingUiCanvasGroup)
+                foreach (var canvasGroup in StoryboardController.Instance.UiCanvasGroup.gameObject
+                    .GetComponentsInChildren<CanvasGroup>())
+                {
+                    if (canvasGroup.name == "PauseHintText") continue;
+                    canvasGroup.alpha = StoryboardController.Instance.UiCanvasGroup.alpha;
+                }
+
             if (Input.GetKeyDown(KeyCode.Escape) && !(this is StoryboardGame))
             {
                 Pause();
@@ -362,24 +365,18 @@ namespace Cytus2.Controllers
                 return;
             }
 
-            if (IsFailed)
-            {
-                AudioSource.volume -= 1f / 120f;
-            }
+            if (IsFailed) AudioSource.volume -= 1f / 120f;
 
             if (IsPlaying)
             {
-                if (Play.NoteCleared >= Chart.Root.note_list.Count)
-                {
-                    Complete();
-                }
+                if (Play.NoteCleared >= Chart.Root.note_list.Count) Complete();
 
                 UpdateOnScreenNotes();
 
                 if (this is StoryboardGame)
                 {
                     Time = AudioSource.timeSamples * 1.0f / AudioSource.clip.frequency
-                            - GameOptions.Instance.ChartOffset + Chart.MusicOffset;
+                           - GameOptions.Instance.ChartOffset + Chart.MusicOffset;
                 }
                 else
                 {
@@ -388,28 +385,20 @@ namespace Cytus2.Controllers
                         lastSynchorized = UnityEngine.Time.time;
                         synchorizedCount++;
                         if (GameOptions.Instance.UseAndroidNativeAudio)
-                        {
                             Time = ANAMusic.getCurrentPosition(NativeAudioId) / 1000f
                                    - GameOptions.Instance.ChartOffset + Chart.MusicOffset;
-                        }
                         else
-                        {
                             Time = AudioSource.timeSamples * 1.0f / AudioSource.clip.frequency
                                    - GameOptions.Instance.ChartOffset + Chart.MusicOffset;
-                        }
                     }
                     else
                     {
                         if (truePlayTime == -1f)
                         {
                             if (GameOptions.Instance.UseAndroidNativeAudio)
-                            {
                                 audioPlayTime = ANAMusic.getCurrentPosition(NativeAudioId) / 1000f;
-                            }
                             else
-                            {
                                 audioPlayTime = AudioSource.timeSamples * 1.0f / AudioSource.clip.frequency;
-                            }
 
                             truePlayTime = UnityEngine.Time.time;
                         }
@@ -426,14 +415,10 @@ namespace Cytus2.Controllers
                 var notes = chart.note_list;
 
                 if (Scanline.PosOverride != float.MinValue)
-                {
-                    Scanline.transform.SetY(Chart.GetScannerPosition01(Scanline.PosOverride));
-                }
+                    Scanline.transform.SetY(Chart.GetScanlinePosition01(Scanline.PosOverride));
                 else
-                {
-                    Scanline.transform.DOMoveY(Chart.GetScannerPosition(Time), UnityEngine.Time.deltaTime)
+                    Scanline.transform.DOMoveY(Chart.GetScanlinePosition(Time), UnityEngine.Time.deltaTime)
                         .SetEase(Ease.Linear);
-                }
 
                 // Scanline.transform.position = new Vector3(0, Chart.GetScannerPosition(Time));
                 Scanline.Direction = Chart.CurrentPageId < chart.page_list.Count
@@ -443,7 +428,9 @@ namespace Cytus2.Controllers
                 if (Chart.CurrentPageId < chart.page_list.Count)
                 {
                     boundaryTopAnimator.speed =
-                        chart.tempo_list[0].value / 1000000f / (chart.page_list[Chart.CurrentPageId].end_time - chart.page_list[Chart.CurrentPageId].start_time);
+                        chart.tempo_list[0].value / 1000000f /
+                        (chart.page_list[Chart.CurrentPageId].end_time -
+                         chart.page_list[Chart.CurrentPageId].start_time);
                     boundaryBottomAnimator.speed = boundaryTopAnimator.speed;
                 }
                 else
@@ -460,23 +447,17 @@ namespace Cytus2.Controllers
                 {
                     // TODO: Speed up text
                     if (chart.event_order_list[currentEventId].event_list[0].type == 0)
-                    {
                         Scanline.PlaySpeedUp();
-                    }
                     else
-                    {
                         Scanline.PlaySpeedDown();
-                    }
 
                     currentEventId++;
                 }
 
                 while (currentAnimId < chart.animation_list.Count &&
                        chart.animation_list[currentAnimId].time < Time)
-                {
                     // TODO: Subtitle animation
                     currentAnimId++;
-                }
 
                 while (currentPageId < chart.page_list.Count && chart.page_list[currentPageId].end_time <= Time)
                 {
@@ -488,7 +469,6 @@ namespace Cytus2.Controllers
                 }
 
                 while (currentNoteId < notes.Count && notes[currentNoteId].start_time - 2.0f < Time)
-                {
                     switch (notes[currentNoteId].type)
                     {
                         case NoteType.DragHead:
@@ -507,7 +487,6 @@ namespace Cytus2.Controllers
                             currentNoteId++;
                             break;
                     }
-                }
             }
         }
 
@@ -524,20 +503,14 @@ namespace Cytus2.Controllers
                 if (!note.HasEmerged || note.IsCleared) continue;
 
                 if (note.Note.type != NoteType.DragHead && note.Note.type != NoteType.DragChild)
-                {
                     touchableNormalNotes.Add(note);
-                }
 
                 if (note.Note.type == NoteType.DragHead || note.Note.type == NoteType.DragChild)
-                {
                     touchableDragNotes.Add(note);
-                }
 
                 if ((note.Note.type == NoteType.Hold || note.Note.type == NoteType.LongHold) &&
                     !((HoldNote) note).IsHolding)
-                {
                     touchableHoldNotes.Add((HoldNote) note);
-                }
             }
         }
 
@@ -577,13 +550,13 @@ namespace Cytus2.Controllers
                     }
                     else
                     {
-
                         if (touchedDrag && Math.Abs(note.TimeUntilStart) > note.Page.Duration / 8f) continue;
                         if (note.Note.page_index > Chart.CurrentPageId &&
                             note.Note.start_time - Time >
                             Chart.Root.page_list[CurrentPageId].Duration * 0.5f) continue;
                         note.Touch(finger.ScreenPosition);
                     }
+
                     return;
                 }
             }
@@ -602,10 +575,7 @@ namespace Cytus2.Controllers
             {
                 var flickingNote = flickingNotes[finger.Index];
                 var cleared = flickingNote.UpdateFingerPosition(pos);
-                if (cleared)
-                {
-                    flickingNotes.Remove(finger.Index);
-                }
+                if (cleared) flickingNotes.Remove(finger.Index);
             }
 
             // Query drag notes
@@ -639,17 +609,13 @@ namespace Cytus2.Controllers
 
                 // Query held hold notes (i.e. multiple fingers on the same hold note)
                 if (!heldNew)
-                {
                     foreach (var holdNote in holdingNotes.Values)
-                    {
                         if (holdNote.DoesCollide(pos))
                         {
                             holdingNotes.Add(finger.Index, holdNote);
                             holdNote.StartHoldingBy(finger.Index);
                             break;
                         }
-                    }
-                }
             }
             else // The finger is already holding a note
             {
@@ -819,18 +785,12 @@ namespace Cytus2.Controllers
         {
             if (GameOptions.Instance.UseAndroidNativeAudio)
             {
-                while (ANAMusic.isPlaying(NativeAudioId))
-                {
-                    yield return null;
-                }
+                while (ANAMusic.isPlaying(NativeAudioId)) yield return null;
             }
             else
             {
                 var exitTime = UnityEngine.Time.time;
-                while (AudioSource.isPlaying && UnityEngine.Time.time - exitTime < 10)
-                {
-                    yield return null;
-                }
+                while (AudioSource.isPlaying && UnityEngine.Time.time - exitTime < 10) yield return null;
             }
 
             if (Play.IsRanked)
@@ -925,17 +885,6 @@ namespace Cytus2.Controllers
             Play.OnClear(note, note.CalculateGrading(), note.TimeUntilEnd, note.GreatGradeWeight);
         }
 
-        // TODO: Get away, Doozy UI
-
-        private string action = Action.Result;
-
-        public static class Action
-        {
-            public const string Result = "Result";
-            public const string Back = "Back";
-            public const string Retry = "Retry";
-        }
-
         public void SetAction(string action)
         {
             this.action = action;
@@ -943,10 +892,7 @@ namespace Cytus2.Controllers
 
         public void DoAction()
         {
-            if (GameOptions.Instance.UseAndroidNativeAudio)
-            {
-                ANAMusic.release(NativeAudioId);
-            }
+            if (GameOptions.Instance.UseAndroidNativeAudio) ANAMusic.release(NativeAudioId);
 
             switch (action)
             {
@@ -966,8 +912,11 @@ namespace Cytus2.Controllers
             }
         }
 
-        // SECTION: Native Audio
-
-        protected int NativeAudioId;
+        public static class Action
+        {
+            public const string Result = "Result";
+            public const string Back = "Back";
+            public const string Retry = "Retry";
+        }
     }
 }

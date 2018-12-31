@@ -16,46 +16,77 @@ namespace Cytoid.Storyboard
 {
     public class StoryboardController : SingletonMonoBehavior<StoryboardController>
     {
-        public bool Loaded = false;
-        public bool ShowEffects = true;
-
-        private string lastPath;
-        private FileSystemWatcher watcher;
-
-        public UnityEngine.UI.Text TextPrefab;
-        public Image SpritePrefab;
-        public PrismEffects Prism;
-        public CameraFilterPack_Blur_Radial_Fast RadialBlur;
-        public CameraFilterPack_Color_BrightContrastSaturation ColorAdjustment;
-        public CameraFilterPack_Color_GrayScale GrayScale;
-        public CameraFilterPack_Color_Noise Noise;
-        public CameraFilterPack_Color_RGB ColorFilter;
-        public CameraFilterPack_Color_Sepia Sepia;
-        public CameraFilterPack_Distortion_Dream Dream;
-        public CameraFilterPack_Distortion_FishEye Fisheye;
-        public CameraFilterPack_Distortion_ShockWave Shockwave;
-        public CameraFilterPack_Drawing_Manga_Flash_Color Focus;
-        public CameraFilterPack_FX_Glitch1 Glitch;
-        public CameraFilterPack_TV_Artefact Artifact;
         public CameraFilterPack_TV_ARCADE_2 Arcade;
-        public CameraFilterPack_TV_Chromatical Chromatical;
-        public CameraFilterPack_TV_Videoflip Tape;
-        public SleekRenderPostProcess Sleek;
-        public Canvas Canvas;
-        public CanvasGroup UiCanvasGroup;
+        public Toggle ArcadeToggle;
+        public CameraFilterPack_TV_Artefact Artifact;
         public Image BackgroundOverlayMask;
+
+        public Toggle BloomPrismToggle;
+        public Toggle BloomSleekToggle;
+        public Canvas Canvas;
 
         [HideInInspector] public CanvasGroup CanvasGroup;
         [HideInInspector] public Rect CanvasRect;
+        public CameraFilterPack_TV_Chromatical Chromatical;
+        public Toggle ChromaticalToggle;
+        public Toggle ChromaticToggle;
+        public CameraFilterPack_Color_BrightContrastSaturation ColorAdjustment;
+        public Toggle ColorAdjustmentToggle;
+        public CameraFilterPack_Color_RGB ColorFilter;
+        public Toggle ColorFilterCfpToggle;
+        public Toggle ColorFilterSleekToggle;
+        [HideInInspector] public List<Controller> Controllers = new List<Controller>();
+        public bool ControllingUiCanvasGroup; // Workaround
+        public CameraFilterPack_Distortion_Dream Dream;
+        public Toggle DreamToggle;
+        private EasingFunction.Ease ease;
+        public CameraFilterPack_Distortion_FishEye Fisheye;
+        public Toggle FisheyeToggle;
+        public CameraFilterPack_Drawing_Manga_Flash_Color Focus;
+        public Toggle FocusToggle;
+        public CameraFilterPack_FX_Glitch1 Glitch;
+        public Toggle GlitchToggle;
+        public CameraFilterPack_Color_GrayScale GrayScale;
+        public Toggle GrayScaleToggle;
+
+        private string lastPath;
+        public bool Loaded;
+        public Toggle LowerResToggle;
+        public Toggle LowestResToggle;
+        public CameraFilterPack_Color_Noise Noise;
+        public Toggle NoiseToggle;
+        public PrismEffects Prism;
+        public CameraFilterPack_Blur_Radial_Fast RadialBlur;
+        public Toggle RadialBlurToggle;
+        public CameraFilterPack_Color_Sepia Sepia;
+        public Toggle SepiaToggle;
+        public CameraFilterPack_Distortion_ShockWave Shockwave;
+        public Toggle ShockwaveToggle;
+        public bool ShowEffects = true;
+        public SleekRenderPostProcess Sleek;
+        public Image SpritePrefab;
+
+        [HideInInspector] public Dictionary<Image, Sprite> SpriteViews = new Dictionary<Image, Sprite>();
+
+        private ObjectState stateA;
+        private ObjectState stateB;
 
         [HideInInspector] public Storyboard Storyboard;
+        public CameraFilterPack_TV_Videoflip Tape;
+        public Toggle TapeToggle;
+
+        public bool Testing;
+
+        public UnityEngine.UI.Text TextPrefab;
 
         [HideInInspector]
         public Dictionary<UnityEngine.UI.Text, Text> TextViews = new Dictionary<UnityEngine.UI.Text, Text>();
 
-        [HideInInspector] public Dictionary<Image, Sprite> SpriteViews = new Dictionary<Image, Sprite>();
-        [HideInInspector] public List<Controller> Controllers = new List<Controller>();
         [HideInInspector] public List<Trigger> Triggers = new List<Trigger>();
+        public CanvasGroup UiCanvasGroup;
+        public Toggle VignettePrismToggle;
+        public Toggle VignetteSleekToggle;
+        private FileSystemWatcher watcher;
 
         public static float Time
         {
@@ -153,10 +184,7 @@ namespace Cytoid.Storyboard
         private IEnumerator Start()
         {
             // Don't proceed until game chart is ready
-            while (Game.Instance == null || Game.Instance.Chart == null)
-            {
-                yield return null;
-            }
+            while (Game.Instance == null || Game.Instance.Chart == null) yield return null;
 
             CanvasGroup = Canvas.GetComponent<CanvasGroup>();
             CanvasRect = Canvas.GetComponent<RectTransform>().rect;
@@ -174,10 +202,7 @@ namespace Cytoid.Storyboard
                 yield break;
             }
 
-            if (SceneManager.GetActiveScene().name == "Storyboard")
-            {
-                WatchFileUpdate();
-            }
+            if (SceneManager.GetActiveScene().name == "Storyboard") WatchFileUpdate();
 
             // Listen to events
             EventKit.Subscribe<GameNote>("note clear", OnNoteClear);
@@ -190,7 +215,6 @@ namespace Cytoid.Storyboard
         public void SetupGraphics()
         {
             if (Controllers.Count > 0)
-            {
                 switch (PlayerPrefs.GetString("storyboard effects"))
                 {
                     case "High":
@@ -208,13 +232,10 @@ namespace Cytoid.Storyboard
                         ShowEffects = false;
                         break;
                 }
-            }
 
             if (PlayerPrefsExt.GetBool("low res"))
-            {
                 Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.5),
                     (int) (CytoidApplication.OriginalHeight * 0.5), true);
-            }
 
             // Enable PRISM only if supported
             if (Prism.m_Shader.isSupported && Prism.m_Shader2.isSupported && Prism.m_Shader3.isSupported)
@@ -247,18 +268,12 @@ namespace Cytoid.Storyboard
             lastPath = path;
 
             // Clear texts
-            foreach (var textView in TextViews.Keys)
-            {
-                Destroy(textView.gameObject);
-            }
+            foreach (var textView in TextViews.Keys) Destroy(textView.gameObject);
 
             TextViews.Clear();
 
             // Clear sprites
-            foreach (var spriteView in SpriteViews.Keys)
-            {
-                Destroy(spriteView.gameObject);
-            }
+            foreach (var spriteView in SpriteViews.Keys) Destroy(spriteView.gameObject);
 
             SpriteViews.Clear();
 
@@ -273,15 +288,13 @@ namespace Cytoid.Storyboard
 
             // Create texts
             foreach (var text in Storyboard.Texts)
-            {
-                if (!text.IsManuallySpawned()) Spawn(text);
-            }
+                if (!text.IsManuallySpawned())
+                    Spawn(text);
 
             // Create sprites
             foreach (var sprite in Storyboard.Sprites)
-            {
-                if (!sprite.IsManuallySpawned()) yield return Spawn(sprite);
-            }
+                if (!sprite.IsManuallySpawned())
+                    yield return Spawn(sprite);
 
             // Create scene
             Controllers = Storyboard.Controllers;
@@ -309,10 +322,7 @@ namespace Cytoid.Storyboard
 
             UpdateControllers();
 
-            if (Testing)
-            {
-                UpdateTestViews();
-            }
+            if (Testing) UpdateTestViews();
         }
 
         protected virtual void UpdateTexts()
@@ -325,10 +335,7 @@ namespace Cytoid.Storyboard
                 TextState b;
                 FindStates(text.States, out a, out b);
 
-                if (a == null)
-                {
-                    continue;
-                }
+                if (a == null) continue;
 
                 stateA = a;
                 stateB = b;
@@ -343,77 +350,51 @@ namespace Cytoid.Storyboard
                 }
 
                 // X
-                if (a.X != float.MinValue)
-                {
-                    textView.rectTransform.SetLocalX(EaseCanvasX(a.X, b.X));
-                }
+                if (a.X != float.MinValue) textView.rectTransform.SetLocalX(EaseCanvasX(a.X, b.X));
 
                 // Y
-                if (a.Y != float.MinValue)
-                {
-                    textView.rectTransform.SetLocalY(EaseCanvasY(a.Y, b.Y));
-                }
+                if (a.Y != float.MinValue) textView.rectTransform.SetLocalY(EaseCanvasY(a.Y, b.Y));
 
                 // RotX
                 if (a.RotX != float.MinValue)
-                {
                     textView.rectTransform.localEulerAngles =
                         textView.rectTransform.localEulerAngles.SetX(Ease(a.RotX, b.RotX));
-                }
 
                 // RotY
                 if (a.RotY != float.MinValue)
-                {
                     textView.rectTransform.localEulerAngles =
                         textView.rectTransform.localEulerAngles.SetY(Ease(a.RotY, b.RotY));
-                }
 
                 // RotZ
                 if (a.RotZ != float.MinValue)
-                {
                     textView.rectTransform.localEulerAngles =
                         textView.rectTransform.localEulerAngles.SetZ(Ease(a.RotZ, b.RotZ));
-                }
 
                 // ScaleX
-                if (a.ScaleX != float.MinValue)
-                {
-                    textView.rectTransform.SetScaleX(Ease(a.ScaleX, b.ScaleX));
-                }
+                if (a.ScaleX != float.MinValue) textView.rectTransform.SetScaleX(Ease(a.ScaleX, b.ScaleX));
 
                 // ScaleY
-                if (a.ScaleY != float.MinValue)
-                {
-                    textView.rectTransform.SetScaleY(Ease(a.ScaleY, b.ScaleY));
-                }
+                if (a.ScaleY != float.MinValue) textView.rectTransform.SetScaleY(Ease(a.ScaleY, b.ScaleY));
 
                 // Color
                 if (a.Color != null)
-                {
                     textView.color = b.Color == null
                         ? a.Color.ToUnityColor()
                         : UnityEngine.Color.Lerp(a.Color.ToUnityColor(), b.Color.ToUnityColor(), Ease(0, 1));
-                }
 
                 // Opacity
                 if (a.Opacity != float.MinValue)
-                {
                     textView.GetComponent<CanvasGroup>().alpha = Ease(a.Opacity, b.Opacity);
-                }
 
                 // PivotX
                 if (a.PivotX != float.MinValue)
-                {
                     textView.rectTransform.pivot =
                         new Vector2(Ease(a.PivotX, b.PivotX), textView.rectTransform.pivot.y);
-                }
 
                 // PivotY
                 if (a.PivotY != float.MinValue)
-                {
                     textView.rectTransform.pivot =
                         new Vector2(textView.rectTransform.pivot.x, Ease(a.PivotY, b.PivotY));
-                }
 
                 // Fill Width
                 if (a.FillWidth != null && (bool) a.FillWidth)
@@ -424,36 +405,22 @@ namespace Cytoid.Storyboard
                 else
                 {
                     // Width
-                    if (a.Width != float.MinValue)
-                    {
-                        textView.rectTransform.SetWidth(EaseCanvasX(a.Width, b.Width));
-                    }
+                    if (a.Width != float.MinValue) textView.rectTransform.SetWidth(EaseCanvasX(a.Width, b.Width));
 
                     // Height
-                    if (a.Height != float.MinValue)
-                    {
-                        textView.rectTransform.SetHeight(EaseCanvasY(a.Height, b.Height));
-                    }
+                    if (a.Height != float.MinValue) textView.rectTransform.SetHeight(EaseCanvasY(a.Height, b.Height));
                 }
 
                 // Text
-                if (a.Text != null)
-                {
-                    textView.text = a.Text;
-                }
+                if (a.Text != null) textView.text = a.Text;
 
                 // Size
-                if (a.Size != int.MinValue)
-                {
-                    textView.fontSize = a.Size;
-                }
+                if (a.Size != int.MinValue) textView.fontSize = a.Size;
 
                 // Align
                 if (a.Align != null)
-                {
                     textView.alignment =
                         (TextAnchor) Enum.Parse(typeof(TextAnchor), a.Align, true);
-                }
 
                 Canvas canvas = null;
 
@@ -485,10 +452,7 @@ namespace Cytoid.Storyboard
                 SpriteState b;
                 FindStates(sprite.States, out a, out b);
 
-                if (a == null)
-                {
-                    continue;
-                }
+                if (a == null) continue;
 
                 stateA = a;
                 stateB = b;
@@ -503,69 +467,45 @@ namespace Cytoid.Storyboard
                 }
 
                 // X
-                if (a.X != float.MinValue)
-                {
-                    spriteView.rectTransform.SetLocalX(EaseCanvasX(a.X, b.X));
-                }
+                if (a.X != float.MinValue) spriteView.rectTransform.SetLocalX(EaseCanvasX(a.X, b.X));
 
                 // Y
-                if (a.Y != float.MinValue)
-                {
-                    spriteView.rectTransform.SetLocalY(EaseCanvasY(a.Y, b.Y));
-                }
+                if (a.Y != float.MinValue) spriteView.rectTransform.SetLocalY(EaseCanvasY(a.Y, b.Y));
 
                 // RotX
                 if (a.RotX != float.MinValue)
-                {
                     spriteView.rectTransform.localEulerAngles =
                         spriteView.rectTransform.localEulerAngles.SetX(Ease(a.RotX, b.RotX));
-                }
 
                 // RotY
                 if (a.RotY != float.MinValue)
-                {
                     spriteView.rectTransform.localEulerAngles =
                         spriteView.rectTransform.localEulerAngles.SetY(Ease(a.RotY, b.RotY));
-                }
 
                 // RotZ
                 if (a.RotZ != float.MinValue)
-                {
                     spriteView.rectTransform.localEulerAngles =
                         spriteView.rectTransform.localEulerAngles.SetZ(Ease(a.RotZ, b.RotZ));
-                }
 
                 // ScaleX
-                if (a.ScaleX != float.MinValue)
-                {
-                    spriteView.rectTransform.SetScaleX(Ease(a.ScaleX, b.ScaleX));
-                }
+                if (a.ScaleX != float.MinValue) spriteView.rectTransform.SetScaleX(Ease(a.ScaleX, b.ScaleX));
 
                 // ScaleY
-                if (a.ScaleY != float.MinValue)
-                {
-                    spriteView.rectTransform.SetScaleY(Ease(a.ScaleY, b.ScaleY));
-                }
+                if (a.ScaleY != float.MinValue) spriteView.rectTransform.SetScaleY(Ease(a.ScaleY, b.ScaleY));
 
                 // Opacity
                 if (a.Opacity != float.MinValue)
-                {
                     spriteView.GetComponent<CanvasGroup>().alpha = Ease(a.Opacity, b.Opacity);
-                }
 
                 // PivotX
                 if (a.PivotX != float.MinValue)
-                {
                     spriteView.rectTransform.pivot =
                         new Vector2(Ease(a.PivotX, b.PivotX), spriteView.rectTransform.pivot.y);
-                }
 
                 // PivotY
                 if (a.PivotY != float.MinValue)
-                {
                     spriteView.rectTransform.pivot =
                         new Vector2(spriteView.rectTransform.pivot.x, Ease(a.PivotY, b.PivotY));
-                }
 
                 // Fill Width
                 if (a.FillWidth != null && (bool) a.FillWidth)
@@ -576,29 +516,17 @@ namespace Cytoid.Storyboard
                 else
                 {
                     // Width
-                    if (a.Width != float.MinValue)
-                    {
-                        spriteView.rectTransform.SetWidth(EaseCanvasX(a.Width, b.Width));
-                    }
+                    if (a.Width != float.MinValue) spriteView.rectTransform.SetWidth(EaseCanvasX(a.Width, b.Width));
 
                     // Height
-                    if (a.Height != float.MinValue)
-                    {
-                        spriteView.rectTransform.SetHeight(EaseCanvasY(a.Height, b.Height));
-                    }
+                    if (a.Height != float.MinValue) spriteView.rectTransform.SetHeight(EaseCanvasY(a.Height, b.Height));
                 }
 
                 // Height
-                if (a.Height != float.MinValue)
-                {
-                    spriteView.rectTransform.SetHeight(EaseCanvasY(a.Height, b.Height));
-                }
+                if (a.Height != float.MinValue) spriteView.rectTransform.SetHeight(EaseCanvasY(a.Height, b.Height));
 
                 // Preserve aspect
-                if (a.PreserveAspect != null)
-                {
-                    spriteView.preserveAspect = (bool) a.PreserveAspect;
-                }
+                if (a.PreserveAspect != null) spriteView.preserveAspect = (bool) a.PreserveAspect;
 
                 // Color tint
                 if (a.Color != null)
@@ -647,29 +575,32 @@ namespace Cytoid.Storyboard
 
                     // Storyboard opacity
                     if (a.StoryboardOpacity != float.MinValue)
-                    {
                         CanvasGroup.alpha = Ease(a.StoryboardOpacity, b.StoryboardOpacity);
-                    }
 
                     // UI opacity
                     if (a.UiOpacity != float.MinValue)
                     {
+                        ControllingUiCanvasGroup = true;
                         if (UiCanvasGroup != null)
-                            UiCanvasGroup.alpha = Ease(a.UiOpacity, b.UiOpacity);
+                            foreach (var canvasGroup in UiCanvasGroup.gameObject.GetComponentsInChildren<CanvasGroup>())
+                            {
+                                if (canvasGroup.name == "PauseHintText") continue;
+                                canvasGroup.alpha = Ease(a.UiOpacity, b.UiOpacity);
+                            }
+                    }
+                    else
+                    {
+                        ControllingUiCanvasGroup = false;
                     }
 
                     // Scanline opacity
                     if (a.ScanlineOpacity != float.MinValue)
-                    {
                         ScanlineView.Instance.Opacity = Ease(a.ScanlineOpacity, b.ScanlineOpacity);
-                    }
 
                     // Background dim
                     if (a.BackgroundDim != float.MinValue)
-                    {
                         BackgroundOverlayMask.color =
                             BackgroundOverlayMask.color.WithAlpha(Ease(a.BackgroundDim, b.BackgroundDim));
-                    }
 
                     // Note opacity
                     if (a.NoteOpacityMultiplier != float.MinValue)
@@ -689,17 +620,21 @@ namespace Cytoid.Storyboard
                         ScanlineView.Instance.ColorOverride = easedColor;
                     }
 
+                    if (a.ScanlineSmoothing != null)
+                    {
+                        if ((bool) a.ScanlineSmoothing)
+                            Game.Instance.Chart.ScanlineSmoothing = true;
+                        else
+                            Game.Instance.Chart.ScanlineSmoothing = false;
+                    }
+
                     // Scanline position
                     if (a.OverrideScanlinePos != null)
                     {
                         if ((bool) a.OverrideScanlinePos)
-                        {
                             ScanlineView.Instance.PosOverride = Ease(a.ScanlinePos, b.ScanlinePos);
-                        }
                         else
-                        {
                             ScanlineView.Instance.PosOverride = float.MinValue;
-                        }
                     }
 
                     // Ring color
@@ -715,25 +650,18 @@ namespace Cytoid.Storyboard
 
                     // Fill colors
                     if (a.NoteFillColors != null)
-                    {
                         for (var i = 0; i < 10; i++)
                         {
-                            if (a.NoteFillColors[i] == null)
-                            {
-                                continue;
-                            }
+                            if (a.NoteFillColors[i] == null) continue;
 
                             if (b.NoteFillColors[i] != null)
-                            {
-                                SimpleVisualOptions.Instance.GlobalFillColorsOverride[i] = UnityEngine.Color.Lerp(a.NoteFillColors[i].ToUnityColor(),
+                                SimpleVisualOptions.Instance.GlobalFillColorsOverride[i] = UnityEngine.Color.Lerp(
+                                    a.NoteFillColors[i].ToUnityColor(),
                                     b.NoteFillColors[i].ToUnityColor(), Ease(0, 1));
-                            }
                             else
-                            {
-                                SimpleVisualOptions.Instance.GlobalFillColorsOverride[i] = a.NoteFillColors[i].ToUnityColor();
-                            }
+                                SimpleVisualOptions.Instance.GlobalFillColorsOverride[i] =
+                                    a.NoteFillColors[i].ToUnityColor();
                         }
-                    }
 
                     if (!Testing && (Game.Instance is StoryboardGame || ShowEffects))
                     {
@@ -744,13 +672,8 @@ namespace Cytoid.Storyboard
                             Sleek.settings.bloomEnabled = (bool) a.Bloom;
                             Sleek.enabled = Sleek.settings.bloomEnabled;
                             if ((bool) a.Bloom)
-                            {
-                                // Bloom Intensity
                                 if (a.BloomIntensity != float.MinValue)
-                                {
                                     Sleek.settings.bloomIntensity = Ease(a.BloomIntensity, b.BloomIntensity);
-                                }
-                            }
                         }
 
                         // Vignette
@@ -762,30 +685,22 @@ namespace Cytoid.Storyboard
                             {
                                 // Vignette Intensity
                                 if (a.VignetteIntensity != float.MinValue)
-                                {
                                     Prism.vignetteStrength = Ease(a.VignetteIntensity, b.VignetteIntensity);
-                                }
 
                                 // Vignette Color
                                 if (a.VignetteColor != null)
-                                {
                                     Prism.vignetteColor = b.VignetteColor == null
                                         ? a.VignetteColor.ToUnityColor()
                                         : UnityEngine.Color.Lerp(a.VignetteColor.ToUnityColor(),
                                             b.VignetteColor.ToUnityColor(), Ease(0, 1));
-                                }
 
                                 // Vignette Start
                                 if (a.VignetteStart != float.MinValue)
-                                {
                                     Prism.vignetteStart = Ease(a.VignetteStart, b.VignetteStart);
-                                }
 
                                 // Vignette End
                                 if (a.VignetteEnd != float.MinValue)
-                                {
                                     Prism.vignetteEnd = Ease(a.VignetteEnd, b.VignetteEnd);
-                                }
                             }
                         }
 
@@ -797,21 +712,15 @@ namespace Cytoid.Storyboard
                             {
                                 // Chromatic Intensity
                                 if (a.ChromaticIntensity != float.MinValue)
-                                {
                                     Prism.chromaticIntensity = Ease(a.ChromaticIntensity, b.ChromaticIntensity);
-                                }
 
                                 // Chromatic Start
                                 if (a.ChromaticStart != float.MinValue)
-                                {
                                     Prism.chromaticDistanceOne = Ease(a.ChromaticStart, b.ChromaticStart);
-                                }
 
                                 // Chromatic End
                                 if (a.ChromaticEnd != float.MinValue)
-                                {
                                     Prism.chromaticDistanceTwo = Ease(a.ChromaticEnd, b.ChromaticEnd);
-                                }
                             }
                         }
 
@@ -819,12 +728,8 @@ namespace Cytoid.Storyboard
                         {
                             RadialBlur.enabled = (bool) a.RadialBlur;
                             if ((bool) a.RadialBlur)
-                            {
                                 if (a.RadialBlurIntensity != float.MinValue)
-                                {
                                     RadialBlur.Intensity = Ease(a.RadialBlurIntensity, b.RadialBlurIntensity);
-                                }
-                            }
                         }
 
                         if (a.ColorAdjustment != null)
@@ -833,19 +738,13 @@ namespace Cytoid.Storyboard
                             if ((bool) a.ColorAdjustment)
                             {
                                 if (a.Brightness != float.MinValue)
-                                {
                                     ColorAdjustment.Brightness = Ease(a.Brightness, b.Brightness);
-                                }
 
                                 if (a.Saturation != float.MinValue)
-                                {
                                     ColorAdjustment.Saturation = Ease(a.Saturation, b.Saturation);
-                                }
 
                                 if (a.Contrast != float.MinValue)
-                                {
                                     ColorAdjustment.Contrast = Ease(a.Contrast, b.Contrast);
-                                }
                             }
                         }
 
@@ -853,75 +752,51 @@ namespace Cytoid.Storyboard
                         {
                             ColorFilter.enabled = (bool) a.ColorFilter;
                             if ((bool) a.ColorFilter)
-                            {
                                 if (a.ColorFilterColor != null)
-                                {
                                     ColorFilter.ColorRGB = b.ColorFilterColor == null
                                         ? a.ColorFilterColor.ToUnityColor()
                                         : UnityEngine.Color.Lerp(a.ColorFilterColor.ToUnityColor(),
                                             b.ColorFilterColor.ToUnityColor(), Ease(0, 1));
-                                }
-                            }
                         }
 
                         if (a.GrayScale != null)
                         {
                             GrayScale.enabled = (bool) a.GrayScale;
                             if ((bool) a.GrayScale)
-                            {
                                 if (a.GrayScaleIntensity != float.MinValue)
-                                {
                                     GrayScale._Fade = Ease(a.GrayScaleIntensity, b.GrayScaleIntensity);
-                                }
-                            }
                         }
 
                         if (a.Noise != null)
                         {
                             Noise.enabled = (bool) a.Noise;
                             if ((bool) a.Noise)
-                            {
                                 if (a.NoiseIntensity != float.MinValue)
-                                {
                                     Noise.Noise = Ease(a.NoiseIntensity, b.NoiseIntensity);
-                                }
-                            }
                         }
 
                         if (a.Sepia != null)
                         {
                             Sepia.enabled = (bool) a.Sepia;
                             if ((bool) a.Sepia)
-                            {
                                 if (a.SepiaIntensity != float.MinValue)
-                                {
                                     Sepia._Fade = Ease(a.SepiaIntensity, b.SepiaIntensity);
-                                }
-                            }
                         }
 
                         if (a.Dream != null)
                         {
                             Dream.enabled = (bool) a.Dream;
                             if ((bool) a.Dream)
-                            {
                                 if (a.DreamIntensity != float.MinValue)
-                                {
                                     Dream.Distortion = Ease(a.DreamIntensity, b.DreamIntensity);
-                                }
-                            }
                         }
 
                         if (a.Fisheye != null)
                         {
                             Fisheye.enabled = (bool) a.Fisheye;
                             if ((bool) a.Fisheye)
-                            {
                                 if (a.FisheyeIntensity != float.MinValue)
-                                {
                                     Fisheye.Distortion = Ease(a.FisheyeIntensity, b.FisheyeIntensity);
-                                }
-                            }
                         }
 
                         if (a.Shockwave != null)
@@ -930,9 +805,7 @@ namespace Cytoid.Storyboard
                             if ((bool) a.Shockwave)
                             {
                                 if (a.ShockwaveSpeed != float.MinValue)
-                                {
                                     Shockwave.Speed = Ease(a.ShockwaveSpeed, b.ShockwaveSpeed);
-                                }
                             }
                             else
                             {
@@ -946,28 +819,18 @@ namespace Cytoid.Storyboard
                             if ((bool) a.Focus)
                             {
                                 if (a.FocusIntensity != float.MinValue)
-                                {
                                     Focus.Intensity = Ease(a.FocusIntensity, b.FocusIntensity);
-                                }
 
-                                if (a.FocusSize != float.MinValue)
-                                {
-                                    Focus.Size = Ease(a.FocusSize, b.FocusSize);
-                                }
+                                if (a.FocusSize != float.MinValue) Focus.Size = Ease(a.FocusSize, b.FocusSize);
 
-                                if (a.FocusSpeed != float.MinValue)
-                                {
-                                    Focus.Speed = Ease(a.FocusSpeed, b.FocusSpeed);
-                                }
+                                if (a.FocusSpeed != float.MinValue) Focus.Speed = Ease(a.FocusSpeed, b.FocusSpeed);
 
                                 if (a.FocusColor != null)
-                                {
                                     Focus.Color = b.FocusColor == null
                                         ? a.FocusColor.ToUnityColor()
                                         : UnityEngine.Color.Lerp(a.FocusColor.ToUnityColor(),
                                             b.FocusColor.ToUnityColor(),
                                             Ease(0, 1));
-                                }
                             }
                         }
 
@@ -975,12 +838,8 @@ namespace Cytoid.Storyboard
                         {
                             Glitch.enabled = (bool) a.Glitch;
                             if ((bool) a.Glitch)
-                            {
                                 if (a.GlitchIntensity != float.MinValue)
-                                {
                                     Glitch.Glitch = Ease(a.GlitchIntensity, b.GlitchIntensity);
-                                }
-                            }
                         }
 
                         if (a.Artifact != null)
@@ -989,24 +848,15 @@ namespace Cytoid.Storyboard
                             if ((bool) a.Artifact)
                             {
                                 if (a.ArtifactIntensity != float.MinValue)
-                                {
                                     Artifact.Fade = Ease(a.ArtifactIntensity, b.ArtifactIntensity);
-                                }
 
                                 if (a.ArtifactColorisation != float.MinValue)
-                                {
                                     Artifact.Colorisation = Ease(a.ArtifactColorisation, b.ArtifactColorisation);
-                                }
 
                                 if (a.ArtifactParasite != float.MinValue)
-                                {
                                     Artifact.Parasite = Ease(a.ArtifactParasite, b.ArtifactParasite);
-                                }
 
-                                if (a.ArtifactNoise != null)
-                                {
-                                    Artifact.Noise = Ease(a.ArtifactNoise, b.ArtifactNoise);
-                                }
+                                if (a.ArtifactNoise != null) Artifact.Noise = Ease(a.ArtifactNoise, b.ArtifactNoise);
                             }
                         }
 
@@ -1016,25 +866,17 @@ namespace Cytoid.Storyboard
                             if ((bool) a.Arcade)
                             {
                                 if (a.ArcadeIntensity != float.MinValue)
-                                {
                                     Arcade.Fade = Ease(a.ArcadeIntensity, b.ArcadeIntensity);
-                                }
 
                                 if (a.ArcadeInterferanceSize != float.MinValue)
-                                {
                                     Arcade.Interferance_Size = Ease(a.ArcadeInterferanceSize, b.ArcadeInterferanceSize);
-                                }
 
                                 if (a.ArcadeInterferanceSpeed != float.MinValue)
-                                {
                                     Arcade.Interferance_Speed =
                                         Ease(a.ArcadeInterferanceSpeed, b.ArcadeInterferanceSpeed);
-                                }
 
                                 if (a.ArcadeContrast != float.MinValue)
-                                {
                                     Arcade.Contrast = Ease(a.ArcadeContrast, b.ArcadeContrast);
-                                }
                             }
                         }
 
@@ -1044,19 +886,13 @@ namespace Cytoid.Storyboard
                             if ((bool) a.Chromatical)
                             {
                                 if (a.ChromaticalFade != float.MinValue)
-                                {
                                     Chromatical.Fade = Ease(a.ChromaticalFade, b.ChromaticalFade);
-                                }
 
                                 if (a.ChromaticalIntensity != float.MinValue)
-                                {
                                     Chromatical.Intensity = Ease(a.ChromaticalIntensity, b.ChromaticalIntensity);
-                                }
 
                                 if (a.ChromaticalSpeed != float.MinValue)
-                                {
                                     Chromatical.Speed = Ease(a.ChromaticalSpeed, b.ChromaticalSpeed);
-                                }
                             }
                             else
                             {
@@ -1064,25 +900,16 @@ namespace Cytoid.Storyboard
                             }
                         }
 
-                        if (a.Tape != null)
-                        {
-                            Tape.enabled = (bool) a.Tape;
-                        }
+                        if (a.Tape != null) Tape.enabled = (bool) a.Tape;
                     }
 
                     var camera = Camera.main;
 
                     // X
-                    if (a.X != float.MinValue)
-                    {
-                        camera.transform.SetX(EaseOrthographicX(a.X, b.X));
-                    }
+                    if (a.X != float.MinValue) camera.transform.SetX(EaseOrthographicX(a.X, b.X));
 
                     // Y
-                    if (a.Y != float.MinValue)
-                    {
-                        camera.transform.SetY(EaseOrthographicY(a.Y, b.Y));
-                    }
+                    if (a.Y != float.MinValue) camera.transform.SetY(EaseOrthographicY(a.Y, b.Y));
 
                     // RotX
                     if (a.RotX != float.MinValue)
@@ -1114,13 +941,8 @@ namespace Cytoid.Storyboard
                         camera.orthographic = (bool) !a.Perspective;
 
                         if ((bool) a.Perspective)
-                        {
-                            // Fov
                             if (a.Fov != float.MinValue)
-                            {
                                 camera.fieldOfView = Ease(a.Fov, b.Fov);
-                            }
-                        }
                     }
                 }
             }
@@ -1146,19 +968,13 @@ namespace Cytoid.Storyboard
             Arcade.enabled = ArcadeToggle.isOn;
             Tape.enabled = TapeToggle.isOn;
             if (LowestResToggle.isOn)
-            {
                 Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.5),
                     (int) (CytoidApplication.OriginalHeight * 0.5), true);
-            }
             else if (LowerResToggle.isOn)
-            {
                 Screen.SetResolution((int) (CytoidApplication.OriginalWidth * 0.8),
                     (int) (CytoidApplication.OriginalHeight * 0.8), true);
-            }
             else
-            {
                 Screen.SetResolution(CytoidApplication.OriginalWidth, CytoidApplication.OriginalHeight, true);
-            }
 
             if (BloomSleekToggle.isOn || VignetteSleekToggle.isOn || ColorFilterSleekToggle.isOn)
             {
@@ -1202,28 +1018,17 @@ namespace Cytoid.Storyboard
         {
             // Spawn objects
             if (trigger.Spawn != null)
-            {
                 foreach (var id in trigger.Spawn)
-                {
                     Spawn(id);
-                }
-            }
 
             // Destroy objects
             if (trigger.Destroy != null)
-            {
                 foreach (var id in trigger.Destroy)
-                {
                     Destroy(id);
-                }
-            }
 
             // Destroy trigger if needed
             trigger.CurrentUses++;
-            if (trigger.CurrentUses == trigger.Uses)
-            {
-                Triggers.Remove(trigger);
-            }
+            if (trigger.CurrentUses == trigger.Uses) Triggers.Remove(trigger);
         }
 
         public void Spawn(string id)
@@ -1287,34 +1092,20 @@ namespace Cytoid.Storyboard
             var baseTime = Time;
 
             if (obj.States[0].Time != float.MaxValue)
-            {
                 baseTime = obj.States[0].Time;
-            }
             else
-            {
                 obj.States[0].Time = baseTime;
-            }
 
             var lastTime = baseTime;
             foreach (var state in obj.States)
             {
-                if (state.RelativeTime != float.MinValue)
-                {
-                    state.Time = baseTime + state.RelativeTime;
-                }
+                if (state.RelativeTime != float.MinValue) state.Time = baseTime + state.RelativeTime;
 
-                if (state.AddTime != float.MinValue)
-                {
-                    state.Time = lastTime + state.AddTime;
-                }
+                if (state.AddTime != float.MinValue) state.Time = lastTime + state.AddTime;
 
                 lastTime = state.Time;
             }
         }
-
-        private ObjectState stateA;
-        private ObjectState stateB;
-        private EasingFunction.Ease ease;
 
         private float Ease(float i, float j)
         {
@@ -1359,8 +1150,7 @@ namespace Cytoid.Storyboard
                 return;
             }
 
-            for (int i = 0; i < states.Count; i++)
-            {
+            for (var i = 0; i < states.Count; i++)
                 if (states[i].Time > Time) // Next state
                 {
                     // Current state is the previous state
@@ -1368,35 +1158,9 @@ namespace Cytoid.Storyboard
                     nextState = states[i];
                     return;
                 }
-            }
 
             currentState = states.Last();
             nextState = currentState;
         }
-
-        public bool Testing = false;
-
-        public Toggle BloomPrismToggle;
-        public Toggle BloomSleekToggle;
-        public Toggle VignettePrismToggle;
-        public Toggle VignetteSleekToggle;
-        public Toggle ChromaticToggle;
-        public Toggle ChromaticalToggle;
-        public Toggle RadialBlurToggle;
-        public Toggle ColorAdjustmentToggle;
-        public Toggle ColorFilterCfpToggle;
-        public Toggle ColorFilterSleekToggle;
-        public Toggle GrayScaleToggle;
-        public Toggle NoiseToggle;
-        public Toggle SepiaToggle;
-        public Toggle DreamToggle;
-        public Toggle FisheyeToggle;
-        public Toggle ShockwaveToggle;
-        public Toggle FocusToggle;
-        public Toggle GlitchToggle;
-        public Toggle ArcadeToggle;
-        public Toggle TapeToggle;
-        public Toggle LowerResToggle;
-        public Toggle LowestResToggle;
     }
 }

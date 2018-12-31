@@ -12,14 +12,13 @@ namespace Cytoid.Storyboard
 {
     public class Storyboard
     {
-        public List<Text> Texts = new List<Text>();
-        public List<Sprite> Sprites = new List<Sprite>();
+        private readonly JObject rootObject;
         public List<Controller> Controllers = new List<Controller>();
-        public List<Trigger> Triggers = new List<Trigger>();
+        public List<Sprite> Sprites = new List<Sprite>();
 
         public Dictionary<string, JObject> Templates = new Dictionary<string, JObject>();
-
-        private JObject rootObject;
+        public List<Text> Texts = new List<Text>();
+        public List<Trigger> Triggers = new List<Trigger>();
 
         public Storyboard(string content)
         {
@@ -31,40 +30,26 @@ namespace Cytoid.Storyboard
 
             // Templates
             if (rootObject["templates"] != null)
-            {
                 foreach (var templateProperty in rootObject["templates"].Children<JProperty>())
-                {
                     Templates[templateProperty.Name] = templateProperty.Value.ToObject<JObject>();
-                }
-
-                // Templates.Keys.ToList().ForEach(key => Debug.Log(JsonConvert.SerializeObject(Templates[key])));
-            }
 
             // Text
             if (rootObject["texts"] != null)
-            {
                 foreach (var childToken in (JArray) rootObject["texts"])
+                foreach (var objectToken in PopulateJObjects((JObject) childToken))
                 {
-                    foreach (var objectToken in PopulateJObjects((JObject) childToken))
-                    {
-                        var text = LoadObject<Text, TextState>(objectToken);
-                        if (text != null) Texts.Add(text);
-                    }
+                    var text = LoadObject<Text, TextState>(objectToken);
+                    if (text != null) Texts.Add(text);
                 }
-
-                // Texts.ForEach(text => Debug.Log(JsonConvert.SerializeObject(text)));
-            }
 
             // Sprite
             if (rootObject["sprites"] != null)
             {
                 foreach (var childToken in (JArray) rootObject["sprites"])
+                foreach (var objectToken in PopulateJObjects((JObject) childToken))
                 {
-                    foreach (var objectToken in PopulateJObjects((JObject) childToken))
-                    {
-                        var sprite = LoadObject<Sprite, SpriteState>(objectToken);
-                        if (sprite != null) Sprites.Add(sprite);
-                    }
+                    var sprite = LoadObject<Sprite, SpriteState>(objectToken);
+                    if (sprite != null) Sprites.Add(sprite);
                 }
 
                 Sprites.ForEach(sprite => Debug.Log(JsonConvert.SerializeObject(sprite)));
@@ -72,32 +57,20 @@ namespace Cytoid.Storyboard
 
             // Controller
             if (rootObject["controllers"] != null)
-            {
                 foreach (var childToken in (JArray) rootObject["controllers"])
+                foreach (var objectToken in PopulateJObjects((JObject) childToken))
                 {
-                    foreach (var objectToken in PopulateJObjects((JObject) childToken))
-                    {
-                        // Controllers must have a time
-                        if (objectToken["time"] == null) objectToken["time"] = 0;
+                    // Controllers must have a time
+                    if (objectToken["time"] == null) objectToken["time"] = 0;
 
-                        var controller = LoadObject<Controller, ControllerState>(objectToken);
-                        if (controller != null) Controllers.Add(controller);
-                    }
+                    var controller = LoadObject<Controller, ControllerState>(objectToken);
+                    if (controller != null) Controllers.Add(controller);
                 }
-
-                // Controllers.ForEach(controller => Debug.Log(JsonConvert.SerializeObject(controller)));
-            }
 
             // Trigger
             if (rootObject["triggers"] != null)
-            {
                 foreach (var objectToken in (JArray) rootObject["triggers"])
-                {
                     Triggers.Add(LoadTrigger(objectToken));
-                }
-
-                // Triggers.ForEach(trigger => Debug.Log(JsonConvert.SerializeObject(trigger)));
-            }
         }
 
         public JObject Compile()
@@ -113,33 +86,19 @@ namespace Cytoid.Storyboard
                 var name = x.Key;
                 var value = x.Value;
                 if (name == "time")
-                {
                     value.Replace(ParseTime(value));
-                }
                 else if (value is JArray)
-                {
                     RecursivelyParseTime((JArray) value);
-                }
-                else if (value is JObject)
-                {
-                    RecursivelyParseTime((JObject) value);
-                }
+                else if (value is JObject) RecursivelyParseTime((JObject) value);
             }
         }
 
         private void RecursivelyParseTime(JArray array)
         {
             foreach (var x in array)
-            {
                 if (x is JArray)
-                {
                     RecursivelyParseTime((JArray) x);
-                }
-                else if (x is JObject)
-                {
-                    RecursivelyParseTime((JObject) x);
-                }
-            }
+                else if (x is JObject) RecursivelyParseTime((JObject) x);
         }
 
         /**
@@ -151,36 +110,30 @@ namespace Cytoid.Storyboard
 
             var timeToken = obj.SelectToken("relative_time");
             if (timeToken != null && timeToken.Type == JTokenType.Array)
-            {
                 foreach (var time in timeToken.Values())
                 {
                     var newObj = (JObject) obj.DeepClone();
                     newObj["relative_time"] = time;
                     actualObjects.Add(newObj);
                 }
-            }
 
             timeToken = obj.SelectToken("add_time");
             if (timeToken != null && timeToken.Type == JTokenType.Array)
-            {
                 foreach (var time in timeToken.Values())
                 {
                     var newObj = (JObject) obj.DeepClone();
                     newObj["add_time"] = time;
                     actualObjects.Add(newObj);
                 }
-            }
 
             timeToken = obj.SelectToken("time");
             if (timeToken != null && timeToken.Type == JTokenType.Array)
-            {
                 foreach (var time in timeToken.Values())
                 {
                     var newObj = (JObject) obj.DeepClone();
                     newObj["time"] = time;
                     actualObjects.Add(newObj);
                 }
-            }
 
             return actualObjects.Count == 0 ? new List<JObject> {obj} : actualObjects;
         }
@@ -224,9 +177,7 @@ namespace Cytoid.Storyboard
 
                 // Template has states?
                 if (templateObject["states"] != null)
-                {
                     AddStates(states, initialState, templateObject, ParseTime(obj.SelectToken("time")));
-                }
             }
 
             // Create inline states
@@ -246,16 +197,13 @@ namespace Cytoid.Storyboard
 
             if (rootObject["states"] != null && rootObject["states"].Type != JTokenType.Null)
             {
-                float lastTime = baseTime;
-                
+                var lastTime = baseTime;
+
                 var allStates = new JArray();
                 foreach (var childToken in (JArray) rootObject["states"])
                 {
                     var populatedChildren = PopulateJObjects((JObject) childToken);
-                    foreach (var child in populatedChildren)
-                    {
-                        allStates.Add(child);
-                    }
+                    foreach (var child in populatedChildren) allStates.Add(child);
                 }
 
                 foreach (var stateJson in allStates)
@@ -263,10 +211,7 @@ namespace Cytoid.Storyboard
                     var stateObject = stateJson.ToObject<JObject>();
                     var objectState = CreateState(typeof(T), baseState, stateObject);
 
-                    if (objectState.Time != float.MaxValue)
-                    {
-                        baseTime = objectState.Time;
-                    }
+                    if (objectState.Time != float.MaxValue) baseTime = objectState.Time;
 
                     var relativeTime = (float?) stateObject["relative_time"];
 
@@ -292,20 +237,14 @@ namespace Cytoid.Storyboard
                     lastTime = objectState.Time;
 
                     // Add inline states
-                    if (stateObject["states"] != null)
-                    {
-                        AddStates(states, baseState, stateObject, rootBaseTime);
-                    }
+                    if (stateObject["states"] != null) AddStates(states, baseState, stateObject, rootBaseTime);
                 }
             }
         }
 
         private ObjectState CreateState<T>(Type type, T baseState, JObject stateObject) where T : ObjectState
         {
-            if ((bool?) stateObject["reset"] == true)
-            {
-                baseState = null; // Allow resetting states
-            }
+            if ((bool?) stateObject["reset"] == true) baseState = null; // Allow resetting states
 
             // Load template
             JObject templateObject = null;
@@ -318,20 +257,12 @@ namespace Cytoid.Storyboard
                 {
                     // Put relative time and add time
                     if (stateObject["relative_time"] == null)
-                    {
                         stateObject["relative_time"] = templateObject["relative_time"];
-                    }
 
-                    if (stateObject["add_time"] == null)
-                    {
-                        stateObject["add_time"] = templateObject["add_time"];
-                    }
+                    if (stateObject["add_time"] == null) stateObject["add_time"] = templateObject["add_time"];
 
                     // Put template states
-                    if (stateObject["states"] == null)
-                    {
-                        stateObject["states"] = templateObject["states"];
-                    }
+                    if (stateObject["states"] == null) stateObject["states"] = templateObject["states"];
                 }
             }
 
@@ -367,20 +298,14 @@ namespace Cytoid.Storyboard
         {
             if (token == null) return null;
 
-            if (token.Type == JTokenType.Float || token.Type == JTokenType.Integer)
-            {
-                return (float) token;
-            }
+            if (token.Type == JTokenType.Float || token.Type == JTokenType.Integer) return (float) token;
 
             if (token.Type == JTokenType.String)
             {
                 var split = ((string) token).Split(':');
                 var type = split[0].ToLower();
                 var offset = 0f;
-                if (split.Length == 3)
-                {
-                    offset = float.Parse(split[2]);
-                }
+                if (split.Length == 3) offset = float.Parse(split[2]);
 
                 var id = int.Parse(split[1]);
                 var note = Game.Instance.Chart.Root.note_list[id];
@@ -424,7 +349,7 @@ namespace Cytoid.Storyboard
                 if (baseX == float.MinValue) baseX = 0;
                 var baseY = baseState.Y;
                 if (baseY == float.MinValue) baseY = 0;
-                
+
                 var dx = (float?) json.SelectToken("dx");
                 var dy = (float?) json.SelectToken("dy");
 
@@ -500,13 +425,15 @@ namespace Cytoid.Storyboard
 
             if (ColorUtility.TryParseHtmlString((string) json.SelectToken("scanline_color"), out tmp))
                 state.ScanlineColor = new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a};
+            state.ScanlineSmoothing = (bool?) json.SelectToken("scanline_smoothing") ?? state.ScanlineSmoothing;
             state.OverrideScanlinePos = (bool?) json.SelectToken("override_scanline_pos") ?? state.OverrideScanlinePos;
             state.ScanlinePos = (float?) json.SelectToken("scanline_pos") ?? state.ScanlinePos;
             state.NoteOpacityMultiplier =
                 (float?) json.SelectToken("note_opacity_multiplier") ?? state.NoteOpacityMultiplier;
             if (ColorUtility.TryParseHtmlString((string) json.SelectToken("note_ring_color"), out tmp))
                 state.NoteRingColor = new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a};
-            var fillColors = (json.SelectToken("note_fill_colors") != null && json.SelectToken("note_fill_colors").Type != JTokenType.Null)
+            var fillColors = json.SelectToken("note_fill_colors") != null &&
+                             json.SelectToken("note_fill_colors").Type != JTokenType.Null
                 ? json.SelectToken("note_fill_colors").Values<string>().ToList()
                 : new List<string>();
             if (!fillColors.IsNullOrEmpty())
@@ -519,6 +446,7 @@ namespace Cytoid.Storyboard
                         state.NoteFillColors.Add(null);
                         continue;
                     }
+
                     var fillColor = fillColors[i];
                     if (ColorUtility.TryParseHtmlString(fillColor, out tmp))
                         state.NoteFillColors.Add(new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a});
@@ -591,9 +519,9 @@ namespace Cytoid.Storyboard
             state.Arcade = (bool?) json.SelectToken("arcade") ?? state.Arcade;
             state.ArcadeIntensity = (float?) json.SelectToken("arcade_intensity") ?? state.ArcadeIntensity;
             state.ArcadeInterferanceSize =
-                (float?) json.SelectToken("arcade_interferance_size") ?? state.ArcadeInterferanceSize;
+                (float?) json.SelectToken("arcade_interference_size") ?? state.ArcadeInterferanceSize;
             state.ArcadeInterferanceSpeed =
-                (float?) json.SelectToken("arcade_interferance_speed") ?? state.ArcadeInterferanceSpeed;
+                (float?) json.SelectToken("arcade_interference_speed") ?? state.ArcadeInterferanceSpeed;
             state.ArcadeContrast = (float?) json.SelectToken("arcade_contrast") ?? state.ArcadeContrast;
 
             state.Chromatical = (bool?) json.SelectToken("chromatical") ?? state.Chromatical;

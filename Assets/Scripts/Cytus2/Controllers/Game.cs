@@ -17,6 +17,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Sprite = UnityEngine.Sprite;
 using Text = UnityEngine.UI.Text;
+using E7.Native;
 
 namespace Cytus2.Controllers
 {

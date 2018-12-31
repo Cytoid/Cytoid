@@ -644,8 +644,8 @@ Canvas:
   m_OverridePixelPerfect: 1
   m_SortingBucketNormalizedSize: 0
   m_AdditionalShaderChannelsFlag: 0
-  m_SortingLayerID: 10317365
-  m_SortingOrder: 32767
+  m_SortingLayerID: 1977794997
+  m_SortingOrder: 30401
   m_TargetDisplay: 0
 --- !u!114 &82014367
 MonoBehaviour:
@@ -1466,7 +1466,7 @@ RectTransform:
   - {fileID: 593499317}
   - {fileID: 389045298}
   m_Father: {fileID: 935393759}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -2218,20 +2218,11 @@ MonoBehaviour:
       m_Target: 0
       speed: 2
       m_Value: 0
-  onPointerUpGameEvents:
-  - WillSwitchDifficulty
+  onPointerUpGameEvents: []
   onPointerUpNavigation:
     addToNavigationHistory: 0
-    show:
-    - category: MusicSelection
-      name: Left
-    - category: MusicSelection
-      name: Right
-    - category: MusicSelection
-      name: Backdrop
-    hide:
-    - category: MusicSelection
-      name: Left
+    show: []
+    hide: []
   useOnClickAnimations: 1
   waitForOnClickAnimation: 0
   singleClickMode: 0
@@ -8712,7 +8703,7 @@ RectTransform:
   - {fileID: 1688471514}
   - {fileID: 1242591033}
   m_Father: {fileID: 935393759}
-  m_RootOrder: 3
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -9504,20 +9495,11 @@ MonoBehaviour:
       m_Target: 0
       speed: 2
       m_Value: 0
-  onPointerUpGameEvents:
-  - WillSwitchDifficulty
+  onPointerUpGameEvents: []
   onPointerUpNavigation:
     addToNavigationHistory: 0
-    show:
-    - category: MusicSelection
-      name: Left
-    - category: MusicSelection
-      name: Right
-    - category: MusicSelection
-      name: Backdrop
-    hide:
-    - category: MusicSelection
-      name: Left
+    show: []
+    hide: []
   useOnClickAnimations: 1
   waitForOnClickAnimation: 0
   singleClickMode: 0
@@ -11156,6 +11138,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0db07868eac4b669ae41de0dd790dd2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  AudioSource: {fileID: 923194760}
+  BoundaryBottom: {fileID: 183019107}
+  BoundaryTop: {fileID: 1891062771}
+  ClickNotePrefab: {fileID: 1539269434326196, guid: 10c4e56b3b8b342029486cda4a673c1b,
+    type: 3}
+  DragChildNotePrefab: {fileID: 1806144172448884, guid: bca125d2b2c3a49488bf15dbe0fe9590,
+    type: 3}
+  DragHeadNotePrefab: {fileID: 1539269434326196, guid: b394b5c19bb1247bba7deb365227f406,
+    type: 3}
+  DragLinePrefab: {fileID: 1150254488694836, guid: 2004d1a983c6043699f98c0eb1e48650,
+    type: 3}
+  FlickNotePrefab: {fileID: 1676948444546874, guid: 90626bb05518b486bb40499b0bc2b86a,
+    type: 3}
+  HoldNotePrefab: {fileID: 1972409087546156, guid: c9d751ce94efe4639bace326f580e477,
+    type: 3}
+  InfoCanvas: {fileID: 223031401084416314, guid: 65e1891bc634e4ac580f2b7532d95965,
+    type: 3}
+  LongHoldNotePrefab: {fileID: 1560703587282886, guid: 9807c0f16dc07490181d58ebfbbd5f7f,
+    type: 3}
   Play:
     IsRanked: 0
     NoteCount: 0
@@ -11195,6 +11196,8 @@ MonoBehaviour:
       model: 
     chart_checksum: 
     checksum: 
+  Scanline: {fileID: 1160427698}
+  UnpauseCountdown: 0
   UnrankedPlayData:
     user: 
     password: 
@@ -11211,27 +11214,6 @@ MonoBehaviour:
     miss: 0
     chart_checksum: 
     checksum: 
-  ClickNotePrefab: {fileID: 1539269434326196, guid: 10c4e56b3b8b342029486cda4a673c1b,
-    type: 3}
-  HoldNotePrefab: {fileID: 1972409087546156, guid: c9d751ce94efe4639bace326f580e477,
-    type: 3}
-  LongHoldNotePrefab: {fileID: 1560703587282886, guid: 9807c0f16dc07490181d58ebfbbd5f7f,
-    type: 3}
-  DragHeadNotePrefab: {fileID: 1539269434326196, guid: b394b5c19bb1247bba7deb365227f406,
-    type: 3}
-  DragChildNotePrefab: {fileID: 1806144172448884, guid: bca125d2b2c3a49488bf15dbe0fe9590,
-    type: 3}
-  FlickNotePrefab: {fileID: 1676948444546874, guid: 90626bb05518b486bb40499b0bc2b86a,
-    type: 3}
-  DragLinePrefab: {fileID: 1150254488694836, guid: 2004d1a983c6043699f98c0eb1e48650,
-    type: 3}
-  InfoCanvas: {fileID: 223031401084416314, guid: 65e1891bc634e4ac580f2b7532d95965,
-    type: 3}
-  AudioSource: {fileID: 923194760}
-  Scanline: {fileID: 1160427698}
-  BoundaryTop: {fileID: 1891062771}
-  BoundaryBottom: {fileID: 183019107}
-  UnpauseCountdown: 0
 --- !u!114 &923194763
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11548,11 +11530,11 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 471899821}
+  - {fileID: 1512481021}
   - {fileID: 157588070}
   - {fileID: 1308921639}
   - {fileID: 763678171}
   - {fileID: 1158803967}
-  - {fileID: 1512481021}
   - {fileID: 1191801547}
   - {fileID: 2013653754}
   m_Father: {fileID: 0}
@@ -12634,33 +12616,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61be716917e44258a8854bdcbe2e4a6f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Loaded: 0
-  ShowEffects: 1
-  TextPrefab: {fileID: 114551777642525302, guid: c873d6a9a0fdb4cfc83243cede415a57,
-    type: 3}
-  SpritePrefab: {fileID: 114332683519793614, guid: add99174d48c4486197b98b4048a0db9,
-    type: 3}
-  Prism: {fileID: 1175824558}
-  RadialBlur: {fileID: 1175824557}
-  ColorAdjustment: {fileID: 1175824556}
-  GrayScale: {fileID: 1175824555}
-  Noise: {fileID: 1175824554}
-  ColorFilter: {fileID: 1175824553}
-  Sepia: {fileID: 1175824552}
-  Dream: {fileID: 1175824551}
-  Fisheye: {fileID: 1175824550}
-  Shockwave: {fileID: 1175824549}
-  Focus: {fileID: 1175824548}
-  Glitch: {fileID: 1175824547}
-  Artifact: {fileID: 1175824546}
   Arcade: {fileID: 1175824545}
-  Chromatical: {fileID: 1175824544}
-  Tape: {fileID: 1175824543}
-  Sleek: {fileID: 1175824567}
-  Canvas: {fileID: 1158803970}
-  UiCanvasGroup: {fileID: 1512481022}
+  ArcadeToggle: {fileID: 1320387113}
+  Artifact: {fileID: 1175824546}
   BackgroundOverlayMask: {fileID: 471899827}
-  ControllingUiCanvasGroup: 0
+  BloomPrismToggle: {fileID: 983153335}
+  BloomSleekToggle: {fileID: 1225135986}
+  Canvas: {fileID: 1158803970}
   CanvasGroup: {fileID: 0}
   CanvasRect:
     serializedVersion: 2
@@ -12668,31 +12630,51 @@ MonoBehaviour:
     y: 0
     width: 0
     height: 0
-  Controllers: []
-  Triggers: []
-  Testing: 0
-  BloomPrismToggle: {fileID: 983153335}
-  BloomSleekToggle: {fileID: 1225135986}
-  VignettePrismToggle: {fileID: 1820675216}
-  VignetteSleekToggle: {fileID: 1348743964}
-  ChromaticToggle: {fileID: 152127261}
+  Chromatical: {fileID: 1175824544}
   ChromaticalToggle: {fileID: 483738387}
-  RadialBlurToggle: {fileID: 2004722291}
+  ChromaticToggle: {fileID: 152127261}
+  ColorAdjustment: {fileID: 1175824556}
   ColorAdjustmentToggle: {fileID: 62656080}
+  ColorFilter: {fileID: 1175824553}
   ColorFilterCfpToggle: {fileID: 925740996}
   ColorFilterSleekToggle: {fileID: 1179847222}
-  GrayScaleToggle: {fileID: 1691269619}
-  NoiseToggle: {fileID: 860100903}
-  SepiaToggle: {fileID: 1148815359}
+  Controllers: []
+  ControllingUiCanvasGroup: 0
+  Dream: {fileID: 1175824551}
   DreamToggle: {fileID: 1287436084}
+  Fisheye: {fileID: 1175824550}
   FisheyeToggle: {fileID: 132386088}
-  ShockwaveToggle: {fileID: 1603221823}
+  Focus: {fileID: 1175824548}
   FocusToggle: {fileID: 16162015}
+  Glitch: {fileID: 1175824547}
   GlitchToggle: {fileID: 1973575984}
-  ArcadeToggle: {fileID: 1320387113}
-  TapeToggle: {fileID: 1057891858}
+  GrayScale: {fileID: 1175824555}
+  GrayScaleToggle: {fileID: 1691269619}
+  Loaded: 0
   LowerResToggle: {fileID: 370938842}
   LowestResToggle: {fileID: 1373923010}
+  Noise: {fileID: 1175824554}
+  NoiseToggle: {fileID: 860100903}
+  Prism: {fileID: 1175824558}
+  RadialBlur: {fileID: 1175824557}
+  RadialBlurToggle: {fileID: 2004722291}
+  Sepia: {fileID: 1175824552}
+  SepiaToggle: {fileID: 1148815359}
+  Shockwave: {fileID: 1175824549}
+  ShockwaveToggle: {fileID: 1603221823}
+  ShowEffects: 1
+  Sleek: {fileID: 1175824567}
+  SpritePrefab: {fileID: 114332683519793614, guid: add99174d48c4486197b98b4048a0db9,
+    type: 3}
+  Tape: {fileID: 1175824543}
+  TapeToggle: {fileID: 1057891858}
+  Testing: 0
+  TextPrefab: {fileID: 114551777642525302, guid: c873d6a9a0fdb4cfc83243cede415a57,
+    type: 3}
+  Triggers: []
+  UiCanvasGroup: {fileID: 1512481022}
+  VignettePrismToggle: {fileID: 1820675216}
+  VignetteSleekToggle: {fileID: 1348743964}
 --- !u!4 &1084412386
 Transform:
   m_ObjectHideFlags: 0
@@ -13247,7 +13229,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 935393759}
-  m_RootOrder: 4
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -14756,8 +14738,8 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_AdditionalShaderChannelsFlag: 0
-  m_SortingLayerID: 10317365
-  m_SortingOrder: 32767
+  m_SortingLayerID: 1977794997
+  m_SortingOrder: 30400
   m_TargetDisplay: 0
 --- !u!114 &1225537455
 MonoBehaviour:
@@ -15795,7 +15777,7 @@ RectTransform:
   m_Children:
   - {fileID: 771621332}
   m_Father: {fileID: 935393759}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -17920,7 +17902,7 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
@@ -18110,9 +18092,9 @@ MonoBehaviour:
       speed: 2
       m_Value: 0
     scaleIsExpanded:
-      m_Target: 0
+      m_Target: 1
       speed: 2
-      m_Value: 0
+      m_Value: 1
   onClickStatePresetCategory: Uncategorized
   onClickStatePresetName: DefaultPreset
   loadOnClickStatePresetAtRuntime: 0
@@ -18196,7 +18178,11 @@ MonoBehaviour:
   onClickNavigation:
     addToNavigationHistory: 0
     show: []
-    hide: []
+    hide:
+    - category: Game
+      name: PauseBackground
+    - category: Game
+      name: PauseRoot
   useOnDoubleClick: 0
   waitForOnDoubleClickAnimation: 1
   doubleClickRegisterInterval: 0.2
@@ -18859,7 +18845,7 @@ RectTransform:
   - {fileID: 1225537449}
   - {fileID: 82014362}
   m_Father: {fileID: 935393759}
-  m_RootOrder: 5
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}

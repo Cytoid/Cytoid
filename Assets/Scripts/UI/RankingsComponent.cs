@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 namespace Cytoid.UI
 {
-    public class RankingsComponent : MonoBehaviour
+    public class RankingsComponent : SingletonMonoBehavior<RankingsComponent>
     {
         public Transform RootTransform;
        

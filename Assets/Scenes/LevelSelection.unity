@@ -1607,8 +1607,7 @@ MonoBehaviour:
       m_Target: 0
       speed: 2
       m_Value: 0
-  onPointerUpGameEvents:
-  - WillSwitchDifficulty
+  onPointerUpGameEvents: []
   onPointerUpNavigation:
     addToNavigationHistory: 0
     show: []
@@ -2690,9 +2689,9 @@ RectTransform:
   m_Father: {fileID: 142426618}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 20, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 20, y: -21.25}
   m_SizeDelta: {x: 0, y: 30}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &100200696
@@ -4872,7 +4871,7 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
@@ -4997,15 +4996,10 @@ MonoBehaviour:
       m_Target: 0
       speed: 2
       m_Value: 0
-  onPointerUpGameEvents:
-  - WillSwitchDifficulty
+  onPointerUpGameEvents: []
   onPointerUpNavigation:
     addToNavigationHistory: 0
-    show:
-    - category: MusicSelection
-      name: AboutBackground
-    - category: MusicSelection
-      name: AboutRoot
+    show: []
     hide: []
   useOnClickAnimations: 1
   waitForOnClickAnimation: 0
@@ -5014,18 +5008,7 @@ MonoBehaviour:
   customOnClickSound: 0
   OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 101569497}
-        m_MethodName: SetAction
-        m_Mode: 5
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: Options
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
     m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine.CoreModule, Version=0.0.0.0,
       Culture=neutral, PublicKeyToken=null
   onClickAnimationType: 0
@@ -5148,7 +5131,11 @@ MonoBehaviour:
   onClickGameEvents: []
   onClickNavigation:
     addToNavigationHistory: 0
-    show: []
+    show:
+    - category: MusicSelection
+      name: AboutBackground
+    - category: MusicSelection
+      name: AboutRoot
     hide: []
   useOnDoubleClick: 0
   waitForOnDoubleClickAnimation: 1
@@ -6723,7 +6710,7 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
@@ -6848,15 +6835,10 @@ MonoBehaviour:
       m_Target: 0
       speed: 2
       m_Value: 0
-  onPointerUpGameEvents:
-  - WillSwitchDifficulty
+  onPointerUpGameEvents: []
   onPointerUpNavigation:
     addToNavigationHistory: 0
-    show:
-    - category: MusicSelection
-      name: InfoBackground
-    - category: MusicSelection
-      name: InfoRoot
+    show: []
     hide: []
   useOnClickAnimations: 1
   waitForOnClickAnimation: 0
@@ -6865,18 +6847,7 @@ MonoBehaviour:
   customOnClickSound: 0
   OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 101569497}
-        m_MethodName: SetAction
-        m_Mode: 5
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: Options
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
     m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine.CoreModule, Version=0.0.0.0,
       Culture=neutral, PublicKeyToken=null
   onClickAnimationType: 0
@@ -6914,9 +6885,9 @@ MonoBehaviour:
       speed: 2
       m_Value: 0
     scaleIsExpanded:
-      m_Target: 0
+      m_Target: 1
       speed: 2
-      m_Value: 0
+      m_Value: 1
   onClickStatePresetCategory: Uncategorized
   onClickStatePresetName: DefaultPreset
   loadOnClickStatePresetAtRuntime: 0
@@ -6999,7 +6970,11 @@ MonoBehaviour:
   onClickGameEvents: []
   onClickNavigation:
     addToNavigationHistory: 0
-    show: []
+    show:
+    - category: MusicSelection
+      name: InfoBackground
+    - category: MusicSelection
+      name: InfoRoot
     hide: []
   useOnDoubleClick: 0
   waitForOnDoubleClickAnimation: 1
@@ -7519,8 +7494,8 @@ RectTransform:
   m_Father: {fileID: 1253424083}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 42.5}
   m_Pivot: {x: 0, y: 1}
@@ -8125,7 +8100,7 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
@@ -8254,11 +8229,7 @@ MonoBehaviour:
   onPointerUpNavigation:
     addToNavigationHistory: 0
     show: []
-    hide:
-    - category: MusicSelection
-      name: AboutBackground
-    - category: MusicSelection
-      name: AboutRoot
+    hide: []
   useOnClickAnimations: 1
   waitForOnClickAnimation: 0
   singleClickMode: 0
@@ -8390,7 +8361,11 @@ MonoBehaviour:
   onClickNavigation:
     addToNavigationHistory: 0
     show: []
-    hide: []
+    hide:
+    - category: MusicSelection
+      name: AboutBackground
+    - category: MusicSelection
+      name: AboutRoot
   useOnDoubleClick: 0
   waitForOnDoubleClickAnimation: 1
   doubleClickRegisterInterval: 0.2
@@ -9241,9 +9216,9 @@ RectTransform:
   m_Father: {fileID: 1314488750}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 30, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 30, y: -21.25}
   m_SizeDelta: {x: 60, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &181390149
@@ -13004,23 +12979,12 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 101569497}
-        m_MethodName: DontShowWhatIsRankedModeAgain
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
     m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine.CoreModule, Version=0.0.0.0,
       Culture=neutral, PublicKeyToken=null
   onPointerUpAnimationType: 0
@@ -13144,11 +13108,7 @@ MonoBehaviour:
   onPointerUpNavigation:
     addToNavigationHistory: 0
     show: []
-    hide:
-    - category: MusicSelection
-      name: WhatIsRankedModeRoot
-    - category: MusicSelection
-      name: WhatIsRankedModeBackground
+    hide: []
   useOnClickAnimations: 1
   waitForOnClickAnimation: 0
   singleClickMode: 0
@@ -13156,7 +13116,18 @@ MonoBehaviour:
   customOnClickSound: 0
   OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 101569497}
+        m_MethodName: DontShowWhatIsRankedModeAgain
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
     m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine.CoreModule, Version=0.0.0.0,
       Culture=neutral, PublicKeyToken=null
   onClickAnimationType: 0
@@ -13280,7 +13251,11 @@ MonoBehaviour:
   onClickNavigation:
     addToNavigationHistory: 0
     show: []
-    hide: []
+    hide:
+    - category: MusicSelection
+      name: WhatIsRankedModeBackground
+    - category: MusicSelection
+      name: WhatIsRankedModeRoot
   useOnDoubleClick: 0
   waitForOnDoubleClickAnimation: 1
   doubleClickRegisterInterval: 0.2
@@ -14473,23 +14448,12 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 101569497}
-        m_MethodName: Login
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
     m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine.CoreModule, Version=0.0.0.0,
       Culture=neutral, PublicKeyToken=null
   onPointerUpAnimationType: 0
@@ -14621,7 +14585,18 @@ MonoBehaviour:
   customOnClickSound: 0
   OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 101569497}
+        m_MethodName: Login
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
     m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine.CoreModule, Version=0.0.0.0,
       Culture=neutral, PublicKeyToken=null
   onClickAnimationType: 0
@@ -18081,9 +18056,9 @@ RectTransform:
   m_Father: {fileID: 1059023279}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 98.381294, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 80, y: -25}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &410432439
@@ -20841,7 +20816,7 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
@@ -20966,15 +20941,10 @@ MonoBehaviour:
       m_Target: 0
       speed: 2
       m_Value: 0
-  onPointerUpGameEvents:
-  - WillSwitchDifficulty
+  onPointerUpGameEvents: []
   onPointerUpNavigation:
     addToNavigationHistory: 0
-    show:
-    - category: MusicSelection
-      name: OptionsBackground
-    - category: MusicSelection
-      name: OptionsRoot
+    show: []
     hide: []
   useOnClickAnimations: 1
   waitForOnClickAnimation: 0
@@ -20983,18 +20953,7 @@ MonoBehaviour:
   customOnClickSound: 0
   OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 101569497}
-        m_MethodName: SetAction
-        m_Mode: 5
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: Options
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
     m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine.CoreModule, Version=0.0.0.0,
       Culture=neutral, PublicKeyToken=null
   onClickAnimationType: 0
@@ -21032,9 +20991,9 @@ MonoBehaviour:
       speed: 2
       m_Value: 0
     scaleIsExpanded:
-      m_Target: 0
+      m_Target: 1
       speed: 2
-      m_Value: 0
+      m_Value: 1
   onClickStatePresetCategory: Uncategorized
   onClickStatePresetName: DefaultPreset
   loadOnClickStatePresetAtRuntime: 0
@@ -21117,7 +21076,11 @@ MonoBehaviour:
   onClickGameEvents: []
   onClickNavigation:
     addToNavigationHistory: 0
-    show: []
+    show:
+    - category: MusicSelection
+      name: OptionsBackground
+    - category: MusicSelection
+      name: OptionsRoot
     hide: []
   useOnDoubleClick: 0
   waitForOnDoubleClickAnimation: 1
@@ -24262,9 +24225,9 @@ RectTransform:
   m_Father: {fileID: 1265443295}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 83.381294, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 83.381294, y: -19.784172}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &606106078
@@ -24880,7 +24843,7 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
@@ -25009,11 +24972,7 @@ MonoBehaviour:
   onPointerUpNavigation:
     addToNavigationHistory: 0
     show: []
-    hide:
-    - category: MusicSelection
-      name: ConfirmBackground
-    - category: MusicSelection
-      name: ConfirmRoot
+    hide: []
   useOnClickAnimations: 1
   waitForOnClickAnimation: 0
   singleClickMode: 0
@@ -25145,7 +25104,11 @@ MonoBehaviour:
   onClickNavigation:
     addToNavigationHistory: 0
     show: []
-    hide: []
+    hide:
+    - category: MusicSelection
+      name: ConfirmBackground
+    - category: MusicSelection
+      name: ConfirmRoot
   useOnDoubleClick: 0
   waitForOnDoubleClickAnimation: 1
   doubleClickRegisterInterval: 0.2
@@ -26128,23 +26091,12 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 101569497}
-        m_MethodName: OnProfilePressed
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
     m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine.CoreModule, Version=0.0.0.0,
       Culture=neutral, PublicKeyToken=null
   onPointerUpAnimationType: 0
@@ -26153,7 +26105,7 @@ MonoBehaviour:
   loadOnPointerUpPunchPresetAtRuntime: 0
   onPointerUpPunch:
     move:
-      enabled: 0
+      enabled: 1
       punch: {x: 0, y: 20, z: 0}
       startDelay: 0
       duration: 0.3
@@ -26174,9 +26126,9 @@ MonoBehaviour:
       vibrato: 4
       elasticity: 0.5
     moveIsExpanded:
-      m_Target: 0
+      m_Target: 1
       speed: 2
-      m_Value: 0
+      m_Value: 1
     rotateIsExpanded:
       m_Target: 0
       speed: 2
@@ -26276,7 +26228,18 @@ MonoBehaviour:
   customOnClickSound: 0
   OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 101569497}
+        m_MethodName: OnProfilePressed
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
     m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine.CoreModule, Version=0.0.0.0,
       Culture=neutral, PublicKeyToken=null
   onClickAnimationType: 0
@@ -34352,7 +34315,7 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
@@ -34481,11 +34444,7 @@ MonoBehaviour:
   onPointerUpNavigation:
     addToNavigationHistory: 0
     show: []
-    hide:
-    - category: MusicSelection
-      name: ModsBackground
-    - category: MusicSelection
-      name: ModsRoot
+    hide: []
   useOnClickAnimations: 1
   waitForOnClickAnimation: 0
   singleClickMode: 0
@@ -34628,7 +34587,11 @@ MonoBehaviour:
   onClickNavigation:
     addToNavigationHistory: 0
     show: []
-    hide: []
+    hide:
+    - category: MusicSelection
+      name: ModsBackground
+    - category: MusicSelection
+      name: ModsRoot
   useOnDoubleClick: 0
   waitForOnDoubleClickAnimation: 1
   doubleClickRegisterInterval: 0.2
@@ -37152,8 +37115,7 @@ MonoBehaviour:
       m_Target: 0
       speed: 2
       m_Value: 0
-  onPointerUpGameEvents:
-  - WillSwitchDifficulty
+  onPointerUpGameEvents: []
   onPointerUpNavigation:
     addToNavigationHistory: 0
     show: []
@@ -37214,9 +37176,9 @@ MonoBehaviour:
       speed: 2
       m_Value: 0
     scaleIsExpanded:
-      m_Target: 0
+      m_Target: 1
       speed: 2
-      m_Value: 0
+      m_Value: 1
   onClickStatePresetCategory: Uncategorized
   onClickStatePresetName: DefaultPreset
   loadOnClickStatePresetAtRuntime: 0
@@ -38906,23 +38868,12 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 101569497}
-        m_MethodName: CancelLogin
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
     m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine.CoreModule, Version=0.0.0.0,
       Culture=neutral, PublicKeyToken=null
   onPointerUpAnimationType: 0
@@ -39046,11 +38997,7 @@ MonoBehaviour:
   onPointerUpNavigation:
     addToNavigationHistory: 0
     show: []
-    hide:
-    - category: MusicSelection
-      name: LoggingInBackground
-    - category: MusicSelection
-      name: LoggingInRoot
+    hide: []
   useOnClickAnimations: 1
   waitForOnClickAnimation: 0
   singleClickMode: 0
@@ -39058,7 +39005,18 @@ MonoBehaviour:
   customOnClickSound: 0
   OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 101569497}
+        m_MethodName: CancelLogin
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
     m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine.CoreModule, Version=0.0.0.0,
       Culture=neutral, PublicKeyToken=null
   onClickAnimationType: 0
@@ -39182,7 +39140,11 @@ MonoBehaviour:
   onClickNavigation:
     addToNavigationHistory: 0
     show: []
-    hide: []
+    hide:
+    - category: MusicSelection
+      name: LoggingInBackground
+    - category: MusicSelection
+      name: LoggingInRoot
   useOnDoubleClick: 0
   waitForOnDoubleClickAnimation: 1
   doubleClickRegisterInterval: 0.2
@@ -39840,7 +39802,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.000030592782}
+  m_AnchoredPosition: {x: 0, y: 0.00006034496}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &842255476
@@ -41238,7 +41200,7 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
@@ -42851,7 +42813,7 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
@@ -42979,18 +42941,8 @@ MonoBehaviour:
   onPointerUpGameEvents: []
   onPointerUpNavigation:
     addToNavigationHistory: 0
-    show:
-    - category: Uncategorized
-      name: ~Element Name~
-    - category: Uncategorized
-      name: ~Element Name~
-    - category: MusicSelection
-      name: Backdrop
-    hide:
-    - category: MusicSelection
-      name: InfoBackground
-    - category: MusicSelection
-      name: InfoRoot
+    show: []
+    hide: []
   useOnClickAnimations: 1
   waitForOnClickAnimation: 0
   singleClickMode: 0
@@ -43132,8 +43084,14 @@ MonoBehaviour:
   onClickGameEvents: []
   onClickNavigation:
     addToNavigationHistory: 0
-    show: []
-    hide: []
+    show:
+    - category: MusicSelection
+      name: Backdrop
+    hide:
+    - category: MusicSelection
+      name: InfoBackground
+    - category: MusicSelection
+      name: InfoRoot
   useOnDoubleClick: 0
   waitForOnDoubleClickAnimation: 1
   doubleClickRegisterInterval: 0.2
@@ -44455,7 +44413,7 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
@@ -44583,11 +44541,7 @@ MonoBehaviour:
   onPointerUpGameEvents: []
   onPointerUpNavigation:
     addToNavigationHistory: 0
-    show:
-    - category: MusicSelection
-      name: ConfirmBackground
-    - category: MusicSelection
-      name: ConfirmRoot
+    show: []
     hide: []
   useOnClickAnimations: 1
   waitForOnClickAnimation: 0
@@ -44719,7 +44673,11 @@ MonoBehaviour:
   onClickGameEvents: []
   onClickNavigation:
     addToNavigationHistory: 0
-    show: []
+    show:
+    - category: MusicSelection
+      name: ConfirmBackground
+    - category: MusicSelection
+      name: ConfirmRoot
     hide: []
   useOnDoubleClick: 0
   waitForOnDoubleClickAnimation: 1
@@ -48339,7 +48297,7 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
@@ -48467,18 +48425,8 @@ MonoBehaviour:
   onPointerUpGameEvents: []
   onPointerUpNavigation:
     addToNavigationHistory: 0
-    show:
-    - category: Uncategorized
-      name: ~Element Name~
-    - category: Uncategorized
-      name: ~Element Name~
-    - category: MusicSelection
-      name: Backdrop
-    hide:
-    - category: MusicSelection
-      name: OptionsBackground
-    - category: MusicSelection
-      name: OptionsRoot
+    show: []
+    hide: []
   useOnClickAnimations: 1
   waitForOnClickAnimation: 0
   singleClickMode: 0
@@ -48620,8 +48568,14 @@ MonoBehaviour:
   onClickGameEvents: []
   onClickNavigation:
     addToNavigationHistory: 0
-    show: []
-    hide: []
+    show:
+    - category: MusicSelection
+      name: Backdrop
+    hide:
+    - category: MusicSelection
+      name: OptionsBackground
+    - category: MusicSelection
+      name: OptionsRoot
   useOnDoubleClick: 0
   waitForOnDoubleClickAnimation: 1
   doubleClickRegisterInterval: 0.2
@@ -50005,9 +49959,9 @@ RectTransform:
   m_Father: {fileID: 1425562605}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 30, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 30, y: -2.125}
   m_SizeDelta: {x: 0, y: 42.5}
   m_Pivot: {x: 0.5, y: 0.95}
 --- !u!114 &1052364299
@@ -50457,7 +50411,7 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
@@ -50594,18 +50548,7 @@ MonoBehaviour:
   customOnClickSound: 0
   OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 101569497}
-        m_MethodName: SetAction
-        m_Mode: 5
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: Options
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
     m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine.CoreModule, Version=0.0.0.0,
       Culture=neutral, PublicKeyToken=null
   onClickAnimationType: 0
@@ -53912,7 +53855,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.000061035156}
+  m_AnchoredPosition: {x: 0, y: 0.00006103356}
   m_SizeDelta: {x: 800, y: 1000}
   m_Pivot: {x: 0, y: 1}
 --- !u!1 &1087493762
@@ -54528,7 +54471,7 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
@@ -58385,9 +58328,9 @@ RectTransform:
   m_Father: {fileID: 1784631549}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 502.76233, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 557.5, y: -20}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1253424084
@@ -59423,18 +59366,7 @@ MonoBehaviour:
   customOnPointerUpSound: 0
   OnPointerUp:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 101569497}
-        m_MethodName: Logout
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
     m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine.CoreModule, Version=0.0.0.0,
       Culture=neutral, PublicKeyToken=null
   onPointerUpAnimationType: 0
@@ -59566,7 +59498,18 @@ MonoBehaviour:
   customOnClickSound: 0
   OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 101569497}
+        m_MethodName: Logout
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
     m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine.CoreModule, Version=0.0.0.0,
       Culture=neutral, PublicKeyToken=null
   onClickAnimationType: 0
@@ -62314,7 +62257,7 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
@@ -65323,7 +65266,7 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
@@ -65452,11 +65395,7 @@ MonoBehaviour:
   onPointerUpNavigation:
     addToNavigationHistory: 0
     show: []
-    hide:
-    - category: MusicSelection
-      name: WhatIsRankedModeRoot
-    - category: MusicSelection
-      name: WhatIsRankedModeBackground
+    hide: []
   useOnClickAnimations: 1
   waitForOnClickAnimation: 0
   singleClickMode: 0
@@ -65502,9 +65441,9 @@ MonoBehaviour:
       speed: 2
       m_Value: 0
     scaleIsExpanded:
-      m_Target: 0
+      m_Target: 1
       speed: 2
-      m_Value: 0
+      m_Value: 1
   onClickStatePresetCategory: Uncategorized
   onClickStatePresetName: DefaultPreset
   loadOnClickStatePresetAtRuntime: 0
@@ -65588,7 +65527,11 @@ MonoBehaviour:
   onClickNavigation:
     addToNavigationHistory: 0
     show: []
-    hide: []
+    hide:
+    - category: MusicSelection
+      name: WhatIsRankedModeBackground
+    - category: MusicSelection
+      name: WhatIsRankedModeRoot
   useOnDoubleClick: 0
   waitForOnDoubleClickAnimation: 1
   doubleClickRegisterInterval: 0.2
@@ -66945,7 +66888,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 242.2482, y: 0}
+  m_AnchoredPosition: {x: 79.47531, y: 0}
   m_SizeDelta: {x: 60, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1425562606
@@ -68486,7 +68429,7 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
@@ -68615,11 +68558,7 @@ MonoBehaviour:
   onPointerUpNavigation:
     addToNavigationHistory: 0
     show: []
-    hide:
-    - category: MusicSelection
-      name: ConfirmBackground
-    - category: MusicSelection
-      name: ConfirmRoot
+    hide: []
   useOnClickAnimations: 1
   waitForOnClickAnimation: 0
   singleClickMode: 0
@@ -68762,7 +68701,11 @@ MonoBehaviour:
   onClickNavigation:
     addToNavigationHistory: 0
     show: []
-    hide: []
+    hide:
+    - category: MusicSelection
+      name: ConfirmBackground
+    - category: MusicSelection
+      name: ConfirmRoot
   useOnDoubleClick: 0
   waitForOnDoubleClickAnimation: 1
   doubleClickRegisterInterval: 0.2
@@ -69278,7 +69221,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.000030442374}
+  m_AnchoredPosition: {x: 0, y: 0.00000068860174}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1468821049
@@ -70400,7 +70343,7 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
@@ -75174,7 +75117,7 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
@@ -75303,11 +75246,7 @@ MonoBehaviour:
   onPointerUpNavigation:
     addToNavigationHistory: 0
     show: []
-    hide:
-    - category: MusicSelection
-      name: LoginBackground
-    - category: MusicSelection
-      name: LoginRoot
+    hide: []
   useOnClickAnimations: 1
   waitForOnClickAnimation: 0
   singleClickMode: 0
@@ -75353,9 +75292,9 @@ MonoBehaviour:
       speed: 2
       m_Value: 0
     scaleIsExpanded:
-      m_Target: 0
+      m_Target: 1
       speed: 2
-      m_Value: 0
+      m_Value: 1
   onClickStatePresetCategory: Uncategorized
   onClickStatePresetName: DefaultPreset
   loadOnClickStatePresetAtRuntime: 0
@@ -75439,7 +75378,11 @@ MonoBehaviour:
   onClickNavigation:
     addToNavigationHistory: 0
     show: []
-    hide: []
+    hide:
+    - category: MusicSelection
+      name: LoginBackground
+    - category: MusicSelection
+      name: LoginRoot
   useOnDoubleClick: 0
   waitForOnDoubleClickAnimation: 1
   doubleClickRegisterInterval: 0.2
@@ -81107,7 +81050,7 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
@@ -85722,10 +85665,11 @@ MonoBehaviour:
     MashroorChowdhury MiroDevice PretTyFish twoloavesofbread LzxEric NatsumeRyuhane
     TheBombMan Thomaisho Xanol ZerodeathPatrick ZixuanLin<alpha=#FF>\n\n<color=#5CECE3>Cytoid@Discord</color>\n<color=#fff>O
     N I C H E N</color> <alpha=#99>Anthony<alpha=#FF>\n<color=#fff>Founder</color>
-    <alpha=#99>Eldritch<alpha=#FF>\n<color=#fff>Chart Rating Guru</color> <alpha=#99>Lumixanth<alpha=#FF>\n<color=#fff>Master
-    of Trolls</color> <alpha=#99>PTB10<alpha=#FF>\n<color=#fff>2 Wide Scum</color>
-    <alpha=#99>TheBombMan<alpha=#FF>\n<color=#fff>Angel of Punishment</color> <alpha=#99>Tsubajashi<alpha=#FF>\n<color=#fff>Crazy
-    Idiot</color> <alpha=#99>Zariq<alpha=#FF>\n\n<color=#5CECE3>Cytoid@QQ</color>\n<color=#fff>Fujaoese</color>
+    <alpha=#99>Eldritch<alpha=#FF>\n<color=#fff>Chart Rating Guru</color> <alpha=#99>Lumixanth<alpha=#FF>\n<color=#fff>Thynk
+    Lord</color> <alpha=#99>Mekko<alpha=#FF>\n<color=#fff>Master of Trolls</color>
+    <alpha=#99>PTB10<alpha=#FF>\n<color=#fff>2 Wide Scum</color> <alpha=#99>TheBombMan<alpha=#FF>\n<color=#fff>Angel
+    of Punishment</color> <alpha=#99>Tsubajashi<alpha=#FF>\n<color=#fff>Crazy Idiot</color>
+    <alpha=#99>Zariq<alpha=#FF>\n\n<color=#5CECE3>Cytoid@QQ</color>\n<color=#fff>Fujaoese</color>
     <alpha=#99>suconh<alpha=#FF>\n<color=#fff>Reviewers</color> <alpha=#99>suconh
     Rballance Tofu xuxu9110 yyao<alpha=#FF>\n\nThank you for playing!"
   m_isRightToLeft: 0
@@ -85797,12 +85741,12 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 1745596992}
-    characterCount: 595
+    characterCount: 612
     spriteCount: 0
-    spaceCount: 80
-    wordCount: 79
+    spaceCount: 83
+    wordCount: 82
     linkCount: 0
-    lineCount: 27
+    lineCount: 28
     pageCount: 1
     materialCount: 1
   m_havePropertiesChanged: 0
@@ -91115,7 +91059,7 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
@@ -92249,9 +92193,9 @@ RectTransform:
   m_Father: {fileID: 2141636290}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 0, y: -50}
   m_SizeDelta: {x: 0, y: 49}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &1983867817
@@ -93029,8 +92973,7 @@ MonoBehaviour:
       m_Target: 0
       speed: 2
       m_Value: 0
-  onPointerUpGameEvents:
-  - WillSwitchDifficulty
+  onPointerUpGameEvents: []
   onPointerUpNavigation:
     addToNavigationHistory: 0
     show: []
@@ -94511,7 +94454,7 @@ MonoBehaviour:
     addToNavigationHistory: 0
     show: []
     hide: []
-  useOnPointerUp: 1
+  useOnPointerUp: 0
   onPointerUpSound: ~No Sound~
   customOnPointerUpSound: 0
   OnPointerUp:
@@ -97492,7 +97435,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.000030442374}
+  m_AnchoredPosition: {x: 0, y: 0.00003051678}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &2101272349

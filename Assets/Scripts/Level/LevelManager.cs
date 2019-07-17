@@ -29,7 +29,17 @@ public class LevelManager
 
             var path = info.Directory.FullName + Path.DirectorySeparatorChar;
             var meta = JsonConvert.DeserializeObject<LevelMeta>(File.ReadAllText(jsonPath));
-
+            
+            // Sort charts
+            var sortedCharts = new List<LevelMeta.ChartSection>();
+            if (meta.charts.Any(it => it.type == Difficulty.Easy.id))
+                sortedCharts.Add(meta.charts.Find(it => it.type == Difficulty.Easy.id));
+            if (meta.charts.Any(it => it.type == Difficulty.Hard.id))
+                sortedCharts.Add(meta.charts.Find(it => it.type == Difficulty.Hard.id));
+            if (meta.charts.Any(it => it.type == Difficulty.Extreme.id))
+                sortedCharts.Add(meta.charts.Find(it => it.type == Difficulty.Extreme.id));
+            meta.charts = sortedCharts;
+            
             // Reject invalid level meta
             if (!meta.Validate()) continue;
 

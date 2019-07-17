@@ -10,7 +10,7 @@ public class Context : SingletonMonoBehavior<Context>
 
     public static string dataPath;
     public static LevelManager levelManager = new LevelManager();
-    public static TextureCache textureCache = new TextureCache();
+    public static SpriteCache spriteCache = new SpriteCache();
 
     public static Level activeLevel;
 

@@ -43,5 +43,10 @@ sysinfo.txt
 out
 gen
 
+# Untracked files
+.DS_Store
+Logs/
+
 # Paid assets
 Assets/Packages/SoftMask
+Assets/Packages/SoftMask.meta

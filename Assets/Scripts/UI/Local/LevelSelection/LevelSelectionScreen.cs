@@ -24,7 +24,7 @@ public class LevelSelectionScreen : Screen
     public override void OnScreenDestroyed()
     {
         Destroy(scrollRect);
-        Context.textureCache.Clear();
+        Context.spriteCache.Clear();
     }
 
 }

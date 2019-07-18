@@ -1,9 +1,13 @@
+using System;
+using DG.Tweening;
+using UniRx.Async;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class LevelCard : MonoBehaviour
+public class LevelCard : UIMonoBehavior
 {
-    
+
     public Image cover;
     public CanvasGroup difficultyBallGroup;
     
@@ -17,8 +21,13 @@ public class LevelCard : MonoBehaviour
 
     public void ScrollCellContent(object levelObject)
     {
-        level = (Level) levelObject;
-       
+        SetModel((Level) levelObject);
+    }
+
+    public void SetModel(Level level)
+    {
+        this.level = level;
+        
         artist.text = level.meta.artist;
         title.text = level.meta.title;
         titleLocalized.text = level.meta.artist_localized;
@@ -30,7 +39,7 @@ public class LevelCard : MonoBehaviour
         {
             var difficultyBall = Instantiate(difficultyBallPrefab, difficultyBallGroup.transform)
                 .GetComponent<DifficultyBall>();
-            difficultyBall.Initialize(Difficulty.Parse(chart.type), chart.difficulty);
+            difficultyBall.SetModel(Difficulty.Parse(chart.type), chart.difficulty);
         }
 
         GetComponentInChildren<VerticalLayoutGroup>().transform.RebuildLayout();
@@ -46,5 +55,35 @@ public class LevelCard : MonoBehaviour
         cover.sprite = sprite;
         cover.GetComponent<AspectRatioFitter>().aspectRatio = sprite.texture.width * 1.0f / sprite.texture.height;
     }
+
+    public override async void OnPointerDown(PointerEventData eventData)
+    {
+        base.OnPointerDown(eventData);
+        await UniTask.Delay(20);
+
+        if (IsPointerDown)
+        {
+            transform.DOScale(0.95f, Constants.TweenDuration).SetEase(Ease.OutCubic);
+            cover.DOFade(1.0f, Constants.TweenDuration).SetEase(Ease.OutCubic);
+            cover.rectTransform.DOScale(1.02f, 0.2f).SetEase(Ease.OutCubic);
+        }
+    }
     
+    public override async void OnPointerUp(PointerEventData eventData)
+    {
+        base.OnPointerUp(eventData);
+        await UniTask.WaitUntil(() => !DOTween.IsTweening(transform));
+        
+        transform.DOScale(1f, Constants.TweenDuration).SetEase(Ease.OutCubic);
+        cover.DOFade(0.5f, Constants.TweenDuration).SetEase(Ease.OutCubic);
+        cover.rectTransform.DOScale(1.0f, 0.2f).SetEase(Ease.OutCubic);
+    }
+
+    private void Update()
+    {
+        if (IsPointerDown)
+        {
+            
+        }
+    }
 }

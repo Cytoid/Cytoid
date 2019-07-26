@@ -2,12 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(RectTransform), typeof(CanvasGroup))]
-public abstract class Screen : MonoBehaviour, ScreenHandler
+public abstract class Screen : MonoBehaviour, ScreenEventListener
 {
-    
     private ScreenState state = ScreenState.Destroyed;
 
     public ScreenState State
@@ -22,7 +23,7 @@ public abstract class Screen : MonoBehaviour, ScreenHandler
                 case ScreenState.Destroyed:
                     if (originalValue != ScreenState.Destroyed)
                     {
-                        handlers.ForEach(it => it.OnScreenDestroyed());
+                        foreach (var handler in handlers) handler.OnScreenDestroyed();
                     }
 
                     break;
@@ -30,20 +31,23 @@ public abstract class Screen : MonoBehaviour, ScreenHandler
                     switch (originalValue)
                     {
                         case ScreenState.Destroyed:
-                            handlers.ForEach(it => it.OnScreenCreated());
+                            foreach (var handler in handlers) handler.OnScreenInitialized();
+                            foreach (var handler in handlers) handler.OnScreenBecomeActive();
                             break;
                         case ScreenState.Inactive:
-                            handlers.ForEach(it => it.OnScreenBecomeActive());
+                            foreach (var handler in handlers) handler.OnScreenBecomeActive();
                             break;
                     }
+
                     break;
                 case ScreenState.Inactive:
                     switch (originalValue)
                     {
                         case ScreenState.Destroyed:
-                            throw new ArgumentException("Destroyed screen cannot be paused");
+                            foreach (var handler in handlers) handler.OnScreenInitialized();
+                            break;
                         case ScreenState.Active:
-                            handlers.ForEach(it => it.OnScreenBecomeInactive());
+                            foreach (var handler in handlers) handler.OnScreenBecomeInactive();
                             break;
                     }
 
@@ -52,33 +56,52 @@ public abstract class Screen : MonoBehaviour, ScreenHandler
         }
     }
 
-    protected List<ScreenHandler> handlers = new List<ScreenHandler>();
+    protected HashSet<ScreenEventListener> handlers = new HashSet<ScreenEventListener>();
 
-    private void Awake()
+    private void Start()
     {
-        handlers = GetComponentsInChildren<ScreenHandler>().ToList(); // Including self
+        handlers = new HashSet<ScreenEventListener>(GetComponentsInChildren<ScreenEventListener>().ToList()); // Including self
     }
 
     private void Update()
     {
         if (state == ScreenState.Active)
         {
-            handlers.ForEach(it => it.OnScreenUpdate());
+            foreach (var handler in handlers) handler.OnScreenUpdate();
         }
+    }
+
+    public void AddHandler(ScreenEventListener listener)
+    {
+        handlers.Add(listener);
+    }
+
+    public void RemoveHandler(ScreenEventListener listener)
+    {
+        handlers.Remove(listener);
     }
 
     public abstract string GetId();
 
-    public virtual void OnScreenCreated() => Expression.Empty();
-    
+    public virtual void OnScreenInitialized()
+    {
+        foreach (var layoutGroup in gameObject.GetComponentsInChildren<LayoutGroup>())
+        {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(layoutGroup.GetComponent<RectTransform>());
+            foreach (var transitionElement in layoutGroup.GetComponentsInChildren<TransitionElement>())
+            {
+                transitionElement.UseCurrentStateAsDefault();
+            }
+        }
+    }
+
     public virtual void OnScreenBecomeActive() => Expression.Empty();
-    
+
     public virtual void OnScreenUpdate() => Expression.Empty();
-    
+
     public virtual void OnScreenBecomeInactive() => Expression.Empty();
-    
+
     public virtual void OnScreenDestroyed() => Expression.Empty();
-    
 }
 
 public enum ScreenState
@@ -86,4 +109,30 @@ public enum ScreenState
     Destroyed,
     Active,
     Inactive
+}
+
+[CustomEditor(typeof(Screen), true)]
+public class ScreenEditor : Editor
+{
+    public override void OnInspectorGUI()
+    {
+        DrawDefaultInspector();
+        var component = (Screen) target;
+        
+        if (GUILayout.Button("Set inactive"))
+        {
+            component.State = ScreenState.Inactive;
+        }
+
+        if (GUILayout.Button("Set active"))
+        {
+            component.State = ScreenState.Active;
+        }
+        
+        if (GUILayout.Button("Destroy"))
+        {
+            component.State = ScreenState.Destroyed;
+        }
+    }
+
 }

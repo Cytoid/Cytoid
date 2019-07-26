@@ -1,7 +1,7 @@
-public interface ScreenHandler
+public interface ScreenEventListener
 {
     
-    void OnScreenCreated();
+    void OnScreenInitialized();
     
     void OnScreenBecomeActive();
     

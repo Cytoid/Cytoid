@@ -86,6 +86,11 @@ public class Run
         tmp.Start();
         return tmp;
     }
+    
+    public static Run Immediate(System.Action aAction)
+    {
+        return After(0, aAction);
+    }
 
     private static IEnumerator _RunAfter(Run aRun, float aDelay, System.Action aAction)
     {

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Linq.Expressions;
 using DG.Tweening;
+using UniRx.Async;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -10,7 +11,6 @@ public class GamePreparationScreen : Screen
     [GetComponentInChildrenName] public Text title;
     [GetComponentInChildrenName] public Text artist;
     [GetComponentInChildrenName] public Image cover;
-    [GetComponentInChildrenName] public Image mask;
 
     private Sprite sprite;
 
@@ -18,22 +18,29 @@ public class GamePreparationScreen : Screen
 
     public override void OnScreenBecomeActive()
     {
+        base.OnScreenBecomeActive();
+        
         var selectedLevel = Context.activeLevel;
+        if (selectedLevel == null)
+        {
+            Debug.LogWarning("Context.activeLevel is null");
+            return;
+        }
+
         title.text = selectedLevel.meta.title;
         artist.text = selectedLevel.meta.artist;
         cover.color = Color.black;
-        mask.color = mask.color.WithAlpha(1f);
 
-        StartCoroutine(LoadCover());
+        LoadCover();
     }
 
-    private IEnumerator LoadCover()
+    private async void LoadCover()
     {
         var selectedLevel = Context.activeLevel;
         var path = "file://" + selectedLevel.path + selectedLevel.meta.background.path;
         using (var request = UnityWebRequestTexture.GetTexture(path))
         {
-            yield return request.SendWebRequest();
+            await request.SendWebRequest();
             if (request.isNetworkError || request.isHttpError)
             {
                 print(path);
@@ -50,15 +57,13 @@ public class GamePreparationScreen : Screen
                 cover.color = Color.white;
             }
         }
-        yield return null;
-
-        mask.DOColor(new Color(0f, 0f, 0f, 0f), 0.4f);
     }
 
     public override void OnScreenDestroyed()
     {
+        base.OnScreenDestroyed();
+        
         cover.color = Color.black;
-        mask.color = mask.color.WithAlpha(1f);
         cover.sprite = null;
         Destroy(sprite);
         sprite = null;

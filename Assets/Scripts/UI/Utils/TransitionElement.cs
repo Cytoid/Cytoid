@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Threading;
 using DG.Tweening;
 using UniRx.Async;
 using UnityEditor;
@@ -7,17 +9,17 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(CanvasGroup))]
-public class TransitionElement : MonoBehaviour, ScreenEventListener
+public class TransitionElement : MonoBehaviour, ScreenListener
 {
     [GetComponent] [HideInInspector] public RectTransform rectTransform;
     [GetComponent] [HideInInspector] public CanvasGroup canvasGroup;
-    
+
     public Transition enterFrom = Transition.Default;
     public float enterMultiplier = 1;
     public float enterDuration = 0.2f;
     public Ease enterEase = Ease.OutCubic;
     public float enterDelay;
-    
+
     public Transition leaveTo = Transition.Default;
     public float leaveMultiplier = 1;
     public float leaveDuration = 0.2f;
@@ -29,7 +31,7 @@ public class TransitionElement : MonoBehaviour, ScreenEventListener
     public float enterOnScreenBecomeActiveDelay;
     public bool leaveOnScreenBecomeInactive = true;
     public float leaveOnScreenBecomeInactiveDelay;
-    
+
     public bool IsShown { get; protected set; }
     public bool IsInTransition { get; protected set; }
 
@@ -39,7 +41,9 @@ public class TransitionElement : MonoBehaviour, ScreenEventListener
     private Vector3 defaultAnchorMin;
     private Vector3 defaultPivot;
 
-    private async void Start()
+    private List<CancellationTokenSource> transitioning = new List<CancellationTokenSource>();
+
+    private void Start()
     {
         UseCurrentStateAsDefault();
 
@@ -60,12 +64,14 @@ public class TransitionElement : MonoBehaviour, ScreenEventListener
 
     public void Enter(bool waitForTransition = true, bool immediate = false)
     {
-        StartTransition(true, enterFrom, enterMultiplier, enterDuration, enterDelay, enterEase, waitForTransition, immediate);
+        StartTransition(true, enterFrom, enterMultiplier, enterDuration, enterDelay, enterEase, waitForTransition,
+            immediate);
     }
 
     public void Leave(bool waitForTransition = true, bool immediate = false)
     {
-        StartTransition(false, leaveTo, leaveMultiplier, leaveDuration, leaveDelay, leaveEase, waitForTransition, immediate);
+        StartTransition(false, leaveTo, leaveMultiplier, leaveDuration, leaveDelay, leaveEase, waitForTransition,
+            immediate);
     }
 
     public async void StartTransition(
@@ -79,7 +85,16 @@ public class TransitionElement : MonoBehaviour, ScreenEventListener
         bool immediate
     )
     {
-        if (!immediate && IsInTransition)
+        if (toShow == IsShown) return;
+
+        if (immediate)
+        {
+            waitForTransition = false;
+            duration = 0;
+            delay = 0;
+        }
+
+        if (IsInTransition)
         {
             if (waitForTransition)
             {
@@ -87,27 +102,35 @@ public class TransitionElement : MonoBehaviour, ScreenEventListener
             }
             else
             {
-                rectTransform.DOComplete();
-                canvasGroup.DOComplete();
+                transitioning.ForEach(it => it.Cancel());
+                transitioning.Clear();
+                canvasGroup.DOKill();
             }
         }
-
-        if (immediate)
-        {
-            duration = 0;
-            delay = 0;
-        }
+        
+        var cancellationTokenSource = new CancellationTokenSource();
+        transitioning.Add(cancellationTokenSource);
         
         IsInTransition = true;
-
         IsShown = toShow;
+        transform.RebuildLayout();
 
         if (delay > 0)
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(delay));
+            try
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(delay), cancellationToken: cancellationTokenSource.Token);
+            }
+            catch
+            {
+                // Cancelled
+                IsInTransition = false;
+                RevertToDefault();
+                return;
+            }
         }
 
-        RevertToDefault(false);
+        RevertToDefault();
 
         canvasGroup.alpha = toShow ? 0 : 1;
         canvasGroup.DOFade(toShow ? 1 : 0, duration);
@@ -161,38 +184,62 @@ public class TransitionElement : MonoBehaviour, ScreenEventListener
                     rectTransform.DOScale(defaultScale * (0.5f / multiplier), duration).SetEase(ease);
                     break;
                 case Transition.Left:
-                    rectTransform.DOAnchorPos(defaultAnchoredPosition.DeltaX(-rectTransform.rect.width * (0.5 * multiplier)), duration).SetEase(ease);
+                    rectTransform
+                        .DOAnchorPos(defaultAnchoredPosition.DeltaX(-rectTransform.rect.width * (0.5 * multiplier)),
+                            duration).SetEase(ease);
                     break;
                 case Transition.Right:
-                    rectTransform.DOAnchorPos(defaultAnchoredPosition.DeltaX(rectTransform.rect.width * (0.5 * multiplier)), duration).SetEase(ease);
+                    rectTransform
+                        .DOAnchorPos(defaultAnchoredPosition.DeltaX(rectTransform.rect.width * (0.5 * multiplier)),
+                            duration).SetEase(ease);
                     break;
                 case Transition.Up:
-                    rectTransform.DOAnchorPos(defaultAnchoredPosition.DeltaY(rectTransform.rect.height * (0.5 * multiplier)), duration).SetEase(ease);
+                    rectTransform
+                        .DOAnchorPos(defaultAnchoredPosition.DeltaY(rectTransform.rect.height * (0.5 * multiplier)),
+                            duration).SetEase(ease);
                     break;
                 case Transition.Down:
-                    rectTransform.DOAnchorPos(defaultAnchoredPosition.DeltaY(-rectTransform.rect.height * (0.5 * multiplier)), duration).SetEase(ease);
+                    rectTransform
+                        .DOAnchorPos(defaultAnchoredPosition.DeltaY(-rectTransform.rect.height * (0.5 * multiplier)),
+                            duration).SetEase(ease);
                     break;
             }
         }
 
-        await UniTask.Delay(TimeSpan.FromSeconds(duration));
-
+        if (duration > 0)
+        {
+            try
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(duration), cancellationToken: cancellationTokenSource.Token);
+            }
+            catch
+            {
+                // Cancelled
+                IsInTransition = false;
+                RevertToDefault();
+            }
+        }
         IsInTransition = false;
     }
 
     public void RevertToDefault(bool killTween = true)
     {
-        if (killTween) rectTransform.DOKill();
+        if (killTween)
+        {
+            rectTransform.DOKill();
+            canvasGroup.DOKill();
+        }
         rectTransform.anchorMax = defaultAnchorMax;
         rectTransform.anchorMin = defaultAnchorMin;
         rectTransform.pivot = defaultPivot;
         rectTransform.anchoredPosition = defaultAnchoredPosition;
         rectTransform.localScale = defaultScale;
+        canvasGroup.alpha = 0;
     }
 
     public void OnScreenInitialized() => Expression.Empty();
 
-    public async void OnScreenBecomeActive()
+    public async void OnScreenBecameActive()
     {
         if (enterOnScreenBecomeActive)
         {
@@ -200,13 +247,14 @@ public class TransitionElement : MonoBehaviour, ScreenEventListener
             {
                 await UniTask.Delay(TimeSpan.FromSeconds(enterOnScreenBecomeActiveDelay));
             }
-            Enter();
+
+            Enter(false);
         }
     }
 
     public void OnScreenUpdate() => Expression.Empty();
 
-    public async void OnScreenBecomeInactive()
+    public async void OnScreenBecameInactive()
     {
         if (leaveOnScreenBecomeInactive)
         {
@@ -214,7 +262,8 @@ public class TransitionElement : MonoBehaviour, ScreenEventListener
             {
                 await UniTask.Delay(TimeSpan.FromSeconds(leaveOnScreenBecomeInactiveDelay));
             }
-            Leave();
+
+            Leave(false);
         }
     }
 
@@ -228,7 +277,7 @@ public class TransitionElementEditor : Editor
     {
         DrawDefaultInspector();
         var component = (TransitionElement) target;
-        
+
         if (GUILayout.Button("Enter"))
         {
             component.Enter();
@@ -239,5 +288,4 @@ public class TransitionElementEditor : Editor
             component.Leave();
         }
     }
-
 }

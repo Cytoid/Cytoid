@@ -1,14 +1,28 @@
-public interface ScreenEventListener
+public interface ScreenListener : ScreenInitializedListener, ScreenBecameActiveListener, ScreenUpdateListener, ScreenBecameInactiveListener, ScreenDestroyedListener
 {
-    
+}
+
+public interface ScreenInitializedListener
+{
     void OnScreenInitialized();
-    
-    void OnScreenBecomeActive();
-    
+}
+
+public interface ScreenBecameActiveListener
+{
+    void OnScreenBecameActive();
+}
+
+public interface ScreenUpdateListener
+{
     void OnScreenUpdate();
+}
 
-    void OnScreenBecomeInactive();
+public interface ScreenBecameInactiveListener
+{
+    void OnScreenBecameInactive();
+}
 
+public interface ScreenDestroyedListener
+{
     void OnScreenDestroyed();
-    
 }

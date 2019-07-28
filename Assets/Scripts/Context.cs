@@ -1,5 +1,4 @@
 using System;
-using UniRx.Async;
 using UnityEngine;
 
 public class Context : SingletonMonoBehavior<Context>
@@ -10,9 +9,9 @@ public class Context : SingletonMonoBehavior<Context>
 
     public static string dataPath;
     public static LevelManager levelManager = new LevelManager();
-    public static SpriteCache spriteCache = new SpriteCache();
-
+    public static ScreenManager screenManager;
     public static Level activeLevel;
+    public static SpriteCache spriteCache = new SpriteCache();
 
     protected override void Awake()
     {

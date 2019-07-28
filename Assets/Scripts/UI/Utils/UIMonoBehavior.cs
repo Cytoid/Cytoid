@@ -5,7 +5,7 @@ using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class UIMonoBehavior : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
+public class InteractableMonoBehavior : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler, IPointerClickHandler
 {
     public Vector2Event onPointerMove;
     public bool IsPointerDown { get; protected set; }
@@ -35,6 +35,10 @@ public class UIMonoBehavior : MonoBehaviour, IPointerEnterHandler, IPointerExitH
     public virtual void OnPointerUp(PointerEventData eventData)
     {
         IsPointerDown = false;
+    }
+
+    public virtual void OnPointerClick(PointerEventData eventData)
+    {
     }
 
     public IEnumerator OnPointerMove()

@@ -68,6 +68,11 @@ public static class CommonExtensions
         return new Color(color.r, color.g, color.b, alpha);
     }
 
+    public static void SetAlpha(this Image image, float alpha)
+    {
+        image.color = image.color.WithAlpha(alpha);
+    }
+
     public static Color ToColor(this string rgbString)
     {
         ColorUtility.TryParseHtmlString(rgbString, out var color);
@@ -88,4 +93,5 @@ public static class CommonExtensions
         rectTransform.pivot = pivot;
         rectTransform.localPosition -= deltaPosition;
     }
+    
 }

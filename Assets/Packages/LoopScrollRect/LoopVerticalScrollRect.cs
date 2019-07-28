@@ -8,6 +8,8 @@ namespace UnityEngine.UI
     [DisallowMultipleComponent]
     public class LoopVerticalScrollRect : LoopScrollRect
     {
+        public float newItemAtStartThreshold = 156;
+        
         protected override float GetSize(RectTransform item)
         {
             float size = contentSpacing;
@@ -70,7 +72,7 @@ namespace UnityEngine.UI
                     changed = true;
             }
 
-            if (viewBounds.max.y > contentBounds.max.y)
+            if (viewBounds.max.y > contentBounds.max.y - newItemAtStartThreshold)
             {
                 float size = NewItemAtStart(), totalSize = size;
                 while (size > 0 && viewBounds.max.y > contentBounds.max.y + totalSize)

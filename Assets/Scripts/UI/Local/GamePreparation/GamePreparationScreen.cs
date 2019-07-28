@@ -1,35 +1,24 @@
-using System.Collections;
-using System.Linq.Expressions;
-using DG.Tweening;
+using System;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 
 public class GamePreparationScreen : Screen
-{
-    [GetComponentInChildrenName] public Text title;
-    [GetComponentInChildrenName] public Text artist;
-    [GetComponentInChildrenName] public Image cover;
-
-    private Sprite sprite;
+{ 
+    [GetComponentInChildrenName] public DepthCover cover;
 
     public override string GetId() => "GamePreparation";
 
-    public override void OnScreenBecomeActive()
+    public override void OnScreenBecameActive()
     {
-        base.OnScreenBecomeActive();
+        base.OnScreenBecameActive();
         
-        var selectedLevel = Context.activeLevel;
-        if (selectedLevel == null)
+        if (Context.activeLevel == null)
         {
             Debug.LogWarning("Context.activeLevel is null");
             return;
         }
-
-        title.text = selectedLevel.meta.title;
-        artist.text = selectedLevel.meta.artist;
-        cover.color = Color.black;
 
         LoadCover();
     }
@@ -48,13 +37,7 @@ public class GamePreparationScreen : Screen
             }
             else
             {
-                var coverTexture = DownloadHandlerTexture.GetContent(request);
-                sprite = Sprite.Create(coverTexture, new Rect(0, 0, coverTexture.width, coverTexture.height),
-                    Vector2.zero, 100f, 0U, SpriteMeshType.FullRect);
-                cover.sprite = sprite;
-                cover.GetComponent<AspectRatioFitter>().aspectRatio =
-                    coverTexture.width * 1.0f / coverTexture.height;
-                cover.color = Color.white;
+                cover.OnCoverLoaded(DownloadHandlerTexture.GetContent(request));
             }
         }
     }
@@ -63,10 +46,7 @@ public class GamePreparationScreen : Screen
     {
         base.OnScreenDestroyed();
         
-        cover.color = Color.black;
-        cover.sprite = null;
-        Destroy(sprite);
-        sprite = null;
+        cover.image.color = Color.black;
     }
     
 }

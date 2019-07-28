@@ -42,6 +42,9 @@ namespace UnityEngine.UI
         protected int itemTypeStart = 0;
         protected int itemTypeEnd = 0;
 
+        public int StartItemIndex => itemTypeStart;
+        public int EndItemIndex => itemTypeEnd;
+
         protected abstract float GetSize(RectTransform item);
         protected abstract float GetDimension(Vector2 vector);
         protected abstract Vector2 GetVector(float value);

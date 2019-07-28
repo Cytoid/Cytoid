@@ -19,6 +19,12 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
 
     private string activeScreenId;
 
+    protected override void Awake()
+    {
+        base.Awake();
+        Context.screenManager = this;
+    }
+
     private async void Start()
     {
         createdScreens.ForEach(it => it.gameObject.SetActive(false));
@@ -57,7 +63,7 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         }
     }
 
-    public async void ChangeScreen(string targetScreenId, ScreenTransition transition, float duration = 0.8f, float newScreenDelay = 0.2f,
+    public async void ChangeScreen(string targetScreenId, ScreenTransition transition, float duration = 0.8f, float transitionDelay = 0.2f,
         Vector2? transitionFocus = null, Action<Screen> onFinished = null)
     {
         print($"Changing screen to {targetScreenId}");
@@ -123,8 +129,8 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
                 lastScreenRectTransform.localPosition = Vector3.zero;
                 lastScreenRectTransform.localScale = Vector3.one;
             }
-            
-            Run.After(duration, () => lastScreen.State = ScreenState.Inactive);
+
+            lastScreen.State = ScreenState.Inactive;
         }
         
         var newScreenCanvasGroup = newScreen.GetComponent<CanvasGroup>();
@@ -132,7 +138,7 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
 
         if (transition != ScreenTransition.None)
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(newScreenDelay));
+            await UniTask.Delay(TimeSpan.FromSeconds(transitionDelay));
 
             newScreenCanvasGroup.alpha = 0f;
             newScreenCanvasGroup.blocksRaycasts = true;
@@ -175,14 +181,12 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
             newScreenRectTransform.localScale = Vector3.one;
         }
         
+        activeScreenId = newScreen.GetId();
+        newScreen.State = ScreenState.Active;
+        
         Run.After(duration, () =>
         {
-            activeScreenId = newScreen.GetId();
-            newScreen.State = ScreenState.Active;
-            if (onFinished != null)
-            {
-                onFinished(newScreen);
-            }
+            onFinished?.Invoke(newScreen);
         });
     }
 }

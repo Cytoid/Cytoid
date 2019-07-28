@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.Networking;
+using Object = UnityEngine.Object;
 
 public class LevelManager
 {
@@ -73,7 +74,7 @@ public class LevelManager
                     var ratio = coverTexture.width / 800f;
                     TextureScaler.scale(coverTexture, 800, (int) (coverTexture.height / ratio));
                     var bytes = coverTexture.EncodeToJPG();
-                    UnityEngine.Object.Destroy(coverTexture);
+                    Object.Destroy(coverTexture);
 
                     File.WriteAllBytes(level.path + ".thumbnail", bytes);
                 }

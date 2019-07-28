@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class LevelCard : UIMonoBehavior
+public class LevelCard : InteractableMonoBehavior
 {
 
     public Image cover;
@@ -79,11 +79,12 @@ public class LevelCard : UIMonoBehavior
         cover.rectTransform.DOScale(1.0f, 0.2f).SetEase(Ease.OutCubic);
     }
 
-    private void Update()
+    public override void OnPointerClick(PointerEventData eventData)
     {
-        if (IsPointerDown)
-        {
-            
-        }
+        base.OnPointerClick(eventData);
+        // Launch screen
+        Context.activeLevel = level;
+        Context.screenManager.ChangeScreen("GamePreparation", ScreenTransition.In, 0.4f);
     }
+
 }

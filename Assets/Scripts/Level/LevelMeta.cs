@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 
 public class LevelMeta : IComparable<LevelMeta>
@@ -59,6 +60,16 @@ public class LevelMeta : IComparable<LevelMeta>
         }
 
         return -1;
+    }
+
+    public int GetEasiestDifficulty()
+    {
+        return charts.Min(it => it.difficulty);
+    }
+
+    public int GetHardestDifficulty()
+    {
+        return charts.Max(it => it.difficulty);
     }
 
     public string GetDisplayDifficulty(ChartSection section)

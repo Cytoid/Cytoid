@@ -6,6 +6,6 @@ public class LevelCoverArtistText : MonoBehaviour, ScreenBecameActiveListener
     [GetComponent] public Text text;
     public void OnScreenBecameActive()
     {
-        text.text = Context.activeLevel?.meta.illustrator ?? "Unknown";
+        text.text = Context.ActiveLevel?.Meta.illustrator ?? "Unknown";
     }
 }

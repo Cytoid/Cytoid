@@ -6,6 +6,6 @@ public class LevelIdText : MonoBehaviour, ScreenBecameActiveListener
     [GetComponent] public Text text;
     public void OnScreenBecameActive()
     {
-        text.text = Context.activeLevel?.meta.id ?? "Unknown";
+        text.text = Context.ActiveLevel?.Meta.id ?? "Unknown";
     }
 }

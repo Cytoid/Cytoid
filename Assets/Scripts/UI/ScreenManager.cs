@@ -18,18 +18,19 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
     public Screen ActiveScreen => createdScreens.Find(it => it.GetId() == activeScreenId);
 
     private string activeScreenId;
+    private HashSet<ScreenChangeListener> screenChangeListeners = new HashSet<ScreenChangeListener>();
 
     protected override void Awake()
     {
         base.Awake();
-        Context.screenManager = this;
+        Context.ScreenManager = this;
     }
 
     private async void Start()
     {
         createdScreens.ForEach(it => it.gameObject.SetActive(false));
         
-        await Context.levelManager.ReloadLocalLevels();
+        await Context.LevelManager.ReloadLocalLevels();
         ChangeScreen(initialScreenId, ScreenTransition.Fade, 0.2f, 0);
     }
 
@@ -94,7 +95,7 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
                 switch (transition)
                 {
                     case ScreenTransition.In:
-                        if (transitionFocus.HasValue)
+                        if (transitionFocus.HasValue && transitionFocus != Vector2.zero)
                         {
                             var difference =
                                 new Vector2(Context.ReferenceWidth / 2f, Context.ReferenceHeight / 2f) -
@@ -131,6 +132,8 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
             }
 
             lastScreen.State = ScreenState.Inactive;
+
+            foreach (var listener in screenChangeListeners) listener.OnScreenChangeStarted(lastScreen, newScreen);
         }
         
         var newScreenCanvasGroup = newScreen.GetComponent<CanvasGroup>();
@@ -187,6 +190,18 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         Run.After(duration, () =>
         {
             onFinished?.Invoke(newScreen);
+            foreach (var listener in screenChangeListeners) listener.OnScreenChangeFinished(lastScreen, newScreen);
         });
     }
+    
+    public void AddHandler(ScreenChangeListener listener)
+    {
+        screenChangeListeners.Add(listener);
+    }
+
+    public void RemoveHandler(ScreenChangeListener listener)
+    {
+        screenChangeListeners.Remove(listener);
+    }
+    
 }

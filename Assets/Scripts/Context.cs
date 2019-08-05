@@ -1,17 +1,18 @@
 using System;
+using System.IO;
 using UnityEngine;
 
 public class Context : SingletonMonoBehavior<Context>
 {
     
-    public const int ReferenceWidth = 1600;
-    public const int ReferenceHeight = 1000;
+    public const int ReferenceWidth = 1920;
+    public const int ReferenceHeight = 1080;
 
-    public static string dataPath;
-    public static LevelManager levelManager = new LevelManager();
-    public static ScreenManager screenManager;
-    public static Level activeLevel;
-    public static SpriteCache spriteCache = new SpriteCache();
+    public static string DataPath;
+    public static LevelManager LevelManager = new LevelManager();
+    public static ScreenManager ScreenManager;
+    public static Level ActiveLevel;
+    public static SpriteCache SpriteCache = new SpriteCache();
 
     protected override void Awake()
     {
@@ -33,8 +34,8 @@ public class Context : SingletonMonoBehavior<Context>
         UnityEngine.Screen.sleepTimeout = SleepTimeout.NeverSleep;
         Application.targetFrameRate = 120;
 
-        dataPath = Application.persistentDataPath;
-        print("Data path: " + dataPath);
+        DataPath = Application.persistentDataPath;
+        print("Data path: " + DataPath);
 
 #if !UNITY_EDITOR
         // On Android...
@@ -46,9 +47,9 @@ public class Context : SingletonMonoBehavior<Context>
 				Application.Quit();
 				return;
 			}
-			DataPath = dir + "/Cytoid";
+			dataPath = dir + "/Cytoid";
 			// Create an empty folder if it doesn't already exist
-			Directory.CreateDirectory(DataPath);
+			Directory.CreateDirectory(dataPath);
 		}
 #endif
 

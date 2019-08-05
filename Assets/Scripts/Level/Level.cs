@@ -1,14 +1,21 @@
+using System;
+
 public class Level
 {
 
-    public string path;
-    public LevelMeta meta;
-    public bool isInternal;
+    public string Path;
+    public LevelMeta Meta;
+    public DateTime AddedDate;
+    public DateTime PlayedDate;
+    
+    public bool IsInternal;
 
-    public Level(string path, LevelMeta meta)
+    public Level(string path, LevelMeta meta, DateTime addedDate, DateTime playedDate)
     {
-        this.path = path;
-        this.meta = meta;
+        Path = path;
+        Meta = meta;
+        AddedDate = addedDate;
+        PlayedDate = playedDate;
     }
 
 }

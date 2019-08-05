@@ -6,19 +6,20 @@ public class UpperOverlay : MonoBehaviour
 {
     public LoopScrollRect loopScrollRect;
     public RectTransform contentRect;
-
-    [GetComponent] public Image image;
+    public float maxAlpha = 0.9f;
+    
+    [GetComponent] public CanvasGroup canvasGroup;
 
     private void Update()
     {
         if (loopScrollRect.StartItemIndex > 0)
         {
-            image.SetAlpha(1);
+            canvasGroup.alpha = maxAlpha;
         }
         else
         {
-            var alpha = Math.Max(0, Math.Min(1, contentRect.anchoredPosition.y / 360));
-            image.SetAlpha(alpha);
+            var alpha = Math.Max(0, Math.Min(maxAlpha, contentRect.anchoredPosition.y / 360));
+            canvasGroup.alpha = alpha;
         }
     }
 }

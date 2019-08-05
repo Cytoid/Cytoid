@@ -177,6 +177,8 @@ public enum ScreenState
     Inactive
 }
 
+#if UNITY_EDITOR
+
 [CustomEditor(typeof(Screen), true)]
 public class ScreenEditor : Editor
 {
@@ -203,6 +205,8 @@ public class ScreenEditor : Editor
 
 }
 
+#endif
+
 public static class ScreenExtensions
 {
     public static Screen GetOwningScreen(this GameObject gameObject)
@@ -217,7 +221,7 @@ public static class ScreenExtensions
         return null;
     }
 
-    public static Screen GetOwingScreen(this MonoBehaviour monoBehaviour)
+    public static Screen GetOwningScreen(this MonoBehaviour monoBehaviour)
     {
         return monoBehaviour.gameObject.GetOwningScreen();
     }

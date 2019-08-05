@@ -6,15 +6,17 @@ using UnityEngine.UI;
 
 public class GamePreparationScreen : Screen
 { 
+    public const string Id = "GamePreparation";
+    
     [GetComponentInChildrenName] public DepthCover cover;
 
-    public override string GetId() => "GamePreparation";
+    public override string GetId() => Id;
 
     public override void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
         
-        if (Context.activeLevel == null)
+        if (Context.ActiveLevel == null)
         {
             Debug.LogWarning("Context.activeLevel is null");
             return;
@@ -25,8 +27,8 @@ public class GamePreparationScreen : Screen
 
     private async void LoadCover()
     {
-        var selectedLevel = Context.activeLevel;
-        var path = "file://" + selectedLevel.path + selectedLevel.meta.background.path;
+        var selectedLevel = Context.ActiveLevel;
+        var path = "file://" + selectedLevel.Path + selectedLevel.Meta.background.path;
         using (var request = UnityWebRequestTexture.GetTexture(path))
         {
             await request.SendWebRequest();

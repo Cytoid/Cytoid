@@ -13,7 +13,8 @@ public class ActionTabs : MonoBehaviour
     public List<GameObject> icons;
     public List<TransitionElement> tabs;
     public TransitionElement tabBackground;
-
+    public RectangularDetectionArea closeDetectionArea;
+    
     private Action closeAction;
     private List<Action> actions = new List<Action>();
     private int currentActionIndex;
@@ -57,6 +58,15 @@ public class ActionTabs : MonoBehaviour
 
         tabBackground.hiddenOnStart = true;
         tabBackground.enterOnScreenBecomeActive = false;
+        
+        // Set up close detection area
+        closeDetectionArea.onClick = Close;
+        closeDetectionArea.DetectionEnabled = false;
+    }
+
+    public void Close()
+    {
+        OnAction(closeAction);
     }
 
     public void OnAction(Action action)
@@ -80,6 +90,9 @@ public class ActionTabs : MonoBehaviour
             });
 
             closeAction.icon.DOFade(0, animationDuration);
+            
+            closeDetectionArea.DetectionEnabled = false;
+            tabBackground.canvasGroup.blocksRaycasts = false;
         }
         else
         {
@@ -105,6 +118,9 @@ public class ActionTabs : MonoBehaviour
             }
             
             closeAction.icon.DOFade(0.3f, animationDuration);
+
+            closeDetectionArea.DetectionEnabled = true;
+            tabBackground.canvasGroup.blocksRaycasts = true;
         }
         currentActionIndex = action.index;
     }
@@ -126,8 +142,12 @@ public class ActionTabs : MonoBehaviour
         {
             base.OnPointerUp(eventData);
             icon.transform.DOScale(1f, 0.2f).SetEase(Ease.OutCubic);
+        }
+
+        public override void OnPointerClick(PointerEventData eventData)
+        {
+            base.OnPointerClick(eventData);
             owner.OnAction(this);
         }
     }
 }
-

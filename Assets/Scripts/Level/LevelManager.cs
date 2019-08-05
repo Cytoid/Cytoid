@@ -10,14 +10,14 @@ using Object = UnityEngine.Object;
 
 public class LevelManager
 {
-    public List<Level> loadedLevels = new List<Level>();
+    public List<Level> LoadedLevels = new List<Level>();
 
     public async UniTask ReloadLocalLevels()
     {
-        loadedLevels.Clear();
+        LoadedLevels.Clear();
 
         // Load levels
-        var jsonFiles = Directory.GetFiles(Context.dataPath, "level.json", SearchOption.AllDirectories).ToList();
+        var jsonFiles = Directory.GetFiles(Context.DataPath, "level.json", SearchOption.AllDirectories).ToList();
 
         Debug.Log($"Found {jsonFiles.Count} levels");
         
@@ -43,22 +43,22 @@ public class LevelManager
             
             // Reject invalid level meta
             if (!meta.Validate()) continue;
-
-            var level = new Level(path, meta);
             
-            loadedLevels.Add(level);
+            var level = new Level(path, meta, info.LastWriteTimeUtc, info.LastWriteTimeUtc);
+            
+            LoadedLevels.Add(level);
             
             Debug.Log($"Loaded {index + 1}/{jsonFiles.Count}: {meta.id} ({path})");
         }
 
-        loadedLevels.Sort((a, b) => string.Compare(a.meta.title, b.meta.title, StringComparison.OrdinalIgnoreCase));
+        LoadedLevels.Sort((a, b) => string.Compare(a.Meta.title, b.Meta.title, StringComparison.OrdinalIgnoreCase));
 
-        for (var index = 0; index < loadedLevels.Count; index++)
+        for (var index = 0; index < LoadedLevels.Count; index++)
         {
-            var level = loadedLevels[index];
+            var level = LoadedLevels[index];
 
-            if (File.Exists(level.path + ".thumbnail")) continue;
-            var path = "file://" + level.path + level.meta.background.path;
+            if (File.Exists(level.Path + ".thumbnail")) continue;
+            var path = "file://" + level.Path + level.Meta.background.path;
             
             using (var request = UnityWebRequestTexture.GetTexture(path))
             {
@@ -76,11 +76,11 @@ public class LevelManager
                     var bytes = coverTexture.EncodeToJPG();
                     Object.Destroy(coverTexture);
 
-                    File.WriteAllBytes(level.path + ".thumbnail", bytes);
+                    File.WriteAllBytes(level.Path + ".thumbnail", bytes);
                 }
             }
 
-            Debug.Log($"Thumbnail generated {index + 1}/{jsonFiles.Count}: {level.meta.id} ({path})");
+            Debug.Log($"Thumbnail generated {index + 1}/{jsonFiles.Count}: {level.Meta.id} ({path})");
         }
     }
 }

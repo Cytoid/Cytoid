@@ -26,3 +26,11 @@ public interface ScreenDestroyedListener
 {
     void OnScreenDestroyed();
 }
+
+public interface ScreenChangeListener
+{
+    void OnScreenChangeStarted(Screen from, Screen to);
+    
+    void OnScreenChangeFinished(Screen from, Screen to);
+    
+}

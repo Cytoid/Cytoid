@@ -93,5 +93,29 @@ public static class CommonExtensions
         rectTransform.pivot = pivot;
         rectTransform.localPosition -= deltaPosition;
     }
-    
+
+    public static Rect GetScreenSpaceRect(this RectTransform rectTransform)
+    {
+        var canvas = rectTransform.GetComponentInParent<Canvas>();
+        var camera = canvas.worldCamera;
+        var corners = new Vector3[4];
+        rectTransform.GetWorldCorners(corners);
+        var screenCorner1 = RectTransformUtility.WorldToScreenPoint(camera, corners[1]);
+        var screenCorner3 = RectTransformUtility.WorldToScreenPoint(camera, corners[3]);
+        var canvasScale = canvas.transform.localScale;
+        screenCorner1 /= canvasScale;
+        screenCorner3 /= canvasScale;
+        var screenRect = new Rect();
+        screenRect.x = screenCorner1.x;
+        screenRect.width = screenCorner3.x - screenRect.x;
+        screenRect.y = screenCorner3.y;
+        screenRect.height = screenCorner1.y - screenRect.y;
+        return screenRect;
+    }
+
+    public static Vector2 GetScreenSpaceCenter(this RectTransform rectTransform)
+    {
+        var rect = rectTransform.GetScreenSpaceRect();
+        return new Vector2((rect.xMin + rect.xMax) / 2.0f, (rect.yMin + rect.yMax) / 2.0f);
+    }
 }

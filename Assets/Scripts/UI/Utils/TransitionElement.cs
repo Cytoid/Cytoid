@@ -270,6 +270,8 @@ public class TransitionElement : MonoBehaviour, ScreenListener
     public void OnScreenDestroyed() => Expression.Empty();
 }
 
+#if UNITY_EDITOR
+
 [CustomEditor(typeof(TransitionElement))]
 public class TransitionElementEditor : Editor
 {
@@ -289,3 +291,5 @@ public class TransitionElementEditor : Editor
         }
     }
 }
+
+#endif

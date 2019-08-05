@@ -28,14 +28,14 @@ public class LevelCard : InteractableMonoBehavior
     {
         this.level = level;
         
-        artist.text = level.meta.artist;
-        title.text = level.meta.title;
-        titleLocalized.text = level.meta.artist_localized;
-        titleLocalized.gameObject.SetActive(!string.IsNullOrEmpty(level.meta.artist_localized));
+        artist.text = level.Meta.artist;
+        title.text = level.Meta.title;
+        titleLocalized.text = level.Meta.artist_localized;
+        titleLocalized.gameObject.SetActive(!string.IsNullOrEmpty(level.Meta.artist_localized));
 
         foreach (Transform child in difficultyBallGroup.transform)
             Destroy(child.gameObject);
-        foreach (var chart in level.meta.charts)
+        foreach (var chart in level.Meta.charts)
         {
             var difficultyBall = Instantiate(difficultyBallPrefab, difficultyBallGroup.transform)
                 .GetComponent<DifficultyBall>();
@@ -49,9 +49,9 @@ public class LevelCard : InteractableMonoBehavior
 
     public async void LoadCover()
     {
-        var path = "file://" + level.path + ".thumbnail";
+        var path = "file://" + level.Path + ".thumbnail";
 
-        var sprite = await Context.spriteCache.GetSprite(path);
+        var sprite = await Context.SpriteCache.GetSprite(path);
         cover.sprite = sprite;
         cover.GetComponent<AspectRatioFitter>().aspectRatio = sprite.texture.width * 1.0f / sprite.texture.height;
     }
@@ -82,9 +82,9 @@ public class LevelCard : InteractableMonoBehavior
     public override void OnPointerClick(PointerEventData eventData)
     {
         base.OnPointerClick(eventData);
-        // Launch screen
-        Context.activeLevel = level;
-        Context.screenManager.ChangeScreen("GamePreparation", ScreenTransition.In, 0.4f);
+        Context.ActiveLevel = level;
+        Context.ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.In, 0.4f,
+            transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter());
     }
 
 }

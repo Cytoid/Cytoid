@@ -9,6 +9,6 @@ public class DifficultyBall : MonoBehaviour
     public void SetModel(Difficulty difficulty, int level)
     {
         text.text = Difficulty.ConvertToDisplayLevel(level);
-        gradientMeshEffect.SetGradient(difficulty.gradient);
+        gradientMeshEffect.SetGradient(difficulty.Gradient);
     }
 }

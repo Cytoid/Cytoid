@@ -11,8 +11,8 @@ using UnityEngine.UI;
 [RequireComponent(typeof(CanvasGroup))]
 public class TransitionElement : MonoBehaviour, ScreenListener
 {
-    [GetComponent] [HideInInspector] public RectTransform rectTransform;
-    [GetComponent] [HideInInspector] public CanvasGroup canvasGroup;
+    [GetComponent] public RectTransform rectTransform;
+    [GetComponent] public CanvasGroup canvasGroup;
 
     public Transition enterFrom = Transition.Default;
     public float enterMultiplier = 1;
@@ -40,13 +40,13 @@ public class TransitionElement : MonoBehaviour, ScreenListener
     private Vector3 defaultAnchorMax;
     private Vector3 defaultAnchorMin;
     private Vector3 defaultPivot;
+    private Vector3 defaultSizeDelta;
 
+    private CancellationTokenSource waitingForTransition;
     private List<CancellationTokenSource> transitioning = new List<CancellationTokenSource>();
 
     private void Start()
     {
-        UseCurrentStateAsDefault();
-
         if (hiddenOnStart)
         {
             canvasGroup.alpha = 0;
@@ -60,6 +60,7 @@ public class TransitionElement : MonoBehaviour, ScreenListener
         defaultAnchorMax = rectTransform.anchorMax;
         defaultAnchorMin = rectTransform.anchorMin;
         defaultPivot = rectTransform.pivot;
+        defaultSizeDelta = rectTransform.sizeDelta;
     }
 
     public void Enter(bool waitForTransition = true, bool immediate = false)
@@ -85,20 +86,36 @@ public class TransitionElement : MonoBehaviour, ScreenListener
         bool immediate
     )
     {
-        if (toShow == IsShown) return;
-
+        if (toShow == IsShown)
+        {
+            print((toShow ? "showing " : "hiding ") + "is cancelled by state");
+            return;
+        }
+        IsShown = toShow;
+        
         if (immediate)
         {
             waitForTransition = false;
             duration = 0;
             delay = 0;
         }
+        
+        waitingForTransition?.Cancel();
+        waitingForTransition = new CancellationTokenSource();
 
         if (IsInTransition)
         {
             if (waitForTransition)
             {
-                await UniTask.WaitUntil(() => !IsInTransition);
+                try
+                {
+                    await UniTask.WaitUntil(() => !IsInTransition, cancellationToken: waitingForTransition.Token);
+                }
+                catch
+                {
+                    print((toShow ? "showing " : "hiding ") + "is cancelled by wait");
+                    return;
+                }
             }
             else
             {
@@ -110,9 +127,8 @@ public class TransitionElement : MonoBehaviour, ScreenListener
         
         var cancellationTokenSource = new CancellationTokenSource();
         transitioning.Add(cancellationTokenSource);
-        
+
         IsInTransition = true;
-        IsShown = toShow;
         transform.RebuildLayout();
 
         if (delay > 0)
@@ -125,7 +141,7 @@ public class TransitionElement : MonoBehaviour, ScreenListener
             {
                 // Cancelled
                 IsInTransition = false;
-                RevertToDefault();
+                print((toShow ? "showing " : "hiding ") + "is cancelled");
                 return;
             }
         }
@@ -216,7 +232,7 @@ public class TransitionElement : MonoBehaviour, ScreenListener
             {
                 // Cancelled
                 IsInTransition = false;
-                RevertToDefault();
+                print((toShow ? "showing " : "hiding ") + "is cancelled during transition");
             }
         }
         IsInTransition = false;
@@ -234,10 +250,14 @@ public class TransitionElement : MonoBehaviour, ScreenListener
         rectTransform.pivot = defaultPivot;
         rectTransform.anchoredPosition = defaultAnchoredPosition;
         rectTransform.localScale = defaultScale;
+        rectTransform.sizeDelta = defaultSizeDelta;
         canvasGroup.alpha = 0;
     }
 
-    public void OnScreenInitialized() => Expression.Empty();
+    public void OnScreenInitialized()
+    {
+        UseCurrentStateAsDefault();
+    }
 
     public async void OnScreenBecameActive()
     {

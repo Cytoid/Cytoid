@@ -51,7 +51,7 @@ public class LevelCard : InteractableMonoBehavior
     {
         var path = "file://" + level.Path + ".thumbnail";
 
-        var sprite = await Context.SpriteCache.GetSprite(path);
+        var sprite = await Context.SpriteCache.GetSprite(path, "LevelCover");
         cover.sprite = sprite;
         cover.GetComponent<AspectRatioFitter>().aspectRatio = sprite.texture.width * 1.0f / sprite.texture.height;
     }
@@ -82,7 +82,7 @@ public class LevelCard : InteractableMonoBehavior
     public override void OnPointerClick(PointerEventData eventData)
     {
         base.OnPointerClick(eventData);
-        Context.ActiveLevel = level;
+        Context.SelectedLevel = level;
         Context.ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.In, 0.4f,
             transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter());
     }

@@ -29,7 +29,7 @@ public class PulseElement : MonoBehaviour
     private RectTransform holderRectTransform;
     private RectTransform rectTransform;
 
-    public async void Awake()
+    public void Awake()
     {
         // Return if this is a cloned instance
         if (cloning)
@@ -54,6 +54,7 @@ public class PulseElement : MonoBehaviour
         holderRectTransform.offsetMax = rectTransform.offsetMax;
         holderRectTransform.offsetMin = rectTransform.offsetMin;
         holderRectTransform.anchoredPosition = rectTransform.anchoredPosition;
+        holderRectTransform.localScale = Vector3.one;
 
         transform.SetParent(holder.transform, false);
 
@@ -79,8 +80,13 @@ public class PulseElement : MonoBehaviour
         holderRectTransform.sizeDelta = newHolderSizeDelta;
     }
 
-    public async void Pulse()
+    public void Pulse()
     {
+        if (holder == null)
+        {
+            throw new InvalidOperationException("Pulse element not initialized yet");
+        }
+        
         // Create clone
         cloning = true;
         var clone = Instantiate(gameObject, holder.transform);
@@ -111,6 +117,13 @@ public class PulseElement : MonoBehaviour
         }
         canvasGroup.alpha = 0;
 
+        PostPulse(clone, canvasGroup);
+    }
+
+    private async void PostPulse(GameObject clone, CanvasGroup canvasGroup)
+    {
+        if (clone == null) return;
+        
         var cloneRectTransform = clone.GetComponent<RectTransform>();
 
         // BUG: Fix your shitty UI system, Unity.

@@ -1,3 +1,7 @@
+using System;
+using Newtonsoft.Json;
+using Proyecto26;
+using RSG;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -118,4 +122,54 @@ public static class CommonExtensions
         var rect = rectTransform.GetScreenSpaceRect();
         return new Vector2((rect.xMin + rect.xMax) / 2.0f, (rect.yMin + rect.yMax) / 2.0f);
     }
+
+    public static Sprite CreateSprite(this Texture2D texture)
+    {
+        return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
+            Vector2.zero, 100f, 0U, SpriteMeshType.FullRect);
+    }
+
+    public static void PrintJson(this object obj)
+    {
+        Debug.Log(JsonConvert.SerializeObject(obj));
+    }
+
+    public static bool IsCloseTo(this float number, float target)
+    {
+        return Math.Abs(number - target) < Constants.FloatingPointTolerance;
+    }
+    
+    public static bool IsNotCloseTo(this float number, float target)
+    {
+        return !IsCloseTo(number, target);
+    }
+
+    public static IPromise Catch(this IPromise promise, Action<RequestException> onRejected)
+    {
+        return promise.Catch(exception => onRejected(exception as RequestException));
+    }
+    
+    public static IPromise HandleRequestErrors(this IPromise promise)
+    {
+        return promise.Catch(error =>
+        {
+            if (error.IsNetworkError)
+            {
+                Toast.Next(Toast.Status.Failure,"Please check your network connection.");
+            }
+            else
+            {
+                switch (error.StatusCode)
+                {
+                    case 401:
+                        Toast.Next(Toast.Status.Failure, "Incorrect Cytoid ID or password.");
+                        break;
+                    default:
+                        Toast.Next(Toast.Status.Failure, "Status code: " + error.StatusCode);
+                        break;
+                }
+            }
+        });
+    }
+
 }

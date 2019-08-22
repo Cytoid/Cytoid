@@ -6,6 +6,6 @@ public class LevelTitleText : MonoBehaviour, ScreenBecameActiveListener
     [GetComponent] public Text text;
     public void OnScreenBecameActive()
     {
-        text.text = Context.ActiveLevel?.Meta.title ?? "Unknown";
+        text.text = Context.SelectedLevel?.Meta.title ?? "Unknown";
     }
 }

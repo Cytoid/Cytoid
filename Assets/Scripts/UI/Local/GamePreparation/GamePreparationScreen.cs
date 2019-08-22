@@ -1,13 +1,13 @@
-using System;
+using Newtonsoft.Json;
+using Proyecto26;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.UI;
 
 public class GamePreparationScreen : Screen
-{ 
+{
     public const string Id = "GamePreparation";
-    
+
     [GetComponentInChildrenName] public DepthCover cover;
 
     public override string GetId() => Id;
@@ -15,8 +15,8 @@ public class GamePreparationScreen : Screen
     public override void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
-        
-        if (Context.ActiveLevel == null)
+
+        if (Context.SelectedLevel == null)
         {
             Debug.LogWarning("Context.activeLevel is null");
             return;
@@ -25,30 +25,20 @@ public class GamePreparationScreen : Screen
         LoadCover();
     }
 
-    private async void LoadCover()
+    private void LoadCover()
     {
-        var selectedLevel = Context.ActiveLevel;
+        var selectedLevel = Context.SelectedLevel;
         var path = "file://" + selectedLevel.Path + selectedLevel.Meta.background.path;
-        using (var request = UnityWebRequestTexture.GetTexture(path))
-        {
-            await request.SendWebRequest();
-            if (request.isNetworkError || request.isHttpError)
-            {
-                print(path);
-                print(request.error);
-            }
-            else
-            {
-                cover.OnCoverLoaded(DownloadHandlerTexture.GetContent(request));
-            }
-        }
+
+        RestClient.Get(new RequestHelper {Uri = path, DownloadHandler = new DownloadHandlerTexture()})
+            .Then(response => { cover.OnCoverLoaded(DownloadHandlerTexture.GetContent(response.Request)); })
+            .Catch(Debug.LogError);
     }
 
     public override void OnScreenDestroyed()
     {
         base.OnScreenDestroyed();
-        
+
         cover.image.color = Color.black;
     }
-    
 }

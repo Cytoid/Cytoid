@@ -6,6 +6,6 @@ public class LevelCharterText : MonoBehaviour, ScreenBecameActiveListener
     [GetComponent] public Text text;
     public void OnScreenBecameActive()
     {
-        text.text = Context.ActiveLevel?.Meta.charter ?? "Unknown";
+        text.text = Context.SelectedLevel?.Meta.charter ?? "Unknown";
     }
 }

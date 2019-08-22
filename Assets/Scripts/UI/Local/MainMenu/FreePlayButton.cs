@@ -8,8 +8,6 @@ public class FreePlayButton : NavigationElement
     
     public override void OnPointerClick(PointerEventData eventData)
     {
-        var mainMenuScreen = (MainMenuScreen) this.GetOwningScreen();
-        mainMenuScreen.translucentImage.DOFade(1, 0.4f);
         transitionFocus = parent.GetScreenSpaceCenter();
         base.OnPointerClick(eventData);
     }

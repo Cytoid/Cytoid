@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using DG.Tweening;
 using UniRx.Async;
 using UnityEngine;
@@ -16,6 +17,7 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
     public List<Screen> createdScreens;
     
     public Screen ActiveScreen => createdScreens.Find(it => it.GetId() == activeScreenId);
+    public List<string> History { get; } = new List<string>();
 
     private string activeScreenId;
     private HashSet<ScreenChangeListener> screenChangeListeners = new HashSet<ScreenChangeListener>();
@@ -37,6 +39,16 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
     public Screen GetScreen(string id)
     {
         return createdScreens.Find(it => it.GetId() == id);
+    }
+
+    public T GetScreen<T>() where T : Screen
+    {
+        return (T) createdScreens.Find(it => it.GetType() == typeof(T));
+    }
+
+    public string GetLastScreenId()
+    {
+        return History.Count > 1 ? History[History.Count - 2] : null;
     }
 
     public Screen CreateScreen(string id)
@@ -64,10 +76,16 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         }
     }
 
-    public async void ChangeScreen(string targetScreenId, ScreenTransition transition, float duration = 0.8f, float transitionDelay = 0.2f,
+    public async void ChangeScreen(string targetScreenId, ScreenTransition transition, float duration = 0.4f, float currentScreenTransitionDelay = 0f, float newScreenTransitionDelay = 0f,
         Vector2? transitionFocus = null, Action<Screen> onFinished = null)
     {
+        if (ActiveScreen != null && targetScreenId == ActiveScreen.GetId())
+        {
+            print($"Warning: Attempted to change to the same screen");
+            return;
+        }
         print($"Changing screen to {targetScreenId}");
+        History.Add(targetScreenId);
 
         DOTween.defaultEaseType = Ease.OutCubic;
 
@@ -86,6 +104,11 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         {
             var lastScreenCanvasGroup = lastScreen.GetComponent<CanvasGroup>();
             var lastScreenRectTransform = lastScreen.GetComponent<RectTransform>();
+            
+            lastScreen.State = ScreenState.Inactive;
+
+            if (currentScreenTransitionDelay > 0)
+                await UniTask.Delay(TimeSpan.FromSeconds(currentScreenTransitionDelay));
 
             if (transition != ScreenTransition.None)
             {
@@ -131,18 +154,20 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
                 lastScreenRectTransform.localScale = Vector3.one;
             }
 
-            lastScreen.State = ScreenState.Inactive;
-
             foreach (var listener in screenChangeListeners) listener.OnScreenChangeStarted(lastScreen, newScreen);
         }
         
         var newScreenCanvasGroup = newScreen.GetComponent<CanvasGroup>();
         var newScreenRectTransform = newScreen.GetComponent<RectTransform>();
 
+        activeScreenId = newScreen.GetId();
+        newScreen.State = ScreenState.Active;
+
+        if (newScreenTransitionDelay > 0)
+            await UniTask.Delay(TimeSpan.FromSeconds(newScreenTransitionDelay));
+        
         if (transition != ScreenTransition.None)
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(transitionDelay));
-
             newScreenCanvasGroup.alpha = 0f;
             newScreenCanvasGroup.blocksRaycasts = true;
             newScreenCanvasGroup.DOFade(1f, duration);
@@ -183,14 +208,11 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
             newScreenRectTransform.localPosition = Vector3.zero;
             newScreenRectTransform.localScale = Vector3.one;
         }
-        
-        activeScreenId = newScreen.GetId();
-        newScreen.State = ScreenState.Active;
-        
+
         Run.After(duration, () =>
         {
             onFinished?.Invoke(newScreen);
-            foreach (var listener in screenChangeListeners) listener.OnScreenChangeFinished(lastScreen, newScreen);
+            foreach (var listener in screenChangeListeners) if (lastScreen != null) listener.OnScreenChangeFinished(lastScreen, newScreen);
         });
     }
     

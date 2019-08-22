@@ -1,18 +1,27 @@
 using System;
-using System.IO;
+using Newtonsoft.Json;
+using Proyecto26;
 using UnityEngine;
+using UnityEngine.Networking;
 
 public class Context : SingletonMonoBehavior<Context>
 {
+    public static string Host = "https://api.cytoid.io";
     
     public const int ReferenceWidth = 1920;
     public const int ReferenceHeight = 1080;
 
     public static string DataPath;
-    public static LevelManager LevelManager = new LevelManager();
     public static ScreenManager ScreenManager;
-    public static Level ActiveLevel;
+    public static LevelManager LevelManager = new LevelManager();
     public static SpriteCache SpriteCache = new SpriteCache();
+
+    public static Level SelectedLevel;
+    public static Difficulty SelectedDifficulty = Difficulty.Easy;
+    public static Difficulty PreferredDifficulty = Difficulty.Easy;
+
+    public static LocalPlayer LocalPlayer = new LocalPlayer();
+    public static OnlinePlayer OnlinePlayer = new OnlinePlayer();
 
     protected override void Awake()
     {
@@ -25,7 +34,7 @@ public class Context : SingletonMonoBehavior<Context>
         }
 
         DontDestroyOnLoad(gameObject);
-        
+
         InitializeApplication();
     }
 
@@ -57,7 +66,7 @@ public class Context : SingletonMonoBehavior<Context>
         Application.runInBackground = true;
 #endif
     }
-    
+
     public static void SetAutoRotation(bool autoRotation)
     {
         if (autoRotation)

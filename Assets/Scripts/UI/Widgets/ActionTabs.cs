@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class ActionTabs : MonoBehaviour
+public class ActionTabs : MonoBehaviour, ScreenChangeListener
 {
     
     private float animationDuration = 0.4f;
@@ -14,18 +15,33 @@ public class ActionTabs : MonoBehaviour
     public List<TransitionElement> tabs;
     public TransitionElement tabBackground;
     public RectangularDetectionArea closeDetectionArea;
+
+    [GetComponent] public HorizontalLayoutGroup horizontalLayoutGroup;
+    private RectTransform profileRectTransform;
     
     private Action closeAction;
     private List<Action> actions = new List<Action>();
     private int currentActionIndex;
-    
+    private float lastProfileRectWidth;
+
     private void Awake()
     {
         // Make sure game objects are active
         icons.ForEach(it => it.gameObject.SetActive(true));
-        tabs.ForEach(it => it.gameObject.SetActive(true));
+        tabs.ForEach(it =>
+        {
+            it.gameObject.SetActive(true);
+            it.canvasGroup.blocksRaycasts = false;
+        });
         tabBackground.gameObject.SetActive(true);
+        tabBackground.canvasGroup.blocksRaycasts = false;
         
+        // Get profile rect transform
+        if (ProfileWidget.Instance != null)
+        {
+            profileRectTransform = ProfileWidget.Instance.GetComponent<RectTransform>();
+        }
+
         // Setup close button
         var closeIcon = gameObject.transform.Find("Close");
         closeAction = closeIcon.gameObject.AddComponent<Action>();
@@ -62,11 +78,25 @@ public class ActionTabs : MonoBehaviour
         // Set up close detection area
         closeDetectionArea.onClick = Close;
         closeDetectionArea.DetectionEnabled = false;
+        
+        Context.ScreenManager.AddHandler(this);
     }
 
     public void Close()
     {
         OnAction(closeAction);
+    }
+
+    private void Update()
+    {
+        var profileRect = profileRectTransform.rect;
+        if (profileRectTransform != null && lastProfileRectWidth.IsNotCloseTo(profileRect.width))
+        {
+            lastProfileRectWidth = profileRect.width;
+            // Set padding based on profile
+            horizontalLayoutGroup.padding.right = (int) profileRect.width - 24;
+            LayoutFixer.Fix(horizontalLayoutGroup.transform);
+        }
     }
 
     public void OnAction(Action action)
@@ -111,10 +141,15 @@ public class ActionTabs : MonoBehaviour
                     it.tabIndicator.Leave();
                 }
             });
+            tabs[action.index].canvasGroup.blocksRaycasts = true;
             tabs[action.index].Enter();
             for (var index = 0; index < tabs.Count; index++)
             {
-                if (index != action.index) tabs[index].Leave();
+                if (index != action.index)
+                {
+                    tabs[index].canvasGroup.blocksRaycasts = false;
+                    tabs[index].Leave();
+                }
             }
             
             closeAction.icon.DOFade(0.3f, animationDuration);
@@ -150,4 +185,11 @@ public class ActionTabs : MonoBehaviour
             owner.OnAction(this);
         }
     }
+
+    public void OnScreenChangeStarted(Screen from, Screen to)
+    {
+        if (currentActionIndex >= 0) Close();
+    }
+
+    public void OnScreenChangeFinished(Screen from, Screen to) => Expression.Empty();
 }

@@ -51,7 +51,7 @@ public class LevelMeta : IComparable<LevelMeta>
         return null;
     }
 
-    public int GetDifficulty(string chartType)
+    public int GetDifficultyLevel(string chartType)
     {
         foreach (var chart in charts)
         {
@@ -62,56 +62,14 @@ public class LevelMeta : IComparable<LevelMeta>
         return -1;
     }
 
-    public int GetEasiestDifficulty()
+    public int GetEasiestDifficultyLevel()
     {
         return charts.Min(it => it.difficulty);
     }
 
-    public int GetHardestDifficulty()
+    public int GetHardestDifficultyLevel()
     {
         return charts.Max(it => it.difficulty);
-    }
-
-    public string GetDisplayDifficulty(ChartSection section)
-    {
-        if (schema_version == 1)
-        {
-            switch (section.difficulty)
-            {
-                case 1:
-                    return "2";
-                case 2:
-                    return "3";
-                case 3:
-                    return "4";
-                case 4:
-                    return "6";
-                case 5:
-                    return "8";
-                case 6:
-                    return "10";
-                case 7:
-                    return "11";
-                case 8:
-                    return "12";
-                case 9:
-                    return "14";
-            }
-
-            if (section.difficulty >= 10 && section.difficulty <= 12)
-            {
-                return "15";
-            }
-
-            return section.difficulty >= 13 ? "15+" : "?";
-        }
-
-        if (section.difficulty >= 16)
-        {
-            return "15+";
-        }
-
-        return section.difficulty <= 0 ? "?" : section.difficulty.ToString();
     }
 
     public class MusicSection
@@ -141,7 +99,60 @@ public class LevelMeta : IComparable<LevelMeta>
 
     public bool Validate()
     {
-        return id != null;
+        if (id == null) return false;
+        
+        // Convert difficulty
+        if (schema_version == 1)
+        {
+            foreach (var section in charts)
+            {
+                switch (section.difficulty)
+                {
+                    case 1:
+                        section.difficulty = 2;
+                        break;
+                    case 2:
+                        section.difficulty = 3;
+                        break;
+                    case 3:
+                        section.difficulty = 4;
+                        break;
+                    case 4:
+                        section.difficulty = 6;
+                        break;
+                    case 5:
+                        section.difficulty = 8;
+                        break;
+                    case 6:
+                        section.difficulty = 10;
+                        break;
+                    case 7:
+                        section.difficulty = 11;
+                        break;
+                    case 8:
+                        section.difficulty = 12;
+                        break;
+                    case 9:
+                        section.difficulty = 14;
+                        break;
+                }
+
+                if (section.difficulty >= 10 && section.difficulty <= 12)
+                {
+                    section.difficulty = 15;
+                } 
+                else if (section.difficulty >= 13)
+                {
+                    section.difficulty = 16;
+                }
+                else
+                {
+                    section.difficulty = 0;
+                }
+            }
+        }
+
+        return true;
     }
 
     public int CompareTo(LevelMeta other)

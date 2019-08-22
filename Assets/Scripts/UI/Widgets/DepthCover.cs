@@ -22,8 +22,13 @@ public class DepthCover : MonoBehaviour, ScreenListener
 
     public void OnCoverLoaded(Texture2D coverTexture)
     {
-        var sprite = Sprite.Create(coverTexture, new Rect(0, 0, coverTexture.width, coverTexture.height),
-            Vector2.zero, 100f, 0U, SpriteMeshType.FullRect);
+        if (image.sprite != null)
+        {
+            Destroy(image.sprite);
+            image.sprite = null;
+        }
+
+        var sprite = coverTexture.CreateSprite();
         image.sprite = sprite;
         image.color = Color.white;
         image.GetComponent<AspectRatioFitter>().aspectRatio =

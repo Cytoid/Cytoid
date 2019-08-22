@@ -62,7 +62,7 @@ public abstract class Screen : MonoBehaviour, ScreenListener
     protected HashSet<ScreenBecameInactiveListener> screenBecameInactiveListeners = new HashSet<ScreenBecameInactiveListener>();
     protected HashSet<ScreenDestroyedListener> screenDestroyedListeners = new HashSet<ScreenDestroyedListener>();
 
-    private void Start()
+    private void Awake()
     {
         screenInitializedListeners = new HashSet<ScreenInitializedListener>(GetComponentsInChildren<ScreenInitializedListener>().ToList());
         screenBecameActiveListeners = new HashSet<ScreenBecameActiveListener>(GetComponentsInChildren<ScreenBecameActiveListener>().ToList());

@@ -1,23 +1,28 @@
 public class Difficulty
 {
     public static readonly Difficulty Easy =
-        new Difficulty("easy", "Easy", new ColorGradient("#67b26f".ToColor(), "#4ca2cd".ToColor(), 135));
+        new Difficulty("easy", "Easy", "#67b26f", "#4ca2cd", 135);
 
     public static readonly Difficulty Hard =
-        new Difficulty("hard", "Hard", new ColorGradient("#b06ab3".ToColor(), "#4568dc".ToColor(), 135));
+        new Difficulty("hard", "Hard", "#b06ab3", "#4568dc", 135);
 
     public static readonly Difficulty Extreme =
-        new Difficulty("extreme", "Extreme", new ColorGradient("#6f0000".ToColor(), "#200122".ToColor(), 135));
+        new Difficulty("extreme", "EX", "#6f0000", "#200122", 135);
 
-    public readonly string id;
-    public readonly string name;
-    public readonly ColorGradient gradient;
+    public readonly string Id;
+    public readonly string Name;
+    public readonly string StartColor;
+    public readonly string ToColor;
+    public readonly int Angle;
+    public ColorGradient Gradient => new ColorGradient(StartColor.ToColor(), ToColor.ToColor(), Angle);
 
-    private Difficulty(string id, string name, ColorGradient gradient)
+    private Difficulty(string id, string name, string startColor, string toColor, int angle)
     {
-        this.id = id;
-        this.name = name;
-        this.gradient = gradient;
+        Id = id;
+        Name = name;
+        StartColor = startColor;
+        ToColor = toColor;
+        Angle = angle;
     }
 
     public static string ConvertToDisplayLevel(int level)

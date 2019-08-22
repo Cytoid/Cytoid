@@ -1,31 +1,22 @@
-using System.Linq;
-using DG.Tweening;
-using LeTai.Asset.TranslucentImage;
-using UnityEngine.UI;
-
 public class MainMenuScreen : Screen
 {
     public const string Id = "MainMenu";
 
-    public TranslucentImage translucentImage;
-    
     public override string GetId() => Id;
-    
-    public override void OnScreenInitialized()
-    {
-        base.OnScreenInitialized();
-        translucentImage.SetAlpha(0);
-    }
 
-    public override void OnScreenBecameActive()
+    public override async void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
-        translucentImage.DOFade(0, 0.4f);
+        if (!Context.OnlinePlayer.IsAuthenticated && !Context.OnlinePlayer.IsAuthenticating && !string.IsNullOrEmpty(Context.OnlinePlayer.GetJwtToken()))
+        {
+            ProfileWidget.Instance.SetSigningIn();
+            Context.OnlinePlayer.AuthenticateWithJwtToken()
+                .Then(profile =>
+                {
+                    Toast.Next(Toast.Status.Success, "Successfully signed in.");
+                    ProfileWidget.Instance.SetSignedIn(profile);
+                })
+                .HandleRequestErrors();
+        }
     }
-
-    public override void OnScreenDestroyed()
-    {
-        base.OnScreenDestroyed();
-    }
-
 }

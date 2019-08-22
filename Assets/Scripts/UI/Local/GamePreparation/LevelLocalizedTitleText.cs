@@ -6,6 +6,6 @@ public class LevelLocalizedTitleText : MonoBehaviour, ScreenBecameActiveListener
     [GetComponent] public Text text;
     public void OnScreenBecameActive()
     {
-        text.text = Context.ActiveLevel?.Meta.title_localized ?? "Unknown";
+        text.text = Context.SelectedLevel?.Meta.title_localized ?? "";
     }
 }

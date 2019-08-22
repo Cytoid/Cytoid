@@ -6,6 +6,6 @@ public class LevelArtistText : MonoBehaviour, ScreenBecameActiveListener
     [GetComponent] public Text text;
     public void OnScreenBecameActive()
     {
-        text.text = Context.ActiveLevel?.Meta.artist ?? "Unknown";
+        text.text = Context.SelectedLevel?.Meta.artist ?? "Unknown";
     }
 }

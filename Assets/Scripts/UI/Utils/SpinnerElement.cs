@@ -16,6 +16,7 @@ public class SpinnerElement : InteractableMonoBehavior
         get => isSpinning;
         set
         {
+            if (value == isSpinning) return;
             if (value)
             {
                 isSpinning = true;
@@ -42,7 +43,7 @@ public class SpinnerElement : InteractableMonoBehavior
         }
     }
     
-    private void Start()
+    protected virtual void Start()
     {
         if (defaultIcon != null) defaultIcon.gameObject.SetActive(true);
         spinnerIcon.gameObject.SetActive(true);

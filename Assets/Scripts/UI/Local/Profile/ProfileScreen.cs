@@ -13,6 +13,8 @@ public class ProfileScreen : Screen
     public LeaderboardElement leaderboard;
     public InteractableMonoBehavior signOutButton;
 
+    private bool populatedLeaderboard;
+
     protected override void Awake()
     {
         base.Awake();
@@ -37,19 +39,29 @@ public class ProfileScreen : Screen
             {
                 character.Leave(false);
             }
+
+            if (index == 1)
+            {
+                if (!populatedLeaderboard)
+                {
+                    populatedLeaderboard = true;
+                    leaderboard.Clear();
+                    RestClient.GetArray<Leaderboard.Entry>(new RequestHelper
+                    {
+                        Uri = Context.ApiBaseUrl + "/leaderboard"
+                    }).Then(data => { leaderboard.SetModel(data); }).Catch(Debug.Log);
+                }
+            }
         });
     }
 
     public override void OnScreenBecameActive()
     {
+        populatedLeaderboard = false;
         character.enterDuration = 1.2f;
         character.enterDelay = 0.4f;
         base.OnScreenBecameActive();
         character.enterDuration = 0.4f;
         character.enterDelay = 0;
-        RestClient.GetArray<Leaderboard.Entry>(new RequestHelper
-        {
-            Uri = Context.Host + "/leaderboard"
-        }).Then(data => { leaderboard.SetModel(data); }).Catch(Debug.Log);
     }
 }

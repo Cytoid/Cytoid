@@ -16,8 +16,13 @@ public class LeaderboardEntry : MonoBehaviour
 
     private string profileUrl;
 
-    private void Awake()
+    protected void Awake()
     {
+        avatarSpinner.onPointerClick.AddListener(_ =>
+        {
+            print(profileUrl);
+            Application.OpenURL(profileUrl);
+        });
     }
 
     public void SetModel(Leaderboard.Entry entry)
@@ -47,6 +52,7 @@ public class LeaderboardEntry : MonoBehaviour
 
         name.text = entry.owner.uid;
         rating.text = "Rating " + entry.rating.ToString("N2");
+        profileUrl = Context.WebsiteUrl + "/profile/" + entry.owner.uid;
     }
     
     public void SetAvatarSprite(Sprite sprite)

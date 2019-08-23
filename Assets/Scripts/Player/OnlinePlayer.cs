@@ -22,7 +22,7 @@ public class OnlinePlayer
         {
             RestClient.Post<Session>(new RequestHelper
             {
-                Uri = Context.Host + "/session",
+                Uri = Context.ApiBaseUrl + "/session",
                 BodyString = JObject.FromObject(new
                 {
                     username = GetUid(),
@@ -33,7 +33,7 @@ public class OnlinePlayer
                 {
                     SetJwtToken(session.token);
                     Debug.Log(session.token);
-                    return RestClient.Get<Profile>($"{Context.Host}/profile/{session.user.uid}/full");
+                    return RestClient.Get<Profile>($"{Context.ApiBaseUrl}/profile/{session.user.uid}/full");
                 }
             ).Then(profile =>
             {
@@ -59,7 +59,7 @@ public class OnlinePlayer
         {
             RestClient.Post<Session>(new RequestHelper
             {
-                Uri = Context.Host + "/session",
+                Uri = Context.ApiBaseUrl + "/session",
                 BodyString = JObject.FromObject(new
                 {
                     token = SecuredConstants.AuthenticationVerificationToken
@@ -72,7 +72,7 @@ public class OnlinePlayer
             {
                 SetJwtToken(session.token);
                 Debug.Log(session.token);
-                return RestClient.Get<Profile>($"{Context.Host}/profile/{session.user.uid}/full");
+                return RestClient.Get<Profile>($"{Context.ApiBaseUrl}/profile/{session.user.uid}/full");
             }
             ).Then(profile =>
             {

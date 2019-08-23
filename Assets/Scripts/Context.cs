@@ -7,7 +7,8 @@ using UnityEngine.Networking;
 
 public class Context : SingletonMonoBehavior<Context>
 {
-    public static string Host = "https://api.cytoid.io";
+    public const string ApiBaseUrl = "https://api.cytoid.io";
+    public const string WebsiteUrl = "https://cytoid.io";
     
     public const int ReferenceWidth = 1920;
     public const int ReferenceHeight = 1080;

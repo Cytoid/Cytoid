@@ -8,12 +8,12 @@ using UnityEngine.UI;
 
 public class InteractableMonoBehavior : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler, IPointerClickHandler
 {
-    public PointerDataEvent onPointerEnter;
-    public PointerDataEvent onPointerExit;
-    public PointerDataEvent onPointerDown;
-    public PointerDataEvent onPointerUp;
-    public PointerDataEvent onPointerClick;
-    public Vector2Event onPointerMove;
+    public PointerDataEvent onPointerEnter = new PointerDataEvent();
+    public PointerDataEvent onPointerExit = new PointerDataEvent();
+    public PointerDataEvent onPointerDown = new PointerDataEvent();
+    public PointerDataEvent onPointerUp = new PointerDataEvent();
+    public PointerDataEvent onPointerClick = new PointerDataEvent();
+    public Vector2Event onPointerMove = new Vector2Event();
     public bool IsPointerDown { get; protected set; }
     
     public bool scaleOnClick;
@@ -21,16 +21,6 @@ public class InteractableMonoBehavior : MonoBehaviour, IPointerEnterHandler, IPo
     public bool pulseOnClick;
 
     protected GraphicRaycaster raycaster;
-    
-    protected virtual void Awake()
-    {
-        onPointerEnter = new PointerDataEvent();
-        onPointerExit = new PointerDataEvent();
-        onPointerDown = new PointerDataEvent();
-        onPointerUp = new PointerDataEvent();
-        onPointerClick = new PointerDataEvent();
-        onPointerMove = new Vector2Event();
-    }
 
     public virtual void OnPointerEnter(PointerEventData eventData)
     {
@@ -41,21 +31,21 @@ public class InteractableMonoBehavior : MonoBehaviour, IPointerEnterHandler, IPo
     public virtual void OnPointerExit(PointerEventData eventData)
     {
         StopCoroutine(nameof(OnPointerMoveIEnumerator));
-        onPointerEnter.Invoke(eventData);
+        onPointerExit.Invoke(eventData);
     }
     
     public virtual void OnPointerDown(PointerEventData eventData)
     {
         IsPointerDown = true;
         if (scaleOnClick) transform.DOScale(scaleToOnClick, 0.2f).SetEase(Ease.OutCubic);
-        onPointerEnter.Invoke(eventData);
+        onPointerDown.Invoke(eventData);
     }
 
     public virtual void OnPointerUp(PointerEventData eventData)
     {
         IsPointerDown = false;
         if (scaleOnClick) transform.DOScale(1f, 0.2f).SetEase(Ease.OutCubic);
-        onPointerEnter.Invoke(eventData);
+        onPointerUp.Invoke(eventData);
     }
 
     public virtual void OnPointerClick(PointerEventData eventData)

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(RectTransform), typeof(CanvasGroup))]
@@ -23,7 +24,7 @@ public abstract class Screen : MonoBehaviour, ScreenListener
                 case ScreenState.Destroyed:
                     if (originalValue != ScreenState.Destroyed)
                     {
-                        foreach (var handler in screenDestroyedListeners) handler.OnScreenDestroyed();
+                        OnScreenDestroyed();
                     }
 
                     break;
@@ -31,11 +32,11 @@ public abstract class Screen : MonoBehaviour, ScreenListener
                     switch (originalValue)
                     {
                         case ScreenState.Destroyed:
-                            foreach (var handler in screenInitializedListeners) handler.OnScreenInitialized();
-                            foreach (var handler in screenBecameActiveListeners) handler.OnScreenBecameActive();
+                            OnScreenInitialized();
+                            OnScreenBecameActive();
                             break;
                         case ScreenState.Inactive:
-                            foreach (var handler in screenBecameActiveListeners) handler.OnScreenBecameActive();
+                            OnScreenBecameActive();
                             break;
                     }
 
@@ -44,10 +45,10 @@ public abstract class Screen : MonoBehaviour, ScreenListener
                     switch (originalValue)
                     {
                         case ScreenState.Destroyed:
-                            foreach (var handler in screenInitializedListeners) handler.OnScreenInitialized();
+                            OnScreenInitialized();
                             break;
                         case ScreenState.Active:
-                            foreach (var handler in screenBecameInactiveListeners) handler.OnScreenBecameInactive();
+                            OnScreenBecameInactive();
                             break;
                     }
 
@@ -56,95 +57,27 @@ public abstract class Screen : MonoBehaviour, ScreenListener
         }
     }
 
-    protected HashSet<ScreenInitializedListener> screenInitializedListeners = new HashSet<ScreenInitializedListener>();
-    protected HashSet<ScreenBecameActiveListener> screenBecameActiveListeners = new HashSet<ScreenBecameActiveListener>();
-    protected HashSet<ScreenUpdateListener> screenUpdateListeners = new HashSet<ScreenUpdateListener>();
-    protected HashSet<ScreenBecameInactiveListener> screenBecameInactiveListeners = new HashSet<ScreenBecameInactiveListener>();
-    protected HashSet<ScreenDestroyedListener> screenDestroyedListeners = new HashSet<ScreenDestroyedListener>();
+    public UnityEvent onScreenInitialized = new UnityEvent();
+    public UnityEvent onScreenBecameActive = new UnityEvent();
+    public UnityEvent onScreenUpdate = new UnityEvent();
+    public UnityEvent onScreenBecameInactive = new UnityEvent();
+    public UnityEvent onScreenDestroyed = new UnityEvent();
 
-    private void Awake()
+    protected virtual void Awake()
     {
-        screenInitializedListeners = new HashSet<ScreenInitializedListener>(GetComponentsInChildren<ScreenInitializedListener>().ToList());
-        screenBecameActiveListeners = new HashSet<ScreenBecameActiveListener>(GetComponentsInChildren<ScreenBecameActiveListener>().ToList());
-        screenUpdateListeners = new HashSet<ScreenUpdateListener>(GetComponentsInChildren<ScreenUpdateListener>().ToList());
-        screenBecameInactiveListeners = new HashSet<ScreenBecameInactiveListener>(GetComponentsInChildren<ScreenBecameInactiveListener>().ToList());
-        screenDestroyedListeners = new HashSet<ScreenDestroyedListener>(GetComponentsInChildren<ScreenDestroyedListener>().ToList());
+        GetComponentsInChildren<ScreenInitializedListener>().Where(it => it != this).ToList().ForEach(it => onScreenInitialized.AddListener(it.OnScreenInitialized));
+        GetComponentsInChildren<ScreenBecameActiveListener>().Where(it => it != this).ToList().ForEach(it => onScreenBecameActive.AddListener(it.OnScreenBecameActive));
+        GetComponentsInChildren<ScreenUpdateListener>().Where(it => it != this).ToList().ForEach(it => onScreenUpdate.AddListener(it.OnScreenUpdate));
+        GetComponentsInChildren<ScreenBecameInactiveListener>().Where(it => it != this).ToList().ForEach(it => onScreenBecameInactive.AddListener(it.OnScreenBecameInactive));
+        GetComponentsInChildren<ScreenDestroyedListener>().Where(it => it != this).ToList().ForEach(it => onScreenDestroyed.AddListener(it.OnScreenDestroyed));
     }
 
     private void Update()
     {
         if (state == ScreenState.Active)
         {
-            foreach (var handler in screenUpdateListeners) handler.OnScreenUpdate();
+            onScreenUpdate.Invoke();
         }
-    }
-
-    public void AddHandler(ScreenListener listener)
-    {
-        AddHandler((ScreenInitializedListener) listener);
-        AddHandler((ScreenBecameActiveListener) listener);
-        AddHandler((ScreenUpdateListener) listener);
-        AddHandler((ScreenBecameActiveListener) listener);
-        AddHandler((ScreenDestroyedListener) listener);
-    }
-
-    public void RemoveHandler(ScreenListener listener)
-    {
-        RemoveHandler((ScreenInitializedListener) listener);
-        RemoveHandler((ScreenBecameActiveListener) listener);
-        RemoveHandler((ScreenUpdateListener) listener);
-        RemoveHandler((ScreenBecameActiveListener) listener);
-        RemoveHandler((ScreenDestroyedListener) listener);
-    }
-    
-    public void AddHandler(ScreenInitializedListener listener)
-    {
-        screenInitializedListeners.Add(listener);
-    }
-
-    public void RemoveHandler(ScreenInitializedListener listener)
-    {
-        screenInitializedListeners.Remove(listener);
-    }
-    
-    public void AddHandler(ScreenBecameActiveListener listener)
-    {
-        screenBecameActiveListeners.Add(listener);
-    }
-
-    public void RemoveHandler(ScreenBecameActiveListener listener)
-    {
-        screenBecameActiveListeners.Remove(listener);
-    }
-    
-    public void AddHandler(ScreenUpdateListener listener)
-    {
-        screenUpdateListeners.Add(listener);
-    }
-
-    public void RemoveHandler(ScreenUpdateListener listener)
-    {
-        screenUpdateListeners.Remove(listener);
-    }
-    
-    public void AddHandler(ScreenBecameInactiveListener listener)
-    {
-        screenBecameInactiveListeners.Add(listener);
-    }
-
-    public void RemoveHandler(ScreenBecameInactiveListener listener)
-    {
-        screenBecameInactiveListeners.Remove(listener);
-    }
-    
-    public void AddHandler(ScreenDestroyedListener listener)
-    {
-        screenDestroyedListeners.Add(listener);
-    }
-
-    public void RemoveHandler(ScreenDestroyedListener listener)
-    {
-        screenDestroyedListeners.Remove(listener);
     }
 
     public abstract string GetId();
@@ -159,15 +92,28 @@ public abstract class Screen : MonoBehaviour, ScreenListener
                 transitionElement.UseCurrentStateAsDefault();
             }
         }
+        onScreenInitialized.Invoke();
     }
 
-    public virtual void OnScreenBecameActive() => Expression.Empty();
+    public virtual void OnScreenBecameActive()
+    {
+        onScreenBecameActive.Invoke();
+    }
 
-    public virtual void OnScreenUpdate() => Expression.Empty();
+    public virtual void OnScreenUpdate()
+    {
+        onScreenUpdate.Invoke();
+    }
 
-    public virtual void OnScreenBecameInactive() => Expression.Empty();
+    public virtual void OnScreenBecameInactive()
+    {
+        onScreenBecameInactive.Invoke();
+    }
 
-    public virtual void OnScreenDestroyed() => Expression.Empty();
+    public virtual void OnScreenDestroyed()
+    {
+        onScreenDestroyed.Invoke();
+    }
 }
 
 public enum ScreenState

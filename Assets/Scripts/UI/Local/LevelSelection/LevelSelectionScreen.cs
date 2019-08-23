@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using DG.Tweening;
 using UniRx.Async;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class LevelSelectionScreen : Screen, RadioGroupChangeListener, ScreenChangeListener
@@ -18,7 +20,12 @@ public class LevelSelectionScreen : Screen, RadioGroupChangeListener, ScreenChan
     private string query;
     
     public override string GetId() => Id;
-    
+
+    protected override void Awake()
+    {
+        base.Awake();
+    }
+
     public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();

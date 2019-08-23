@@ -1,3 +1,4 @@
+using System;
 using DG.Tweening;
 using Proyecto26;
 using UnityEngine;
@@ -12,6 +13,12 @@ public class LeaderboardEntry : MonoBehaviour
     public Image avatarImage;
     public new Text name;
     public Text rating;
+
+    private string profileUrl;
+
+    private void Awake()
+    {
+    }
 
     public void SetModel(Leaderboard.Entry entry)
     {

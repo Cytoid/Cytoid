@@ -1,16 +1,10 @@
-using System;
-using UnityEngine;
 using UnityEngine.UI;
 
-public class LevelSelectionUpperOverlay : MonoBehaviour
+public class LevelSelectionUpperOverlay : UpperOverlay
 {
     public LoopScrollRect loopScrollRect;
-    public RectTransform contentRect;
-    public float maxAlpha = 0.9f;
     
-    [GetComponent] public CanvasGroup canvasGroup;
-
-    private void Update()
+    protected override void Update()
     {
         if (loopScrollRect.StartItemIndex > 0)
         {
@@ -18,8 +12,7 @@ public class LevelSelectionUpperOverlay : MonoBehaviour
         }
         else
         {
-            var alpha = Math.Max(0, Math.Min(maxAlpha, contentRect.anchoredPosition.y / 360));
-            canvasGroup.alpha = alpha;
+            base.Update();
         }
     }
 }

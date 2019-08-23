@@ -391,6 +391,9 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
     m_TypeName: Vector2Event, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  scaleOnClick: 0
+  scaleToOnClick: 0.9
+  pulseOnClick: 0
   defaultIcon: {fileID: 0}
   spinnerIcon: {fileID: 4555322494781148018}
   fullScale: 0.5
@@ -617,7 +620,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 754, y: 0}
+  m_AnchoredPosition: {x: 672, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &7768465691752197523

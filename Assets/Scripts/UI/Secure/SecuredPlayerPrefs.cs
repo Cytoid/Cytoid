@@ -55,7 +55,8 @@ public static class SecuredPlayerPrefs
 
     public static void SetString(string key, string value)
     {
-        PlayerPrefs.SetString(Encrypt(key), Encrypt(value));
+        if (value == null) Delete(key);
+        else PlayerPrefs.SetString(Encrypt(key), Encrypt(value));
     }
     
     public static void Delete(string key)
@@ -89,7 +90,7 @@ public static class SecuredPlayerPrefs
         }
         catch (Exception e)
         {
-            Debug.LogWarning("SecuredPlayerPrefs: Could not encrypt. " + e);
+            Debug.LogError("SecuredPlayerPrefs: Could not encrypt. " + e);
             return plainString;
         }
     }
@@ -122,7 +123,7 @@ public static class SecuredPlayerPrefs
         }
         catch (Exception e)
         {
-            Debug.LogWarning("SecuredPlayerPrefs: Could not decrypt. " + e);
+            Debug.LogError("SecuredPlayerPrefs: Could not decrypt. " + e);
             return encryptedString;
         }
     }

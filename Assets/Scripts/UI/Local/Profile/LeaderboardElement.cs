@@ -9,7 +9,7 @@ public class LeaderboardElement : MonoBehaviour
 
     public void SetModel(IEnumerable<Leaderboard.Entry> data)
     {
-        entries.ForEach(Destroy);
+        entries.ForEach(it => Destroy(it.gameObject));
         entries.Clear();
         foreach (var datum in data)
         {

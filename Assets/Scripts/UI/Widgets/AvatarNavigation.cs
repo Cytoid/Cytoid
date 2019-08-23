@@ -17,16 +17,4 @@ public class AvatarNavigation : InteractableMonoBehavior
         }
     }
 
-    public override void OnPointerDown(PointerEventData eventData)
-    {
-        base.OnPointerDown(eventData);
-        transform.DOScale(0.9f, 0.2f).SetEase(Ease.OutCubic);
-    }
-        
-    public override void OnPointerUp(PointerEventData eventData)
-    {
-        base.OnPointerUp(eventData);
-        transform.DOScale(1f, 0.2f).SetEase(Ease.OutCubic);
-    }
-
 }

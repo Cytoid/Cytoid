@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
@@ -14,10 +15,14 @@ public class InteractableMonoBehavior : MonoBehaviour, IPointerEnterHandler, IPo
     public PointerDataEvent onPointerClick;
     public Vector2Event onPointerMove;
     public bool IsPointerDown { get; protected set; }
-
-    private GraphicRaycaster raycaster;
     
-    private void Awake()
+    public bool scaleOnClick;
+    public float scaleToOnClick = 0.9f;
+    public bool pulseOnClick;
+
+    protected GraphicRaycaster raycaster;
+    
+    protected virtual void Awake()
     {
         onPointerEnter = new PointerDataEvent();
         onPointerExit = new PointerDataEvent();
@@ -42,18 +47,21 @@ public class InteractableMonoBehavior : MonoBehaviour, IPointerEnterHandler, IPo
     public virtual void OnPointerDown(PointerEventData eventData)
     {
         IsPointerDown = true;
+        if (scaleOnClick) transform.DOScale(scaleToOnClick, 0.2f).SetEase(Ease.OutCubic);
         onPointerEnter.Invoke(eventData);
     }
 
     public virtual void OnPointerUp(PointerEventData eventData)
     {
         IsPointerDown = false;
+        if (scaleOnClick) transform.DOScale(1f, 0.2f).SetEase(Ease.OutCubic);
         onPointerEnter.Invoke(eventData);
     }
 
     public virtual void OnPointerClick(PointerEventData eventData)
     {
         onPointerClick.Invoke(eventData);
+        if (pulseOnClick) GetComponent<PulseElement>()?.Pulse();
     }
     
     public virtual void OnPointerMove(Vector2 localPointerPos)

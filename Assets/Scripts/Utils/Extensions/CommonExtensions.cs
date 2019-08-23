@@ -1,8 +1,12 @@
 using System;
+using DG.Tweening;
+using DG.Tweening.Core;
+using DG.Tweening.Plugins.Options;
 using Newtonsoft.Json;
 using Proyecto26;
 using RSG;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 public static class CommonExtensions
@@ -170,6 +174,20 @@ public static class CommonExtensions
                 }
             }
         });
+    }
+    
+    public static TweenerCore<float, float, FloatOptions> DOWidth(this RectTransform target, float endValue, float duration, bool snapping = false)
+    {
+        var t = DOTween.To(() => target.sizeDelta.x, x => target.sizeDelta = new Vector2(x, target.sizeDelta.y), endValue, duration);
+        t.SetOptions(snapping).SetTarget(target);
+        return t;
+    }
+
+    public static TweenerCore<float, float, FloatOptions> DOHeight(this RectTransform target, float endValue, float duration, bool snapping = false)
+    {
+        var t = DOTween.To(() => target.sizeDelta.y, y => target.sizeDelta = new Vector2(target.sizeDelta.x, y), endValue, duration);
+        t.SetOptions(snapping).SetTarget(target);
+        return t;
     }
 
 }

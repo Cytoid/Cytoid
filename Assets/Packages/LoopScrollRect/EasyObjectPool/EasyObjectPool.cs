@@ -68,7 +68,7 @@ namespace SG
         private void AddObjectToPool(PoolObject po)
         {
             //add to pool
-            po.gameObject.SetActive(false);
+            // po.gameObject.SetActive(false);
             po.gameObject.name = poolName;
             availableObjStack.Push(po);
             po.isPooled = true;
@@ -123,7 +123,7 @@ namespace SG
                 result = po.gameObject;
                 if (autoActive)
                 {
-                    result.SetActive(true);
+                    // result.SetActive(true);
                 }
             }
 

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Newtonsoft.Json;
 using Proyecto26;
 using UnityEngine;
@@ -56,9 +57,9 @@ public class Context : SingletonMonoBehavior<Context>
 				Application.Quit();
 				return;
 			}
-			dataPath = dir + "/Cytoid";
+			DataPath = dir + "/Cytoid";
 			// Create an empty folder if it doesn't already exist
-			Directory.CreateDirectory(dataPath);
+			Directory.CreateDirectory(DataPath);
 		}
 #endif
 

@@ -86,6 +86,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
             if (cachedSprite != null)
             {
                 SetAvatarSprite(cachedSprite);
+                spinner.IsSpinning = false;
             }
             else
             {
@@ -124,6 +125,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
         LayoutFixer.Fix(layoutGroup.transform);
         background.color = Color.white;
         spinner.defaultIcon.GetComponent<Image>().color = Color.white;
+        spinner.IsSpinning = false;
         avatarImage.sprite = null;
         avatarImage.color = Color.clear;
     }

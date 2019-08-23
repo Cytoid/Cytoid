@@ -25,6 +25,8 @@ public class LabelSelect : MonoBehaviour, ScreenBecameActiveListener
             var interactable = it.gameObject.AddComponent<InteractableMonoBehavior>();
             var toIndex = index;
             interactable.onPointerClick.AddListener(pointerData => Select(toIndex));
+            interactable.scaleToOnClick = 0.95f;
+            interactable.scaleOnClick = true;
         }
     }
 

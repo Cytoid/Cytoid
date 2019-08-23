@@ -78,7 +78,10 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
         // Set up close detection area
         closeDetectionArea.onClick = Close;
         closeDetectionArea.DetectionEnabled = false;
-        
+    }
+
+    private void Start()
+    {
         Context.ScreenManager.AddHandler(this);
     }
 

@@ -88,7 +88,6 @@ public class TransitionElement : MonoBehaviour, ScreenListener
     {
         if (toShow == IsShown)
         {
-            print((toShow ? "showing " : "hiding ") + "is cancelled by state");
             return;
         }
         IsShown = toShow;
@@ -113,7 +112,6 @@ public class TransitionElement : MonoBehaviour, ScreenListener
                 }
                 catch
                 {
-                    print((toShow ? "showing " : "hiding ") + "is cancelled by wait");
                     return;
                 }
             }
@@ -141,7 +139,6 @@ public class TransitionElement : MonoBehaviour, ScreenListener
             {
                 // Cancelled
                 IsInTransition = false;
-                print((toShow ? "showing " : "hiding ") + "is cancelled");
                 return;
             }
         }
@@ -232,7 +229,6 @@ public class TransitionElement : MonoBehaviour, ScreenListener
             {
                 // Cancelled
                 IsInTransition = false;
-                print((toShow ? "showing " : "hiding ") + "is cancelled during transition");
             }
         }
         IsInTransition = false;

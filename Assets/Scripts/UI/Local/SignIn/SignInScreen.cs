@@ -8,6 +8,7 @@ public class SignInScreen : Screen
 
     public InputField uidInput;
     public InputField passwordInput;
+    public TransitionElement closeButton;
 
     public override string GetId() => Id;
 
@@ -43,6 +44,8 @@ public class SignInScreen : Screen
             .HandleRequestErrors()
             .Finally(() => completed = true);
 
+        closeButton.Leave();
         await UniTask.WaitUntil(() => completed);
+        closeButton.Enter();
     }
 }

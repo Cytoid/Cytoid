@@ -48,13 +48,14 @@ gen
 Logs/
 
 # Secured files
-Assets/Scripts/UI/Secure/
-Assets/Scripts/UI/Secure.meta
-Resources/Sprites/Kreutz/
-Resources/Sprites/Kreutz.meta
-Resources/Sprites/Palescreen/
-Resources/Sprites/Palescreen.meta
-Resources/Sprites/Background.png
+Assets/Scripts/Secure/
+Assets/Scripts/Secure.meta
+Assets/Resources/Sprites/Kreutz/
+Assets/Resources/Sprites/Kreutz.meta
+Assets/Resources/Sprites/Palescreen/
+Assets/Resources/Sprites/Palescreen.meta
+Assets/Resources/Sprites/Background.png
+Assets/Resources/Sprites/Background.png.meta
 
 # Paid assets
 Assets/Packages/SoftMask

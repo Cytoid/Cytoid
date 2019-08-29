@@ -9,6 +9,7 @@ public class GamePreparationScreen : Screen
     public const string Id = "GamePreparation";
 
     [GetComponentInChildrenName] public DepthCover cover;
+    [GetComponentInChildren] public RankingContainer rankingContainer;
 
     public override string GetId() => Id;
 
@@ -23,6 +24,15 @@ public class GamePreparationScreen : Screen
         }
 
         LoadCover();
+        UpdateRankings();
+    }
+
+    public void UpdateRankings()
+    {
+        RestClient.GetArray<RankingEntry>(new RequestHelper
+        {
+            Uri = Context.ApiBaseUrl + "/levels/" + Context.SelectedLevel.Meta.id + "/charts/" + Context.SelectedDifficulty.Id + "/ranking"
+        }).Then(data => { rankingContainer.SetData(data); }).Catch(Debug.Log);
     }
 
     private void LoadCover()
@@ -38,7 +48,6 @@ public class GamePreparationScreen : Screen
     public override void OnScreenDestroyed()
     {
         base.OnScreenDestroyed();
-
         cover.image.color = Color.black;
     }
 }

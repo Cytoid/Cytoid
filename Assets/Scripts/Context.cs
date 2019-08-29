@@ -4,6 +4,8 @@ using Newtonsoft.Json;
 using Proyecto26;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
+using Object = System.Object;
 
 public class Context : SingletonMonoBehavior<Context>
 {
@@ -14,6 +16,7 @@ public class Context : SingletonMonoBehavior<Context>
     public const int ReferenceHeight = 1080;
 
     public static string DataPath;
+    public static AudioManager AudioManager;
     public static ScreenManager ScreenManager;
     public static LevelManager LevelManager = new LevelManager();
     public static SpriteCache SpriteCache = new SpriteCache();
@@ -21,7 +24,8 @@ public class Context : SingletonMonoBehavior<Context>
     public static Level SelectedLevel;
     public static Difficulty SelectedDifficulty = Difficulty.Easy;
     public static Difficulty PreferredDifficulty = Difficulty.Easy;
-
+    public static Game CurrentGame;
+    
     public static LocalPlayer LocalPlayer = new LocalPlayer();
     public static OnlinePlayer OnlinePlayer = new OnlinePlayer();
 
@@ -67,6 +71,15 @@ public class Context : SingletonMonoBehavior<Context>
 #if UNITY_EDITOR
         Application.runInBackground = true;
 #endif
+
+        if (SceneManager.GetActiveScene().name == "Game")
+        {
+            // Load test level
+            var level = LevelManager.LoadTestLevel();
+
+            var game = (Game) FindObjectOfType(typeof(Game));
+            game.Initialize(level, Difficulty.Parse(level.Meta.charts[0].type));
+        }
     }
 
     public static void SetAutoRotation(bool autoRotation)

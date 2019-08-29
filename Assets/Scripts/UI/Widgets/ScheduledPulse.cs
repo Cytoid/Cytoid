@@ -26,8 +26,8 @@ public class ScheduledPulse : MonoBehaviour, ScreenBecameActiveListener, ScreenB
     {
         if (isPulsing && DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() >= nextPulseTime)
         {
-            pulseElement.Pulse();
             nextPulseTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + (int) (interval * 1000);
+            pulseElement.Pulse();
         }
     }
 

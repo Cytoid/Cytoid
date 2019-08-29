@@ -9,8 +9,9 @@ public class ProfileScreen : Screen
 
     public UpperOverlay upperOverlay;
     public ContentTabs contentTabs;
+    public InteractableMonoBehavior playerAvatar;
     public TransitionElement character;
-    public LeaderboardElement leaderboard;
+    public LeaderboardContainer leaderboard;
     public InteractableMonoBehavior signOutButton;
 
     private bool populatedLeaderboard;
@@ -18,7 +19,8 @@ public class ProfileScreen : Screen
     protected override void Awake()
     {
         base.Awake();
-        signOutButton.onPointerClick.AddListener(pointerData =>
+        playerAvatar.onPointerClick.AddListener(_ => Application.OpenURL(Context.WebsiteUrl + "/profile/" + Context.OnlinePlayer.LastProfile.user.uid));
+        signOutButton.onPointerClick.AddListener(_ =>
         {
             Context.OnlinePlayer.Deauthenticate();
             Context.ScreenManager.ChangeScreen(Context.ScreenManager.GetLastScreenId(), ScreenTransition.In);
@@ -49,7 +51,7 @@ public class ProfileScreen : Screen
                     RestClient.GetArray<Leaderboard.Entry>(new RequestHelper
                     {
                         Uri = Context.ApiBaseUrl + "/leaderboard"
-                    }).Then(data => { leaderboard.SetModel(data); }).Catch(Debug.Log);
+                    }).Then(data => { leaderboard.SetData(data); }).Catch(Debug.Log);
                 }
             }
         });

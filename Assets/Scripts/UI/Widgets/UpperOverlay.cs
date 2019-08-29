@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,6 +13,6 @@ public class UpperOverlay : MonoBehaviour
     protected virtual void Update()
     {
         var alpha = Math.Max(0, Math.Min(maxAlpha, contentRect.anchoredPosition.y / 360));
-        canvasGroup.alpha = alpha;
+        canvasGroup.DOFade(alpha, 0.2f).SetEase(Ease.OutCubic);
     }
 }

@@ -66,9 +66,11 @@ public class Toast : SingletonMonoBehavior<Toast>
     {
         while (true)
         {
+            if (this == null) return;
+            
             if (queue.Count == 0)
             {
-                if (canvasGroup.alpha.IsNotCloseTo(0))
+                if (!Mathf.Approximately(canvasGroup.alpha, 0))
                 {
                     canvasGroup.DOFade(0, 0.2f).SetEase(Ease.OutCubic).OnComplete(() =>
                     {
@@ -83,7 +85,7 @@ public class Toast : SingletonMonoBehavior<Toast>
 
             currentEntry = queue.Dequeue();
 
-            if (canvasGroup.alpha.IsNotCloseTo(1))
+            if (!Mathf.Approximately(canvasGroup.alpha, 1))
             {
                 canvasGroup.DOKill();
                 canvasGroup.DOFade(1, 0.2f).SetEase(Ease.OutCubic);

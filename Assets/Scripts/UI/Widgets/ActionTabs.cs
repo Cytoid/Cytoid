@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using DG.Tweening;
@@ -93,7 +92,7 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
     private void Update()
     {
         var profileRect = profileRectTransform.rect;
-        if (profileRectTransform != null && lastProfileRectWidth.IsNotCloseTo(profileRect.width))
+        if (profileRectTransform != null && !Mathf.Approximately(lastProfileRectWidth, profileRect.width))
         {
             lastProfileRectWidth = profileRect.width;
             // Set padding based on profile

@@ -1,0 +1,194 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Lean.Touch;
+using UnityEngine;
+
+public class InputController : MonoBehaviour
+{
+    public Game game;
+
+    public readonly Dictionary<int, FlickNote> FlickingNotes = new Dictionary<int, FlickNote>();
+    public readonly Dictionary<int, HoldNote> HoldingNotes = new Dictionary<int, HoldNote>();
+    public readonly List<Note> TouchableDragNotes = new List<Note>(); // Drag head, Drag child
+    public readonly List<HoldNote> TouchableHoldNotes = new List<HoldNote>(); // Hold, Long hold
+    public readonly List<Note> TouchableNormalNotes = new List<Note>(); // Click, Hold, Long hold, Flick
+
+    private void Awake()
+    {
+        game.onGameUpdate.AddListener(OnGameUpdate);
+        game.onGamePaused.AddListener(OnGamePaused);
+    }
+
+    public void EnableInput()
+    {
+        LeanTouch.OnFingerDown += OnFingerDown;
+        LeanTouch.OnFingerSet += OnFingerSet;
+        LeanTouch.OnFingerUp += OnFingerUp;
+    }
+
+    public void DisableInput()
+    {
+        LeanTouch.OnFingerDown -= OnFingerDown;
+        LeanTouch.OnFingerSet -= OnFingerSet;
+        LeanTouch.OnFingerUp -= OnFingerUp;
+    }
+
+    public void OnGamePaused(Game game)
+    {
+        HoldingNotes.Values.ForEach(note =>
+        {
+            note.Holding = false;
+            note.HoldingFingers.Clear();
+        });
+        HoldingNotes.Clear();
+    }
+
+    public void OnGameUpdate(Game game)
+    {
+        TouchableNormalNotes.Clear();
+        TouchableDragNotes.Clear();
+        TouchableHoldNotes.Clear();
+        for (var id = 0; id <= game.Chart.Model.note_list.Count; id++)
+        {
+            if (!game.Notes.ContainsKey(id)) continue;
+
+            var note = game.Notes[id];
+            if (!note.HasEmerged || note.IsCleared) continue;
+
+            if (note.Type != NoteType.DragHead && note.Type != NoteType.DragChild)
+            {
+                TouchableNormalNotes.Add(note);
+            }
+
+            if (note.Type == NoteType.DragHead || note.Type == NoteType.DragChild)
+            {
+                TouchableDragNotes.Add(note);
+            }
+
+            if ((note.Type == NoteType.Hold || note.Type == NoteType.LongHold) &&
+                !((HoldNote) note).Holding)
+            {
+                TouchableHoldNotes.Add((HoldNote) note);
+            }
+        }
+    }
+
+    protected virtual void OnFingerDown(LeanFinger finger)
+    {
+        var pressedPosition = Camera.main.orthographic
+            ? Camera.main.ScreenToWorldPoint(finger.ScreenPosition)
+            : Camera.main.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
+
+        var collidedDrag = false;
+        // Query drag notes first
+        foreach (var note in TouchableDragNotes.Where(note => note != null).Where(note => note.DoesCollide(pressedPosition)))
+        {
+            note.OnTouch(finger.ScreenPosition);
+            collidedDrag = true;
+            break; // Query other notes too!
+        }
+
+        foreach (var note in TouchableNormalNotes.Where(note => note != null).Where(note => note.DoesCollide(pressedPosition)))
+        {
+            if (note is FlickNote flickNote)
+            {
+                if (FlickingNotes.ContainsKey(finger.Index) || FlickingNotes.ContainsValue(flickNote))
+                    continue;
+                FlickingNotes.Add(finger.Index, flickNote);
+                flickNote.StartFlicking(pressedPosition);
+            }
+            else
+            {
+                if (collidedDrag && Math.Abs(note.TimeUntilStart) > note.Page.Duration / 8f) continue;
+                if (note.Model.page_index > game.Chart.CurrentPageId &&
+                    note.Model.start_time - game.Time >
+                    game.Chart.Model.page_list[game.Chart.CurrentPageId].Duration * 0.5f) continue;
+                note.OnTouch(finger.ScreenPosition);
+            }
+
+            return;
+        }
+    }
+
+    protected virtual void OnFingerSet(LeanFinger finger)
+    {
+        var pos = Camera.main.orthographic
+            ? Camera.main.ScreenToWorldPoint(finger.ScreenPosition)
+            : Camera.main.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
+
+        // Query flick note
+        if (FlickingNotes.ContainsKey(finger.Index))
+        {
+            var flickingNote = FlickingNotes[finger.Index];
+            var cleared = flickingNote.UpdateFingerPosition(pos);
+            if (cleared) FlickingNotes.Remove(finger.Index);
+        }
+
+        // Query drag notes
+        foreach (var note in TouchableDragNotes)
+        {
+            if (note == null) continue;
+            if (note.DoesCollide(pos))
+            {
+                note.OnTouch(finger.ScreenPosition);
+                break; // Query other notes too!
+            }
+        }
+
+        // If this is a new finger
+        if (!HoldingNotes.ContainsKey(finger.Index))
+        {
+            var switchedToNewNote = false; // If the finger holds a new note
+
+            // Query unheld hold notes
+            foreach (var note in TouchableHoldNotes)
+            {
+                if (note == null) continue;
+                if (note.DoesCollide(pos))
+                {
+                    HoldingNotes.Add(finger.Index, note);
+                    note.SetHoldingBy(finger.Index, true);
+                    switchedToNewNote = true;
+                    break;
+                }
+            }
+
+            // Query held hold notes (i.e. multiple fingers on the same hold note)
+            if (!switchedToNewNote)
+            {
+                foreach (var holdNote in HoldingNotes.Values.Where(holdNote => holdNote.DoesCollide(pos)))
+                {
+                    HoldingNotes.Add(finger.Index, holdNote);
+                    holdNote.SetHoldingBy(finger.Index, true);
+                    break;
+                }
+            }
+        }
+        else // The finger is already holding a note
+        {
+            var holdNote = HoldingNotes[finger.Index];
+
+            if (holdNote.IsCleared) // If cleared
+            {
+                HoldingNotes.Remove(finger.Index);
+            }
+            else if (!holdNote.DoesCollide(pos)) // If holding elsewhere
+            {
+                holdNote.SetHoldingBy(finger.Index, false);
+                HoldingNotes.Remove(finger.Index);
+            }
+        }
+    }
+
+    protected virtual void OnFingerUp(LeanFinger finger)
+    {
+        if (HoldingNotes.ContainsKey(finger.Index))
+        {
+            var holdNote = HoldingNotes[finger.Index];
+            holdNote.SetHoldingBy(finger.Index, false);
+            HoldingNotes.Remove(finger.Index);
+        }
+    }
+    
+}

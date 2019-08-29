@@ -47,6 +47,21 @@ gen
 .DS_Store
 Logs/
 
+# Secured files
+Assets/Scripts/UI/Secure/
+Assets/Scripts/UI/Secure.meta
+Resources/Sprites/Kreutz/
+Resources/Sprites/Kreutz.meta
+Resources/Sprites/Palescreen/
+Resources/Sprites/Palescreen.meta
+Resources/Sprites/Background.png
+
 # Paid assets
 Assets/Packages/SoftMask
 Assets/Packages/SoftMask.meta
+Assets/Packages/Le Tai's Asset
+Assets/Packages/Le Tai's Asset.meta
+Assets/Packages/NativeAudio
+Assets/Packages/NativeAudio.meta
+Assets/Packages/ProceduralUIImage
+Assets/Packages/ProceduralUIImage.meta

@@ -9,14 +9,6 @@ public class Leaderboard
     {
         public int rank;
         public float rating;
-        public User owner;
-    }
-    
-    [Serializable]
-    public class User
-    {
-        public string uid;
-        public string name;
-        public string avatarURL;
+        public OnlineUser owner;
     }
 }

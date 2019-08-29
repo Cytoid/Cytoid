@@ -42,6 +42,7 @@ public class DifficultyPill : InteractableMonoBehavior
         base.OnPointerClick(eventData);
         Select();
         Context.PreferredDifficulty = Difficulty;
+        this.GetOwningScreen<GamePreparationScreen>().UpdateRankings();
     }
 
     public void Select(bool pulse = true)

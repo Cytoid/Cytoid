@@ -17,7 +17,8 @@ public class ContentTabs : LabelSelect
             var tab = tabs[index];
             if (index == newIndex)
             {
-                tab.rectTransform.anchoredPosition = new Vector2(tab.rectTransform.anchoredPosition.x, 0);
+                var rect = tab.transform.Find("Viewport/Content").transform as RectTransform;
+                rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, 0);
                 tab.Enter(false);
                 tab.canvasGroup.blocksRaycasts = true;
             }

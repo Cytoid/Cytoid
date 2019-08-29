@@ -16,7 +16,7 @@ public class MainMenuScreen : Screen
                     Toast.Next(Toast.Status.Success, "Successfully signed in.");
                     ProfileWidget.Instance.SetSignedIn(profile);
                 })
-                .HandleRequestErrors();
+                .HandleRequestErrors(error => ProfileWidget.Instance.SetSignedOut());
         }
     }
 }

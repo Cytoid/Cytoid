@@ -12,6 +12,14 @@ public class LevelManager
 {
     public List<Level> LoadedLevels = new List<Level>();
 
+    public Level LoadTestLevel()
+    {
+        var info = new FileInfo(Context.DataPath + "/player/");
+        var path = info.Directory.FullName + Path.DirectorySeparatorChar;
+        var meta = JsonConvert.DeserializeObject<LevelMeta>(File.ReadAllText(path + "level.json"));
+        return new Level(path, meta, info.LastWriteTimeUtc, info.LastWriteTimeUtc);
+    }
+    
     public async UniTask ReloadLocalLevels()
     {
         LoadedLevels.Clear();

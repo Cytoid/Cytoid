@@ -5,6 +5,10 @@ TagManager:
   serializedVersion: 2
   tags:
   - Context
+  - NoteMask
+  - Early
+  - Late
+  - Note
   layers:
   - Default
   - TransparentFX
@@ -39,6 +43,39 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: GameBackground
+    uniqueID: 399455341
+    locked: 0
+  - name: Storyboard1
+    uniqueID: 2748322457
+    locked: 0
+  - name: GameHoldLine
+    uniqueID: 1708887473
+    locked: 0
+  - name: GameLongHoldLine
+    uniqueID: 1894122573
+    locked: 0
+  - name: GameDragLine
+    uniqueID: 3041713465
+    locked: 0
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: GameMain
+    uniqueID: 1548518063
+    locked: 0
+  - name: Storyboard2
+    uniqueID: 1509338589
+    locked: 0
+  - name: GameOverlay1
+    uniqueID: 3373315349
+    locked: 0
+  - name: GameOverlay2
+    uniqueID: 1257212571
+    locked: 0
+  - name: Storyboard3
+    uniqueID: 3692223565
+    locked: 0
+  - name: GameOverlay3
+    uniqueID: 358664851
     locked: 0

@@ -3,17 +3,9 @@ using System;
 [Serializable]
 public class Profile
 {
-    public User user;
+    public OnlineUser user;
     public float rating;
     public Exp exp;
-
-    [Serializable]
-    public class User
-    {
-        public string uid;
-        public string name;
-        public string avatarURL;
-    }
 
     [Serializable]
     public class Exp
@@ -23,5 +15,4 @@ public class Profile
         public float currentLevelExp;
         public float nextLevelExp;
     }
-    
 }

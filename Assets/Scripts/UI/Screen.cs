@@ -64,14 +64,26 @@ public abstract class Screen : MonoBehaviour, ScreenListener
     public UnityEvent onScreenDestroyed = new UnityEvent();
 
     protected virtual void Awake()
+    {}
+
+    public void UseChildrenListeners()
     {
-        GetComponentsInChildren<ScreenInitializedListener>().Where(it => it != this).ToList().ForEach(it => onScreenInitialized.AddListener(it.OnScreenInitialized));
-        GetComponentsInChildren<ScreenBecameActiveListener>().Where(it => it != this).ToList().ForEach(it => onScreenBecameActive.AddListener(it.OnScreenBecameActive));
-        GetComponentsInChildren<ScreenUpdateListener>().Where(it => it != this).ToList().ForEach(it => onScreenUpdate.AddListener(it.OnScreenUpdate));
-        GetComponentsInChildren<ScreenBecameInactiveListener>().Where(it => it != this).ToList().ForEach(it => onScreenBecameInactive.AddListener(it.OnScreenBecameInactive));
-        GetComponentsInChildren<ScreenDestroyedListener>().Where(it => it != this).ToList().ForEach(it => onScreenDestroyed.AddListener(it.OnScreenDestroyed));
+        UseChildrenListener<ScreenInitializedListener>(onScreenInitialized, it => it.OnScreenInitialized);
+        UseChildrenListener<ScreenBecameActiveListener>(onScreenBecameActive, it => it.OnScreenBecameActive);
+        UseChildrenListener<ScreenUpdateListener>(onScreenUpdate, it => it.OnScreenUpdate);
+        UseChildrenListener<ScreenBecameInactiveListener>(onScreenBecameInactive, it => it.OnScreenBecameInactive);
+        UseChildrenListener<ScreenDestroyedListener>(onScreenDestroyed, it => it.OnScreenDestroyed);
     }
 
+    private void UseChildrenListener<T>(UnityEvent unityEvent, Func<T, UnityAction> use)
+    {
+        GetComponentsInChildren<T>(true).Where(it => (object) it != (object) this).ToList().ForEach(it =>
+        {
+            unityEvent.RemoveListener(use(it));
+            unityEvent.AddListener(use(it));
+        });
+    }
+    
     private void Update()
     {
         if (state == ScreenState.Active)
@@ -170,5 +182,10 @@ public static class ScreenExtensions
     public static Screen GetOwningScreen(this MonoBehaviour monoBehaviour)
     {
         return monoBehaviour.gameObject.GetOwningScreen();
+    }
+    
+    public static T GetOwningScreen<T>(this MonoBehaviour monoBehaviour) where T : Screen
+    {
+        return (T) monoBehaviour.gameObject.GetOwningScreen();
     }
 }

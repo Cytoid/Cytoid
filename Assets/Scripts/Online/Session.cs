@@ -4,5 +4,5 @@ using System;
 public class Session
 {
     public string token;
-    public Profile.User user;
+    public OnlineUser user;
 }

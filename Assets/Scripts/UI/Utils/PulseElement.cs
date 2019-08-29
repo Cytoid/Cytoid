@@ -29,7 +29,7 @@ public class PulseElement : MonoBehaviour
     private RectTransform holderRectTransform;
     private RectTransform rectTransform;
 
-    public void Awake()
+    protected void Awake()
     {
         // Return if this is a cloned instance
         if (cloning)
@@ -92,6 +92,7 @@ public class PulseElement : MonoBehaviour
         var clone = Instantiate(gameObject, holder.transform);
         clone.name = "Pulse";
         Destroy(clone.GetComponent<PulseElement>());
+        Destroy(clone.GetComponent<ScheduledPulse>());
         cloning = false;
 
         clone.transform.SetAsFirstSibling();

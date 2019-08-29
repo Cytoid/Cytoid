@@ -63,14 +63,14 @@ public class LevelCard : InteractableMonoBehavior
     public override void OnPointerDown(PointerEventData eventData)
     {
         base.OnPointerDown(eventData);
-        cover.DOFade(1.0f, Constants.TweenDuration).SetEase(Ease.OutCubic);
+        cover.DOFade(1.0f, 0.2f).SetEase(Ease.OutCubic);
         cover.rectTransform.DOScale(1.02f, 0.2f).SetEase(Ease.OutCubic);
     }
     
     public override void OnPointerUp(PointerEventData eventData)
     {
         base.OnPointerUp(eventData);
-        cover.DOFade(0.5f, Constants.TweenDuration).SetEase(Ease.OutCubic);
+        cover.DOFade(0.5f, 0.2f).SetEase(Ease.OutCubic);
         cover.rectTransform.DOScale(1.0f, 0.2f).SetEase(Ease.OutCubic);
     }
 

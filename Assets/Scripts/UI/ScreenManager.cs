@@ -99,6 +99,7 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
 
         if (newScreen == null) newScreen = CreateScreen(targetScreenId);
         else newScreen.gameObject.SetActive(true);
+        newScreen.UseChildrenListeners();
 
         if (lastScreen != null)
         {

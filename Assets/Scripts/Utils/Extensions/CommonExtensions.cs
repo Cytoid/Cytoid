@@ -1,13 +1,17 @@
 using System;
+using System.Collections.Generic;
 using DG.Tweening;
 using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
 using Newtonsoft.Json;
 using Proyecto26;
 using RSG;
+using UniRx;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using Object = System.Object;
 
 public static class CommonExtensions
 {
@@ -81,9 +85,14 @@ public static class CommonExtensions
         image.color = image.color.WithAlpha(alpha);
     }
 
+    private static readonly Dictionary<string, Color> ColorLookup = new Dictionary<string, Color>();
+
     public static Color ToColor(this string rgbString)
     {
+        Assert.IsTrue(rgbString != null);
+        if (ColorLookup.ContainsKey(rgbString.ToLower())) return ColorLookup[rgbString.ToLower()];
         ColorUtility.TryParseHtmlString(rgbString, out var color);
+        ColorLookup[rgbString.ToLower()] = color;
         return color;
     }
 
@@ -138,22 +147,12 @@ public static class CommonExtensions
         Debug.Log(JsonConvert.SerializeObject(obj));
     }
 
-    public static bool IsCloseTo(this float number, float target)
-    {
-        return Math.Abs(number - target) < Constants.FloatingPointTolerance;
-    }
-    
-    public static bool IsNotCloseTo(this float number, float target)
-    {
-        return !IsCloseTo(number, target);
-    }
-
     public static IPromise Catch(this IPromise promise, Action<RequestException> onRejected)
     {
         return promise.Catch(exception => onRejected(exception as RequestException));
     }
     
-    public static IPromise HandleRequestErrors(this IPromise promise)
+    public static IPromise HandleRequestErrors(this IPromise promise, Action<Exception> onRejected = null)
     {
         return promise.Catch(error =>
         {
@@ -173,6 +172,7 @@ public static class CommonExtensions
                         break;
                 }
             }
+            onRejected?.Invoke(error);
         });
     }
     
@@ -190,4 +190,96 @@ public static class CommonExtensions
         return t;
     }
 
+    public static string WithParam<T>(this string url, KeyValuePair<string, T>[] parameters)
+    {
+        url += "?";
+        foreach (var pair in parameters)
+        {
+            url += pair.Key + "=" + pair.Value;
+            url += "&";
+        }
+        return url.Substring(0, url.Length - 1);
+    }
+    
+    public static string WithSquareSizeParam(this string url, int size = 256)
+    {
+        return WithParam(url, new[] {"size".Pair(size)});
+    }
+    
+    public static string WithSizeParam(this string url, int width = -1, int height = -1)
+    {
+        return WithParam(url, new[] {"w".Pair(width), "h".Pair(height)});
+    }
+
+    public static KeyValuePair<T1, T2> Pair<T1, T2>(this T1 a, T2 b)
+    {
+        return new KeyValuePair<T1, T2>(a, b);
+    }
+    
+    public static void ForEach<T>(this IEnumerable<T> enumerable, Action<T> action)
+    {
+        foreach (var item in enumerable) action(item);
+    }
+
+    public static T Also<T>(this T on, Action<T> action)
+    {
+        action(on);
+        return on;
+    }
+    
+    public static void Apply<T>(this T on, Action<T> action)
+    {
+        action(on);
+    }
+    
+    public static TR Let<T, TR>(this T on, Func<T, TR> action)
+    {
+        return action(on);
+    }
+    
+    public static void SetX(this Transform transform, float x)
+    {
+        var position = transform.position;
+        position = new Vector3(x, position.y, position.z);
+        transform.position = position;
+    }
+    
+    public static void SetY(this Transform transform, float y)
+    {
+        var position = transform.position;
+        position = new Vector3(position.x, y, position.z);
+        transform.position = position;
+    }
+    
+    public static void SetZ(this Transform transform, float z)
+    {
+        var position = transform.position;
+        position = new Vector3(position.x, position.y, z);
+        transform.position = position;
+    }
+    
+    public static void SetLocalScaleX(this Transform transform, float x)
+    {
+        var scale = transform.localScale;
+        transform.localScale = new Vector3(x, scale.y, scale.z);
+    }
+    
+    public static void SetLocalScaleY(this Transform transform, float y)
+    {
+        var scale = transform.localScale;
+        transform.localScale = new Vector3(scale.x, y, scale.z);
+    }
+
+    public static void SetLocalScaleXY(this Transform transform, float x, float y)
+    {
+        transform.localScale = new Vector3(x, y, transform.localScale.z);
+    }
+    
+    public static void SetLocalX(this Transform transform, float x)
+    {
+        var localPosition = transform.localPosition;
+        localPosition = new Vector3(x, localPosition.y, localPosition.z);
+        transform.localPosition = localPosition;
+    }
+    
 }

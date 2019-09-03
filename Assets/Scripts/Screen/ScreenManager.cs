@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using DG.Tweening;
 using UniRx.Async;
 using UnityEngine;
@@ -20,7 +21,9 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
     public List<string> History { get; } = new List<string>();
 
     private string activeScreenId;
+    private string changingToScreenId;
     private HashSet<ScreenChangeListener> screenChangeListeners = new HashSet<ScreenChangeListener>();
+    private CancellationTokenSource screenChangeCancellationTokenSource;
 
     protected override void Awake()
     {
@@ -28,12 +31,13 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         Context.ScreenManager = this;
     }
 
-    private async void Start()
+    private void Start()
     {
         createdScreens.ForEach(it => it.gameObject.SetActive(false));
-        
-        await Context.LevelManager.ReloadLocalLevels();
-        ChangeScreen(initialScreenId, ScreenTransition.Fade, 0.2f, 0);
+        if (initialScreenId != null)
+        {
+            ChangeScreen(initialScreenId, ScreenTransition.None);
+        }
     }
 
     public Screen GetScreen(string id)
@@ -76,18 +80,31 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         }
     }
 
-    public async void ChangeScreen(string targetScreenId, ScreenTransition transition, float duration = 0.4f, float currentScreenTransitionDelay = 0f, float newScreenTransitionDelay = 0f,
-        Vector2? transitionFocus = null, Action<Screen> onFinished = null)
+    protected override void OnDestroy()
+    {
+        base.OnDestroy();
+        screenChangeCancellationTokenSource?.Cancel();
+    }
+
+    public async void ChangeScreen(
+        string targetScreenId,
+        ScreenTransition transition,
+        float duration = 0.4f,
+        float currentScreenTransitionDelay = 0f,
+        float newScreenTransitionDelay = 0f,
+        Vector2? transitionFocus = null,
+        Action<Screen> onFinished = null
+    )
     {
         if (ActiveScreen != null && targetScreenId == ActiveScreen.GetId())
         {
             print($"Warning: Attempted to change to the same screen");
             return;
         }
+        if (changingToScreenId == targetScreenId) return;
+        changingToScreenId = targetScreenId;
         print($"Changing screen to {targetScreenId}");
         History.Add(targetScreenId);
-
-        DOTween.defaultEaseType = Ease.OutCubic;
 
         if (transition == ScreenTransition.None)
         {
@@ -99,23 +116,27 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
 
         if (newScreen == null) newScreen = CreateScreen(targetScreenId);
         else newScreen.gameObject.SetActive(true);
-        newScreen.UseChildrenListeners();
 
         if (lastScreen != null)
         {
-            var lastScreenCanvasGroup = lastScreen.GetComponent<CanvasGroup>();
-            var lastScreenRectTransform = lastScreen.GetComponent<RectTransform>();
-            
             lastScreen.State = ScreenState.Inactive;
-
             if (currentScreenTransitionDelay > 0)
-                await UniTask.Delay(TimeSpan.FromSeconds(currentScreenTransitionDelay));
-
+            {
+                try
+                {
+                    await UniTask.Delay(TimeSpan.FromSeconds(currentScreenTransitionDelay),
+                        cancellationToken: (screenChangeCancellationTokenSource = new CancellationTokenSource()).Token);
+                }
+                catch
+                {
+                    return;
+                }
+            }
+            
+            lastScreen.CanvasGroup.DOFade(0, duration);
+            
             if (transition != ScreenTransition.None)
             {
-                lastScreenCanvasGroup.blocksRaycasts = false;
-                lastScreenCanvasGroup.DOFade(0, duration);
-
                 switch (transition)
                 {
                     case ScreenTransition.In:
@@ -124,91 +145,90 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
                             var difference =
                                 new Vector2(Context.ReferenceWidth / 2f, Context.ReferenceHeight / 2f) -
                                 transitionFocus.Value;
-                            lastScreenRectTransform.DOLocalMove(difference * 2f, duration);
+                            lastScreen.RectTransform.DOLocalMove(difference * 2f, duration);
                         }
 
-                        lastScreenRectTransform.DOScale(2f, duration);
+                        lastScreen.RectTransform.DOScale(2f, duration);
                         break;
                     case ScreenTransition.Out:
-                        lastScreenRectTransform.DOScale(0.5f, duration);
+                        lastScreen.RectTransform.DOScale(0.5f, duration);
                         break;
                     case ScreenTransition.Left:
-                        lastScreenRectTransform.DOLocalMove(new Vector3(Context.ReferenceWidth, 0), duration);
+                        lastScreen.RectTransform.DOLocalMove(new Vector3(Context.ReferenceWidth, 0), duration);
                         break;
                     case ScreenTransition.Right:
-                        lastScreenRectTransform.DOLocalMove(new Vector3(-Context.ReferenceWidth, 0), duration);
+                        lastScreen.RectTransform.DOLocalMove(new Vector3(-Context.ReferenceWidth, 0), duration);
                         break;
                     case ScreenTransition.Up:
-                        lastScreenRectTransform.DOLocalMove(new Vector3(0, -Context.ReferenceHeight), duration);
+                        lastScreen.RectTransform.DOLocalMove(new Vector3(0, -Context.ReferenceHeight), duration);
                         break;
                     case ScreenTransition.Down:
-                        lastScreenRectTransform.DOLocalMove(new Vector3(0, Context.ReferenceHeight), duration);
+                        lastScreen.RectTransform.DOLocalMove(new Vector3(0, Context.ReferenceHeight), duration);
                         break;
                     case ScreenTransition.Fade:
                         break;
                 }
             }
-            else
-            {
-                lastScreenCanvasGroup.alpha = 1f;
-                lastScreenRectTransform.localPosition = Vector3.zero;
-                lastScreenRectTransform.localScale = Vector3.one;
-            }
 
             foreach (var listener in screenChangeListeners) listener.OnScreenChangeStarted(lastScreen, newScreen);
         }
         
-        var newScreenCanvasGroup = newScreen.GetComponent<CanvasGroup>();
-        var newScreenRectTransform = newScreen.GetComponent<RectTransform>();
-
         activeScreenId = newScreen.GetId();
         newScreen.State = ScreenState.Active;
-
+        newScreen.CanvasGroup.blocksRaycasts = false; // Special handling
+        
         if (newScreenTransitionDelay > 0)
-            await UniTask.Delay(TimeSpan.FromSeconds(newScreenTransitionDelay));
+        {
+            try
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(newScreenTransitionDelay),
+                    cancellationToken: (screenChangeCancellationTokenSource = new CancellationTokenSource()).Token);
+            }
+            catch
+            {
+                return;
+            }
+        }
+        
+        newScreen.CanvasGroup.blocksRaycasts = true; // Special handling
+        newScreen.CanvasGroup.alpha = 0f;
+        newScreen.CanvasGroup.DOFade(1f, duration);
+        newScreen.RectTransform.DOLocalMove(Vector3.zero, duration);
         
         if (transition != ScreenTransition.None)
         {
-            newScreenCanvasGroup.alpha = 0f;
-            newScreenCanvasGroup.blocksRaycasts = true;
-            newScreenCanvasGroup.DOFade(1f, duration);
-            newScreenRectTransform.DOLocalMove(Vector3.zero, duration);
             switch (transition)
             {
                 case ScreenTransition.In:
-                    newScreenRectTransform.localScale = new Vector3(0.5f, 0.5f);
-                    newScreenRectTransform.DOScale(1f, duration);
+                    newScreen.RectTransform.localScale = new Vector3(0.5f, 0.5f);
+                    newScreen.RectTransform.DOScale(1f, duration);
                     break;
                 case ScreenTransition.Out:
-                    newScreenRectTransform.localScale = new Vector3(2, 2);
-                    newScreenRectTransform.DOScale(1f, duration);
+                    newScreen.RectTransform.localScale = new Vector3(2, 2);
+                    newScreen.RectTransform.DOScale(1f, duration);
                     break;
                 case ScreenTransition.Left:
-                    newScreenRectTransform.localPosition = new Vector3(-Context.ReferenceWidth, 0);
-                    newScreenRectTransform.localScale = new Vector3(1, 1);
+                    newScreen.RectTransform.localPosition = new Vector3(-Context.ReferenceWidth, 0);
+                    newScreen.RectTransform.localScale = new Vector3(1, 1);
                     break;
                 case ScreenTransition.Right:
-                    newScreenRectTransform.localPosition = new Vector3(Context.ReferenceWidth, 0);
-                    newScreenRectTransform.localScale = new Vector3(1, 1);
+                    newScreen.RectTransform.localPosition = new Vector3(Context.ReferenceWidth, 0);
+                    newScreen.RectTransform.localScale = new Vector3(1, 1);
                     break;
                 case ScreenTransition.Up:
-                    newScreenRectTransform.localPosition = new Vector3(0, Context.ReferenceHeight);
-                    newScreenRectTransform.localScale = new Vector3(1, 1);
+                    newScreen.RectTransform.localPosition = new Vector3(0, Context.ReferenceHeight);
+                    newScreen.RectTransform.localScale = new Vector3(1, 1);
                     break;
                 case ScreenTransition.Down:
-                    newScreenRectTransform.localPosition = new Vector3(0, -Context.ReferenceHeight);
-                    newScreenRectTransform.localScale = new Vector3(1, 1);
+                    newScreen.RectTransform.localPosition = new Vector3(0, -Context.ReferenceHeight);
+                    newScreen.RectTransform.localScale = new Vector3(1, 1);
                     break;
                 case ScreenTransition.Fade:
                     break;
             }
         }
-        else
-        {
-            newScreenCanvasGroup.alpha = 1f;
-            newScreenRectTransform.localPosition = Vector3.zero;
-            newScreenRectTransform.localScale = Vector3.one;
-        }
+
+        changingToScreenId = null;
 
         Run.After(duration, () =>
         {

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using UniRx.Async;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
@@ -10,6 +11,9 @@ using UnityEngine.UI;
 [RequireComponent(typeof(RectTransform), typeof(CanvasGroup))]
 public abstract class Screen : MonoBehaviour, ScreenListener
 {
+    public RectTransform RectTransform { get; set; }
+    public CanvasGroup CanvasGroup { get; set; }
+    
     private ScreenState state = ScreenState.Destroyed;
 
     public ScreenState State
@@ -64,7 +68,15 @@ public abstract class Screen : MonoBehaviour, ScreenListener
     public UnityEvent onScreenDestroyed = new UnityEvent();
 
     protected virtual void Awake()
-    {}
+    {
+        CanvasGroup = GetComponent<CanvasGroup>();
+        RectTransform = GetComponent<RectTransform>();
+    }
+
+    protected void OnEnable()
+    {
+        UseChildrenListeners();
+    }
 
     public void UseChildrenListeners()
     {
@@ -96,19 +108,25 @@ public abstract class Screen : MonoBehaviour, ScreenListener
 
     public virtual void OnScreenInitialized()
     {
-        foreach (var layoutGroup in gameObject.GetComponentsInChildren<LayoutGroup>())
+        // Unfortunately, due to how Unity implements their shitty & buggy layout group system,
+        // we need to rebuild every layout group two times in order to have correct rect values.
+        for (var i = 1; i <= 2; i++)
         {
-            layoutGroup.transform.RebuildLayout();
-            foreach (var transitionElement in layoutGroup.GetComponentsInChildren<TransitionElement>())
+            foreach (var layoutGroup in gameObject.GetComponentsInChildren<LayoutGroup>())
             {
-                transitionElement.UseCurrentStateAsDefault();
+                layoutGroup.transform.RebuildLayout();
             }
+        }
+        foreach (var transitionElement in gameObject.GetComponentsInChildren<TransitionElement>())
+        {
+            transitionElement.UseCurrentStateAsDefault();
         }
         onScreenInitialized.Invoke();
     }
 
     public virtual void OnScreenBecameActive()
     {
+        CanvasGroup.blocksRaycasts = true;
         onScreenBecameActive.Invoke();
     }
 
@@ -119,6 +137,7 @@ public abstract class Screen : MonoBehaviour, ScreenListener
 
     public virtual void OnScreenBecameInactive()
     {
+        CanvasGroup.blocksRaycasts = false;
         onScreenBecameInactive.Invoke();
     }
 
@@ -167,7 +186,7 @@ public class ScreenEditor : Editor
 
 public static class ScreenExtensions
 {
-    public static Screen GetOwningScreen(this GameObject gameObject)
+    public static Screen GetScreenParent(this GameObject gameObject)
     {
         var transform = gameObject.transform;
         while (transform != null)
@@ -179,13 +198,13 @@ public static class ScreenExtensions
         return null;
     }
 
-    public static Screen GetOwningScreen(this MonoBehaviour monoBehaviour)
+    public static Screen GetScreenParent(this MonoBehaviour monoBehaviour)
     {
-        return monoBehaviour.gameObject.GetOwningScreen();
+        return monoBehaviour.gameObject.GetScreenParent();
     }
     
-    public static T GetOwningScreen<T>(this MonoBehaviour monoBehaviour) where T : Screen
+    public static T GetScreenParent<T>(this MonoBehaviour monoBehaviour) where T : Screen
     {
-        return (T) monoBehaviour.gameObject.GetOwningScreen();
+        return (T) monoBehaviour.gameObject.GetScreenParent();
     }
 }

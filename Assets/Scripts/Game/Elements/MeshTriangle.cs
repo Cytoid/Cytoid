@@ -1,13 +1,13 @@
 ﻿using System;
 using UnityEngine;
 
-public class TriangleElement : MonoBehaviour
+public class MeshTriangle : MonoBehaviour
 {
     [NonSerialized] public ChartModel.Note Note;
     public bool isShowing;
 
     private Mesh mesh;
-    private ScannerElement scanner;
+    private Scanner scanner;
     private Camera mainCamera;
 
     private void OnEnable()
@@ -27,7 +27,7 @@ public class TriangleElement : MonoBehaviour
             new Vector2()
         };
         mesh.triangles = new[] {0, 1, 2};
-        scanner = ScannerElement.Instance;
+        scanner = Scanner.Instance;
         mainCamera = Camera.main;
     }
 

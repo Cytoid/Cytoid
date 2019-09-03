@@ -20,7 +20,7 @@ public class SpriteCache
 
     public bool HasCachedSprite(string path) => GetCachedSprite(path) != null;
     
-    public async UniTask<Sprite> GetSprite(string path, string tag = "Default")
+    public async UniTask<Sprite> CacheSprite(string path, string tag)
     {
         var cachedSprite = GetCachedSprite(path);
         if (cachedSprite != null) return cachedSprite;
@@ -57,8 +57,6 @@ public class SpriteCache
         return sprite;
     }
     
-    
-
     public void PutSprite(string path, string tag, Sprite sprite)
     {
         cache[path] = new Entry {Sprite = sprite, Tag = tag};

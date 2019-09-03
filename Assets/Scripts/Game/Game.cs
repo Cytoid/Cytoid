@@ -12,32 +12,40 @@ using UnityEngine.Networking;
 
 public class Game : MonoBehaviour
 {
+    public GameObject contentParent;
     public EffectController effectController;
     public InputController inputController;
 
     public bool IsLoaded { get; protected set; }
-    
+
     public GameConfig Config { get; protected set; }
     public GameState State { get; protected set; }
     public GameRenderer Renderer { get; protected set; }
 
     public Level Level { get; protected set; }
+    
+    public Difficulty Difficulty { get; protected set; }
     public Chart Chart { get; protected set; }
     public Dictionary<int, Note> Notes { get; } = new Dictionary<int, Note>();
-    
+
     public float Time { get; protected set; }
     public float MusicDuration { get; protected set; }
     public float MusicStartedTimestamp { get; protected set; } // When was the music started to play?
     public float MusicStartedAt { get; protected set; } // When the music was played, from when was it played?
     public float MainMusicProgress { get; protected set; }
+    public float UnpauseCountdown { get; protected set; }
 
     public AudioManager.Controller Music { get; protected set; }
     public AudioManager.Controller HitSound { get; protected set; }
+    
+    public List<UniTask> BeforeStartTasks { get; protected set; } = new List<UniTask>();
+    public List<UniTask> BeforeExitTasks { get; protected set; } = new List<UniTask>();
 
     public GameEvent onGameLoaded = new GameEvent();
     public GameEvent onGameStarted = new GameEvent();
     public GameEvent onGameUpdate = new GameEvent();
     public GameEvent onGamePaused = new GameEvent();
+    public GameEvent onGameWillUnpause = new GameEvent();
     public GameEvent onGameUnpaused = new GameEvent();
     public GameEvent onGameFailed = new GameEvent();
     public GameEvent onGameCompleted = new GameEvent();
@@ -48,18 +56,25 @@ public class Game : MonoBehaviour
     public GameEvent onTopBoundaryBounded = new GameEvent();
     public GameEvent onBottomBoundaryBounded = new GameEvent();
 
-    private void Awake()
+    protected void Awake()
     {
         Renderer = new GameRenderer(this);
     }
 
-    public async void Initialize(Level level, Difficulty difficulty, bool startAutomatically = true)
+    protected async void Start()
+    {
+        await Initialize(Context.SelectedLevel, Context.SelectedDifficulty);
+        State.Mods.Add(Mod.Auto);
+    }
+
+    public async UniTask Initialize(Level level, Difficulty difficulty, bool startAutomatically = true)
     {
         Level = level;
+        Difficulty = difficulty;
 
         // Load chart
         print("Loading chart");
-        var chartMeta = level.Meta.GetChartSection(difficulty.Id);
+        var chartMeta = level.Meta.GetChartSection(Difficulty.Id);
         var chartPath = "file://" + level.Path + chartMeta.path;
         string chartText;
         using (var request = UnityWebRequest.Get(chartPath))
@@ -67,7 +82,7 @@ public class Game : MonoBehaviour
             await request.SendWebRequest();
             if (request.isNetworkError || request.isHttpError)
             {
-                Debug.LogError($"Cannot download chart from {chartPath}");
+                Debug.LogError($"Failed to download chart from {chartPath}");
                 Debug.LogError(request.error);
                 return;
             }
@@ -88,43 +103,28 @@ public class Game : MonoBehaviour
 
         // Load audio
         print("Loading audio");
+
         var audioPath = "file://" + Level.Path + Level.Meta.GetMusicPath(difficulty.Id);
-        AudioClip audioClip;
-        using (var request = UnityWebRequestMultimedia.GetAudioClip(audioPath, AudioType.MPEG))
+        var loader = new AssetLoader(audioPath);
+        await loader.LoadAudioClip();
+        if (loader.Error != null)
         {
-            await request.SendWebRequest();
-            if (request.isNetworkError || request.isHttpError)
-            {
-                Debug.LogError($"Cannot download audio from {audioPath}");
-                Debug.LogError(request.error);
-                return;
-            }
-
-            audioClip = DownloadHandlerAudioClip.GetContent(request);
+            Debug.LogError($"Failed to download audio from {audioPath}");
+            Debug.LogError(loader.Error);
+            return;
         }
-
-        MusicDuration = audioClip.length;
-        Music = Context.AudioManager.Load("main", audioClip);
-
-        if (Context.LocalPlayer.HitSound != "None")
+        
+        MusicDuration = loader.AudioClip.length;
+        
+        if (Context.AudioManager == null) await UniTask.WaitUntil(() => Context.AudioManager != null);
+        Music = Context.AudioManager.Load("Level", loader.AudioClip);
+        
+        // Load hit sound
+        Context.LocalPlayer.HitSound = "quack";
+        if (Context.LocalPlayer.HitSound != "none")
         {
-            // Load hit sound
-            var hitSoundPath = Application.streamingAssetsPath + "/HitSounds/" + Context.LocalPlayer.HitSound +
-                               ".wav";
-            using (var request = UnityWebRequestMultimedia.GetAudioClip(hitSoundPath, AudioType.WAV))
-            {
-                await request.SendWebRequest();
-                if (request.isNetworkError || request.isHttpError)
-                {
-                    Debug.LogError($"Cannot load hit sound from {hitSoundPath}");
-                    Debug.LogError(request.error);
-                    return;
-                }
-
-                audioClip = DownloadHandlerAudioClip.GetContent(request);
-            }
-
-            HitSound = Context.AudioManager.Load("hitSound", audioClip);
+            var resource = await Resources.LoadAsync<AudioClip>("Audio/HitSounds/" + Context.LocalPlayer.HitSound);
+            HitSound = Context.AudioManager.Load("HitSound", resource as AudioClip);
         }
 
         // State & config
@@ -141,6 +141,7 @@ public class Game : MonoBehaviour
         }
 
         // System config
+        Application.targetFrameRate = 120;
         Context.SetAutoRotation(false);
 
         IsLoaded = true;
@@ -149,11 +150,18 @@ public class Game : MonoBehaviour
         // Wait for storyboard
         // await UniTask.WaitUntil(() => StoryboardController.Instance.Loaded);
 
-        if (startAutomatically) StartGame();
+        if (startAutomatically)
+        {
+            StartGame();
+        }
     }
 
     protected async void StartGame()
     {
+        await UniTask.WhenAll(BeforeStartTasks);
+        
+        Context.ScreenManager.ChangeScreen(OverlayScreen.Id, ScreenTransition.None);
+        
         Music.Play(AudioTrackIndex.Reserved1);
 
         await UniTask.WaitUntil(() =>
@@ -173,19 +181,23 @@ public class Game : MonoBehaviour
 
     protected virtual void Update()
     {
-        if (!IsLoaded || !State.IsStarted) return;
+        if (!IsLoaded) return;
+        
+        Renderer.OnUpdate();
+        
+        if (!State.IsPlaying) return;
 
         if (Input.GetKeyDown(KeyCode.Escape) && !(this is StoryboardGame))
         {
             Pause();
             return;
         }
-        
+
         if (State.ShouldFail) Fail();
         if (State.IsFailed) Music.PlaybackTime -= 1f / 120f;
         if (State.IsPlaying)
         {
-            if (State.ClearedNotes >= Chart.Model.note_list.Count) Complete();
+            if (State.ClearCount >= Chart.Model.note_list.Count) Complete();
 
             // Update current states
             if (this is StoryboardGame)
@@ -205,7 +217,6 @@ public class Game : MonoBehaviour
             while (Chart.CurrentEventId < Chart.Model.event_order_list.Count &&
                    Chart.Model.event_order_list[Chart.CurrentEventId].time < Time)
             {
-                // TODO: Speed up/down text
                 if (Chart.Model.event_order_list[Chart.CurrentEventId].event_list[0].type == 0)
                 {
                     onGameSpeedUp.Invoke(this);
@@ -223,11 +234,11 @@ public class Game : MonoBehaviour
             {
                 if (Chart.Model.page_list[Chart.CurrentPageId].scan_line_direction == 1)
                 {
-                    onTopBoundaryBounded.Invoke(this);
+                    if (!State.IsCompleted) onTopBoundaryBounded.Invoke(this);
                 }
                 else
                 {
-                    onBottomBoundaryBounded.Invoke(this);
+                    if (!State.IsCompleted) onBottomBoundaryBounded.Invoke(this);
                 }
 
                 Chart.CurrentPageId++;
@@ -265,25 +276,25 @@ public class Game : MonoBehaviour
         switch ((NoteType) model.type)
         {
             case NoteType.Click:
-                note = Instantiate(provider.clickNotePrefab, transform.parent).GetComponent<Note>();
+                note = Instantiate(provider.clickNotePrefab, contentParent.transform).GetComponent<Note>();
                 break;
             case NoteType.Hold:
-                note = Instantiate(provider.holdNotePrefab, transform.parent).GetComponent<Note>();
+                note = Instantiate(provider.holdNotePrefab, contentParent.transform).GetComponent<Note>();
                 break;
             case NoteType.LongHold:
-                note = Instantiate(provider.longHoldNotePrefab, transform.parent).GetComponent<Note>();
+                note = Instantiate(provider.longHoldNotePrefab, contentParent.transform).GetComponent<Note>();
                 break;
             case NoteType.DragHead:
-                note = Instantiate(provider.dragHeadNotePrefab, transform.parent).GetComponent<Note>();
+                note = Instantiate(provider.dragHeadNotePrefab, contentParent.transform).GetComponent<Note>();
                 break;
             case NoteType.DragChild:
-                note = Instantiate(provider.dragChildNotePrefab, transform.parent).GetComponent<Note>();
+                note = Instantiate(provider.dragChildNotePrefab, contentParent.transform).GetComponent<Note>();
                 break;
             case NoteType.Flick:
-                note = Instantiate(provider.flickNotePrefab, transform.parent).GetComponent<Note>();
+                note = Instantiate(provider.flickNotePrefab, contentParent.transform).GetComponent<Note>();
                 break;
             default:
-                note = Instantiate(provider.clickNotePrefab, transform.parent).GetComponent<Note>();
+                note = Instantiate(provider.clickNotePrefab, contentParent.transform).GetComponent<Note>();
                 break;
         }
 
@@ -293,7 +304,7 @@ public class Game : MonoBehaviour
 
     public virtual void SpawnDragLine(ChartModel.Note from, ChartModel.Note to)
     {
-        var dragLineView = Instantiate(GameObjectProvider.Instance.dragLinePrefab, transform.parent)
+        var dragLineView = Instantiate(GameObjectProvider.Instance.dragLinePrefab, contentParent.transform)
             .GetComponent<DragLineElement>();
         dragLineView.SetData(this, from, to);
     }
@@ -305,44 +316,53 @@ public class Game : MonoBehaviour
 
     public void Pause()
     {
+        unpause?.Cancel();
+        UnpauseCountdown = 0;
         if (!IsLoaded || !State.IsPlaying || State.IsCompleted || State.IsFailed) return;
-
+        print("Game paused");
+        
         State.IsPlaying = false;
         Music.Pause();
-        unpause?.Cancel();
-
+        
         onGamePaused.Invoke(this);
     }
-    
+
     private CancellationTokenSource unpause;
 
-    public async void Unpause()
+    public async void WillUnpause()
     {
-        if (!IsLoaded || State.IsPlaying || State.IsCompleted || State.IsFailed) return;
-        var countdown = 3;
-        while (countdown > 0)
-        {
-            // TODO: Update text?
+        if (!IsLoaded || State.IsPlaying || State.IsCompleted || State.IsFailed || UnpauseCountdown > 0) return;
+        print("Game ready to unpause");
+        
+        onGameWillUnpause.Invoke(this);
 
+        UnpauseCountdown = 3;
+        while (UnpauseCountdown > 0)
+        {
             unpause = new CancellationTokenSource();
             try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(1), cancellationToken: unpause.Token);
+                await UniTask.Delay(TimeSpan.FromSeconds(0.1), cancellationToken: unpause.Token);
             }
             catch
             {
+                print("Game unpause cancelled");
                 return;
             }
-            countdown--;
+
+            UnpauseCountdown -= 0.1f;
         }
-        UnpauseImmediately();
+
+        Unpause();
     }
 
-    public virtual async void UnpauseImmediately()
-    { 
-        State.IsPlaying = true;
-        Music.Resume();
+    public virtual async void Unpause()
+    {
+        if (!IsLoaded || State.IsPlaying || State.IsCompleted || State.IsFailed) return;
+        print("Game unpaused");
         
+        Music.Resume();
+
         await UniTask.WaitUntil(() =>
         {
             // Wait until the audio actually starts playing
@@ -353,6 +373,8 @@ public class Game : MonoBehaviour
         MusicStartedTimestamp = UnityEngine.Time.realtimeSinceStartup;
         MusicStartedAt = Music.PlaybackTime;
 
+        State.IsPlaying = true;
+        
         onGameUnpaused.Invoke(this);
     }
 
@@ -370,24 +392,31 @@ public class Game : MonoBehaviour
     {
         if (State.IsCompleted || State.IsFailed) return;
         print("Game completed");
-        
+
         State.IsCompleted = true;
         inputController.DisableInput();
 
+        onGameCompleted.Invoke(this);
+        
+#if UNITY_EDITOR
+        State.Mods.Remove(Mod.Auto);
+#endif
         if (State.Mods.Contains(Mod.Auto) || State.Mods.Contains(Mod.AutoDrag)
                                           || State.Mods.Contains(Mod.AutoHold) || State.Mods.Contains(Mod.AutoFlick))
         {
             await UniTask.Delay(TimeSpan.FromSeconds(1));
             Cleanup();
-
+            
+            await UniTask.WhenAll(BeforeExitTasks);
             // TODO: Go back
         }
         else
         {
             // Wait for audio to finish
-            await UniTask.WaitUntil(() => Mathf.Approximately(Music.PlaybackTime, MusicDuration));
+            await UniTask.WaitUntil(() => Music.IsFinished());
             print("Audio ended");
-
+            
+            await UniTask.WhenAll(BeforeExitTasks);
             // TODO: Result
         }
     }
@@ -396,6 +425,7 @@ public class Game : MonoBehaviour
     {
         Notes.Select(entry => entry.Value).Where(note => note != null).ForEach(Destroy);
     }
+    
 }
 
 public class GameEvent : UnityEvent<Game>

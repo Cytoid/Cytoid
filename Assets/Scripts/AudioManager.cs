@@ -7,6 +7,7 @@ using UnityEngine.Assertions;
 public class AudioManager : SingletonMonoBehavior<AudioManager>
 {
     public AudioSource[] audioSources;
+    public AudioClip[] preloadedAudioClips;
     
     private Dictionary<string, Controller> controllers = new Dictionary<string, Controller>();
     
@@ -20,7 +21,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
     {
         base.Awake();
         Context.AudioManager = this;
-        
+
         Assert.AreEqual(audioSources.Length, 7);
         trackCurrentIndex = RoundRobinStartIndex;
         useNativeAudio = NativeAudio.OnSupportedPlatform();
@@ -35,6 +36,8 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         {
                
         }
+        
+        preloadedAudioClips.ForEach(it => Load(it.name, it));
     }
 
     public Controller Load(string id, AudioClip audioClip)
@@ -73,7 +76,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
 
         public Controller(AudioManager parent)
         {
-            this.Parent = parent;
+            Parent = parent;
         }
         
         public abstract float Volume { get; set; }
@@ -83,6 +86,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         public abstract void Resume();
         public abstract void Stop();
         public abstract void Unload();
+        public abstract bool IsFinished();
     }
 
     public class UnityController : Controller
@@ -141,17 +145,24 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             audioClip.UnloadAudioData();
             Destroy(audioClip);
         }
+
+        public override bool IsFinished()
+        {
+            return !Source.isPlaying;
+        }
     }
     
     public class Exceed7Controller : Controller
     {
         private NativeAudioPointer pointer;
         private NativeAudioController controller;
+        private float length;
         private float volume;
 
         public Exceed7Controller(AudioManager parent, AudioClip audioClip) : base(parent)
         {
             pointer = NativeAudio.Load(audioClip, NativeAudio.LoadOptions.defaultOptions);
+            length = audioClip.length;
         }
 
         public override float Volume
@@ -199,14 +210,19 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             await UniTask.DelayFrame(10);
             pointer.Unload();
         }
+
+        public override bool IsFinished()
+        {
+            return Mathf.Approximately(PlaybackTime, 0) || Mathf.Approximately(PlaybackTime, length);
+        }
     }
     
 }
 
 public enum AudioTrackIndex
 {
-    Reserved1 = 1,
-    Reserved2 = 2,
-    Reserved3 = 3,
+    Reserved1 = 0,
+    Reserved2 = 1,
+    Reserved3 = 2,
     RoundRobin = -1
 }

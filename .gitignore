@@ -58,6 +58,8 @@ Assets/Resources/Sprites/Background.png
 Assets/Resources/Sprites/Background.png.meta
 
 # Paid assets
+Assets/Packages/FlatFX
+Assets/Packages/FlatFX.meta
 Assets/Packages/SoftMask
 Assets/Packages/SoftMask.meta
 Assets/Packages/Le Tai's Asset
@@ -66,3 +68,9 @@ Assets/Packages/NativeAudio
 Assets/Packages/NativeAudio.meta
 Assets/Packages/ProceduralUIImage
 Assets/Packages/ProceduralUIImage.meta
+Assets/Packages/Clean Title Transitions
+Assets/Packages/Clean Title Transitions.meta
+Assets/Packages/Introloop
+Assets/Packages/Introloop.meta
+Resources/Introloop
+Resources/Introloop.meta

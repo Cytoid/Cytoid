@@ -4,8 +4,9 @@
 Material:
   serializedVersion: 6
   m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
   m_Name: HoldTriangle
   m_Shader: {fileID: 4800000, guid: 6d654773a9dca438ea781278bf43d7a9, type: 3}
   m_ShaderKeywords: ETC1_EXTERNAL_ALPHA _ALPHAPREMULTIPLY_ON _GLOSSYREFLECTIONS_OFF
@@ -44,7 +45,7 @@ Material:
         m_Scale: {x: 50, y: 50}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 13e467ef3d4994b1b960206ea0eb121c, type: 3}
+        m_Texture: {fileID: 2800000, guid: 9bb21705743ad4c8695d77e50e3f4ba3, type: 3}
         m_Scale: {x: 4.5, y: 4.5}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:

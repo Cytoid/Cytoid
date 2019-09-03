@@ -1,11 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using Newtonsoft.Json;
-using Proyecto26;
+using DG.Tweening;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
-using Object = System.Object;
 
 public class Context : SingletonMonoBehavior<Context>
 {
@@ -24,8 +22,8 @@ public class Context : SingletonMonoBehavior<Context>
     public static Level SelectedLevel;
     public static Difficulty SelectedDifficulty = Difficulty.Easy;
     public static Difficulty PreferredDifficulty = Difficulty.Easy;
-    public static Game CurrentGame;
-    
+    public static List<Mod> SelectedMods = new List<Mod>();
+
     public static LocalPlayer LocalPlayer = new LocalPlayer();
     public static OnlinePlayer OnlinePlayer = new OnlinePlayer();
 
@@ -44,8 +42,9 @@ public class Context : SingletonMonoBehavior<Context>
         InitializeApplication();
     }
 
-    private void InitializeApplication()
+    private async void InitializeApplication()
     {
+        DOTween.defaultEaseType = Ease.OutCubic;
         UnityEngine.Screen.sleepTimeout = SleepTimeout.NeverSleep;
         Application.targetFrameRate = 120;
 
@@ -75,10 +74,8 @@ public class Context : SingletonMonoBehavior<Context>
         if (SceneManager.GetActiveScene().name == "Game")
         {
             // Load test level
-            var level = LevelManager.LoadTestLevel();
-
-            var game = (Game) FindObjectOfType(typeof(Game));
-            game.Initialize(level, Difficulty.Parse(level.Meta.charts[0].type));
+            SelectedLevel = LevelManager.LoadTestLevel();
+            SelectedDifficulty = Difficulty.Parse(SelectedLevel.Meta.charts[0].type);
         }
     }
 

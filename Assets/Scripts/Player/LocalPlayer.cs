@@ -20,7 +20,7 @@ public class LocalPlayer
     
     public bool ShowBoundaries
     {
-        get => PlayerPrefsExtensions.GetBool("boundaries");
+        get => PlayerPrefsExtensions.GetBool("boundaries", true);
         set => PlayerPrefsExtensions.SetBool("boundaries", value);
     }
     
@@ -59,11 +59,17 @@ public class LocalPlayer
         get => PlayerPrefs.GetFloat("vertical margin", 3);
         set => PlayerPrefs.SetFloat("vertical margin", value);
     }
+    
+    public float CoverOpacity
+    {
+        get => PlayerPrefs.GetFloat("horizontal margin", 17) / 20.0f;
+        set => PlayerPrefs.SetFloat("horizontal margin", Mathf.Clamp01(value) * 20.0f);
+    }
 
     public string HitSound
     {
-        get => PlayerPrefs.GetString("hit_sound", "None");
-        set => PlayerPrefs.SetString("hit_sound", value);
+        get => PlayerPrefs.GetString("hit_sound", "None").ToLower();
+        set => PlayerPrefs.SetString("hit_sound", value.ToLower());
     }
 
     public float MainChartOffset

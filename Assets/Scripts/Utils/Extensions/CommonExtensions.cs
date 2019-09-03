@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DG.Tweening;
 using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
@@ -151,14 +152,14 @@ public static class CommonExtensions
     {
         return promise.Catch(exception => onRejected(exception as RequestException));
     }
-    
+
     public static IPromise HandleRequestErrors(this IPromise promise, Action<Exception> onRejected = null)
     {
         return promise.Catch(error =>
         {
             if (error.IsNetworkError)
             {
-                Toast.Next(Toast.Status.Failure,"Please check your network connection.");
+                Toast.Next(Toast.Status.Failure, "Please check your network connection.");
             }
             else
             {
@@ -172,50 +173,57 @@ public static class CommonExtensions
                         break;
                 }
             }
+
             onRejected?.Invoke(error);
         });
     }
-    
-    public static TweenerCore<float, float, FloatOptions> DOWidth(this RectTransform target, float endValue, float duration, bool snapping = false)
+
+    public static TweenerCore<float, float, FloatOptions> DOWidth(this RectTransform target, float endValue,
+        float duration, bool snapping = false)
     {
-        var t = DOTween.To(() => target.sizeDelta.x, x => target.sizeDelta = new Vector2(x, target.sizeDelta.y), endValue, duration);
+        var t = DOTween.To(() => target.sizeDelta.x, x => target.sizeDelta = new Vector2(x, target.sizeDelta.y),
+            endValue, duration);
         t.SetOptions(snapping).SetTarget(target);
         return t;
     }
 
-    public static TweenerCore<float, float, FloatOptions> DOHeight(this RectTransform target, float endValue, float duration, bool snapping = false)
+    public static TweenerCore<float, float, FloatOptions> DOHeight(this RectTransform target, float endValue,
+        float duration, bool snapping = false)
     {
-        var t = DOTween.To(() => target.sizeDelta.y, y => target.sizeDelta = new Vector2(target.sizeDelta.x, y), endValue, duration);
+        var t = DOTween.To(() => target.sizeDelta.y, y => target.sizeDelta = new Vector2(target.sizeDelta.x, y),
+            endValue, duration);
         t.SetOptions(snapping).SetTarget(target);
         return t;
     }
 
     public static string WithParam<T>(this string url, KeyValuePair<string, T>[] parameters)
     {
+        url = url.Substring(0, url.LastIndexOf("?", StringComparison.Ordinal));
         url += "?";
         foreach (var pair in parameters)
         {
             url += pair.Key + "=" + pair.Value;
             url += "&";
         }
+
         return url.Substring(0, url.Length - 1);
     }
-    
+
     public static string WithSquareSizeParam(this string url, int size = 256)
     {
         return WithParam(url, new[] {"size".Pair(size)});
     }
-    
+
     public static string WithSizeParam(this string url, int width = -1, int height = -1)
     {
-        return WithParam(url, new[] {"w".Pair(width), "h".Pair(height)});
+        return WithParam(url, new[] {"w".Pair(width.ToString()), "h".Pair(height.ToString()), "fit".Pair("crop")});
     }
 
     public static KeyValuePair<T1, T2> Pair<T1, T2>(this T1 a, T2 b)
     {
         return new KeyValuePair<T1, T2>(a, b);
     }
-    
+
     public static void ForEach<T>(this IEnumerable<T> enumerable, Action<T> action)
     {
         foreach (var item in enumerable) action(item);
@@ -226,44 +234,44 @@ public static class CommonExtensions
         action(on);
         return on;
     }
-    
+
     public static void Apply<T>(this T on, Action<T> action)
     {
         action(on);
     }
-    
+
     public static TR Let<T, TR>(this T on, Func<T, TR> action)
     {
         return action(on);
     }
-    
+
     public static void SetX(this Transform transform, float x)
     {
         var position = transform.position;
         position = new Vector3(x, position.y, position.z);
         transform.position = position;
     }
-    
+
     public static void SetY(this Transform transform, float y)
     {
         var position = transform.position;
         position = new Vector3(position.x, y, position.z);
         transform.position = position;
     }
-    
+
     public static void SetZ(this Transform transform, float z)
     {
         var position = transform.position;
         position = new Vector3(position.x, position.y, z);
         transform.position = position;
     }
-    
+
     public static void SetLocalScaleX(this Transform transform, float x)
     {
         var scale = transform.localScale;
         transform.localScale = new Vector3(x, scale.y, scale.z);
     }
-    
+
     public static void SetLocalScaleY(this Transform transform, float y)
     {
         var scale = transform.localScale;
@@ -274,7 +282,7 @@ public static class CommonExtensions
     {
         transform.localScale = new Vector3(x, y, transform.localScale.z);
     }
-    
+
     public static void SetLocalX(this Transform transform, float x)
     {
         var localPosition = transform.localPosition;
@@ -282,4 +290,134 @@ public static class CommonExtensions
         transform.localPosition = localPosition;
     }
     
+    public static HslColor ToHslColor(this Color color)
+    {
+        return HslColor.FromRgbColor(color);
+    }
+    
+    public static List<T> ListOf<T>(this object self, params T[] objects)
+    {
+        return objects.ToList();
+    }
+
+}
+
+public class HslColor
+{
+    public double H;
+    public double S;
+    public double L;
+    public float A;
+    
+    public HslColor(double h, double s, double l, float a = 1)
+    {
+        H = h;
+        S = s;
+        L = l;
+        A = a;
+    }
+
+    public Color ToRgbColor()
+    {
+        HslToRgb(H, S, L, out var r, out var g, out var b);
+        return new Color((float) r, (float) g, (float) b, A);
+    }
+
+    public static HslColor FromRgbColor(Color color)
+    {
+        RgbToHsl(color.r, color.g, color.b, out var h, out var s, out var l);
+        return new HslColor(h, s, l, color.a);
+    }
+    
+    private static void RgbToHsl(double r, double g, double b,
+        out double h, out double s, out double l)
+    {
+        // Convert RGB to a 0.0 to 1.0 range.
+        var doubleR = r;
+        var doubleG = g;
+        var doubleB = b;
+
+        // Get the maximum and minimum RGB components.
+        var max = doubleR;
+        if (max < doubleG) max = doubleG;
+        if (max < doubleB) max = doubleB;
+
+        var min = doubleR;
+        if (min > doubleG) min = doubleG;
+        if (min > doubleB) min = doubleB;
+
+        var diff = max - min;
+        l = (max + min) / 2;
+        if (Math.Abs(diff) < 0.00001)
+        {
+            s = 0;
+            h = 0; // H is really undefined.
+        }
+        else
+        {
+            if (l <= 0.5) s = diff / (max + min);
+            else s = diff / (2 - max - min);
+
+            var rDist = (max - doubleR) / diff;
+            var gDist = (max - doubleG) / diff;
+            var bDist = (max - doubleB) / diff;
+
+            if (Math.Abs(doubleR - max) < 0.000001) h = bDist - gDist;
+            else if (Math.Abs(doubleG - max) < 0.000001) h = 2 + rDist - bDist;
+            else h = 4 + gDist - rDist;
+
+            h = h * 60;
+            if (h < 0) h += 360;
+        }
+    }
+
+    public static void HslToRgb(double h, double s, double l,
+        out double r, out double g, out double b)
+    {
+        double p2;
+        if (l <= 0.5) p2 = l * (1 + s);
+        else p2 = l + s - l * s;
+
+        var p1 = 2 * l - p2;
+        double doubleR, doubleG, doubleB;
+        if (Math.Abs(s) < 0.000001)
+        {
+            doubleR = l;
+            doubleG = l;
+            doubleB = l;
+        }
+        else
+        {
+            doubleR = QqhToRgb(p1, p2, h + 120);
+            doubleG = QqhToRgb(p1, p2, h);
+            doubleB = QqhToRgb(p1, p2, h - 120);
+        }
+
+        r = doubleR;
+        g = doubleG;
+        b = doubleB;
+    }
+
+    private static double QqhToRgb(double q1, double q2, double hue)
+    {
+        if (hue > 360) hue -= 360;
+        else if (hue < 0) hue += 360;
+
+        if (hue < 60) return q1 + (q2 - q1) * hue / 60;
+        if (hue < 180) return q2;
+        if (hue < 240) return q1 + (q2 - q1) * (240 - hue) / 60;
+        return q1;
+    }
+
+}
+
+public static class AudioTypeExtensions
+{
+    public static AudioType Detect(string path)
+    {
+        if (path.EndsWith(".mp3")) return AudioType.MPEG;
+        if (path.EndsWith(".wav")) return AudioType.WAV;
+        if (path.EndsWith(".ogg")) return AudioType.OGGVORBIS;
+        return AudioType.UNKNOWN;
+    }
 }

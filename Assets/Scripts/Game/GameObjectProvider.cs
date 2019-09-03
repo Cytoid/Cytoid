@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameObjectProvider : SingletonMonoBehavior<GameObjectProvider>
 {
@@ -9,6 +10,7 @@ public class GameObjectProvider : SingletonMonoBehavior<GameObjectProvider>
      public GameObject flickNotePrefab;
      public GameObject holdNotePrefab;
      public GameObject longHoldNotePrefab;
+     public Image cover;
      public GameObject boundaryBottom;
      public GameObject boundaryTop;
 }

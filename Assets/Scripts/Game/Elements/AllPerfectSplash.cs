@@ -13,6 +13,7 @@ public class AllPerfectSplash : AwaitableAnimatedElement
         if (game.State.Score == 1000000)
         {
             game.BeforeExitTasks.Add(Animate());
+            Context.AudioManager.Get("LevelMax").Play(AudioTrackIndex.RoundRobin);
         }
     }
 }

@@ -12,27 +12,36 @@ public class SpriteCache
 {
 
     private Dictionary<string, Entry> cache = new Dictionary<string, Entry>();
+    private object cacheLock = new object();
 
     public Sprite GetCachedSprite(string path)
     {
-        return cache.ContainsKey(path) ? cache[path].Sprite : null;
+        if (cache.ContainsKey(path))
+        {
+            return cache[path]?.Sprite ? cache[path]?.Sprite : null;
+        }
+
+        return null;
     }
 
     public bool HasCachedSprite(string path) => GetCachedSprite(path) != null;
     
     public async UniTask<Sprite> CacheSprite(string path, string tag)
     {
+        bool isLoading;
         var cachedSprite = GetCachedSprite(path);
         if (cachedSprite != null) return cachedSprite;
+        isLoading = cache.ContainsKey(path);
 
         // Currently loading
-        if (cache.ContainsKey(path))
+        if (isLoading)
         {
             await UniTask.WaitUntil(() => GetCachedSprite(path) != null);
             return GetCachedSprite(path);
         }
-        cache[path] = null;
         
+        cache[path] = null;
+
         var time = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
         Sprite sprite;

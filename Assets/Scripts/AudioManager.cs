@@ -31,6 +31,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             {
                 androidAudioTrackCount = 7
             });
+            Debug.Log("Native Audio initialized");
         }
         else
         {
@@ -157,7 +158,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         private NativeAudioPointer pointer;
         private NativeAudioController controller;
         private float length;
-        private float volume;
+        private float volume = 1f;
 
         public Exceed7Controller(AudioManager parent, AudioClip audioClip) : base(parent)
         {
@@ -171,7 +172,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             set
             {
                 volume = value;
-                controller.SetVolume(volume);
+                controller?.SetVolume(volume);
             }
         }
 
@@ -187,6 +188,8 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             {
                 audioPlayerIndex = Parent.GetAvailableIndex(trackIndex)
             });
+            controller.SetVolume(volume);
+            Debug.Log("Controller volume set to " + volume);
         }
 
         public override void Pause()
@@ -213,7 +216,8 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
 
         public override bool IsFinished()
         {
-            return Mathf.Approximately(PlaybackTime, 0) || Mathf.Approximately(PlaybackTime, length);
+            print("Playback time: " + PlaybackTime + ", Length: " + length);
+            return Mathf.Approximately(PlaybackTime, 0) || PlaybackTime >= length;
         }
     }
     

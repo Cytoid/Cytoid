@@ -134,7 +134,26 @@ public static class CommonExtensions
     public static Vector2 GetScreenSpaceCenter(this RectTransform rectTransform)
     {
         var rect = rectTransform.GetScreenSpaceRect();
-        return new Vector2((rect.xMin + rect.xMax) / 2.0f, (rect.yMin + rect.yMax) / 2.0f);
+        return new Vector2((rect.xMin + rect.xMax) / 2f, (rect.yMin + rect.yMax) / 2f);
+    }
+    
+    public static void SetSize(this RectTransform rectTransform, Vector2 newSize)
+    {
+        var oldSize = rectTransform.rect.size;
+        var deltaSize = newSize - oldSize;
+        var pivot = rectTransform.pivot;
+        rectTransform.offsetMin -= new Vector2(deltaSize.x * pivot.x, deltaSize.y * pivot.y);
+        rectTransform.offsetMax += new Vector2(deltaSize.x * (1f - pivot.x), deltaSize.y * (1f - pivot.y));
+    }
+
+    public static void SetWidth(this RectTransform rectTransform, float newSize)
+    {
+        SetSize(rectTransform, new Vector2(newSize, rectTransform.rect.size.y));
+    }
+
+    public static void SetHeight(this RectTransform rectTransform, float newSize)
+    {
+        SetSize(rectTransform, new Vector2(rectTransform.rect.size.x, newSize));
     }
 
     public static Sprite CreateSprite(this Texture2D texture)
@@ -196,13 +215,13 @@ public static class CommonExtensions
         return t;
     }
 
-    public static string WithParam<T>(this string url, KeyValuePair<string, T>[] parameters)
+    public static string WithParam<T>(this string url, ValueTuple<string, T>[] parameters)
     {
         url = url.Substring(0, url.LastIndexOf("?", StringComparison.Ordinal));
         url += "?";
-        foreach (var pair in parameters)
+        foreach (var (key, value) in parameters)
         {
-            url += pair.Key + "=" + pair.Value;
+            url += key + "=" + value;
             url += "&";
         }
 
@@ -211,17 +230,12 @@ public static class CommonExtensions
 
     public static string WithSquareSizeParam(this string url, int size = 256)
     {
-        return WithParam(url, new[] {"size".Pair(size)});
+        return WithParam(url, new[] {("size", size)});
     }
 
     public static string WithSizeParam(this string url, int width = -1, int height = -1)
     {
-        return WithParam(url, new[] {"w".Pair(width.ToString()), "h".Pair(height.ToString()), "fit".Pair("crop")});
-    }
-
-    public static KeyValuePair<T1, T2> Pair<T1, T2>(this T1 a, T2 b)
-    {
-        return new KeyValuePair<T1, T2>(a, b);
+        return WithParam(url, new[] {("w", width.ToString()), ("h", height.ToString()), ("fit", "crop")});
     }
 
     public static void ForEach<T>(this IEnumerable<T> enumerable, Action<T> action)
@@ -290,16 +304,39 @@ public static class CommonExtensions
         transform.localPosition = localPosition;
     }
     
+    public static void SetLocalY(this Transform transform, float y)
+    {
+        var localPosition = transform.localPosition;
+        localPosition = new Vector3(localPosition.x, y, localPosition.z);
+        transform.localPosition = localPosition;
+    }
+
     public static HslColor ToHslColor(this Color color)
     {
         return HslColor.FromRgbColor(color);
     }
-    
+
     public static List<T> ListOf<T>(this object self, params T[] objects)
     {
         return objects.ToList();
     }
 
+    public static void FitSpriteAspectRatio(this Image image)
+    {
+        var texture = image.sprite.texture;
+        image.GetComponent<AspectRatioFitter>().aspectRatio = texture.width * 1.0f / texture.height;
+    }
+
+    public static T JsonDeepCopy<T>(this T source)
+    {
+        if (ReferenceEquals(source, null))
+        {
+            return default;
+        }
+
+        return JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(source),
+            new JsonSerializerSettings {ObjectCreationHandling = ObjectCreationHandling.Replace});
+    }
 }
 
 public class HslColor
@@ -308,7 +345,7 @@ public class HslColor
     public double S;
     public double L;
     public float A;
-    
+
     public HslColor(double h, double s, double l, float a = 1)
     {
         H = h;
@@ -328,7 +365,7 @@ public class HslColor
         RgbToHsl(color.r, color.g, color.b, out var h, out var s, out var l);
         return new HslColor(h, s, l, color.a);
     }
-    
+
     private static void RgbToHsl(double r, double g, double b,
         out double h, out double s, out double l)
     {
@@ -408,7 +445,6 @@ public class HslColor
         if (hue < 240) return q1 + (q2 - q1) * (240 - hue) / 60;
         return q1;
     }
-
 }
 
 public static class AudioTypeExtensions

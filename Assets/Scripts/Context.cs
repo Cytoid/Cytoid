@@ -14,6 +14,9 @@ public class Context : SingletonMonoBehavior<Context>
     public const int ReferenceHeight = 1080;
 
     public static string DataPath;
+    public static int InitialWidth;
+    public static int InitialHeight;
+    
     public static AudioManager AudioManager;
     public static ScreenManager ScreenManager;
     public static LevelManager LevelManager = new LevelManager();
@@ -44,6 +47,9 @@ public class Context : SingletonMonoBehavior<Context>
 
     private async void InitializeApplication()
     {
+        InitialWidth = UnityEngine.Screen.width;
+        InitialHeight = UnityEngine.Screen.height;
+        
         DOTween.defaultEaseType = Ease.OutCubic;
         UnityEngine.Screen.sleepTimeout = SleepTimeout.NeverSleep;
         Application.targetFrameRate = 120;

@@ -13,6 +13,7 @@ public class FullComboSplash : AwaitableAnimatedElement
         if (game.State.Combo == game.State.NoteCount && game.State.Score < 1000000)
         {
             game.BeforeExitTasks.Add(Animate());
+            Context.AudioManager.Get("LevelFullCombo").Play(AudioTrackIndex.RoundRobin);
         }
     }
 }

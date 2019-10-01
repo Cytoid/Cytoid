@@ -129,24 +129,15 @@ public class GamePreparationScreen : Screen
             
         Context.AudioManager.Get("LevelStart").Play(AudioTrackIndex.RoundRobin);
 
-        StartCoroutine(LoadCoroutine());
+        var sceneLoader = new SceneLoader("Game");
+        sceneLoader.Load();
         
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
 
-        cover.mask.DOFade(1, 0.4f);
+        cover.mask.DOFade(1, 0.8f);
         
-        await UniTask.Delay(TimeSpan.FromSeconds(0.4f));
+        await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
 
-        if (loadOperation == null) await UniTask.WaitUntil(() => loadOperation != null);
-        loadOperation.allowSceneActivation = true;
-    }
-
-    private AsyncOperation loadOperation;
-
-    private IEnumerator LoadCoroutine()
-    {
-        loadOperation = SceneManager.LoadSceneAsync("Game");
-        loadOperation.allowSceneActivation = false;
-        yield return loadOperation;
+        sceneLoader.Activate();
     }
 }

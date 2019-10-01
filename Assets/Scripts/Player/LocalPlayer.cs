@@ -62,14 +62,26 @@ public class LocalPlayer
     
     public float CoverOpacity
     {
-        get => PlayerPrefs.GetFloat("horizontal margin", 17) / 20.0f;
-        set => PlayerPrefs.SetFloat("horizontal margin", Mathf.Clamp01(value) * 20.0f);
+        get => 1 - PlayerPrefs.GetFloat("background dim", 17) / 20.0f;
+        set => PlayerPrefs.SetFloat("background dim", 20 - Mathf.Clamp01(value) * 20.0f);
     }
 
     public string HitSound
     {
-        get => PlayerPrefs.GetString("hit_sound", "None").ToLower();
+        get => PlayerPrefs.GetString("hit_sound", "none").ToLower();
         set => PlayerPrefs.SetString("hit_sound", value.ToLower());
+    }
+    
+    public string GraphicsLevel
+    {
+        get => PlayerPrefs.GetString("storyboard effects", "high").ToLower();
+        set => PlayerPrefs.SetString("storyboard effects", value.ToLower());
+    }
+    
+    public bool HalfResolution
+    {
+        get => PlayerPrefsExtensions.GetBool("low res", false);
+        set => PlayerPrefsExtensions.SetBool("low res", value);
     }
 
     public float MainChartOffset
@@ -118,12 +130,12 @@ public class LocalPlayer
 
     private static Dictionary<NoteType, string[]> NoteTypeDefaultFillColors = new Dictionary<NoteType, string[]>
     {
-        {NoteType.Click, new[] {"#6699CC", "#FF3C38"}},
+        {NoteType.Click, new[] {"#35A7FF", "#FF5964"}},
         {NoteType.DragHead, new[] {"#39E59E", "#39E59E"}},
         {NoteType.DragChild, new[] {"#39E59E", "#39E59E"}},
-        {NoteType.Hold, new[] {"#6699CC", "#FF3C38"}},
+        {NoteType.Hold, new[] {"#35A7FF", "#FF5964"}},
         {NoteType.LongHold, new[] {"#F2C85A", "#F2C85A"}},
-        {NoteType.Flick, new[] {"#6699CC", "#FF3C38"}}
+        {NoteType.Flick, new[] {"#35A7FF", "#FF5964"}}
     };
 
     public Color GetFillColor(NoteType type, bool alt)

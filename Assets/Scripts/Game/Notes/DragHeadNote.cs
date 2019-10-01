@@ -19,7 +19,7 @@ public class DragHeadNote : Note
     {
         base.SetData(game, noteId);
         FromNoteModel = Model;
-        ToNoteModel = Chart.note_list[Model.next_id];
+        ToNoteModel = Model.next_id > 0 ? Chart.note_list[Model.next_id] : Model;
         EndNoteModel = FromNoteModel.GetDragEndNote(game.Chart.Model);
     }
 
@@ -77,8 +77,6 @@ public class DragHeadNote : Note
         else
         {
             gameObject.transform.position = Model.position;
-            FromNoteModel = Model;
-            ToNoteModel = Chart.note_list[Model.next_id];
         }
     }
 

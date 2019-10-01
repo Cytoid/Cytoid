@@ -59,7 +59,7 @@ public class LevelCard : InteractableMonoBehavior, IPointerClickHandler
 
         var sprite = await Context.SpriteCache.CacheSprite(path, "localLevelCoverThumbnail");
         cover.sprite = sprite;
-        cover.GetComponent<AspectRatioFitter>().aspectRatio = sprite.texture.width * 1.0f / sprite.texture.height;
+        cover.FitSpriteAspectRatio();
     }
 
     public override void OnPointerDown(PointerEventData eventData)

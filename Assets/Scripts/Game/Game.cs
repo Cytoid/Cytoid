@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using System.Text;
 using System.Threading;
+using Cytoid.Storyboard;
 using UnityEngine;
-using UniRx;
 using UniRx.Async;
-using UniRx.Triggers;
 using UnityEngine.Events;
 using UnityEngine.Networking;
 
@@ -28,6 +27,8 @@ public class Game : MonoBehaviour
     public Chart Chart { get; protected set; }
     public Dictionary<int, Note> Notes { get; } = new Dictionary<int, Note>();
 
+    public Storyboard Storyboard { get; protected set; }
+    
     public float Time { get; protected set; }
     public float MusicDuration { get; protected set; }
     public float MusicStartedTimestamp { get; protected set; } // When was the music started to play?
@@ -41,6 +42,7 @@ public class Game : MonoBehaviour
     public List<UniTask> BeforeStartTasks { get; protected set; } = new List<UniTask>();
     public List<UniTask> BeforeExitTasks { get; protected set; } = new List<UniTask>();
 
+    public GameEvent onGameReadyToLoad = new GameEvent();
     public GameEvent onGameLoaded = new GameEvent();
     public GameEvent onGameStarted = new GameEvent();
     public GameEvent onGameUpdate = new GameEvent();
@@ -64,13 +66,14 @@ public class Game : MonoBehaviour
     protected async void Start()
     {
         await Initialize(Context.SelectedLevel, Context.SelectedDifficulty);
-        State.Mods.Add(Mod.Auto);
     }
 
     public async UniTask Initialize(Level level, Difficulty difficulty, bool startAutomatically = true)
     {
         Level = level;
         Difficulty = difficulty;
+
+        onGameReadyToLoad.Invoke(this);
 
         // Load chart
         print("Loading chart");
@@ -119,8 +122,21 @@ public class Game : MonoBehaviour
         if (Context.AudioManager == null) await UniTask.WaitUntil(() => Context.AudioManager != null);
         Music = Context.AudioManager.Load("Level", loader.AudioClip);
         
+        // Load storyboard
+        var storyboardPath =
+            level.Path + (chartMeta.storyboard != null ? chartMeta.storyboard.path : "storyboard.json");
+
+        if (File.Exists(storyboardPath)) {
+            // Initialize storyboard
+            // TODO: Why File.ReadAllText() works but not UnityWebRequest?
+            // (UnityWebRequest downloaded text could not be parsed by Newtonsoft.Json)
+            var storyboardText = File.ReadAllText(storyboardPath);
+            Storyboard = new Storyboard(this, storyboardText);
+            await Storyboard.Initialize();
+        }
+
         // Load hit sound
-        Context.LocalPlayer.HitSound = "quack";
+        Context.LocalPlayer.HitSound = "none";
         if (Context.LocalPlayer.HitSound != "none")
         {
             var resource = await Resources.LoadAsync<AudioClip>("Audio/HitSounds/" + Context.LocalPlayer.HitSound);
@@ -146,10 +162,7 @@ public class Game : MonoBehaviour
 
         IsLoaded = true;
         onGameLoaded.Invoke(this);
-
-        // Wait for storyboard
-        // await UniTask.WaitUntil(() => StoryboardController.Instance.Loaded);
-
+        
         if (startAutomatically)
         {
             StartGame();
@@ -311,7 +324,11 @@ public class Game : MonoBehaviour
 
     protected virtual void OnApplicationPause(bool willPause)
     {
-        if (IsLoaded && State.IsStarted && willPause) Pause();
+        if (IsLoaded && State.IsStarted && willPause)
+        {
+            Pause();
+            Context.ScreenManager.ChangeScreen(PausedScreen.Id, ScreenTransition.None);
+        }
     }
 
     public void Pause()
@@ -398,34 +415,30 @@ public class Game : MonoBehaviour
 
         onGameCompleted.Invoke(this);
         
-#if UNITY_EDITOR
-        State.Mods.Remove(Mod.Auto);
-#endif
+        // Wait for audio to finish
+        await UniTask.WaitUntil(() => Music.IsFinished());
+        print("Audio ended");
+        
+        await UniTask.WhenAll(BeforeExitTasks);
+        
+        var sceneLoader = new SceneLoader("Navigation");
+        sceneLoader.Load();
+
+        await UniTask.Delay(TimeSpan.FromSeconds(1.5f));
+        
         if (State.Mods.Contains(Mod.Auto) || State.Mods.Contains(Mod.AutoDrag)
                                           || State.Mods.Contains(Mod.AutoHold) || State.Mods.Contains(Mod.AutoFlick))
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(1));
-            Cleanup();
-            
-            await UniTask.WhenAll(BeforeExitTasks);
             // TODO: Go back
         }
         else
         {
-            // Wait for audio to finish
-            await UniTask.WaitUntil(() => Music.IsFinished());
-            print("Audio ended");
-            
-            await UniTask.WhenAll(BeforeExitTasks);
             // TODO: Result
         }
+        
+        sceneLoader.Activate();
     }
 
-    private void Cleanup()
-    {
-        Notes.Select(entry => entry.Value).Where(note => note != null).ForEach(Destroy);
-    }
-    
 }
 
 public class GameEvent : UnityEvent<Game>

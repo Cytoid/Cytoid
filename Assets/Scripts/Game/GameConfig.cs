@@ -7,8 +7,8 @@ public class GameConfig
     public float ChartOffset;
     public float NoteHitboxMultiplier;
     public bool UseScannerSmoothing;
-    
-    public float GlobalOpacityMultiplier = 1f;
+
+    public float GlobalNoteOpacityMultiplier = 1f;
     public Color GlobalRingColorOverride;
     public readonly Dictionary<NoteType, Color[]> GlobalFillColorsOverride = new Dictionary<NoteType, Color[]>();
 
@@ -23,7 +23,7 @@ public class GameConfig
         game.onGameLoaded.AddListener(OnGameLoaded);
     }
 
-    private static readonly Dictionary<NoteType, int[]> NoteColorChartOverrideMapping = new Dictionary<NoteType, int[]>
+    public static readonly Dictionary<NoteType, int[]> NoteColorChartOverrideMapping = new Dictionary<NoteType, int[]>
     {
         {NoteType.Click, new[] {0, 1}},
         {NoteType.DragHead, new[] {2, 3}},
@@ -39,10 +39,10 @@ public class GameConfig
 
         ChartOffset = Context.LocalPlayer.MainChartOffset + Context.LocalPlayer.GetLevelChartOffset(game.Level.Meta.id);
         if (DetectHeadset.Detect()) ChartOffset += Context.LocalPlayer.HeadsetOffset;
-        
+
         NoteHitboxMultiplier = Context.LocalPlayer.UseLargerHitboxes ? 1.5555f : 1.3333f;
         UseScannerSmoothing = true;
-        
+
         GlobalRingColorOverride = chart.Model.ring_color?.ToColor() ?? Color.clear;
         foreach (NoteType type in Enum.GetValues(typeof(NoteType)))
         {
@@ -72,11 +72,13 @@ public class GameConfig
             };
             NoteFillColors[type] = new[]
             {
-                chart.Model.fill_colors[NoteColorChartOverrideMapping[type][0]]?.ToColor() ?? Context.LocalPlayer.GetFillColor(type, false),
-                chart.Model.fill_colors[NoteColorChartOverrideMapping[type][1]]?.ToColor() ?? Context.LocalPlayer.GetFillColor(type, true)
+                chart.Model.fill_colors[NoteColorChartOverrideMapping[type][0]]?.ToColor() ??
+                Context.LocalPlayer.GetFillColor(type, false),
+                chart.Model.fill_colors[NoteColorChartOverrideMapping[type][1]]?.ToColor() ??
+                Context.LocalPlayer.GetFillColor(type, true)
             };
         }
-        
+
         NoteGradeEffectColors = new Dictionary<NoteGrade, Color>
         {
             {NoteGrade.Perfect, "#5BC0EB".ToColor()},
@@ -85,13 +87,44 @@ public class GameConfig
             {NoteGrade.Bad, "#E55934".ToColor()},
             {NoteGrade.Miss, "#333333".ToColor()},
         };
+
+        if (game.Storyboard != null)
+        {
+            if (game.Storyboard.Controllers.Count > 0)
+            {
+                game.Storyboard.Config.UseEffects = true;
+                switch (Context.LocalPlayer.GraphicsLevel)
+                {
+                    case "high":
+                        UnityEngine.Screen.SetResolution(Context.InitialWidth, Context.InitialHeight, true);
+                        break;
+                    case "medium":
+                        UnityEngine.Screen.SetResolution((int) (Context.InitialWidth * 0.7f),
+                            (int) (Context.InitialHeight * 0.7f), true);
+                        break;
+                    case "low":
+                        UnityEngine.Screen.SetResolution((int) (Context.InitialWidth * 0.5f),
+                            (int) (Context.InitialHeight * 0.5f), true);
+                        break;
+                    case "none":
+                        game.Storyboard.Config.UseEffects = false;
+                        break;
+                }
+            }
+        }
+
+        if (Context.LocalPlayer.HalfResolution)
+        {
+            UnityEngine.Screen.SetResolution((int) (Context.InitialWidth * 0.5f),
+                (int) (Context.InitialHeight * 0.5f), true);
+        }
     }
 
     public Color GetRingColor(ChartModel.Note note)
     {
         return note.direction > 0 ? NoteRingColors[(NoteType) note.type][0] : NoteRingColors[(NoteType) note.type][1];
     }
-    
+
     public Color GetFillColor(ChartModel.Note note)
     {
         if ((NoteType) note.type == NoteType.DragChild) return GetRingColor(note); // Special case: drag child
@@ -107,6 +140,8 @@ public class GameConfig
     {
         var alt = note.direction > 0;
         if (note.is_forward) alt = !alt;
-        return alt ? GlobalFillColorsOverride[(NoteType) note.type][0] : GlobalFillColorsOverride[(NoteType) note.type][1];
+        return alt
+            ? GlobalFillColorsOverride[(NoteType) note.type][0]
+            : GlobalFillColorsOverride[(NoteType) note.type][1];
     }
 }

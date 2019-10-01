@@ -126,6 +126,8 @@ public class ClassicNoteRenderer : NoteRenderer
                 Mathf.Clamp((Game.Time - Note.Model.intro_time) / (Note.Model.start_time - Note.Model.intro_time) * 2f,
                     0f, maxOpacity);
         else EasedOpacity = maxOpacity;
+        
+        EasedOpacity *= Game.Config.GlobalNoteOpacityMultiplier;
 
         Ring.color = Ring.color.WithAlpha(EasedOpacity);
         Fill.color = Fill.color.WithAlpha(EasedOpacity);

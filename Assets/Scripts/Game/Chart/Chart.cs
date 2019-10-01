@@ -20,7 +20,7 @@ public class Chart
 
     public bool IsHorizontallyInverted { get; }
     public bool IsVerticallyInverted { get; }
-    public bool UseScannerSmoothing { get; }
+    public bool UseScannerSmoothing { get; set; }
 
     public Chart(
         string text,

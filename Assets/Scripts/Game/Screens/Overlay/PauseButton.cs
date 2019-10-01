@@ -20,6 +20,8 @@ public class PauseButton : InteractableMonoBehavior
     protected void Awake()
     {
         canvasGroup.alpha = normalOpacity;
+        canvasGroup.interactable = false;
+        game.onGameLoaded.AddListener(_ => canvasGroup.interactable = true);
         game.onGameCompleted.AddListener(_ =>
         {
             transitionElement.leaveTo = Transition.Default;

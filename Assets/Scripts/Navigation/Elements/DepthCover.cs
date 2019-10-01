@@ -34,8 +34,7 @@ public class DepthCover : MonoBehaviour, ScreenListener
             }
 
             image.sprite = sprite;
-            image.GetComponent<AspectRatioFitter>().aspectRatio =
-                sprite.texture.width * 1.0f / sprite.texture.height;
+            image.FitSpriteAspectRatio();
 
             Context.SpriteCache.PutSprite("game://cover", "game", sprite);
         }

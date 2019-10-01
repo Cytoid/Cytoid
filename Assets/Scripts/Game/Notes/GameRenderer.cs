@@ -74,6 +74,7 @@ public class GameRenderer
             }
         }
         cover.sprite = sprite;
+        cover.FitSpriteAspectRatio();
         cover.color = Color.white.WithAlpha(0);
         cover.DOFade(Context.LocalPlayer.CoverOpacity, 0.8f);
     }

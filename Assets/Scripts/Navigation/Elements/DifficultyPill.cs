@@ -22,7 +22,7 @@ public class DifficultyPill : InteractableMonoBehavior
     {
         if (gameToAttach != null)
         {
-            gameToAttach.onGameLoaded.AddListener(_ =>
+            gameToAttach.onGameReadyToLoad.AddListener(_ =>
             {
                 SetModel(gameToAttach.Level.Meta.GetChartSection(gameToAttach.Difficulty.Id));
             });
@@ -37,6 +37,8 @@ public class DifficultyPill : InteractableMonoBehavior
         gradientMesh.SetGradient(Difficulty.Gradient);
         name.text = section.name ?? Difficulty.Name;
         level.text = "LV." + Difficulty.ConvertToDisplayLevel(section.difficulty);
+        
+        LayoutFixer.Fix(transform);
     }
 
     private void Update()

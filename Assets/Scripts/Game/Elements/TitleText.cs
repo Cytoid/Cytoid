@@ -8,7 +8,7 @@ public class TitleText : MonoBehaviour
     public Game game;
     protected void Awake()
     {
-        game.onGameLoaded.AddListener(_ => text.text = game.Level.Meta.title);
+        game.onGameReadyToLoad.AddListener(_ => text.text = game.Level.Meta.title);
     }
     
 }

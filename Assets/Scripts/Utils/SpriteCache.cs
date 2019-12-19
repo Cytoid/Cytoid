@@ -11,8 +11,7 @@ using Object = UnityEngine.Object;
 public class SpriteCache
 {
 
-    private Dictionary<string, Entry> cache = new Dictionary<string, Entry>();
-    private object cacheLock = new object();
+    private readonly Dictionary<string, Entry> cache = new Dictionary<string, Entry>();
 
     public Sprite GetCachedSprite(string path)
     {

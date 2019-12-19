@@ -20,6 +20,7 @@ public class InteractableMonoBehavior : MonoBehaviour, IPointerEnterHandler, IPo
     public bool scaleOnClick;
     public float scaleToOnClick = 0.9f;
     public bool pulseOnClick;
+    public bool bypassOnClickHitboxCheck;
     
     protected GraphicRaycaster raycaster;
 
@@ -35,6 +36,7 @@ public class InteractableMonoBehavior : MonoBehaviour, IPointerEnterHandler, IPo
         IsPointerEntered = false;
         StopCoroutine(nameof(OnPointerMoveIEnumerator));
         onPointerExit.Invoke(eventData);
+        if (IsPointerDown) OnPointerUp(eventData);
     }
     
     public virtual void OnPointerDown(PointerEventData eventData)
@@ -46,7 +48,7 @@ public class InteractableMonoBehavior : MonoBehaviour, IPointerEnterHandler, IPo
 
     public virtual void OnPointerUp(PointerEventData eventData)
     {
-        if (IsPointerDown && IsPointerEntered)
+        if (IsPointerDown && (bypassOnClickHitboxCheck || IsPointerEntered))
         {
             OnPointerClick(eventData);
         }

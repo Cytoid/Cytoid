@@ -56,8 +56,8 @@ public class LongHoldNoteRenderer : HoldNoteRenderer
                 Line2.flipY = !Line.flipY;
                 CompletedLine2.flipY = !CompletedLine.flipY;
 
-                Line.size = new Vector2(1, orthographicSize * 4);
-                Line2.size = new Vector2(1, orthographicSize * 4);
+                Line.size = new Vector2(1, orthographicSize * 8);
+                Line2.size = new Vector2(1, orthographicSize * 8);
 
                 var color = Fill.color;
                 CompletedLine.color = color;
@@ -114,7 +114,7 @@ public class LongHoldNoteRenderer : HoldNoteRenderer
         Line2.transform.SetLocalScaleX(Line.transform.localScale.x);
     }
 
-    public void Cleanup()
+    public override void Cleanup()
     {
         base.Cleanup();
         Object.Destroy(Line2.gameObject);

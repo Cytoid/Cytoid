@@ -15,6 +15,10 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
     public TransitionElement tabBackground;
     public RectangularDetectionArea closeDetectionArea;
 
+    public string closeGameObjectName = "Close";
+    public string iconPath = "Graphic/Icon";
+    public string tabIndicatorPath = "Graphic/TabIndicator";
+
     [GetComponent] public HorizontalLayoutGroup horizontalLayoutGroup;
     private RectTransform profileRectTransform;
     
@@ -42,19 +46,19 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
         }
 
         // Setup close button
-        var closeIcon = gameObject.transform.Find("Close");
+        var closeIcon = gameObject.transform.Find(closeGameObjectName);
         closeAction = closeIcon.gameObject.AddComponent<Action>();
         closeAction.owner = this;
         closeAction.index = -1;
-        closeAction.icon = closeIcon.Find("Icon").GetComponent<Image>();
+        closeAction.icon = closeIcon.Find(iconPath).GetComponent<Image>();
         closeAction.icon.DOFade(0, 0);
 
         // Setup actions and tabs
         for (var index = 0; index < icons.Count; index++)
         {
             var actionGameObject = icons[index];
-            var icon = actionGameObject.transform.Find("Icon");
-            var tabIndicator = actionGameObject.transform.Find("TabIndicator");
+            var icon = actionGameObject.transform.Find(iconPath);
+            var tabIndicator = actionGameObject.transform.Find(tabIndicatorPath);
             if (icon == null || tabIndicator == null) continue;
 
             var action = actionGameObject.AddComponent<Action>();

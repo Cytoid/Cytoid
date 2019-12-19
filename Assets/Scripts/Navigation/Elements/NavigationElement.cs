@@ -12,7 +12,7 @@ public class NavigationElement : InteractableMonoBehavior
     public float currentScreenDelay;
     public float newScreenDelay;
     public Vector2 transitionFocus;
-    
+
     public override void OnPointerClick(PointerEventData eventData)
     {
         base.OnPointerClick(eventData);

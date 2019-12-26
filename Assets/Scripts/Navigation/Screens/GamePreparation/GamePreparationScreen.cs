@@ -30,7 +30,8 @@ public class GamePreparationScreen : Screen
             Debug.LogWarning("Context.activeLevel is null");
             return;
         }
-        Navigation.Instance.FadeOutLoopPlayer();
+        LoopAudioPlayer.Instance.FadeOutLoopPlayer();
+        ProfileWidget.Instance.Enter();
 
         var needReload = Level != Context.SelectedLevel;
         
@@ -45,10 +46,14 @@ public class GamePreparationScreen : Screen
 
     public void UpdateRankings()
     {
-        RestClient.GetArray<RankingEntry>(new RequestHelper
-        {
-            Uri = Context.ApiBaseUrl + "/levels/" + Context.SelectedLevel.Meta.id + "/charts/" + Context.SelectedDifficulty.Id + "/ranking"
-        }).Then(data => { rankingContainer.SetData(data); }).Catch(Debug.Log);
+        Context.OnlinePlayer.GetLevelRankings(Context.SelectedLevel.Meta.id, Context.SelectedDifficulty.Id)
+            .Then(ret =>
+            {
+                var (rank, entries) = ret;
+                rankingContainer.SetData(entries);
+            })
+            .Catch(Debug.LogError)
+            .Finally(() => {});
     }
 
     public async void LoadCover(bool load)
@@ -116,7 +121,7 @@ public class GamePreparationScreen : Screen
     {
         base.OnScreenBecameInactive();
         previewAudioSource.DOFade(0, 1f).SetEase(Ease.Linear).onComplete = () => previewAudioSource.Stop();
-        if (!willStart) Navigation.Instance.FadeInLoopPlayer();
+        if (!willStart) LoopAudioPlayer.Instance.FadeInLoopPlayer();
     }
 
     public async void StartGame()

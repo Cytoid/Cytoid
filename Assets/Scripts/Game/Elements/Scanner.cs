@@ -24,7 +24,7 @@ public class Scanner : SingletonMonoBehavior<Scanner>
     private void Awake()
     {
         game.onGameLoaded.AddListener(_ => {
-            if (game.State.Mods.Contains(Mod.HideScanner))
+            if (game.State.Mods.Contains(Mod.HideScanline))
             {
                 GetComponent<SpriteRenderer>().enabled = false;
             }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,7 +16,7 @@ public class AccuracyText : MonoBehaviour
     {
         if (game.IsLoaded && game.State.IsStarted && game.State.ClearCount > 0)
         {
-            text.text = game.State.Accuracy.ToString("0.00") + "%";
+            text.text = (Math.Floor(game.State.Accuracy * 100) / 100).ToString("0.00") + "%";
         }
     }
 }

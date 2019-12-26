@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using Cytoid.Storyboard;
@@ -51,6 +52,7 @@ public class Game : MonoBehaviour
     public GameEvent onGameUnpaused = new GameEvent();
     public GameEvent onGameFailed = new GameEvent();
     public GameEvent onGameCompleted = new GameEvent();
+    public GameEvent onGameReadyToExit = new GameEvent();
     public GameEvent onGameAborted = new GameEvent();
     public NoteEvent onNoteClear = new NoteEvent();
     public GameEvent onGameSpeedUp = new GameEvent();
@@ -162,6 +164,8 @@ public class Game : MonoBehaviour
 
         IsLoaded = true;
         onGameLoaded.Invoke(this);
+        
+        Context.ScreenManager.ChangeScreen("Overlay", ScreenTransition.None);
         
         if (startAutomatically)
         {
@@ -420,6 +424,8 @@ public class Game : MonoBehaviour
         print("Audio ended");
         
         await UniTask.WhenAll(BeforeExitTasks);
+
+        onGameReadyToExit.Invoke(this);
         
         var sceneLoader = new SceneLoader("Navigation");
         sceneLoader.Load();
@@ -433,7 +439,28 @@ public class Game : MonoBehaviour
         }
         else
         {
-            // TODO: Result
+            Context.LastGameResult = new GameResult
+            {
+                Score = (int) State.Score,
+                Accuracy = State.Accuracy,
+                MaxCombo = State.MaxCombo,
+                Mods = new List<Mod>(State.Mods),
+                GradeCounts = new Dictionary<NoteGrade, int>
+                {
+                    {NoteGrade.Perfect, State.Judgements.Count(it => it.Value.Grade == NoteGrade.Perfect)},
+                    {NoteGrade.Great, State.Judgements.Count(it => it.Value.Grade == NoteGrade.Great)},
+                    {NoteGrade.Good, State.Judgements.Count(it => it.Value.Grade == NoteGrade.Good)},
+                    {NoteGrade.Bad, State.Judgements.Count(it => it.Value.Grade == NoteGrade.Bad)},
+                    {NoteGrade.Miss, State.Judgements.Count(it => it.Value.Grade == NoteGrade.Miss)}
+                },
+                EarlyCount = State.EarlyCount,
+                LateCount = State.LateCount,
+                AverageTimingError = State.AverageTimingError,
+                StandardTimingError = State.StandardTimingError,
+                LevelId = Level.Meta.id,
+                LevelVersion = Level.Meta.version,
+                ChartType = Context.SelectedDifficulty
+            };
         }
         
         sceneLoader.Activate();

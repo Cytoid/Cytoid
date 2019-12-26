@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using Proyecto26;
@@ -28,7 +27,6 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
         infoLayoutGroup.gameObject.SetActive(false);
         canvasGroup.alpha = 0;
         canvasGroup.blocksRaycasts = false;
-        
     }
 
     private async void Start()
@@ -49,6 +47,26 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
         Context.ScreenManager.RemoveHandler(this);
     }
 
+    public void Enter()
+    {
+        FadeIn();
+        if (Context.OnlinePlayer.IsAuthenticated)
+        {
+            SetSignedIn(Context.OnlinePlayer.LastProfile);
+        } 
+        else if (!Context.OnlinePlayer.IsAuthenticated && !Context.OnlinePlayer.IsAuthenticating && !string.IsNullOrEmpty(Context.OnlinePlayer.GetJwtToken()))
+        {
+            SetSigningIn();
+            Context.OnlinePlayer.AuthenticateWithJwtToken()
+                .Then(profile =>
+                {
+                    Toast.Next(Toast.Status.Success, "Successfully signed in.");
+                    SetSignedIn(profile);
+                })
+                .HandleRequestErrors(error => SetSignedOut());
+        }
+    }
+    
     public void Enlarge()
     {
         transform.DOLocalMove(startLocalPosition, 0.4f);
@@ -135,10 +153,11 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
     }
 
     private static List<string> hiddenScreenIds = new List<string> {SignInScreen.Id, ProfileScreen.Id};
+    private static List<string> staticScreenIds = new List<string> {ResultScreen.Id};
 
     public void OnScreenChangeStarted(Screen from, Screen to)
     {
-        if (from.GetId() == MainMenuScreen.Id && !hiddenScreenIds.Contains(to.GetId()))
+        if (from != null && from.GetId() == MainMenuScreen.Id && !hiddenScreenIds.Contains(to.GetId()))
         {
             Shrink();
         }
@@ -151,25 +170,37 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
         {
             FadeOut();
         }
+
+        Debug.Log("Profile widget " + to.GetId());
+        if (staticScreenIds.Contains(to.GetId()))
+        {
+            Debug.Log("set block raycast = false");
+            canvasGroup.blocksRaycasts = canvasGroup.interactable = false;
+        }
     }
 
     public void OnScreenChangeFinished(Screen from, Screen to)
     {
-        if (hiddenScreenIds.Contains(from.GetId()))
+        if (from != null && hiddenScreenIds.Contains(from.GetId()))
         {
             FadeIn();
+        }
+        
+        if (staticScreenIds.Contains(to.GetId()))
+        {
+            canvasGroup.blocksRaycasts = canvasGroup.interactable = false;
         }
     }
 
     public void FadeIn()
     {
         canvasGroup.DOFade(1, 0.2f).SetEase(Ease.OutCubic);
-        canvasGroup.blocksRaycasts = true;
+        canvasGroup.blocksRaycasts = canvasGroup.interactable = !staticScreenIds.Contains(Context.ScreenManager.ActiveScreen.GetId());
     }
     
     public void FadeOut()
     {
         canvasGroup.DOFade(0, 0.2f).SetEase(Ease.OutCubic);
-        canvasGroup.blocksRaycasts = false;
+        canvasGroup.blocksRaycasts = canvasGroup.interactable = false;
     }
 }

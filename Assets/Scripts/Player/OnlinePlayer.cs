@@ -1,13 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json.Linq;
 using Proyecto26;
 using RSG;
 using UniRx.Async;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class OnlinePlayer
 {
+    public UnityEvent onAuthenticated = new UnityEvent();
+    
     public Profile LastProfile { get; private set; }
     
     public bool IsAuthenticated { get; private set; }
@@ -78,6 +82,7 @@ public class OnlinePlayer
             {
                 IsAuthenticated = true;
                 LastProfile = profile;
+                onAuthenticated.Invoke();
                 resolve(profile);
             }).Catch(result =>
             {
@@ -113,5 +118,78 @@ public class OnlinePlayer
     public void SetJwtToken(string token)
     {
         SecuredPlayerPrefs.SetString("JwtToken", token);
+    }
+
+    public Dictionary<string, string> GetJwtAuthorizationHeaders()
+    {
+        return new Dictionary<string, string>
+        {
+            {"Authorization", "JWT " + GetJwtToken()}
+        };
+    }
+
+    public RSG.IPromise<System.Tuple<int, List<RankingEntry>>> GetLevelRankings(string levelId, string chartType)
+    {
+        var entries = new List<RankingEntry>();
+        var top10 = new List<RankingEntry>();
+        if (IsAuthenticated)
+        {
+            return RestClient.GetArray<RankingEntry>(new RequestHelper
+                {
+                    Uri = $"{Context.ApiBaseUrl}/levels/{levelId}/charts/{chartType}/ranking",
+                    EnableDebug = true
+                })
+                .Then(data =>
+                {
+                    top10 = data.ToList();
+                    // Add the first 3
+                    entries.AddRange(top10.GetRange(0, Math.Min(3, top10.Count)));
+
+                    return RestClient.GetArray<RankingEntry>(new RequestHelper
+                    {
+                        Uri =
+                            $"{Context.ApiBaseUrl}/levels/{levelId}/charts/{chartType}/ranking?user={Context.OnlinePlayer.GetUid()}&userLimit=6"
+                    });
+                })
+                .Then(data =>
+                {
+                    var list = data.ToList();
+
+                    // Find user's position
+                    var userRank = -1;
+                    for (var index = 0; index < data.Length; index++)
+                    {
+                        var entry = data[index];
+                        if (entry.owner.uid == Context.OnlinePlayer.GetUid())
+                        {
+                            userRank = entry.rank;
+                            break;
+                        }
+                    }
+
+                    if (userRank == -1 || userRank <= 3)
+                    {
+                        // Just add 4th to 10th from Top 10
+                        if (top10.Count > 3) 
+                            entries.AddRange(top10.GetRange(3, Math.Min(7, top10.Count - 3)));
+                    }
+                    else
+                    {
+                        // Add previous 6 and next 6, and remove accordingly
+                        var append = new List<RankingEntry>();
+                        append.AddRange(list);
+                        append.RemoveRange(0, Math.Max(3, Math.Max(0, 10 - userRank)));
+                        if (append.Count > 7) append.RemoveRange(7, append.Count - 7);
+                        entries.AddRange(append);
+                    }
+
+                    return new System.Tuple<int, List<RankingEntry>>(userRank, entries);
+                });
+        }
+
+        return RestClient.GetArray<RankingEntry>(new RequestHelper
+        {
+            Uri = $"{Context.ApiBaseUrl}/levels/{levelId}/charts/{chartType}/ranking"
+        }).Then(array => new System.Tuple<int, List<RankingEntry>>(-1, array.ToList()));
     }
 }

@@ -194,9 +194,9 @@ public class GameState
         }
 
         if (
-            Mods.Contains(Mod.AllPerfect) && grade != NoteGrade.Perfect
+            Mods.Contains(Mod.AP) && grade != NoteGrade.Perfect
             ||
-            Mods.Contains(Mod.FullCombo) && (grade == NoteGrade.Bad || grade == NoteGrade.Miss)
+            Mods.Contains(Mod.FC) && (grade == NoteGrade.Bad || grade == NoteGrade.Miss)
         )
         {
             ShouldFail = true;

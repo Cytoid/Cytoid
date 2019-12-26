@@ -84,6 +84,7 @@ MonoBehaviour:
   scaleOnClick: 1
   scaleToOnClick: 0.9
   pulseOnClick: 0
+  bypassOnClickHitboxCheck: 0
   defaultIcon: {fileID: 0}
   spinnerIcon: {fileID: 1537597697593351845}
   fullScale: 0.5
@@ -169,6 +170,7 @@ MonoBehaviour:
   scaleOnClick: 0
   scaleToOnClick: 0.9
   pulseOnClick: 0
+  bypassOnClickHitboxCheck: 0
   avatarBackground: {fileID: 8297311857865009637}
   avatarSpinner: {fileID: 8352521874983378603}
   avatarImage: {fileID: 8793127780595123865}
@@ -736,7 +738,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 448, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 360, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4732798573884637932
@@ -846,7 +848,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 54, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4732798574937247128
@@ -990,7 +992,7 @@ PrefabInstance:
     - target: {fileID: 7854026637845850981, guid: 7fd14bf51a66e4bbe8cd72f2e0142b56,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 981
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7854026637845850981, guid: 7fd14bf51a66e4bbe8cd72f2e0142b56,
         type: 3}
@@ -1075,7 +1077,7 @@ PrefabInstance:
     - target: {fileID: 7854026637960816189, guid: 7fd14bf51a66e4bbe8cd72f2e0142b56,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 237
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7854026637960816189, guid: 7fd14bf51a66e4bbe8cd72f2e0142b56,
         type: 3}
@@ -1105,7 +1107,7 @@ PrefabInstance:
     - target: {fileID: 7854026637794291805, guid: 7fd14bf51a66e4bbe8cd72f2e0142b56,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 93
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7854026637794291805, guid: 7fd14bf51a66e4bbe8cd72f2e0142b56,
         type: 3}

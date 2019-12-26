@@ -31,10 +31,13 @@ public class Avatar : InteractableMonoBehavior
         }
         else
         {
+            var avatarUri = user.avatarURL.WithSizeParam(128, 128);
+            Debug.Log("Requesting avatar from " + avatarUri);
             RestClient.Get(new RequestHelper
             {
-                Uri = user.avatarURL.WithSizeParam(128, 128),
-                DownloadHandler = new DownloadHandlerTexture()
+                Uri = avatarUri,
+                DownloadHandler = new DownloadHandlerTexture(),
+                RedirectLimit = 10
             }).Then(response =>
             {
                 var texture = ((DownloadHandlerTexture) response.Request.downloadHandler).texture;

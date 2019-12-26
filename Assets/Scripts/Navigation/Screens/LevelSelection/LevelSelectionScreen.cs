@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DG.Tweening;
 using UniRx.Async;
-using UnityEngine;
 using UnityEngine.UI;
 
 public class LevelSelectionScreen : Screen, RadioGroupChangeListener, ScreenChangeListener
@@ -34,7 +32,7 @@ public class LevelSelectionScreen : Screen, RadioGroupChangeListener, ScreenChan
         sortOrderRadioGroup.AddHandler(this);
         searchInputField.onValueChanged.AddListener(WillSearch);
         
-        await Context.LevelManager.ReloadLocalLevels();
+        await Context.LevelManager.LoadAllFromDataPath();
 
         RefillLevels();
         

@@ -57,7 +57,7 @@ public class LevelCard : InteractableMonoBehavior, IPointerClickHandler
     {
         var path = "file://" + level.Path + ".thumbnail";
 
-        var sprite = await Context.SpriteCache.CacheSprite(path, "localLevelCoverThumbnail");
+        var sprite = await Context.SpriteCache.CacheSprite(path, "LocalLevelCoverThumbnail");
         cover.sprite = sprite;
         cover.FitSpriteAspectRatio();
     }

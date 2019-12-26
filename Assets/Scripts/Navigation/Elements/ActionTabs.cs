@@ -50,8 +50,8 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
         closeAction = closeIcon.gameObject.AddComponent<Action>();
         closeAction.owner = this;
         closeAction.index = -1;
-        closeAction.icon = closeIcon.Find(iconPath).GetComponent<Image>();
-        closeAction.icon.DOFade(0, 0);
+        closeAction.icon = closeIcon.Find(iconPath);
+        DOFade(closeAction.icon, 0, 0);
 
         // Setup actions and tabs
         for (var index = 0; index < icons.Count; index++)
@@ -64,7 +64,7 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
             var action = actionGameObject.AddComponent<Action>();
             action.owner = this;
             action.index = index;
-            action.icon = icon.GetComponent<Image>();
+            action.icon = icon;
             action.tabIndicator = tabIndicator.GetComponent<TransitionElement>();
             action.tabIndicator.hiddenOnStart = true;
             action.tabIndicator.enterOnScreenBecomeActive = false;
@@ -115,7 +115,7 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
             tabBackground.Leave();
             actions.ForEach(it =>
             {
-                it.icon.DOFade(1f, animationDuration);
+                DOFade(it.icon, 1f, animationDuration);
                 it.tabIndicator.leaveTo = leaveTransition;
                 it.tabIndicator.Leave();
             });
@@ -124,8 +124,8 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
                 it.leaveTo = Transition.Right; // TODO: Customize?
                 it.Leave();
             });
-
-            closeAction.icon.DOFade(0, animationDuration);
+                
+            DOFade(closeAction.icon, 0, animationDuration);
             
             closeDetectionArea.DetectionEnabled = false;
             tabBackground.canvasGroup.blocksRaycasts = false;
@@ -134,7 +134,7 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
         {
             // Enter
             tabBackground.Enter();
-            action.icon.DOFade(1f, animationDuration);
+            DOFade(action.icon, 1f, animationDuration);
             
             action.tabIndicator.enterFrom = enterTransition;
             action.tabIndicator.Enter();
@@ -142,7 +142,7 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
             {
                 if (it.index != action.index)
                 {
-                    it.icon.DOFade(0.3f, animationDuration);
+                    DOFade(it.icon, 0.3f, animationDuration);
                     it.tabIndicator.leaveTo = leaveTransition;
                     it.tabIndicator.Leave();
                 }
@@ -158,7 +158,7 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
                 }
             }
             
-            closeAction.icon.DOFade(0.3f, animationDuration);
+            DOFade(closeAction.icon, 0.3f, animationDuration);
 
             closeDetectionArea.DetectionEnabled = true;
             tabBackground.canvasGroup.blocksRaycasts = true;
@@ -170,19 +170,19 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
     {
         public ActionTabs owner;
         public int index;
-        public Image icon;
+        public Transform icon;
         public TransitionElement tabIndicator;
         
         public override void OnPointerDown(PointerEventData eventData)
         {
             base.OnPointerDown(eventData);
-            icon.transform.DOScale(0.9f, 0.2f).SetEase(Ease.OutCubic);
+            icon.DOScale(0.9f, 0.2f).SetEase(Ease.OutCubic);
         }
         
         public override void OnPointerUp(PointerEventData eventData)
         {
             base.OnPointerUp(eventData);
-            icon.transform.DOScale(1f, 0.2f).SetEase(Ease.OutCubic);
+            icon.DOScale(1f, 0.2f).SetEase(Ease.OutCubic);
         }
 
         public override void OnPointerClick(PointerEventData eventData)
@@ -198,4 +198,17 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
     }
 
     public void OnScreenChangeFinished(Screen from, Screen to) => Expression.Empty();
+
+    private void DOFade(Transform transform, float target, float duration)
+    {
+        var image = transform.GetComponent<Image>();
+        if (image)
+        {
+            image.DOFade(target, duration);
+        }
+        else
+        {
+            transform.GetComponent<CanvasGroup>().DOFade(target, duration);
+        }
+    }
 }

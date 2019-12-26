@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class DifficultyPill : InteractableMonoBehavior
+public class DifficultyPill : InteractableMonoBehavior, ScreenBecameActiveListener
 {
     [GetComponent] public CanvasGroup canvasGroup;
     [GetComponentInChildrenName("Background")] public GradientMeshEffect gradientMesh;
@@ -14,18 +14,24 @@ public class DifficultyPill : InteractableMonoBehavior
     public bool isStatic;
 
     public Game gameToAttach;
+    public bool attachToContext;
     
     private LevelMeta.ChartSection section;
     public Difficulty Difficulty { get; private set; }
 
-    protected void Awake()
+    public void OnScreenBecameActive()
     {
         if (gameToAttach != null)
         {
+            isStatic = true;
             gameToAttach.onGameReadyToLoad.AddListener(_ =>
             {
                 SetModel(gameToAttach.Level.Meta.GetChartSection(gameToAttach.Difficulty.Id));
             });
+        } else if (attachToContext)
+        {
+            isStatic = true;
+            SetModel(Context.SelectedLevel.Meta.GetChartSection(Context.SelectedDifficulty.Id));
         }
     }
 
@@ -58,9 +64,12 @@ public class DifficultyPill : InteractableMonoBehavior
     {
         base.OnPointerClick(eventData);
         if (isStatic) return;
+        if (Context.PreferredDifficulty != Difficulty)
+        {
+            this.GetScreenParent<GamePreparationScreen>().UpdateRankings();
+        }
         Select();
         Context.PreferredDifficulty = Difficulty;
-        this.GetScreenParent<GamePreparationScreen>().UpdateRankings();
     }
 
     public void Select(bool pulse = true)

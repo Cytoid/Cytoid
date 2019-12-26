@@ -10,28 +10,27 @@ using Object = UnityEngine.Object;
 
 public class LevelManager
 {
-    public List<Level> LoadedLevels = new List<Level>();
+    public readonly List<Level> LoadedLevels = new List<Level>();
 
-    public Level LoadTestLevel()
+    public async UniTask LoadAllFromDataPath(bool clearExisting = true)
     {
-        var info = new FileInfo(Context.DataPath + "/player/");
-        var path = info.Directory.FullName + Path.DirectorySeparatorChar;
-        var meta = JsonConvert.DeserializeObject<LevelMeta>(File.ReadAllText(path + "level.json"));
-        return new Level(path, meta, info.LastWriteTimeUtc, info.LastWriteTimeUtc);
-    }
-    
-    public async UniTask ReloadLocalLevels()
-    {
-        LoadedLevels.Clear();
-
-        // Load levels
-        var jsonFiles = Directory.GetFiles(Context.DataPath, "level.json", SearchOption.AllDirectories).ToList();
-
-        Debug.Log($"Found {jsonFiles.Count} levels");
-        
-        for (var index = 0; index < jsonFiles.Count; index++)
+        if (clearExisting)
         {
-            var jsonPath = jsonFiles[index];
+            LoadedLevels.Clear();
+            Context.SpriteCache.ClearTagged("LocalLevelCoverThumbnail");
+        }
+
+        var jsonPaths = Directory.GetFiles(Context.DataPath, "level.json", SearchOption.AllDirectories).ToList();
+        Debug.Log($"Found {jsonPaths.Count} levels");
+        
+        await LoadFromMetadataFiles(jsonPaths);
+    }
+
+    public async UniTask LoadFromMetadataFiles(List<string> jsonPaths)
+    {
+        for (var index = 0; index < jsonPaths.Count; index++)
+        {
+            var jsonPath = jsonPaths[index];
 
             var info = new FileInfo(jsonPath);
             if (info.Directory == null) continue;
@@ -56,11 +55,12 @@ public class LevelManager
             
             LoadedLevels.Add(level);
             
-            Debug.Log($"Loaded {index + 1}/{jsonFiles.Count}: {meta.id} ({path})");
+            Debug.Log($"Loaded {index + 1}/{jsonPaths.Count}: {meta.id} ({path})");
         }
 
         LoadedLevels.Sort((a, b) => string.Compare(a.Meta.title, b.Meta.title, StringComparison.OrdinalIgnoreCase));
 
+        // Generate thumbnails
         for (var index = 0; index < LoadedLevels.Count; index++)
         {
             var level = LoadedLevels[index];
@@ -88,7 +88,7 @@ public class LevelManager
                 }
             }
 
-            Debug.Log($"Thumbnail generated {index + 1}/{jsonFiles.Count}: {level.Meta.id} ({path})");
+            Debug.Log($"Thumbnail generated {index + 1}/{jsonPaths.Count}: {level.Meta.id} ({path})");
         }
     }
 }

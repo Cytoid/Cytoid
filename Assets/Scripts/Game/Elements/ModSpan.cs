@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,17 +9,25 @@ public class ModSpan : MonoBehaviour
 
     protected void Awake()
     {
-        game.onGameLoaded.AddListener(_ => OnGameLoaded());
+        if (game != null)
+        {
+            game.onGameLoaded.AddListener(_ => UpdateMods(game.State.Mods));
+        }
+        else
+        {
+            UpdateMods(Context.SelectedMods);
+        }
     }
 
-    public void OnGameLoaded()
+    public void UpdateMods(HashSet<Mod> mods)
     {
         foreach (Transform child in layoutGroup.transform)
         {
             var pill = child.GetComponent<ModPill>();
-            child.gameObject.SetActive(game.State.Mods.Contains(pill.mod));
+            child.gameObject.SetActive(mods.Contains(pill.mod));
         }
         layoutGroup.transform.RebuildLayout();
         GetComponentInParent<TransitionElement>().UseCurrentStateAsDefault();
     }
+
 }

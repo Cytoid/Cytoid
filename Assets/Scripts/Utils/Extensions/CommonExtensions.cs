@@ -235,7 +235,7 @@ public static class CommonExtensions
 
     public static string WithSizeParam(this string url, int width = -1, int height = -1)
     {
-        return WithParam(url, new[] {("w", width.ToString()), ("h", height.ToString()), ("fit", "crop")});
+        return WithParam(url, new[] {("w", width.ToString()), ("h", height.ToString()), ("rt", "fill")});
     }
 
     public static void ForEach<T>(this IEnumerable<T> enumerable, Action<T> action)

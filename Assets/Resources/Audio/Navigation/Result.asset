@@ -18,4 +18,4 @@ MonoBehaviour:
   introBoundary: 0
   loopingBoundary: 30
   nonLooping: 0
-  loopWholeAudio: 0
+  loopWholeAudio: 1

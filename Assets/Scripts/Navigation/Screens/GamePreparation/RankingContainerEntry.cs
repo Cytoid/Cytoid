@@ -10,7 +10,7 @@ public class RankingContainerEntry : ContainerEntry<RankingEntry>
     public override void SetModel(RankingEntry entry)
     {
         avatar.SetModel(entry.owner);
-        rank.text = entry.rank + ".";
+        rank.text = "#" + entry.rank;
         name.text = entry.owner.uid;
         performance.SetModel(entry);
     }

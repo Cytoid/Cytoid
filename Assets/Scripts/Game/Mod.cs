@@ -7,12 +7,12 @@
     Slow,
     Fast,
 
-    FullCombo, // FC
-    AllPerfect, // AP
+    FC,
+    AP,
     Hard,
     ExHard,
 
-    HideScanner, // HideScanline
+    HideScanline,
     HideNotes,
 
     AutoDrag,

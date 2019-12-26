@@ -11,7 +11,7 @@ using Object = UnityEngine.Object;
 public class ScreenManager : SingletonMonoBehavior<ScreenManager>
 {
     public Canvas rootCanvas;
-
+    
     public List<Screen> screenPrefabs;
     public string initialScreenId;
 
@@ -34,7 +34,7 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
     private void Start()
     {
         createdScreens.ForEach(it => it.gameObject.SetActive(false));
-        if (initialScreenId != null)
+        if (!string.IsNullOrEmpty(initialScreenId))
         {
             ChangeScreen(initialScreenId, ScreenTransition.None);
         }
@@ -169,9 +169,9 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
                         break;
                 }
             }
-
-            foreach (var listener in screenChangeListeners) listener.OnScreenChangeStarted(lastScreen, newScreen);
         }
+        
+        foreach (var listener in screenChangeListeners) listener.OnScreenChangeStarted(lastScreen, newScreen);
         
         activeScreenId = newScreen.GetId();
         newScreen.State = ScreenState.Active;

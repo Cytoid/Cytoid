@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using DG.Tweening;
+using UniRx.Async;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -21,11 +22,13 @@ public class Context : SingletonMonoBehavior<Context>
     public static ScreenManager ScreenManager;
     public static LevelManager LevelManager = new LevelManager();
     public static SpriteCache SpriteCache = new SpriteCache();
-
+    
     public static Level SelectedLevel;
     public static Difficulty SelectedDifficulty = Difficulty.Easy;
     public static Difficulty PreferredDifficulty = Difficulty.Easy;
-    public static List<Mod> SelectedMods = new List<Mod>();
+    public static HashSet<Mod> SelectedMods = new HashSet<Mod>();
+
+    public static GameResult LastGameResult;
 
     public static LocalPlayer LocalPlayer = new LocalPlayer();
     public static OnlinePlayer OnlinePlayer = new OnlinePlayer();
@@ -43,6 +46,8 @@ public class Context : SingletonMonoBehavior<Context>
         DontDestroyOnLoad(gameObject);
 
         InitializeApplication();
+        
+        LocalPlayer.EnabledMods = new List<Mod>();
     }
 
     private async void InitializeApplication()
@@ -80,11 +85,50 @@ public class Context : SingletonMonoBehavior<Context>
         if (SceneManager.GetActiveScene().name == "Game")
         {
             // Load test level
-            SelectedLevel = LevelManager.LoadTestLevel();
+            await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/player/level.json" });
+            SelectedLevel = LevelManager.LoadedLevels[0];
             SelectedDifficulty = Difficulty.Parse(SelectedLevel.Meta.charts[0].type);
+        }
+        else
+        {
+            await UniTask.WaitUntil(() => ScreenManager != null);
+            if (true)
+            {
+                // Load f.fff
+                await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/Dreadnought/level.json" });
+                SelectedLevel = LevelManager.LoadedLevels[0];
+                SelectedDifficulty = Difficulty.Parse(SelectedLevel.Meta.charts[0].type);
+                ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.None);
+            }
+
+            if (false)
+            {
+                // Load result
+                await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/playeralice/level.json" });
+                SelectedLevel = LevelManager.LoadedLevels[0];
+                SelectedDifficulty = Difficulty.Hard;
+                ScreenManager.ChangeScreen("Result", ScreenTransition.None);
+            }
         }
     }
 
+    public static void OnSceneChanged(string prev, string next)
+    {
+        if (prev == "Game" && next == "Navigation")
+        {
+            if (LastGameResult != null)
+            {
+                // Show result screen
+                ScreenManager.ChangeScreen("Result", ScreenTransition.None);
+            }
+            else
+            {
+                // Show game preparation screen
+                ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.None);
+            }
+        }
+    }
+    
     public static void SetAutoRotation(bool autoRotation)
     {
         if (autoRotation)

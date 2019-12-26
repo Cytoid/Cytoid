@@ -1,8 +1,5 @@
-using System.Collections.Generic;
 using DG.Tweening;
-using UniRx;
 using UniRx.Async;
-using UniRx.Triggers;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -24,6 +21,7 @@ public class GameRenderer
         Game = game;
         game.onGameLoaded.AddListener(_ => Game.BeforeStartTasks.Add(OnGameBeforeStart()));
         game.onGameCompleted.AddListener(_ => OnGameCompleted());
+        game.onGameReadyToExit.AddListener(_ => OnGameReadyToExit());
     }
 
     public async UniTask OnGameBeforeStart()
@@ -88,6 +86,12 @@ public class GameRenderer
         {
             it.DOFade(0, 0.4f);
         });
+    }
+
+    public void OnGameReadyToExit()
+    {
+        Context.ScreenManager.ActiveScreen.State = ScreenState.Inactive;
+        cover.DOFade(0, 0.8f);
     }
 
     public void OnUpdate()

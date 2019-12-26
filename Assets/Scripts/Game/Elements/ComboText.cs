@@ -18,6 +18,7 @@ public class ComboText : MonoBehaviour
     {
         text.text = "";
         text.color = text.color.WithAlpha(0);
+        game.onGameReadyToExit.AddListener(_ => OnGameReadyToExit());
     }
 
     protected void LateUpdate()
@@ -42,5 +43,10 @@ public class ComboText : MonoBehaviour
             lastCombo = game.State.Combo;
             text.text = lastCombo + "x";
         }
+    }
+
+    public void OnGameReadyToExit()
+    {
+        text.DOFade(0, fadeDuration).SetEase(ease);
     }
 }

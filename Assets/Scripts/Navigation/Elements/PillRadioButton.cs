@@ -7,6 +7,7 @@ using UnityEngine.UI.ProceduralImage;
 
 public class PillRadioButton : RadioButton
 {
+    public bool debug = false;
     public float radius = 16;
 
     [GetComponent] public ProceduralImage image;
@@ -51,6 +52,7 @@ public class PillRadioButton : RadioButton
     public override void Select(bool pulse = true)
     {
         base.Select(pulse);
+        if (debug) print("Selected index " + Index);
         if (pulse) pulseElement.Pulse();
         image.BorderWidth = 0;
         text.fontStyle = FontStyle.Bold;
@@ -60,6 +62,7 @@ public class PillRadioButton : RadioButton
     public override void Unselect()
     {
         base.Unselect();
+        if (debug) print("Unselected index " + Index);
         image.BorderWidth = 2;
         text.fontStyle = FontStyle.Normal;
         text.DOColor(Color.white, 0.2f).SetEase(Ease.OutCubic);

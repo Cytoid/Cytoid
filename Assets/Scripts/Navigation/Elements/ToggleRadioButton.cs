@@ -14,7 +14,7 @@ public class ToggleRadioButton : RadioButton
     private Image image;
     private PulseElement pulseElement;
 
-    private async void Awake()
+    private void Awake()
     {
         image = GetComponent<Image>();
         pulseElement = GetComponent<PulseElement>();

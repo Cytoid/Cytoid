@@ -81,15 +81,15 @@ public class Run
 
     public static Run After(float aDelay, System.Action aAction)
     {
+        if (aDelay <= 0)
+        {
+            Debug.LogError("Run delay must be positive");
+            return null;
+        }
         var tmp = new Run();
         tmp.action = _RunAfter(tmp, aDelay, aAction);
         tmp.Start();
         return tmp;
-    }
-    
-    public static Run Immediate(System.Action aAction)
-    {
-        return After(0, aAction);
     }
 
     private static IEnumerator _RunAfter(Run aRun, float aDelay, System.Action aAction)

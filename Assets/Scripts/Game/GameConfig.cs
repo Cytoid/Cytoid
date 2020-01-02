@@ -37,8 +37,8 @@ public class GameConfig
     {
         var chart = game.Chart;
 
-        ChartOffset = Context.LocalPlayer.MainChartOffset + Context.LocalPlayer.GetLevelChartOffset(game.Level.Meta.id);
-        if (DetectHeadset.Detect()) ChartOffset += Context.LocalPlayer.HeadsetOffset;
+        ChartOffset = Context.LocalPlayer.BaseLevelOffset + Context.LocalPlayer.GetLevelNoteOffset(game.Level.Meta.id);
+        if (DetectHeadset.Detect()) ChartOffset += Context.LocalPlayer.HeadsetLevelOffset;
 
         NoteHitboxMultiplier = Context.LocalPlayer.UseLargerHitboxes ? 1.5555f : 1.3333f;
         UseScannerSmoothing = true;
@@ -113,7 +113,7 @@ public class GameConfig
             }
         }
 
-        if (Context.LocalPlayer.HalfResolution)
+        if (Context.LocalPlayer.LowerResolution)
         {
             UnityEngine.Screen.SetResolution((int) (Context.InitialWidth * 0.5f),
                 (int) (Context.InitialHeight * 0.5f), true);

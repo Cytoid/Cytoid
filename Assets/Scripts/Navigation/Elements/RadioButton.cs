@@ -17,7 +17,7 @@ public class RadioButton : InteractableMonoBehavior
     
     public virtual void Select(bool pulse = true)
     {
-        radioGroup.Value = value;
+        radioGroup.Select(value);
     }
 
     public virtual void Unselect()

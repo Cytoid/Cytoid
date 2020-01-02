@@ -24,7 +24,7 @@ public class LocalPlayer
         set => PlayerPrefsExtensions.SetBool("boundaries", value);
     }
     
-    public bool ShowEarlyLateIndicator
+    public bool DisplayEarlyLateIndicators
     {
         get => PlayerPrefsExtensions.GetBool("early_late_indicator");
         set => PlayerPrefsExtensions.SetBool("early_late_indicator", value);
@@ -44,7 +44,7 @@ public class LocalPlayer
     
     public float NoteSize
     {
-        get => PlayerPrefs.GetFloat("note size", 3);
+        get => PlayerPrefs.GetFloat("note size", 4);
         set => PlayerPrefs.SetFloat("note size", value);
     }
     
@@ -68,8 +68,8 @@ public class LocalPlayer
 
     public string HitSound
     {
-        get => PlayerPrefs.GetString("hit_sound", "none").ToLower();
-        set => PlayerPrefs.SetString("hit_sound", value.ToLower());
+        get => PlayerPrefs.GetString("hit sound", "none").ToLower();
+        set => PlayerPrefs.SetString("hit sound", value.ToLower());
     }
     
     public string GraphicsLevel
@@ -78,31 +78,37 @@ public class LocalPlayer
         set => PlayerPrefs.SetString("storyboard effects", value.ToLower());
     }
     
-    public bool HalfResolution
+    public bool LowerResolution
     {
         get => PlayerPrefsExtensions.GetBool("low res", false);
         set => PlayerPrefsExtensions.SetBool("low res", value);
     }
 
-    public float MainChartOffset
+    public float BaseLevelOffset
     {
         get => PlayerPrefs.GetFloat("main chart offset", 0);
         set => PlayerPrefs.SetFloat("main chart offset", value);
     }
 
-    public float HeadsetOffset
+    public float HeadsetLevelOffset
     {
         get => PlayerPrefs.GetFloat("headset chart offset", 0);
         set => PlayerPrefs.SetFloat("headset chart offset", value);
     }
+    
+    public bool DisplayProfiler
+    {
+        get => PlayerPrefsExtensions.GetBool("profiler");
+        set => PlayerPrefsExtensions.SetBool("profiler", value);
+    }
 
-    public bool ShowNoteIds
+    public bool DisplayNoteIds
     {
         get => PlayerPrefsExtensions.GetBool("note ids");
         set => PlayerPrefsExtensions.SetBool("note ids", value);
     }
 
-    public float GetLevelChartOffset(string levelId)
+    public float GetLevelNoteOffset(string levelId)
     {
         return PlayerPrefs.GetFloat($"level {levelId} chart offset", 0);
     }
@@ -141,6 +147,11 @@ public class LocalPlayer
     public Color GetFillColor(NoteType type, bool alt)
     {
         return PlayerPrefsExtensions.GetColor($"fill color ({NoteTypeConfigKeyMapping[type]} {(alt ? 2 : 1)})", NoteTypeDefaultFillColors[type][alt ? 1 : 0]);
+    }
+    
+    public void SetFillColor(NoteType type, bool alt, Color color)
+    {
+        PlayerPrefsExtensions.SetColor($"fill color ({NoteTypeConfigKeyMapping[type]} {(alt ? 2 : 1)})", color);
     }
 
     public class Performance

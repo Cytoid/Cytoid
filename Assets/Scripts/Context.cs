@@ -82,6 +82,8 @@ public class Context : SingletonMonoBehavior<Context>
         Application.runInBackground = true;
 #endif
 
+        SelectedMods = new HashSet<Mod>(LocalPlayer.EnabledMods);
+
         if (SceneManager.GetActiveScene().name == "Game")
         {
             // Load test level
@@ -95,7 +97,7 @@ public class Context : SingletonMonoBehavior<Context>
             if (true)
             {
                 // Load f.fff
-                await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/Dreadnought/level.json" });
+                await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/playeralice/level.json" });
                 SelectedLevel = LevelManager.LoadedLevels[0];
                 SelectedDifficulty = Difficulty.Parse(SelectedLevel.Meta.charts[0].type);
                 ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.None);

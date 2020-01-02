@@ -16,6 +16,17 @@ using Object = System.Object;
 
 public static class CommonExtensions
 {
+
+    public static string BoolToString(this bool b)
+    {
+        return b ? "true" : "false";
+    }
+    public static int Mod(this int x, int m)
+    {
+        var r = x % m;
+        return r < 0 ? r + m : r;
+    }
+    
     public static Vector3 SetX(this Vector3 vector3, float x)
     {
         return new Vector3(x, vector3.y, vector3.z);
@@ -136,7 +147,7 @@ public static class CommonExtensions
         var rect = rectTransform.GetScreenSpaceRect();
         return new Vector2((rect.xMin + rect.xMax) / 2f, (rect.yMin + rect.yMax) / 2f);
     }
-    
+
     public static void SetSize(this RectTransform rectTransform, Vector2 newSize)
     {
         var oldSize = rectTransform.rect.size;
@@ -217,7 +228,8 @@ public static class CommonExtensions
 
     public static string WithParam<T>(this string url, ValueTuple<string, T>[] parameters)
     {
-        url = url.Substring(0, url.LastIndexOf("?", StringComparison.Ordinal));
+        var sepIndex = url.LastIndexOf("?", StringComparison.Ordinal);
+        url = sepIndex >= 0 ? url.Substring(0, sepIndex) : url;
         url += "?";
         foreach (var (key, value) in parameters)
         {
@@ -303,7 +315,7 @@ public static class CommonExtensions
         localPosition = new Vector3(x, localPosition.y, localPosition.z);
         transform.localPosition = localPosition;
     }
-    
+
     public static void SetLocalY(this Transform transform, float y)
     {
         var localPosition = transform.localPosition;

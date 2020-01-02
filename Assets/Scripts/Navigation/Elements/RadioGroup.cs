@@ -2,32 +2,28 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class RadioGroup : MonoBehaviour
 {
+    public bool debug = false;
 
     private List<RadioButton> radioButtons;
     public string defaultValue;
 
     private string value;
+
     public string Value
     {
         get => value;
-        set
-        {
-            if (value == this.value) return;
-            Selected.Unselect(); 
-            this.value = value;
-            foreach (var listener in radioGroupChangeListeners) listener.OnRadioGroupChange(this, value);
-        }
     }
 
-    protected HashSet<RadioGroupChangeListener> radioGroupChangeListeners = new HashSet<RadioGroupChangeListener>();
+    public RadioGroupSelectEvent onSelect = new RadioGroupSelectEvent();
 
-    public RadioButton Selected => radioButtons.Find(it => it.value == value);
+    private RadioButton selected;
 
     public int Size => radioButtons.Count;
-    
+
     private void Awake()
     {
         radioButtons = GetComponentsInChildren<RadioButton>().ToList();
@@ -37,35 +33,41 @@ public class RadioGroup : MonoBehaviour
 
     private void Start()
     {
-        radioButtons.First(it => it.value == value).Select(false);
+        radioButtons.ForEach(it => it.Unselect());
+        selected = radioButtons.First(it => it.value == value);
+        selected.Select(false);
     }
 
     public int GetIndex(string value)
     {
         return radioButtons.FindIndex(it => it.value == value);
     }
-    
+
     public bool IsSelected(RadioButton radioButton)
     {
         if (!radioButtons.Contains(radioButton)) throw new ArgumentOutOfRangeException();
         return radioButton.value == value;
     }
-    
-    public void AddHandler(RadioGroupChangeListener listener)
-    {
-        radioGroupChangeListeners.Add(listener);
-    }
 
-    public void RemoveHandler(RadioGroupChangeListener listener)
+    public void Select(string value, bool notify = true)
     {
-        radioGroupChangeListeners.Remove(listener);
-    }
+        if (value == this.value) return;
+        if (debug)
+        {
+            print("setting value to " + value);
+        }
 
+        this.value = value;
+        if (selected != null) selected.Unselect();
+        selected = radioButtons.First(it => it.value == value);
+        selected.Select(false);
+        if (notify)
+        {
+            onSelect.Invoke(value);
+        }
+    }
 }
 
-public interface RadioGroupChangeListener
+public class RadioGroupSelectEvent : UnityEvent<string>
 {
-
-    void OnRadioGroupChange(RadioGroup radioGroup, string value);
-
 }

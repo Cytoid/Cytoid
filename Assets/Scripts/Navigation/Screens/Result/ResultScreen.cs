@@ -34,6 +34,7 @@ public class ResultScreen : Screen
     public SpinnerElement rankingSpinner;
     public Text rankingText;
     public RankingContainer rankingContainer;
+    public Text rankingContainerStatusText;
 
     public SpinnerElement ratingSpinner;
     public Text ratingText;
@@ -45,6 +46,7 @@ public class ResultScreen : Screen
     public override async void OnScreenInitialized()
     {
         base.OnScreenInitialized();
+        rankingContainerStatusText.text = "";
         result = Context.LastGameResult;
         Context.LastGameResult = null;
         if (result == null)
@@ -103,7 +105,7 @@ public class ResultScreen : Screen
         image.color = Color.white.WithAlpha(0);
 
         // Update performance info
-        scoreText.text = result.Score.ToString();
+        scoreText.text = result.Score.ToString("D6");
         accuracyText.text = (Math.Floor(result.Accuracy * 100 * 100) / 100).ToString("0.00") + "% accuracy";
         if (Math.Abs(result.Accuracy - 1) < 0.000001) accuracyText.text = "Full accuracy";
         maxComboText.text = result.MaxCombo + " max combo";
@@ -267,21 +269,27 @@ public class ResultScreen : Screen
 
     public void UpdateRankings()
     {
+        rankingContainer.Clear();
         rankingSpinner.IsSpinning = true;
+        rankingContainerStatusText.text = "Downloading level rankings...";
         Context.OnlinePlayer.GetLevelRankings(result.LevelId, result.ChartType.Id)
             .Then(ret =>
             {
                 var (rank, entries) = ret;
                 rankingContainer.SetData(entries);
-                Debug.Log("player rank: " + rank);
                 if (rank > 0)
                 {
                     if (rank > 99) rankingText.text = "#99+";
                     else rankingText.text = "#" + rank;
                 }
                 else rankingText.text = "N/A";
+                rankingContainerStatusText.text = "";
             })
-            .Catch(Debug.LogError)
+            .Catch(error =>
+            {
+                Debug.LogError(error);
+                rankingContainerStatusText.text = "Could not download level rankings.";
+            })
             .Finally(() => rankingSpinner.IsSpinning = false);
     }
 

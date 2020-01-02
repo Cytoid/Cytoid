@@ -29,25 +29,4 @@ public class LayoutFixer : MonoBehaviour, ScreenBecameActiveListener
         }
     }
 
-    public static async void Staticize(HorizontalLayoutGroup layoutGroup)
-    {
-        var gameObject = layoutGroup.gameObject;
-        Destroy(layoutGroup);
-        var contentSizeFitter = gameObject.GetComponent<ContentSizeFitter>();
-        if (contentSizeFitter != null) Destroy(contentSizeFitter);
-        foreach (RectTransform child in gameObject.transform)
-        {
-            contentSizeFitter = child.GetComponent<ContentSizeFitter>();
-            if (contentSizeFitter != null) Destroy(contentSizeFitter);
-        }
-        foreach (RectTransform child in gameObject.transform)
-        {
-            // TODO
-            print(child.name);
-            print(child.anchoredPosition);
-            // child.anchoredPosition = new Vector2(123 * 10, 0);
-            print(child.anchoredPosition);
-        }
-    }
-    
 }

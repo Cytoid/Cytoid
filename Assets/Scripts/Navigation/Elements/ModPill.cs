@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -33,9 +34,20 @@ public class ModPill : InteractableMonoBehavior
 
     public void Select(bool pulse = true)
     {
-        Context.SelectedMods.Add(mod);
-        modsToDisable.ForEach(it => Context.SelectedMods.Remove(it));
+        if (Context.SelectedMods.Contains(mod))
+        {
+            Context.SelectedMods.Remove(mod);
+        }
+        else
+        {
+            Context.SelectedMods.Add(mod);
+            modsToDisable.ForEach(it => Context.SelectedMods.Remove(it));
+        }
+
         if (pulse) pulseElement.Pulse();
+        
+        // Save config
+        Context.LocalPlayer.EnabledMods = Context.SelectedMods.ToList();
     }
     
 }

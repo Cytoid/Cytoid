@@ -64,12 +64,17 @@ public class DifficultyPill : InteractableMonoBehavior, ScreenBecameActiveListen
     {
         base.OnPointerClick(eventData);
         if (isStatic) return;
-        if (Context.PreferredDifficulty != Difficulty)
-        {
-            this.GetScreenParent<GamePreparationScreen>().UpdateRankings();
-        }
+        var willUpdateScreenInfo = Context.PreferredDifficulty != Difficulty;
         Select();
         Context.PreferredDifficulty = Difficulty;
+        if (willUpdateScreenInfo)
+        {
+            this.GetScreenParent<GamePreparationScreen>().Apply(it =>
+            {
+                it.LoadLevelPerformance();
+                it.UpdateRankings();
+            });
+        }
     }
 
     public void Select(bool pulse = true)

@@ -4,7 +4,7 @@ using System.Linq;
 using UniRx.Async;
 using UnityEngine.UI;
 
-public class LevelSelectionScreen : Screen, RadioGroupChangeListener, ScreenChangeListener
+public class LevelSelectionScreen : Screen, ScreenChangeListener
 {
     public const string Id = "LevelSelection";
     
@@ -28,15 +28,20 @@ public class LevelSelectionScreen : Screen, RadioGroupChangeListener, ScreenChan
     {
         base.OnScreenInitialized();
         
-        sortByRadioGroup.AddHandler(this);
-        sortOrderRadioGroup.AddHandler(this);
+        sortByRadioGroup.onSelect.AddListener(value => RefillLevels());
+        sortOrderRadioGroup.onSelect.AddListener(value => RefillLevels());
         searchInputField.onValueChanged.AddListener(WillSearch);
         
         await Context.LevelManager.LoadAllFromDataPath();
 
-        RefillLevels();
-        
         Context.ScreenManager.AddHandler(this);
+    }
+
+    public override void OnScreenBecameActive()
+    {
+        base.OnScreenBecameActive();
+        
+        RefillLevels();
     }
 
     public override void OnScreenDestroyed()
@@ -44,16 +49,8 @@ public class LevelSelectionScreen : Screen, RadioGroupChangeListener, ScreenChan
         base.OnScreenDestroyed();
         
         Destroy(scrollRect);
-
-        sortByRadioGroup.RemoveHandler(this);
-        sortOrderRadioGroup.RemoveHandler(this);
         
         Context.ScreenManager.RemoveHandler(this);
-    }
-    
-    public void OnRadioGroupChange(RadioGroup radioGroup, string value)
-    {
-        RefillLevels();
     }
 
     public async void WillSearch(string query)

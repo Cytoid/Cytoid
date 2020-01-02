@@ -14,7 +14,7 @@ public class EffectController : MonoBehaviour
 
     public void PlayClearEffect(NoteRenderer noteRenderer, NoteGrade grade, float timeUntilEnd)
     {
-        PlayClearEffect(noteRenderer, grade, timeUntilEnd, Context.LocalPlayer.ShowEarlyLateIndicator);
+        PlayClearEffect(noteRenderer, grade, timeUntilEnd, Context.LocalPlayer.DisplayEarlyLateIndicators);
     }
 
     public void PlayClearEffect(NoteRenderer noteRenderer, NoteGrade grade, float timeUntilEnd, bool earlyLateIndicator)

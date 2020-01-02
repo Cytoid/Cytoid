@@ -56,8 +56,8 @@ public class LongHoldNoteRenderer : HoldNoteRenderer
                 Line2.flipY = !Line.flipY;
                 CompletedLine2.flipY = !CompletedLine.flipY;
 
-                Line.size = new Vector2(1, orthographicSize * 8);
-                Line2.size = new Vector2(1, orthographicSize * 8);
+                Line.size = new Vector2(1, orthographicSize * 16);
+                Line2.size = new Vector2(1, orthographicSize * 16);
 
                 var color = Fill.color;
                 CompletedLine.color = color;

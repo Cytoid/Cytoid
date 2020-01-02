@@ -66,7 +66,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
                 .HandleRequestErrors(error => SetSignedOut());
         }
     }
-    
+
     public void Enlarge()
     {
         transform.DOLocalMove(startLocalPosition, 0.4f);

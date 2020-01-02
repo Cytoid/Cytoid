@@ -165,7 +165,7 @@ public class Game : MonoBehaviour
         IsLoaded = true;
         onGameLoaded.Invoke(this);
         
-        Context.ScreenManager.ChangeScreen("Overlay", ScreenTransition.None);
+        Context.ScreenManager.ChangeScreen(OverlayScreen.Id, ScreenTransition.None);
         
         if (startAutomatically)
         {

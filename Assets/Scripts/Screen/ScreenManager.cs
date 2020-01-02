@@ -11,12 +11,12 @@ using Object = UnityEngine.Object;
 public class ScreenManager : SingletonMonoBehavior<ScreenManager>
 {
     public Canvas rootCanvas;
-    
+
     public List<Screen> screenPrefabs;
     public string initialScreenId;
 
     public List<Screen> createdScreens;
-    
+
     public Screen ActiveScreen => createdScreens.Find(it => it.GetId() == activeScreenId);
     public List<string> History { get; } = new List<string>();
 
@@ -62,8 +62,9 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         {
             throw new ArgumentException($"Screen {id} does not exist");
         }
+
         var gameObject = Instantiate(prefab.gameObject, rootCanvas.transform);
-        
+
         var newScreen = gameObject.GetComponent<Screen>();
         newScreen.gameObject.SetActive(true);
         createdScreens.Add(newScreen);
@@ -96,11 +97,18 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         Action<Screen> onFinished = null
     )
     {
-        if (ActiveScreen != null && targetScreenId == ActiveScreen.GetId())
+        if (changingToScreenId != null)
         {
-            print($"Warning: Attempted to change to the same screen");
+            print($"Warning: Already changing to {changingToScreenId}! Ignoring.");
             return;
         }
+
+        if (ActiveScreen != null && targetScreenId == ActiveScreen.GetId())
+        {
+            print("Warning: Attempted to change to the same screen! Ignoring.");
+            return;
+        }
+
         if (changingToScreenId == targetScreenId) return;
         changingToScreenId = targetScreenId;
         print($"Changing screen to {targetScreenId}");
@@ -129,12 +137,13 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
                 }
                 catch
                 {
+                    changingToScreenId = null;
                     return;
                 }
             }
-            
+
             lastScreen.CanvasGroup.DOFade(0, duration);
-            
+
             if (transition != ScreenTransition.None)
             {
                 switch (transition)
@@ -170,13 +179,13 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
                 }
             }
         }
-        
+
         foreach (var listener in screenChangeListeners) listener.OnScreenChangeStarted(lastScreen, newScreen);
-        
+
         activeScreenId = newScreen.GetId();
         newScreen.State = ScreenState.Active;
         newScreen.CanvasGroup.blocksRaycasts = false; // Special handling
-        
+
         if (newScreenTransitionDelay > 0)
         {
             try
@@ -186,15 +195,16 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
             }
             catch
             {
+                changingToScreenId = null;
                 return;
             }
         }
-        
+
         newScreen.CanvasGroup.blocksRaycasts = true; // Special handling
         newScreen.CanvasGroup.alpha = 0f;
         newScreen.CanvasGroup.DOFade(1f, duration);
         newScreen.RectTransform.DOLocalMove(Vector3.zero, duration);
-        
+
         if (transition != ScreenTransition.None)
         {
             switch (transition)
@@ -228,15 +238,18 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
             }
         }
 
-        changingToScreenId = null;
-
-        Run.After(duration, () =>
+        Action action = () =>
         {
+            changingToScreenId = null;
             onFinished?.Invoke(newScreen);
-            foreach (var listener in screenChangeListeners) if (lastScreen != null) listener.OnScreenChangeFinished(lastScreen, newScreen);
-        });
+            if (lastScreen != null)
+                foreach (var listener in screenChangeListeners)
+                    listener.OnScreenChangeFinished(lastScreen, newScreen);
+        };
+        if (duration > 0) Run.After(duration, action);
+        else action();
     }
-    
+
     public void AddHandler(ScreenChangeListener listener)
     {
         screenChangeListeners.Add(listener);
@@ -246,5 +259,4 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
     {
         screenChangeListeners.Remove(listener);
     }
-    
 }

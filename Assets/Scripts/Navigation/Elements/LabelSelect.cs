@@ -12,8 +12,8 @@ public class LabelSelect : MonoBehaviour, ScreenBecameActiveListener
     public bool rememberIndex;
 
     public LabelSelectEvent onSelect = new LabelSelectEvent();
-    
-    public int SelectedIndex { get; private set; }
+
+    public int SelectedIndex { get; private set; } = -1;
 
     private void Awake()
     {
@@ -27,11 +27,16 @@ public class LabelSelect : MonoBehaviour, ScreenBecameActiveListener
             interactable.onPointerClick.AddListener(pointerData => Select(toIndex));
             interactable.scaleToOnClick = 0.95f;
             interactable.scaleOnClick = true;
+            var image = it.gameObject.AddComponent<Image>();
+            image.raycastTarget = true;
+            image.SetAlpha(0);
         }
     }
 
-    public virtual void Select(int newIndex)
+    public virtual void Select(int newIndex, bool notify = true)
     {
+        if (newIndex == SelectedIndex) return;
+        
         SelectedIndex = newIndex;
         for (var i = 0; i < labels.Count; i++)
         {
@@ -40,7 +45,7 @@ public class LabelSelect : MonoBehaviour, ScreenBecameActiveListener
             labels[i].DOFade(i == SelectedIndex ? 1 : 0.3f, 0.4f);
         }
 
-        OnSelect(newIndex);
+        if (notify) OnSelect(newIndex);
     }
 
     protected virtual void OnSelect(int newIndex)
@@ -50,8 +55,15 @@ public class LabelSelect : MonoBehaviour, ScreenBecameActiveListener
 
     public void OnScreenBecameActive()
     {
-        if (!rememberIndex) SelectedIndex = 0;
-        Select(SelectedIndex);
+        if (!rememberIndex)
+        {
+            SelectedIndex = -1;
+            Select(0);
+        }
+        else
+        {
+            Select(SelectedIndex >= 0 ? SelectedIndex : 0);
+        }
     }
     
 }

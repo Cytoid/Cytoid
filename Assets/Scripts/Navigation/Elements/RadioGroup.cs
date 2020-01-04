@@ -6,8 +6,6 @@ using UnityEngine.Events;
 
 public class RadioGroup : MonoBehaviour
 {
-    public bool debug = false;
-
     private List<RadioButton> radioButtons;
     public string defaultValue;
 
@@ -52,10 +50,6 @@ public class RadioGroup : MonoBehaviour
     public void Select(string value, bool notify = true)
     {
         if (value == this.value) return;
-        if (debug)
-        {
-            print("setting value to " + value);
-        }
 
         this.value = value;
         if (selected != null) selected.Unselect();
@@ -66,6 +60,7 @@ public class RadioGroup : MonoBehaviour
             onSelect.Invoke(value);
         }
     }
+
 }
 
 public class RadioGroupSelectEvent : UnityEvent<string>

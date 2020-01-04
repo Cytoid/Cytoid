@@ -138,7 +138,6 @@ public class Game : MonoBehaviour
         }
 
         // Load hit sound
-        Context.LocalPlayer.HitSound = "none";
         if (Context.LocalPlayer.HitSound != "none")
         {
             var resource = await Resources.LoadAsync<AudioClip>("Audio/HitSounds/" + Context.LocalPlayer.HitSound);
@@ -146,7 +145,7 @@ public class Game : MonoBehaviour
         }
 
         // State & config
-        var isRanked = Context.LocalPlayer.PlayRanked && Context.OnlinePlayer.IsAuthenticated;
+        var isRanked = Context.LocalPlayer.PlayRanked;
         var maxHealth = chartMeta.difficulty * 75;
         if (maxHealth < 0) maxHealth = 1000;
         State = new GameState(this, isRanked, mods, maxHealth);

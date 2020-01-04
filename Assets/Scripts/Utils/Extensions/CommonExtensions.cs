@@ -21,6 +21,12 @@ public static class CommonExtensions
     {
         return b ? "true" : "false";
     }
+
+    public static string ColorToString(this Color color)
+    {
+        return "#" + ColorUtility.ToHtmlStringRGB(color);
+    }
+    
     public static int Mod(this int x, int m)
     {
         var r = x % m;
@@ -103,7 +109,7 @@ public static class CommonExtensions
     {
         Assert.IsTrue(rgbString != null);
         if (ColorLookup.ContainsKey(rgbString.ToLower())) return ColorLookup[rgbString.ToLower()];
-        ColorUtility.TryParseHtmlString(rgbString, out var color);
+        if (!ColorUtility.TryParseHtmlString(rgbString, out var color)) return Color.clear;
         ColorLookup[rgbString.ToLower()] = color;
         return color;
     }

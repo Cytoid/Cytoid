@@ -32,7 +32,7 @@ public class Avatar : InteractableMonoBehavior
         else
         {
             var avatarUri = user.avatarURL.WithSizeParam(128, 128);
-            Debug.Log("Requesting avatar from " + avatarUri);
+            Debug.Log("Downloading avatar from " + avatarUri);
             RestClient.Get(new RequestHelper
             {
                 Uri = avatarUri,

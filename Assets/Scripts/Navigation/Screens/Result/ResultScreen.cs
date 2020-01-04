@@ -106,7 +106,7 @@ public class ResultScreen : Screen
 
         // Update performance info
         scoreText.text = result.Score.ToString("D6");
-        accuracyText.text = (Math.Floor(result.Accuracy * 100 * 100) / 100).ToString("0.00") + "% accuracy";
+        accuracyText.text = (Math.Floor(result.Accuracy * 100) / 100).ToString("0.00") + "% accuracy";
         if (Math.Abs(result.Accuracy - 1) < 0.000001) accuracyText.text = "Full accuracy";
         maxComboText.text = result.MaxCombo + " max combo";
         if (result.GradeCounts[NoteGrade.Bad] == 0 && result.GradeCounts[NoteGrade.Miss] == 0)
@@ -137,8 +137,8 @@ public class ResultScreen : Screen
                                   $"<b>STE</b> {result.StandardTimingError:0.000}s";
 
         // Increment local play count
-        Context.LocalPlayer.SetPlayCount(result.LevelId, result.ChartType.Name,
-            Context.LocalPlayer.GetPlayCount(result.LevelId, result.ChartType.Name) + 1);
+        Context.LocalPlayer.SetPlayCount(result.LevelId, result.ChartType.Id,
+            Context.LocalPlayer.GetPlayCount(result.LevelId, result.ChartType.Id) + 1);
 
         // Save performance to local
         var clearType = string.Empty;
@@ -147,10 +147,10 @@ public class ResultScreen : Screen
         if (result.Mods.Contains(Mod.Hard)) clearType = "Hard";
         if (result.Mods.Contains(Mod.ExHard)) clearType = "ExHard";
 
-        if (!Context.LocalPlayer.HasPerformance(result.LevelId, result.ChartType.Name, Context.LocalPlayer.PlayRanked))
+        if (!Context.LocalPlayer.HasPerformance(result.LevelId, result.ChartType.Id, Context.LocalPlayer.PlayRanked))
         {
             newBestText.text = "NEW!";
-            Context.LocalPlayer.SetBestPerformance(result.LevelId, result.ChartType.Name,
+            Context.LocalPlayer.SetBestPerformance(result.LevelId, result.ChartType.Id,
                 Context.LocalPlayer.PlayRanked,
                 new LocalPlayer.Performance
                 {
@@ -160,7 +160,7 @@ public class ResultScreen : Screen
         else
         {
             var historicBest = Context.LocalPlayer.GetBestPerformance(result.LevelId,
-                result.ChartType.Name, Context.LocalPlayer.PlayRanked);
+                result.ChartType.Id, Context.LocalPlayer.PlayRanked);
             var newBest = new LocalPlayer.Performance
             {
                 Score = historicBest.Score, Accuracy = historicBest.Accuracy, ClearType = historicBest.ClearType
@@ -181,7 +181,7 @@ public class ResultScreen : Screen
                 newBest.Accuracy = (float) result.Accuracy;
             }
 
-            Context.LocalPlayer.SetBestPerformance(result.LevelId, result.ChartType.Name,
+            Context.LocalPlayer.SetBestPerformance(result.LevelId, result.ChartType.Id,
                 Context.LocalPlayer.PlayRanked, newBest);
         }
     }
@@ -193,6 +193,11 @@ public class ResultScreen : Screen
         TranslucentCover.Instance.image.DOFade(0.7f, 0.8f);
         ProfileWidget.Instance.Enter();
         upperRightColumn.Enter();
+        
+        if (!Context.LocalPlayer.PlayRanked)
+        {
+            rankingIcon.SetActive(false);
+        }
 
         if (Context.OnlinePlayer.IsAuthenticated)
         {
@@ -207,10 +212,6 @@ public class ResultScreen : Screen
         if (Context.LocalPlayer.PlayRanked && !Context.OnlinePlayer.IsAuthenticated)
         {
             UpdateRankings();
-        }
-        else
-        {
-            rankingIcon.SetActive(false);
         }
         
         Context.OnlinePlayer.onAuthenticated.AddListener(() =>
@@ -240,7 +241,7 @@ public class ResultScreen : Screen
             BodyString = JObject.FromObject(new UploadRecord
             {
                 score = result.Score,
-                accuracy = 0.998888, //result.Accuracy.ToString("0.00000000"),
+                accuracy = double.Parse((result.Accuracy / 100.0).ToString("0.00000000")),
                 details = new UploadRecord.Details
                 {
                     perfect = result.GradeCounts[NoteGrade.Perfect],

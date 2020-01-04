@@ -10,6 +10,8 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
     
     public LoopVerticalScrollRect scrollRect;
 
+    public LabelSelect categorySelect;
+
     public RadioGroup sortByRadioGroup;
     public RadioGroup sortOrderRadioGroup;
     public InputField searchInputField;
@@ -19,14 +21,11 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
     
     public override string GetId() => Id;
 
-    protected override void Awake()
-    {
-        base.Awake();
-    }
-
     public override async void OnScreenInitialized()
     {
         base.OnScreenInitialized();
+        
+        categorySelect.onSelect.AddListener((index, canvasGroup) => RefillLevels());
         
         sortByRadioGroup.onSelect.AddListener(value => RefillLevels());
         sortOrderRadioGroup.onSelect.AddListener(value => RefillLevels());
@@ -35,13 +34,6 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         await Context.LevelManager.LoadAllFromDataPath();
 
         Context.ScreenManager.AddHandler(this);
-    }
-
-    public override void OnScreenBecameActive()
-    {
-        base.OnScreenBecameActive();
-        
-        RefillLevels();
     }
 
     public override void OnScreenDestroyed()
@@ -65,15 +57,28 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
     
     public void RefillLevels()
     {
+        print("Refilled levels");
+        
         // Sort with selected method
         Enum.TryParse(sortByRadioGroup.Value, out LevelSort sort);
         // Sort with selected order
         var asc = bool.Parse(sortOrderRadioGroup.Value);
+        // Category?
+        var category = categorySelect.SelectedIndex;
+        var filters = new List<Func<Level, bool>>();
+        if (category == 1)
+        {
+            filters.Add(level => level.Meta.id.StartsWith("io.cytoid"));
+        }
+        else
+        {
+            filters.Add(level => !level.Meta.id.StartsWith("io.cytoid"));
+        }
 
-        RefillLevels(sort, asc, query);
+        RefillLevels(sort, asc, query, filters);
     }
 
-    public void RefillLevels(LevelSort sort, bool asc, string query = "")
+    public void RefillLevels(LevelSort sort, bool asc, string query = "", List<Func<Level, bool>> filters = null)
     {
         var levels = new List<Level>(Context.LevelManager.LoadedLevels);
 
@@ -96,6 +101,26 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
                     filteredLevels.Remove(level);
                 }
             }
+
+            levels = filteredLevels;
+        }
+
+        if (filters != null)
+        {
+            var filteredLevels = new List<Level>();
+            foreach (var level in levels)
+            {
+                var fail = false;
+                foreach (var predicate in filters)
+                {
+                    if (predicate(level)) continue;
+                    fail = true;
+                    break;
+                }
+                if (fail) continue;
+                filteredLevels.Add(level);
+            }
+            
             levels = filteredLevels;
         }
 

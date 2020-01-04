@@ -7,17 +7,25 @@ using UnityEngine.UI.ProceduralImage;
 
 public class PillRadioButton : RadioButton
 {
-    public bool debug = false;
     public float radius = 16;
 
     [GetComponent] public ProceduralImage image;
     [GetComponent] public PulseElement pulseElement;
     [GetComponentInChildren] public Text text;
+    
+    private static Font regularFont;
+    private static Font boldFont;
 
     private void Awake()
     {
         image = GetComponent<ProceduralImage>();
         pulseElement = GetComponent<PulseElement>();
+        text.fontStyle = FontStyle.Normal;
+        if (regularFont == null)
+        {
+            regularFont = Resources.Load<Font>("Fonts/Nunito-Regular");
+            boldFont = Resources.Load<Font>("Fonts/Nunito-Bold");
+        }
     }
 
     private void Start()
@@ -52,19 +60,17 @@ public class PillRadioButton : RadioButton
     public override void Select(bool pulse = true)
     {
         base.Select(pulse);
-        if (debug) print("Selected index " + Index);
         if (pulse) pulseElement.Pulse();
         image.BorderWidth = 0;
-        text.fontStyle = FontStyle.Bold;
+        text.font = boldFont;
         text.DOColor(Color.black, 0.2f).SetEase(Ease.OutCubic);
     }
 
     public override void Unselect()
     {
         base.Unselect();
-        if (debug) print("Unselected index " + Index);
         image.BorderWidth = 2;
-        text.fontStyle = FontStyle.Normal;
+        text.font = regularFont;
         text.DOColor(Color.white, 0.2f).SetEase(Ease.OutCubic);
     }
 }

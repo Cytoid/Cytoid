@@ -143,8 +143,6 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         {
             Stop();
             Source.clip = null;
-            audioClip.UnloadAudioData();
-            Destroy(audioClip);
         }
 
         public override bool IsFinished()

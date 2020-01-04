@@ -31,7 +31,6 @@ public class TransitionElement : MonoBehaviour, ScreenListener
     public float enterOnScreenBecomeActiveDelay;
     public bool leaveOnScreenBecomeInactive = true;
     public float leaveOnScreenBecomeInactiveDelay;
-    public bool rebuildLayoutOnTransition = true;
 
     public bool IsShown { get; protected set; }
     public bool IsInTransition { get; protected set; }
@@ -137,7 +136,6 @@ public class TransitionElement : MonoBehaviour, ScreenListener
         transitioning.Add(cancellationTokenSource);
 
         IsInTransition = true;
-        if (rebuildLayoutOnTransition) transform.RebuildLayout();
 
         if (delay > 0)
         {

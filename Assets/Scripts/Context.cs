@@ -46,8 +46,6 @@ public class Context : SingletonMonoBehavior<Context>
         DontDestroyOnLoad(gameObject);
 
         InitializeApplication();
-        
-        LocalPlayer.EnabledMods = new List<Mod>();
     }
 
     private async void InitializeApplication()
@@ -96,8 +94,13 @@ public class Context : SingletonMonoBehavior<Context>
             await UniTask.WaitUntil(() => ScreenManager != null);
             if (true)
             {
+                ScreenManager.ChangeScreen("MainMenu", ScreenTransition.None);
+            }
+            
+            if (false)
+            {
                 // Load f.fff
-                await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/playeralice/level.json" });
+                await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/f.fff/level.json" });
                 SelectedLevel = LevelManager.LoadedLevels[0];
                 SelectedDifficulty = Difficulty.Parse(SelectedLevel.Meta.charts[0].type);
                 ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.None);

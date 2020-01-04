@@ -31,11 +31,10 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
 
     private async void Start()
     {
+        startLocalPosition = transform.localPosition;
         Context.ScreenManager.AddHandler(this);
         await UniTask.WaitUntil(() => Context.ScreenManager.ActiveScreen != null);
 
-        transform.RebuildLayout();
-        startLocalPosition = transform.localPosition;
         if (Context.ScreenManager.ActiveScreen.GetId() != MainMenuScreen.Id)
         {
             Shrink();
@@ -171,10 +170,8 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
             FadeOut();
         }
 
-        Debug.Log("Profile widget " + to.GetId());
         if (staticScreenIds.Contains(to.GetId()))
         {
-            Debug.Log("set block raycast = false");
             canvasGroup.blocksRaycasts = canvasGroup.interactable = false;
         }
     }

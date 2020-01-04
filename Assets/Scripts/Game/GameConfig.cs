@@ -37,8 +37,8 @@ public class GameConfig
     {
         var chart = game.Chart;
 
-        ChartOffset = Context.LocalPlayer.BaseLevelOffset + Context.LocalPlayer.GetLevelNoteOffset(game.Level.Meta.id);
-        if (DetectHeadset.Detect()) ChartOffset += Context.LocalPlayer.HeadsetLevelOffset;
+        ChartOffset = Context.LocalPlayer.BaseNoteOffset + Context.LocalPlayer.GetLevelNoteOffset(game.Level.Meta.id);
+        if (DetectHeadset.Detect()) ChartOffset += Context.LocalPlayer.HeadsetNoteOffset;
 
         NoteHitboxMultiplier = Context.LocalPlayer.UseLargerHitboxes ? 1.5555f : 1.3333f;
         UseScannerSmoothing = true;
@@ -53,7 +53,7 @@ public class GameConfig
             };
         }
 
-        var playerNoteSizeOffset = ((int) Context.LocalPlayer.NoteSize - 3) * 0.1f;
+        var playerNoteSizeOffset = Context.LocalPlayer.NoteSize;
         NoteSizeMultiplier = (float) chart.Model.size * (1 + playerNoteSizeOffset);
 
         NoteSizes[NoteType.Click] = (Camera.main.orthographicSize * 2.0f) * (7.0f / 9.0f) / 5.0f * 1.2675f;

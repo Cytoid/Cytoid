@@ -42,34 +42,38 @@ public class LocalPlayer
         set => PlayerPrefsExtensions.SetBool("early hit sounds", value);
     }
     
+    // Bounded by -0.3~0.3.
     public float NoteSize
     {
-        get => PlayerPrefs.GetFloat("note size", 4);
-        set => PlayerPrefs.SetFloat("note size", value);
+        get => PlayerPrefs.GetFloat("NoteSize", 0);
+        set => PlayerPrefs.SetFloat("NoteSize", value);
     }
     
-    public float HorizontalMargin
+    // Bounded by 1~5.
+    public int HorizontalMargin
     {
-        get => PlayerPrefs.GetFloat("horizontal margin", 3);
-        set => PlayerPrefs.SetFloat("horizontal margin", value);
+        get => (int) PlayerPrefs.GetFloat("HorizontalMargin", 3);
+        set => PlayerPrefs.SetFloat("HorizontalMargin", value);
     }
     
-    public float VerticalMargin
+    // Bounded by 1~5.
+    public int VerticalMargin
     {
-        get => PlayerPrefs.GetFloat("vertical margin", 3);
-        set => PlayerPrefs.SetFloat("vertical margin", value);
+        get => (int) PlayerPrefs.GetFloat("VerticalMargin", 3);
+        set => PlayerPrefs.SetFloat("VerticalMargin", value);
     }
     
+    // Bounded by 0~1.
     public float CoverOpacity
     {
-        get => 1 - PlayerPrefs.GetFloat("background dim", 17) / 20.0f;
-        set => PlayerPrefs.SetFloat("background dim", 20 - Mathf.Clamp01(value) * 20.0f);
+        get => PlayerPrefs.GetFloat("CoverOpacity", 0.15f);
+        set => PlayerPrefs.SetFloat("CoverOpacity", value);
     }
 
     public string HitSound
     {
-        get => PlayerPrefs.GetString("hit sound", "none").ToLower();
-        set => PlayerPrefs.SetString("hit sound", value.ToLower());
+        get => PlayerPrefs.GetString("HitSound", "none").ToLower();
+        set => PlayerPrefs.SetString("HitSound", value.ToLower());
     }
     
     public string GraphicsLevel
@@ -84,13 +88,13 @@ public class LocalPlayer
         set => PlayerPrefsExtensions.SetBool("low res", value);
     }
 
-    public float BaseLevelOffset
+    public float BaseNoteOffset
     {
         get => PlayerPrefs.GetFloat("main chart offset", 0);
         set => PlayerPrefs.SetFloat("main chart offset", value);
     }
 
-    public float HeadsetLevelOffset
+    public float HeadsetNoteOffset
     {
         get => PlayerPrefs.GetFloat("headset chart offset", 0);
         set => PlayerPrefs.SetFloat("headset chart offset", value);
@@ -113,7 +117,7 @@ public class LocalPlayer
         return PlayerPrefs.GetFloat($"level {levelId} chart offset", 0);
     }
     
-    public void SetLevelChartOffset(string levelId, float offset)
+    public void SetLevelNoteOffset(string levelId, float offset)
     {
         PlayerPrefs.SetFloat($"level {levelId} chart offset", offset);
     }

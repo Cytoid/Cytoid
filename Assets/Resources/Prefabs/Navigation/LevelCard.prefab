@@ -61,7 +61,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.5019608}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -826,6 +826,7 @@ MonoBehaviour:
   scaleOnClick: 1
   scaleToOnClick: 0.95
   pulseOnClick: 0
+  bypassOnClickHitboxCheck: 0
   cover: {fileID: 4689410249049215325}
   artist: {fileID: 3370015424872146410}
   title: {fileID: 8950214026502757546}

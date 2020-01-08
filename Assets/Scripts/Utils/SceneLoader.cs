@@ -17,6 +17,7 @@ public class SceneLoader
 
     public async UniTask Load()
     {
+        Context.PreSceneChanged(CurrentScene, Scene);
         AsyncOperation = SceneManager.LoadSceneAsync(Scene);
         AsyncOperation.allowSceneActivation = false;
         await AsyncOperation;

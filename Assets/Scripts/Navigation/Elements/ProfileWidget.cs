@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using Proyecto26;
 using UniRx.Async;
 using UnityEngine;
+using UnityEngine.Experimental.PlayerLoop;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 
@@ -20,6 +22,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
     public Text level;
 
     private Vector2 startLocalPosition;
+    private Profile lastProfile;
 
     protected override void Awake()
     {
@@ -33,6 +36,10 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
     {
         startLocalPosition = transform.localPosition;
         Context.ScreenManager.AddHandler(this);
+        Context.OnlinePlayer.onProfileChanged.AddListener(profile =>
+        {
+            UpdateRatingAndLevel(profile, Context.ScreenManager.ActiveScreen.GetId() == ResultScreen.Id);
+        });
         await UniTask.WaitUntil(() => Context.ScreenManager.ActiveScreen != null);
 
         if (Context.ScreenManager.ActiveScreen.GetId() != MainMenuScreen.Id)
@@ -52,8 +59,9 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
         if (Context.OnlinePlayer.IsAuthenticated)
         {
             SetSignedIn(Context.OnlinePlayer.LastProfile);
-        } 
-        else if (!Context.OnlinePlayer.IsAuthenticated && !Context.OnlinePlayer.IsAuthenticating && !string.IsNullOrEmpty(Context.OnlinePlayer.GetJwtToken()))
+        }
+        else if (!Context.OnlinePlayer.IsAuthenticated && !Context.OnlinePlayer.IsAuthenticating &&
+                 !string.IsNullOrEmpty(Context.OnlinePlayer.GetJwtToken()))
         {
             SetSigningIn();
             Context.OnlinePlayer.AuthenticateWithJwtToken()
@@ -62,6 +70,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
                     Toast.Next(Toast.Status.Success, "Successfully signed in.");
                     SetSignedIn(profile);
                 })
+                .Catch(error => SetSignedOut())
                 .HandleRequestErrors(error => SetSignedOut());
         }
     }
@@ -80,7 +89,6 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
 
     public void SetSigningIn()
     {
-        print("set signing in");
         name.text = "Signing in...";
         name.DOFade(0, 0.4f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutFlash);
         infoLayoutGroup.gameObject.SetActive(false);
@@ -94,11 +102,8 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
         name.text = profile.user.uid;
         name.DOKill();
         name.DOFade(1, 0.2f);
-        rating.text = "Rating " + profile.rating.ToString("N2");
-        level.text = "Level " + profile.exp.currentLevel;
         infoLayoutGroup.gameObject.SetActive(true);
         infoLayoutGroup.gameObject.SetActive(true);
-        LayoutFixer.Fix(layoutGroup.transform);
         if (avatarImage.sprite == null)
         {
             spinner.IsSpinning = true;
@@ -119,12 +124,13 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
                     {
                         var texture = ((DownloadHandlerTexture) response.Request.downloadHandler).texture;
                         var sprite = texture.CreateSprite();
-                        Context.SpriteCache.PutSprite("avatar://" + profile.user.uid, "avatar", sprite);
+                        Context.SpriteCache.PutSprite("avatar://" + profile.user.uid, "UserAvatar", sprite);
                         SetAvatarSprite(sprite);
                     }).Catch(error => { Toast.Enqueue(Toast.Status.Failure, "Could not download the avatar."); })
                     .Finally(() => spinner.IsSpinning = false);
             }
         }
+        UpdateRatingAndLevel(profile);
     }
 
     public void SetAvatarSprite(Sprite sprite)
@@ -182,22 +188,59 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
         {
             FadeIn();
         }
-        
+
         if (staticScreenIds.Contains(to.GetId()))
         {
             canvasGroup.blocksRaycasts = canvasGroup.interactable = false;
+        }
+
+        if (Context.OnlinePlayer.LastProfile != null)
+        {
+            UpdateRatingAndLevel(Context.OnlinePlayer.LastProfile);
         }
     }
 
     public void FadeIn()
     {
         canvasGroup.DOFade(1, 0.2f).SetEase(Ease.OutCubic);
-        canvasGroup.blocksRaycasts = canvasGroup.interactable = !staticScreenIds.Contains(Context.ScreenManager.ActiveScreen.GetId());
+        canvasGroup.blocksRaycasts = canvasGroup.interactable =
+            !staticScreenIds.Contains(Context.ScreenManager.ActiveScreen.GetId());
     }
-    
+
     public void FadeOut()
     {
         canvasGroup.DOFade(0, 0.2f).SetEase(Ease.OutCubic);
         canvasGroup.blocksRaycasts = canvasGroup.interactable = false;
     }
+
+    public void UpdateRatingAndLevel(Profile profile, bool showChange = false)
+    {
+        rating.text = "Rating " + profile.rating.ToString("N2");
+        level.text = "Level " + profile.exp.currentLevel;
+
+        if (showChange && lastProfile != null)
+        {
+            var lastRating = Math.Floor(lastProfile.rating * 100) / 100;
+            var currentRating = Math.Floor(profile.rating * 100) / 100;
+            var rtDifference = currentRating - lastRating;
+            if (rtDifference >= 0.01)
+            {
+                rating.text += $" <color=#9BC53D>(+{Math.Round(rtDifference, 2)})</color>";
+            } 
+            else if (rtDifference <= -0.01)
+            {
+                rating.text += $" <color=#E55934>({Math.Round(rtDifference, 2)})</color>";
+            }
+
+            var levelDifference = profile.exp.currentLevel - lastProfile.exp.currentLevel;
+            if (levelDifference > 0)
+            {
+                level.text += $" <color=#9BC53D>(+{levelDifference})</color>";
+            }
+        }
+        
+        lastProfile = profile;
+        LayoutFixer.Fix(layoutGroup.transform);
+    }
+
 }

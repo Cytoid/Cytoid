@@ -7,7 +7,7 @@ namespace Proyecto26
         /// <summary>
         /// Internal use
         /// </summary>
-        public UnityWebRequest Request { private get; set; }
+        public UnityWebRequest Request { get; set; }
 
         /// <summary>
         /// Returns a floating-point value between 0.0 and 1.0, indicating the progress of uploading body data to the server.

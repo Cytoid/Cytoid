@@ -39,7 +39,7 @@ public class SignInScreen : Screen
             {
                 Toast.Next(Toast.Status.Success, "Successfully signed in.");
                 ProfileWidget.Instance.SetSignedIn(profile);
-                Context.ScreenManager.ChangeScreen(Context.ScreenManager.GetLastScreenId(), ScreenTransition.In);
+                Context.ScreenManager.ChangeScreen(Context.ScreenManager.PopHistoryAndPeek(), ScreenTransition.In, addToHistory: false);
             })
             .HandleRequestErrors()
             .Finally(() => completed = true);

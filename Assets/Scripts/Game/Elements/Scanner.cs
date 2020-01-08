@@ -26,7 +26,7 @@ public class Scanner : SingletonMonoBehavior<Scanner>
         game.onGameLoaded.AddListener(_ => {
             if (game.State.Mods.Contains(Mod.HideScanline))
             {
-                GetComponent<SpriteRenderer>().enabled = false;
+                lineRenderer.enabled = false;
             }
         });
         game.onGameStarted.AddListener(_ => PlayEnter());

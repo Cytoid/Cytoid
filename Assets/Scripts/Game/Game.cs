@@ -31,7 +31,7 @@ public class Game : MonoBehaviour
     public Storyboard Storyboard { get; protected set; }
     
     public float Time { get; protected set; }
-    public float MusicDuration { get; protected set; }
+    public float MusicLength { get; protected set; }
     public float MusicStartedTimestamp { get; protected set; } // When was the music started to play?
     public float MusicStartedAt { get; protected set; } // When the music was played, from when was it played?
     public float MainMusicProgress { get; protected set; }
@@ -54,6 +54,7 @@ public class Game : MonoBehaviour
     public GameEvent onGameCompleted = new GameEvent();
     public GameEvent onGameReadyToExit = new GameEvent();
     public GameEvent onGameAborted = new GameEvent();
+    public GameEvent onGameRetried = new GameEvent();
     public NoteEvent onNoteClear = new NoteEvent();
     public GameEvent onGameSpeedUp = new GameEvent();
     public GameEvent onGameSpeedDown = new GameEvent();
@@ -76,6 +77,8 @@ public class Game : MonoBehaviour
         Difficulty = difficulty;
 
         onGameReadyToLoad.Invoke(this);
+
+        await Resources.UnloadUnusedAssets();
 
         // Load chart
         print("Loading chart");
@@ -105,10 +108,11 @@ public class Game : MonoBehaviour
             0.8f + (5 - (int) Context.LocalPlayer.HorizontalMargin - 1) * 0.025f,
             (5.5f + (5 - (int) Context.LocalPlayer.VerticalMargin) * 0.5f) / 9.0f
         );
-
+        
         // Load audio
         print("Loading audio");
-
+            
+        if (Context.AudioManager == null) await UniTask.WaitUntil(() => Context.AudioManager != null);
         var audioPath = "file://" + Level.Path + Level.Meta.GetMusicPath(difficulty.Id);
         var loader = new AssetLoader(audioPath);
         await loader.LoadAudioClip();
@@ -118,11 +122,9 @@ public class Game : MonoBehaviour
             Debug.LogError(loader.Error);
             return;
         }
-        
-        MusicDuration = loader.AudioClip.length;
-        
-        if (Context.AudioManager == null) await UniTask.WaitUntil(() => Context.AudioManager != null);
-        Music = Context.AudioManager.Load("Level", loader.AudioClip);
+            
+        Music = Context.AudioManager.Load("Level", loader.AudioClip, false);
+        MusicLength = Music.Length;
         
         // Load storyboard
         var storyboardPath =
@@ -184,7 +186,7 @@ public class Game : MonoBehaviour
         {
             // Wait until the audio actually starts playing
             var playbackTime = Music.PlaybackTime;
-            return playbackTime > 0 && playbackTime < MusicDuration;
+            return playbackTime > 0 && playbackTime < MusicLength;
         });
 
         MusicStartedTimestamp = UnityEngine.Time.realtimeSinceStartup;
@@ -227,7 +229,7 @@ public class Game : MonoBehaviour
                        - Config.ChartOffset + Chart.MusicOffset;
             }
 
-            MainMusicProgress = Time / MusicDuration;
+            MainMusicProgress = Time / MusicLength;
 
             // Process chart elements
             while (Chart.CurrentEventId < Chart.Model.event_order_list.Count &&
@@ -353,7 +355,8 @@ public class Game : MonoBehaviour
     {
         if (!IsLoaded || State.IsPlaying || State.IsCompleted || State.IsFailed || UnpauseCountdown > 0) return;
         print("Game ready to unpause");
-        
+        Context.ScreenManager.ChangeScreen(OverlayScreen.Id, ScreenTransition.None, 0.4f, 1);
+
         onGameWillUnpause.Invoke(this);
 
         UnpauseCountdown = 3;
@@ -387,7 +390,7 @@ public class Game : MonoBehaviour
         {
             // Wait until the audio actually starts playing
             var playbackTime = Music.PlaybackTime;
-            return playbackTime > 0 && playbackTime < MusicDuration;
+            return playbackTime > 0 && playbackTime < MusicLength;
         });
 
         MusicStartedTimestamp = UnityEngine.Time.realtimeSinceStartup;
@@ -398,6 +401,37 @@ public class Game : MonoBehaviour
         onGameUnpaused.Invoke(this);
     }
 
+    public void Abort()
+    {
+        print("Game aborted");
+        
+        // Unload resources
+        Context.AudioManager.Unload("Level");
+        Context.SpriteCache.DisposeTagged("GameCover");
+        
+        onGameAborted.Invoke(this);
+
+        var sceneLoader = new SceneLoader("Navigation");
+        sceneLoader.Load();
+        Context.ScreenManager.ChangeScreen(OverlayScreen.Id, ScreenTransition.None, 0.4f, 1,
+            onFinished: screen => sceneLoader.Activate());
+    }
+
+    public void Retry()
+    {
+        print("Game retried");
+        
+        // Unload resources
+        Context.AudioManager.Unload("Level");
+        
+        onGameRetried.Invoke(this);
+        
+        var sceneLoader = new SceneLoader("Game");
+        sceneLoader.Load();
+        Context.ScreenManager.ChangeScreen(OverlayScreen.Id, ScreenTransition.None, 0.4f, 1,
+            onFinished: screen => sceneLoader.Activate());
+    }
+    
     public void Fail()
     {
         if (State.IsFailed) return;
@@ -421,8 +455,10 @@ public class Game : MonoBehaviour
         // Wait for audio to finish
         await UniTask.WaitUntil(() => Music.IsFinished());
         print("Audio ended");
+        Context.AudioManager.Unload("Level");
         
         await UniTask.WhenAll(BeforeExitTasks);
+        await Resources.UnloadUnusedAssets();
 
         onGameReadyToExit.Invoke(this);
         
@@ -462,6 +498,7 @@ public class Game : MonoBehaviour
             };
         }
         
+        Context.SpriteCache.DisposeTagged("Game");
         sceneLoader.Activate();
     }
 

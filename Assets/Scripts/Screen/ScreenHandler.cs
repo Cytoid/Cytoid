@@ -12,6 +12,11 @@ public interface ScreenBecameActiveListener
     void OnScreenBecameActive();
 }
 
+public interface ScreenPostActiveListener
+{
+    void OnScreenPostActive();
+}
+
 public interface ScreenUpdateListener
 {
     void OnScreenUpdate();

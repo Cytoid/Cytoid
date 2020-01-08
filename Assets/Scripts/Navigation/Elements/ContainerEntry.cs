@@ -10,4 +10,6 @@ public abstract class ContainerEntry<T> : MonoBehaviour
 
     public abstract void SetModel(T entry);
 
+    public abstract T GetModel();
+
 }

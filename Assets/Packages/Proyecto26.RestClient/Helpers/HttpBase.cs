@@ -65,7 +65,7 @@ namespace Proyecto26
 
         private static RequestException CreateException(UnityWebRequest request)
         {
-            return new RequestException(request.error, request.isHttpError, request.isNetworkError, request.responseCode, request.downloadHandler.text);
+            return new RequestException(request.error, request.isHttpError, request.isNetworkError, request.responseCode, /*request.downloadHandler.text*/"no response lol");
         }
 
         private static void DebugLog(bool debugEnabled, object message, bool isError)

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using E7.Native;
 using UniRx.Async;
@@ -41,10 +42,11 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         preloadedAudioClips.ForEach(it => Load(it.name, it));
     }
 
-    public Controller Load(string id, AudioClip audioClip)
+    public Controller Load(string id, AudioClip audioClip, bool? useNativeAudio = null)
     {
+        if (useNativeAudio == null) useNativeAudio = this.useNativeAudio;
         if (controllers.ContainsKey(id)) Unload(id);
-        return controllers[id] = useNativeAudio ? (Controller) new Exceed7Controller(this, audioClip) : new UnityController(this, audioClip);
+        return controllers[id] = useNativeAudio.Value ? (Controller) new Exceed7Controller(this, audioClip) : new UnityController(this, audioClip);
     }
 
     public void Unload(string id)
@@ -82,6 +84,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         
         public abstract float Volume { get; set; }
         public abstract float PlaybackTime { get; set; }
+        public abstract float Length { get; }
         public abstract void Play(AudioTrackIndex trackIndex);
         public abstract void Pause();
         public abstract void Resume();
@@ -113,7 +116,9 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             get => Source.timeSamples * 1f / Source.clip.frequency;
             set => Source.time = value;
         }
-    
+        
+        public override float Length => audioClip.length;
+
         public override void Play(AudioTrackIndex trackIndex)
         {
             index = Parent.GetAvailableIndex(trackIndex);
@@ -143,6 +148,15 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         {
             Stop();
             Source.clip = null;
+            try
+            {
+                audioClip.UnloadAudioData();
+                Destroy(audioClip);
+            }
+            catch (Exception ignored)
+            {
+                // ignored
+            }
         }
 
         public override bool IsFinished()
@@ -179,6 +193,8 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             get => controller.GetPlaybackTime();
             set => controller.SetPlaybackTime(value);
         }
+        
+        public override float Length => length;
 
         public override void Play(AudioTrackIndex trackIndex)
         {

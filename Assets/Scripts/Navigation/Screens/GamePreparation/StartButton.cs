@@ -10,10 +10,14 @@ public class StartButton : MonoBehaviour, ScreenInitializedListener
     {
         interactableMonoBehavior.onPointerClick.AddListener(_ =>
         {
-            scheduledPulse.NextPulseTime = long.MaxValue;
             pulseElement.Pulse();
             
-            this.GetScreenParent<GamePreparationScreen>().StartGame();
+            var parent = this.GetScreenParent<GamePreparationScreen>();
+            if (parent.Level.IsLocal)
+            {
+                scheduledPulse.NextPulseTime = long.MaxValue;
+            }
+            parent.OnStartButton();
         });
     }
 }

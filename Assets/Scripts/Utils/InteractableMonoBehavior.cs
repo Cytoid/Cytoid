@@ -8,12 +8,12 @@ using UnityEngine.UI;
 
 public class InteractableMonoBehavior : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
 {
-    public PointerDataEvent onPointerEnter = new PointerDataEvent();
-    public PointerDataEvent onPointerExit = new PointerDataEvent();
-    public PointerDataEvent onPointerDown = new PointerDataEvent();
-    public PointerDataEvent onPointerUp = new PointerDataEvent();
-    public PointerDataEvent onPointerClick = new PointerDataEvent();
-    public Vector2Event onPointerMove = new Vector2Event();
+    [HideInInspector] public PointerDataEvent onPointerEnter = new PointerDataEvent();
+    [HideInInspector]  public PointerDataEvent onPointerExit = new PointerDataEvent();
+    [HideInInspector] public PointerDataEvent onPointerDown = new PointerDataEvent();
+    [HideInInspector] public PointerDataEvent onPointerUp = new PointerDataEvent();
+    [HideInInspector] public PointerDataEvent onPointerClick = new PointerDataEvent();
+    [HideInInspector] public Vector2Event onPointerMove = new Vector2Event();
     public bool IsPointerDown { get; protected set; }
     public virtual bool IsPointerEntered { get; protected set; }
     

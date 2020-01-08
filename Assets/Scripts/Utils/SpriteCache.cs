@@ -11,6 +11,13 @@ using Object = UnityEngine.Object;
 public class SpriteCache
 {
 
+    private static Dictionary<string, int> tagLimits = new Dictionary<string, int>
+    {
+        {"LocalLevelCoverThumbnail", 96},
+        {"RemoteLevelCoverThumbnail", 96},
+        {"Avatar", 100}
+    };
+    private readonly Dictionary<string, List<Entry>> taggedCache = new Dictionary<string, List<Entry>>();
     private readonly Dictionary<string, Entry> cache = new Dictionary<string, Entry>();
 
     public Sprite GetCachedSprite(string path)
@@ -27,6 +34,8 @@ public class SpriteCache
     
     public async UniTask<Sprite> CacheSprite(string path, string tag)
     {
+        if (!taggedCache.ContainsKey(tag)) taggedCache[tag] = new List<Entry>();
+        
         bool isLoading;
         var cachedSprite = GetCachedSprite(path);
         if (cachedSprite != null) return cachedSprite;
@@ -38,8 +47,17 @@ public class SpriteCache
             await UniTask.WaitUntil(() => GetCachedSprite(path) != null);
             return GetCachedSprite(path);
         }
-        
-        cache[path] = null;
+
+        if (cache.ContainsKey(path))
+        {
+            Dispose(cache[path].Sprite);
+            taggedCache[tag].Remove(cache[path]);
+            cache.Remove(path);
+        }
+        else
+        {
+            CheckIfExceedTagLimit(tag);
+        }
 
         var time = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
@@ -57,6 +75,7 @@ public class SpriteCache
             var coverTexture = DownloadHandlerTexture.GetContent(request);
             sprite = coverTexture.CreateSprite();
             cache[path] = new Entry { Sprite = sprite, Tag = tag};
+            taggedCache[tag].Add(cache[path]);
         }
         
         time = DateTimeOffset.Now.ToUnixTimeMilliseconds() - time;
@@ -67,30 +86,58 @@ public class SpriteCache
     
     public void PutSprite(string path, string tag, Sprite sprite)
     {
+        if (!taggedCache.ContainsKey(tag)) taggedCache[tag] = new List<Entry>();
+        
+        if (cache.ContainsKey(path))
+        {
+            Dispose(cache[path].Sprite);
+            taggedCache[tag].Remove(cache[path]);
+            cache.Remove(path);
+        }
+        else
+        {
+            CheckIfExceedTagLimit(tag);
+        }
         cache[path] = new Entry {Sprite = sprite, Tag = tag};
+        taggedCache[tag].Add(cache[path]);
     }
 
-    public void ClearTagged(string tag)
+    public void DisposeTagged(string tag)
     {
+        if (!taggedCache.ContainsKey(tag)) taggedCache[tag] = new List<Entry>();
+        
         var removals = new List<string>();
         foreach (var pair in cache)
         {
             if (pair.Value.Tag == tag)
             {
                 removals.Add(pair.Key);
-                Object.Destroy(pair.Value.Sprite);
+                Dispose(pair.Value.Sprite);
             }
         }
         removals.ForEach(it => cache.Remove(it));
+        taggedCache[tag] = new List<Entry>();
     }
     
-    public void ClearAll()
+    public void DisposeAll()
     {
         foreach (var pair in cache)
         {
-            Object.Destroy(pair.Value.Sprite);
+            Dispose(pair.Value.Sprite);
         }
         cache.Clear();
+        taggedCache.Clear();
+    }
+
+    private void CheckIfExceedTagLimit(string tag)
+    {
+        
+    }
+
+    private void Dispose(Sprite sprite)
+    {
+        Object.Destroy(sprite.texture);
+        Object.Destroy(sprite);
     }
 
     public class Entry

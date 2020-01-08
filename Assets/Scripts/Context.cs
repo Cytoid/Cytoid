@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using DG.Tweening;
 using UniRx.Async;
 using UnityEngine;
@@ -20,6 +19,7 @@ public class Context : SingletonMonoBehavior<Context>
     
     public static AudioManager AudioManager;
     public static ScreenManager ScreenManager;
+    
     public static LevelManager LevelManager = new LevelManager();
     public static SpriteCache SpriteCache = new SpriteCache();
     
@@ -32,6 +32,8 @@ public class Context : SingletonMonoBehavior<Context>
 
     public static LocalPlayer LocalPlayer = new LocalPlayer();
     public static OnlinePlayer OnlinePlayer = new OnlinePlayer();
+
+    private static Stack<string> navigationScreenHistory = new Stack<string>();
 
     protected override void Awake()
     {
@@ -99,6 +101,11 @@ public class Context : SingletonMonoBehavior<Context>
             
             if (false)
             {
+                ScreenManager.ChangeScreen("CommunityHome", ScreenTransition.None);
+            }
+            
+            if (false)
+            {
                 // Load f.fff
                 await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/f.fff/level.json" });
                 SelectedLevel = LevelManager.LoadedLevels[0];
@@ -116,15 +123,30 @@ public class Context : SingletonMonoBehavior<Context>
             }
         }
     }
+    
+    public static void PreSceneChanged(string prev, string next)
+    {
+        if (prev == "Navigation" && next == "Game")
+        {
+            // Save history
+            navigationScreenHistory = ScreenManager.History;
+        }
+    }
 
     public static void OnSceneChanged(string prev, string next)
     {
+        if (prev == "Navigation" && next == "Game")
+        {
+            OnlinePlayer.IsAuthenticating = false;
+        }
         if (prev == "Game" && next == "Navigation")
         {
+            // Restore history
+            ScreenManager.History = navigationScreenHistory;
             if (LastGameResult != null)
             {
                 // Show result screen
-                ScreenManager.ChangeScreen("Result", ScreenTransition.None);
+                ScreenManager.ChangeScreen("Result", ScreenTransition.None, addToHistory: false);
             }
             else
             {

@@ -23,35 +23,18 @@ public class PausedScreen : Screen
         overlay.gameObject.SetActive(true);
         goBackButton.onPointerClick.AddListener(_ =>
         {
-            var sceneLoader = new SceneLoader("Navigation");
-            sceneLoader.Load();
-            
+            game.Abort();
             overlay.DOFade(1, 0.8f);
-            Context.ScreenManager.ChangeScreen(OverlayScreen.Id, ScreenTransition.None, 0.4f, 1,
-                onFinished: screen => sceneLoader.Activate());
         });
         retryButton.onPointerClick.AddListener(_ =>
         {
-            var sceneLoader = new SceneLoader("Game");
-            sceneLoader.Load();
-            
+            game.Retry();
             overlay.DOFade(1, 0.8f);
-            Context.ScreenManager.ChangeScreen(OverlayScreen.Id, ScreenTransition.None, 0.4f, 1,
-                onFinished: screen => sceneLoader.Activate());
         });
         continueButton.onPointerClick.AddListener(_ =>
         {
-            Context.ScreenManager.ChangeScreen(OverlayScreen.Id, ScreenTransition.None, 0.4f, 1);
             game.WillUnpause();
         });
     }
     
-    private AsyncOperation loadOperation;
-
-    private IEnumerator LoadCoroutine(string sceneName)
-    {
-        loadOperation = SceneManager.LoadSceneAsync(sceneName);
-        loadOperation.allowSceneActivation = false;
-        yield return loadOperation;
-    }
 }

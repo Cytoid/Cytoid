@@ -6,11 +6,17 @@ using DG.Tweening;
 using UniRx.Async;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(CanvasGroup))]
-public class TransitionElement : MonoBehaviour, ScreenListener
+public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActiveListener
 {
+    [HideInInspector] public UnityEvent onEnterStarted = new UnityEvent();
+    [HideInInspector] public UnityEvent onEnterCompleted = new UnityEvent();
+    [HideInInspector] public UnityEvent onLeaveStarted = new UnityEvent();
+    [HideInInspector] public UnityEvent onLeaveCompleted = new UnityEvent();
+
     public RectTransform rectTransform;
     public CanvasGroup canvasGroup;
 
@@ -66,14 +72,16 @@ public class TransitionElement : MonoBehaviour, ScreenListener
 
     public void Enter(bool waitForTransition = true, bool immediate = false)
     {
+        onEnterStarted.Invoke();
         StartTransition(true, enterFrom, enterMultiplier, enterDuration, enterDelay, enterEase, waitForTransition,
-            immediate);
+            immediate, () => onEnterCompleted.Invoke());
     }
 
     public void Leave(bool waitForTransition = true, bool immediate = false)
     {
+        onLeaveStarted.Invoke();
         StartTransition(false, leaveTo, leaveMultiplier, leaveDuration, leaveDelay, leaveEase, waitForTransition,
-            immediate);
+            immediate, () => onLeaveCompleted.Invoke());
     }
 
     protected void OnDestroy()
@@ -92,22 +100,24 @@ public class TransitionElement : MonoBehaviour, ScreenListener
         float delay,
         Ease ease,
         bool waitForTransition,
-        bool immediate
+        bool immediate,
+        Action onComplete = null
     )
     {
         if (toShow == IsShown)
         {
             return;
         }
+
         IsShown = toShow;
-        
+
         if (immediate)
         {
             waitForTransition = false;
             duration = 0;
             delay = 0;
         }
-        
+
         waitingForTransition?.Cancel();
         waitingForTransition = new CancellationTokenSource();
 
@@ -131,7 +141,7 @@ public class TransitionElement : MonoBehaviour, ScreenListener
                 canvasGroup.DOKill();
             }
         }
-        
+
         var cancellationTokenSource = new CancellationTokenSource();
         transitioning.Add(cancellationTokenSource);
 
@@ -151,6 +161,7 @@ public class TransitionElement : MonoBehaviour, ScreenListener
             }
         }
 
+        if (this == null) return;
         RevertToDefault();
 
         canvasGroup.alpha = toShow ? 0 : 1;
@@ -240,7 +251,9 @@ public class TransitionElement : MonoBehaviour, ScreenListener
                 IsInTransition = false;
             }
         }
+
         IsInTransition = false;
+        onComplete?.Invoke();
     }
 
     public void RevertToDefault(bool killTween = true)
@@ -250,6 +263,7 @@ public class TransitionElement : MonoBehaviour, ScreenListener
             rectTransform.DOKill();
             canvasGroup.DOKill();
         }
+
         rectTransform.anchorMax = defaultAnchorMax;
         rectTransform.anchorMin = defaultAnchorMin;
         rectTransform.pivot = defaultPivot;
@@ -264,8 +278,12 @@ public class TransitionElement : MonoBehaviour, ScreenListener
         UseCurrentStateAsDefault();
     }
 
-    public async void OnScreenBecameActive()
+    public void OnScreenBecameActive() =>
+        Expression.Empty(); // Do nothing. Others are changing the layout groups at this time.
+
+    public async void OnScreenPostActive()
     {
+        await UniTask.DelayFrame(0); // Ensure this gets executed the last
         if (enterOnScreenBecomeActive)
         {
             if (enterOnScreenBecomeActiveDelay > 0)

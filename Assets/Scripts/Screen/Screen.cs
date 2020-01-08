@@ -9,7 +9,7 @@ using UnityEngine.Events;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(RectTransform), typeof(CanvasGroup))]
-public abstract class Screen : MonoBehaviour, ScreenListener
+public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveListener
 {
     public RectTransform RectTransform { get; set; }
     public CanvasGroup CanvasGroup { get; set; }
@@ -38,9 +38,11 @@ public abstract class Screen : MonoBehaviour, ScreenListener
                         case ScreenState.Destroyed:
                             OnScreenInitialized();
                             OnScreenBecameActive();
+                            OnScreenPostActive();
                             break;
                         case ScreenState.Inactive:
                             OnScreenBecameActive();
+                            OnScreenPostActive();
                             break;
                     }
 
@@ -60,12 +62,13 @@ public abstract class Screen : MonoBehaviour, ScreenListener
             }
         }
     }
-
-    public UnityEvent onScreenInitialized = new UnityEvent();
-    public UnityEvent onScreenBecameActive = new UnityEvent();
-    public UnityEvent onScreenUpdate = new UnityEvent();
-    public UnityEvent onScreenBecameInactive = new UnityEvent();
-    public UnityEvent onScreenDestroyed = new UnityEvent();
+    
+    [HideInInspector] public UnityEvent onScreenInitialized = new UnityEvent();
+    [HideInInspector] public UnityEvent onScreenBecameActive = new UnityEvent();
+    [HideInInspector] public UnityEvent onScreenPostActive = new UnityEvent();
+    [HideInInspector] public UnityEvent onScreenUpdate = new UnityEvent();
+    [HideInInspector] public UnityEvent onScreenBecameInactive = new UnityEvent();
+    [HideInInspector] public UnityEvent onScreenDestroyed = new UnityEvent();
 
     protected virtual void Awake()
     {
@@ -82,6 +85,7 @@ public abstract class Screen : MonoBehaviour, ScreenListener
     {
         UseChildrenListener<ScreenInitializedListener>(onScreenInitialized, it => it.OnScreenInitialized);
         UseChildrenListener<ScreenBecameActiveListener>(onScreenBecameActive, it => it.OnScreenBecameActive);
+        UseChildrenListener<ScreenPostActiveListener>(onScreenPostActive, it => it.OnScreenPostActive);
         UseChildrenListener<ScreenUpdateListener>(onScreenUpdate, it => it.OnScreenUpdate);
         UseChildrenListener<ScreenBecameInactiveListener>(onScreenBecameInactive, it => it.OnScreenBecameInactive);
         UseChildrenListener<ScreenDestroyedListener>(onScreenDestroyed, it => it.OnScreenDestroyed);
@@ -117,10 +121,6 @@ public abstract class Screen : MonoBehaviour, ScreenListener
                 layoutGroup.transform.RebuildLayout();
             }
         }
-        foreach (var transitionElement in gameObject.GetComponentsInChildren<TransitionElement>())
-        {
-            transitionElement.UseCurrentStateAsDefault();
-        }
         onScreenInitialized.Invoke();
     }
 
@@ -144,6 +144,11 @@ public abstract class Screen : MonoBehaviour, ScreenListener
     public virtual void OnScreenDestroyed()
     {
         onScreenDestroyed.Invoke();
+    }
+
+    public virtual void OnScreenPostActive()
+    {
+        onScreenPostActive.Invoke();
     }
 }
 

@@ -42,7 +42,7 @@ public class Avatar : InteractableMonoBehavior
             {
                 var texture = ((DownloadHandlerTexture) response.Request.downloadHandler).texture;
                 var sprite = texture.CreateSprite();
-                Context.SpriteCache.PutSprite("avatar://" + user.uid, "avatar", sprite);
+                Context.SpriteCache.PutSprite("avatar://" + user.uid, "Avatar", sprite);
                 SetAvatarSprite(sprite);
             }).Finally(() => avatarSpinner.IsSpinning = false);
         }

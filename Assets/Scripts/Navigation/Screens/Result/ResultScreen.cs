@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using DG.Tweening;
 using Newtonsoft.Json.Linq;
 using Proyecto26;
@@ -10,7 +11,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 
-public class ResultScreen : Screen
+public class ResultScreen : Screen, ScreenChangeListener
 {
     public const string Id = "Result";
 
@@ -22,6 +23,7 @@ public class ResultScreen : Screen
     public InteractableMonoBehavior nextButton;
     public InteractableMonoBehavior retryButton;
 
+    public GameObject infoContainer;
     public Text scoreText;
     public Text newBestText;
     public Text gradeText;
@@ -51,15 +53,17 @@ public class ResultScreen : Screen
         Context.LastGameResult = null;
         if (result == null)
         {
+            // Test mode
             Debug.Log("Result not set, entering test mode...");
-            await Context.LevelManager.LoadFromMetadataFiles(new List<string> {Context.DataPath + "/playeralice/level.json"});
+            await Context.LevelManager.LoadFromMetadataFiles(new List<string>
+                {Context.DataPath + "/playeralice/level.json"});
             Context.SelectedLevel = Context.LevelManager.LoadedLevels[0];
             Context.SelectedDifficulty = Difficulty.Parse(Context.LevelManager.LoadedLevels[0].Meta.charts[0].type);
             Context.LocalPlayer.PlayRanked = true;
             result = new GameResult
             {
-                Score = 999729,
-                Accuracy = 0.99942353,
+                Score = 123,
+                Accuracy = 1.942353,
                 MaxCombo = 568,
                 Mods = new List<Mod> {Mod.Fast},
                 GradeCounts = new Dictionary<NoteGrade, int>
@@ -76,8 +80,14 @@ public class ResultScreen : Screen
                 StandardTimingError = 0.0030,
                 LevelId = "suconh_typex.alice",
                 LevelVersion = 1,
-                ChartType = Difficulty.Hard
+                ChartType = Difficulty.Extreme
             };
+            Context.OnlinePlayer.onAuthenticated.AddListener(() =>
+            {
+                UpdateRankings();
+                UploadRecord();
+                UpdateLevelRating();
+            });
         }
 
         // Load translucent cover
@@ -107,7 +117,7 @@ public class ResultScreen : Screen
         // Update performance info
         scoreText.text = result.Score.ToString("D6");
         accuracyText.text = (Math.Floor(result.Accuracy * 100) / 100).ToString("0.00") + "% accuracy";
-        if (Math.Abs(result.Accuracy - 1) < 0.000001) accuracyText.text = "Full accuracy";
+        if (Math.Abs(result.Accuracy - 100.0) < 0.000001) accuracyText.text = "Full accuracy";
         maxComboText.text = result.MaxCombo + " max combo";
         if (result.GradeCounts[NoteGrade.Bad] == 0 && result.GradeCounts[NoteGrade.Miss] == 0)
         {
@@ -135,6 +145,7 @@ public class ResultScreen : Screen
                                   $"<b>Late</b> {result.LateCount}    " +
                                   $"<b>ATE</b> {result.AverageTimingError:0.000}s    " +
                                   $"<b>STE</b> {result.StandardTimingError:0.000}s";
+        if (!Context.LocalPlayer.DisplayEarlyLateIndicators) advancedMetricText.text = "";
 
         // Increment local play count
         Context.LocalPlayer.SetPlayCount(result.LevelId, result.ChartType.Id,
@@ -184,16 +195,18 @@ public class ResultScreen : Screen
             Context.LocalPlayer.SetBestPerformance(result.LevelId, result.ChartType.Id,
                 Context.LocalPlayer.PlayRanked, newBest);
         }
+
+        await Resources.UnloadUnusedAssets();
     }
 
-    public override async void OnScreenBecameActive()
+    public override void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
 
         TranslucentCover.Instance.image.DOFade(0.7f, 0.8f);
         ProfileWidget.Instance.Enter();
         upperRightColumn.Enter();
-        
+
         if (!Context.LocalPlayer.PlayRanked)
         {
             rankingIcon.SetActive(false);
@@ -202,7 +215,7 @@ public class ResultScreen : Screen
         if (Context.OnlinePlayer.IsAuthenticated)
         {
             UploadRecord();
-            UpdateRating();
+            UpdateLevelRating();
         }
         else
         {
@@ -213,15 +226,16 @@ public class ResultScreen : Screen
         {
             UpdateRankings();
         }
-        
-        Context.OnlinePlayer.onAuthenticated.AddListener(() =>
-        {
-            UpdateRankings();
-            UpdateRating();
-        });
 
         LoopAudioPlayer.Instance.PlayResultLoopAudio();
         LoopAudioPlayer.Instance.FadeInLoopPlayer(0);
+    }
+
+    public override void OnScreenPostActive()
+    {
+        base.OnScreenPostActive();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(infoContainer.transform as RectTransform);
+        infoContainer.GetComponentsInChildren<TransitionElement>().ForEach(it => it.UseCurrentStateAsDefault());
     }
 
     public override void OnScreenBecameInactive()
@@ -265,6 +279,7 @@ public class ResultScreen : Screen
         {
             EnterControls();
             UpdateRankings();
+            Context.OnlinePlayer.FetchProfile();
         });
     }
 
@@ -284,17 +299,19 @@ public class ResultScreen : Screen
                     else rankingText.text = "#" + rank;
                 }
                 else rankingText.text = "N/A";
+
                 rankingContainerStatusText.text = "";
             })
             .Catch(error =>
             {
                 Debug.LogError(error);
+                rankingText.text = "N/A";
                 rankingContainerStatusText.text = "Could not download level rankings.";
             })
             .Finally(() => rankingSpinner.IsSpinning = false);
     }
 
-    public void UpdateRating()
+    public void UpdateLevelRating()
     {
         ratingSpinner.IsSpinning = true;
         RestClient.Get<LevelRating>($"{Context.ApiBaseUrl}/levels/{result.LevelId}/ratings")
@@ -310,8 +327,8 @@ public class ResultScreen : Screen
     {
         LoopAudioPlayer.Instance.FadeOutLoopPlayer(0.4f);
         LoopAudioPlayer.Instance.PlayMainLoopAudio();
-
-        Context.ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.Out);
+        Context.ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.Out, willDestroy: true,
+            onFinished: screen => Resources.UnloadUnusedAssets());
         Context.AudioManager.Get("LevelStart").Play(AudioTrackIndex.RoundRobin);
     }
 
@@ -337,5 +354,16 @@ public class ResultScreen : Screen
     {
         lowerLeftColumn.Enter();
         lowerRightColumn.Enter();
+    }
+
+    public void OnScreenChangeStarted(Screen from, Screen to) => Expression.Empty();
+
+    public void OnScreenChangeFinished(Screen from, Screen to)
+    {
+        if (from == this)
+        {
+            // Dispose game cover
+            Context.SpriteCache.DisposeTagged("GameCover");
+        }
     }
 }

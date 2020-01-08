@@ -1,13 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using UniRx.Async;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class LevelSelectionScreen : Screen, ScreenChangeListener
 {
-    public const string Id = "LevelSelection";
+    private static float savedScrollPosition = -1;
     
+    public const string Id = "LevelSelection";
+
     public LoopVerticalScrollRect scrollRect;
 
     public LabelSelect categorySelect;
@@ -18,30 +22,46 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
 
     private UniTask willSearchTask;
     private string query;
-    
+
     public override string GetId() => Id;
 
     public override async void OnScreenInitialized()
     {
         base.OnScreenInitialized();
-        
+
         categorySelect.onSelect.AddListener((index, canvasGroup) => RefillLevels());
-        
+
         sortByRadioGroup.onSelect.AddListener(value => RefillLevels());
         sortOrderRadioGroup.onSelect.AddListener(value => RefillLevels());
         searchInputField.onValueChanged.AddListener(WillSearch);
-        
+
         await Context.LevelManager.LoadAllFromDataPath();
 
         Context.ScreenManager.AddHandler(this);
     }
 
+    public override async void OnScreenBecameActive()
+    {
+        base.OnScreenBecameActive();
+        RefillLevels();
+        if (savedScrollPosition > 0)
+        {
+            scrollRect.verticalNormalizedPosition = savedScrollPosition;
+        }
+    }
+
+    public override void OnScreenBecameInactive()
+    {
+        base.OnScreenBecameInactive();
+        savedScrollPosition = scrollRect.verticalNormalizedPosition;
+    }
+
     public override void OnScreenDestroyed()
     {
         base.OnScreenDestroyed();
-        
+
         Destroy(scrollRect);
-        
+
         Context.ScreenManager.RemoveHandler(this);
     }
 
@@ -51,14 +71,14 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         this.query = query;
         willSearchTask = UniTask.Delay(TimeSpan.FromSeconds(0.5));
         await willSearchTask;
-        
+
         RefillLevels();
     }
-    
+
     public void RefillLevels()
     {
         print("Refilled levels");
-        
+
         // Sort with selected method
         Enum.TryParse(sortByRadioGroup.Value, out LevelSort sort);
         // Sort with selected order
@@ -117,10 +137,11 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
                     fail = true;
                     break;
                 }
+
                 if (fail) continue;
                 filteredLevels.Add(level);
             }
-            
+
             levels = filteredLevels;
         }
 
@@ -143,7 +164,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
                 levels.Sort((a, b) => a.PlayedDate.CompareTo(b.PlayedDate) * (asc ? 1 : -1));
                 break;
         }
-        
+
         scrollRect.totalCount = levels.Count;
         scrollRect.objectsToFill = levels.ToArray().Cast<object>().ToArray();
         scrollRect.RefillCells();
@@ -156,19 +177,18 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
             // Clear search query
             query = null;
             searchInputField.SetTextWithoutNotify("");
-            
-            RefillLevels();
         }
     }
 
     public void OnScreenChangeFinished(Screen from, Screen to)
     {
-        if (from.GetId() == Id && to.GetId() == MainMenuScreen.Id)
+        if (from.GetId() == Id)
         {
-            // Clear level cover sprite cache
-            Context.SpriteCache.ClearTagged("LevelCover");
+            Context.SpriteCache.DisposeTagged("LocalLevelCoverThumbnail");
+            scrollRect.ClearCells();
         }
     }
+
 }
 
 public enum LevelSort

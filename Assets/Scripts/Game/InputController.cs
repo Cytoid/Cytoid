@@ -72,6 +72,14 @@ public class InputController : MonoBehaviour
                 TouchableHoldNotes.Add((HoldNote) note);
             }
         }
+
+        // Make sure to query other notes first
+        TouchableNormalNotes.Sort((a, b) =>
+        {
+            if (a is FlickNote && b is FlickNote) return 0;
+            if (a is FlickNote) return 1;
+            return -1;
+        });
     }
 
     protected virtual void OnFingerDown(LeanFinger finger)

@@ -1,14 +1,20 @@
 using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Globalization;
+using System.IO;
+using System.Linq.Expressions;
 using DG.Tweening;
+using Newtonsoft.Json.Linq;
+using Proyecto26;
+using RSG;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Networking;
 using UnityEngine.UI;
-using UnityEngine.UIElements;
 
-public class GamePreparationScreen : Screen
+public class GamePreparationScreen : Screen, ScreenChangeListener
 {
     public const string Id = "GamePreparation";
 
@@ -60,6 +66,10 @@ public class GamePreparationScreen : Screen
     public RadioGroup displayProfilerToggle;
     public RadioGroup displayNoteIdsToggle;
 
+    private DateTime asyncRequestsToken;
+    private Sprite coverSprite;
+    private AudioClip previewAudioClip;
+
     public Level Level { get; set; }
 
     public override string GetId() => Id;
@@ -71,11 +81,13 @@ public class GamePreparationScreen : Screen
         base.OnScreenInitialized();
         rankingContainerStatusText.text = "";
         LoadSettings();
+        Context.ScreenManager.AddHandler(this);
     }
 
     public override void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
+        asyncRequestsToken = DateTime.Now;
 
         if (Context.SelectedLevel == null)
         {
@@ -104,12 +116,22 @@ public class GamePreparationScreen : Screen
 
     private void UpdateStartButton()
     {
-        startButtonGradient.SetGradient(
-            Context.LocalPlayer.PlayRanked
-                ? new ColorGradient("#12D8FA".ToColor(), "#A6FFCB".ToColor(), -45)
-                : new ColorGradient("#F953C6".ToColor(), "#B91D73".ToColor(), 135)
-        );
-        startButtonText.text = Context.LocalPlayer.PlayRanked ? "Start!" : "Practice!";
+        if (Level.IsLocal)
+        {
+            startButtonGradient.SetGradient(
+                Context.LocalPlayer.PlayRanked
+                    ? new ColorGradient("#12D8FA".ToColor(), "#A6FFCB".ToColor(), -45)
+                    : new ColorGradient("#F953C6".ToColor(), "#B91D73".ToColor(), 135)
+            );
+            startButtonText.text = Context.LocalPlayer.PlayRanked ? "Start!" : "Practice!";
+        }
+        else
+        {
+            startButtonGradient.SetGradient(
+                new ColorGradient("#476ADC".ToColor(), "#9CAFEC".ToColor(), -45)
+            );
+            startButtonText.text = "Download!";
+        }
     }
 
     private long updateRankingToken;
@@ -155,9 +177,17 @@ public class GamePreparationScreen : Screen
     {
         if (load)
         {
-            var selectedLevel = Context.SelectedLevel;
-            var path = "file://" + selectedLevel.Path + selectedLevel.Meta.background.path;
+            string path;
+            if (Level.IsLocal)
+            {
+                path = "file://" + Level.Path + Level.Meta.background.path;
+            }
+            else
+            {
+                path = Level.Meta.background.path.WithImageCdn().WithSizeParam(1920, 1080);
+            }
 
+            var token = asyncRequestsToken;
             Sprite sprite;
             using (var request = UnityWebRequestTexture.GetTexture(path))
             {
@@ -172,7 +202,17 @@ public class GamePreparationScreen : Screen
                 sprite = DownloadHandlerTexture.GetContent(request).CreateSprite();
             }
 
-            cover.OnCoverLoaded(sprite);
+            if (asyncRequestsToken != token)
+            {
+                Destroy(sprite);
+                return;
+            }
+
+            if (State == ScreenState.Active)
+            {
+                cover.OnCoverLoaded(sprite);
+                coverSprite = sprite;
+            }
         }
         else
         {
@@ -184,8 +224,17 @@ public class GamePreparationScreen : Screen
     {
         if (load)
         {
-            var selectedLevel = Context.SelectedLevel;
-            var path = "file://" + selectedLevel.Path + selectedLevel.Meta.music_preview.path;
+            string path;
+            if (Level.IsLocal)
+            {
+                path = "file://" + Level.Path + Level.Meta.music_preview.path;
+            }
+            else
+            {
+                path = Level.Meta.music_preview.path;
+            }
+
+            var token = asyncRequestsToken;
             var loader = new AssetLoader(path);
             await loader.LoadAudioClip();
             if (loader.Error != null)
@@ -195,9 +244,16 @@ public class GamePreparationScreen : Screen
                 return;
             }
 
+            if (asyncRequestsToken != token)
+            {
+                Destroy(loader.AudioClip);
+                return;
+            }
+
             if (State == ScreenState.Active)
             {
                 previewAudioSource.clip = loader.AudioClip;
+                previewAudioClip = loader.AudioClip;
             }
         }
 
@@ -242,37 +298,198 @@ public class GamePreparationScreen : Screen
     {
         base.OnScreenDestroyed();
         cover.image.color = Color.black;
+        Context.ScreenManager.RemoveHandler(this);
     }
 
     public override void OnScreenBecameInactive()
     {
         base.OnScreenBecameInactive();
-        previewAudioSource.DOFade(0, 1f).SetEase(Ease.Linear).onComplete = () => previewAudioSource.Stop();
+        Level = null;
+        asyncRequestsToken = DateTime.Now;
+        previewAudioSource.DOFade(0, 1f).SetEase(Ease.Linear).onComplete = () =>
+        {
+            previewAudioSource.Stop();
+        };
         if (!willStart) LoopAudioPlayer.Instance.FadeInLoopPlayer();
     }
 
-    public async void StartGame()
+    public void OnScreenChangeStarted(Screen @from, Screen to) => Expression.Empty();
+
+    public void OnScreenChangeFinished(Screen from, Screen to)
     {
-        willStart = true;
-        State = ScreenState.Inactive;
-
-        cover.pulseElement.Pulse();
-        ProfileWidget.Instance.FadeOut();
-
-        Context.AudioManager.Get("LevelStart").Play(AudioTrackIndex.RoundRobin);
-
-        var sceneLoader = new SceneLoader("Game");
-        sceneLoader.Load();
-
-        await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
-
-        cover.mask.DOFade(1, 0.8f);
-
-        await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
-
-        sceneLoader.Activate();
+        if (from.GetId() == Id && to.GetId() != ProfileScreen.Id)
+        {    
+            // Unload resources
+            UnloadPreviewAudioClip();
+            UnloadCoverSprite();
+        }
     }
 
+    private void UnloadPreviewAudioClip()
+    {
+        if (previewAudioClip != null)
+        {
+            print("Unloaded preview");
+            previewAudioClip.UnloadAudioData();
+            Destroy(previewAudioClip);
+            previewAudioClip = null;
+        }
+    }
+
+    private void UnloadCoverSprite()
+    {
+        if (coverSprite != null)
+        {
+            print("Unloaded cover");
+            Destroy(coverSprite.texture);
+            Destroy(coverSprite);
+            coverSprite = null;
+        }
+    }
+
+    public async void OnStartButton()
+    {
+        if (Level.IsLocal)
+        {
+            willStart = true;
+            State = ScreenState.Inactive;
+
+            cover.pulseElement.Pulse();
+            ProfileWidget.Instance.FadeOut();
+
+            Context.AudioManager.Get("LevelStart").Play(AudioTrackIndex.RoundRobin);
+
+            if (coverSprite == null)
+            {
+                await UniTask.WaitUntil(() => coverSprite != null);
+            }
+            Context.SpriteCache.PutSprite("game://cover", "GameCover", coverSprite);
+            coverSprite = null; // Prevent sprite being unloaded by UnloadCoverSprite()
+
+            var sceneLoader = new SceneLoader("Game");
+            sceneLoader.Load();
+
+            await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
+
+            cover.mask.DOFade(1, 0.8f);
+
+            await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
+
+            sceneLoader.Activate();
+        }
+        else
+        {
+            var dialog = Dialog.Instantiate();
+            dialog.Message = "Downloading...";
+            dialog.UseProgress = true;
+            dialog.UsePositiveButton = false;
+            dialog.UseNegativeButton = true;
+
+            ulong downloadedSize;
+            var totalSize = 0UL;
+            var downloading = false;
+            var aborted = false;
+            var targetFile = $"{Application.temporaryCachePath}/Downloads/{Level.Meta.id}.cytoidlevel";
+            var destFolder = $"{Context.DataPath}/{Level.Meta.id}";
+
+            // TODO: Check destFolder exists
+
+            // Download detail first, then package
+            RequestHelper req = null;
+            var downloadHandler = new DownloadHandlerFile(targetFile)
+            {
+                removeFileOnAbort = true
+            };
+            RestClient.Get<OnlineLevel>(new RequestHelper
+            {
+                Uri = $"{Context.ApiBaseUrl}/levels/{Level.Meta.id}"
+            }).Then(it =>
+            {
+                if (aborted)
+                {
+                    throw new OperationCanceledException();
+                }
+
+                totalSize = (ulong) it.size;
+                downloading = true;
+                return RestClient.Get(req = new RequestHelper
+                {
+                    Uri = Level.PackagePath,
+                    DownloadHandler = downloadHandler,
+                    WillParseBody = false,
+                    Headers = new Dictionary<string, string>
+                    {
+                        {"Cookie", Context.OnlinePlayer.GetUserCookies()}
+                    }
+                });
+            }).Then(async res =>
+            {
+                downloading = false;
+                dialog.OnNegativeButtonClicked = it => { };
+                dialog.UseNegativeButton = false;
+                dialog.Progress = 0;
+                dialog.Message = "Unpacking...";
+                DOTween.To(() => dialog.Progress, value => dialog.Progress = value, 1f, 1f).SetEase(Ease.OutCubic);
+
+                var success = await Context.LevelManager.UnpackLevelPackage(targetFile, destFolder);
+                if (success)
+                {
+                    // Load with level manager and reload screen
+                    await Context.LevelManager.LoadFromMetadataFiles(new List<string> { destFolder + "/level.json" });
+                    Toast.Enqueue(Toast.Status.Success, "Successfully downloaded level.");
+
+                    Context.SelectedLevel = Context.LevelManager.LoadedLevels.Find(it => it.Meta.id == Level.Meta.id);
+                    Level = Context.SelectedLevel;
+
+                    LoadCover(true);
+                    if (!previewAudioSource.isPlaying) LoadPreview(true);
+                    UpdateStartButton();
+                }
+                else
+                {
+                    Toast.Next(Toast.Status.Failure, "Could not unpack level.");
+                }
+                dialog.Close();
+                File.Delete(targetFile);
+            }).Catch(error =>
+            {
+                if (error is OperationCanceledException || (req != null && req.IsAborted))
+                {
+                    Toast.Enqueue(Toast.Status.Success, "Download cancelled.");
+                }
+                else
+                {
+                    Debug.LogError(error);
+                    Toast.Next(Toast.Status.Failure, "Could not download level.");
+                }
+
+                dialog.Close();
+            });
+
+            dialog.onUpdate.AddListener(it =>
+            {
+                if (!downloading) return;
+                if (totalSize > 0)
+                {
+                    downloadedSize = req.DownloadedBytes;
+                    it.Progress = downloadedSize * 1.0f / totalSize;
+                    it.Message =
+                        $"Downloading... ({downloadedSize.ToHumanReadableFileSize()} / {totalSize.ToHumanReadableFileSize()})";
+                }
+                else
+                {
+                    it.Message = "Downloading...";
+                }
+            });
+            dialog.OnNegativeButtonClicked = it =>
+            {
+                aborted = true;
+                req?.Abort();
+            };
+            dialog.Open();
+        }
+    }
+    
     public void LoadSettings()
     {
         var lp = Context.LocalPlayer;

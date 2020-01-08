@@ -1,22 +1,52 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Newtonsoft.Json.Linq;
 using Proyecto26;
 using RSG;
-using UniRx.Async;
 using UnityEngine;
 using UnityEngine.Events;
 
 public class OnlinePlayer
 {
-    public UnityEvent onAuthenticated = new UnityEvent();
+    public readonly UnityEvent onAuthenticated = new UnityEvent();
+    public readonly ProfileChangedEvent onProfileChanged = new ProfileChangedEvent();
     
     public Profile LastProfile { get; private set; }
-    
+
     public bool IsAuthenticated { get; private set; }
     
-    public bool IsAuthenticating { get; private set; }
+    public bool IsAuthenticating { get; set; }
+    
+    private Dictionary<string, string> setCookies = new Dictionary<string, string>();
+
+    public string GetUserCookies(string existingCookie = null)
+    {
+        var cookies = "";
+        setCookies.Select(pair => pair.Key + "=" + pair.Value + "; ").ForEach(it => cookies += it);
+        Debug.Log(cookies);
+        if (existingCookie == null) return cookies;
+        return existingCookie + cookies;
+    }
+
+    private void SetUserCookies(ResponseHelper res)
+    {
+        res.Headers.ForEach(pair => Debug.Log(pair.Key + " => " + pair.Value));
+        if (res.Headers.ContainsKey("Set-Cookie"))
+        {
+            var cookie = res.Headers["Set-Cookie"];
+            // Find cytoid:sess and cytoid:sess.sig
+            var regex = new Regex(@"cytoid:sess=([^;]*);");
+            var cytoidSess = regex.Match(cookie).Groups[1].Value;
+            Debug.Log(cytoidSess);
+            regex = new Regex(@"cytoid:sess.sig=([^;]*);");
+            var cytoidSessSig = regex.Match(cookie).Groups[1].Value;
+            Debug.Log(cytoidSessSig);
+            setCookies["cytoid:sess"] = cytoidSess;
+            setCookies["cytoid:sess.sig"] = cytoidSessSig;
+        }
+    }
 
     public Promise<Profile> Authenticate(string password)
     {
@@ -24,7 +54,7 @@ public class OnlinePlayer
         
         return new Promise<Profile>((resolve, reject) =>
         {
-            RestClient.Post<Session>(new RequestHelper
+            RestClient.Post(new RequestHelper
             {
                 Uri = Context.ApiBaseUrl + "/session",
                 BodyString = JObject.FromObject(new
@@ -33,19 +63,21 @@ public class OnlinePlayer
                     password,
                     token = SecuredConstants.AuthenticationVerificationToken
                 }).ToString()
-            }).Then(session =>
+            }).Then(res =>
                 {
+                    SetUserCookies(res);
+                    var session = JsonUtility.FromJson<Session>(res.Text);
                     SetJwtToken(session.token);
                     Debug.Log(session.token);
-                    return RestClient.Get<Profile>($"{Context.ApiBaseUrl}/profile/{session.user.uid}/full");
+                    return FetchProfile();
                 }
             ).Then(profile =>
             {
                 IsAuthenticated = true;
-                LastProfile = profile;
                 resolve(profile);
             }).Catch(result =>
             {
+                Debug.LogError(result);
                 SetJwtToken(null);
                 reject(result);
             }).Finally(() => IsAuthenticating = false);
@@ -61,7 +93,7 @@ public class OnlinePlayer
 
         return new Promise<Profile>((resolve, reject) =>
         {
-            RestClient.Post<Session>(new RequestHelper
+            RestClient.Post(new RequestHelper
             {
                 Uri = Context.ApiBaseUrl + "/session",
                 BodyString = JObject.FromObject(new
@@ -72,20 +104,22 @@ public class OnlinePlayer
                 {
                     {"Authorization", "JWT " + jwtToken}
                 }
-            }).Then(session =>
+            }).Then(res =>
             {
+                SetUserCookies(res);
+                var session = JsonUtility.FromJson<Session>(res.Text);
                 SetJwtToken(session.token);
                 Debug.Log(session.token);
-                return RestClient.Get<Profile>($"{Context.ApiBaseUrl}/profile/{session.user.uid}/full");
+                return FetchProfile();
             }
             ).Then(profile =>
             {
                 IsAuthenticated = true;
-                LastProfile = profile;
                 onAuthenticated.Invoke();
                 resolve(profile);
             }).Catch(result =>
             {
+                Debug.LogError(result);
                 SetJwtToken(null);
                 reject(result);
             }).Finally(() => IsAuthenticating = false);
@@ -128,6 +162,21 @@ public class OnlinePlayer
         };
     }
 
+    public RSG.IPromise<Profile> FetchProfile(string uid = null)
+    {
+        if (uid == null) uid = GetUid();
+        return RestClient.Get<Profile>(new RequestHelper
+        {
+            Uri = $"{Context.ApiBaseUrl}/profile/{uid}/full",
+            EnableDebug = true
+        }).Then(profile =>
+        {
+            LastProfile = profile;
+            onProfileChanged.Invoke(profile);
+            return profile;
+        });
+    }
+
     public RSG.IPromise<System.Tuple<int, List<RankingEntry>>> GetLevelRankings(string levelId, string chartType)
     {
         var entries = new List<RankingEntry>();
@@ -167,11 +216,10 @@ public class OnlinePlayer
                         }
                     }
 
-                    if (userRank == -1 || userRank <= 3)
+                    if (userRank == -1 || userRank <= 10)
                     {
-                        // Just add 4th to 10th from Top 10
-                        if (top10.Count > 3) 
-                            entries.AddRange(top10.GetRange(3, Math.Min(7, top10.Count - 3)));
+                        // Just use top 10
+                        entries = top10;
                     }
                     else
                     {
@@ -192,4 +240,8 @@ public class OnlinePlayer
             Uri = $"{Context.ApiBaseUrl}/levels/{levelId}/charts/{chartType}/ranking"
         }).Then(array => new System.Tuple<int, List<RankingEntry>>(-1, array.ToList()));
     }
+}
+
+public class ProfileChangedEvent : UnityEvent<Profile>
+{
 }

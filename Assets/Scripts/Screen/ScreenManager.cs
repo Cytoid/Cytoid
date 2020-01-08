@@ -1,12 +1,10 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DG.Tweening;
 using UniRx.Async;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 public class ScreenManager : SingletonMonoBehavior<ScreenManager>
 {
@@ -18,7 +16,7 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
     public List<Screen> createdScreens;
 
     public Screen ActiveScreen => createdScreens.Find(it => it.GetId() == activeScreenId);
-    public List<string> History { get; } = new List<string>();
+    public Stack<string> History { get; set; } = new Stack<string>();
 
     private string activeScreenId;
     private string changingToScreenId;
@@ -50,9 +48,9 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         return (T) createdScreens.Find(it => it.GetType() == typeof(T));
     }
 
-    public string GetLastScreenId()
+    public string PopHistoryAndPeek()
     {
-        return History.Count > 1 ? History[History.Count - 2] : null;
+        return History.Count > 1 ? History.Also(it => it.Pop()).Peek() : null;
     }
 
     public Screen CreateScreen(string id)
@@ -94,7 +92,9 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         float currentScreenTransitionDelay = 0f,
         float newScreenTransitionDelay = 0f,
         Vector2? transitionFocus = null,
-        Action<Screen> onFinished = null
+        Action<Screen> onFinished = null,
+        bool willDestroy = false,
+        bool addToHistory = true
     )
     {
         if (changingToScreenId != null)
@@ -112,7 +112,6 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         if (changingToScreenId == targetScreenId) return;
         changingToScreenId = targetScreenId;
         print($"Changing screen to {targetScreenId}");
-        History.Add(targetScreenId);
 
         if (transition == ScreenTransition.None)
         {
@@ -241,6 +240,13 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         Action action = () =>
         {
             changingToScreenId = null;
+            
+            if (lastScreen != null)
+            {
+                lastScreen.gameObject.SetActive(false);
+                if (willDestroy) DestroyScreen(lastScreen.GetId());
+            }
+
             onFinished?.Invoke(newScreen);
             if (lastScreen != null)
                 foreach (var listener in screenChangeListeners)
@@ -248,6 +254,12 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         };
         if (duration > 0) Run.After(duration, action);
         else action();
+        
+        if (addToHistory)
+        {
+            print($"Adding {newScreen.GetId()} to history");
+            History.Push(newScreen.GetId());
+        }
     }
 
     public void AddHandler(ScreenChangeListener listener)

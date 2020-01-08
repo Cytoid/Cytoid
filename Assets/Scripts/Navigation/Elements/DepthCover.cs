@@ -35,8 +35,6 @@ public class DepthCover : MonoBehaviour, ScreenListener
 
             image.sprite = sprite;
             image.FitSpriteAspectRatio();
-
-            Context.SpriteCache.PutSprite("game://cover", "game", sprite);
         }
         image.color = Color.white;
         mask.color = Color.black;

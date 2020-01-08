@@ -16,9 +16,10 @@ public class NavigationElement : InteractableMonoBehavior
     public override void OnPointerClick(PointerEventData eventData)
     {
         base.OnPointerClick(eventData);
-        Context.ScreenManager.ChangeScreen(navigateToLastScreen ? Context.ScreenManager.GetLastScreenId() : targetScreenId, transition, duration, currentScreenDelay, newScreenDelay, transitionFocus, OnScreenChanged);
+        Context.ScreenManager.ChangeScreen(
+            navigateToLastScreen ? Context.ScreenManager.PopHistoryAndPeek() : targetScreenId, transition,
+            duration, currentScreenDelay, newScreenDelay, transitionFocus, OnScreenChanged, addToHistory: !navigateToLastScreen);
     }
-    
+
     protected virtual void OnScreenChanged(Screen screen) => Expression.Empty();
-    
 }

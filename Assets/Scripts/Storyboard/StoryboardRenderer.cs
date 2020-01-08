@@ -45,7 +45,7 @@ namespace Cytoid.Storyboard
             UiSprites.Clear();
 
             // Clear sprite cache
-            Context.SpriteCache.ClearTagged("Storyboard");
+            Context.SpriteCache.DisposeTagged("Storyboard");
 
             // Initialize easers
             TextEaser = new TextEaser();
@@ -124,6 +124,7 @@ namespace Cytoid.Storyboard
             if (Game.State.IsCompleted)
             {
                 Clear();
+                Context.SpriteCache.DisposeTagged("Storyboard");
                 return;
             }
 

@@ -160,7 +160,7 @@ public class LocalPlayer
 
     public class Performance
     {
-        public float Score;
+        public int Score;
         public float Accuracy;
         public string ClearType;
     }
@@ -174,7 +174,7 @@ public class LocalPlayer
     {
         return new Performance
         {
-            Score = SecuredPlayerPrefs.GetFloat(BestScoreKey(levelId, chartType, ranked), -1),
+            Score = (int) SecuredPlayerPrefs.GetFloat(BestScoreKey(levelId, chartType, ranked), -1),
             Accuracy = SecuredPlayerPrefs.GetFloat(BestAccuracyKey(levelId, chartType, ranked), -1),
             ClearType = SecuredPlayerPrefs.GetString(BestClearTypeKey(levelId, chartType, ranked), "")
         };

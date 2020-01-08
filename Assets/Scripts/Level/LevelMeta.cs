@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
 
+[Serializable]
 public class LevelMeta : IComparable<LevelMeta>
 {
     public const string Easy = "easy";
@@ -72,16 +73,19 @@ public class LevelMeta : IComparable<LevelMeta>
         return charts.Max(it => it.difficulty);
     }
 
+    [Serializable]
     public class MusicSection
     {
         public string path { get; set; }
     }
 
+    [Serializable]
     public class BackgroundSection
     {
         public string path { get; set; }
     }
 
+    [Serializable]
     public class ChartSection
     {
         public string type;
@@ -92,6 +96,7 @@ public class LevelMeta : IComparable<LevelMeta>
         public StoryboardSection storyboard;
     }
 
+    [Serializable]
     public class StoryboardSection
     {
         public string path = "storyboard.json";

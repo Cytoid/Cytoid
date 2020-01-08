@@ -79,7 +79,7 @@ public class OnlineLevel
             Debug.Log($"Online level {uid} resolved locally");
             return Context.LevelManager.LoadedLevels.Find(it => it.Meta.id == uid);
         }
-        var level = new Level($"{Context.ApiBaseUrl}/levels/{uid}/package",
+        var level = new Level($"{Context.ApiBaseUrl}/levels/{uid}/resources",
             JObject.FromObject(metadata.raw).DeepClone().ToObject<LevelMeta>());
         level.Meta.background.path = bundle.background;
         level.Meta.music.path = bundle.music;

@@ -20,9 +20,6 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
     public RadioGroup sortOrderRadioGroup;
     public InputField searchInputField;
 
-    private UniTask willSearchTask;
-    private string query;
-
     public override string GetId() => Id;
 
     public override async void OnScreenInitialized()
@@ -33,7 +30,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
 
         sortByRadioGroup.onSelect.AddListener(value => RefillLevels());
         sortOrderRadioGroup.onSelect.AddListener(value => RefillLevels());
-        searchInputField.onValueChanged.AddListener(WillSearch);
+        searchInputField.onEndEdit.AddListener(value => RefillLevels());
 
         await Context.LevelManager.LoadAllFromDataPath();
 
@@ -65,16 +62,6 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         Context.ScreenManager.RemoveHandler(this);
     }
 
-    public async void WillSearch(string query)
-    {
-        if (willSearchTask.Status == AwaiterStatus.Pending) willSearchTask.Forget();
-        this.query = query;
-        willSearchTask = UniTask.Delay(TimeSpan.FromSeconds(0.5));
-        await willSearchTask;
-
-        RefillLevels();
-    }
-
     public void RefillLevels()
     {
         print("Refilled levels");
@@ -94,6 +81,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         {
             filters.Add(level => !level.Meta.id.StartsWith("io.cytoid"));
         }
+        var query = searchInputField.text.Trim();
 
         RefillLevels(sort, asc, query, filters);
     }
@@ -175,7 +163,6 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         if (from.GetId() == MainMenuScreen.Id && to.GetId() == Id)
         {
             // Clear search query
-            query = null;
             searchInputField.SetTextWithoutNotify("");
         }
     }

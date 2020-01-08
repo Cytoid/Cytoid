@@ -412,15 +412,25 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
 
                 totalSize = (ulong) it.size;
                 downloading = true;
-                return RestClient.Get(req = new RequestHelper
+                return RestClient.Get<OnlineLevelResources>(req = new RequestHelper
                 {
                     Uri = Level.PackagePath,
-                    DownloadHandler = downloadHandler,
-                    WillParseBody = false,
                     Headers = new Dictionary<string, string>
                     {
-                        {"Cookie", Context.OnlinePlayer.GetUserCookies()}
+                        {"Authorization", "JWT " + Context.OnlinePlayer.GetJwtToken()}
                     }
+                });
+            }).Then(res => {
+                if (aborted)
+                {
+                    throw new OperationCanceledException();
+                }
+                
+                return RestClient.Get(req = new RequestHelper
+                {
+                    Uri = res.package,
+                    DownloadHandler = downloadHandler,
+                    WillParseBody = false
                 });
             }).Then(async res =>
             {

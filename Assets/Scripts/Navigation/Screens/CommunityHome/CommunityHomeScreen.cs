@@ -16,15 +16,18 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
 
     public ScrollRect scrollRect;
     public Transform latestLevelsHolder;
-
-    private UniTask willSearchTask;
-    private string query;
+    public InteractableMonoBehavior latestLevelsButton;
+    
+    public InputField searchInputField;
 
     public override string GetId() => Id;
 
     public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
+        
+        searchInputField.onEndEdit.AddListener(SearchLevels);
+        latestLevelsButton.onPointerClick.AddListener(_ => BrowseLatestLevels());
         
         Context.ScreenManager.AddHandler(this);
     }
@@ -66,7 +69,7 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
             EnableDebug = true
         }).Then(entries =>
         {
-            content.OnlineLevels = entries;
+            content.OnlineLevels = entries.ToList();
             savedContent = content;
             OnContentLoaded(savedContent);
         }).Catch(Debug.LogError);
@@ -81,12 +84,33 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
         }
     }
 
-    public async void WillSearch(string query)
+    public void BrowseLatestLevels()
     {
-        if (willSearchTask.Status == AwaiterStatus.Pending) willSearchTask.Forget();
-        this.query = query;
-        willSearchTask = UniTask.Delay(TimeSpan.FromSeconds(0.5));
-        await willSearchTask;
+        CommunityLevelSelectionScreen.SavedContent = new CommunityLevelSelectionScreen.Content
+        {
+            Sort = "creation_date",
+            Order = "desc",
+            Category = "all",
+            Time = "all",
+            Query = "",
+            OnlineLevels = null // Signal reload
+        };
+        Context.ScreenManager.ChangeScreen(CommunityLevelSelectionScreen.Id, ScreenTransition.In, 0.4f,
+            transitionFocus: ((RectTransform) latestLevelsButton.transform).GetScreenSpaceCenter());
+    }
+
+    public void SearchLevels(string query)
+    {
+        CommunityLevelSelectionScreen.SavedContent = new CommunityLevelSelectionScreen.Content
+        {
+            Sort = "creation_date",
+            Order = "desc",
+            Category = "all",
+            Time = "all",
+            Query = query,
+            OnlineLevels = null // Signal reload
+        };
+        Context.ScreenManager.ChangeScreen(CommunityLevelSelectionScreen.Id, ScreenTransition.In);
     }
 
     public void OnScreenChangeStarted(Screen from, Screen to)
@@ -94,8 +118,7 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
         if (from.GetId() == MainMenuScreen.Id && to.GetId() == Id)
         {
             // Clear search query
-            query = null;
-            //searchInputField.SetTextWithoutNotify("");
+            searchInputField.SetTextWithoutNotify("");
             savedContent = null;
             savedScrollPosition = default;
         }
@@ -108,11 +131,12 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
             // Clear community cache
             // TODO
             Context.SpriteCache.DisposeTagged("RemoteLevelCoverThumbnail");
+            GetComponentsInChildren<LevelCard>().ForEach(it => it.cover.SetAlpha(0));
         }
     }
 
     public class Content
     {
-        public OnlineLevel[] OnlineLevels;
+        public List<OnlineLevel> OnlineLevels;
     }
 }

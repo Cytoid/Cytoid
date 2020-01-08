@@ -84,7 +84,7 @@ public class LevelManager
                     {
                         outputFile.Write(dataBuffer, 0, readBytes);
                         outputFile.Flush();
-                        await UniTask.DelayFrame(0); // Prevent blocking main thread
+                        await UniTask.Yield(); // Prevent blocking main thread
                     }
                 }
             }

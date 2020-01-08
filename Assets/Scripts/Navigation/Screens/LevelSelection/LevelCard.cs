@@ -22,10 +22,16 @@ public class LevelCard : InteractableMonoBehavior, IPointerClickHandler
     public override bool IsPointerEntered => false;
 
     private Level level;
+    private bool loadedCover;
 
     public void ScrollCellContent(object levelObject)
     {
         SetModel((Level) levelObject);
+    }
+
+    public void ScrollCellReturn()
+    {
+        cover.SetAlpha(0);
     }
 
     private void Awake()
@@ -60,7 +66,7 @@ public class LevelCard : InteractableMonoBehavior, IPointerClickHandler
             }
         }
 
-        transform.RebuildLayout();
+        LayoutFixer.Fix(transform);
 
         LoadCover();
     }
@@ -69,6 +75,8 @@ public class LevelCard : InteractableMonoBehavior, IPointerClickHandler
 
     public async void LoadCover()
     {
+        loadedCover = false;
+        cover.SetAlpha(0);
         if (cancelToken != null)
         {
             if (!cancelToken.IsCancellationRequested) cancelToken.Cancel();
@@ -88,44 +96,65 @@ public class LevelCard : InteractableMonoBehavior, IPointerClickHandler
             }
         }
         
-        cover.SetAlpha(0);
-        Sprite sprite;
-        if (level.IsLocal)
+        cancelToken = new CancellationTokenSource();
+        Sprite sprite = null;
+        try
         {
-            var path = "file://" + level.Path + ".thumbnail";
-            sprite = await Context.SpriteCache.CacheSprite(path, "LocalLevelCoverThumbnail");
+            if (level.IsLocal)
+            {
+                var path = "file://" + level.Path + ".thumbnail";
+                sprite = await Context.SpriteCache.CacheSprite(path, "LocalLevelCoverThumbnail",
+                    cancelToken.Token);
+            }
+            else
+            {
+                var path = level.Meta.background.path.WithImageCdn().WithSizeParam(576, 360);
+                sprite = await Context.SpriteCache.CacheSprite(path, "RemoteLevelCoverThumbnail",
+                    cancelToken.Token);
+            }
         }
-        else
+        catch
         {
-            var path = level.Meta.background.path.WithImageCdn().WithSizeParam(576, 360);
-            sprite = await Context.SpriteCache.CacheSprite(path, "RemoteLevelCoverThumbnail");
+            if (sprite != null)
+            {
+                // Should be impossible
+                Destroy(sprite); 
+            }
+            return;
         }
-        
-        cover.sprite = sprite;
-        cover.DOFade(0.5f, 0.2f);
-        cover.FitSpriteAspectRatio();
+
+        if (sprite != null)
+        {
+            cover.sprite = sprite;
+            cover.DOFade(0.5f, 0.2f);
+            cover.FitSpriteAspectRatio();
+            loadedCover = true;
+        }
     }
 
     public override void OnPointerDown(PointerEventData eventData)
     {
         base.OnPointerDown(eventData);
-        cover.DOFade(1.0f, 0.2f).SetEase(Ease.OutCubic);
+        if (loadedCover) cover.DOFade(1.0f, 0.2f).SetEase(Ease.OutCubic);
         cover.rectTransform.DOScale(1.02f, 0.2f).SetEase(Ease.OutCubic);
     }
     
     public override void OnPointerUp(PointerEventData eventData)
     {
         base.OnPointerUp(eventData);
-        cover.DOFade(0.5f, 0.2f).SetEase(Ease.OutCubic);
+        if (loadedCover) cover.DOFade(0.5f, 0.2f).SetEase(Ease.OutCubic);
         cover.rectTransform.DOScale(1.0f, 0.2f).SetEase(Ease.OutCubic);
     }
 
     public override void OnPointerClick(PointerEventData eventData)
     {
         base.OnPointerClick(eventData);
-        Context.SelectedLevel = level;
-        Context.ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.In, 0.4f,
-            transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter());
+        if (level != null)
+        {
+            Context.SelectedLevel = level;
+            Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.In, 0.4f,
+                transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter());
+        }
     }
 
 }

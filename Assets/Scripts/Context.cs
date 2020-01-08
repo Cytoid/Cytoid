@@ -96,12 +96,12 @@ public class Context : SingletonMonoBehavior<Context>
             await UniTask.WaitUntil(() => ScreenManager != null);
             if (true)
             {
-                ScreenManager.ChangeScreen("MainMenu", ScreenTransition.None);
+                ScreenManager.ChangeScreen(MainMenuScreen.Id, ScreenTransition.None);
             }
             
             if (false)
             {
-                ScreenManager.ChangeScreen("CommunityHome", ScreenTransition.None);
+                ScreenManager.ChangeScreen(CommunityHomeScreen.Id, ScreenTransition.None);
             }
             
             if (false)
@@ -146,12 +146,12 @@ public class Context : SingletonMonoBehavior<Context>
             if (LastGameResult != null)
             {
                 // Show result screen
-                ScreenManager.ChangeScreen("Result", ScreenTransition.None, addToHistory: false);
+                ScreenManager.ChangeScreen(ResultScreen.Id, ScreenTransition.None, addToHistory: false);
             }
             else
             {
                 // Show game preparation screen
-                ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.None);
+                ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.None);
             }
         }
     }

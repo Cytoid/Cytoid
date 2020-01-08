@@ -327,7 +327,7 @@ public class ResultScreen : Screen, ScreenChangeListener
     {
         LoopAudioPlayer.Instance.FadeOutLoopPlayer(0.4f);
         LoopAudioPlayer.Instance.PlayMainLoopAudio();
-        Context.ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.Out, willDestroy: true,
+        Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.Out, willDestroy: true,
             onFinished: screen => Resources.UnloadUnusedAssets());
         Context.AudioManager.Get("LevelStart").Play(AudioTrackIndex.RoundRobin);
     }

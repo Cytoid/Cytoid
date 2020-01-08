@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using Newtonsoft.Json.Linq;
 using Proyecto26;
 using RSG;
@@ -21,40 +20,13 @@ public class OnlinePlayer
     
     private Dictionary<string, string> setCookies = new Dictionary<string, string>();
 
-    public string GetUserCookies(string existingCookie = null)
-    {
-        var cookies = "";
-        setCookies.Select(pair => pair.Key + "=" + pair.Value + "; ").ForEach(it => cookies += it);
-        Debug.Log(cookies);
-        if (existingCookie == null) return cookies;
-        return existingCookie + cookies;
-    }
-
-    private void SetUserCookies(ResponseHelper res)
-    {
-        res.Headers.ForEach(pair => Debug.Log(pair.Key + " => " + pair.Value));
-        if (res.Headers.ContainsKey("Set-Cookie"))
-        {
-            var cookie = res.Headers["Set-Cookie"];
-            // Find cytoid:sess and cytoid:sess.sig
-            var regex = new Regex(@"cytoid:sess=([^;]*);");
-            var cytoidSess = regex.Match(cookie).Groups[1].Value;
-            Debug.Log(cytoidSess);
-            regex = new Regex(@"cytoid:sess.sig=([^;]*);");
-            var cytoidSessSig = regex.Match(cookie).Groups[1].Value;
-            Debug.Log(cytoidSessSig);
-            setCookies["cytoid:sess"] = cytoidSess;
-            setCookies["cytoid:sess.sig"] = cytoidSessSig;
-        }
-    }
-
     public Promise<Profile> Authenticate(string password)
     {
         IsAuthenticating = true;
         
         return new Promise<Profile>((resolve, reject) =>
         {
-            RestClient.Post(new RequestHelper
+            RestClient.Post<Session>(new RequestHelper
             {
                 Uri = Context.ApiBaseUrl + "/session",
                 BodyString = JObject.FromObject(new
@@ -63,10 +35,8 @@ public class OnlinePlayer
                     password,
                     token = SecuredConstants.AuthenticationVerificationToken
                 }).ToString()
-            }).Then(res =>
+            }).Then(session =>
                 {
-                    SetUserCookies(res);
-                    var session = JsonUtility.FromJson<Session>(res.Text);
                     SetJwtToken(session.token);
                     Debug.Log(session.token);
                     return FetchProfile();
@@ -93,7 +63,7 @@ public class OnlinePlayer
 
         return new Promise<Profile>((resolve, reject) =>
         {
-            RestClient.Post(new RequestHelper
+            RestClient.Post<Session>(new RequestHelper
             {
                 Uri = Context.ApiBaseUrl + "/session",
                 BodyString = JObject.FromObject(new
@@ -104,10 +74,8 @@ public class OnlinePlayer
                 {
                     {"Authorization", "JWT " + jwtToken}
                 }
-            }).Then(res =>
+            }).Then(session =>
             {
-                SetUserCookies(res);
-                var session = JsonUtility.FromJson<Session>(res.Text);
                 SetJwtToken(session.token);
                 Debug.Log(session.token);
                 return FetchProfile();
@@ -162,7 +130,7 @@ public class OnlinePlayer
         };
     }
 
-    public RSG.IPromise<Profile> FetchProfile(string uid = null)
+    public IPromise<Profile> FetchProfile(string uid = null)
     {
         if (uid == null) uid = GetUid();
         return RestClient.Get<Profile>(new RequestHelper
@@ -177,7 +145,7 @@ public class OnlinePlayer
         });
     }
 
-    public RSG.IPromise<System.Tuple<int, List<RankingEntry>>> GetLevelRankings(string levelId, string chartType)
+    public IPromise<System.Tuple<int, List<RankingEntry>>> GetLevelRankings(string levelId, string chartType)
     {
         var entries = new List<RankingEntry>();
         var top10 = new List<RankingEntry>();

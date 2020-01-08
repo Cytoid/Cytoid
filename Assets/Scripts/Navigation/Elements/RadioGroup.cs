@@ -61,6 +61,11 @@ public class RadioGroup : MonoBehaviour
         }
     }
 
+    public void RevertToDefault(bool notify = false)
+    {
+        Select(defaultValue, notify);
+    }
+
 }
 
 public class RadioGroupSelectEvent : UnityEvent<string>

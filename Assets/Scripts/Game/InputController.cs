@@ -73,13 +73,13 @@ public class InputController : MonoBehaviour
             }
         }
 
-        // Make sure to query non-flick notes first
-        TouchableNormalNotes.Sort((a, b) =>
-        {
-            if (a.GetType() == b.GetType()) return a.Model.id - b.Model.id;
-            if (a is FlickNote) return 1;
-            return -1;
-        });
+        // // Make sure to query non-flick notes first
+        // TouchableNormalNotes.Sort((a, b) =>
+        // {
+        //     if (a.GetType() == b.GetType()) return a.Model.id - b.Model.id;
+        //     if (a is FlickNote) return 1;
+        //     return -1;
+        // });
     }
 
     protected virtual void OnFingerDown(LeanFinger finger)

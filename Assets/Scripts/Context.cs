@@ -88,7 +88,7 @@ public class Context : SingletonMonoBehavior<Context>
         if (SceneManager.GetActiveScene().name == "Game")
         {
             // Load test level
-            await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/player/level.json" });
+            await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/sggrkung.festival_blaze/level.json" });
             SelectedLevel = LevelManager.LoadedLevels[0];
             SelectedDifficulty = Difficulty.Parse(SelectedLevel.Meta.charts[0].type);
         }
@@ -135,7 +135,7 @@ public class Context : SingletonMonoBehavior<Context>
         if (prev == "Navigation" && next == "Game")
         {
             // Save history
-            navigationScreenHistory = ScreenManager.History;
+            navigationScreenHistory = new Stack<string>(ScreenManager.History);
         }
     }
 
@@ -147,8 +147,10 @@ public class Context : SingletonMonoBehavior<Context>
         }
         if (prev == "Game" && next == "Navigation")
         {
+            // Resume DSP
+            AudioListener.pause = false;
             // Restore history
-            ScreenManager.History = navigationScreenHistory;
+            ScreenManager.History = new Stack<string>(navigationScreenHistory);
             if (LastGameResult != null)
             {
                 // Show result screen

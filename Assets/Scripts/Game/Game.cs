@@ -7,6 +7,7 @@ using System.Threading;
 using Cytoid.Storyboard;
 using UnityEngine;
 using UniRx.Async;
+using UnityEditor;
 using UnityEngine.Events;
 using UnityEngine.Networking;
 
@@ -32,9 +33,10 @@ public class Game : MonoBehaviour
     
     public float Time { get; protected set; }
     public float MusicLength { get; protected set; }
-    public float MusicStartedTimestamp { get; protected set; } // When was the music started to play?
-    public float MusicStartedAt { get; protected set; } // When the music was played, from when was it played?
-    public float MainMusicProgress { get; protected set; }
+    public float GameStartedOrResumedTimestamp { get; protected set; }
+    public double MusicStartedTimestamp { get; protected set; } // When was the music started to play?
+    public double MusicUnpausedTimestamp { get; protected set; } // When was the music unpaused to play?
+    public float MusicProgress { get; protected set; }
     public float UnpauseCountdown { get; protected set; }
 
     public AudioManager.Controller Music { get; protected set; }
@@ -60,6 +62,10 @@ public class Game : MonoBehaviour
     public GameEvent onGameSpeedDown = new GameEvent();
     public GameEvent onTopBoundaryBounded = new GameEvent();
     public GameEvent onBottomBoundaryBounded = new GameEvent();
+
+    private float pausedAt = 0;
+    private double pausedDuration = 0;
+    private double pausedTimestamp = 0;
 
     protected void Awake()
     {
@@ -111,7 +117,8 @@ public class Game : MonoBehaviour
         
         // Load audio
         print("Loading audio");
-            
+        AudioListener.pause = false;
+        
         if (Context.AudioManager == null) await UniTask.WaitUntil(() => Context.AudioManager != null);
         var audioPath = "file://" + Level.Path + Level.Meta.GetMusicPath(difficulty.Id);
         var loader = new AssetLoader(audioPath);
@@ -180,22 +187,21 @@ public class Game : MonoBehaviour
         
         Context.ScreenManager.ChangeScreen(OverlayScreen.Id, ScreenTransition.None);
         
-        Music.Play(AudioTrackIndex.Reserved1);
+        MusicStartedTimestamp = Music.PlayScheduled(AudioTrackIndex.Reserved1, 1.0f);
 
-        await UniTask.WaitUntil(() =>
-        {
-            // Wait until the audio actually starts playing
-            var playbackTime = Music.PlaybackTime;
-            return playbackTime > 0 && playbackTime < MusicLength;
-        });
+        await UniTask.WaitUntil(
+            () => AudioSettings.dspTime >= MusicStartedTimestamp,
+            PlayerLoopTiming.Initialization);
 
-        MusicStartedTimestamp = UnityEngine.Time.realtimeSinceStartup;
-        MusicStartedAt = Music.PlaybackTime;
-
+        GameStartedOrResumedTimestamp = UnityEngine.Time.realtimeSinceStartup;
         State.IsStarted = true;
         State.IsPlaying = true;
         onGameStarted.Invoke(this);
     }
+
+    private double lastDspTime = -1;
+
+    private int ticksBeforeSynchronization = 600;
 
     protected virtual void Update()
     {
@@ -218,18 +224,22 @@ public class Game : MonoBehaviour
             if (State.ClearCount >= Chart.Model.note_list.Count) Complete();
 
             // Update current states
-            if (this is StoryboardGame)
+            ticksBeforeSynchronization--;
+            var resumeElapsedTime = UnityEngine.Time.realtimeSinceStartup - GameStartedOrResumedTimestamp;
+            var nowDspTime = AudioSettings.dspTime;
+            // Sync: every 600 ticks (=10 seconds) and every tick within the first 0.5 seconds
+            if ((ticksBeforeSynchronization <= 0 || resumeElapsedTime < 0.5f) && nowDspTime != lastDspTime)
             {
-                // PlaybackTime is accurate enough on desktop
-                Time = Music.PlaybackTime - Config.ChartOffset + Chart.MusicOffset + MusicStartedAt;
+                Time = (float) nowDspTime;
+                lastDspTime = nowDspTime;
+                ticksBeforeSynchronization = 600;
+                Time = (float) (Time - Config.ChartOffset + Chart.MusicOffset - MusicStartedTimestamp);
             }
             else
             {
-                Time = UnityEngine.Time.realtimeSinceStartup - MusicStartedTimestamp + MusicStartedAt
-                       - Config.ChartOffset + Chart.MusicOffset;
+                Time += UnityEngine.Time.unscaledDeltaTime;
             }
-
-            MainMusicProgress = Time / MusicLength;
+            MusicProgress = Time / MusicLength;
 
             // Process chart elements
             while (Chart.CurrentEventId < Chart.Model.event_order_list.Count &&
@@ -338,18 +348,20 @@ public class Game : MonoBehaviour
 
     public void Pause()
     {
-        unpause?.Cancel();
+        unpauseToken?.Cancel();
         UnpauseCountdown = 0;
         if (!IsLoaded || !State.IsPlaying || State.IsCompleted || State.IsFailed) return;
         print("Game paused");
         
         State.IsPlaying = false;
-        Music.Pause();
+        //Music.Pause();
+        AudioListener.pause = true;
+        pausedTimestamp = UnityEngine.Time.realtimeSinceStartup;
         
         onGamePaused.Invoke(this);
     }
 
-    private CancellationTokenSource unpause;
+    private CancellationTokenSource unpauseToken;
 
     public async void WillUnpause()
     {
@@ -362,10 +374,10 @@ public class Game : MonoBehaviour
         UnpauseCountdown = 3;
         while (UnpauseCountdown > 0)
         {
-            unpause = new CancellationTokenSource();
+            unpauseToken = new CancellationTokenSource();
             try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(0.1), cancellationToken: unpause.Token);
+                await UniTask.Delay(TimeSpan.FromSeconds(0.1), cancellationToken: unpauseToken.Token);
             }
             catch
             {
@@ -375,7 +387,7 @@ public class Game : MonoBehaviour
 
             UnpauseCountdown -= 0.1f;
         }
-
+        
         Unpause();
     }
 
@@ -383,19 +395,10 @@ public class Game : MonoBehaviour
     {
         if (!IsLoaded || State.IsPlaying || State.IsCompleted || State.IsFailed) return;
         print("Game unpaused");
-        
-        Music.Resume();
 
-        await UniTask.WaitUntil(() =>
-        {
-            // Wait until the audio actually starts playing
-            var playbackTime = Music.PlaybackTime;
-            return playbackTime > 0 && playbackTime < MusicLength;
-        });
-
-        MusicStartedTimestamp = UnityEngine.Time.realtimeSinceStartup;
-        MusicStartedAt = Music.PlaybackTime;
-
+        GameStartedOrResumedTimestamp = UnityEngine.Time.realtimeSinceStartup;
+        AudioListener.pause = false;
+        pausedDuration += MusicUnpausedTimestamp - Time;
         State.IsPlaying = true;
         
         onGameUnpaused.Invoke(this);
@@ -511,3 +514,21 @@ public class GameEvent : UnityEvent<Game>
 public class NoteEvent : UnityEvent<Game, Note>
 {
 }
+
+#if UNITY_EDITOR
+
+[CustomEditor(typeof(Game))]
+public class GameEditor : Editor
+{
+    public override void OnInspectorGUI()
+    {
+        DrawDefaultInspector();
+
+        if (Application.isPlaying)
+        {
+            GUILayout.Label($"DSP time: {AudioSettings.dspTime}");
+            EditorUtility.SetDirty(target);
+        }
+    }
+}
+#endif

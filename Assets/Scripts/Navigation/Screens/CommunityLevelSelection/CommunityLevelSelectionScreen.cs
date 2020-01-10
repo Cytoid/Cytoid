@@ -169,7 +169,15 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
         scrollRect.objectsToFill = content.OnlineLevels.Select(it => it.ToLevel()).Cast<object>().ToArray();
         if (append) scrollRect.RefreshCells();
         else scrollRect.RefillCells();
-        Run.After(1f, () => canLoadMore = true);
+        if (content.OnlineLevels.Count <= 9 && content.PageLoaded == 0)
+        {
+            // Impossible to have more levels
+            canLoadMore = false;
+        }
+        else
+        {
+            Run.After(1f, () => canLoadMore = true);
+        }
     }
     
     public override void OnScreenUpdate()

@@ -31,6 +31,7 @@ public class PauseButton : InteractableMonoBehavior
         {
             transitionElement.leaveTo = Transition.Default;
             transitionElement.Leave();
+            Context.ScreenManager.ChangeScreen(PausedScreen.Id, ScreenTransition.None);
         });
         game.onGameUnpaused.AddListener(_ =>
         {
@@ -48,7 +49,6 @@ public class PauseButton : InteractableMonoBehavior
             {
                 Unhighlight();
                 game.Pause();
-                Context.ScreenManager.ChangeScreen(PausedScreen.Id, ScreenTransition.None);
             }
         });
     }

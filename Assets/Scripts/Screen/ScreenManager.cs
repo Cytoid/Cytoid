@@ -15,11 +15,11 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
 
     public List<Screen> createdScreens;
 
-    public Screen ActiveScreen => createdScreens.Find(it => it.GetId() == activeScreenId);
+    public Screen ActiveScreen => createdScreens.Find(it => it.GetId() == ActiveScreenId);
     public Stack<string> History { get; set; } = new Stack<string>();
 
-    private string activeScreenId;
-    private string changingToScreenId;
+    public string ActiveScreenId { get; protected set; }
+    public string ChangingToScreenId { get; protected set; }
     private HashSet<ScreenChangeListener> screenChangeListeners = new HashSet<ScreenChangeListener>();
     private CancellationTokenSource screenChangeCancellationTokenSource;
 
@@ -97,9 +97,9 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         bool addToHistory = true
     )
     {
-        if (changingToScreenId != null)
+        if (ChangingToScreenId != null)
         {
-            print($"Warning: Already changing to {changingToScreenId}! Ignoring.");
+            print($"Warning: Already changing to {ChangingToScreenId}! Ignoring.");
             return;
         }
 
@@ -109,8 +109,8 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
             return;
         }
 
-        if (changingToScreenId == targetScreenId) return;
-        changingToScreenId = targetScreenId;
+        if (ChangingToScreenId == targetScreenId) return;
+        ChangingToScreenId = targetScreenId;
         print($"Changing screen to {targetScreenId}");
 
         if (transition == ScreenTransition.None)
@@ -136,7 +136,7 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
                 }
                 catch
                 {
-                    changingToScreenId = null;
+                    ChangingToScreenId = null;
                     return;
                 }
             }
@@ -181,7 +181,7 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
 
         foreach (var listener in screenChangeListeners) listener.OnScreenChangeStarted(lastScreen, newScreen);
 
-        activeScreenId = newScreen.GetId();
+        ActiveScreenId = newScreen.GetId();
         newScreen.State = ScreenState.Active;
         newScreen.CanvasGroup.blocksRaycasts = false; // Special handling
 
@@ -194,7 +194,7 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
             }
             catch
             {
-                changingToScreenId = null;
+                ChangingToScreenId = null;
                 return;
             }
         }
@@ -239,7 +239,7 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
 
         Action action = () =>
         {
-            changingToScreenId = null;
+            ChangingToScreenId = null;
             
             if (lastScreen != null)
             {

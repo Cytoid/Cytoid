@@ -9,15 +9,15 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
 {
     public AudioSource[] audioSources;
     public AudioClip[] preloadedAudioClips;
-    
+
     private Dictionary<string, Controller> controllers = new Dictionary<string, Controller>();
-    
+
     private const int RoundRobinStartIndex = 3;
     private const int RoundRobinEndIndex = 6;
     private int trackCurrentIndex;
-    
+
     private bool useNativeAudio;
-    
+
     protected override void Awake()
     {
         base.Awake();
@@ -36,9 +36,8 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         }
         else
         {
-               
         }
-        
+
         preloadedAudioClips.ForEach(it => Load(it.name, it));
     }
 
@@ -46,7 +45,9 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
     {
         if (useNativeAudio == null) useNativeAudio = this.useNativeAudio;
         if (controllers.ContainsKey(id)) Unload(id);
-        return controllers[id] = useNativeAudio.Value ? (Controller) new Exceed7Controller(this, audioClip) : new UnityController(this, audioClip);
+        return controllers[id] = useNativeAudio.Value
+            ? (Controller) new Exceed7Controller(this, audioClip)
+            : new UnityController(this, audioClip);
     }
 
     public void Unload(string id)
@@ -81,12 +82,12 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         {
             Parent = parent;
         }
-        
+
         public abstract float Volume { get; set; }
         public abstract float PlaybackTime { get; set; }
         public abstract float Length { get; }
         public abstract void Play(AudioTrackIndex trackIndex);
-        public abstract void PlayScheduled();
+        public abstract double PlayScheduled(AudioTrackIndex trackIndex, double delay);
         public abstract void Pause();
         public abstract void Resume();
         public abstract void Stop();
@@ -117,7 +118,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             get => Source.timeSamples * 1f / Source.clip.frequency;
             set => Source.time = value;
         }
-        
+
         public override float Length => audioClip.length;
 
         public override void Play(AudioTrackIndex trackIndex)
@@ -130,14 +131,13 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             });
         }
 
-        public override void PlayScheduled(AudioTrackIndex trackIndex)
+        public override double PlayScheduled(AudioTrackIndex trackIndex, double delay)
         {
             index = Parent.GetAvailableIndex(trackIndex);
-            Source.Apply(it =>
-            {
-                it.clip = audioClip;
-                it.PlayScheduled();
-            });
+            Source.clip = audioClip;
+            var time = AudioSettings.dspTime + delay;
+            Source.PlayScheduled(time);
+            return time;
         }
 
         public override void Pause()
@@ -164,7 +164,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
                 audioClip.UnloadAudioData();
                 Destroy(audioClip);
             }
-            catch (Exception ignored)
+            catch
             {
                 // ignored
             }
@@ -175,7 +175,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             return !Source.isPlaying;
         }
     }
-    
+
     public class Exceed7Controller : Controller
     {
         private NativeAudioPointer pointer;
@@ -204,7 +204,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             get => controller.GetPlaybackTime();
             set => controller.SetPlaybackTime(value);
         }
-        
+
         public override float Length => length;
 
         public override void Play(AudioTrackIndex trackIndex)
@@ -215,6 +215,11 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             });
             controller.SetVolume(volume);
             Debug.Log("Controller volume set to " + volume);
+        }
+
+        public override double PlayScheduled(AudioTrackIndex trackIndex, double delay)
+        {
+            throw new NotImplementedException();
         }
 
         public override void Pause()
@@ -244,8 +249,8 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             print("Playback time: " + PlaybackTime + ", Length: " + length);
             return Mathf.Approximately(PlaybackTime, 0) || PlaybackTime >= length;
         }
+
     }
-    
 }
 
 public enum AudioTrackIndex

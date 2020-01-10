@@ -48,6 +48,7 @@ public class ResultScreen : Screen, ScreenChangeListener
     public override async void OnScreenInitialized()
     {
         base.OnScreenInitialized();
+        rankingText.text = "";
         rankingContainerStatusText.text = "";
         result = Context.LastGameResult;
         Context.LastGameResult = null;

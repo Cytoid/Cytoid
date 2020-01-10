@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using DG.Tweening;
+using Tayx.Graphy;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -33,6 +35,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static LocalPlayer LocalPlayer = new LocalPlayer();
     public static OnlinePlayer OnlinePlayer = new OnlinePlayer();
 
+    private static GraphyManager graphyManager;
     private static Stack<string> navigationScreenHistory = new Stack<string>();
 
     protected override void Awake()
@@ -62,7 +65,6 @@ public class Context : SingletonMonoBehavior<Context>
         DataPath = Application.persistentDataPath;
         print("Data path: " + DataPath);
 
-#if !UNITY_EDITOR
         // On Android...
 		if (Application.platform == RuntimePlatform.Android)
 		{
@@ -76,7 +78,6 @@ public class Context : SingletonMonoBehavior<Context>
 			// Create an empty folder if it doesn't already exist
 			Directory.CreateDirectory(DataPath);
 		}
-#endif
 
 #if UNITY_EDITOR
         Application.runInBackground = true;
@@ -101,7 +102,7 @@ public class Context : SingletonMonoBehavior<Context>
             
             if (false)
             {
-                ScreenManager.ChangeScreen(CommunityHomeScreen.Id, ScreenTransition.None);
+                ScreenManager.ChangeScreen(CommunityLevelSelectionScreen.Id, ScreenTransition.None);
             }
             
             if (false)
@@ -122,6 +123,11 @@ public class Context : SingletonMonoBehavior<Context>
                 ScreenManager.ChangeScreen("Result", ScreenTransition.None);
             }
         }
+
+        await UniTask.DelayFrame(0);
+
+        graphyManager = GraphyManager.Instance;
+        UpdateProfilerDisplay();
     }
     
     public static void PreSceneChanged(string prev, string next)
@@ -195,5 +201,21 @@ public class Context : SingletonMonoBehavior<Context>
         }
 
         return path;
+    }
+
+    public static void UpdateProfilerDisplay()
+    {
+        print("Profiler display: " + LocalPlayer.DisplayProfiler);
+        if (LocalPlayer.DisplayProfiler)
+        {
+            graphyManager.Enable();
+            graphyManager.FpsModuleState = GraphyManager.ModuleState.FULL;
+            graphyManager.RamModuleState = GraphyManager.ModuleState.FULL;
+            graphyManager.AudioModuleState = GraphyManager.ModuleState.FULL;
+        }
+        else
+        {
+            graphyManager.Disable();
+        }
     }
 }

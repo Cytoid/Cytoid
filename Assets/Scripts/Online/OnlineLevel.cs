@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
@@ -80,7 +81,8 @@ public class OnlineLevel
             return Context.LevelManager.LoadedLevels.Find(it => it.Meta.id == uid);
         }
         var level = new Level($"{Context.ApiBaseUrl}/levels/{uid}/resources",
-            JObject.FromObject(metadata.raw).DeepClone().ToObject<LevelMeta>());
+            metadata.raw.JsonDeepCopy());
+        level.Meta.SortCharts();
         level.Meta.background.path = bundle.background;
         level.Meta.music.path = bundle.music;
         level.Meta.music_preview.path = bundle.music_preview;

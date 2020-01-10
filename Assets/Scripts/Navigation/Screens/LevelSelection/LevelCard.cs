@@ -31,6 +31,9 @@ public class LevelCard : InteractableMonoBehavior, IPointerClickHandler
 
     public void ScrollCellReturn()
     {
+        loadedCover = false;
+        cover.sprite = null;
+        cover.DOKill();
         cover.SetAlpha(0);
     }
 
@@ -76,6 +79,7 @@ public class LevelCard : InteractableMonoBehavior, IPointerClickHandler
     public async void LoadCover()
     {
         loadedCover = false;
+        cover.DOKill();
         cover.SetAlpha(0);
         if (cancelToken != null)
         {
@@ -84,11 +88,11 @@ public class LevelCard : InteractableMonoBehavior, IPointerClickHandler
         if (!((RectTransform) transform).IsVisible())
         {
             cancelToken = new CancellationTokenSource();
-            cancelToken.CancelAfter(TimeSpan.FromSeconds(3));
             try
             {
                 await UniTask.WaitUntil(() => ((RectTransform) transform).IsVisible(),
                     cancellationToken: cancelToken.Token);
+                await UniTask.DelayFrame(0);
             }
             catch
             {

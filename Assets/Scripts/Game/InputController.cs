@@ -73,10 +73,10 @@ public class InputController : MonoBehaviour
             }
         }
 
-        // Make sure to query other notes first
+        // Make sure to query non-flick notes first
         TouchableNormalNotes.Sort((a, b) =>
         {
-            if (a is FlickNote && b is FlickNote) return 0;
+            if (a.GetType() == b.GetType()) return a.Model.id - b.Model.id;
             if (a is FlickNote) return 1;
             return -1;
         });

@@ -395,12 +395,12 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
             // TODO: Check destFolder exists
 
             // Download detail first, then package
-            RequestHelper req = null;
+            RequestHelper req;
             var downloadHandler = new DownloadHandlerFile(targetFile)
             {
                 removeFileOnAbort = true
             };
-            RestClient.Get<OnlineLevel>(new RequestHelper
+            RestClient.Get<OnlineLevel>(req = new RequestHelper
             {
                 Uri = $"{Context.ApiBaseUrl}/levels/{Level.Meta.id}"
             }).Then(it =>
@@ -463,7 +463,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
                 File.Delete(targetFile);
             }).Catch(error =>
             {
-                if (error is OperationCanceledException || (req != null && req.IsAborted))
+                if (aborted || error is OperationCanceledException || (req != null && req.IsAborted))
                 {
                     Toast.Enqueue(Toast.Status.Success, "Download cancelled.");
                 }
@@ -582,7 +582,9 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         fillColorFlickDownTextfield.onEndEdit.AddListener(ColorSettingHandler(fillColorFlickDownTextfield,
             () => lp.GetFillColor(NoteType.Flick, true), value => lp.SetFillColor(NoteType.Flick, true, value)));
         displayProfilerToggle.Select(lp.DisplayProfiler.BoolToString(), false);
+        displayProfilerToggle.onSelect.AddListener(it => { lp.DisplayProfiler = bool.Parse(it); });
         displayNoteIdsToggle.Select(lp.DisplayNoteIds.BoolToString(), false);
+        displayNoteIdsToggle.onSelect.AddListener(it => { lp.DisplayNoteIds = bool.Parse(it); });
     }
 
     private static UnityAction<string> FloatSettingHandler(InputField inputField, Func<float> defaultValueGetter,

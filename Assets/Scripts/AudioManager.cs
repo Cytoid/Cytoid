@@ -86,6 +86,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         public abstract float PlaybackTime { get; set; }
         public abstract float Length { get; }
         public abstract void Play(AudioTrackIndex trackIndex);
+        public abstract void PlayScheduled();
         public abstract void Pause();
         public abstract void Resume();
         public abstract void Stop();
@@ -126,6 +127,16 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             {
                 it.clip = audioClip;
                 it.Play();
+            });
+        }
+
+        public override void PlayScheduled(AudioTrackIndex trackIndex)
+        {
+            index = Parent.GetAvailableIndex(trackIndex);
+            Source.Apply(it =>
+            {
+                it.clip = audioClip;
+                it.PlayScheduled();
             });
         }
 

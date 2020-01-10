@@ -121,7 +121,7 @@ public class Scanner : SingletonMonoBehavior<Scanner>
         while (timing < animationDuration)
         {
             var progress = timing / animationDuration;
-            var randomRange = progress / 10;
+            var randomRange = 0; // progress / 10;
             for (var i = 0; i < 100; i++)
             {
                 var orthographicSize = Camera.main.orthographicSize;
@@ -149,7 +149,7 @@ public class Scanner : SingletonMonoBehavior<Scanner>
         while (timing < animationDuration)
         {
             var progress = timing / animationDuration;
-            var randomRange = (1 - progress) / 10;
+            var randomRange = 0; // (1 - progress) / 10;
             for (var i = 0; i < 100; i++)
             {
                 var orthographicSize = Camera.main.orthographicSize;

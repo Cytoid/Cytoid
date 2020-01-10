@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using DG.Tweening;
 using Proyecto26;
+using RSG;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,15 +11,54 @@ using UnityEngine.UI;
 public class CommunityHomeScreen : Screen, ScreenChangeListener
 {
     public const string Id = "CommunityHome";
-    private const int LatestLevelsSize = 6;
+
+    private static readonly Layout defaultLayout = new Layout
+    {
+        Sections = new List<Layout.Section>
+        {
+            new Layout.Section
+            {
+                Title = "New uploads",
+                Query = new OnlineLevelQuery
+                {
+                    sort = "creation_date",
+                    order = "desc",
+                    category = "all"
+                }
+            },
+            new Layout.Section
+            {
+                Title = "Trending this month",
+                Query = new OnlineLevelQuery
+                {
+                    sort = "rating",
+                    order = "desc",
+                    category = "all",
+                    time = "month"
+                }
+            },
+            new Layout.Section
+            {
+                Title = "Best of Cytoid",
+                Query = new OnlineLevelQuery
+                {
+                    sort = "creation_date",
+                    order = "desc",
+                    category = "featured"
+                }
+            }
+        }
+    };
 
     private static float savedScrollPosition;
     private static Content savedContent;
 
+    public GameObject sectionPrefab;
+    public GameObject levelCardPrefab;
+
     public ScrollRect scrollRect;
-    public Transform latestLevelsHolder;
-    public InteractableMonoBehavior latestLevelsButton;
-    
+    public CanvasGroup contentHolder;
+    public Transform sectionHolder;
     public InputField searchInputField;
 
     public override string GetId() => Id;
@@ -27,7 +68,6 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
         base.OnScreenInitialized();
         
         searchInputField.onEndEdit.AddListener(SearchLevels);
-        latestLevelsButton.onPointerClick.AddListener(_ => BrowseLatestLevels());
         
         Context.ScreenManager.AddHandler(this);
     }
@@ -42,7 +82,8 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
     public override void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
-       
+
+        contentHolder.alpha = 0;
         if (savedContent != null)
         {
             OnContentLoaded(savedContent);
@@ -62,52 +103,81 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
 
     public void LoadContent()
     {
+        SpinnerOverlay.Show();
+        
         var content = new Content();
-        RestClient.GetArray<OnlineLevel>(new RequestHelper
+        var promises = new List<RSG.IPromise<OnlineLevel[]>>();
+        foreach (var section in defaultLayout.Sections)
         {
-            Uri = $"{Context.ApiBaseUrl}/levels?sort=creation_date&order=desc&limit={LatestLevelsSize}",
-            EnableDebug = true
-        }).Then(entries =>
-        {
-            content.OnlineLevels = entries.ToList();
-            savedContent = content;
-            OnContentLoaded(savedContent);
-        }).Catch(Debug.LogError);
-    }
-
-    public void OnContentLoaded(Content content)
-    {
-        var levelCards = latestLevelsHolder.GetComponentsInChildren<LevelCard>();
-        for (var i = 0; i < LatestLevelsSize; i++)
-        {
-            levelCards[i].SetModel(content.OnlineLevels[i].ToLevel());
+            promises.Add( RestClient.GetArray<OnlineLevel>(new RequestHelper
+            {
+                Uri = section.Query.BuildUri(section.PreviewSize),
+                EnableDebug = true
+            }));
         }
+
+        Promise<OnlineLevel[]>.All(promises)
+            .Then(payload =>
+            {
+                content.SectionOnlineLevels = payload.Select(it => it.ToList()).ToList();
+                content.Layout = defaultLayout;
+                savedContent = content;
+                OnContentLoaded(savedContent);
+            })
+            .Catch(error =>
+            {
+                Toast.Next(Toast.Status.Failure, "Could not connect to CytoidIO.");
+                Debug.LogError(error);
+            })
+            .Finally(SpinnerOverlay.Hide);
     }
 
-    public void BrowseLatestLevels()
+    public async void OnContentLoaded(Content content)
     {
-        CommunityLevelSelectionScreen.SavedContent = new CommunityLevelSelectionScreen.Content
+        foreach (Transform child in sectionHolder.transform) Destroy(child.gameObject);
+
+        for (var index = 0; index < content.SectionOnlineLevels.Count; index++)
         {
-            Sort = "creation_date",
-            Order = "desc",
-            Category = "all",
-            Time = "all",
-            Query = "",
-            OnlineLevels = null // Signal reload
-        };
-        Context.ScreenManager.ChangeScreen(CommunityLevelSelectionScreen.Id, ScreenTransition.In, 0.4f,
-            transitionFocus: ((RectTransform) latestLevelsButton.transform).GetScreenSpaceCenter());
+            var onlineLevels = content.SectionOnlineLevels[index];
+            var section = content.Layout.Sections[index];
+            var sectionGameObject = Instantiate(sectionPrefab, sectionHolder.transform);
+            var sectionBehavior = sectionGameObject.GetComponent<CommunityHomeSection>();
+            sectionBehavior.titleText.text = section.Title;
+            foreach (var onlineLevel in onlineLevels)
+            {
+                var levelCardGameObject = Instantiate(levelCardPrefab, sectionBehavior.levelCardHolder.transform);
+                var levelCard = levelCardGameObject.GetComponent<LevelCard>();
+                levelCard.SetModel(onlineLevel.ToLevel());
+            }
+            sectionBehavior.viewMoreButton.onPointerClick.AddListener(_ =>
+            {
+                CommunityLevelSelectionScreen.SavedContent = new CommunityLevelSelectionScreen.Content
+                {
+                    Query = section.Query.JsonDeepCopy(),
+                    OnlineLevels = null // Signal reload
+                };
+                Context.ScreenManager.ChangeScreen(CommunityLevelSelectionScreen.Id, ScreenTransition.In, 0.4f,
+                    transitionFocus: ((RectTransform) sectionBehavior.viewMoreButton.transform).GetScreenSpaceCenter());
+            });
+        }
+
+        LayoutFixer.Fix(contentHolder.transform);
+        await UniTask.DelayFrame(0);
+        contentHolder.DOFade(1, 0.4f).SetEase(Ease.OutCubic);
     }
 
     public void SearchLevels(string query)
     {
         CommunityLevelSelectionScreen.SavedContent = new CommunityLevelSelectionScreen.Content
         {
-            Sort = "creation_date",
-            Order = "desc",
-            Category = "all",
-            Time = "all",
-            Query = query,
+            Query = new OnlineLevelQuery
+            {
+                sort = "creation_date",
+                order = "desc",
+                category = "all",
+                time = "all",
+                search = query
+            },
             OnlineLevels = null // Signal reload
         };
         Context.ScreenManager.ChangeScreen(CommunityLevelSelectionScreen.Id, ScreenTransition.In);
@@ -115,28 +185,38 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
 
     public void OnScreenChangeStarted(Screen from, Screen to)
     {
-        if (from.GetId() == MainMenuScreen.Id && to.GetId() == Id)
-        {
-            // Clear search query
-            searchInputField.SetTextWithoutNotify("");
-            savedContent = null;
-            savedScrollPosition = default;
-        }
     }
 
     public void OnScreenChangeFinished(Screen from, Screen to)
     {
-        if (from.GetId() == Id && to.GetId() == MainMenuScreen.Id)
+        if (from == this && to.GetId() == MainMenuScreen.Id)
         {
             // Clear community cache
-            // TODO
             Context.SpriteCache.DisposeTagged("RemoteLevelCoverThumbnail");
-            GetComponentsInChildren<LevelCard>().ForEach(it => it.cover.SetAlpha(0));
+            
+            searchInputField.SetTextWithoutNotify("");
+            savedContent = null;
+            savedScrollPosition = default;
+            
+            foreach (Transform child in sectionHolder) Destroy(child.gameObject);
+        }
+    }
+
+    public class Layout
+    {
+        public List<Section> Sections;
+
+        public class Section
+        {
+            public string Title;
+            public int PreviewSize = 6;
+            public OnlineLevelQuery Query;
         }
     }
 
     public class Content
     {
-        public List<OnlineLevel> OnlineLevels;
+        public Layout Layout;
+        public List<List<OnlineLevel>> SectionOnlineLevels;
     }
 }

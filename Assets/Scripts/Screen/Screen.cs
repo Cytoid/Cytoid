@@ -104,7 +104,7 @@ public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveLi
     {
         if (state == ScreenState.Active)
         {
-            onScreenUpdate.Invoke();
+            OnScreenUpdate();
         }
     }
 

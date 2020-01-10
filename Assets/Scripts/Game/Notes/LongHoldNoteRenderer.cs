@@ -6,6 +6,8 @@ public class LongHoldNoteRenderer : HoldNoteRenderer
     public SpriteRenderer Line2;
     public SpriteRenderer CompletedLine2;
 
+    private float orthographicSize = Camera.main.orthographicSize;
+
     public LongHoldNoteRenderer(LongHoldNote holdNote) : base(holdNote) => Expression.Empty();
 
     protected override void InitializeHoldComponents()
@@ -51,13 +53,11 @@ public class LongHoldNoteRenderer : HoldNoteRenderer
 
             if (!Note.IsCleared)
             {
-                var orthographicSize = Camera.main.orthographicSize;
-
                 Line2.flipY = !Line.flipY;
                 CompletedLine2.flipY = !CompletedLine.flipY;
 
-                Line.size = new Vector2(1, orthographicSize * 16);
-                Line2.size = new Vector2(1, orthographicSize * 16);
+                Line.size = new Vector2(1, orthographicSize * 4);
+                Line2.size = new Vector2(1, orthographicSize * 4);
 
                 var color = Fill.color;
                 CompletedLine.color = color;
@@ -111,6 +111,7 @@ public class LongHoldNoteRenderer : HoldNoteRenderer
     protected override void UpdateTransformScale()
     {
         base.UpdateTransformScale();
+        Line.size = new Vector2(1, orthographicSize * 4);
         Line2.transform.SetLocalScaleX(Line.transform.localScale.x);
     }
 

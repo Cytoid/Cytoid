@@ -126,14 +126,7 @@ public class LevelManager
             var meta = JsonConvert.DeserializeObject<LevelMeta>(File.ReadAllText(jsonPath));
             
             // Sort charts
-            var sortedCharts = new List<LevelMeta.ChartSection>();
-            if (meta.charts.Any(it => it.type == Difficulty.Easy.Id))
-                sortedCharts.Add(meta.charts.Find(it => it.type == Difficulty.Easy.Id));
-            if (meta.charts.Any(it => it.type == Difficulty.Hard.Id))
-                sortedCharts.Add(meta.charts.Find(it => it.type == Difficulty.Hard.Id));
-            if (meta.charts.Any(it => it.type == Difficulty.Extreme.Id))
-                sortedCharts.Add(meta.charts.Find(it => it.type == Difficulty.Extreme.Id));
-            meta.charts = sortedCharts;
+            meta.SortCharts();
             
             // Reject invalid level meta
             if (!meta.Validate()) continue;

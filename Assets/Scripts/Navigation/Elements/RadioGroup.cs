@@ -49,6 +49,7 @@ public class RadioGroup : MonoBehaviour
 
     public void Select(string value, bool notify = true)
     {
+        if (value == null) value = defaultValue;
         if (value == this.value) return;
 
         this.value = value;

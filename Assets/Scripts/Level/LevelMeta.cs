@@ -115,33 +115,32 @@ public class LevelMeta : IComparable<LevelMeta>
                 {
                     case 1:
                         section.difficulty = 2;
-                        break;
+                        continue;
                     case 2:
                         section.difficulty = 3;
-                        break;
+                        continue;
                     case 3:
                         section.difficulty = 4;
-                        break;
+                        continue;
                     case 4:
                         section.difficulty = 6;
-                        break;
+                        continue;
                     case 5:
                         section.difficulty = 8;
-                        break;
+                        continue;
                     case 6:
                         section.difficulty = 10;
-                        break;
+                        continue;
                     case 7:
                         section.difficulty = 11;
-                        break;
+                        continue;
                     case 8:
                         section.difficulty = 12;
-                        break;
+                        continue;
                     case 9:
                         section.difficulty = 14;
-                        break;
+                        continue;
                 }
-
                 if (section.difficulty >= 10 && section.difficulty <= 12)
                 {
                     section.difficulty = 15;
@@ -158,6 +157,18 @@ public class LevelMeta : IComparable<LevelMeta>
         }
 
         return true;
+    }
+
+    public void SortCharts()
+    {
+        var sortedCharts = new List<ChartSection>();
+        if (charts.Any(it => it.type == Difficulty.Easy.Id))
+            sortedCharts.Add(charts.Find(it => it.type == Difficulty.Easy.Id));
+        if (charts.Any(it => it.type == Difficulty.Hard.Id))
+            sortedCharts.Add(charts.Find(it => it.type == Difficulty.Hard.Id));
+        if (charts.Any(it => it.type == Difficulty.Extreme.Id))
+            sortedCharts.Add(charts.Find(it => it.type == Difficulty.Extreme.Id));
+        charts = sortedCharts;
     }
 
     public int CompareTo(LevelMeta other)

@@ -103,7 +103,11 @@ public class LocalPlayer
     public bool DisplayProfiler
     {
         get => PlayerPrefsExtensions.GetBool("profiler");
-        set => PlayerPrefsExtensions.SetBool("profiler", value);
+        set
+        {
+            PlayerPrefsExtensions.SetBool("profiler", value);
+            Context.UpdateProfilerDisplay();
+        }
     }
 
     public bool DisplayNoteIds

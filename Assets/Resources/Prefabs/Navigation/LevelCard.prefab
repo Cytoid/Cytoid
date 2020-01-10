@@ -827,6 +827,7 @@ MonoBehaviour:
   scaleToOnClick: 0.95
   pulseOnClick: 0
   bypassOnClickHitboxCheck: 0
+  j: 0
   cover: {fileID: 4689410249049215325}
   artist: {fileID: 3370015424872146410}
   title: {fileID: 8950214026502757546}

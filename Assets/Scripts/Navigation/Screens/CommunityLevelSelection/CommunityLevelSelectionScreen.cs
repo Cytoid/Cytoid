@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using Proyecto26;
 using UniRx.Async;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
@@ -24,6 +25,8 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
     public RadioGroup timeRadioGroup;
     public InputField searchInputField;
 
+    private bool canLoadMore;
+
     public override string GetId() => Id;
 
     public override void OnScreenInitialized()
@@ -34,7 +37,9 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
         orderRadioGroup.onSelect.AddListener(value => LoadContent());
         categoryRadioGroup.onSelect.AddListener(value => LoadContent());
         timeRadioGroup.onSelect.AddListener(value => LoadContent());
-        searchInputField.onEndEdit.AddListener(LoadContent);
+        searchInputField.onEndEdit.AddListener(value => LoadContent());
+
+        titleText.text = "Browse";
 
         Context.ScreenManager.AddHandler(this);
     }
@@ -45,11 +50,11 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
 
         if (SavedContent != null)
         {
-            sortRadioGroup.Select(SavedContent.Sort, false);
-            orderRadioGroup.Select(SavedContent.Order, false);
-            categoryRadioGroup.Select(SavedContent.Category, false);
-            timeRadioGroup.Select(SavedContent.Time, false);
-            searchInputField.SetTextWithoutNotify(SavedContent.Query);
+            sortRadioGroup.Select(SavedContent.Query.sort, false);
+            orderRadioGroup.Select(SavedContent.Query.order, false);
+            categoryRadioGroup.Select(SavedContent.Query.category, false);
+            timeRadioGroup.Select(SavedContent.Query.time, false);
+            searchInputField.SetTextWithoutNotify(SavedContent.Query.search);
             if (SavedContent.OnlineLevels != null)
             {
                 OnContentLoaded(SavedContent);
@@ -72,6 +77,7 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
     public override void OnScreenBecameInactive()
     {
         base.OnScreenBecameInactive();
+        canLoadMore = false;
         savedScrollPosition = scrollRect.verticalNormalizedPosition;
     }
 
@@ -83,28 +89,42 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
         Context.ScreenManager.RemoveHandler(this);
     }
 
-    public void LoadContent(string query = null)
+    public void LoadContent()
     {
-        LoadContent(sortRadioGroup.Value, orderRadioGroup.Value, categoryRadioGroup.Value, timeRadioGroup.Value,
-            query ?? searchInputField.text);
+        LoadContent(new OnlineLevelQuery
+        {
+            sort = sortRadioGroup.Value,
+            order = orderRadioGroup.Value,
+            category = categoryRadioGroup.Value,
+            time = timeRadioGroup.Value,
+            search = searchInputField.text
+        });
     }
 
-    public void LoadContent(string sort, string order, string category, string time, string query = "")
+    public void LoadMoreContent()
+    {
+        if (!canLoadMore || SavedContent == null) return;
+        canLoadMore = false;
+        scrollRect.OnEndDrag(new PointerEventData(EventSystem.current).Also(it => it.button = PointerEventData.InputButton.Left));
+        LoadContent(SavedContent.Query, SavedContent.PageLoaded + 1, true);
+    }
+
+    public void LoadContent(OnlineLevelQuery query, int page = 0, bool append = false)
     {
         SpinnerOverlay.Show();
 
-        var uri = $"{Context.ApiBaseUrl}/levels?sort={sort}&order={order}&search={query}&page=0";
-        if (category == "featured")
-        {
-            uri += "&featured=true";
-        }
+        var uri = query.BuildUri(page: page);
+
         var content = new Content
         {
-            Sort = sortRadioGroup.Value,
-            Order = orderRadioGroup.Value,
-            Category = categoryRadioGroup.Value,
-            Time = timeRadioGroup.Value,
-            Query = searchInputField.text
+            Query = new OnlineLevelQuery
+            {
+                sort = sortRadioGroup.Value,
+                order = orderRadioGroup.Value,
+                category = categoryRadioGroup.Value,
+                time = timeRadioGroup.Value,
+                search = searchInputField.text
+            }
         };
         RestClient.GetArray<OnlineLevel>(new RequestHelper
         {
@@ -112,17 +132,56 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
             EnableDebug = true
         }).Then(entries =>
         {
-            content.OnlineLevels = entries.ToList();
+            if (append)
+            {
+                content.OnlineLevels = SavedContent.OnlineLevels;
+                content.OnlineLevels.AddRange(entries.ToList());
+            }
+            else
+            {
+                content.OnlineLevels = entries.ToList();
+            }
+            content.PageLoaded = page;
             SavedContent = content;
-            OnContentLoaded(SavedContent);
-        }).Catch(Debug.LogError).Finally(SpinnerOverlay.Hide);
+            OnContentLoaded(SavedContent, append);
+        }).Catch(error =>
+        {
+            Toast.Next(Toast.Status.Failure, "Could not connect to CytoidIO.");
+            Debug.LogError(error);
+        }).Finally(() =>
+        {
+            SpinnerOverlay.Hide();
+            if (string.IsNullOrWhiteSpace(content.Query.search))
+            {
+                titleText.text = "Browse";
+            }
+            else
+            {
+                titleText.text = "Search: " + content.Query.search.Trim();
+            }
+        });
     }
 
-    public void OnContentLoaded(Content content)
+    public void OnContentLoaded(Content content, bool append = false)
     {
+        if (!append) scrollRect.ClearCells();
         scrollRect.totalCount = content.OnlineLevels.Count;
         scrollRect.objectsToFill = content.OnlineLevels.Select(it => it.ToLevel()).Cast<object>().ToArray();
-        scrollRect.RefillCells();
+        if (append) scrollRect.RefreshCells();
+        else scrollRect.RefillCells();
+        Run.After(1f, () => canLoadMore = true);
+    }
+    
+    public override void OnScreenUpdate()
+    {
+        base.OnScreenUpdate();
+        if (canLoadMore)
+        {
+            if (scrollRect.content.anchoredPosition.y - scrollRect.content.sizeDelta.y > 128)
+            {
+                LoadMoreContent();
+            }
+        }
     }
 
     public void OnScreenChangeStarted(Screen from, Screen to)
@@ -144,11 +203,26 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
 
     public class Content
     {
-        public string Sort;
-        public string Order;
-        public string Category;
-        public string Time;
-        public string Query;
-        public List<OnlineLevel> OnlineLevels;
+        public OnlineLevelQuery Query;
+        public int PageLoaded = -1;
+        public List<OnlineLevel> OnlineLevels; // Can be null
     }
 }
+
+#if UNITY_EDITOR
+
+[CustomEditor(typeof(CommunityLevelSelectionScreen))]
+public class CommunityLevelSelectionScreenEditor : Editor
+{
+
+    public override void OnInspectorGUI()
+    {
+        DrawDefaultInspector();
+        if (GUILayout.Button("Load more"))
+        {
+            ((CommunityLevelSelectionScreen) target).LoadMoreContent();
+        }
+    }
+}
+
+#endif

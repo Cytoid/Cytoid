@@ -85,7 +85,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
 
     public void RefillLevels(LevelSort sort, bool asc, string query = "", List<Func<Level, bool>> filters = null)
     {
-        var levels = new List<Level>(Context.LevelManager.LoadedLevels);
+        var levels = new List<Level>(Context.LevelManager.LoadedLocalLevels);
 
         if (!string.IsNullOrEmpty(query))
         {

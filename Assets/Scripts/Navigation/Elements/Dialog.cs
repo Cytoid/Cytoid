@@ -87,7 +87,7 @@ public class Dialog : MonoBehaviour
     public Action<Dialog> OnPositiveButtonClicked { get; set; } = (dialog) => { dialog.Close(); };
     public Action<Dialog> OnNegativeButtonClicked { get; set; } = (dialog) => { dialog.Close(); };
 
-    private void Awake()
+    protected virtual void Awake()
     {
         canvasGroup.alpha = 1;
         canvasGroup.interactable = true;
@@ -99,12 +99,12 @@ public class Dialog : MonoBehaviour
         progressImage.rectTransform.SetWidth(0);
     }
 
-    private void Update()
+    protected virtual void Update()
     {
         if (IsOpened) onUpdate.Invoke(this);
     }
 
-    public void Open()
+    public virtual void Open()
     {
         IsOpened = true;
         canvasGroup.blocksRaycasts = true;
@@ -112,7 +112,7 @@ public class Dialog : MonoBehaviour
         GetComponentsInChildren<TransitionElement>().ForEach(it => it.Enter());
     }
 
-    public void Close(bool willDestroy = true)
+    public virtual void Close(bool willDestroy = true)
     {
         IsOpened = false;
         canvasGroup.blocksRaycasts = false;

@@ -12,7 +12,7 @@ using Object = UnityEngine.Object;
 
 public class LevelManager
 {
-    public readonly List<Level> LoadedLevels = new List<Level>();
+    public readonly List<Level> LoadedLocalLevels = new List<Level>();
     private HashSet<string> LoadedPaths = new HashSet<string>();
 
     public async UniTask<bool> UnpackLevelPackage(string packagePath, string destFolder)
@@ -97,7 +97,7 @@ public class LevelManager
     {
         if (clearExisting)
         {
-            LoadedLevels.Clear();
+            LoadedLocalLevels.Clear();
             LoadedPaths.Clear();
             Context.SpriteCache.DisposeTagged("LocalLevelCoverThumbnail");
         }
@@ -133,18 +133,18 @@ public class LevelManager
             
             var level = new Level(path, meta, info.LastWriteTimeUtc, info.LastWriteTimeUtc);
             
-            LoadedLevels.Add(level);
+            LoadedLocalLevels.Add(level);
             LoadedPaths.Add(jsonPath);
             
             Debug.Log($"Loaded {index + 1}/{jsonPaths.Count}: {meta.id} ({path})");
         }
 
-        LoadedLevels.Sort((a, b) => string.Compare(a.Meta.title, b.Meta.title, StringComparison.OrdinalIgnoreCase));
+        LoadedLocalLevels.Sort((a, b) => string.Compare(a.Meta.title, b.Meta.title, StringComparison.OrdinalIgnoreCase));
 
         // Generate thumbnails
-        for (var index = 0; index < LoadedLevels.Count; index++)
+        for (var index = 0; index < LoadedLocalLevels.Count; index++)
         {
-            var level = LoadedLevels[index];
+            var level = LoadedLocalLevels[index];
 
             if (File.Exists(level.Path + ".thumbnail")) continue;
             var path = "file://" + level.Path + level.Meta.background.path;

@@ -89,7 +89,7 @@ public class Context : SingletonMonoBehavior<Context>
         {
             // Load test level
             await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/sggrkung.festival_blaze/level.json" });
-            SelectedLevel = LevelManager.LoadedLevels[0];
+            SelectedLevel = LevelManager.LoadedLocalLevels[0];
             SelectedDifficulty = Difficulty.Parse(SelectedLevel.Meta.charts[0].type);
         }
         else
@@ -109,7 +109,7 @@ public class Context : SingletonMonoBehavior<Context>
             {
                 // Load f.fff
                 await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/f.fff/level.json" });
-                SelectedLevel = LevelManager.LoadedLevels[0];
+                SelectedLevel = LevelManager.LoadedLocalLevels[0];
                 SelectedDifficulty = Difficulty.Parse(SelectedLevel.Meta.charts[0].type);
                 ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.None);
             }
@@ -117,8 +117,8 @@ public class Context : SingletonMonoBehavior<Context>
             if (false)
             {
                 // Load result
-                await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/playeralice/level.json" });
-                SelectedLevel = LevelManager.LoadedLevels[0];
+                await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/suconh_typex.alice/level.json" });
+                SelectedLevel = LevelManager.LoadedLocalLevels[0];
                 SelectedDifficulty = Difficulty.Hard;
                 ScreenManager.ChangeScreen("Result", ScreenTransition.None);
             }
@@ -134,6 +134,7 @@ public class Context : SingletonMonoBehavior<Context>
     {
         if (prev == "Navigation" && next == "Game")
         {
+            LoopAudioPlayer.Instance.StopMainLoopAudio();
             // Save history
             navigationScreenHistory = new Stack<string>(ScreenManager.History);
         }
@@ -147,8 +148,6 @@ public class Context : SingletonMonoBehavior<Context>
         }
         if (prev == "Game" && next == "Navigation")
         {
-            // Resume DSP
-            AudioListener.pause = false;
             // Restore history
             ScreenManager.History = new Stack<string>(navigationScreenHistory);
             if (LastGameResult != null)

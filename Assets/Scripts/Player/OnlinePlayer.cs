@@ -44,6 +44,7 @@ public class OnlinePlayer
             ).Then(profile =>
             {
                 IsAuthenticated = true;
+                onAuthenticated.Invoke();
                 resolve(profile);
             }).Catch(result =>
             {

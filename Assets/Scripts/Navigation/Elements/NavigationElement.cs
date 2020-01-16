@@ -15,6 +15,7 @@ public class NavigationElement : InteractableMonoBehavior
     public float currentScreenDelay;
     public float newScreenDelay;
     public Vector2 transitionFocus;
+    public string soundName = "Navigate1";
 
     public override async void OnPointerClick(PointerEventData eventData)
     {
@@ -26,6 +27,7 @@ public class NavigationElement : InteractableMonoBehavior
             await UniTask.WaitUntil(() => Context.ScreenManager.ChangingToScreenId == null,
                 cancellationToken: cancellationSource.Token);
         }
+        if (!string.IsNullOrWhiteSpace(soundName)) Context.AudioManager.Get(soundName).Play(ignoreDsp: true);
         Context.ScreenManager.ChangeScreen(
             navigateToLastScreen ? Context.ScreenManager.PopHistoryAndPeek() : targetScreenId, transition,
             duration, currentScreenDelay, newScreenDelay, transitionFocus, OnScreenChanged, addToHistory: !navigateToLastScreen);

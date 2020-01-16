@@ -25,7 +25,14 @@ public class SpriteCache
     {
         if (cache.ContainsKey(path))
         {
-            return cache[path]?.Sprite ? cache[path]?.Sprite : null;
+            var entry = cache[path];
+            if (entry.Sprite != null)
+            {
+                // Update priority
+                taggedCache[entry.Tag].Remove(entry);
+                taggedCache[entry.Tag].Add(entry);
+                return entry.Sprite;
+            }
         }
 
         return null;

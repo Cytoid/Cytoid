@@ -31,6 +31,10 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
     public Text rankingText;
     public RankingContainer rankingContainer;
     public Text rankingContainerStatusText;
+    
+    public SpinnerElement ratingSpinner;
+    public Text ratingText;
+    public RateLevelElement rateLevelElement;
 
     public RadioGroup practiceModeToggle;
 
@@ -79,7 +83,9 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
     public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
+        rankingText.text = "";
         rankingContainerStatusText.text = "";
+        ratingText.text = "";
         LoadSettings();
         Context.ScreenManager.AddHandler(this);
     }
@@ -99,13 +105,10 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         ProfileWidget.Instance.Enter();
 
         var needReload = Level != Context.SelectedLevel;
-
-        if (needReload)
-        {
-            Level = Context.SelectedLevel;
-            UpdateRankings();
-        }
-
+        Level = Context.SelectedLevel;
+        
+        UpdateLevelRating();
+        UpdateRankings();
         LoadLevelPerformance();
         LoadLevelSettings();
         LoadCover(needReload);
@@ -171,6 +174,42 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
                 if (token != updateRankingToken) return;
                 rankingSpinner.IsSpinning = false;
             });
+    }
+    
+    private void OnLevelRatingUpdated(LevelRating data)
+    {
+        if (data.total > 0)
+        {
+            ratingText.text = (data.average / 2.0).ToString("0.00");
+        }
+        else
+        {
+            ratingText.text = "N/A";
+        }
+
+        rateLevelElement.SetModel(Level.Meta.id, data);
+        rateLevelElement.rateButton.onPointerClick.RemoveAllListeners();
+        rateLevelElement.rateButton.onPointerClick.AddListener(_ =>
+        {
+            var dialog = RateLevelDialog.Instantiate(Level.Meta.id, data.rating);
+            dialog.onLevelRated.AddListener(OnLevelRatingUpdated);
+            dialog.Open();
+        });
+    }
+
+    public void UpdateLevelRating()
+    {
+        ratingSpinner.IsSpinning = true;
+        RestClient.Get<LevelRating>(new RequestHelper
+            {
+                Uri = $"{Context.ApiBaseUrl}/levels/{Level.Meta.id}/ratings",
+                EnableDebug = true
+            }).Then(OnLevelRatingUpdated)
+            .Catch(error =>
+            {
+                Debug.Log(error);
+                ratingText.text = "N/A";
+            }).Finally(() => ratingSpinner.IsSpinning = false);
     }
 
     public async void LoadCover(bool load)
@@ -415,10 +454,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
                 return RestClient.Get<OnlineLevelResources>(req = new RequestHelper
                 {
                     Uri = Level.PackagePath,
-                    Headers = new Dictionary<string, string>
-                    {
-                        {"Authorization", "JWT " + Context.OnlinePlayer.GetJwtToken()}
-                    }
+                    Headers = Context.OnlinePlayer.GetJwtAuthorizationHeaders()
                 });
             }).Then(res => {
                 if (aborted)
@@ -448,7 +484,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
                     await Context.LevelManager.LoadFromMetadataFiles(new List<string> { destFolder + "/level.json" });
                     Toast.Enqueue(Toast.Status.Success, "Successfully downloaded level.");
 
-                    Context.SelectedLevel = Context.LevelManager.LoadedLevels.Find(it => it.Meta.id == Level.Meta.id);
+                    Context.SelectedLevel = Context.LevelManager.LoadedLocalLevels.Find(it => it.Meta.id == Level.Meta.id);
                     Level = Context.SelectedLevel;
 
                     LoadCover(true);

@@ -86,8 +86,8 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         public abstract float Volume { get; set; }
         public abstract float PlaybackTime { get; set; }
         public abstract float Length { get; }
-        public abstract void Play(AudioTrackIndex trackIndex);
-        public abstract double PlayScheduled(AudioTrackIndex trackIndex, double delay);
+        public abstract void Play(AudioTrackIndex trackIndex = AudioTrackIndex.RoundRobin, bool ignoreDsp = false);
+        public abstract double PlayScheduled(AudioTrackIndex trackIndex = AudioTrackIndex.RoundRobin, double delay = 1.0, bool ignoreDsp = false);
         public abstract void Pause();
         public abstract void Resume();
         public abstract void Stop();
@@ -121,9 +121,10 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
 
         public override float Length => audioClip.length;
 
-        public override void Play(AudioTrackIndex trackIndex)
+        public override void Play(AudioTrackIndex trackIndex = AudioTrackIndex.RoundRobin, bool ignoreDsp = false)
         {
             index = Parent.GetAvailableIndex(trackIndex);
+            Source.ignoreListenerPause = ignoreDsp;
             Source.Apply(it =>
             {
                 it.clip = audioClip;
@@ -131,9 +132,10 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             });
         }
 
-        public override double PlayScheduled(AudioTrackIndex trackIndex, double delay)
+        public override double PlayScheduled(AudioTrackIndex trackIndex = AudioTrackIndex.RoundRobin, double delay = 1.0, bool ignoreDsp = false)
         {
             index = Parent.GetAvailableIndex(trackIndex);
+            Source.ignoreListenerPause = ignoreDsp;
             Source.clip = audioClip;
             var time = AudioSettings.dspTime + delay;
             Source.PlayScheduled(time);
@@ -207,8 +209,9 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
 
         public override float Length => length;
 
-        public override void Play(AudioTrackIndex trackIndex)
+        public override void Play(AudioTrackIndex trackIndex = AudioTrackIndex.RoundRobin, bool ignoreDsp = false)
         {
+            if (ignoreDsp) throw new NotImplementedException();
             controller = pointer.Play(new NativeAudio.PlayOptions
             {
                 audioPlayerIndex = Parent.GetAvailableIndex(trackIndex)
@@ -217,7 +220,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             Debug.Log("Controller volume set to " + volume);
         }
 
-        public override double PlayScheduled(AudioTrackIndex trackIndex, double delay)
+        public override double PlayScheduled(AudioTrackIndex trackIndex = AudioTrackIndex.RoundRobin, double delay = 1.0, bool ignoreDsp = false)
         {
             throw new NotImplementedException();
         }

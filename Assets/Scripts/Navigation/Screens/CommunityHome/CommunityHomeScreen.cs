@@ -126,7 +126,7 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
             })
             .Catch(error =>
             {
-                Toast.Next(Toast.Status.Failure, "Could not connect to CytoidIO.");
+                Toast.Next(Toast.Status.Failure, "Please check your network connection.");
                 Debug.LogError(error);
             })
             .Finally(SpinnerOverlay.Hide);

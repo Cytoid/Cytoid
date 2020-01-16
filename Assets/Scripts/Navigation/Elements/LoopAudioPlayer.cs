@@ -16,6 +16,11 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>
         IntroloopPlayer.Instance.Play(mainLoopAudio, fadeDuration);
     }
 
+    public void StopMainLoopAudio()
+    {
+        IntroloopPlayer.Instance.Stop();
+    }
+
     public void PlayResultLoopAudio(float fadeDuration = 0.0f)
     {
         IntroloopPlayer.Instance.SetMixerGroup(audioMixerGroup);

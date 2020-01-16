@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using DG.Tweening;
 using UniRx.Async;
@@ -237,10 +236,10 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
             }
         }
 
-        Action action = () =>
+        void Action()
         {
             ChangingToScreenId = null;
-            
+
             if (lastScreen != null)
             {
                 lastScreen.gameObject.SetActive(false);
@@ -251,11 +250,12 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
             if (lastScreen != null)
                 foreach (var listener in screenChangeListeners)
                     listener.OnScreenChangeFinished(lastScreen, newScreen);
-        };
-        if (duration > 0) Run.After(duration, action);
-        else action();
+        }
+
+        if (duration > 0) Run.After(duration, Action);
+        else Action();
         
-        if (addToHistory)
+        if (addToHistory && (History.Count == 0 || History.Peek() != newScreen.GetId()))
         {
             print($"Adding {newScreen.GetId()} to history");
             History.Push(newScreen.GetId());

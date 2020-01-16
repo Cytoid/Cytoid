@@ -156,6 +156,7 @@ public class LevelCard : InteractableMonoBehavior, IPointerClickHandler
         if (level != null)
         {
             Context.SelectedLevel = level;
+            Context.AudioManager.Get("Navigate2").Play();
             Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.In, 0.4f,
                 transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter());
         }

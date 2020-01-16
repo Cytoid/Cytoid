@@ -63,10 +63,6 @@ public class Game : MonoBehaviour
     public GameEvent onTopBoundaryBounded = new GameEvent();
     public GameEvent onBottomBoundaryBounded = new GameEvent();
 
-    private float pausedAt = 0;
-    private double pausedDuration = 0;
-    private double pausedTimestamp = 0;
-
     protected void Awake()
     {
         Renderer = new GameRenderer(this);
@@ -342,23 +338,24 @@ public class Game : MonoBehaviour
         if (IsLoaded && State.IsStarted && willPause)
         {
             Pause();
-            Context.ScreenManager.ChangeScreen(PausedScreen.Id, ScreenTransition.None);
         }
     }
 
-    public void Pause()
+    public bool Pause()
     {
-        unpauseToken?.Cancel();
-        UnpauseCountdown = 0;
-        if (!IsLoaded || !State.IsPlaying || State.IsCompleted || State.IsFailed) return;
+        if (!IsLoaded || !State.IsPlaying || State.IsCompleted || State.IsFailed) return false;
         print("Game paused");
         
+        unpauseToken?.Cancel();
+        UnpauseCountdown = 0;
         State.IsPlaying = false;
-        //Music.Pause();
         AudioListener.pause = true;
-        pausedTimestamp = UnityEngine.Time.realtimeSinceStartup;
+        Context.AudioManager.Get("Navigate2").Play(ignoreDsp: true);
+        
+        Context.ScreenManager.ChangeScreen(PausedScreen.Id, ScreenTransition.None);
         
         onGamePaused.Invoke(this);
+        return true;
     }
 
     private CancellationTokenSource unpauseToken;
@@ -398,7 +395,6 @@ public class Game : MonoBehaviour
 
         GameStartedOrResumedTimestamp = UnityEngine.Time.realtimeSinceStartup;
         AudioListener.pause = false;
-        pausedDuration += MusicUnpausedTimestamp - Time;
         State.IsPlaying = true;
         
         onGameUnpaused.Invoke(this);
@@ -407,6 +403,10 @@ public class Game : MonoBehaviour
     public void Abort()
     {
         print("Game aborted");
+        
+        Music.Stop();
+        // Resume DSP
+        AudioListener.pause = false;
         
         // Unload resources
         Context.AudioManager.Unload("Level");

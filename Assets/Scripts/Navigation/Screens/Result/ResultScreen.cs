@@ -40,6 +40,7 @@ public class ResultScreen : Screen, ScreenChangeListener
 
     public SpinnerElement ratingSpinner;
     public Text ratingText;
+    public RateLevelElement rateLevelElement;
 
     private GameResult result;
 
@@ -50,6 +51,7 @@ public class ResultScreen : Screen, ScreenChangeListener
         base.OnScreenInitialized();
         rankingText.text = "";
         rankingContainerStatusText.text = "";
+        ratingText.text = "";
         result = Context.LastGameResult;
         Context.LastGameResult = null;
         if (result == null)
@@ -57,9 +59,9 @@ public class ResultScreen : Screen, ScreenChangeListener
             // Test mode
             Debug.Log("Result not set, entering test mode...");
             await Context.LevelManager.LoadFromMetadataFiles(new List<string>
-                {Context.DataPath + "/playeralice/level.json"});
-            Context.SelectedLevel = Context.LevelManager.LoadedLevels[0];
-            Context.SelectedDifficulty = Difficulty.Parse(Context.LevelManager.LoadedLevels[0].Meta.charts[0].type);
+                {Context.DataPath + "/suconh_typex.alice/level.json"});
+            Context.SelectedLevel = Context.LevelManager.LoadedLocalLevels[0];
+            Context.SelectedDifficulty = Difficulty.Parse(Context.LevelManager.LoadedLocalLevels[0].Meta.charts[0].type);
             Context.LocalPlayer.PlayRanked = true;
             result = new GameResult
             {
@@ -212,11 +214,12 @@ public class ResultScreen : Screen, ScreenChangeListener
         {
             rankingIcon.SetActive(false);
         }
+        
+        UpdateLevelRating();
 
         if (Context.OnlinePlayer.IsAuthenticated)
         {
             UploadRecord();
-            UpdateLevelRating();
         }
         else
         {
@@ -271,16 +274,43 @@ public class ResultScreen : Screen, ScreenChangeListener
             }).ToString(),
             Headers = Context.OnlinePlayer.GetJwtAuthorizationHeaders(),
             EnableDebug = true
-        }).Then(_ => { Toast.Next(Toast.Status.Success, "Performance synchronized.".Localized()); }
+        }).Then(_ =>
+            {
+                Toast.Next(Toast.Status.Success, "Performance synchronized.".Localized());
+                EnterControls();
+                UpdateRankings();
+                Context.OnlinePlayer.FetchProfile();
+            }
         ).Catch(error =>
         {
             Debug.Log(error.Response);
-            Toast.Next(Toast.Status.Failure, "This level is not ranked!".Localized());
-        }).Finally(() =>
-        {
-            EnterControls();
-            UpdateRankings();
-            Context.OnlinePlayer.FetchProfile();
+            if (error.IsNetworkError)
+            {
+                Toast.Next(Toast.Status.Failure, "Please check your network connection.");
+            }
+            else if (error.IsHttpError)
+            {
+                Toast.Next(Toast.Status.Failure, "This level is not ranked!".Localized());
+            }
+
+            var dialog = Dialog.Instantiate();
+            dialog.Message = "Could not synchronize performance. Retry?";
+            dialog.UseProgress = false;
+            dialog.UsePositiveButton = true;
+            dialog.UseNegativeButton = true;
+            dialog.OnPositiveButtonClicked = _ =>
+            {
+                dialog.Close();
+                UploadRecord();
+            };
+            dialog.OnNegativeButtonClicked = _ =>
+            {
+                dialog.Close();
+                EnterControls();
+                UpdateRankings();
+                Context.OnlinePlayer.FetchProfile();
+            };
+            dialog.Open();
         });
     }
 
@@ -312,11 +342,43 @@ public class ResultScreen : Screen, ScreenChangeListener
             .Finally(() => rankingSpinner.IsSpinning = false);
     }
 
+    private void OnLevelRatingUpdated(LevelRating data)
+    {
+        if (data.total > 0)
+        {
+            ratingText.text = (data.average / 2.0).ToString("0.00");
+        }
+        else
+        {
+            ratingText.text = "N/A";
+        }
+
+        rateLevelElement.SetModel(result.LevelId, data);
+        rateLevelElement.rateButton.onPointerClick.RemoveAllListeners();
+        rateLevelElement.rateButton.onPointerClick.AddListener(_ =>
+        {
+            var dialog = RateLevelDialog.Instantiate(result.LevelId, data.rating);
+            dialog.onLevelRated.AddListener(OnLevelRatingUpdated);
+            dialog.Open();
+        });
+    }
+
     public void UpdateLevelRating()
     {
         ratingSpinner.IsSpinning = true;
-        RestClient.Get<LevelRating>($"{Context.ApiBaseUrl}/levels/{result.LevelId}/ratings")
-            .Then(levelRating => { ratingText.text = (levelRating.average / 2.0).ToString("0.00"); })
+        RestClient.Get<LevelRating>(new RequestHelper
+            {
+                Uri = $"{Context.ApiBaseUrl}/levels/{result.LevelId}/ratings",
+                EnableDebug = true
+            }).Then(it =>
+            {
+                OnLevelRatingUpdated(it);
+                if (it.rating <= 0 && ScoreGrades.From(result.Score) >= ScoreGrade.A)
+                {
+                    // Show the rate dialog
+                    rateLevelElement.rateButton.onPointerClick.Invoke(null);
+                }
+            })
             .Catch(error =>
             {
                 Debug.Log(error);

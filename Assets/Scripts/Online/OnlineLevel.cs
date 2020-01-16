@@ -75,10 +75,10 @@ public class OnlineLevel
 
     public Level ToLevel(bool resolveLocalLevel = true)
     {
-        if (resolveLocalLevel && Context.LevelManager.LoadedLevels.Any(it => it.Meta.id == uid))
+        if (resolveLocalLevel && Context.LevelManager.LoadedLocalLevels.Any(it => it.Meta.id == uid))
         {
             Debug.Log($"Online level {uid} resolved locally");
-            return Context.LevelManager.LoadedLevels.Find(it => it.Meta.id == uid);
+            return Context.LevelManager.LoadedLocalLevels.Find(it => it.Meta.id == uid);
         }
         var level = new Level($"{Context.ApiBaseUrl}/levels/{uid}/resources",
             metadata.raw.JsonDeepCopy());

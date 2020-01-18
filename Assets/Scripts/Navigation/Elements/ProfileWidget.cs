@@ -36,7 +36,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
     {
         startLocalPosition = transform.localPosition;
         Context.ScreenManager.AddHandler(this);
-        Context.OnlinePlayer.onProfileChanged.AddListener(profile =>
+        Context.OnlinePlayer.OnProfileChanged.AddListener(profile =>
         {
             UpdateRatingAndLevel(profile, Context.ScreenManager.ActiveScreen.GetId() == ResultScreen.Id);
         });

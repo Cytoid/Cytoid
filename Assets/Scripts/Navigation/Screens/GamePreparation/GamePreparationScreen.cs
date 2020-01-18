@@ -111,6 +111,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         UpdateLevelRating();
         UpdateRankings();
         Context.LevelManager.OnLevelMetaUpdated.AddListener(OnLevelMetaUpdated);
+        Context.OnlinePlayer.OnLevelBestPerformanceUpdated.AddListener(OnLevelBestPerformanceUpdated);
 
         var localVersion = Level.Meta.version;
         Context.LevelManager.FetchLevelMeta(Level.Meta.id, true).Then(it =>
@@ -364,6 +365,13 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         LayoutRebuilder.ForceRebuildLayoutImmediate(bestPerformanceDescriptionText.transform as RectTransform);
     }
 
+    public void OnLevelBestPerformanceUpdated(string levelId)
+    {
+        if (levelId != Level.Meta.id) return;
+        LoadLevelPerformance();
+        Toast.Next(Toast.Status.Success, "Best performance synchronized.");
+    }
+
     public void LoadLevelSettings()
     {
         var lp = Context.LocalPlayer;
@@ -386,6 +394,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         base.OnScreenBecameInactive();
         Level = null;
         Context.LevelManager.OnLevelMetaUpdated.RemoveListener(OnLevelMetaUpdated);
+        Context.OnlinePlayer.OnLevelBestPerformanceUpdated.RemoveListener(OnLevelBestPerformanceUpdated);
 
         asyncRequestsToken = DateTime.Now;
         previewAudioSource.DOFade(0, 1f).SetEase(Ease.Linear).onComplete = () => { previewAudioSource.Stop(); };

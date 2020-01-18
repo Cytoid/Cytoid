@@ -85,7 +85,7 @@ public class ResultScreen : Screen, ScreenChangeListener
                 LevelVersion = 1,
                 ChartType = Difficulty.Extreme
             };
-            Context.OnlinePlayer.onAuthenticated.AddListener(() =>
+            Context.OnlinePlayer.OnAuthenticated.AddListener(() =>
             {
                 UpdateRankings();
                 UploadRecord();

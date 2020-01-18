@@ -5,12 +5,14 @@ using Newtonsoft.Json.Linq;
 using Proyecto26;
 using RSG;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.Events;
 
 public class OnlinePlayer
 {
-    public readonly UnityEvent onAuthenticated = new UnityEvent();
-    public readonly ProfileChangedEvent onProfileChanged = new ProfileChangedEvent();
+    public readonly UnityEvent OnAuthenticated = new UnityEvent();
+    public readonly ProfileChangedEvent OnProfileChanged = new ProfileChangedEvent();
+    public readonly LevelBestPerformanceUpdatedEvent OnLevelBestPerformanceUpdated = new LevelBestPerformanceUpdatedEvent();
     
     public Profile LastProfile { get; private set; }
 
@@ -44,7 +46,7 @@ public class OnlinePlayer
             ).Then(profile =>
             {
                 IsAuthenticated = true;
-                onAuthenticated.Invoke();
+                OnAuthenticated.Invoke();
                 resolve(profile);
             }).Catch(result =>
             {
@@ -84,7 +86,7 @@ public class OnlinePlayer
             ).Then(profile =>
             {
                 IsAuthenticated = true;
-                onAuthenticated.Invoke();
+                OnAuthenticated.Invoke();
                 resolve(profile);
             }).Catch(result =>
             {
@@ -141,7 +143,7 @@ public class OnlinePlayer
         }).Then(profile =>
         {
             LastProfile = profile;
-            onProfileChanged.Invoke(profile);
+            OnProfileChanged.Invoke(profile);
             return profile;
         });
     }
@@ -175,12 +177,14 @@ public class OnlinePlayer
 
                     // Find user's position
                     var userRank = -1;
+                    RankingEntry userEntry = null;
                     for (var index = 0; index < data.Length; index++)
                     {
                         var entry = data[index];
                         if (entry.owner.uid == Context.OnlinePlayer.GetUid())
                         {
                             userRank = entry.rank;
+                            userEntry = entry;
                             break;
                         }
                     }
@@ -200,6 +204,21 @@ public class OnlinePlayer
                         entries.AddRange(append);
                     }
 
+                    if (userEntry != null)
+                    {
+                        // Replace local performance only if higher score
+                        var localPerformance = Context.LocalPlayer.GetBestPerformance(levelId, chartType, true);
+                        if (userEntry.score > localPerformance.Score)
+                        {
+                            Context.LocalPlayer.SetBestPerformance(levelId, chartType, true, new LocalPlayer.Performance
+                            {
+                                Score = userEntry.score, Accuracy = userEntry.accuracy * 100f, ClearType = string.Empty
+                            }); // TODO: ClearType
+                            
+                            OnLevelBestPerformanceUpdated.Invoke(levelId);
+                        }
+                    }
+
                     return new System.Tuple<int, List<RankingEntry>>(userRank, entries);
                 });
         }
@@ -212,5 +231,9 @@ public class OnlinePlayer
 }
 
 public class ProfileChangedEvent : UnityEvent<Profile>
+{
+}
+
+public class LevelBestPerformanceUpdatedEvent : UnityEvent<string>
 {
 }

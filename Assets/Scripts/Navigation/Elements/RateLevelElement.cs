@@ -31,7 +31,7 @@ public class RateLevelElement : MonoBehaviour
             numRatingsText.text = "0 ratings";
         }
 
-        if (Context.OnlinePlayer.IsAuthenticated && Context.LevelManager.LoadedLocalLevels.Any(it => it.Meta.id == levelId))
+        if (Context.OnlinePlayer.IsAuthenticated && Context.LevelManager.LoadedLocalLevels.ContainsKey(levelId))
         {
             messageText.text = data.rating > 0
                 ? $"You rated {data.rating / 2.0:0.#}/5."

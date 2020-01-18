@@ -60,8 +60,8 @@ public class ResultScreen : Screen, ScreenChangeListener
             Debug.Log("Result not set, entering test mode...");
             await Context.LevelManager.LoadFromMetadataFiles(new List<string>
                 {Context.DataPath + "/suconh_typex.alice/level.json"});
-            Context.SelectedLevel = Context.LevelManager.LoadedLocalLevels[0];
-            Context.SelectedDifficulty = Difficulty.Parse(Context.LevelManager.LoadedLocalLevels[0].Meta.charts[0].type);
+            Context.SelectedLevel = Context.LevelManager.LoadedLocalLevels.Values.First();
+            Context.SelectedDifficulty = Difficulty.Parse(Context.LevelManager.LoadedLocalLevels.Values.First().Meta.charts[0].type);
             Context.LocalPlayer.PlayRanked = true;
             result = new GameResult
             {

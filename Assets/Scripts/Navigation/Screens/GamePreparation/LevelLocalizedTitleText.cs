@@ -4,8 +4,18 @@ using UnityEngine.UI;
 public class LevelLocalizedTitleText : MonoBehaviour, ScreenBecameActiveListener
 {
     [GetComponent] public Text text;
+    private void Awake()
+    {
+        Context.OnSelectedLevelChanged.AddListener(Load);
+    }
+
     public void OnScreenBecameActive()
     {
-        text.text = Context.SelectedLevel?.Meta.title_localized ?? "";
+        Load(Context.SelectedLevel);
+    }
+
+    public void Load(Level level)
+    {
+        text.text = level?.Meta.title_localized ?? "";
     }
 }

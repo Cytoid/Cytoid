@@ -108,7 +108,11 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
             return;
         }
 
-        if (ChangingToScreenId == targetScreenId) return;
+        if (ChangingToScreenId == targetScreenId)
+        {
+            print("Warning: Already changing to the same screen! Ignoring.");
+            return;
+        }
         ChangingToScreenId = targetScreenId;
         print($"Changing screen to {targetScreenId}");
 

@@ -29,12 +29,14 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>
 
     public void FadeOutLoopPlayer(float duration = 1f)
     {
-        audioMixerGroup.audioMixer.DOSetFloat("MasterVolume", -80f, duration).SetEase(Ease.Linear);
+        if (duration == 0) audioMixerGroup.audioMixer.SetFloat("MasterVolume", -80f);
+        else audioMixerGroup.audioMixer.DOSetFloat("MasterVolume", -80f, duration).SetEase(Ease.Linear);
     }
 
     public async void FadeInLoopPlayer(float duration = 1f)
     {
         await UniTask.DelayFrame(0); // Introloop bug: switching music is not immediate
-        audioMixerGroup.audioMixer.DOSetFloat("MasterVolume", 0, duration).SetEase(Ease.Linear);
+        if (duration == 0) audioMixerGroup.audioMixer.SetFloat("MasterVolume", 0);
+        else audioMixerGroup.audioMixer.DOSetFloat("MasterVolume", 0, duration).SetEase(Ease.Linear);
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using DG.Tweening;
 using Tayx.Graphy;
 using UniRx.Async;
@@ -15,6 +16,8 @@ public class Context : SingletonMonoBehavior<Context>
     public const int ReferenceWidth = 1920;
     public const int ReferenceHeight = 1080;
 
+    public static readonly LevelEvent OnSelectedLevelChanged = new LevelEvent();
+    
     public static string DataPath;
     public static int InitialWidth;
     public static int InitialHeight;
@@ -24,8 +27,16 @@ public class Context : SingletonMonoBehavior<Context>
     
     public static LevelManager LevelManager = new LevelManager();
     public static SpriteCache SpriteCache = new SpriteCache();
-    
-    public static Level SelectedLevel;
+
+    public static Level SelectedLevel
+    {
+        get => selectedLevel;
+        set
+        {
+            selectedLevel = value;
+            OnSelectedLevelChanged.Invoke(value);
+        }
+    }
     public static Difficulty SelectedDifficulty = Difficulty.Easy;
     public static Difficulty PreferredDifficulty = Difficulty.Easy;
     public static HashSet<Mod> SelectedMods = new HashSet<Mod>();
@@ -35,6 +46,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static LocalPlayer LocalPlayer = new LocalPlayer();
     public static OnlinePlayer OnlinePlayer = new OnlinePlayer();
 
+    private static Level selectedLevel;
     private static GraphyManager graphyManager;
     private static Stack<string> navigationScreenHistory = new Stack<string>();
 
@@ -89,7 +101,7 @@ public class Context : SingletonMonoBehavior<Context>
         {
             // Load test level
             await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/sggrkung.festival_blaze/level.json" });
-            SelectedLevel = LevelManager.LoadedLocalLevels[0];
+            SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
             SelectedDifficulty = Difficulty.Parse(SelectedLevel.Meta.charts[0].type);
         }
         else
@@ -109,7 +121,7 @@ public class Context : SingletonMonoBehavior<Context>
             {
                 // Load f.fff
                 await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/f.fff/level.json" });
-                SelectedLevel = LevelManager.LoadedLocalLevels[0];
+                SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
                 SelectedDifficulty = Difficulty.Parse(SelectedLevel.Meta.charts[0].type);
                 ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.None);
             }
@@ -118,7 +130,7 @@ public class Context : SingletonMonoBehavior<Context>
             {
                 // Load result
                 await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/suconh_typex.alice/level.json" });
-                SelectedLevel = LevelManager.LoadedLocalLevels[0];
+                SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
                 SelectedDifficulty = Difficulty.Hard;
                 ScreenManager.ChangeScreen("Result", ScreenTransition.None);
             }
@@ -135,6 +147,7 @@ public class Context : SingletonMonoBehavior<Context>
         if (prev == "Navigation" && next == "Game")
         {
             LoopAudioPlayer.Instance.StopMainLoopAudio();
+            LoopAudioPlayer.Instance.FadeOutLoopPlayer(0);
             // Save history
             navigationScreenHistory = new Stack<string>(ScreenManager.History);
         }
@@ -148,6 +161,7 @@ public class Context : SingletonMonoBehavior<Context>
         }
         if (prev == "Game" && next == "Navigation")
         {
+            LoopAudioPlayer.Instance.PlayMainLoopAudio();
             // Restore history
             ScreenManager.History = new Stack<string>(navigationScreenHistory);
             if (LastGameResult != null)

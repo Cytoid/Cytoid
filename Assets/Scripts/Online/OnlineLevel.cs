@@ -8,6 +8,8 @@ using UnityEngine;
 public class OnlineLevel
 {
     public string uid;
+    public int version;
+
     public string title;
     public Metadata metadata;
     public DateTime creationDate;
@@ -18,7 +20,7 @@ public class OnlineLevel
     public double rating;
     public int plays;
     public int downloads;
-    
+
     // Extra info with /levels/{uid}
     public double duration; // in seconds
     public long size; // in bytes
@@ -28,7 +30,6 @@ public class OnlineLevel
     [Serializable]
     public class Metadata
     {
-        public LevelMeta raw;
         public string title_localized;
         public Artist artist;
         public Charter charter;
@@ -75,17 +76,37 @@ public class OnlineLevel
 
     public Level ToLevel(bool resolveLocalLevel = true)
     {
-        if (resolveLocalLevel && Context.LevelManager.LoadedLocalLevels.Any(it => it.Meta.id == uid))
+        if (resolveLocalLevel && Context.LevelManager.LoadedLocalLevels.ContainsKey(uid))
         {
             Debug.Log($"Online level {uid} resolved locally");
-            return Context.LevelManager.LoadedLocalLevels.Find(it => it.Meta.id == uid);
+            return Context.LevelManager.LoadedLocalLevels[uid];
         }
-        var level = new Level($"{Context.ApiBaseUrl}/levels/{uid}/resources",
-            metadata.raw.JsonDeepCopy());
-        level.Meta.SortCharts();
-        level.Meta.background.path = bundle.background;
-        level.Meta.music.path = bundle.music;
-        level.Meta.music_preview.path = bundle.music_preview;
-        return level;
+
+        return new Level($"{Context.ApiBaseUrl}/levels/{uid}/resources", GenerateLevelMeta());
+    }
+
+    public LevelMeta GenerateLevelMeta()
+    {
+        var meta = new LevelMeta();
+        meta.schema_version = 2;
+        meta.version = version;
+        meta.id = uid;
+        meta.title = title;
+        meta.title_localized = metadata.title_localized;
+        meta.artist = metadata.artist.name;
+        meta.artist_localized = metadata.artist.localized_name;
+        meta.artist_source = metadata.artist.url;
+        meta.illustrator = metadata.illustrator.name;
+        meta.illustrator_source = metadata.illustrator.url;
+        meta.charter = metadata.charter.name;
+        meta.charts = charts.Select(onlineChart => new LevelMeta.ChartSection
+        {
+            type = onlineChart.type, name = onlineChart.name, difficulty = onlineChart.difficulty
+        }).ToList();
+        meta.background = new LevelMeta.BackgroundSection {path = bundle.background};
+        meta.music = new LevelMeta.MusicSection {path = bundle.music};
+        meta.music_preview = new LevelMeta.MusicSection {path = bundle.music_preview};
+        meta.SortCharts();
+        return meta;
     }
 }

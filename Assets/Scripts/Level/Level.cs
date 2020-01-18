@@ -3,7 +3,6 @@ using System;
 public class Level
 {
     public bool IsLocal;
-    public bool IsInternal;
     public LevelMeta Meta;
 
     public string Path;
@@ -14,6 +13,7 @@ public class Level
     public Level(string path, LevelMeta meta, DateTime addedDate, DateTime playedDate)
     {
         IsLocal = true;
+        PackagePath = $"{Context.ApiBaseUrl}/levels/{meta.id}/resources";
         Path = path;
         Meta = meta;
         AddedDate = addedDate;

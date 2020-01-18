@@ -1,19 +1,27 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class DifficultyPillGroup : MonoBehaviour, ScreenBecameActiveListener, ScreenBecameInactiveListener
+public class DifficultyPillGroup : MonoBehaviour, ScreenBecameActiveListener
 {
 
     public GameObject difficultyPillPrefab;
 
     private List<DifficultyPill> difficultyPills = new List<DifficultyPill>();
 
-    public void OnScreenBecameActive()
+    private void Awake()
     {
-        if (Context.SelectedLevel == null) return;
+        Context.OnSelectedLevelChanged.AddListener(Load);
+    }
 
-        var meta = Context.SelectedLevel.Meta;
+    public void Load(Level level)
+    {
+        if (level == null) return;
+        foreach (Transform child in transform) Destroy(child.gameObject);
+        difficultyPills.Clear();
+
+        var meta = level.Meta;
         var hasPreferredDifficulty = false;
         foreach (var section in meta.charts)
         {
@@ -43,10 +51,9 @@ public class DifficultyPillGroup : MonoBehaviour, ScreenBecameActiveListener, Sc
         LayoutFixer.Fix(transform);
     }
 
-    public void OnScreenBecameInactive()
+    public void OnScreenBecameActive()
     {
-        difficultyPills.ForEach(it => Destroy(it.transform.parent.gameObject)); // Destroy parent because pulse wrapper
-        difficultyPills.Clear();
+        Load(Context.SelectedLevel);
     }
-    
+
 }

@@ -6,7 +6,11 @@ public class AssetLoader
 {
     public string Path;
     public string Error;
+
+    private bool loaded;
+    
     public AudioClip AudioClip;
+    private NLayerLoader nLayerLoader;
     
     public AssetLoader(string path)
     {
@@ -15,6 +19,11 @@ public class AssetLoader
     
     public async UniTask LoadAudioClip()
     {
+        if (loaded)
+        {
+            UnloadAudioClip();
+        }
+        
         var type = AudioTypeExtensions.Detect(Path);
         
         // TODO: Load remote mp3 with non-mobile platform (Download with UnityWebRequest first?)
@@ -26,7 +35,8 @@ public class AssetLoader
             && Application.platform != RuntimePlatform.IPhonePlayer
         )
         {
-            AudioClip = NLayerLoader.LoadMpeg(Path);
+            nLayerLoader = new NLayerLoader(Path);
+            AudioClip = nLayerLoader.LoadAudioClip();
         }
         else
         {
@@ -42,5 +52,23 @@ public class AssetLoader
                 AudioClip = DownloadHandlerAudioClip.GetContent(request);
             }
         }
+
+        loaded = true;
+    }
+
+    public void UnloadAudioClip()
+    {
+        if (!loaded) return;
+        
+        AudioClip.UnloadAudioData();
+        Object.Destroy(AudioClip);
+        AudioClip = null;
+        if (nLayerLoader != null)
+        {
+            nLayerLoader.Dispose();
+            nLayerLoader = null;
+        }
+
+        loaded = false;
     }
 }

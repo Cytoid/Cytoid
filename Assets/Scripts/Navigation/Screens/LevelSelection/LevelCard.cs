@@ -129,10 +129,16 @@ public class LevelCard : InteractableMonoBehavior, IPointerClickHandler
 
         if (sprite != null)
         {
-            cover.sprite = sprite;
-            cover.DOFade(0.5f, 0.2f);
-            cover.FitSpriteAspectRatio();
-            loadedCover = true;
+            lock (sprite)
+            {
+                if (sprite != null)
+                {
+                    cover.sprite = sprite;
+                    cover.DOFade(0.5f, 0.2f);
+                    cover.FitSpriteAspectRatio();
+                    loadedCover = true;
+                }
+            }
         }
     }
 

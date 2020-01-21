@@ -4,6 +4,7 @@ public class Level
 {
     public bool IsLocal;
     public LevelMeta Meta;
+    public string Id => Meta.id;
 
     public string Path;
     public string PackagePath;

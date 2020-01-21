@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UniRx.Async;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,7 +12,11 @@ public class ModSpan : MonoBehaviour
     {
         if (game != null)
         {
-            game.onGameLoaded.AddListener(_ => UpdateMods(game.State.Mods));
+            game.onGameLoaded.AddListener(async _ =>
+            {
+                await UniTask.DelayFrame(0);
+                UpdateMods(game.State.Mods);
+            });
         }
         else
         {
@@ -24,6 +29,7 @@ public class ModSpan : MonoBehaviour
         foreach (Transform child in layoutGroup.transform)
         {
             var pill = child.GetComponent<ModPill>();
+            pill.isStatic = true;
             child.gameObject.SetActive(mods.Contains(pill.mod));
         }
         layoutGroup.transform.RebuildLayout();

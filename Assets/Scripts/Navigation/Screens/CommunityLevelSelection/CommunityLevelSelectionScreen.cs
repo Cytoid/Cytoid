@@ -41,6 +41,17 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
 
         titleText.text = "Browse";
 
+        Context.LevelManager.OnLevelDeleted.AddListener(_ =>
+        {
+            if (State != ScreenState.Active) return;
+            // Reload active content
+            if (SavedContent.OnlineLevels != null)
+            {
+                savedScrollPosition = scrollRect.verticalNormalizedPosition;
+                OnContentLoaded(SavedContent);
+                scrollRect.verticalNormalizedPosition = savedScrollPosition;
+            }
+        });
         Context.ScreenManager.AddHandler(this);
     }
 

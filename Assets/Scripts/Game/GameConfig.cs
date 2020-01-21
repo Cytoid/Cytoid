@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class GameConfig
 {
+    public bool IsCalibration;
+    
     public float ChartOffset;
     public float NoteHitboxMultiplier;
     public bool UseScannerSmoothing;
@@ -37,7 +39,7 @@ public class GameConfig
     {
         var chart = game.Chart;
 
-        ChartOffset = Context.LocalPlayer.BaseNoteOffset + Context.LocalPlayer.GetLevelNoteOffset(game.Level.Meta.id);
+        ChartOffset = Context.LocalPlayer.BaseNoteOffset + Context.LocalPlayer.GetLevelNoteOffset(game.Level.Id);
         if (DetectHeadset.Detect()) ChartOffset += Context.LocalPlayer.HeadsetNoteOffset;
 
         NoteHitboxMultiplier = Context.LocalPlayer.UseLargerHitboxes ? 1.5555f : 1.3333f;

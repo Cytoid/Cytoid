@@ -9,14 +9,28 @@ public class AccuracyText : MonoBehaviour
 
     protected void Awake()
     {
-        text.text = "100.00%";
+        text.text = "";
     }
 
     protected void LateUpdate()
     {
-        if (game.IsLoaded && game.State.IsStarted && game.State.ClearCount > 0)
+        if (game.IsLoaded)
         {
-            text.text = (Math.Floor(game.State.Accuracy * 100) / 100).ToString("0.00") + "%";
+            if (game.Config.IsCalibration)
+            {
+                text.text = "";
+            }
+            else
+            {
+                if (game.State.IsStarted && game.State.ClearCount > 0)
+                {
+                    text.text = (Math.Floor(game.State.Accuracy * 100) / 100).ToString("0.00") + "%";
+                }
+                else
+                {
+                    text.text = "100.00%";
+                }
+            }
         }
     }
 }

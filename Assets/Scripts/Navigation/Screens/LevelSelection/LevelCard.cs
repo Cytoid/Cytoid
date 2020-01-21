@@ -7,22 +7,19 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class LevelCard : InteractableMonoBehavior, IPointerClickHandler
+public class LevelCard : InteractableMonoBehavior
 {
-    public static int i = 1;
-    public int j = 0;
-
     public Image cover;
     public Text artist;
     public Text title;
     public Text titleLocalized;
 
     public List<DifficultyBall> difficultyBalls = new List<DifficultyBall>();
-    
-    public override bool IsPointerEntered => false;
 
     private Level level;
     private bool loadedCover;
+    private CancellationTokenSource actionToken;
+    private Vector2 pressPosition;
 
     public void ScrollCellContent(object levelObject)
     {
@@ -39,7 +36,6 @@ public class LevelCard : InteractableMonoBehavior, IPointerClickHandler
 
     private void Awake()
     {
-        j = i++;
         artist.text = "";
         title.text = "";
         titleLocalized.text = "";
@@ -142,15 +138,42 @@ public class LevelCard : InteractableMonoBehavior, IPointerClickHandler
         }
     }
 
-    public override void OnPointerDown(PointerEventData eventData)
+    private bool ignoreNextPointerUp;
+    
+    public override async void OnPointerDown(PointerEventData eventData)
     {
         base.OnPointerDown(eventData);
+        pressPosition = eventData.position;
         if (loadedCover) cover.DOFade(1.0f, 0.2f).SetEase(Ease.OutCubic);
         cover.rectTransform.DOScale(1.02f, 0.2f).SetEase(Ease.OutCubic);
+        actionToken?.Cancel();
+        actionToken = new CancellationTokenSource();
+        try
+        {
+            await UniTask.Delay(TimeSpan.FromSeconds(0.8f), cancellationToken: actionToken.Token);
+        }
+        catch
+        {
+            // ignored
+            return;
+        }
+        ignoreNextPointerUp = true;
+        OnPointerUp(eventData);
+        OnAction();
+        Handheld.Vibrate();
+        actionToken = null;
     }
     
     public override void OnPointerUp(PointerEventData eventData)
     {
+        var d = Vector2.Distance(pressPosition, eventData.position);
+        print(Context.ReferenceWidth * 0.005f + " <-> " + d);
+        if (d > 0.005f * Context.ReferenceWidth || ignoreNextPointerUp)
+        {
+            ignoreNextPointerUp = false;
+            IsPointerDown = false;
+        }
+        actionToken?.Cancel();
         base.OnPointerUp(eventData);
         if (loadedCover) cover.DOFade(0.5f, 0.2f).SetEase(Ease.OutCubic);
         cover.rectTransform.DOScale(1.0f, 0.2f).SetEase(Ease.OutCubic);
@@ -166,6 +189,24 @@ public class LevelCard : InteractableMonoBehavior, IPointerClickHandler
             Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.In, 0.4f,
                 transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter());
         }
+    }
+
+    public void OnAction()
+    {
+        if (!level.IsLocal) return;
+        if (Context.ScreenManager.ActiveScreenId != LevelSelectionScreen.Id &&
+            Context.ScreenManager.ActiveScreenId != CommunityLevelSelectionScreen.Id) return;
+        
+        var dialog = Dialog.Instantiate();
+        dialog.Message = $"Delete \"{level.Meta.title}\"?\nYour best performance will not be deleted.";
+        dialog.UsePositiveButton = true;
+        dialog.UseNegativeButton = true;
+        dialog.OnPositiveButtonClicked = _ =>
+        {
+            Context.LevelManager.DeleteLocalLevel(level.Id);
+            dialog.Close();
+        };
+        dialog.Open();
     }
 
 }

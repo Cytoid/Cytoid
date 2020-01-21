@@ -28,6 +28,12 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         sortByRadioGroup.onSelect.AddListener(value => RefillLevels());
         sortOrderRadioGroup.onSelect.AddListener(value => RefillLevels());
         searchInputField.onEndEdit.AddListener(value => RefillLevels());
+        
+        Context.LevelManager.OnLevelDeleted.AddListener(_ =>
+        {
+            if (State != ScreenState.Active) return;
+            RefillLevels(true);
+        });
 
         await Context.LevelManager.LoadAllFromDataPath();
 
@@ -59,9 +65,14 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         Context.ScreenManager.RemoveHandler(this);
     }
 
-    public void RefillLevels()
+    public void RefillLevels(bool saveScrollPosition = false)
     {
-        print("Refilled levels");
+        print("Refilling levels");
+
+        if (saveScrollPosition)
+        {
+            savedScrollPosition = scrollRect.verticalNormalizedPosition;
+        }
 
         // Sort with selected method
         Enum.TryParse(sortByRadioGroup.Value, out LevelSort sort);
@@ -70,17 +81,23 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         // Category?
         var category = categorySelect.SelectedIndex;
         var filters = new List<Func<Level, bool>>();
-        if (category == 1)
+        switch (category)
         {
-            filters.Add(level => level.Meta.id.StartsWith("io.cytoid"));
-        }
-        else
-        {
-            filters.Add(level => !level.Meta.id.StartsWith("io.cytoid"));
+            case 1:
+                filters.Add(level => level.Id.StartsWith("io.cytoid"));
+                break;
+            case 2:
+                filters.Add(level => !level.Id.StartsWith("io.cytoid"));
+                break;
         }
         var query = searchInputField.text.Trim();
 
         RefillLevels(sort, asc, query, filters);
+
+        if (saveScrollPosition)
+        {
+            scrollRect.verticalNormalizedPosition = savedScrollPosition;
+        }
     }
 
     public void RefillLevels(LevelSort sort, bool asc, string query = "", List<Func<Level, bool>> filters = null)

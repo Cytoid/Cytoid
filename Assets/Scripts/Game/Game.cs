@@ -34,13 +34,13 @@ public class Game : MonoBehaviour
     public float Time { get; protected set; }
     public float MusicLength { get; protected set; }
     public float GameStartedOrResumedTimestamp { get; protected set; }
-    public double MusicStartedTimestamp { get; protected set; } // When was the music started to play?
-    public double MusicUnpausedTimestamp { get; protected set; } // When was the music unpaused to play?
+    public double MusicStartedTimestamp { get; protected set; } // When did the music start playing?
     public float MusicProgress { get; protected set; }
     public float UnpauseCountdown { get; protected set; }
+    
+    public bool ResynchronizeChartOnNextFrame { get; set; }
 
     public AudioManager.Controller Music { get; protected set; }
-    public AudioManager.Controller HitSound { get; protected set; }
     
     public List<UniTask> BeforeStartTasks { get; protected set; } = new List<UniTask>();
     public List<UniTask> BeforeExitTasks { get; protected set; } = new List<UniTask>();
@@ -101,14 +101,22 @@ public class Game : MonoBehaviour
         }
 
         var mods = Context.LocalPlayer.EnabledMods;
+        var ratio = UnityEngine.Screen.width * 1.0f / UnityEngine.Screen.height;
+        var height = Camera.main.orthographicSize * 2.0f;
+        var width = height * ratio;
+        var topRatio = 0.0966666f;
+        var bottomRatio = 0.07f;
+        var verticalRatio = 1 - width * (topRatio + bottomRatio) / height + (3 - Context.LocalPlayer.VerticalMargin) * 0.05f;
+        var verticalOffset = -(width * (topRatio - (topRatio + bottomRatio) / 2.0f));
         Chart = new Chart(
             chartText,
             mods.Contains(Mod.FlipX) || mods.Contains(Mod.FlipAll),
             mods.Contains(Mod.FlipY) || mods.Contains(Mod.FlipAll),
             true,
             mods.Contains(Mod.Fast) ? 1.5f : (mods.Contains(Mod.Slow) ? 0.75f : 1),
-            0.8f + (5 - (int) Context.LocalPlayer.HorizontalMargin - 1) * 0.025f,
-            (5.5f + (5 - (int) Context.LocalPlayer.VerticalMargin) * 0.5f) / 9.0f
+            0.8f + (5 - Context.LocalPlayer.HorizontalMargin - 1) * 0.02f,
+            verticalRatio,
+            verticalOffset
         );
         
         // Load audio
@@ -146,7 +154,7 @@ public class Game : MonoBehaviour
         if (Context.LocalPlayer.HitSound != "none")
         {
             var resource = await Resources.LoadAsync<AudioClip>("Audio/HitSounds/" + Context.LocalPlayer.HitSound);
-            HitSound = Context.AudioManager.Load("HitSound", resource as AudioClip);
+            Context.AudioManager.Load("HitSound", resource as AudioClip, isResource: true);
         }
 
         // State & config
@@ -154,7 +162,7 @@ public class Game : MonoBehaviour
         var maxHealth = chartMeta.difficulty * 75;
         if (maxHealth < 0) maxHealth = 1000;
         State = new GameState(this, isRanked, mods, maxHealth);
-        Config = new GameConfig(this);
+        Config = new GameConfig(this) {IsCalibration = Context.WillCalibrate};
 
         // Touch handlers
         if (!mods.Contains(Mod.Auto))
@@ -213,8 +221,8 @@ public class Game : MonoBehaviour
             return;
         }
 
-        if (State.ShouldFail) Fail();
-        if (State.IsFailed) Music.PlaybackTime -= 1f / 120f;
+        if (!State.IsFailed && State.ShouldFail) Fail();
+        if (State.IsFailed) Music.Volume -= 1f / 120f;
         if (State.IsPlaying)
         {
             if (State.ClearCount >= Chart.Model.note_list.Count) Complete();
@@ -223,9 +231,10 @@ public class Game : MonoBehaviour
             ticksBeforeSynchronization--;
             var resumeElapsedTime = UnityEngine.Time.realtimeSinceStartup - GameStartedOrResumedTimestamp;
             var nowDspTime = AudioSettings.dspTime;
-            // Sync: every 600 ticks (=10 seconds) and every tick within the first 0.5 seconds
-            if ((ticksBeforeSynchronization <= 0 || resumeElapsedTime < 0.5f) && nowDspTime != lastDspTime)
+            // Sync: every 600 ticks (=10 seconds) and every tick within the first 0.5 seconds after start/unpause
+            if ((ResynchronizeChartOnNextFrame || ticksBeforeSynchronization <= 0 || resumeElapsedTime < 0.5f) && nowDspTime != lastDspTime)
             {
+                ResynchronizeChartOnNextFrame = false;
                 Time = (float) nowDspTime;
                 lastDspTime = nowDspTime;
                 ticksBeforeSynchronization = 600;
@@ -388,7 +397,7 @@ public class Game : MonoBehaviour
         Unpause();
     }
 
-    public virtual async void Unpause()
+    public virtual void Unpause()
     {
         if (!IsLoaded || State.IsPlaying || State.IsCompleted || State.IsFailed) return;
         print("Game unpaused");
@@ -438,11 +447,15 @@ public class Game : MonoBehaviour
     public void Fail()
     {
         if (State.IsFailed) return;
+        print("Game failed");
+        
         State.IsFailed = true;
         inputController.DisableInput();
 
+        Context.ScreenManager.ChangeScreen(FailedScreen.Id, ScreenTransition.None);
+        Context.AudioManager.Get("LevelFailed").Play();
+        
         onGameFailed.Invoke(this);
-        // TODO: Show fail UI
     }
 
     public virtual async void Complete()
@@ -470,10 +483,10 @@ public class Game : MonoBehaviour
 
         await UniTask.Delay(TimeSpan.FromSeconds(1.5f));
         
-        if (State.Mods.Contains(Mod.Auto) || State.Mods.Contains(Mod.AutoDrag)
+        if (Config.IsCalibration || State.Mods.Contains(Mod.Auto) || State.Mods.Contains(Mod.AutoDrag)
                                           || State.Mods.Contains(Mod.AutoHold) || State.Mods.Contains(Mod.AutoFlick))
         {
-            // TODO: Go back
+            // TODO: Simply go back. Handle more?
         }
         else
         {
@@ -495,7 +508,7 @@ public class Game : MonoBehaviour
                 LateCount = State.LateCount,
                 AverageTimingError = State.AverageTimingError,
                 StandardTimingError = State.StandardTimingError,
-                LevelId = Level.Meta.id,
+                LevelId = Level.Id,
                 LevelVersion = Level.Meta.version,
                 ChartType = Context.SelectedDifficulty
             };

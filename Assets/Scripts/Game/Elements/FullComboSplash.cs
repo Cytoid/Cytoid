@@ -13,7 +13,7 @@ public class FullComboSplash : AwaitableAnimatedElement
 
     public void OnGameComplete()
     {
-        if (game.State.Combo == game.State.NoteCount && game.State.Score < 1000000)
+        if (!game.Config.IsCalibration && game.State.Combo == game.State.NoteCount && game.State.Score < 1000000)
         {
             text.text = game.State.Combo + "x";
             game.BeforeExitTasks.Add(Animate());

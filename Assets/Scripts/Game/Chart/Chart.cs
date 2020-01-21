@@ -7,7 +7,7 @@ using UnityEngine;
 public class Chart
 {
     private readonly float baseSize;
-    private readonly float offset;
+    private readonly float verticalOffset;
     private readonly float verticalRatio;
     public ChartModel Model { get; }
     
@@ -28,8 +28,9 @@ public class Chart
         bool isVerticallyInverted,
         bool useScannerSmoothing,
         float approachRateMultiplier,
-        float horizontalRatio = 0.85f,
-        float verticalRatio = 7.0f / 9.0f)
+        float horizontalRatio,
+        float verticalRatio,
+        float verticalOffset)
     {
         IsHorizontallyInverted = isHorizontallyInverted;
         IsVerticallyInverted = isVerticallyInverted;
@@ -48,8 +49,9 @@ public class Chart
         }
 
         baseSize = Camera.main.orthographicSize;
-        offset = -baseSize * 0.04f;
+        // verticalOffset = -baseSize * 0.04f;
         this.verticalRatio = verticalRatio;
+        this.verticalOffset = verticalOffset;
 
         // Convert tick to absolute time
         foreach (var eventOrder in Model.event_order_list) eventOrder.time = ConvertToTime(eventOrder.tick);
@@ -101,7 +103,7 @@ public class Chart
                      baseSize *
                      (note.tick - page.start_tick) * 1.0f /
                      (page.end_tick - page.start_tick))
-                    + offset)
+                    + verticalOffset)
             );
 
             note.end_position = new Vector3(
@@ -255,14 +257,14 @@ public class Chart
                  (tick - Model.page_list[targetPageId - 1].end_tick) *
                  1.0f / (Model.page_list[targetPageId - 1].end_tick -
                          Model.page_list[targetPageId - 1].start_tick))
-                + offset);
+                + verticalOffset);
 
         return (float) (
             verticalRatio * Model.page_list[targetPageId].scan_line_direction *
             (-baseSize + 2.0f *
              baseSize * (tick - Model.page_list[targetPageId].start_tick) *
              1.0f / (Model.page_list[targetPageId].end_tick - Model.page_list[targetPageId].start_tick))
-            + offset);
+            + verticalOffset);
     }
 
     public float GetScannerPositionY(float time, bool useScannerSmoothing)
@@ -279,14 +281,14 @@ public class Chart
                                  (ConvertToTick(time) - Model.page_list[CurrentPageId - 1].end_tick) *
                                  1.0f / (Model.page_list[CurrentPageId - 1].end_tick -
                                          Model.page_list[CurrentPageId - 1].start_tick))
-                                + offset);
+                                + verticalOffset);
             return -verticalRatio * Model.page_list[CurrentPageId - 1].scan_line_direction *
                    (-baseSize + 2.0f *
                     baseSize *
                     (time - Model.page_list[CurrentPageId - 1].end_time) *
                     1.0f / (Model.page_list[CurrentPageId - 1].end_time -
                             Model.page_list[CurrentPageId - 1].start_time))
-                   + offset;
+                   + verticalOffset;
         }
 
         if (UseScannerSmoothing)
@@ -296,27 +298,27 @@ public class Chart
                              (ConvertToTick(time) - Model.page_list[CurrentPageId].start_tick) *
                              1.0f / (Model.page_list[CurrentPageId].end_tick -
                                      Model.page_list[CurrentPageId].start_tick))
-                            + offset);
+                            + verticalOffset);
         return verticalRatio * Model.page_list[CurrentPageId].scan_line_direction *
                (-baseSize + 2.0f *
                 baseSize *
                 (time - Model.page_list[CurrentPageId].start_time) *
                 1.0f / (Model.page_list[CurrentPageId].end_time - Model.page_list[CurrentPageId].start_time))
-               + offset;
+               + verticalOffset;
     }
 
     public float GetScanlinePosition01(float percentage)
     {
         return verticalRatio *
                (-baseSize + 2.0f * baseSize * percentage)
-               + offset;
+               + verticalOffset;
     }
 
     public float GetBoundaryPosition(bool bottom)
     {
         return verticalRatio * (bottom ? 1 : -1) *
                -baseSize
-               + offset;
+               + verticalOffset;
     }
 
     public ChartModel FromLegacyChart(string text)

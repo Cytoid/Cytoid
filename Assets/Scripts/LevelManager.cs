@@ -16,9 +16,24 @@ using Object = UnityEngine.Object;
 public class LevelManager
 {
     public readonly LevelEvent OnLevelMetaUpdated = new LevelEvent();
+    public readonly LevelEvent OnLevelDeleted = new LevelEvent();
 
     public readonly Dictionary<string, Level> LoadedLocalLevels = new Dictionary<string, Level>();
     private readonly HashSet<string> loadedPaths = new HashSet<string>();
+
+    public void DeleteLocalLevel(string id)
+    {
+        if (!LoadedLocalLevels.ContainsKey(id))
+        {
+            Debug.LogWarning($"Warning: Could not find level {id}");
+            return;
+        }
+        var level = LoadedLocalLevels[id];
+        Directory.Delete(Path.GetDirectoryName(level.Path) ?? throw new InvalidOperationException(), true);
+        LoadedLocalLevels.Remove(level.Id);
+        loadedPaths.Remove(level.Path);
+        OnLevelDeleted.Invoke(level);
+    }
 
     public Promise<LevelMeta> FetchLevelMeta(string levelId, bool updateLocal = false)
     {
@@ -35,7 +50,7 @@ public class LevelManager
                     var localLevel = LoadedLocalLevels[levelId];
                     if (UpdateLevelMeta(localLevel, remoteMeta))
                     {
-                        Debug.Log($"Level meta updated for {localLevel.Meta.id}");
+                        Debug.Log($"Level meta updated for {localLevel.Id}");
                         OnLevelMetaUpdated.Invoke(localLevel);
                     }
                 }
@@ -203,7 +218,7 @@ public class LevelManager
                 }
             }
 
-            Debug.Log($"Thumbnail generated {index + 1}/{jsonPaths.Count}: {level.Meta.id} ({path})");
+            Debug.Log($"Thumbnail generated {index + 1}/{jsonPaths.Count}: {level.Id} ({path})");
         }
 
         return results;

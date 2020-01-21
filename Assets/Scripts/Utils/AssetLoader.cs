@@ -59,7 +59,7 @@ public class AssetLoader
     public void UnloadAudioClip()
     {
         if (!loaded) return;
-        
+        Debug.Log("audio detroyed");
         AudioClip.UnloadAudioData();
         Object.Destroy(AudioClip);
         AudioClip = null;

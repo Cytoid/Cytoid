@@ -16,6 +16,6 @@ public class LevelIdText : MonoBehaviour, ScreenBecameActiveListener
 
     public void Load(Level level)
     {
-        text.text = level?.Meta.id ?? "Unknown";
+        text.text = level?.Id ?? "Unknown";
     }
 }

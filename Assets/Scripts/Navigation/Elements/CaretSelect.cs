@@ -7,7 +7,7 @@ using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class CaretSelect : MonoBehaviour, ScreenInitializedListener
+public class CaretSelect : MonoBehaviour
 {
 
     public Transform leftCaret;
@@ -25,7 +25,16 @@ public class CaretSelect : MonoBehaviour, ScreenInitializedListener
     private void Awake()
     {
         SelectedIndex = defaultIndex;
-        labelText.text = labels[defaultIndex];
+        labelText.text = defaultIndex <= labels.Count - 1 ? labels[defaultIndex] : "N/A";
+        var left = true;
+        foreach (var caret in new List<Transform>{leftCaret, rightCaret})
+        {
+            var interactable = caret.gameObject.AddComponent<InteractableMonoBehavior>();
+            interactable.onPointerClick.AddListener(left ? (UnityAction<PointerEventData>) (_ => SelectPrevious()) : _ => SelectNext());
+            interactable.scaleToOnClick = 0.95f;
+            interactable.scaleOnClick = true;
+            left = false;
+        }
     }
     
     public int GetIndex(string value)
@@ -60,19 +69,6 @@ public class CaretSelect : MonoBehaviour, ScreenInitializedListener
         Select(values.FindIndex(it => it == value), anim, notify);
     }
 
-    public void OnScreenInitialized()
-    {
-        var left = true;
-        foreach (var caret in new List<Transform>{leftCaret, rightCaret})
-        {
-            var interactable = caret.gameObject.AddComponent<InteractableMonoBehavior>();
-            interactable.onPointerClick.AddListener(left ? (UnityAction<PointerEventData>) (_ => SelectPrevious()) : _ => SelectNext());
-            interactable.scaleToOnClick = 0.95f;
-            interactable.scaleOnClick = true;
-            left = false;
-        }
-    }
-    
 }
 
 public class CaretSelectEvent : UnityEvent<int, string>

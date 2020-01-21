@@ -12,6 +12,8 @@ public class PillRadioButton : RadioButton
     [GetComponent] public ProceduralImage image;
     [GetComponent] public PulseElement pulseElement;
     [GetComponentInChildren] public Text text;
+
+    public Color activeTextColor = Color.black;
     
     private static Font regularFont;
     private static Font boldFont;
@@ -63,7 +65,7 @@ public class PillRadioButton : RadioButton
         if (pulse) pulseElement.Pulse();
         image.BorderWidth = 0;
         text.font = boldFont;
-        text.DOColor(Color.black, 0.2f).SetEase(Ease.OutCubic);
+        text.DOColor(activeTextColor, 0.2f).SetEase(Ease.OutCubic);
     }
 
     public override void Unselect()

@@ -25,6 +25,8 @@ public class ComboText : MonoBehaviour
     {
         if (game.IsLoaded && game.State.IsStarted)
         {
+            if (game.Config.IsCalibration) return;
+            
             if (game.State.Combo != lastCombo)
             {
                 if (game.State.Combo > 0)

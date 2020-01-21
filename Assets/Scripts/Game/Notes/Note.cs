@@ -70,7 +70,10 @@ public abstract class Note : MonoBehaviour
 
     public void PlayHitSound()
     {
-        if (Context.AudioManager.IsLoaded("HitSound")) Context.AudioManager.Get("HitSound").Play(AudioTrackIndex.RoundRobin);
+        if (Context.AudioManager.IsLoaded("HitSound"))
+        {
+            Context.AudioManager.Get("HitSound").Play();
+        }
     }
 
     protected virtual void OnGameUpdate()

@@ -28,6 +28,8 @@ public class GameState
     public int MaxCombo { get; private set; }
     public float Health { get; private set; }
     
+    public bool UseHealthSystem { get; private set; }
+    
     public double NoteScoreMultiplier { get; private set; } = 1.0;
 
     public int EarlyCount =>
@@ -61,6 +63,7 @@ public class GameState
         NoteCount = game.Chart.Model.note_list.Count;
         game.Chart.Model.note_list.ForEach(it => Judgements[it.id] = new NoteJudgement());
         noteScoreMultiplierFactor = Mathf.Sqrt(NoteCount) / 3.0f;
+        UseHealthSystem = Mods.Contains(Mod.Hard) || Mods.Contains(Mod.ExHard);
     }
 
     public void Judge(Note note, NoteGrade grade, float error, float greatGradeWeight)
@@ -168,8 +171,9 @@ public class GameState
         Accuracy = accumulatedAccuracy / ClearCount;
 
         // Health mods
-        if (Mods.Contains(Mod.Hard) || Mods.Contains(Mod.ExHard))
+        if (UseHealthSystem)
         {
+            // TODO: Other health mods
             var mods = Mods.Contains(Mod.ExHard) ? exHardHpMods : hardHpMods;
 
             var mod = mods
@@ -190,7 +194,7 @@ public class GameState
             }
 
             Health = Mathf.Clamp(Health, 0, MaxHealth);
-            if (Health < 0) ShouldFail = true;
+            if (Health <= 0) ShouldFail = true;
         }
 
         if (

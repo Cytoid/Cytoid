@@ -14,7 +14,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
 
     private const int RoundRobinStartIndex = 3;
     private const int RoundRobinEndIndex = 6;
-    private int trackCurrentIndex;
+    private int trackCurrentIndex = RoundRobinStartIndex;
 
     private bool useNativeAudio;
 
@@ -41,17 +41,19 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         preloadedAudioClips.ForEach(it => Load(it.name, it));
     }
 
-    public Controller Load(string id, AudioClip audioClip, bool? useNativeAudio = null)
+    public Controller Load(string id, AudioClip audioClip, bool? useNativeAudio = null, bool isResource = false)
     {
         if (useNativeAudio == null) useNativeAudio = this.useNativeAudio;
         if (controllers.ContainsKey(id)) Unload(id);
+        print("[AudioManager] Loading " + id);
         return controllers[id] = useNativeAudio.Value
             ? (Controller) new Exceed7Controller(this, audioClip)
-            : new UnityController(this, audioClip);
+            : new UnityController(this, audioClip, isResource);
     }
 
     public void Unload(string id)
     {
+        print("[AudioManager] Unloading " + id);
         controllers[id].Unload();
         controllers.Remove(id);
     }
@@ -70,7 +72,6 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             if (trackCurrentIndex > RoundRobinEndIndex)
                 trackCurrentIndex = RoundRobinStartIndex;
         }
-
         return index;
     }
 
@@ -98,11 +99,13 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
     public class UnityController : Controller
     {
         private AudioClip audioClip;
-        private int index;
+        private int index = -1;
+        private bool isResource;
 
-        public UnityController(AudioManager parent, AudioClip audioClip) : base(parent)
+        public UnityController(AudioManager parent, AudioClip audioClip, bool isResource) : base(parent)
         {
             this.audioClip = audioClip;
+            this.isResource = isResource;
         }
 
         public AudioSource Source => Parent.audioSources[index];
@@ -144,31 +147,37 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
 
         public override void Pause()
         {
+            if (index < 0) throw new InvalidOperationException();
             Source.Pause();
         }
 
         public override void Resume()
         {
+            if (index < 0) throw new InvalidOperationException();
             Source.UnPause();
         }
 
         public override void Stop()
         {
+            if (index < 0) throw new InvalidOperationException();
             Source.Stop();
         }
 
         public override void Unload()
         {
-            Stop();
-            Source.clip = null;
-            try
+            if (index >= 0)
             {
-                audioClip.UnloadAudioData();
+                Stop();
+                Source.clip = null;
+            }
+            audioClip.UnloadAudioData();
+            if (!isResource)
+            {
                 Destroy(audioClip);
             }
-            catch
+            else
             {
-                // ignored
+                Resources.UnloadAsset(audioClip);
             }
         }
 

@@ -37,12 +37,14 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
     public Text ratingText;
     public RateLevelElement rateLevelElement;
 
+    public GameObject gameplayIcon;
+    public GameObject settingsIcon;
+
     public RadioGroup practiceModeToggle;
 
     public InteractableMonoBehavior levelNoteOffsetCalibrateButton;
     public InputField levelNoteOffsetTextField;
 
-    public CaretSelect hitSoundCaretSelect;
     public RadioGroup earlyHitSoundsToggle;
     public RadioGroup largerHitboxesToggle;
     public RadioGroup earlyLateIndicatorsToggle;
@@ -89,6 +91,11 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         ratingText.text = "";
         LoadSettings();
         Context.ScreenManager.AddHandler(this);
+        levelNoteOffsetCalibrateButton.onPointerClick.AddListener(_ =>
+        {
+            Context.WillCalibrate = true;
+            OnStartButton();
+        });
     }
 
     public override void OnScreenBecameActive()
@@ -114,7 +121,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         Context.OnlinePlayer.OnLevelBestPerformanceUpdated.AddListener(OnLevelBestPerformanceUpdated);
 
         var localVersion = Level.Meta.version;
-        Context.LevelManager.FetchLevelMeta(Level.Meta.id, true).Then(it =>
+        Context.LevelManager.FetchLevelMeta(Level.Id, true).Then(it =>
         {
             print($"Remote version: {it.version}, local version: {localVersion}");
             if (it.version > Level.Meta.version)
@@ -138,7 +145,14 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         LoadCover(needReload);
         LoadPreview(needReload);
 
+        UpdateTopMenu();
         UpdateStartButton();
+    }
+
+    private void UpdateTopMenu()
+    {
+        gameplayIcon.SetActive(Level.IsLocal);
+        settingsIcon.SetActive(Level.IsLocal);
     }
 
     private void UpdateStartButton()
@@ -178,7 +192,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         rankingContainerStatusText.text = "Downloading level rankings...";
         updateRankingToken = DateTime.Now.ToFileTimeUtc();
         var token = updateRankingToken;
-        Context.OnlinePlayer.GetLevelRankings(Context.SelectedLevel.Meta.id, Context.SelectedDifficulty.Id)
+        Context.OnlinePlayer.GetLevelRankings(Context.SelectedLevel.Id, Context.SelectedDifficulty.Id)
             .Then(ret =>
             {
                 if (token != updateRankingToken) return;
@@ -219,11 +233,11 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
             ratingText.text = "N/A";
         }
 
-        rateLevelElement.SetModel(Level.Meta.id, data);
+        rateLevelElement.SetModel(Level.Id, data);
         rateLevelElement.rateButton.onPointerClick.RemoveAllListeners();
         rateLevelElement.rateButton.onPointerClick.AddListener(_ =>
         {
-            var dialog = RateLevelDialog.Instantiate(Level.Meta.id, data.rating);
+            var dialog = RateLevelDialog.Instantiate(Level.Id, data.rating);
             dialog.onLevelRated.AddListener(rating => OnLevelRatingUpdated(level, rating));
             dialog.Open();
         });
@@ -235,7 +249,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         ratingSpinner.IsSpinning = true;
         RestClient.Get<LevelRating>(new RequestHelper
             {
-                Uri = $"{Context.ApiBaseUrl}/levels/{Level.Meta.id}/ratings",
+                Uri = $"{Context.ApiBaseUrl}/levels/{Level.Id}/ratings",
                 EnableDebug = true
             }).Then(it => { OnLevelRatingUpdated(level, it); })
             .Catch(error =>
@@ -349,14 +363,14 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
     {
         bestPerformanceDescriptionText.text =
             Context.LocalPlayer.PlayRanked ? "BEST PERFORMANCE" : "BEST PERFORMANCE (PRACTICE)";
-        if (!Context.LocalPlayer.HasPerformance(Context.SelectedLevel.Meta.id, Context.SelectedDifficulty.Id,
+        if (!Context.LocalPlayer.HasPerformance(Context.SelectedLevel.Id, Context.SelectedDifficulty.Id,
             Context.LocalPlayer.PlayRanked))
         {
             bestPerformanceWidget.SetModel(new LocalPlayer.Performance()); // 0
         }
         else
         {
-            var performance = Context.LocalPlayer.GetBestPerformance(Context.SelectedLevel.Meta.id,
+            var performance = Context.LocalPlayer.GetBestPerformance(Context.SelectedLevel.Id,
                 Context.SelectedDifficulty.Id,
                 Context.LocalPlayer.PlayRanked);
             bestPerformanceWidget.SetModel(performance);
@@ -367,7 +381,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
 
     public void OnLevelBestPerformanceUpdated(string levelId)
     {
-        if (levelId != Level.Meta.id) return;
+        if (levelId != Level.Id) return;
         LoadLevelPerformance();
         Toast.Next(Toast.Status.Success, "Best performance synchronized.");
     }
@@ -376,10 +390,10 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
     {
         var lp = Context.LocalPlayer;
         levelNoteOffsetTextField.SetTextWithoutNotify(
-            lp.GetLevelNoteOffset(Context.SelectedLevel.Meta.id)
+            lp.GetLevelNoteOffset(Context.SelectedLevel.Id)
                 .ToString(CultureInfo.InvariantCulture));
         levelNoteOffsetTextField.onEndEdit.AddListener(FloatSettingHandler(levelNoteOffsetTextField,
-            () => 0, value => lp.SetLevelNoteOffset(Context.SelectedLevel.Meta.id, value)));
+            () => 0, value => lp.SetLevelNoteOffset(Context.SelectedLevel.Id, value)));
     }
 
     public override void OnScreenDestroyed()
@@ -489,8 +503,8 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         var totalSize = 0UL;
         var downloading = false;
         var aborted = false;
-        var targetFile = $"{Application.temporaryCachePath}/Downloads/{Level.Meta.id}.cytoidlevel";
-        var destFolder = $"{Context.DataPath}/{Level.Meta.id}";
+        var targetFile = $"{Application.temporaryCachePath}/Downloads/{Level.Id}.cytoidlevel";
+        var destFolder = $"{Context.DataPath}/{Level.Id}";
 
         if (Level.IsLocal)
         {
@@ -506,7 +520,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         };
         RestClient.Get<OnlineLevel>(req = new RequestHelper
         {
-            Uri = $"{Context.ApiBaseUrl}/levels/{Level.Meta.id}"
+            Uri = $"{Context.ApiBaseUrl}/levels/{Level.Id}"
         }).Then(it =>
         {
             if (aborted)
@@ -564,7 +578,8 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
                     .First();
                 Context.SelectedLevel = Level;
                 Toast.Enqueue(Toast.Status.Success, "Successfully downloaded level.");
-                
+
+                UpdateTopMenu();
                 LoadPreview(true);
                 LoadCover(true);
                 if (!previewAudioSource.isPlaying) LoadPreview(true);
@@ -625,14 +640,6 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
             lp.PlayRanked = ranked;
             LoadLevelPerformance();
             UpdateStartButton();
-        });
-        hitSoundCaretSelect.Select(lp.HitSound, false, false);
-        hitSoundCaretSelect.onSelect.AddListener((_, it) =>
-        {
-            lp.HitSound = it;
-            var resource = Resources.Load<AudioClip>("Audio/HitSounds/" + Context.LocalPlayer.HitSound);
-            var hitSound = Context.AudioManager.Load("HitSound", resource);
-            hitSound.Play();
         });
         earlyHitSoundsToggle.Select(lp.PlayHitSoundsEarly.BoolToString(), false);
         earlyHitSoundsToggle.onSelect.AddListener(it => lp.PlayHitSoundsEarly = bool.Parse(it));

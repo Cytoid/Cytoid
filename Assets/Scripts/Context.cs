@@ -40,6 +40,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static Difficulty SelectedDifficulty = Difficulty.Easy;
     public static Difficulty PreferredDifficulty = Difficulty.Easy;
     public static HashSet<Mod> SelectedMods = new HashSet<Mod>();
+    public static bool WillCalibrate = false;
 
     public static GameResult LastGameResult;
 
@@ -161,6 +162,7 @@ public class Context : SingletonMonoBehavior<Context>
         }
         if (prev == "Game" && next == "Navigation")
         {
+            WillCalibrate = false;
             LoopAudioPlayer.Instance.PlayMainLoopAudio();
             // Restore history
             ScreenManager.History = new Stack<string>(navigationScreenHistory);

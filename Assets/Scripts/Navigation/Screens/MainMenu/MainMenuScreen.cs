@@ -1,20 +1,25 @@
+using UnityEngine.UI;
+
 public class MainMenuScreen : Screen
 {
-    private static bool StartedMainLoop = false;
+    private static bool startedMainLoop;
     public const string Id = "MainMenu";
 
+    public Text freePlayText;
+    
     public override string GetId() => Id;
 
     public override void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
-        if (!StartedMainLoop)
+        if (!startedMainLoop)
         {
-            StartedMainLoop = true;
+            startedMainLoop = true;
             LoopAudioPlayer.Instance.PlayMainLoopAudio();
             LoopAudioPlayer.Instance.FadeInLoopPlayer();
         }
 
+        freePlayText.text = $"{Context.LevelManager.LoadedLocalLevels.Count} LEVEL{(Context.LevelManager.LoadedLocalLevels.Count == 1 ? "" : "S")} LOADED";
         ProfileWidget.Instance.Enter();
     }
 }

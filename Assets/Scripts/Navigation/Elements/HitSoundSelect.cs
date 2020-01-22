@@ -66,6 +66,10 @@ public class HitSoundSelect : MonoBehaviour, ScreenBecameActiveListener
                 var hitSound = Context.AudioManager.Load("HitSound", audioClip, isResource: true);
                 hitSound.Play();
             }
+            else
+            {
+                Context.AudioManager.Unload("HitSound");
+            }
         });
     }
 

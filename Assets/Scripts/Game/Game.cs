@@ -173,6 +173,9 @@ public class Game : MonoBehaviour
         // System config
         Application.targetFrameRate = 120;
         Context.SetAutoRotation(false);
+        
+        // Update last played time
+        Context.LocalPlayer.SetLastPlayedTime(level.Id, DateTime.UtcNow);
 
         IsLoaded = true;
         onGameLoaded.Invoke(this);

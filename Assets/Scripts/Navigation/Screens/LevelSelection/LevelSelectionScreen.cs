@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class LevelSelectionScreen : Screen, ScreenChangeListener
 {
     private static float savedScrollPosition = -1;
+    public static Content SavedContent;
     
     public const string Id = "LevelSelection";
 
@@ -34,9 +35,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
             if (State != ScreenState.Active) return;
             RefillLevels(true);
         });
-
-        await Context.LevelManager.LoadAllFromDataPath();
-
+        
         Context.ScreenManager.AddHandler(this);
     }
 
@@ -47,6 +46,14 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         if (savedScrollPosition > 0)
         {
             scrollRect.verticalNormalizedPosition = savedScrollPosition;
+        }
+
+        if (SavedContent != null)
+        {
+            print("not null");
+            categorySelect.Select(SavedContent.CategoryIndex);
+            sortByRadioGroup.Select(SavedContent.Sort.ToString());
+            sortOrderRadioGroup.Select(SavedContent.IsAscendingOrder.BoolToString());
         }
     }
 
@@ -174,20 +181,40 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
 
     public void OnScreenChangeStarted(Screen from, Screen to)
     {
-        if (from.GetId() == MainMenuScreen.Id && to.GetId() == Id)
+        if (from is MainMenuScreen && to == this)
         {
             // Clear search query
             searchInputField.SetTextWithoutNotify("");
+        }
+        if (from == this)
+        {
+            SavedContent = new Content
+            {
+                CategoryIndex = categorySelect.SelectedIndex,
+                Sort = (LevelSort) Enum.Parse(typeof(LevelSort), sortByRadioGroup.Value),
+                IsAscendingOrder = bool.Parse(sortOrderRadioGroup.Value)
+            };
         }
     }
 
     public void OnScreenChangeFinished(Screen from, Screen to)
     {
-        if (from.GetId() == Id)
+        if (from == this)
         {
             Context.SpriteCache.DisposeTagged("LocalLevelCoverThumbnail");
             scrollRect.ClearCells();
+            if (to is MainMenuScreen)
+            {
+                savedScrollPosition = default;
+            }
         }
+    }
+
+    public class Content
+    {
+        public int CategoryIndex;
+        public LevelSort Sort;
+        public bool IsAscendingOrder;
     }
 
 }

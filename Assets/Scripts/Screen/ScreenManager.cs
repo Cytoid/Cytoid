@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using DG.Tweening;
 using UniRx.Async;
@@ -35,6 +36,11 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         {
             ChangeScreen(initialScreenId, ScreenTransition.None);
         }
+    }
+
+    public bool IsScreenCreated(string id)
+    {
+        return createdScreens.Any(it => it.GetId() == id);
     }
 
     public Screen GetScreen(string id)

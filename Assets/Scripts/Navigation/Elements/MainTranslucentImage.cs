@@ -21,23 +21,36 @@ public class MainTranslucentImage : SingletonMonoBehavior<MainTranslucentImage>,
     
     public void OnScreenChangeStarted(Screen from, Screen to)
     {
-        if (to.GetId() == ResultScreen.Id)
+        if (to is ResultScreen)
         {
             parallaxElement.gameObject.SetActive(false);
             translucentImage.color = Color.black;
         }
-        else if (to.GetId() == MainMenuScreen.Id)
+        else if (to is InitializationScreen)
         {
+            translucentImage.color = "#1e2129".ToColor();
+            translucentImage.DOKill();
+            translucentImage.DOFade(1, 1f).SetEase(Ease.OutCubic);
+            parallaxElement.gameObject.SetActive(true);
+            parallaxElement.GetComponent<RectTransform>().DOScale(baseScale * 0.9f, 0.4f).SetEase(Ease.OutCubic);
+        }
+        else if (to is MainMenuScreen)
+        {
+            translucentImage.color = Color.black;
+            translucentImage.DOKill();
             translucentImage.DOFade(0, 0.4f).SetEase(Ease.OutCubic);
             parallaxElement.gameObject.SetActive(true);
             parallaxElement.GetComponent<RectTransform>().DOScale(baseScale * 1f, 0.4f).SetEase(Ease.OutCubic);
-        } else if (!OverlayScreenIds.Contains(to.GetId())) {
+        }
+        else if (!OverlayScreenIds.Contains(to.GetId())) {
+            translucentImage.DOKill();
             translucentImage.DOFade(1, 0.4f);
             parallaxElement.gameObject.SetActive(true);
             parallaxElement.GetComponent<RectTransform>().DOScale(baseScale * 1.1f, 0.4f).SetEase(Ease.OutCubic);
         }
         else
         {
+            translucentImage.DOKill();
             translucentImage.DOFade(1, 0.4f);
             parallaxElement.gameObject.SetActive(true);
             parallaxElement.GetComponent<RectTransform>().DOScale(baseScale * 0.98f, 0.4f).SetEase(Ease.OutCubic);

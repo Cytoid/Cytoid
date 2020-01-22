@@ -76,7 +76,7 @@ public class DifficultyPill : InteractableMonoBehavior, ScreenBecameActiveListen
             this.GetScreenParent<GamePreparationScreen>().Apply(it =>
             {
                 it.LoadLevelPerformance();
-                it.UpdateRankings();
+                it.rankingsTab.UpdateRankings(it.Level.Id, Context.SelectedDifficulty.Id);
             });
         }
     }

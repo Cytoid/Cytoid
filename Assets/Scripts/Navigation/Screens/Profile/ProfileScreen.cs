@@ -1,10 +1,11 @@
 using System;
+using System.Linq.Expressions;
 using Proyecto26;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ProfileScreen : Screen
+public class ProfileScreen : Screen, ScreenChangeListener
 {
     public const string Id = "Profile";
 
@@ -116,5 +117,15 @@ public class ProfileScreen : Screen
                 }
             }
         }).Catch(Debug.Log);
+    }
+
+    public void OnScreenChangeStarted(Screen from, Screen to) => Expression.Empty();
+
+    public void OnScreenChangeFinished(Screen from, Screen to)
+    {
+        if (from == this)
+        {
+            leaderboard.Clear();
+        }
     }
 }

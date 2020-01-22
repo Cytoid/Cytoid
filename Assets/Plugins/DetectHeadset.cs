@@ -19,7 +19,7 @@ public class DetectHeadset {
 				using (var currentActivity = javaUnityPlayer.GetStatic<AndroidJavaObject>("currentActivity")) {
 
 					using (var androidPlugin =
- new AndroidJavaObject("com.davikingcode.DetectHeadset.DetectHeadset", currentActivity)) {
+ new AndroidJavaObject("me.tigerhix.cytoid.DetectHeadset", currentActivity)) {
 
 						return androidPlugin.Call<bool>("_Detect");
 					}

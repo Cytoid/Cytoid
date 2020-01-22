@@ -8,8 +8,19 @@ public class MainMenuCardButton : NavigationElement
 
     public override void OnPointerClick(PointerEventData eventData)
     {
-        transitionFocus = parent.GetScreenSpaceCenter();
-        base.OnPointerClick(eventData);
+        if (Context.ScreenManager.IsScreenCreated(targetScreenId))
+        {
+            transitionFocus = parent.GetScreenSpaceCenter();
+            base.OnPointerClick(eventData);
+        }
+        else
+        {
+            var dialog = Dialog.Instantiate();
+            dialog.UseNegativeButton = false;
+            dialog.UsePositiveButton = true;
+            dialog.Message = "Coming soon!";
+            dialog.Open();
+        }
     }
     
     public override void OnPointerDown(PointerEventData eventData)

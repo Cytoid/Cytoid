@@ -95,6 +95,11 @@ public class Context : SingletonMonoBehavior<Context>
 #if UNITY_EDITOR
         Application.runInBackground = true;
 #endif
+        
+        if (LocalPlayer.LowerResolution)
+        {
+            UnityEngine.Screen.SetResolution((int) (InitialWidth * 0.5f), (int) (InitialHeight * 0.5f), true);
+        }
 
         SelectedMods = new HashSet<Mod>(LocalPlayer.EnabledMods);
 
@@ -110,7 +115,7 @@ public class Context : SingletonMonoBehavior<Context>
             await UniTask.WaitUntil(() => ScreenManager != null);
             if (true)
             {
-                ScreenManager.ChangeScreen(MainMenuScreen.Id, ScreenTransition.None);
+                ScreenManager.ChangeScreen(InitializationScreen.Id, ScreenTransition.None);
             }
             
             if (false)
@@ -178,7 +183,12 @@ public class Context : SingletonMonoBehavior<Context>
             }
         }
     }
-    
+
+    public static void Vibrate()
+    {
+        Handheld.Vibrate();
+    }
+
     public static void SetAutoRotation(bool autoRotation)
     {
         if (autoRotation)

@@ -55,8 +55,7 @@ public class GameConfig
             };
         }
 
-        var playerNoteSizeOffset = Context.LocalPlayer.NoteSize;
-        NoteSizeMultiplier = (float) chart.Model.size * (1 + playerNoteSizeOffset);
+        NoteSizeMultiplier = (float) chart.Model.size * (1 + Context.LocalPlayer.NoteSize);
 
         NoteSizes[NoteType.Click] = (Camera.main.orthographicSize * 2.0f) * (7.0f / 9.0f) / 5.0f * 1.2675f;
         NoteSizes[NoteType.DragHead] = NoteSizes[NoteType.Click] * 0.8f;

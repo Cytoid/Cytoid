@@ -104,10 +104,10 @@ public class GameState
                     NoteScoreMultiplier += 0.002D * noteScoreMultiplierFactor;
                     break;
                 case NoteGrade.Great:
-                    NoteScoreMultiplier += 0.0005D * noteScoreMultiplierFactor;
+                    NoteScoreMultiplier += 0.001D * noteScoreMultiplierFactor;
                     break;
                 case NoteGrade.Good:
-                    NoteScoreMultiplier -= 0.005D * noteScoreMultiplierFactor;
+                    NoteScoreMultiplier += 0.0005D * noteScoreMultiplierFactor;
                     break;
                 case NoteGrade.Bad:
                     NoteScoreMultiplier -= 0.025D * noteScoreMultiplierFactor;

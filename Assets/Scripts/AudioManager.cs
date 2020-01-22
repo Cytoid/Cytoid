@@ -220,7 +220,6 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
 
         public override void Play(AudioTrackIndex trackIndex = AudioTrackIndex.RoundRobin, bool ignoreDsp = false)
         {
-            if (ignoreDsp) throw new NotImplementedException();
             controller = pointer.Play(new NativeAudio.PlayOptions
             {
                 audioPlayerIndex = Parent.GetAvailableIndex(trackIndex)

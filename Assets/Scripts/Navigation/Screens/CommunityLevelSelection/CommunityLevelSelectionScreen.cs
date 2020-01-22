@@ -143,6 +143,7 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
             EnableDebug = true
         }).Then(entries =>
         {
+            if (entries == null) throw new Exception("Entries returned null");
             if (append)
             {
                 content.OnlineLevels = SavedContent.OnlineLevels;
@@ -209,10 +210,10 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
 
     public void OnScreenChangeFinished(Screen from, Screen to)
     {
-        if (from.GetId() == Id)
+        if (from == this)
         {
             scrollRect.ClearCells();
-            if (to.GetId() == CommunityHomeScreen.Id)
+            if (to is CommunityHomeScreen)
             {
                 SavedContent = null;
                 savedScrollPosition = default;

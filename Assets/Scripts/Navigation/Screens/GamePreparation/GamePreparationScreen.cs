@@ -28,14 +28,8 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
     public GradientMeshEffect startButtonGradient;
     public Text startButtonText;
 
-    public SpinnerElement rankingSpinner;
-    public Text rankingText;
-    public RankingContainer rankingContainer;
-    public Text rankingContainerStatusText;
-
-    public SpinnerElement ratingSpinner;
-    public Text ratingText;
-    public RateLevelElement rateLevelElement;
+    public RankingsTab rankingsTab;
+    public RatingTab ratingTab;
 
     public GameObject gameplayIcon;
     public GameObject settingsIcon;
@@ -81,14 +75,11 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
 
     public override string GetId() => Id;
 
-    private bool willStart = false;
+    private bool willStart;
 
     public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
-        rankingText.text = "";
-        rankingContainerStatusText.text = "";
-        ratingText.text = "";
         LoadSettings();
         Context.ScreenManager.AddHandler(this);
         levelNoteOffsetCalibrateButton.onPointerClick.AddListener(_ =>
@@ -115,8 +106,8 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         var needReload = Level != Context.SelectedLevel;
         Level = Context.SelectedLevel;
 
-        UpdateLevelRating();
-        UpdateRankings();
+        rankingsTab.UpdateRankings(Level.Id, Context.SelectedDifficulty.Id);
+        ratingTab.UpdateLevelRating(Level.Id);
         Context.LevelManager.OnLevelMetaUpdated.AddListener(OnLevelMetaUpdated);
         Context.OnlinePlayer.OnLevelBestPerformanceUpdated.AddListener(OnLevelBestPerformanceUpdated);
 
@@ -180,83 +171,6 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         if (level != Level) return;
         Toast.Enqueue(Toast.Status.Success, "Level metadata synchronized.");
         Context.OnSelectedLevelChanged.Invoke(Context.SelectedLevel);
-    }
-
-    private long updateRankingToken;
-
-    public void UpdateRankings()
-    {
-        rankingText.text = "";
-        rankingContainer.Clear();
-        rankingSpinner.IsSpinning = true;
-        rankingContainerStatusText.text = "Downloading level rankings...";
-        updateRankingToken = DateTime.Now.ToFileTimeUtc();
-        var token = updateRankingToken;
-        Context.OnlinePlayer.GetLevelRankings(Context.SelectedLevel.Id, Context.SelectedDifficulty.Id)
-            .Then(ret =>
-            {
-                if (token != updateRankingToken) return;
-                var (rank, entries) = ret;
-                rankingContainer.SetData(entries);
-                if (rank > 0)
-                {
-                    if (rank > 99) rankingText.text = "#99+";
-                    else rankingText.text = "#" + rank;
-                }
-                else rankingText.text = "N/A";
-
-                rankingContainerStatusText.text = "";
-            })
-            .Catch(error =>
-            {
-                if (token != updateRankingToken) return;
-                Debug.LogError(error);
-                rankingText.text = "N/A";
-                rankingContainerStatusText.text = "Could not download level rankings.";
-            })
-            .Finally(() =>
-            {
-                if (token != updateRankingToken) return;
-                rankingSpinner.IsSpinning = false;
-            });
-    }
-
-    private void OnLevelRatingUpdated(Level level, LevelRating data)
-    {
-        if (level != Level) return;
-        if (data.total > 0)
-        {
-            ratingText.text = (data.average / 2.0).ToString("0.00");
-        }
-        else
-        {
-            ratingText.text = "N/A";
-        }
-
-        rateLevelElement.SetModel(Level.Id, data);
-        rateLevelElement.rateButton.onPointerClick.RemoveAllListeners();
-        rateLevelElement.rateButton.onPointerClick.AddListener(_ =>
-        {
-            var dialog = RateLevelDialog.Instantiate(Level.Id, data.rating);
-            dialog.onLevelRated.AddListener(rating => OnLevelRatingUpdated(level, rating));
-            dialog.Open();
-        });
-    }
-
-    public void UpdateLevelRating()
-    {
-        var level = Level;
-        ratingSpinner.IsSpinning = true;
-        RestClient.Get<LevelRating>(new RequestHelper
-            {
-                Uri = $"{Context.ApiBaseUrl}/levels/{Level.Id}/ratings",
-                EnableDebug = true
-            }).Then(it => { OnLevelRatingUpdated(level, it); })
-            .Catch(error =>
-            {
-                Debug.Log(error);
-                ratingText.text = "N/A";
-            }).Finally(() => ratingSpinner.IsSpinning = false);
     }
 
     public async void LoadCover(bool load)
@@ -662,7 +576,18 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         storyboardEffectsCaretSelect.Select(lp.GraphicsLevel, false, false);
         storyboardEffectsCaretSelect.onSelect.AddListener((_, it) => lp.GraphicsLevel = it);
         lowerResolutionToggle.Select(lp.LowerResolution.BoolToString(), false);
-        lowerResolutionToggle.onSelect.AddListener(it => lp.LowerResolution = bool.Parse(it));
+        lowerResolutionToggle.onSelect.AddListener(it =>
+        {
+            lp.LowerResolution = bool.Parse(it);
+            if (lp.LowerResolution)
+            {
+                UnityEngine.Screen.SetResolution((int) (Context.InitialWidth * 0.5f), (int) (Context.InitialHeight * 0.5f), true);
+            }
+            else
+            {
+                UnityEngine.Screen.SetResolution(Context.InitialWidth, Context.InitialHeight, true);
+            }
+        });
         showBoundariesToggle.Select(lp.ShowBoundaries.BoolToString(), false);
         showBoundariesToggle.onSelect.AddListener(it => lp.ShowBoundaries = bool.Parse(it));
         coverOpacityCaretSelect.Select(lp.CoverOpacity.ToString(CultureInfo.InvariantCulture), false, false);

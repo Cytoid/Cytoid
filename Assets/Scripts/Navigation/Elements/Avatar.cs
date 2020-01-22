@@ -15,6 +15,7 @@ public class Avatar : InteractableMonoBehavior
     
     protected void Awake()
     {
+        avatarSpinner.bypassOnClickHitboxCheck = false;
         avatarSpinner.onPointerClick.AddListener(_ =>
         {
             Application.OpenURL(profileUrl);

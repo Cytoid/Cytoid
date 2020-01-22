@@ -15,6 +15,7 @@ using Object = UnityEngine.Object;
 
 public class LevelManager
 {
+    public readonly LevelLoadProgressEvent OnLevelLoadProgress = new LevelLoadProgressEvent();
     public readonly LevelEvent OnLevelMetaUpdated = new LevelEvent();
     public readonly LevelEvent OnLevelDeleted = new LevelEvent();
 
@@ -182,43 +183,41 @@ public class LevelManager
             // Reject invalid level meta
             if (!meta.Validate()) continue;
 
-            var level = new Level(path, meta, info.LastWriteTimeUtc, info.LastWriteTimeUtc);
+            var level = new Level(path, meta, info.LastWriteTimeUtc);
 
             LoadedLocalLevels[meta.id] = level;
             loadedPaths.Add(jsonPath);
             results.Add(level);
-
-            Debug.Log($"Loaded {index + 1}/{jsonPaths.Count}: {meta.id} ({path})");
-        }
-
-        // Generate thumbnails
-        index = 0;
-        foreach (var level in LoadedLocalLevels.Values)
-        {
-            if (File.Exists(level.Path + ".thumbnail")) continue;
-            var path = "file://" + level.Path + level.Meta.background.path;
-
-            using (var request = UnityWebRequestTexture.GetTexture(path))
+            
+            if (!File.Exists(level.Path + ".thumbnail"))
             {
-                await request.SendWebRequest();
-                if (request.isNetworkError || request.isHttpError)
-                {
-                    Debug.Log($"Cannot get background texture from {path}");
-                    Debug.Log(request.error);
-                }
-                else
-                {
-                    var coverTexture = DownloadHandlerTexture.GetContent(request);
-                    var ratio = coverTexture.width / 800f;
-                    TextureScaler.scale(coverTexture, 800, (int) (coverTexture.height / ratio));
-                    var bytes = coverTexture.EncodeToJPG();
-                    Object.Destroy(coverTexture);
+                var thumbnailPath = "file://" + level.Path + level.Meta.background.path;
 
-                    File.WriteAllBytes(level.Path + ".thumbnail", bytes);
+                using (var request = UnityWebRequestTexture.GetTexture(thumbnailPath))
+                {
+                    await request.SendWebRequest();
+                    if (request.isNetworkError || request.isHttpError)
+                    {
+                        Debug.Log($"Cannot get background texture from {thumbnailPath}");
+                        Debug.Log(request.error);
+                    }
+                    else
+                    {
+                        var coverTexture = DownloadHandlerTexture.GetContent(request);
+                        var ratio = coverTexture.width / 800f;
+                        TextureScaler.scale(coverTexture, 800, (int) (coverTexture.height / ratio));
+                        var bytes = coverTexture.EncodeToJPG();
+                        Object.Destroy(coverTexture);
+
+                        File.WriteAllBytes(level.Path + ".thumbnail", bytes);
+                    }
                 }
+
+                Debug.Log($"Thumbnail generated {index + 1}/{jsonPaths.Count}: {level.Id} ({thumbnailPath})");
             }
-
-            Debug.Log($"Thumbnail generated {index + 1}/{jsonPaths.Count}: {level.Id} ({path})");
+            
+            Debug.Log($"Loaded {index + 1}/{jsonPaths.Count}: {meta.id} ({path})");
+            OnLevelLoadProgress.Invoke(level, index + 1, jsonPaths.Count);
         }
 
         return results;
@@ -310,5 +309,9 @@ public class LevelManager
 }
 
 public class LevelEvent : UnityEvent<Level>
+{
+}
+
+public class LevelLoadProgressEvent : UnityEvent<Level, int, int>
 {
 }

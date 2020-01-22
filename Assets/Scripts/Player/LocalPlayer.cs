@@ -84,25 +84,27 @@ public class LocalPlayer
     
     public bool LowerResolution
     {
-        get => PlayerPrefsExtensions.GetBool("low res", false);
+        get => PlayerPrefsExtensions.GetBool("low res", 
+            Application.platform == RuntimePlatform.Android); // TODO
         set => PlayerPrefsExtensions.SetBool("low res", value);
     }
 
     public float BaseNoteOffset
     {
-        get => PlayerPrefs.GetFloat("main chart offset", 0);
+        get => PlayerPrefs.GetFloat("main chart offset", 
+            Application.platform == RuntimePlatform.Android ? 0.2f : 0.1f);
         set => PlayerPrefs.SetFloat("main chart offset", value);
     }
 
     public float HeadsetNoteOffset
     {
-        get => PlayerPrefs.GetFloat("headset chart offset", 0);
+        get => PlayerPrefs.GetFloat("headset chart offset", 0f);
         set => PlayerPrefs.SetFloat("headset chart offset", value);
     }
     
     public bool DisplayProfiler
     {
-        get => PlayerPrefsExtensions.GetBool("profiler");
+        get => PlayerPrefsExtensions.GetBool("profiler", true);
         set
         {
             PlayerPrefsExtensions.SetBool("profiler", value);
@@ -190,6 +192,18 @@ public class LocalPlayer
         SecuredPlayerPrefs.SetFloat(BestAccuracyKey(levelId, chartType, ranked), performance.Accuracy);
         SecuredPlayerPrefs.SetString(BestClearTypeKey(levelId, chartType, ranked), performance.ClearType);
     }
+    
+    public DateTime GetLastPlayedTime(string levelId)
+    {
+        return SecuredPlayerPrefs.HasKey(LastPlayedKey(levelId)) ? 
+            DateTime.Parse(SecuredPlayerPrefs.GetString(LastPlayedKey(levelId), null)) : 
+            DateTime.MinValue;
+    }
+
+    public void SetLastPlayedTime(string levelId, DateTime dateTime)
+    {
+        SecuredPlayerPrefs.SetString(LastPlayedKey(levelId), dateTime.ToString("s"));
+    }
 
     public int GetPlayCount(string levelId, string chartType)
     {
@@ -200,6 +214,8 @@ public class LocalPlayer
     {
         SecuredPlayerPrefs.SetInt(PlayCountKey(levelId, chartType), playCount);
     }
+
+    private static string LastPlayedKey(string level) => level + " : " + "last played";
     
     private static string BestScoreKey(string level, string type, bool ranked) => level + " : " + type + " : " + "best score" + (ranked ? " ranked" : "");
 

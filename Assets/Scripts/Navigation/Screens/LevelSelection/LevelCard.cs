@@ -129,6 +129,7 @@ public class LevelCard : InteractableMonoBehavior
             {
                 if (sprite != null)
                 {
+                    if (cover == null) return;
                     cover.sprite = sprite;
                     cover.DOFade(0.5f, 0.2f);
                     cover.FitSpriteAspectRatio();
@@ -160,14 +161,13 @@ public class LevelCard : InteractableMonoBehavior
         ignoreNextPointerUp = true;
         OnPointerUp(eventData);
         OnAction();
-        Handheld.Vibrate();
+        Context.Vibrate();
         actionToken = null;
     }
     
     public override void OnPointerUp(PointerEventData eventData)
     {
         var d = Vector2.Distance(pressPosition, eventData.position);
-        print(Context.ReferenceWidth * 0.005f + " <-> " + d);
         if (d > 0.005f * Context.ReferenceWidth || ignoreNextPointerUp)
         {
             ignoreNextPointerUp = false;
@@ -204,6 +204,7 @@ public class LevelCard : InteractableMonoBehavior
         dialog.OnPositiveButtonClicked = _ =>
         {
             Context.LevelManager.DeleteLocalLevel(level.Id);
+            Toast.Next(Toast.Status.Success, "Successfully deleted level.");
             dialog.Close();
         };
         dialog.Open();

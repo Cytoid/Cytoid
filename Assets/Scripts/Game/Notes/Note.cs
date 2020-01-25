@@ -29,7 +29,7 @@ public abstract class Note : MonoBehaviour
     {
         Game = game;
         Chart = game.Chart.Model;
-        Model = game.Chart.Model.note_list[noteId];
+        Model = game.Chart.Model.note_map[noteId];
         Page = Chart.page_list[Model.page_index];
         Type = (NoteType) Model.type;
 

@@ -158,7 +158,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         {
             case LevelSort.Title:
                 levels.Sort((a, b) =>
-                    string.Compare(a.Meta.title, b.Meta.title, StringComparison.Ordinal) * (asc ? 1 : -1));
+                    string.Compare(a.Meta.title.LowerCaseFirstChar(), b.Meta.title.LowerCaseFirstChar(), StringComparison.Ordinal) * (asc ? 1 : -1));
                 break;
             case LevelSort.Difficulty:
                 levels.Sort((a, b) =>

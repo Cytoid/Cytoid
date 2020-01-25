@@ -378,7 +378,7 @@ namespace Cytoid.Storyboard
                 if (split.Length == 3) offset = float.Parse(split[2]);
 
                 var id = int.Parse(split[1]);
-                var note = Game.Chart.Model.note_list[id];
+                var note = Game.Chart.Model.note_map[id];
                 switch (type)
                 {
                     case "intro":

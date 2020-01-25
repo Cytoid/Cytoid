@@ -15,6 +15,8 @@ using Object = UnityEngine.Object;
 
 public class LevelManager
 {
+    public const string CoverThumbnailFilename = ".cover";
+    
     public readonly LevelLoadProgressEvent OnLevelLoadProgress = new LevelLoadProgressEvent();
     public readonly LevelEvent OnLevelMetaUpdated = new LevelEvent();
     public readonly LevelEvent OnLevelDeleted = new LevelEvent();
@@ -59,7 +61,14 @@ public class LevelManager
                 resolve(remoteMeta);
             }).Catch(error =>
             {
-                Debug.LogError(error);
+                if (!error.IsNetworkError && error.StatusCode == 404)
+                {
+                    Debug.Log($"Level {levelId} does not exist on the remote server");   
+                }
+                else
+                {
+                    Debug.LogError(error);
+                }
                 reject(error);
             });
         });
@@ -170,26 +179,41 @@ public class LevelManager
                 Debug.Log($"Warning: {jsonPath} is already loaded!");
                 continue;
             }
-
+            
             var info = new FileInfo(jsonPath);
             if (info.Directory == null) continue;
 
             var path = info.Directory.FullName + Path.DirectorySeparatorChar;
+            Debug.Log($"Loading {index + 1}/{jsonPaths.Count} from {path}");
+            
             var meta = JsonConvert.DeserializeObject<LevelMeta>(File.ReadAllText(jsonPath));
+
+            if (meta == null)
+            {
+                Debug.Log($"Invalid level.json file");
+                Debug.Log($"Skipped {index + 1}/{jsonPaths.Count} from {path}");
+                continue;
+            }
 
             // Sort charts
             meta.SortCharts();
 
             // Reject invalid level meta
-            if (!meta.Validate()) continue;
+            if (!meta.Validate())
+            {
+                Debug.Log($"Invalid metadata");
+                Debug.Log($"Skipped {index + 1}/{jsonPaths.Count} from {path}");
+                continue;
+            }
 
-            var level = new Level(path, meta, info.LastWriteTimeUtc);
+            var level = new Level(path, meta, info.LastWriteTimeUtc, Context.LocalPlayer.GetLastPlayedTime(meta.id));
 
             LoadedLocalLevels[meta.id] = level;
             loadedPaths.Add(jsonPath);
             results.Add(level);
             
-            if (!File.Exists(level.Path + ".thumbnail"))
+            if (File.Exists(level.Path + ".thumbnail")) File.Delete(level.Path + ".thumbnail");
+            if (!File.Exists(level.Path + CoverThumbnailFilename))
             {
                 var thumbnailPath = "file://" + level.Path + level.Meta.background.path;
 
@@ -200,23 +224,33 @@ public class LevelManager
                     {
                         Debug.Log($"Cannot get background texture from {thumbnailPath}");
                         Debug.Log(request.error);
+                        Debug.Log($"Skipped {index + 1}/{jsonPaths.Count}: {meta.id} ({path})");
+                        continue;
                     }
-                    else
-                    {
-                        var coverTexture = DownloadHandlerTexture.GetContent(request);
-                        var ratio = coverTexture.width / 800f;
-                        TextureScaler.scale(coverTexture, 800, (int) (coverTexture.height / ratio));
-                        var bytes = coverTexture.EncodeToJPG();
-                        Object.Destroy(coverTexture);
 
-                        File.WriteAllBytes(level.Path + ".thumbnail", bytes);
+                    var coverTexture = DownloadHandlerTexture.GetContent(request);
+
+                    if (coverTexture == null)
+                    {
+                        Debug.Log($"Cannot get background texture from {thumbnailPath}");
+                        Debug.Log(request.error);
+                        Debug.Log($"Skipped {index + 1}/{jsonPaths.Count}: {meta.id} ({path})");
+                        continue;
                     }
+                    var croppedTexture = TextureScaler.FitCrop(coverTexture, Context.ThumbnailWidth, Context.ThumbnailHeight);
+                    var bytes = croppedTexture.EncodeToJPG();
+                    Object.Destroy(coverTexture);
+                    Object.Destroy(croppedTexture);
+
+                    await UniTask.DelayFrame(0); // Reduce load to prevent crash
+
+                    File.WriteAllBytes(level.Path + CoverThumbnailFilename, bytes);
                 }
 
                 Debug.Log($"Thumbnail generated {index + 1}/{jsonPaths.Count}: {level.Id} ({thumbnailPath})");
             }
             
-            Debug.Log($"Loaded {index + 1}/{jsonPaths.Count}: {meta.id} ({path})");
+            Debug.Log($"Loaded {index + 1}/{jsonPaths.Count}: ({meta.id})");
             OnLevelLoadProgress.Invoke(level, index + 1, jsonPaths.Count);
         }
 

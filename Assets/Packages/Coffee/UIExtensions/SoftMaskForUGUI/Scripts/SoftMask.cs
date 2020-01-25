@@ -404,7 +404,7 @@ namespace Coffee.UIExtensions
 		{
 			foreach (var sm in s_ActiveSoftMasks)
 			{
-				if (!sm || sm._hasChanged)
+				if (!sm || sm._hasChanged || !sm.graphic || !sm.graphic.canvas)
 					continue;
 
 				var canvas = sm.graphic.canvas;

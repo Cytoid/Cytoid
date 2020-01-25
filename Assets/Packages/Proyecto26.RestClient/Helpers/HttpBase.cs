@@ -73,7 +73,7 @@ namespace Proyecto26
             if (debugEnabled)
             {
                 if (isError)
-                    Debug.LogError(message);
+                    Debug.LogWarning(message);
                 else
                     Debug.Log(message);
             }

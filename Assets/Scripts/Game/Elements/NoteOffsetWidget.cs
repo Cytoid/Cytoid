@@ -74,6 +74,7 @@ public class NoteOffsetWidget : MonoBehaviour
                 game.onGameRetried.AddListener(_ => transitionElement.Leave());
                 autoplayRadioGroup.Select("true", false);
                 game.State.Mods.Add(Mod.Auto);
+                transform.RebuildLayout();
             }
         });
     }

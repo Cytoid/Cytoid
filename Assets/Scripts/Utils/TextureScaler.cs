@@ -19,7 +19,7 @@ public class TextureScaler
     /// <param name="width">Destination texture width</param>
     /// <param name="height">Destination texture height</param>
     /// <param name="mode">Filtering mode</param>
-    public static Texture2D scaled(Texture2D src, int width, int height, FilterMode mode = FilterMode.Trilinear)
+    public static Texture2D Scaled(Texture2D src, int width, int height, FilterMode mode = FilterMode.Trilinear)
     {
         Rect texR = new Rect(0, 0, width, height);
         _gpu_scale(src, width, height, mode);
@@ -38,7 +38,7 @@ public class TextureScaler
     /// <param name="width">New width</param>
     /// <param name="height">New height</param>
     /// <param name="mode">Filtering mode</param>
-    public static void scale(Texture2D tex, int width, int height, FilterMode mode = FilterMode.Trilinear)
+    public static void Scale(Texture2D tex, int width, int height, FilterMode mode = FilterMode.Trilinear)
     {
         Rect texR = new Rect(0, 0, width, height);
         _gpu_scale(tex, width, height, mode);
@@ -47,6 +47,34 @@ public class TextureScaler
         tex.Resize(width, height);
         tex.ReadPixels(texR, 0, 0, true);
         tex.Apply(true); //Remove this if you hate us applying textures for you :)
+    }
+    
+    public static Texture2D FitCrop(Texture2D tex, int width, int height, FilterMode mode = FilterMode.Trilinear)
+    {
+        var result = new Texture2D(width, height, TextureFormat.ARGB32, true);
+        result.Resize(width, height);
+        var targetRatio = width * 1.0f / height;
+        var ratio = tex.width * 1.0f / tex.height;
+        Debug.Log($"Width: {width}, Height: {height}, Texture width: {tex.width}, Texture height: {tex.height}, Target ratio: {targetRatio}, Texture ratio: {ratio}");
+        Rect texR;
+        if (targetRatio < ratio)
+        {
+            var toWidth = tex.width * height * 1.0f / tex.height;
+            texR = new Rect((int) ((toWidth - width) / 2), 0, width, height);
+            _gpu_scale(tex, (int) toWidth, height, mode);
+            Debug.Log($"To width: {toWidth}, Rect: {texR}");
+            result.ReadPixels(texR, 0, 0, true);
+        }
+        else
+        {
+            var toHeight = tex.height * width * 1.0f / tex.width;
+            texR = new Rect(0, (int) ((toHeight - height) / 2), width, height);
+            _gpu_scale(tex, width, (int) toHeight, mode);
+            Debug.Log($"To height: {toHeight}, Rect: {texR}");
+            result.ReadPixels(texR, 0, 0, true);
+        }
+
+        return result;
     }
 
     // Internal unility that renders the source texture into the RTT - the scaling method itself.

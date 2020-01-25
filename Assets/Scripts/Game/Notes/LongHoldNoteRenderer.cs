@@ -25,8 +25,6 @@ public class LongHoldNoteRenderer : HoldNoteRenderer
         ProgressRing = Object.Instantiate(provider.progressRingPrefab, Note.transform, false)
             .GetComponent<ProgressRing>();
         Triangle = Object.Instantiate(provider.trianglePrefab).GetComponent<MeshTriangle>();
-        var newProgressRingScale = ProgressRing.transform.localScale.x * SizeMultiplier;
-        ProgressRing.transform.SetLocalScaleXY(newProgressRingScale, newProgressRingScale);
         ProgressRing.maxCutoff = 0;
         ProgressRing.fillCutoff = 0;
         ProgressRing.gameObject.GetComponent<SpriteRenderer>().material.renderQueue =
@@ -34,6 +32,13 @@ public class LongHoldNoteRenderer : HoldNoteRenderer
         CompletedLine.size = new Vector2(1, 0);
         CompletedLine2.size = new Vector2(1, 0);
         SpriteMask = Note.transform.GetComponentInChildren<SpriteMask>();
+    }
+
+    public override void OnNoteLoaded()
+    {
+        base.OnNoteLoaded();
+        var newProgressRingScale = ProgressRing.transform.localScale.x * SizeMultiplier;
+        ProgressRing.transform.SetLocalScaleXY(newProgressRingScale, newProgressRingScale);
     }
 
     protected override void UpdateComponentStates()

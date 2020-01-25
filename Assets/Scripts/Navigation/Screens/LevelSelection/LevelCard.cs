@@ -102,7 +102,7 @@ public class LevelCard : InteractableMonoBehavior
         {
             if (level.IsLocal)
             {
-                var path = "file://" + level.Path + ".thumbnail";
+                var path = "file://" + level.Path + LevelManager.CoverThumbnailFilename;
                 sprite = await Context.SpriteCache.CacheSprite(path, "LocalLevelCoverThumbnail",
                     cancelToken.Token);
             }
@@ -146,7 +146,7 @@ public class LevelCard : InteractableMonoBehavior
         base.OnPointerDown(eventData);
         pressPosition = eventData.position;
         if (loadedCover) cover.DOFade(1.0f, 0.2f).SetEase(Ease.OutCubic);
-        cover.rectTransform.DOScale(1.02f, 0.2f).SetEase(Ease.OutCubic);
+        // cover.rectTransform.DOScale(1.02f, 0.2f).SetEase(Ease.OutCubic);
         actionToken?.Cancel();
         actionToken = new CancellationTokenSource();
         try
@@ -176,7 +176,7 @@ public class LevelCard : InteractableMonoBehavior
         actionToken?.Cancel();
         base.OnPointerUp(eventData);
         if (loadedCover) cover.DOFade(0.5f, 0.2f).SetEase(Ease.OutCubic);
-        cover.rectTransform.DOScale(1.0f, 0.2f).SetEase(Ease.OutCubic);
+        // cover.rectTransform.DOScale(1.0f, 0.2f).SetEase(Ease.OutCubic);
     }
 
     public override void OnPointerClick(PointerEventData eventData)

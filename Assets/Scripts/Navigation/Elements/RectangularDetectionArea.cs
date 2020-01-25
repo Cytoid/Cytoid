@@ -12,13 +12,13 @@ public class RectangularDetectionArea : InteractableMonoBehavior
         set
         {
             detectionEnabled = value;
-            image.raycastTarget = value;
+            text.raycastTarget = value;
         }
     }
 
     public Action onClick;
 
-    [GetComponent] public Image image;
+    [GetComponent] public Text text;
 
     private void Awake()
     {

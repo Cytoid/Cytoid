@@ -16,6 +16,9 @@ public class Context : SingletonMonoBehavior<Context>
     public const int ReferenceWidth = 1920;
     public const int ReferenceHeight = 1080;
 
+    public static int ThumbnailWidth = 576;
+    public static int ThumbnailHeight = 360;
+
     public static readonly LevelEvent OnSelectedLevelChanged = new LevelEvent();
     
     public static string DataPath;
@@ -74,7 +77,8 @@ public class Context : SingletonMonoBehavior<Context>
         DOTween.defaultEaseType = Ease.OutCubic;
         UnityEngine.Screen.sleepTimeout = SleepTimeout.NeverSleep;
         Application.targetFrameRate = 120;
-
+        Input.gyro.enabled = true;
+        
         DataPath = Application.persistentDataPath;
         print("Data path: " + DataPath);
 
@@ -90,6 +94,7 @@ public class Context : SingletonMonoBehavior<Context>
 			DataPath = dir + "/Cytoid";
 			// Create an empty folder if it doesn't already exist
 			Directory.CreateDirectory(DataPath);
+            File.Create(DataPath + "/.nomedia").Dispose();
 		}
 
 #if UNITY_EDITOR
@@ -152,6 +157,7 @@ public class Context : SingletonMonoBehavior<Context>
     {
         if (prev == "Navigation" && next == "Game")
         {
+            Input.gyro.enabled = false;
             LoopAudioPlayer.Instance.StopMainLoopAudio();
             LoopAudioPlayer.Instance.FadeOutLoopPlayer(0);
             // Save history
@@ -159,7 +165,7 @@ public class Context : SingletonMonoBehavior<Context>
         }
     }
 
-    public static void OnSceneChanged(string prev, string next)
+    public static async void OnSceneChanged(string prev, string next)
     {
         if (prev == "Navigation" && next == "Game")
         {
@@ -167,8 +173,8 @@ public class Context : SingletonMonoBehavior<Context>
         }
         if (prev == "Game" && next == "Navigation")
         {
+            Input.gyro.enabled = true;
             WillCalibrate = false;
-            LoopAudioPlayer.Instance.PlayMainLoopAudio();
             // Restore history
             ScreenManager.History = new Stack<string>(navigationScreenHistory);
             if (LastGameResult != null)
@@ -180,6 +186,8 @@ public class Context : SingletonMonoBehavior<Context>
             {
                 // Show game preparation screen
                 ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.None);
+                await UniTask.DelayFrame(5);
+                LoopAudioPlayer.Instance.PlayMainLoopAudio();
             }
         }
     }

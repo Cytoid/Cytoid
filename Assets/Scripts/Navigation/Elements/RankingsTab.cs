@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Proyecto26;
 using RSG;
 using UnityEngine;
 using UnityEngine.UI;
@@ -60,7 +61,7 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
                     rankingContainerStatusText.text = "No performances yet. Be the first!";
                 }
                 
-                if (entries.Count > 0 && entries.Max(it => it.rank) > 10)
+                if (entries.Count > 0)
                 {
                     viewMoreButton.gameObject.SetActive(true);
                     viewMoreButton.onPointerClick.RemoveAllListeners();
@@ -76,7 +77,17 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
             .Catch(error =>
             {
                 if (token != updateRankingToken) return null;
-                Debug.LogError(error);
+                if (error is RequestException reqError)
+                {
+                    if (reqError.StatusCode != 404)
+                    {
+                        Debug.LogError(error);
+                    }
+                }
+                else
+                {
+                    Debug.LogError(error);
+                }
                 rankingText.text = "N/A";
                 rankingContainerStatusText.text = "Could not download level rankings.";
                 throw error;

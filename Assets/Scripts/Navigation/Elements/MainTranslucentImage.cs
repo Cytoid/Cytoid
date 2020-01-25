@@ -6,6 +6,7 @@ using UnityEngine;
 
 public class MainTranslucentImage : SingletonMonoBehavior<MainTranslucentImage>, ScreenChangeListener
 {
+    public Camera uiCamera;
     public float baseScale = 1.0f;
     public ParallaxElement parallaxElement;
     [GetComponent] public TranslucentImage translucentImage;
@@ -18,9 +19,13 @@ public class MainTranslucentImage : SingletonMonoBehavior<MainTranslucentImage>,
     }
 
     private static readonly List<string> OverlayScreenIds = new List<string> {SignInScreen.Id, ProfileScreen.Id};
-    
+
     public void OnScreenChangeStarted(Screen from, Screen to)
     {
+        if (from is GamePreparationScreen) {
+            TranslucentImageSource.Disabled = false;
+            uiCamera.gameObject.SetActive(true);
+        }
         if (to is ResultScreen)
         {
             parallaxElement.gameObject.SetActive(false);
@@ -57,5 +62,12 @@ public class MainTranslucentImage : SingletonMonoBehavior<MainTranslucentImage>,
         }
     }
 
-    public void OnScreenChangeFinished(Screen from, Screen to) => Expression.Empty();
+    public void OnScreenChangeFinished(Screen from, Screen to)
+    {
+        if (to is GamePreparationScreen)
+        {
+            TranslucentImageSource.Disabled = true;
+            uiCamera.gameObject.SetActive(false);
+        }
+    }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -11,6 +12,7 @@ public class ChartModel
     public List<Tempo> tempo_list = new List<Tempo>();
     public List<Page> page_list = new List<Page>();
     public List<Note> note_list = new List<Note>();
+    [JsonIgnore] public Dictionary<int, Note> note_map = new Dictionary<int, Note>();
     public List<EventOrder> event_order_list = new List<EventOrder>();
 
     public double music_offset;
@@ -105,8 +107,8 @@ public class ChartModel
 
         public Note GetDragEndNote(ChartModel parent)
         {
-            Assert.IsTrue((NoteType) type == NoteType.DragHead || (NoteType) type == NoteType.DragChild);
-            return next_id <= 0 ? this : parent.note_list[next_id].GetDragEndNote(parent);
+            Assert.IsTrue((NoteType) type == NoteType.DragHead || (NoteType) type == NoteType.DragChild, $"Expected DragHead or DragChild, but type is {((NoteType) type).ToString()} for note {id}");
+            return next_id <= 0 ? this : parent.note_map[next_id].GetDragEndNote(parent);
         }
     }
 }

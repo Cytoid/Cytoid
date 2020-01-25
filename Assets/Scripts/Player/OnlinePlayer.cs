@@ -19,8 +19,6 @@ public class OnlinePlayer
     public bool IsAuthenticated { get; private set; }
     
     public bool IsAuthenticating { get; set; }
-    
-    private Dictionary<string, string> setCookies = new Dictionary<string, string>();
 
     public Promise<Profile> Authenticate(string password)
     {

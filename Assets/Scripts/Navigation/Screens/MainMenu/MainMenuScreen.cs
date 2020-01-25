@@ -20,6 +20,7 @@ public class MainMenuScreen : Screen
         }
 
         freePlayText.text = $"{Context.LevelManager.LoadedLocalLevels.Count} LEVEL{(Context.LevelManager.LoadedLocalLevels.Count == 1 ? "" : "S")} LOADED";
+        freePlayText.transform.RebuildLayout();
         ProfileWidget.Instance.Enter();
     }
 }

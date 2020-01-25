@@ -79,6 +79,7 @@ public class Chart
         for (var i = 0; i < Model.note_list.Count; i++)
         {
             var note = Model.note_list[i];
+            Model.note_map[note.id] = note;
             var page = Model.page_list[note.page_index];
 
             note.direction = page.scan_line_direction;
@@ -141,7 +142,7 @@ public class Chart
                     if (note.next_id > 0)
                     {
                         note.nextdraglinestarttime = note.intro_time - 0.133f;
-                        note.nextdraglinestoptime = Model.note_list[note.next_id].intro_time - 0.132f;
+                        note.nextdraglinestoptime = Model.note_map[note.next_id].intro_time - 0.132f;
                     }
 
                     break;
@@ -150,7 +151,7 @@ public class Chart
                     if (note.next_id > 0)
                     {
                         note.nextdraglinestarttime = note.intro_time - 0.133f;
-                        note.nextdraglinestoptime = Model.note_list[note.next_id].intro_time - 0.132f;
+                        note.nextdraglinestoptime = Model.note_map[note.next_id].intro_time - 0.132f;
                     }
 
                     break;
@@ -164,7 +165,7 @@ public class Chart
             if (note.next_id <= 0) continue;
 
             var noteThis = note;
-            var noteNext = Model.note_list[note.next_id];
+            var noteNext = Model.note_map[note.next_id];
 
             if (noteThis.position == noteNext.position)
                 noteThis.rotation = 0;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DG.Tweening;
+using LeTai.Asset.TranslucentImage;
 using UniRx.Async;
 using UnityEngine;
 

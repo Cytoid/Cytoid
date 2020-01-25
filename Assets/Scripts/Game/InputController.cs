@@ -66,6 +66,11 @@ public class InputController : MonoBehaviour
                 TouchableDragNotes.Add(note);
             }
 
+            if ((note.Type == NoteType.Hold || note.Type == NoteType.LongHold) && !(note is HoldNote))
+            {
+                print(note.GetType().Name);
+                print(note.Model.id);
+            }
             if ((note.Type == NoteType.Hold || note.Type == NoteType.LongHold) &&
                 !((HoldNote) note).Holding)
             {

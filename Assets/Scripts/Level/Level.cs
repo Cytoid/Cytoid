@@ -9,15 +9,27 @@ public class Level
     public string Path;
     public string PackagePath;
     public DateTime AddedDate;
-    public DateTime PlayedDate => Context.LocalPlayer.GetLastPlayedTime(Id);
+
+    public DateTime PlayedDate
+    {
+        get => playedDate;
+        set
+        {
+            playedDate = value;
+            Context.LocalPlayer.SetLastPlayedTime(Id, value);
+        }
+    }
+
+    private DateTime playedDate;
     
-    public Level(string path, LevelMeta meta, DateTime addedDate)
+    public Level(string path, LevelMeta meta, DateTime addedDate, DateTime playedDate)
     {
         IsLocal = true;
         PackagePath = $"{Context.ApiBaseUrl}/levels/{meta.id}/resources";
         Path = path;
         Meta = meta;
         AddedDate = addedDate;
+        PlayedDate = playedDate;
     }
 
     public Level(string packagePath, LevelMeta meta)

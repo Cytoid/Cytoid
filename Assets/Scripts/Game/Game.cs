@@ -280,7 +280,7 @@ public class Game : MonoBehaviour
                 Chart.CurrentPageId++;
             }
 
-            var notes = Chart.Model.note_list;
+            var notes = Chart.Model.note_map;
             while (Chart.CurrentNoteId < notes.Count && notes[Chart.CurrentNoteId].start_time - 2.0f < Time)
                 switch ((NoteType) notes[Chart.CurrentNoteId].type)
                 {
@@ -334,6 +334,7 @@ public class Game : MonoBehaviour
                 break;
         }
 
+        Debug.Log($"Note {model.id} is spawned as {((NoteType) model.type).ToString()}");
         note.SetData(this, model.id);
         Notes[model.id] = note;
     }
@@ -365,6 +366,7 @@ public class Game : MonoBehaviour
         Context.AudioManager.Get("Navigate2").Play(ignoreDsp: true);
         
         Context.ScreenManager.ChangeScreen(PausedScreen.Id, ScreenTransition.None);
+        Context.SetAutoRotation(true);
         
         onGamePaused.Invoke(this);
         return true;
@@ -377,6 +379,7 @@ public class Game : MonoBehaviour
         if (!IsLoaded || State.IsPlaying || State.IsCompleted || State.IsFailed || UnpauseCountdown > 0) return;
         print("Game ready to unpause");
         Context.ScreenManager.ChangeScreen(OverlayScreen.Id, ScreenTransition.None, 0.4f, 1);
+        Context.SetAutoRotation(false);
 
         onGameWillUnpause.Invoke(this);
 

@@ -80,9 +80,13 @@ public class SpriteCache
 
             if (request.isNetworkError || request.isHttpError)
             {
-                Debug.LogError($"SpriteCache: Failed to load {path}");
-                Debug.LogError(request.error);
-                return null;
+                // TODO: Neo, fix your image CDN :)
+                if (request.responseCode != 422)
+                {
+                    Debug.LogError($"SpriteCache: Failed to load {path}");
+                    Debug.LogError(request.error);
+                    return null;
+                }
             }
 
             var coverTexture = DownloadHandlerTexture.GetContent(request);

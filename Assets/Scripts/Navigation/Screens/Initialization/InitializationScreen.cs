@@ -41,6 +41,7 @@ public class InitializationScreen : Screen
     private void OnLevelLoadProgress(Level level, int current, int total)
     {
         statusText.text = $"Loaded {level.Id} ({current}/{total})";
+        statusText.transform.RebuildLayout();
     }
     
 }

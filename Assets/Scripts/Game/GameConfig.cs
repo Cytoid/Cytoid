@@ -123,13 +123,17 @@ public class GameConfig
 
     public Color GetRingColor(ChartModel.Note note)
     {
-        return note.direction > 0 ? NoteRingColors[(NoteType) note.type][0] : NoteRingColors[(NoteType) note.type][1];
+        var alt =  note.direction > 0;
+        if (note.is_forward) alt = !alt;
+        return alt ? NoteRingColors[(NoteType) note.type][0] : NoteRingColors[(NoteType) note.type][1];
     }
 
     public Color GetFillColor(ChartModel.Note note)
     {
         if ((NoteType) note.type == NoteType.DragChild) return GetRingColor(note); // Special case: drag child
-        return note.direction > 0 ? NoteFillColors[(NoteType) note.type][0] : NoteFillColors[(NoteType) note.type][1];
+        var alt = note.direction > 0;
+        if (note.is_forward) alt = !alt;
+        return alt ? NoteFillColors[(NoteType) note.type][0] : NoteFillColors[(NoteType) note.type][1];
     }
 
     public Color GetRingColorOverride(ChartModel.Note note)

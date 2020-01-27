@@ -48,7 +48,7 @@ public class ResultScreen : Screen, ScreenChangeListener
                 {Context.DataPath + "/suconh_typex.alice/level.json"});
             Context.SelectedLevel = Context.LevelManager.LoadedLocalLevels.Values.First();
             Context.SelectedDifficulty = Difficulty.Parse(Context.LevelManager.LoadedLocalLevels.Values.First().Meta.charts[0].type);
-            Context.LocalPlayer.PlayRanked = true;
+            Context.LocalPlayer.PlayRanked = false;
             result = new GameResult
             {
                 Score = 123,
@@ -193,7 +193,7 @@ public class ResultScreen : Screen, ScreenChangeListener
     {
         base.OnScreenBecameActive();
 
-        TranslucentCover.Instance.image.DOFade(0.7f, 0.8f);
+        TranslucentCover.Instance.image.DOFade(0.9f, 0.8f);
         ProfileWidget.Instance.Enter();
         upperRightColumn.Enter();
 

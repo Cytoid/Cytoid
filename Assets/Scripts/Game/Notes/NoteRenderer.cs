@@ -7,20 +7,17 @@ public class NoteRenderer
     public Game Game => Note.Game;
 
     protected CircleCollider2D Collider;
-    protected float InitialColliderRadius;
 
     public NoteRenderer(Note note)
     {
         Note = note;
         Collider = note.gameObject.GetComponent<CircleCollider2D>();
         Collider.enabled = true;
-        InitialColliderRadius = Collider.radius;
     }
 
     public virtual void OnLateUpdate()
     {
-        Collider.radius = InitialColliderRadius * Note.Game.Config.NoteHitboxMultiplier /
-                          Note.Game.Config.NoteSizeMultiplier;
+        Collider.radius = Note.Game.Config.NoteHitboxSizes[Note.Type] / Note.Game.Config.NoteSizeMultiplier;
         Render();
     }
 

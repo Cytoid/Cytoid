@@ -41,26 +41,37 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         preloadedAudioClips.ForEach(it => Load(it.name, it));
     }
 
-    public Controller Load(string id, AudioClip audioClip, bool? useNativeAudio = null, bool isResource = false)
+    public Controller Load(string id, AudioClip audioClip, bool? useNativeAudio = null, bool isResource = false, bool isMusic = false)
     {
         if (useNativeAudio == null) useNativeAudio = this.useNativeAudio;
         if (controllers.ContainsKey(id)) Unload(id);
         print("[AudioManager] Loading " + id);
         return controllers[id] = useNativeAudio.Value
-            ? (Controller) new Exceed7Controller(this, audioClip)
-            : new UnityController(this, audioClip, isResource);
+            ? (Controller) new Exceed7Controller(this, audioClip, isMusic)
+            : new UnityController(this, audioClip, isResource, isMusic);
     }
 
     public void Unload(string id)
     {
-        print("[AudioManager] Unloading " + id);
-        controllers[id].Unload();
-        controllers.Remove(id);
+        if (controllers.ContainsKey(id))
+        {
+            print("[AudioManager] Unloading " + id);
+            controllers[id].Unload();
+            controllers.Remove(id);
+        }
     }
 
     public bool IsLoaded(string id) => controllers.ContainsKey(id);
 
     public Controller Get(string id) => controllers[id];
+
+    public void UpdateVolumes()
+    {
+        foreach (var controller in controllers.Values)
+        {
+            controller.Volume = controller.IsMusic ? Context.LocalPlayer.MusicVolume : Context.LocalPlayer.SoundEffectsVolume;
+        }
+    }
 
     private int GetAvailableIndex(AudioTrackIndex trackIndex)
     {
@@ -78,10 +89,12 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
     public abstract class Controller
     {
         protected AudioManager Parent;
+        public bool IsMusic { get; }
 
-        public Controller(AudioManager parent)
+        public Controller(AudioManager parent, bool isMusic)
         {
             Parent = parent;
+            IsMusic = isMusic;
         }
 
         public abstract float Volume { get; set; }
@@ -101,19 +114,25 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         private AudioClip audioClip;
         private int index = -1;
         private bool isResource;
+        private float volume = 1f;
 
-        public UnityController(AudioManager parent, AudioClip audioClip, bool isResource) : base(parent)
+        public UnityController(AudioManager parent, AudioClip audioClip, bool isResource, bool isMusic) : base(parent, isMusic)
         {
             this.audioClip = audioClip;
             this.isResource = isResource;
+            volume = isMusic ? Context.LocalPlayer.MusicVolume : Context.LocalPlayer.SoundEffectsVolume;
         }
 
         public AudioSource Source => Parent.audioSources[index];
 
         public override float Volume
         {
-            get => Source.volume;
-            set => Source.volume = value;
+            get => volume;
+            set
+            {
+                volume = value;
+                if (index >= 0) Source.volume = volume;
+            }
         }
 
         public override float PlaybackTime
@@ -131,6 +150,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             Source.Apply(it =>
             {
                 it.clip = audioClip;
+                it.volume = Volume;
                 it.Play();
             });
         }
@@ -140,6 +160,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             index = Parent.GetAvailableIndex(trackIndex);
             Source.ignoreListenerPause = ignoreDsp;
             Source.clip = audioClip;
+            Source.volume = Volume;
             var time = AudioSettings.dspTime + delay;
             Source.PlayScheduled(time);
             return time;
@@ -194,10 +215,11 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         private float length;
         private float volume = 1f;
 
-        public Exceed7Controller(AudioManager parent, AudioClip audioClip) : base(parent)
+        public Exceed7Controller(AudioManager parent, AudioClip audioClip, bool isMusic) : base(parent, isMusic)
         {
             pointer = NativeAudio.Load(audioClip, NativeAudio.LoadOptions.defaultOptions);
             length = audioClip.length;
+            volume = isMusic ? Context.LocalPlayer.MusicVolume : Context.LocalPlayer.SoundEffectsVolume;
         }
 
         public override float Volume

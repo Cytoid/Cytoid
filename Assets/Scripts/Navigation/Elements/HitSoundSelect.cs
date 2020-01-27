@@ -35,7 +35,7 @@ public class HitSoundSelect : MonoBehaviour, ScreenBecameActiveListener
         "Quack",
     };
 
-    [GetComponent] public CaretSelect select;
+    [GetComponentInChildren] public CaretSelect select;
 
     public Game game;
 
@@ -45,9 +45,6 @@ public class HitSoundSelect : MonoBehaviour, ScreenBecameActiveListener
         {
             game.onGameLoaded.AddListener(_ => Load());
         }
-
-        select.labels = new List<string>(HitSoundNames);
-        select.values = new List<string>(HitSounds);
     }
 
     public void OnScreenBecameActive()
@@ -55,10 +52,14 @@ public class HitSoundSelect : MonoBehaviour, ScreenBecameActiveListener
         Load();
     }
 
-    private void Load()
+    public void Load()
     {
+        if (select == null) select = GetComponentInChildren<CaretSelect>();
+        select.labels = new List<string>(HitSoundNames);
+        select.values = new List<string>(HitSounds);
         var lp = Context.LocalPlayer;
         select.Select(lp.HitSound, false, false);
+        select.onSelect.RemoveAllListeners();
         select.onSelect.AddListener((_, it) =>
         {
             lp.HitSound = it;

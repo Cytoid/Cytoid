@@ -12,6 +12,7 @@ public class ListContainer<T, TE> : MonoBehaviour where TE : ContainerEntry<T>
     public virtual void SetData(IEnumerable<T> data)
     {
         Clear();
+        if (canvasGroup == null) return;
         canvasGroup.alpha = 0;
         foreach (var datum in data)
         {
@@ -20,6 +21,7 @@ public class ListContainer<T, TE> : MonoBehaviour where TE : ContainerEntry<T>
             entryElement.SetModel(datum);
             LayoutFixer.Fix(entryElement.transform);
         }
+
         LayoutFixer.Fix(transform);
         canvasGroup.DOFade(1, 0.4f).SetDelay(0.1f).SetEase(Ease.OutCubic);
     }

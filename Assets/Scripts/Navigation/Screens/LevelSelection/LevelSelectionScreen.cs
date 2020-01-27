@@ -14,8 +14,8 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
 
     public LabelSelect categorySelect;
 
-    public RadioGroup sortByRadioGroup;
-    public RadioGroup sortOrderRadioGroup;
+    public ToggleRadioGroupPreferenceElement sortByRadioGroup;
+    public ToggleRadioGroupPreferenceElement sortOrderRadioGroup;
     public InputField searchInputField;
 
     public override string GetId() => Id;
@@ -26,8 +26,23 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
 
         categorySelect.onSelect.AddListener((index, canvasGroup) => RefillLevels());
 
-        sortByRadioGroup.onSelect.AddListener(value => RefillLevels());
-        sortOrderRadioGroup.onSelect.AddListener(value => RefillLevels());
+        var lp = Context.LocalPlayer;
+        sortByRadioGroup.SetContent("SORT BY", null, () => lp.LocalLevelsSortBy,
+            it => lp.LocalLevelsSortBy = it, new []
+            {
+                ("Added date", LevelSort.AddedDate.ToString()),
+                ("Played date", LevelSort.PlayedDate.ToString()),
+                ("Difficulty", LevelSort.Difficulty.ToString()),
+                ("Title", LevelSort.Title.ToString())
+            });
+        sortByRadioGroup.radioGroup.onSelect.AddListener(value => RefillLevels());
+        sortOrderRadioGroup.SetContent("SORT BY", null, () => lp.LocalLevelsSortInAscendingOrder,
+            it => lp.LocalLevelsSortInAscendingOrder = it, new []
+            {
+                ("Ascending", true),
+                ("Descending", false)
+            });
+        sortOrderRadioGroup.radioGroup.onSelect.AddListener(value => RefillLevels());
         searchInputField.onEndEdit.AddListener(value => RefillLevels());
         
         Context.LevelManager.OnLevelDeleted.AddListener(_ =>
@@ -52,8 +67,6 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         {
             print("not null");
             categorySelect.Select(SavedContent.CategoryIndex);
-            sortByRadioGroup.Select(SavedContent.Sort.ToString());
-            sortOrderRadioGroup.Select(SavedContent.IsAscendingOrder.BoolToString());
         }
     }
 
@@ -82,9 +95,9 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         }
 
         // Sort with selected method
-        Enum.TryParse(sortByRadioGroup.Value, out LevelSort sort);
+        Enum.TryParse(sortByRadioGroup.radioGroup.Value, out LevelSort sort);
         // Sort with selected order
-        var asc = bool.Parse(sortOrderRadioGroup.Value);
+        var asc = bool.Parse(sortOrderRadioGroup.radioGroup.Value);
         // Category?
         var category = categorySelect.SelectedIndex;
         var filters = new List<Func<Level, bool>>();
@@ -191,8 +204,8 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
             SavedContent = new Content
             {
                 CategoryIndex = categorySelect.SelectedIndex,
-                Sort = (LevelSort) Enum.Parse(typeof(LevelSort), sortByRadioGroup.Value),
-                IsAscendingOrder = bool.Parse(sortOrderRadioGroup.Value)
+                Sort = (LevelSort) Enum.Parse(typeof(LevelSort), sortByRadioGroup.radioGroup.Value),
+                IsAscendingOrder = bool.Parse(sortOrderRadioGroup.radioGroup.Value)
             };
         }
     }

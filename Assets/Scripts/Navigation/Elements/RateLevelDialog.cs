@@ -145,7 +145,7 @@ public class RateLevelDialog : Dialog
         var dialog = Instantiate(NavigationObjectProvider.Instance.rateLevelDialogPrefab,
             NavigationObjectProvider.Instance.dialogHolder, false);
         dialog.levelId = levelId;
-        dialog.Rating = userRating > 0 ? userRating : 5;
+        dialog.Rating = userRating > 0 ? userRating : 8;
         if (userRating > 0)
         {
             // dialog.Message = $"You rated {userRating / 2:0.#}/5.";

@@ -19,6 +19,12 @@ public class HoldNoteRenderer : ClassicNoteRenderer
         InitializeHoldComponents();
     }
 
+    public override void OnLateUpdate()
+    {
+        base.OnLateUpdate();
+        if (HoldNote.Holding) Collider.radius *= 1.3333f;
+    }
+
     protected virtual void InitializeHoldComponents()
     {
         var provider = HoldNoteRendererProvider.Instance;

@@ -108,9 +108,10 @@ public class LevelCard : InteractableMonoBehavior
             }
             else
             {
-                var path = level.Meta.background.path.WithImageCdn().WithSizeParam(576, 360);
+                var path = level.Meta.background.path.WithImageCdn().WithSizeParam(
+                    Context.ThumbnailWidth, Context.ThumbnailHeight);
                 sprite = await Context.SpriteCache.CacheSprite(path, "RemoteLevelCoverThumbnail",
-                    cancelToken.Token);
+                    cancelToken.Token, new []{ Context.ThumbnailWidth, Context.ThumbnailHeight });
             }
         }
         catch
@@ -158,6 +159,7 @@ public class LevelCard : InteractableMonoBehavior
             // ignored
             return;
         }
+        if (transform == null) return; // Transform destroyed?
         ignoreNextPointerUp = true;
         OnPointerUp(eventData);
         OnAction();

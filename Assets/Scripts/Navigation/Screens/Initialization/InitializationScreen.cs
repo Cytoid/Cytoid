@@ -1,5 +1,6 @@
 using System;
 using DG.Tweening;
+using LeTai.Asset.TranslucentImage;
 using UniRx.Async;
 using UnityEngine.UI;
 using Color = UnityEngine.Color;
@@ -36,6 +37,8 @@ public class InitializationScreen : Screen
             Context.AudioManager.Get("LevelStart").Play();
             Context.ScreenManager.ChangeScreen(MainMenuScreen.Id, ScreenTransition.In);
         });
+        
+        MainTranslucentImage.Instance.Initialize();
     }
 
     private void OnLevelLoadProgress(Level level, int current, int total)

@@ -2,11 +2,14 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class ActionTabs : MonoBehaviour, ScreenChangeListener
 {
+    
+    [HideInInspector] public TabChangeEvent OnTabChanged = new TabChangeEvent();
     
     private float animationDuration = 0.4f;
     
@@ -107,6 +110,7 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
 
     public void OnAction(Action action)
     {
+        var prev = currentActionIndex == -1 ? closeAction : actions[currentActionIndex];
         var enterTransition = action.index < currentActionIndex ? Transition.Right : Transition.Left;
         var leaveTransition = action.index < currentActionIndex ? Transition.Left : Transition.Right;
         if (action.index == -1)
@@ -164,6 +168,7 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
             tabBackground.canvasGroup.blocksRaycasts = true;
         }
         currentActionIndex = action.index;
+        OnTabChanged.Invoke(prev, action);
     }
     
     public class Action : InteractableMonoBehavior
@@ -211,4 +216,8 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
             transform.GetComponent<CanvasGroup>().DOFade(target, duration);
         }
     }
+}
+
+public class TabChangeEvent : UnityEvent<ActionTabs.Action, ActionTabs.Action>
+{
 }

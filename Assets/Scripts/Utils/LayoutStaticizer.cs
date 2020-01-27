@@ -34,4 +34,23 @@ public class LayoutStaticizer : MonoBehaviour, ScreenBecameActiveListener
         }
     }
     
+    public static void Activate(Transform transform)
+    {
+        var gameObject = transform.gameObject;
+        foreach (Transform child in gameObject.transform)
+        {
+            Activate(child);
+        }
+        var contentSizeFitter = gameObject.GetComponent<ContentSizeFitter>();
+        if (contentSizeFitter != null)
+        {
+            contentSizeFitter.enabled = true;
+        }
+        var layoutGroup = gameObject.GetComponent<HorizontalOrVerticalLayoutGroup>();
+        if (layoutGroup != null)
+        {
+            layoutGroup.enabled = true;
+        }
+    }
+    
 }

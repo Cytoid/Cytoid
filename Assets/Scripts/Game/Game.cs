@@ -33,9 +33,11 @@ public class Game : MonoBehaviour
     
     public float Time { get; protected set; }
     public float MusicLength { get; protected set; }
+    public float ChartLength { get; protected set; }
     public float GameStartedOrResumedTimestamp { get; protected set; }
     public double MusicStartedTimestamp { get; protected set; } // When did the music start playing?
     public float MusicProgress { get; protected set; }
+    public float ChartProgress { get; protected set; }
     public float UnpauseCountdown { get; protected set; }
     
     public bool ResynchronizeChartOnNextFrame { get; set; }
@@ -100,7 +102,7 @@ public class Game : MonoBehaviour
             chartText = Encoding.UTF8.GetString(request.downloadHandler.data);
         }
 
-        var mods = Context.LocalPlayer.EnabledMods;
+        var mods = Context.SelectedMods;
         var ratio = UnityEngine.Screen.width * 1.0f / UnityEngine.Screen.height;
         var height = Camera.main.orthographicSize * 2.0f;
         var width = height * ratio;
@@ -118,6 +120,7 @@ public class Game : MonoBehaviour
             verticalRatio,
             verticalOffset
         );
+        ChartLength = Chart.Model.note_list.Max(it => it.end_time);
         
         // Load audio
         print("Loading audio");
@@ -134,7 +137,7 @@ public class Game : MonoBehaviour
             return;
         }
             
-        Music = Context.AudioManager.Load("Level", loader.AudioClip, false);
+        Music = Context.AudioManager.Load("Level", loader.AudioClip, false, false, true);
         MusicLength = Music.Length;
         
         // Load storyboard
@@ -225,7 +228,7 @@ public class Game : MonoBehaviour
         }
 
         if (!State.IsFailed && State.ShouldFail) Fail();
-        if (State.IsFailed) Music.Volume -= 1f / 120f;
+        if (State.IsFailed) Music.Volume -= 1f / 60f;
         if (State.IsPlaying)
         {
             if (State.ClearCount >= Chart.Model.note_list.Count) Complete();
@@ -248,6 +251,7 @@ public class Game : MonoBehaviour
                 Time += UnityEngine.Time.unscaledDeltaTime;
             }
             MusicProgress = Time / MusicLength;
+            ChartProgress = Time / ChartLength;
 
             // Process chart elements
             while (Chart.CurrentEventId < Chart.Model.event_order_list.Count &&
@@ -334,7 +338,7 @@ public class Game : MonoBehaviour
                 break;
         }
 
-        Debug.Log($"Note {model.id} is spawned as {((NoteType) model.type).ToString()}");
+        // Debug.Log($"Note {model.id} is spawned as {((NoteType) model.type).ToString()}");
         note.SetData(this, model.id);
         Notes[model.id] = note;
     }
@@ -473,9 +477,18 @@ public class Game : MonoBehaviour
         inputController.DisableInput();
 
         onGameCompleted.Invoke(this);
-        
+
+        var volume = 3f;
         // Wait for audio to finish
-        await UniTask.WaitUntil(() => Music.IsFinished());
+        await UniTask.WaitUntil(() =>
+        {
+            volume -= 1 / 180f;
+            if (volume < 1)
+            {
+                Music.Volume = volume;
+            }
+            return volume <= 0 || Music.IsFinished();
+        });
         print("Audio ended");
         Context.AudioManager.Unload("Level");
         

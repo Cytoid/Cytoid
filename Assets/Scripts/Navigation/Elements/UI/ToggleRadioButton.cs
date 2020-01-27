@@ -1,24 +1,17 @@
-using DG.Tweening;
-using UniRx.Async;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class ToggleRadioButton : RadioButton
 {
 
     private static bool loadingSprites;
+    
     public Sprite radioOnSprite;
     public Sprite radioOffSprite;
 
-    private Image image;
-    private PulseElement pulseElement;
-
-    private void Awake()
-    {
-        image = GetComponent<Image>();
-        pulseElement = GetComponent<PulseElement>();
-    }
+    [GetComponentInChildren] public Text label;
+    [GetComponentInChildren] public Image image;
+    [GetComponentInChildren] public PulseElement pulseElement;
 
     public override void Select(bool pulse = true)
     {

@@ -12,37 +12,55 @@ public class LocalPlayer
         set => PlayerPrefsExtensions.SetBool("ranked", value);
     }
     
-    public List<Mod> EnabledMods
+    public HashSet<Mod> EnabledMods
     {
-        get => PlayerPrefsExtensions.GetStringArray("mods").Select(it => (Mod) Enum.Parse(typeof(Mod), it)).ToList();
+        get => new HashSet<Mod>(PlayerPrefsExtensions.GetStringArray("mods").Select(it => (Mod) Enum.Parse(typeof(Mod), it)).ToList());
         set => PlayerPrefsExtensions.SetStringArray("mods", value.Select(it => it.ToString()).ToArray());
     }
     
     public bool ShowBoundaries
     {
-        get => PlayerPrefsExtensions.GetBool("boundaries", true);
+        get => PlayerPrefsExtensions.GetBool("boundaries", false);
         set => PlayerPrefsExtensions.SetBool("boundaries", value);
     }
     
     public bool DisplayEarlyLateIndicators
     {
-        get => PlayerPrefsExtensions.GetBool("early_late_indicator");
+        get => PlayerPrefsExtensions.GetBool("early_late_indicator", true);
         set => PlayerPrefsExtensions.SetBool("early_late_indicator", value);
     }
 
-    public bool UseLargerHitboxes
+    public int ClickHitboxSize
     {
-        get => PlayerPrefsExtensions.GetBool("larger_hitboxes");
-        set => PlayerPrefsExtensions.SetBool("larger_hitboxes", value);
+        get => PlayerPrefs.GetInt("click hitbox size", 2);
+        set => PlayerPrefs.SetInt("click hitbox size", value);
+    }
+    
+    public int DragHitboxSize
+    {
+        get => PlayerPrefs.GetInt("drag hitbox size", 2);
+        set => PlayerPrefs.SetInt("drag hitbox size", value);
+    }
+
+    public int HoldHitboxSize
+    {
+        get => PlayerPrefs.GetInt("hold hitbox size", 2);
+        set => PlayerPrefs.SetInt("hold hitbox size", value);
+    }
+    
+    public int FlickHitboxSize
+    {
+        get => PlayerPrefs.GetInt("flick hitbox size", 2);
+        set => PlayerPrefs.SetInt("flick hitbox size", value);
     }
 
     public bool PlayHitSoundsEarly
     {
-        get => PlayerPrefsExtensions.GetBool("early hit sounds");
+        get => PlayerPrefsExtensions.GetBool("early hit sounds", false);
         set => PlayerPrefsExtensions.SetBool("early hit sounds", value);
     }
     
-    // Bounded by -0.3~0.3.
+    // Bounded by -0.5~0.5.
     public float NoteSize
     {
         get => PlayerPrefs.GetFloat("NoteSize", 0);
@@ -69,6 +87,20 @@ public class LocalPlayer
         get => PlayerPrefs.GetFloat("CoverOpacity", 0.15f);
         set => PlayerPrefs.SetFloat("CoverOpacity", value);
     }
+    
+    // Bounded by 0~1.
+    public float MusicVolume
+    {
+        get => PlayerPrefs.GetFloat("MusicVolume", 0.85f);
+        set => PlayerPrefs.SetFloat("MusicVolume", value);
+    }
+    
+    // Bounded by 0~1.
+    public float SoundEffectsVolume
+    {
+        get => PlayerPrefs.GetFloat("SoundEffectsVolume", 1f);
+        set => PlayerPrefs.SetFloat("SoundEffectsVolume", value);
+    }
 
     public string HitSound
     {
@@ -76,17 +108,17 @@ public class LocalPlayer
         set => PlayerPrefs.SetString("HitSound", value.ToLower());
     }
     
-    public string GraphicsLevel
+    public bool UseStoryboardEffects
     {
-        get => PlayerPrefs.GetString("storyboard effects", "high").ToLower();
-        set => PlayerPrefs.SetString("storyboard effects", value.ToLower());
+        get => PlayerPrefsExtensions.GetBool("StoryboardEffects", true);
+        set => PlayerPrefsExtensions.SetBool("StoryboardEffects", value);
     }
-    
-    public bool LowerResolution
+
+    public string GraphicsQuality
     {
-        get => PlayerPrefsExtensions.GetBool("low res", 
-            Application.platform == RuntimePlatform.Android); // TODO
-        set => PlayerPrefsExtensions.SetBool("low res", value);
+        get => PlayerPrefs.GetString("GraphicsQuality",
+            Application.platform == RuntimePlatform.Android ? "medium" : "high");
+        set => PlayerPrefs.SetString("GraphicsQuality", value.ToLower());
     }
 
     public float BaseNoteOffset
@@ -98,7 +130,7 @@ public class LocalPlayer
 
     public float HeadsetNoteOffset
     {
-        get => PlayerPrefs.GetFloat("headset chart offset", 0f);
+        get => PlayerPrefs.GetFloat("headset chart offset", -0.05f);
         set => PlayerPrefs.SetFloat("headset chart offset", value);
     }
     
@@ -116,6 +148,18 @@ public class LocalPlayer
     {
         get => PlayerPrefsExtensions.GetBool("note ids");
         set => PlayerPrefsExtensions.SetBool("note ids", value);
+    }
+
+    public string LocalLevelsSortBy
+    {
+        get => PlayerPrefs.GetString("local levels sort by", LevelSort.AddedDate.ToString());
+        set => PlayerPrefs.SetString("local levels sort by", value);
+    }
+
+    public bool LocalLevelsSortInAscendingOrder
+    {
+        get => PlayerPrefsExtensions.GetBool("local levels sort in ascending order", false);
+        set => PlayerPrefsExtensions.SetBool("local levels sort in ascending order", value);
     }
 
     public float GetLevelNoteOffset(string levelId)

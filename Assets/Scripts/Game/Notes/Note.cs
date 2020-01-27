@@ -47,7 +47,7 @@ public abstract class Note : MonoBehaviour
 
         IsCleared = true;
         Renderer.OnClear(grade);
-        Game.State.Judge(this, grade, TimeUntilEnd, GreatGradeWeight);
+        Game.State.Judge(this, grade, -TimeUntilEnd, GreatGradeWeight);
 
         if (!(Game is StoryboardGame))
         {

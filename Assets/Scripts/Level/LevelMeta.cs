@@ -155,8 +155,10 @@ public class LevelMeta : IComparable<LevelMeta>
                 }
             }
         }
-
-        return true;
+        
+        // Ensure there is at least one difficulty present
+        return charts.Any(it =>
+            it.type == Difficulty.Easy.Id || it.type == Difficulty.Hard.Id || it.type == Difficulty.Extreme.Id);
     }
 
     public void SortCharts()

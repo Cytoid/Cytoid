@@ -43,7 +43,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static Difficulty SelectedDifficulty = Difficulty.Easy;
     public static Difficulty PreferredDifficulty = Difficulty.Easy;
     public static HashSet<Mod> SelectedMods = new HashSet<Mod>();
-    public static bool WillCalibrate = false;
+    public static bool WillCalibrate;
 
     public static GameResult LastGameResult;
 
@@ -73,7 +73,8 @@ public class Context : SingletonMonoBehavior<Context>
     {
         InitialWidth = UnityEngine.Screen.width;
         InitialHeight = UnityEngine.Screen.height;
-        
+        UpdateGraphicsQuality();
+
         DOTween.defaultEaseType = Ease.OutCubic;
         UnityEngine.Screen.sleepTimeout = SleepTimeout.NeverSleep;
         Application.targetFrameRate = 120;
@@ -100,11 +101,6 @@ public class Context : SingletonMonoBehavior<Context>
 #if UNITY_EDITOR
         Application.runInBackground = true;
 #endif
-        
-        if (LocalPlayer.LowerResolution)
-        {
-            UnityEngine.Screen.SetResolution((int) (InitialWidth * 0.5f), (int) (InitialHeight * 0.5f), true);
-        }
 
         SelectedMods = new HashSet<Mod>(LocalPlayer.EnabledMods);
 
@@ -114,6 +110,7 @@ public class Context : SingletonMonoBehavior<Context>
             await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/sggrkung.festival_blaze/level.json" });
             SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
             SelectedDifficulty = Difficulty.Parse(SelectedLevel.Meta.charts[0].type);
+            SelectedMods.Add(Mod.ExHard);
         }
         else
         {
@@ -146,7 +143,6 @@ public class Context : SingletonMonoBehavior<Context>
                 ScreenManager.ChangeScreen("Result", ScreenTransition.None);
             }
         }
-
         await UniTask.DelayFrame(0);
 
         graphyManager = GraphyManager.Instance;
@@ -194,7 +190,8 @@ public class Context : SingletonMonoBehavior<Context>
 
     public static void Vibrate()
     {
-        Handheld.Vibrate();
+        // TODO: Haptic engine
+        // Handheld.Vibrate();
     }
 
     public static void SetAutoRotation(bool autoRotation)
@@ -251,6 +248,24 @@ public class Context : SingletonMonoBehavior<Context>
         else
         {
             graphyManager.Disable();
+        }
+    }
+
+    public static void UpdateGraphicsQuality()
+    {
+        switch (LocalPlayer.GraphicsQuality)
+        {
+            case "high":
+                UnityEngine.Screen.SetResolution(InitialWidth, InitialHeight, true);
+                break;
+            case "medium":
+                UnityEngine.Screen.SetResolution((int) (InitialWidth * 0.7f),
+                    (int) (InitialHeight * 0.7f), true);
+                break;
+            case "low":
+                UnityEngine.Screen.SetResolution((int) (InitialWidth * 0.5f),
+                    (int) (InitialHeight * 0.5f), true);
+                break;
         }
     }
 }

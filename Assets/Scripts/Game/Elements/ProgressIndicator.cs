@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.UI.ProceduralImage;
@@ -26,7 +25,7 @@ public class ProgressIndicator : MonoBehaviour
         }
         else
         {
-            image.rectTransform.DOWidth(fullWidth * game.MusicProgress, 0.2f);
+            image.rectTransform.DOWidth(fullWidth * game.ChartProgress, 0.2f);
         }
     }
     

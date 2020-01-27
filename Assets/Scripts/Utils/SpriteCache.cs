@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using Proyecto26;
 using UniRx.Async;
@@ -40,7 +41,8 @@ public class SpriteCache
 
     public bool HasCachedSprite(string path) => GetCachedSprite(path) != null;
 
-    public async UniTask<Sprite> CacheSprite(string path, string tag, CancellationToken cancellationToken = default)
+    public async UniTask<Sprite> CacheSprite(string path, string tag, CancellationToken cancellationToken = default,
+        int[] fitCropSize = default)
     {
         if (!taggedCache.ContainsKey(tag)) taggedCache[tag] = new List<Entry>();
 
@@ -52,7 +54,7 @@ public class SpriteCache
         // Currently loading
         if (isLoading)
         {
-            await UniTask.WaitUntil(() => GetCachedSprite(path) != null);
+            await UniTask.WaitUntil(() => GetCachedSprite(path) != null, cancellationToken: cancellationToken);
             return GetCachedSprite(path);
         }
 
@@ -90,6 +92,51 @@ public class SpriteCache
             }
 
             var coverTexture = DownloadHandlerTexture.GetContent(request);
+            if (coverTexture == null) return null;
+
+            // Fit crop
+            // TODO: For some reasons, the texture read would be black unless I do stupid I/O like this...
+            if (fitCropSize != default && (coverTexture.width != fitCropSize[0] || coverTexture.height != fitCropSize[1]))
+            {
+                Debug.Log("start cropping!!!");
+                
+                Directory.CreateDirectory(Context.DataPath + "/.cache");
+                var filename = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds();
+                
+                var bytes = coverTexture.EncodeToJPG();
+                var innerPath = $"{Context.DataPath}/.cache/{filename}";
+                File.WriteAllBytes(innerPath, bytes);
+                Object.Destroy(coverTexture);
+
+                using (var request2 = UnityWebRequestTexture.GetTexture(innerPath))
+                {
+                    await request2.SendWebRequest();
+                    coverTexture = DownloadHandlerTexture.GetContent(request2);
+                    coverTexture = TextureScaler.FitCrop(coverTexture, fitCropSize[0], fitCropSize[1]);
+                    bytes = coverTexture.EncodeToJPG();
+                    File.WriteAllBytes(innerPath, bytes);
+                    Object.Destroy(coverTexture);
+                
+                    using (var request3 = UnityWebRequestTexture.GetTexture(innerPath))
+                    {
+                        await request3.SendWebRequest();
+                        coverTexture = DownloadHandlerTexture.GetContent(request3);
+                        Debug.Log($"size: {coverTexture.width}/{coverTexture.height}");
+                    }
+                    if (cancellationToken != default && cancellationToken.IsCancellationRequested)
+                    {
+                        File.Delete(innerPath);
+                        return null;
+                    }
+                }
+                if (cancellationToken != default && cancellationToken.IsCancellationRequested)
+                {
+                    File.Delete(innerPath);
+                    return null;
+                }
+                File.Delete(innerPath);
+            }
+
             sprite = coverTexture.CreateSprite();
             cache[path] = new Entry {Key = path, Sprite = sprite, Tag = tag};
             taggedCache[tag].Add(cache[path]);

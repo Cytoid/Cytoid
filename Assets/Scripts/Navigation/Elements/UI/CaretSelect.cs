@@ -17,15 +17,19 @@ public class CaretSelect : MonoBehaviour
     public List<string> values;
     public int defaultIndex;
 
-    public int SelectedIndex { get; private set; }
+    public int SelectedIndex { get; private set; } = -1;
     public string SelectedValue => values[SelectedIndex];
     
     public CaretSelectEvent onSelect = new CaretSelectEvent();
         
-    private void Awake()
+    private void Start()
     {
-        SelectedIndex = defaultIndex;
-        labelText.text = defaultIndex <= labels.Count - 1 ? labels[defaultIndex] : "N/A";
+        if (SelectedIndex < 0)
+        {
+            SelectedIndex = defaultIndex;
+            labelText.text = defaultIndex <= labels.Count - 1 ? labels[defaultIndex] : "N/A";
+        }
+
         var left = true;
         foreach (var caret in new List<Transform>{leftCaret, rightCaret})
         {

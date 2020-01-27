@@ -28,6 +28,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
     public GradientMeshEffect startButtonGradient;
     public Text startButtonText;
 
+    public ActionTabs actionTabs;
     public RankingsTab rankingsTab;
     public RatingTab ratingTab;
 
@@ -35,42 +36,19 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
     public GameObject settingsIcon;
 
     public RadioGroup practiceModeToggle;
-
-    public InteractableMonoBehavior levelNoteOffsetCalibrateButton;
-    public InputField levelNoteOffsetTextField;
-
-    public RadioGroup earlyHitSoundsToggle;
-    public RadioGroup largerHitboxesToggle;
-    public RadioGroup earlyLateIndicatorsToggle;
-    public CaretSelect noteSizeCaretSelect;
-    public CaretSelect horizontalMarginCaretSelect;
-    public CaretSelect verticalMarginCaretSelect;
-    public InputField baseNoteOffsetTextField;
-    public InputField headsetNoteOffsetTextfield;
-
-    public CaretSelect storyboardEffectsCaretSelect;
-    public RadioGroup lowerResolutionToggle;
-    public RadioGroup showBoundariesToggle;
-    public CaretSelect coverOpacityCaretSelect;
-    public InputField ringColorTextField;
-    public InputField fillColorClickUpTextField;
-    public InputField fillColorClickDownTextfield;
-    public InputField fillColorDragUpTextField;
-    public InputField fillColorDragDownTextfield;
-    public InputField fillColorHoldUpTextField;
-    public InputField fillColorHoldDownTextfield;
-    public InputField fillColorLongHoldUpTextField;
-    public InputField fillColorLongHoldDownTextfield;
-    public InputField fillColorFlickUpTextField;
-    public InputField fillColorFlickDownTextfield;
-
-    public RadioGroup displayProfilerToggle;
-    public RadioGroup displayNoteIdsToggle;
-
+    
+    public Transform settingsTabContent;
+    public CalibratePreferenceElement calibratePreferenceElement;
+    public Transform generalSettingsHolder;
+    public Transform gameplaySettingsHolder;
+    public Transform visualSettingsHolder;
+    public Transform advancedSettingsHolder;
+    
     private DateTime asyncRequestsToken;
     private Sprite coverSprite;
     private AssetLoader previewAudioClip;
-
+    private bool initializedSettingsTab;
+    
     public Level Level { get; set; }
 
     public override string GetId() => Id;
@@ -80,12 +58,18 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
     public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
-        LoadSettings();
         Context.ScreenManager.AddHandler(this);
-        levelNoteOffsetCalibrateButton.onPointerClick.AddListener(_ =>
+        actionTabs.OnTabChanged.AddListener(async (prev, next) => 
         {
-            Context.WillCalibrate = true;
-            OnStartButton();
+            if (!initializedSettingsTab && next.index == 3)
+            {
+                initializedSettingsTab = true;
+                SpinnerOverlay.Show();
+                await UniTask.DelayFrame(5);
+                InitializeSettingsTab();
+                await UniTask.DelayFrame(5);
+                SpinnerOverlay.Hide();
+            }
         });
     }
 
@@ -273,6 +257,12 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         previewAudioSource.Play();
     }
 
+    public override void OnScreenUpdate()
+    {
+        base.OnScreenUpdate();
+        previewAudioSource.volume = Context.LocalPlayer.MusicVolume; // TODO: Migrate preview to audio manager
+    }
+
     public void LoadLevelPerformance()
     {
         bestPerformanceDescriptionText.text =
@@ -303,11 +293,11 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
     public void LoadLevelSettings()
     {
         var lp = Context.LocalPlayer;
-        levelNoteOffsetTextField.SetTextWithoutNotify(
-            lp.GetLevelNoteOffset(Context.SelectedLevel.Id)
-                .ToString(CultureInfo.InvariantCulture));
-        levelNoteOffsetTextField.onEndEdit.AddListener(FloatSettingHandler(levelNoteOffsetTextField,
-            () => 0, value => lp.SetLevelNoteOffset(Context.SelectedLevel.Id, value)));
+        calibratePreferenceElement.SetContent(null, null,
+            () => lp.GetLevelNoteOffset(Context.SelectedLevel.Id),
+            it => lp.SetLevelNoteOffset(Context.SelectedLevel.Id, it),
+            "seconds",
+            0.ToString());
     }
 
     public override void OnScreenDestroyed()
@@ -381,6 +371,8 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
 
             Context.SpriteCache.PutSprite("game://cover", "GameCover", coverSprite);
             coverSprite = null; // Prevent sprite being unloaded by UnloadCoverSprite()
+
+            Context.SelectedMods = Context.LocalPlayer.EnabledMods;
 
             var sceneLoader = new SceneLoader("Game");
             sceneLoader.Load();
@@ -544,7 +536,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         dialog.Open();
     }
 
-    public void LoadSettings()
+    public async void InitializeSettingsTab()
     {
         var lp = Context.LocalPlayer;
         practiceModeToggle.Select((!lp.PlayRanked).BoolToString(), false);
@@ -555,115 +547,24 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
             LoadLevelPerformance();
             UpdateStartButton();
         });
-        earlyHitSoundsToggle.Select(lp.PlayHitSoundsEarly.BoolToString(), false);
-        earlyHitSoundsToggle.onSelect.AddListener(it => lp.PlayHitSoundsEarly = bool.Parse(it));
-        largerHitboxesToggle.Select(lp.UseLargerHitboxes.BoolToString(), false);
-        largerHitboxesToggle.onSelect.AddListener(it => lp.UseLargerHitboxes = bool.Parse(it));
-        earlyLateIndicatorsToggle.Select(lp.DisplayEarlyLateIndicators.BoolToString(), false);
-        earlyLateIndicatorsToggle.onSelect.AddListener(it => lp.DisplayEarlyLateIndicators = bool.Parse(it));
-        noteSizeCaretSelect.Select(lp.NoteSize.ToString(CultureInfo.InvariantCulture), false, false);
-        noteSizeCaretSelect.onSelect.AddListener((_, it) => lp.NoteSize = float.Parse(it));
-        horizontalMarginCaretSelect.Select(lp.HorizontalMargin.ToString(CultureInfo.InvariantCulture), false, false);
-        horizontalMarginCaretSelect.onSelect.AddListener((_, it) => lp.HorizontalMargin = int.Parse(it));
-        verticalMarginCaretSelect.Select(lp.VerticalMargin.ToString(CultureInfo.InvariantCulture), false, false);
-        verticalMarginCaretSelect.onSelect.AddListener((_, it) => lp.VerticalMargin = int.Parse(it));
-        baseNoteOffsetTextField.SetTextWithoutNotify(lp.BaseNoteOffset.ToString(CultureInfo.InvariantCulture));
-        baseNoteOffsetTextField.onEndEdit.AddListener(FloatSettingHandler(baseNoteOffsetTextField,
-            () => lp.BaseNoteOffset, value => lp.BaseNoteOffset = value));
-        headsetNoteOffsetTextfield.SetTextWithoutNotify(lp.HeadsetNoteOffset.ToString(CultureInfo.InvariantCulture));
-        headsetNoteOffsetTextfield.onEndEdit.AddListener(FloatSettingHandler(headsetNoteOffsetTextfield,
-            () => lp.HeadsetNoteOffset, value => lp.HeadsetNoteOffset = value));
-        storyboardEffectsCaretSelect.Select(lp.GraphicsLevel, false, false);
-        storyboardEffectsCaretSelect.onSelect.AddListener((_, it) => lp.GraphicsLevel = it);
-        lowerResolutionToggle.Select(lp.LowerResolution.BoolToString(), false);
-        lowerResolutionToggle.onSelect.AddListener(it =>
+        
+        calibratePreferenceElement.SetContent("Level note offset", "Notes not syncing well with music?\n" +
+                                                                   "Press \"Calibrate\" or manually enter\n" +
+                                                                   "a desired note offset.");
+        calibratePreferenceElement.calibrateButton.onPointerClick.AddListener(_ =>
         {
-            lp.LowerResolution = bool.Parse(it);
-            if (lp.LowerResolution)
-            {
-                UnityEngine.Screen.SetResolution((int) (Context.InitialWidth * 0.5f), (int) (Context.InitialHeight * 0.5f), true);
-            }
-            else
-            {
-                UnityEngine.Screen.SetResolution(Context.InitialWidth, Context.InitialHeight, true);
-            }
+            Context.WillCalibrate = true;
+            OnStartButton();
         });
-        showBoundariesToggle.Select(lp.ShowBoundaries.BoolToString(), false);
-        showBoundariesToggle.onSelect.AddListener(it => lp.ShowBoundaries = bool.Parse(it));
-        coverOpacityCaretSelect.Select(lp.CoverOpacity.ToString(CultureInfo.InvariantCulture), false, false);
-        coverOpacityCaretSelect.onSelect.AddListener((_, it) => lp.CoverOpacity = float.Parse(it));
-        ringColorTextField.SetTextWithoutNotify(lp.GetRingColor(NoteType.Click, false).ColorToString());
-        ringColorTextField.onEndEdit.AddListener(ColorSettingHandler(ringColorTextField,
-            () => lp.GetRingColor(NoteType.Click, false), value => lp.SetRingColor(NoteType.Click, false, value)));
-        fillColorClickUpTextField.SetTextWithoutNotify(lp.GetFillColor(NoteType.Click, false).ColorToString());
-        fillColorClickUpTextField.onEndEdit.AddListener(ColorSettingHandler(fillColorClickUpTextField,
-            () => lp.GetFillColor(NoteType.Click, false), value => lp.SetFillColor(NoteType.Click, false, value)));
-        fillColorClickDownTextfield.SetTextWithoutNotify(lp.GetFillColor(NoteType.Click, true).ColorToString());
-        fillColorClickDownTextfield.onEndEdit.AddListener(ColorSettingHandler(fillColorClickDownTextfield,
-            () => lp.GetFillColor(NoteType.Click, true), value => lp.SetFillColor(NoteType.Click, true, value)));
-        fillColorDragUpTextField.SetTextWithoutNotify(lp.GetFillColor(NoteType.DragChild, false).ColorToString());
-        fillColorDragUpTextField.onEndEdit.AddListener(ColorSettingHandler(fillColorDragUpTextField,
-            () => lp.GetFillColor(NoteType.DragChild, false),
-            value => lp.SetFillColor(NoteType.DragChild, false, value)));
-        fillColorDragDownTextfield.SetTextWithoutNotify(lp.GetFillColor(NoteType.DragChild, true).ColorToString());
-        fillColorDragDownTextfield.onEndEdit.AddListener(ColorSettingHandler(fillColorDragDownTextfield,
-            () => lp.GetFillColor(NoteType.DragChild, true),
-            value => lp.SetFillColor(NoteType.DragChild, true, value)));
-        fillColorHoldUpTextField.SetTextWithoutNotify(lp.GetFillColor(NoteType.Hold, false).ColorToString());
-        fillColorHoldUpTextField.onEndEdit.AddListener(ColorSettingHandler(fillColorHoldUpTextField,
-            () => lp.GetFillColor(NoteType.Hold, false), value => lp.SetFillColor(NoteType.Hold, false, value)));
-        fillColorHoldDownTextfield.SetTextWithoutNotify(lp.GetFillColor(NoteType.Hold, true).ColorToString());
-        fillColorHoldDownTextfield.onEndEdit.AddListener(ColorSettingHandler(fillColorHoldDownTextfield,
-            () => lp.GetFillColor(NoteType.Hold, true), value => lp.SetFillColor(NoteType.Hold, true, value)));
-        fillColorLongHoldUpTextField.SetTextWithoutNotify(lp.GetFillColor(NoteType.LongHold, false).ColorToString());
-        fillColorLongHoldUpTextField.onEndEdit.AddListener(ColorSettingHandler(fillColorLongHoldUpTextField,
-            () => lp.GetFillColor(NoteType.LongHold, false),
-            value => lp.SetFillColor(NoteType.LongHold, false, value)));
-        fillColorLongHoldDownTextfield.SetTextWithoutNotify(lp.GetFillColor(NoteType.LongHold, true).ColorToString());
-        fillColorLongHoldDownTextfield.onEndEdit.AddListener(ColorSettingHandler(fillColorLongHoldDownTextfield,
-            () => lp.GetFillColor(NoteType.LongHold, true), value => lp.SetFillColor(NoteType.LongHold, true, value)));
-        fillColorFlickUpTextField.SetTextWithoutNotify(lp.GetFillColor(NoteType.Flick, false).ColorToString());
-        fillColorFlickUpTextField.onEndEdit.AddListener(ColorSettingHandler(fillColorFlickUpTextField,
-            () => lp.GetFillColor(NoteType.Flick, false), value => lp.SetFillColor(NoteType.Flick, false, value)));
-        fillColorFlickDownTextfield.SetTextWithoutNotify(lp.GetFillColor(NoteType.Flick, true).ColorToString());
-        fillColorFlickDownTextfield.onEndEdit.AddListener(ColorSettingHandler(fillColorFlickDownTextfield,
-            () => lp.GetFillColor(NoteType.Flick, true), value => lp.SetFillColor(NoteType.Flick, true, value)));
-        displayProfilerToggle.Select(lp.DisplayProfiler.BoolToString(), false);
-        displayProfilerToggle.onSelect.AddListener(it => { lp.DisplayProfiler = bool.Parse(it); });
-        displayNoteIdsToggle.Select(lp.DisplayNoteIds.BoolToString(), false);
-        displayNoteIdsToggle.onSelect.AddListener(it => { lp.DisplayNoteIds = bool.Parse(it); });
+
+        SettingsFactory.InstantiateGeneralSettings(generalSettingsHolder);
+        SettingsFactory.InstantiateGameplaySettings(gameplaySettingsHolder);
+        SettingsFactory.InstantiateVisualSettings(visualSettingsHolder);
+        SettingsFactory.InstantiateAdvancedSettings(advancedSettingsHolder);
+
+        LayoutFixer.Fix(settingsTabContent);
+        await UniTask.DelayFrame(5);
+        LayoutStaticizer.Staticize(settingsTabContent);
     }
 
-    private static UnityAction<string> FloatSettingHandler(InputField inputField, Func<float> defaultValueGetter,
-        Action<float> setter)
-    {
-        return it =>
-        {
-            if (float.TryParse(it, out var value))
-            {
-                setter(value);
-            }
-            else
-            {
-                inputField.text = defaultValueGetter().ToString(CultureInfo.InvariantCulture);
-            }
-        };
-    }
-
-    private static UnityAction<string> ColorSettingHandler(InputField inputField, Func<Color> defaultValueGetter,
-        Action<Color> setter)
-    {
-        return it =>
-        {
-            var value = it.ToColor();
-            if (value != Color.clear)
-            {
-                setter(value);
-            }
-            else
-            {
-                inputField.text = defaultValueGetter().ColorToString();
-            }
-        };
-    }
 }

@@ -48,9 +48,9 @@ public class EffectController : MonoBehaviour
         settings.sectorCount = noteRenderer.Note.Type == NoteType.Flick ? 4 : 100;
         settings.start.innerColor = settings.start.outerColor = color.WithAlpha(1);
         settings.end.innerColor = settings.end.outerColor = color.WithAlpha(0);
-        settings.end.size = noteRenderer.Note.Type == NoteType.DragHead || noteRenderer.Note.Type == NoteType.DragChild
+        settings.end.size = (noteRenderer.Note.Type == NoteType.DragHead || noteRenderer.Note.Type == NoteType.DragChild
             ? 4f
-            : 5f;
+            : 5f) * noteRenderer.Game.Config.NoteSizeMultiplier;
         settings.start.thickness = 1.333f;
         settings.end.thickness = 0.333f;
         flatFx.AddEffect(at, 1);

@@ -6,7 +6,7 @@ using UnityEngine.Events;
 
 public class RadioGroup : MonoBehaviour
 {
-    private List<RadioButton> radioButtons;
+    protected List<RadioButton> radioButtons;
     public string defaultValue;
 
     private string value;
@@ -24,16 +24,20 @@ public class RadioGroup : MonoBehaviour
 
     private void Awake()
     {
+        Initialize();
+    }
+
+    public virtual void Initialize()
+    {
         radioButtons = GetComponentsInChildren<RadioButton>().ToList();
         radioButtons.ForEach(it => it.radioGroup = this);
         value = defaultValue;
-    }
-
-    private void Start()
-    {
         radioButtons.ForEach(it => it.Unselect());
-        selected = radioButtons.First(it => it.value == value);
-        selected.Select(false);
+        if (radioButtons.Any(it => it.value == value))
+        {
+            selected = radioButtons.First(it => it.value == value);
+            selected.Select(false);
+        }
     }
 
     public int GetIndex(string value)

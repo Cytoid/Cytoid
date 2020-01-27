@@ -1,4 +1,3 @@
-using System;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -9,9 +8,9 @@ public class PillRadioButton : RadioButton
 {
     public float radius = 16;
 
+    [GetComponentInChildren] public Text label;
     [GetComponent] public ProceduralImage image;
     [GetComponent] public PulseElement pulseElement;
-    [GetComponentInChildren] public Text text;
 
     public Color activeTextColor = Color.black;
     
@@ -22,7 +21,7 @@ public class PillRadioButton : RadioButton
     {
         image = GetComponent<ProceduralImage>();
         pulseElement = GetComponent<PulseElement>();
-        text.fontStyle = FontStyle.Normal;
+        label.fontStyle = FontStyle.Normal;
         if (regularFont == null)
         {
             regularFont = Resources.Load<Font>("Fonts/Nunito-Regular");
@@ -43,20 +42,20 @@ public class PillRadioButton : RadioButton
         }
         else
         {
-            modifier.Radius = new Vector4(radius, radius, radius, radius);
+            modifier.Radius = new Vector4(0, 0, 0, 0);
         }
     }
 
     public override void OnPointerDown(PointerEventData eventData)
     {
         base.OnPointerDown(eventData);
-        text.transform.DOScale(0.9f, 0.2f).SetEase(Ease.OutCubic);
+        label.transform.DOScale(0.9f, 0.2f).SetEase(Ease.OutCubic);
     }
 
     public override void OnPointerUp(PointerEventData eventData)
     {
         base.OnPointerUp(eventData);
-        text.transform.DOScale(1f, 0.2f).SetEase(Ease.OutCubic);
+        label.transform.DOScale(1f, 0.2f).SetEase(Ease.OutCubic);
     }
 
     public override void Select(bool pulse = true)
@@ -64,15 +63,15 @@ public class PillRadioButton : RadioButton
         base.Select(pulse);
         if (pulse) pulseElement.Pulse();
         image.BorderWidth = 0;
-        text.font = boldFont;
-        text.DOColor(activeTextColor, 0.2f).SetEase(Ease.OutCubic);
+        label.font = boldFont;
+        label.DOColor(activeTextColor, 0.2f).SetEase(Ease.OutCubic);
     }
 
     public override void Unselect()
     {
         base.Unselect();
         image.BorderWidth = 2;
-        text.font = regularFont;
-        text.DOColor(Color.white, 0.2f).SetEase(Ease.OutCubic);
+        label.font = regularFont;
+        label.DOColor(Color.white, 0.2f).SetEase(Ease.OutCubic);
     }
 }

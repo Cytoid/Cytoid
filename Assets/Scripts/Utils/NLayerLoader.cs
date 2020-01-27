@@ -40,7 +40,6 @@ public class NLayerLoader
 
     public void Dispose()
     {
-        Debug.Log("file disposed " + createdFiles.Count);
         createdFiles.ForEach(it => it.Dispose());
         file = null;
     }

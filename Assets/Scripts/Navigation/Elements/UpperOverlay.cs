@@ -13,6 +13,7 @@ public class UpperOverlay : MonoBehaviour
 
     protected virtual void Update()
     {
+        if (contentRect == null) return;
         var alpha = Math.Max(minAlpha, Math.Min(maxAlpha, contentRect.anchoredPosition.y / 360));
         canvasGroup.DOFade(alpha, 0.2f).SetEase(Ease.OutCubic);
     }

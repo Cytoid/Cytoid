@@ -157,7 +157,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
         avatarImage.color = Color.clear;
     }
 
-    private static List<string> hiddenScreenIds = new List<string> {SignInScreen.Id, ProfileScreen.Id};
+    private static List<string> hiddenScreenIds = new List<string> {SignInScreen.Id, ProfileScreen.Id, SettingsScreen.Id};
     private static List<string> staticScreenIds = new List<string> {ResultScreen.Id};
 
     public void OnScreenChangeStarted(Screen from, Screen to)

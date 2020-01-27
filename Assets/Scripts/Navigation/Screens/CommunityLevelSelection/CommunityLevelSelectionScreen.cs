@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Proyecto26;
-using UniRx.Async;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -19,10 +18,10 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
 
     public Text titleText;
 
-    public RadioGroup sortRadioGroup;
-    public RadioGroup orderRadioGroup;
-    public RadioGroup categoryRadioGroup;
-    public RadioGroup timeRadioGroup;
+    public ToggleRadioGroupPreferenceElement sortRadioGroup;
+    public ToggleRadioGroupPreferenceElement orderRadioGroup;
+    public ToggleRadioGroupPreferenceElement categoryRadioGroup;
+    public ToggleRadioGroupPreferenceElement timeRadioGroup;
     public InputField searchInputField;
 
     private bool canLoadMore;
@@ -33,10 +32,41 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
     {
         base.OnScreenInitialized();
 
-        sortRadioGroup.onSelect.AddListener(value => LoadContent());
-        orderRadioGroup.onSelect.AddListener(value => LoadContent());
-        categoryRadioGroup.onSelect.AddListener(value => LoadContent());
-        timeRadioGroup.onSelect.AddListener(value => LoadContent());
+        sortRadioGroup.SetContent(null, null,
+            () => "creation_date", it => LoadContent(),
+            new []
+            {
+                ("Uploaded date", "creation_date"),
+                ("Modified date", "modified_date"),
+                ("Rating", "rating"),
+                ("Downloads", "downloads"),
+                ("Difficulty", "difficulty"),
+                ("Duration", "duration")
+            });
+        orderRadioGroup.SetContent(null, null,
+            () => "desc", it => LoadContent(),
+            new []
+            {
+                ("Ascending", "asc"),
+                ("Descending", "desc")
+            });
+        categoryRadioGroup.SetContent(null, null,
+            () => "category", it => LoadContent(),
+            new []
+            {
+                ("All", "all"),
+                ("Featured", "featured")
+            });
+        timeRadioGroup.SetContent(null, null,
+            () => "all", it => LoadContent(),
+            new []
+            {
+                ("Any time", "all"),
+                ("Past week", "week"),
+                ("Past month", "month"),
+                ("Past 6 months", "halfyear"),
+                ("Past year", "year")
+            });
         searchInputField.onEndEdit.AddListener(value => LoadContent());
 
         titleText.text = "Browse";
@@ -61,10 +91,10 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
 
         if (SavedContent != null)
         {
-            sortRadioGroup.Select(SavedContent.Query.sort, false);
-            orderRadioGroup.Select(SavedContent.Query.order, false);
-            categoryRadioGroup.Select(SavedContent.Query.category, false);
-            timeRadioGroup.Select(SavedContent.Query.time, false);
+            sortRadioGroup.radioGroup.Select(SavedContent.Query.sort, false);
+            orderRadioGroup.radioGroup.Select(SavedContent.Query.order, false);
+            categoryRadioGroup.radioGroup.Select(SavedContent.Query.category, false);
+            timeRadioGroup.radioGroup.Select(SavedContent.Query.time, false);
             searchInputField.SetTextWithoutNotify(SavedContent.Query.search);
             if (SavedContent.OnlineLevels != null)
             {
@@ -104,10 +134,10 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
     {
         LoadContent(new OnlineLevelQuery
         {
-            sort = sortRadioGroup.Value,
-            order = orderRadioGroup.Value,
-            category = categoryRadioGroup.Value,
-            time = timeRadioGroup.Value,
+            sort = sortRadioGroup.radioGroup.Value,
+            order = orderRadioGroup.radioGroup.Value,
+            category = categoryRadioGroup.radioGroup.Value,
+            time = timeRadioGroup.radioGroup.Value,
             search = searchInputField.text
         });
     }
@@ -130,10 +160,10 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
         {
             Query = new OnlineLevelQuery
             {
-                sort = sortRadioGroup.Value,
-                order = orderRadioGroup.Value,
-                category = categoryRadioGroup.Value,
-                time = timeRadioGroup.Value,
+                sort = sortRadioGroup.radioGroup.Value,
+                order = orderRadioGroup.radioGroup.Value,
+                category = categoryRadioGroup.radioGroup.Value,
+                time = timeRadioGroup.radioGroup.Value,
                 search = searchInputField.text
             }
         };

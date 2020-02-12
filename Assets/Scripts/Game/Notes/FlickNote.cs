@@ -9,7 +9,7 @@ public class FlickNote : Note
 
     private float age;
 
-    protected override NoteRenderer CreateRenderer() => new FlickNoteRenderer(this);
+    protected override NoteRenderer CreateRenderer() => new FlickNoteClassicRenderer(this);
 
     public override void OnTouch(Vector2 screenPos)
     {

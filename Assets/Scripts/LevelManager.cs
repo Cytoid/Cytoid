@@ -16,13 +16,106 @@ using Object = UnityEngine.Object;
 public class LevelManager
 {
     public const string CoverThumbnailFilename = ".cover";
-    
+
+    public readonly LevelInstallProgressEvent OnLevelInstallProgress = new LevelInstallProgressEvent();
     public readonly LevelLoadProgressEvent OnLevelLoadProgress = new LevelLoadProgressEvent();
     public readonly LevelEvent OnLevelMetaUpdated = new LevelEvent();
     public readonly LevelEvent OnLevelDeleted = new LevelEvent();
 
     public readonly Dictionary<string, Level> LoadedLocalLevels = new Dictionary<string, Level>();
     private readonly HashSet<string> loadedPaths = new HashSet<string>();
+
+    public async UniTask<List<string>> InstallAllFromDataPath()
+    {
+        if (Application.platform == RuntimePlatform.IPhonePlayer)
+        {
+            var files = new List<string>();
+            var inboxPath = Context.DataPath + "/Inbox/"; 
+            if (Directory.Exists(inboxPath))
+            {
+                files.AddRange(Directory.GetFiles(inboxPath, "*.cytoidlevel"));
+            }
+            if (Directory.Exists(Context.iOSTemporaryInboxPath))
+            {
+                files.AddRange(Directory.GetFiles(Context.iOSTemporaryInboxPath, "*.cytoidlevel"));
+            }
+            
+            foreach (var file in files)
+            {
+                if (file == null) continue;
+                
+                var toPath = Context.DataPath + "/" + Path.GetFileName(file);
+                try
+                {
+                    if (File.Exists(toPath))
+                    {
+                        File.Delete(toPath);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(e);
+                    Debug.LogError($"Failed to delete .cytoidlevel file at {toPath}");
+                    continue;
+                }
+
+                try
+                {
+                    File.Move(file, toPath);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(e);
+                    Debug.LogError($"Failed to move .cytoidlevel file from {file} to {toPath}");
+                }
+            }
+        }
+
+        string[] levelFiles;
+        try
+        {
+            levelFiles = Directory.GetFiles(Context.DataPath, "*.cytoidlevel");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError(e);
+            Debug.LogError("Cannot read from data path");
+            return new List<string>();
+        }
+        
+        var loadedLevelJsonFiles = new List<string>();
+        var index = 1;
+        foreach (var levelFile in levelFiles)
+        {
+            var fileName = Path.GetFileNameWithoutExtension(levelFile);
+            OnLevelInstallProgress.Invoke(fileName, index, levelFiles.Length);
+
+            var destFolder = $"{Context.DataPath}/{fileName}";
+            if (await UnpackLevelPackage(levelFile, destFolder))
+            {
+                loadedLevelJsonFiles.Add(destFolder + "/level.json");
+                Debug.Log($"Installed {index}/{levelFiles.Length}: {levelFile}");
+            }
+            else
+            {
+                Debug.LogWarning($"Could not install {index}/{levelFiles.Length}: {levelFile}");
+            }
+
+            try
+            {
+                File.Delete(levelFile);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+                Debug.LogError($"Could not delete level file at {levelFile}");
+            }
+
+            index++;
+        }
+
+        return loadedLevelJsonFiles;
+    }
 
     public void DeleteLocalLevel(string id)
     {
@@ -31,6 +124,7 @@ public class LevelManager
             Debug.LogWarning($"Warning: Could not find level {id}");
             return;
         }
+
         var level = LoadedLocalLevels[id];
         Directory.Delete(Path.GetDirectoryName(level.Path) ?? throw new InvalidOperationException(), true);
         LoadedLocalLevels.Remove(level.Id);
@@ -61,14 +155,22 @@ public class LevelManager
                 resolve(remoteMeta);
             }).Catch(error =>
             {
-                if (!error.IsNetworkError && error.StatusCode == 404)
+                if (!error.IsNetworkError && (error.StatusCode == 404 || error.StatusCode == 403))
                 {
-                    Debug.Log($"Level {levelId} does not exist on the remote server");   
+                    if (error.StatusCode == 404)
+                    {
+                        Debug.Log($"Level {levelId} does not exist on the remote server");
+                    } 
+                    else 
+                    {
+                        Debug.Log($"Level {levelId} cannot be accessed on the remote server");
+                    }
                 }
                 else
                 {
                     Debug.LogError(error);
                 }
+
                 reject(error);
             });
         });
@@ -167,91 +269,126 @@ public class LevelManager
         await LoadFromMetadataFiles(jsonPaths);
     }
 
-    public async UniTask<List<Level>> LoadFromMetadataFiles(List<string> jsonPaths)
+    public async UniTask<List<Level>> LoadFromMetadataFiles(List<string> jsonPaths, bool forceReload = false)
     {
         var results = new List<Level>();
         int index;
         for (index = 0; index < jsonPaths.Count; index++)
         {
             var jsonPath = jsonPaths[index];
-            if (loadedPaths.Contains(jsonPath))
+            try
             {
-                Debug.Log($"Warning: {jsonPath} is already loaded!");
-                continue;
-            }
-            
-            var info = new FileInfo(jsonPath);
-            if (info.Directory == null) continue;
-
-            var path = info.Directory.FullName + Path.DirectorySeparatorChar;
-            Debug.Log($"Loading {index + 1}/{jsonPaths.Count} from {path}");
-            
-            var meta = JsonConvert.DeserializeObject<LevelMeta>(File.ReadAllText(jsonPath));
-
-            if (meta == null)
-            {
-                Debug.Log($"Invalid level.json file");
-                Debug.Log($"Skipped {index + 1}/{jsonPaths.Count} from {path}");
-                continue;
-            }
-
-            // Sort charts
-            meta.SortCharts();
-
-            // Reject invalid level meta
-            if (!meta.Validate())
-            {
-                Debug.Log($"Invalid metadata");
-                Debug.Log($"Skipped {index + 1}/{jsonPaths.Count} from {path}");
-                continue;
-            }
-
-            var level = new Level(path, meta, info.LastWriteTimeUtc, Context.LocalPlayer.GetLastPlayedTime(meta.id));
-
-            LoadedLocalLevels[meta.id] = level;
-            loadedPaths.Add(jsonPath);
-            results.Add(level);
-            
-            if (File.Exists(level.Path + ".thumbnail")) File.Delete(level.Path + ".thumbnail");
-            if (!File.Exists(level.Path + CoverThumbnailFilename))
-            {
-                var thumbnailPath = "file://" + level.Path + level.Meta.background.path;
-
-                using (var request = UnityWebRequestTexture.GetTexture(thumbnailPath))
+                if (!forceReload && loadedPaths.Contains(jsonPath))
                 {
-                    await request.SendWebRequest();
-                    if (request.isNetworkError || request.isHttpError)
-                    {
-                        Debug.Log($"Cannot get background texture from {thumbnailPath}");
-                        Debug.Log(request.error);
-                        Debug.Log($"Skipped {index + 1}/{jsonPaths.Count}: {meta.id} ({path})");
-                        continue;
-                    }
-
-                    var coverTexture = DownloadHandlerTexture.GetContent(request);
-
-                    if (coverTexture == null)
-                    {
-                        Debug.Log($"Cannot get background texture from {thumbnailPath}");
-                        Debug.Log(request.error);
-                        Debug.Log($"Skipped {index + 1}/{jsonPaths.Count}: {meta.id} ({path})");
-                        continue;
-                    }
-                    var croppedTexture = TextureScaler.FitCrop(coverTexture, Context.ThumbnailWidth, Context.ThumbnailHeight);
-                    var bytes = croppedTexture.EncodeToJPG();
-                    Object.Destroy(coverTexture);
-                    Object.Destroy(croppedTexture);
-
-                    await UniTask.DelayFrame(0); // Reduce load to prevent crash
-
-                    File.WriteAllBytes(level.Path + CoverThumbnailFilename, bytes);
+                    Debug.LogWarning($"{jsonPath} is already loaded");
+                    Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {jsonPath}");
+                    continue;
                 }
 
-                Debug.Log($"Thumbnail generated {index + 1}/{jsonPaths.Count}: {level.Id} ({thumbnailPath})");
+                FileInfo info;
+                try
+                {
+                    info = new FileInfo(jsonPath);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning(e);
+                    Debug.LogWarning($"{jsonPath} could not be read");
+                    Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {jsonPath}");
+                    continue;
+                }
+
+                if (info.Directory == null) continue;
+
+                var path = info.Directory.FullName + Path.DirectorySeparatorChar;
+                Debug.Log($"Loading {index + 1}/{jsonPaths.Count} from {path}");
+
+                var meta = JsonConvert.DeserializeObject<LevelMeta>(File.ReadAllText(jsonPath));
+
+                if (meta == null)
+                {
+                    Debug.LogWarning($"Invalid level.json at {jsonPath}");
+                    Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {path}");
+                    continue;
+                }
+                
+                OnLevelLoadProgress.Invoke(meta.id, index + 1, jsonPaths.Count);
+
+                // Sort charts
+                meta.SortCharts();
+
+                // Reject invalid level meta
+                if (!meta.Validate())
+                {
+                    Debug.LogWarning($"Invalid metadata in level.json at {jsonPath}");
+                    Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {path}");
+                    continue;
+                }
+
+                var level = new Level(path, meta, info.LastWriteTimeUtc,
+                    Context.LocalPlayer.GetLastPlayedTime(meta.id));
+
+                LoadedLocalLevels[meta.id] = level;
+                loadedPaths.Add(jsonPath);
+                results.Add(level);
+
+                if (!File.Exists(level.Path + CoverThumbnailFilename))
+                {
+                    var thumbnailPath = "file://" + level.Path + level.Meta.background.path;
+
+                    using (var request = UnityWebRequestTexture.GetTexture(thumbnailPath))
+                    {
+                        await request.SendWebRequest();
+                        if (request.isNetworkError || request.isHttpError)
+                        {
+                            Debug.LogWarning(request.error);
+                            Debug.LogWarning($"Cannot get background texture from {thumbnailPath}");
+                            Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count}: {meta.id} ({path})");
+                            continue;
+                        }
+
+                        var coverTexture = DownloadHandlerTexture.GetContent(request);
+
+                        if (coverTexture == null)
+                        {
+                            Debug.LogWarning(request.error);
+                            Debug.LogWarning($"Cannot get background texture from {thumbnailPath}");
+                            Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count}: {meta.id} ({path})");
+                            continue;
+                        }
+
+                        var croppedTexture = TextureScaler.FitCrop(coverTexture, Context.ThumbnailWidth,
+                            Context.ThumbnailHeight);
+                        var bytes = croppedTexture.EncodeToJPG();
+                        Object.Destroy(coverTexture);
+                        Object.Destroy(croppedTexture);
+
+                        await UniTask.DelayFrame(0); // Reduce load to prevent crash
+
+                        try
+                        {
+                            File.WriteAllBytes(level.Path + CoverThumbnailFilename, bytes);
+                            Debug.Log($"Thumbnail generated {index + 1}/{jsonPaths.Count}: {level.Id} ({thumbnailPath})");
+                            
+                            await UniTask.DelayFrame(0); // Reduce load to prevent crash
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.LogWarning(e);
+                            Debug.LogWarning($"Could not write to {level.Path + CoverThumbnailFilename}");
+                            Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {jsonPath}");
+                        }
+                    }
+                }
+
+                Debug.Log($"Loaded {index + 1}/{jsonPaths.Count}: ({meta.id})");
             }
-            
-            Debug.Log($"Loaded {index + 1}/{jsonPaths.Count}: ({meta.id})");
-            OnLevelLoadProgress.Invoke(level, index + 1, jsonPaths.Count);
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+                Debug.LogError($"Unexpected error while loading from {jsonPath}");
+                Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {jsonPath}");
+            }
         }
 
         return results;
@@ -261,7 +398,7 @@ public class LevelManager
     {
         var local = level.Meta;
         var remote = meta;
-        
+
         var updated = false;
         if (local.version > remote.version)
         {
@@ -332,7 +469,7 @@ public class LevelManager
                 updated = true;
             }
         }
-        
+
         if (updated)
         {
             File.WriteAllText($"{level.Path}/level.json", JsonConvert.SerializeObject(local));
@@ -346,6 +483,10 @@ public class LevelEvent : UnityEvent<Level>
 {
 }
 
-public class LevelLoadProgressEvent : UnityEvent<Level, int, int>
+public class LevelInstallProgressEvent : UnityEvent<string, int, int> // Filename, current, total
+{
+}
+
+public class LevelLoadProgressEvent : UnityEvent<string, int, int> // Level ID, current, total. Note: may NOT be continuous!
 {
 }

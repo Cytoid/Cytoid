@@ -313,6 +313,7 @@ public class Game : MonoBehaviour
     {
         var provider = GameObjectProvider.Instance;
         Note note;
+        
         switch ((NoteType) model.type)
         {
             case NoteType.Click:
@@ -337,9 +338,10 @@ public class Game : MonoBehaviour
                 note = Instantiate(provider.clickNotePrefab, contentParent.transform).GetComponent<Note>();
                 break;
         }
-
+        
         // Debug.Log($"Note {model.id} is spawned as {((NoteType) model.type).ToString()}");
         note.SetData(this, model.id);
+        note.gameObject.SetLayerRecursively(LayerMask.NameToLayer("Content"));
         Notes[model.id] = note;
     }
 
@@ -347,6 +349,7 @@ public class Game : MonoBehaviour
     {
         var dragLineView = Instantiate(GameObjectProvider.Instance.dragLinePrefab, contentParent.transform)
             .GetComponent<DragLineElement>();
+        dragLineView.gameObject.SetLayerRecursively(LayerMask.NameToLayer("Content"));
         dragLineView.SetData(this, from, to);
     }
 
@@ -511,7 +514,7 @@ public class Game : MonoBehaviour
         {
             Context.LastGameResult = new GameResult
             {
-                Score = (int) State.Score,
+                Score = State.Score,
                 Accuracy = State.Accuracy,
                 MaxCombo = State.MaxCombo,
                 Mods = new List<Mod>(State.Mods),

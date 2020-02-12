@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cytoid.Storyboard.Controllers;
 using Cytoid.Storyboard.Sprites;
 using Cytoid.Storyboard.Texts;
+using Newtonsoft.Json;
 using UniRx.Async;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -92,7 +94,7 @@ namespace Cytoid.Storyboard
 
         public async UniTask Initialize()
         {
-            // Reset
+            // Clear
             Clear();
 
             // Create initially spawned texts
@@ -116,21 +118,22 @@ namespace Cytoid.Storyboard
             }
 
             await UniTask.WhenAll(spawnSpriteTasks);
+            
+            // Clear on abort/retry/complete
+            Game.onGameAborted.AddListener(_ => Clear());
+            Game.onGameRetried.AddListener(_ => Clear());
+            Game.onGameCompleted.AddListener(_ => Clear());
         }
 
         public void OnGameUpdate(Game _)
         {
-            if (Time < 0) return;
-            if (Game.State.IsCompleted)
-            {
-                Clear();
-                Context.SpriteCache.DisposeTagged("Storyboard");
-                return;
-            }
+            if (Time < 0 || Game.State.IsCompleted) return;
 
             UpdateTexts();
             UpdateSprites();
             UpdateControllers();
+            
+            // TODO: If pause, reset controller effects
         }
 
         protected virtual void UpdateTexts()
@@ -296,8 +299,15 @@ namespace Cytoid.Storyboard
             ui.color = UnityEngine.Color.white;
             ui.preserveAspect = true;
             ui.GetComponent<CanvasGroup>().alpha = 0;
+            
+            var spritePath = sprite.States[0].Path;
+            if (spritePath == null && sprite.States.Count > 1) spritePath = sprite.States[1].Path;
+            if (spritePath == null)
+            {
+                throw new InvalidOperationException("Sprite does not have a valid path");
+            }
 
-            var path = "file://" + Game.Level.Path + sprite.States[0].Path;
+            var path = "file://" + Game.Level.Path + spritePath;
             ui.sprite = await Context.SpriteCache.CacheSprite(path, "Storyboard");
         }
 

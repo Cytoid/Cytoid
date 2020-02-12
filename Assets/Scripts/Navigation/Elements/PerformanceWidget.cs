@@ -1,4 +1,4 @@
-using UniRx.Async;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,7 +18,7 @@ public class PerformanceWidget : ContainerEntry<RankingEntry>
         grade.text = scoreGrade.ToString();
         gradeGradient.SetGradient(scoreGrade.GetGradient());
         score.text = entry.score.ToString("D6");
-        accuracy.text = (entry.accuracy * 100f).ToString("N2") + "%";
+        accuracy.text = (Math.Floor(entry.accuracy * 100 * 100) / 100).ToString("0.00") + "%";
         LayoutFixer.Fix(transform as RectTransform);
     }
 
@@ -26,7 +26,7 @@ public class PerformanceWidget : ContainerEntry<RankingEntry>
 
     public void SetModel(LocalPlayer.Performance performance)
     {
-        SetModel(new RankingEntry { score = (int) performance.Score, accuracy = performance.Accuracy / 100.0f });
+        SetModel(new RankingEntry { score = performance.Score, accuracy = performance.Accuracy / 100.0f });
     }
     
 }

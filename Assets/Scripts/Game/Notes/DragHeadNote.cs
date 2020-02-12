@@ -7,7 +7,7 @@ public class DragHeadNote : Note
 {
     protected override NoteRenderer CreateRenderer()
     {
-        return new DragHeadNoteRenderer(this);
+        return new DragHeadNoteClassicRenderer(this);
     }
 
     // Drag head is constantly moving from drag note to drag note

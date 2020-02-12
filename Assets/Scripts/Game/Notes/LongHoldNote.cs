@@ -2,6 +2,6 @@
 {
     protected override NoteRenderer CreateRenderer()
     {
-        return new LongHoldNoteRenderer(this);
+        return new LongHoldNoteClassicRenderer(this);
     }
 }

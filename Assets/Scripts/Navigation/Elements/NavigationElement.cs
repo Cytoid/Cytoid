@@ -29,7 +29,7 @@ public class NavigationElement : InteractableMonoBehavior
         }
         if (!string.IsNullOrWhiteSpace(soundName)) Context.AudioManager.Get(soundName).Play(ignoreDsp: true);
         Context.ScreenManager.ChangeScreen(
-            navigateToLastScreen ? Context.ScreenManager.PopHistoryAndPeek() : targetScreenId, transition,
+            navigateToLastScreen ? Context.ScreenManager.PopAndPeekHistory() : targetScreenId, transition,
             duration, currentScreenDelay, newScreenDelay, transitionFocus, OnScreenChanged, addToHistory: !navigateToLastScreen);
     }
 

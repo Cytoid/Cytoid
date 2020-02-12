@@ -51,6 +51,7 @@ public abstract class Note : MonoBehaviour
 
         if (!(Game is StoryboardGame))
         {
+            Game.onNoteClear.Invoke(Game, this);
             AwaitAndDestroy();
         }
         else
@@ -90,15 +91,18 @@ public abstract class Note : MonoBehaviour
         if (!IsCleared)
         {
             // Autoplay
-            if (TimeUntilStart < 0)
+            if (IsAutoEnabled())
             {
-                if (this is HoldNote && IsAutoEnabled())
+                if (TimeUntilStart < 0)
                 {
-                    ((HoldNote) this).Holding = true;
-                }
-                else if (IsAutoEnabled())
-                {
-                    Clear(NoteGrade.Perfect);
+                    if (this is HoldNote)
+                    {
+                        ((HoldNote) this).UpdateFinger(0, true);
+                    }
+                    else
+                    {
+                        Clear(NoteGrade.Perfect);
+                    }
                 }
             }
 

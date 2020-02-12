@@ -22,6 +22,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static readonly LevelEvent OnSelectedLevelChanged = new LevelEvent();
     
     public static string DataPath;
+    public static string iOSTemporaryInboxPath;
     public static int InitialWidth;
     public static int InitialHeight;
     
@@ -96,7 +97,14 @@ public class Context : SingletonMonoBehavior<Context>
 			// Create an empty folder if it doesn't already exist
 			Directory.CreateDirectory(DataPath);
             File.Create(DataPath + "/.nomedia").Dispose();
-		}
+		} 
+        else if (Application.platform == RuntimePlatform.IPhonePlayer)
+        {
+            // iOS 13 fix
+            iOSTemporaryInboxPath = DataPath
+                                   .Replace("Documents/", "")
+                                   .Replace("Documents", "") + "/tmp/me.tigerhix.cytoid-Inbox/";
+        }
 
 #if UNITY_EDITOR
         Application.runInBackground = true;
@@ -107,10 +115,10 @@ public class Context : SingletonMonoBehavior<Context>
         if (SceneManager.GetActiveScene().name == "Game")
         {
             // Load test level
-            await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/sggrkung.festival_blaze/level.json" });
+            await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/encopda.grandescape.mafu/level.json" });
             SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
-            SelectedDifficulty = Difficulty.Parse(SelectedLevel.Meta.charts[0].type);
-            SelectedMods.Add(Mod.ExHard);
+            SelectedDifficulty = Difficulty.Extreme;
+            SelectedMods.Remove(Mod.Auto);
         }
         else
         {

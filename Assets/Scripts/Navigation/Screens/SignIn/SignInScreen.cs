@@ -1,3 +1,4 @@
+using System.Globalization;
 using Proyecto26;
 using UniRx.Async;
 using UnityEngine.UI;
@@ -31,6 +32,8 @@ public class SignInScreen : Screen
             return;
         }
 
+        uidInput.text = uidInput.text.ToLower(CultureInfo.InvariantCulture);
+
         var completed = false;
 
         Context.OnlinePlayer.SetUid(uidInput.text.Trim());
@@ -40,7 +43,7 @@ public class SignInScreen : Screen
                 Toast.Next(Toast.Status.Success, "Successfully signed in.");
                 ProfileWidget.Instance.SetSignedIn(profile);
                 Context.AudioManager.Get("ActionSuccess").Play();
-                Context.ScreenManager.ChangeScreen(Context.ScreenManager.PopHistoryAndPeek(), ScreenTransition.In, addToHistory: false);
+                Context.ScreenManager.ChangeScreen(Context.ScreenManager.PopAndPeekHistory(), ScreenTransition.In, addToHistory: false);
             })
             .HandleRequestErrors()
             .Finally(() => completed = true);

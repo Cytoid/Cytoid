@@ -21,7 +21,7 @@ public class ProgressIndicator : MonoBehaviour
     {
         if (game.State.UseHealthSystem)
         {
-            image.rectTransform.DOWidth(fullWidth * game.State.Health / game.State.MaxHealth, 0.2f);
+            image.rectTransform.DOWidth((float) (fullWidth * game.State.Health / game.State.MaxHealth), 0.2f);
         }
         else
         {

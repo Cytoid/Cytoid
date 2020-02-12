@@ -155,7 +155,7 @@ public class ResultScreen : Screen, ScreenChangeListener
                 Context.LocalPlayer.PlayRanked,
                 new LocalPlayer.Performance
                 {
-                    Score = result.Score, Accuracy = (float) result.Accuracy, ClearType = clearType
+                    Score = (int) result.Score, Accuracy = (float) result.Accuracy, ClearType = clearType
                 });
         }
         else
@@ -169,7 +169,7 @@ public class ResultScreen : Screen, ScreenChangeListener
             if (result.Score > historicBest.Score)
             {
                 newBestText.text = $"+{result.Score - historicBest.Score}";
-                newBest.Score = result.Score;
+                newBest.Score = (int) result.Score;
                 newBest.ClearType = clearType;
             }
             else
@@ -201,7 +201,7 @@ public class ResultScreen : Screen, ScreenChangeListener
             .Then(it =>
             {
                 if (it == null) return;
-                if (it.rating <= 0 && ScoreGrades.From(result.Score) >= ScoreGrade.A)
+                if (Context.OnlinePlayer.IsAuthenticated && it.rating <= 0 && ScoreGrades.From(result.Score) >= ScoreGrade.A)
                 {
                     // Invoke the rate dialog
                     ratingTab.rateLevelElement.rateButton.onPointerClick.Invoke(null);
@@ -249,7 +249,7 @@ public class ResultScreen : Screen, ScreenChangeListener
             Uri = uri,
             BodyString = JObject.FromObject(new UploadRecord
             {
-                score = result.Score,
+                score = (int) result.Score,
                 accuracy = double.Parse((result.Accuracy / 100.0).ToString("0.00000000")),
                 details = new UploadRecord.Details
                 {
@@ -311,7 +311,7 @@ public class ResultScreen : Screen, ScreenChangeListener
         LoopAudioPlayer.Instance.PlayMainLoopAudio();
         Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.Out, willDestroy: true,
             onFinished: screen => Resources.UnloadUnusedAssets());
-        Context.AudioManager.Get("LevelStart").Play(AudioTrackIndex.RoundRobin);
+        Context.AudioManager.Get("LevelStart").Play();
     }
 
     public async void RetryGame()
@@ -322,7 +322,7 @@ public class ResultScreen : Screen, ScreenChangeListener
 
         ProfileWidget.Instance.FadeOut();
 
-        Context.AudioManager.Get("LevelStart").Play(AudioTrackIndex.RoundRobin);
+        Context.AudioManager.Get("LevelStart").Play();
 
         var sceneLoader = new SceneLoader("Game");
         sceneLoader.Load();

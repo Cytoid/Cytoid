@@ -42,7 +42,7 @@ public class ProfileScreen : Screen, ScreenChangeListener
         signOutButton.onPointerClick.AddListener(_ =>
         {
             Context.OnlinePlayer.Deauthenticate();
-            Context.ScreenManager.ChangeScreen(Context.ScreenManager.PopHistoryAndPeek(), ScreenTransition.In, addToHistory: false);
+            Context.ScreenManager.ChangeScreen(Context.ScreenManager.PopAndPeekHistory(), ScreenTransition.In, addToHistory: false);
             Toast.Next(Toast.Status.Success, "Successfully signed out.");
             ProfileWidget.Instance.SetSignedOut();
             Context.ScreenManager.GetScreen<SignInScreen>().passwordInput.text = "";

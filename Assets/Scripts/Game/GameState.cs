@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -15,18 +16,18 @@ public class GameState
     
     public bool IsRanked { get; }
     public HashSet<Mod> Mods { get; }
-    public float MaxHealth { get; }
+    public double MaxHealth { get; }
     public int NoteCount { get; }
 
     public Dictionary<int, NoteJudgement> Judgements { get; private set; } = new Dictionary<int, NoteJudgement>();
     public int ClearCount { get; private set; }
     public bool ShouldFail { get; private set; }
     
-    public float Score { get; private set; }
-    public float Accuracy { get; private set; }
+    public double Score { get; private set; }
+    public double Accuracy { get; private set; }
     public int Combo { get; private set; }
     public int MaxCombo { get; private set; }
-    public float Health { get; private set; }
+    public double Health { get; private set; }
     
     public bool UseHealthSystem { get; private set; }
     
@@ -38,23 +39,23 @@ public class GameState
     public int LateCount =>
         Judgements.Values.Count(it => it.Grade != NoteGrade.Perfect && it.Grade != NoteGrade.Miss && it.Error > 0);
 
-    public float AverageTimingError => Judgements.Values.Sum(it => it.Error) / Judgements.Count;
+    public double AverageTimingError => Judgements.Values.Sum(it => it.Error) / Judgements.Count;
 
-    public float StandardTimingError
+    public double StandardTimingError
     {
         get
         {
-            var difference = 0f;
-            Judgements.Values.ForEach(it => difference += Mathf.Pow(AverageTimingError - it.Error, 2));
-            return Mathf.Sqrt(difference / Judgements.Count);
+            var difference = 0.0;
+            Judgements.Values.ForEach(it => difference += Math.Pow(AverageTimingError - it.Error, 2));
+            return Math.Sqrt(difference / Judgements.Count);
         }
     }
 
     private bool isFullScorePossible = true;
-    private float accumulatedAccuracy;
-    private float noteScoreMultiplierFactor;
+    private double accumulatedAccuracy;
+    private double noteScoreMultiplierFactor;
 
-    public GameState(Game game, bool isRanked, IEnumerable<Mod> mods, float maxHealth)
+    public GameState(Game game, bool isRanked, IEnumerable<Mod> mods, double maxHealth)
     {
         IsRanked = isRanked;
         Mods = new HashSet<Mod>(mods);
@@ -62,11 +63,11 @@ public class GameState
         Health = MaxHealth;
         NoteCount = game.Chart.Model.note_list.Count;
         game.Chart.Model.note_list.ForEach(it => Judgements[it.id] = new NoteJudgement());
-        noteScoreMultiplierFactor = Mathf.Sqrt(NoteCount) / 3.0f;
+        noteScoreMultiplierFactor = Math.Sqrt(NoteCount) / 3.0;
         UseHealthSystem = Mods.Contains(Mod.Hard) || Mods.Contains(Mod.ExHard);
     }
 
-    public void Judge(Note note, NoteGrade grade, float error, float greatGradeWeight)
+    public void Judge(Note note, NoteGrade grade, double error, double greatGradeWeight)
     {
         if (Judgements[note.Model.id].IsJudged)
         {
@@ -124,8 +125,8 @@ public class GameState
         // Score
         if (!IsRanked)
         {
-            Score += 900000f / NoteCount * grade.GetScoreWeight(false) +
-                     100000f / (NoteCount * (float) (NoteCount + 1) / 2f) * Combo;
+            Score += 900000.0 / NoteCount * grade.GetScoreWeight(false) +
+                     100000.0 / (NoteCount * (NoteCount + 1) / 2.0) * Combo;
         }
         else
         {
@@ -145,7 +146,7 @@ public class GameState
             }
 
             noteScore *= NoteScoreMultiplier;
-            Score += (float) noteScore;
+            Score += noteScore;
         }
         if (Score > 999500)
         {
@@ -155,15 +156,16 @@ public class GameState
             }
         }
         if (Score > 1000000) Score = 1000000;
+        if (Score == 1000000 && isFullScorePossible) Score = 999999; // In case of double inaccuracy
 
         // Accuracy
         if (!IsRanked || grade != NoteGrade.Great)
         {
-            accumulatedAccuracy += 100f * grade.GetAccuracyWeight();
+            accumulatedAccuracy += 100.0 * grade.GetAccuracyWeight();
         }
         else
         {
-            accumulatedAccuracy += 100f * (NoteGrade.Great.GetAccuracyWeight() +
+            accumulatedAccuracy += 100.0 * (NoteGrade.Great.GetAccuracyWeight() +
                                            (NoteGrade.Perfect.GetAccuracyWeight() -
                                             NoteGrade.Great.GetAccuracyWeight()) *
                                            greatGradeWeight);
@@ -193,7 +195,7 @@ public class GameState
                     break;
             }
 
-            Health = Mathf.Clamp(Health, 0, MaxHealth);
+            Health = Math.Min(Math.Max(Health, 0), MaxHealth);
             if (Health <= 0) ShouldFail = true;
         }
 
@@ -237,7 +239,7 @@ public class GameState
             NoteType.Click, new NoteHpMod(new List<HpMod>
             {
                 new HpMod(1, HpModType.Absolute),
-                new HpMod(0.5f, HpModType.Absolute),
+                new HpMod(0.5, HpModType.Absolute),
                 new HpMod(-1, HpModType.Percentage),
                 new HpMod(-3, HpModType.Percentage),
                 new HpMod(-6, HpModType.Percentage),
@@ -247,9 +249,9 @@ public class GameState
         {
             NoteType.Hold, new NoteHpMod(new List<HpMod>
             {
-                new HpMod(0.5f, HpModType.Absolute),
-                new HpMod(0.25f, HpModType.Absolute),
-                new HpMod(-1.5f, HpModType.Percentage),
+                new HpMod(0.5, HpModType.Absolute),
+                new HpMod(0.25, HpModType.Absolute),
+                new HpMod(-1.5, HpModType.Percentage),
                 new HpMod(-4, HpModType.Percentage),
                 new HpMod(-9, HpModType.Percentage),
                 new HpMod(-12, HpModType.Percentage)
@@ -258,9 +260,9 @@ public class GameState
         {
             NoteType.LongHold, new NoteHpMod(new List<HpMod>
             {
-                new HpMod(0.5f, HpModType.Absolute),
-                new HpMod(0.25f, HpModType.Absolute),
-                new HpMod(-1.5f, HpModType.Percentage),
+                new HpMod(0.5, HpModType.Absolute),
+                new HpMod(0.25, HpModType.Absolute),
+                new HpMod(-1.5, HpModType.Percentage),
                 new HpMod(-4, HpModType.Percentage),
                 new HpMod(-9, HpModType.Percentage),
                 new HpMod(-12, HpModType.Percentage)
@@ -269,7 +271,7 @@ public class GameState
         {
             NoteType.DragHead, new NoteHpMod(new List<HpMod>
             {
-                new HpMod(0.2f, HpModType.Absolute),
+                new HpMod(0.2, HpModType.Absolute),
                 new HpMod(0, HpModType.Absolute),
                 new HpMod(0, HpModType.Absolute),
                 new HpMod(0, HpModType.Absolute),
@@ -280,21 +282,21 @@ public class GameState
         {
             NoteType.DragChild, new NoteHpMod(new List<HpMod>
             {
-                new HpMod(0.1f, HpModType.Absolute),
+                new HpMod(0.1, HpModType.Absolute),
                 new HpMod(0, HpModType.Absolute),
                 new HpMod(0, HpModType.Absolute),
                 new HpMod(0, HpModType.Absolute),
                 new HpMod(0, HpModType.Absolute),
-                new HpMod(-2.4f, HpModType.Percentage)
+                new HpMod(-2.4, HpModType.Percentage)
             })
         },
         {
             NoteType.Flick, new NoteHpMod(new List<HpMod>
             {
                 new HpMod(1, HpModType.Absolute),
-                new HpMod(0.5f, HpModType.Absolute),
-                new HpMod(-0.75f, HpModType.Percentage),
-                new HpMod(-2.25f, HpModType.Percentage),
+                new HpMod(0.5, HpModType.Absolute),
+                new HpMod(-0.75, HpModType.Percentage),
+                new HpMod(-2.25, HpModType.Percentage),
                 new HpMod(-4, HpModType.Percentage),
                 new HpMod(-6, HpModType.Percentage)
             })
@@ -317,7 +319,7 @@ public class GameState
         {
             NoteType.Hold, new NoteHpMod(new List<HpMod>
             {
-                new HpMod(0.5f, HpModType.Absolute),
+                new HpMod(0.5, HpModType.Absolute),
                 new HpMod(0, HpModType.Absolute),
                 new HpMod(-6, HpModType.Percentage),
                 new HpMod(-12, HpModType.Percentage),
@@ -328,7 +330,7 @@ public class GameState
         {
             NoteType.LongHold, new NoteHpMod(new List<HpMod>
             {
-                new HpMod(0.5f, HpModType.Absolute),
+                new HpMod(0.5, HpModType.Absolute),
                 new HpMod(0, HpModType.Absolute),
                 new HpMod(-6, HpModType.Percentage),
                 new HpMod(-12, HpModType.Percentage),
@@ -339,7 +341,7 @@ public class GameState
         {
             NoteType.DragHead, new NoteHpMod(new List<HpMod>
             {
-                new HpMod(0.2f, HpModType.Absolute),
+                new HpMod(0.2, HpModType.Absolute),
                 new HpMod(0, HpModType.Absolute),
                 new HpMod(0, HpModType.Absolute),
                 new HpMod(0, HpModType.Absolute),
@@ -350,7 +352,7 @@ public class GameState
         {
             NoteType.DragChild, new NoteHpMod(new List<HpMod>
             {
-                new HpMod(0.1f, HpModType.Absolute),
+                new HpMod(0.1, HpModType.Absolute),
                 new HpMod(0, HpModType.Absolute),
                 new HpMod(0, HpModType.Absolute),
                 new HpMod(0, HpModType.Absolute),
@@ -379,7 +381,7 @@ public class NoteJudgement
 {
     public bool IsJudged;
     public NoteGrade Grade;
-    public float Error;
+    public double Error;
 }
 
 public class ModeHpMod
@@ -404,10 +406,10 @@ public class NoteHpMod
 
 public class HpMod
 {
-    public float Value;
+    public double Value;
     public HpModType Type;
 
-    public HpMod(float value, HpModType type)
+    public HpMod(double value, HpModType type)
     {
         Value = value;
         Type = type;

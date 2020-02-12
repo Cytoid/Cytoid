@@ -16,10 +16,10 @@ public enum ScoreGrade
 
 public static class ScoreGrades
 {
-    public static ScoreGrade From(float score)
+    public static ScoreGrade From(double score)
     {
         var grade = ScoreGrade.F;
-        if (Mathf.Approximately(score, 1000000))
+        if (score == 1000000)
         {
             grade = ScoreGrade.MAX;
         }

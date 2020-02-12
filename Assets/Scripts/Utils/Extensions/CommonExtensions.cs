@@ -17,6 +17,14 @@ using Object = System.Object;
 public static class CommonExtensions
 {
     
+    public static void SetLayerRecursively(this GameObject go, int layerNumber)
+    {
+        foreach (var trans in go.GetComponentsInChildren<Transform>(true))
+        {
+            trans.gameObject.layer = layerNumber;
+        }
+    }
+    
     // Credits: https://forum.unity.com/threads/test-if-ui-element-is-visible-on-screen.276549/#post-5075102
     /// <summary>
     /// Counts the bounding box corners of the given RectTransform that are visible in screen space.
@@ -445,8 +453,9 @@ public static class CommonExtensions
         transform.localScale = new Vector3(scale.x, y, scale.z);
     }
 
-    public static void SetLocalScaleXY(this Transform transform, float x, float y)
+    public static void SetLocalScaleXY(this Transform transform, float x, float y = default)
     {
+        if (y == default) y = x;
         transform.localScale = new Vector3(x, y, transform.localScale.z);
     }
 

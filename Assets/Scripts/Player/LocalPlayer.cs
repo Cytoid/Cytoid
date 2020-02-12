@@ -50,7 +50,7 @@ public class LocalPlayer
     
     public int FlickHitboxSize
     {
-        get => PlayerPrefs.GetInt("flick hitbox size", 2);
+        get => PlayerPrefs.GetInt("flick hitbox size", 1);
         set => PlayerPrefs.SetInt("flick hitbox size", value);
     }
 
@@ -211,7 +211,7 @@ public class LocalPlayer
     public class Performance
     {
         public int Score;
-        public float Accuracy;
+        public float Accuracy; // 0~100
         public string ClearType;
     }
     

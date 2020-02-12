@@ -23,6 +23,10 @@ public class InitializationScreen : Screen
         spinnerElement.IsSpinning = true;
         statusText.text = "Scanning levels";
         
+        Context.LevelManager.OnLevelInstallProgress.AddListener(OnLevelInstallProgress);
+        await Context.LevelManager.InstallAllFromDataPath();
+        Context.LevelManager.OnLevelInstallProgress.RemoveListener(OnLevelInstallProgress);
+        
         Context.LevelManager.OnLevelLoadProgress.AddListener(OnLevelLoadProgress);
         await Context.LevelManager.LoadAllFromDataPath();
         Context.LevelManager.OnLevelLoadProgress.RemoveListener(OnLevelLoadProgress);
@@ -41,9 +45,15 @@ public class InitializationScreen : Screen
         MainTranslucentImage.Instance.Initialize();
     }
 
-    private void OnLevelLoadProgress(Level level, int current, int total)
+    private void OnLevelInstallProgress(string fileName, int current, int total)
     {
-        statusText.text = $"Loaded {level.Id} ({current}/{total})";
+        statusText.text = $"Unpacking {fileName} ({current}/{total})";
+        statusText.transform.RebuildLayout();
+    }
+    
+    private void OnLevelLoadProgress(string levelId, int current, int total)
+    {
+        statusText.text = $"Loading {levelId} ({current}/{total})";
         statusText.transform.RebuildLayout();
     }
     

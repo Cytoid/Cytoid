@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public class GameResult
 {
 
-    public int Score;
+    public double Score;
     public double Accuracy;
     public int MaxCombo;
     public List<Mod> Mods;

@@ -71,6 +71,16 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
                 SpinnerOverlay.Hide();
             }
         });
+
+        var lp = Context.LocalPlayer;
+        practiceModeToggle.Select((!lp.PlayRanked).BoolToString(), false);
+        practiceModeToggle.onSelect.AddListener(it =>
+        {
+            var ranked = !bool.Parse(it);
+            lp.PlayRanked = ranked;
+            LoadLevelPerformance();
+            UpdateStartButton();
+        });
     }
 
     public override void OnScreenBecameActive()
@@ -323,7 +333,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
 
     public void OnScreenChangeFinished(Screen from, Screen to)
     {
-        if (from.GetId() == Id && to.GetId() != ProfileScreen.Id)
+        if (from.GetId() == Id)
         {
             // Unload resources
             UnloadPreviewAudioClip();
@@ -539,15 +549,6 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
     public async void InitializeSettingsTab()
     {
         var lp = Context.LocalPlayer;
-        practiceModeToggle.Select((!lp.PlayRanked).BoolToString(), false);
-        practiceModeToggle.onSelect.AddListener(it =>
-        {
-            var ranked = !bool.Parse(it);
-            lp.PlayRanked = ranked;
-            LoadLevelPerformance();
-            UpdateStartButton();
-        });
-        
         calibratePreferenceElement.SetContent("Level note offset", "Notes not syncing well with music?\n" +
                                                                    "Press \"Calibrate\" or manually enter\n" +
                                                                    "a desired note offset.");

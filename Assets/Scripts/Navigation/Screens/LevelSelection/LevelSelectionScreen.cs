@@ -14,6 +14,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
 
     public LabelSelect categorySelect;
 
+    [GetComponentInChildren] public ActionTabs actionTabs;
     public ToggleRadioGroupPreferenceElement sortByRadioGroup;
     public ToggleRadioGroupPreferenceElement sortOrderRadioGroup;
     public InputField searchInputField;
@@ -43,7 +44,11 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
                 ("Descending", false)
             });
         sortOrderRadioGroup.radioGroup.onSelect.AddListener(value => RefillLevels());
-        searchInputField.onEndEdit.AddListener(value => RefillLevels());
+        searchInputField.onEndEdit.AddListener(value =>
+        {
+            actionTabs.Close();
+            RefillLevels();
+        });
         
         Context.LevelManager.OnLevelDeleted.AddListener(_ =>
         {
@@ -65,7 +70,6 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
 
         if (SavedContent != null)
         {
-            print("not null");
             categorySelect.Select(SavedContent.CategoryIndex);
         }
     }

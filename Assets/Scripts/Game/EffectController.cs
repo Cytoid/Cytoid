@@ -56,7 +56,7 @@ public class EffectController : MonoBehaviour
         flatFx.AddEffect(at, 1);
 
         var clearFx = this.clearFx;
-        if (noteRenderer is DragChildNoteRenderer || noteRenderer is DragHeadNoteRenderer)
+        if (noteRenderer is DragChildNoteClassicRenderer || noteRenderer is DragHeadNoteClassicRenderer)
         {
             clearFx = clearDragFx;
         }
@@ -84,7 +84,7 @@ public class EffectController : MonoBehaviour
             fx.transform.SetParent(effectParent.transform, true);
             fx.Stop();
 
-            if (!(noteRenderer is DragChildNoteRenderer) && !(noteRenderer is DragHeadNoteRenderer))
+            if (!(noteRenderer is DragChildNoteClassicRenderer) && !(noteRenderer is DragHeadNoteClassicRenderer))
             {
                 if (earlyLateIndicator)
                 {

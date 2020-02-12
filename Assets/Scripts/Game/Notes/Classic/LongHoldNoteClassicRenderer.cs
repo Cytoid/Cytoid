@@ -1,19 +1,19 @@
 ﻿using System.Linq.Expressions;
 using UnityEngine;
 
-public class LongHoldNoteRenderer : HoldNoteRenderer
+public class LongHoldNoteClassicRenderer : HoldNoteClassicRenderer
 {
     public SpriteRenderer Line2;
     public SpriteRenderer CompletedLine2;
 
-    private float orthographicSize = Camera.main.orthographicSize;
+    private readonly float orthographicSize = Camera.main.orthographicSize;
 
-    public LongHoldNoteRenderer(LongHoldNote holdNote) : base(holdNote) => Expression.Empty();
+    public LongHoldNoteClassicRenderer(LongHoldNote holdNote) : base(holdNote) => Expression.Empty();
 
     protected override void InitializeHoldComponents()
     {
         // Override base renderer
-        var provider = LongHoldNoteRendererProvider.Instance;
+        var provider = LongHoldNoteClassicRendererProvider.Instance;
         Line = Object.Instantiate(provider.linePrefab, Note.transform, false).GetComponent<SpriteRenderer>();
         Line.color = Line.color.WithAlpha(0);
         Line2 = Object.Instantiate(provider.linePrefab, Note.transform, false).GetComponent<SpriteRenderer>();
@@ -39,6 +39,10 @@ public class LongHoldNoteRenderer : HoldNoteRenderer
         base.OnNoteLoaded();
         var newProgressRingScale = ProgressRing.transform.localScale.x * SizeMultiplier;
         ProgressRing.transform.SetLocalScaleXY(newProgressRingScale, newProgressRingScale);
+        
+        CompletedLine2.size = new Vector2(1, 0);
+        Line.size = new Vector2(1, orthographicSize * 4);
+        Line2.size = new Vector2(1, orthographicSize * 4);
     }
 
     protected override void UpdateComponentStates()
@@ -48,7 +52,7 @@ public class LongHoldNoteRenderer : HoldNoteRenderer
         {
             Line2.enabled = true;
             CompletedLine2.enabled = true;
-            CompletedLine2.size = new Vector2(1, 0);
+            
             CompletedLine2.transform.SetLocalScaleX(Line2.transform.localScale.x);
             if (Game.State.Mods.Contains(Mod.HideNotes))
             {
@@ -60,10 +64,6 @@ public class LongHoldNoteRenderer : HoldNoteRenderer
             {
                 Line2.flipY = !Line.flipY;
                 CompletedLine2.flipY = !CompletedLine.flipY;
-
-                Line.size = new Vector2(1, orthographicSize * 4);
-                Line2.size = new Vector2(1, orthographicSize * 4);
-
                 var color = Fill.color;
                 CompletedLine.color = color;
                 CompletedLine2.color = color;
@@ -76,7 +76,7 @@ public class LongHoldNoteRenderer : HoldNoteRenderer
                 SpriteMask.frontSortingOrder = baseSortingOrder + 2;
                 SpriteMask.backSortingOrder = baseSortingOrder - 1;
                 
-                if (HoldNote.Holding)
+                if (HoldNote.IsHolding)
                 {
                     if (Note.Game.Time > Note.Model.start_time)
                     {

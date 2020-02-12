@@ -87,7 +87,7 @@ namespace Cytoid.Storyboard
             await Renderer.Initialize();
             Game.onGameUpdate.AddListener(Renderer.OnGameUpdate);
         }
-        
+
         public void OnNoteClear(Game game, Note note)
         {
             foreach (var trigger in Triggers)
@@ -263,7 +263,7 @@ namespace Cytoid.Storyboard
         private void AddStates<T>(List<T> states, T baseState, JObject rootObject, float? rootBaseTime)
             where T : ObjectState
         {
-            var baseTime = ParseTime(rootObject.SelectToken("time")) ?? rootBaseTime ?? float.MaxValue;
+            var baseTime = ParseTime(rootObject.SelectToken("time")) ?? rootBaseTime ?? float.MinValue;
 
             if (rootObject["states"] != null && rootObject["states"].Type != JTokenType.Null)
             {
@@ -281,7 +281,7 @@ namespace Cytoid.Storyboard
                     var stateObject = stateJson.ToObject<JObject>();
                     var objectState = CreateState(typeof(T), baseState, stateObject);
 
-                    if (objectState.Time != float.MaxValue) baseTime = objectState.Time;
+                    if (objectState.Time.IsSet()) baseTime = objectState.Time;
 
                     var relativeTime = (float?) stateObject["relative_time"];
 

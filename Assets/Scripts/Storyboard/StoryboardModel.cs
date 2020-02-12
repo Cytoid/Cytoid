@@ -41,7 +41,7 @@ namespace Cytoid.Storyboard
         public float RelativeTime = float.MinValue;
 
         // If time is not defined, this object is never rendered - unless cloned and recalculated by a trigger
-        public float Time = float.MaxValue;
+        public float Time = float.MinValue;
     }
 
     [Serializable]

@@ -10,22 +10,22 @@ public enum NoteGrade
 
 public static class NoteGradeExtensions
 {
-    public static float GetScoreWeight(this NoteGrade grade, bool ranked)
+    public static double GetScoreWeight(this NoteGrade grade, bool ranked)
     {
         if (!ranked)
         {
             switch (grade)
             {
                 case NoteGrade.Perfect:
-                    return 1f;
+                    return 1.0;
                 case NoteGrade.Great:
-                    return 1f;
+                    return 1.0;
                 case NoteGrade.Good:
-                    return 0.7f;
+                    return 0.7;
                 case NoteGrade.Bad:
-                    return 0.3f;
+                    return 0.3;
                 case NoteGrade.Miss:
-                    return 0f;
+                    return 0;
             }
         }
         else
@@ -33,13 +33,13 @@ public static class NoteGradeExtensions
             switch (grade)
             {
                 case NoteGrade.Perfect:
-                    return 1f;
+                    return 1.0;
                 case NoteGrade.Great:
-                    return 0.9f;
+                    return 0.9;
                 case NoteGrade.Good:
-                    return 0.5f;
+                    return 0.5;
                 case NoteGrade.Bad:
-                    return 0.1f;
+                    return 0.1;
                 case NoteGrade.Miss:
                     return 0f;
             }
@@ -48,20 +48,20 @@ public static class NoteGradeExtensions
         return 0f;
     }
 
-    public static float GetAccuracyWeight(this NoteGrade grade)
+    public static double GetAccuracyWeight(this NoteGrade grade)
     {
         switch (grade)
         {
             case NoteGrade.Perfect:
-                return 1f;
+                return 1.0;
             case NoteGrade.Great:
-                return 0.7f;
+                return 0.7;
             case NoteGrade.Good:
-                return 0.3f;
+                return 0.3;
             case NoteGrade.Bad:
-                return 0f;
+                return 0;
             case NoteGrade.Miss:
-                return 0f;
+                return 0;
         }
 
         return 0f;

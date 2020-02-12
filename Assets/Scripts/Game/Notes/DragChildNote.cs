@@ -6,7 +6,7 @@ public class DragChildNote : Note
 
     protected override NoteRenderer CreateRenderer()
     {
-        return new DragChildNoteRenderer(this);
+        return new DragChildNoteClassicRenderer(this);
     }
 
     public override void OnTouch(Vector2 screenPos)

@@ -53,8 +53,13 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
     {
         return (T) createdScreens.Find(it => it.GetType() == typeof(T));
     }
+    
+    public string PeekHistory()
+    {
+        return History.Count > 1 ? History.Peek() : null;
+    }
 
-    public string PopHistoryAndPeek()
+    public string PopAndPeekHistory()
     {
         return History.Count > 1 ? History.Also(it => it.Pop()).Peek() : null;
     }

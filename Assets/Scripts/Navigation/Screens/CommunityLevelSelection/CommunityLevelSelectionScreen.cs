@@ -18,6 +18,7 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
 
     public Text titleText;
 
+    [GetComponentInChildren] public ActionTabs actionTabs;
     public ToggleRadioGroupPreferenceElement sortRadioGroup;
     public ToggleRadioGroupPreferenceElement orderRadioGroup;
     public ToggleRadioGroupPreferenceElement categoryRadioGroup;
@@ -67,7 +68,11 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
                 ("Past 6 months", "halfyear"),
                 ("Past year", "year")
             });
-        searchInputField.onEndEdit.AddListener(value => LoadContent());
+        searchInputField.onEndEdit.AddListener(value =>
+        {
+            actionTabs.Close();
+            LoadContent();
+        });
 
         titleText.text = "Browse";
 

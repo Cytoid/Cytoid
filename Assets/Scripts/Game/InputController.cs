@@ -38,7 +38,6 @@ public class InputController : MonoBehaviour
     {
         HoldingNotes.Values.ForEach(note =>
         {
-            note.Holding = false;
             note.HoldingFingers.Clear();
         });
         HoldingNotes.Clear();
@@ -72,7 +71,7 @@ public class InputController : MonoBehaviour
                 print(note.Model.id);
             }
             if ((note.Type == NoteType.Hold || note.Type == NoteType.LongHold) &&
-                !((HoldNote) note).Holding)
+                !((HoldNote) note).IsHolding)
             {
                 TouchableHoldNotes.Add((HoldNote) note);
             }
@@ -161,7 +160,7 @@ public class InputController : MonoBehaviour
                 if (note.DoesCollide(pos))
                 {
                     HoldingNotes.Add(finger.Index, note);
-                    note.SetHoldingBy(finger.Index, true);
+                    note.UpdateFinger(finger.Index, true);
                     switchedToNewNote = true;
                     break;
                 }
@@ -173,7 +172,7 @@ public class InputController : MonoBehaviour
                 foreach (var holdNote in HoldingNotes.Values.Where(holdNote => holdNote.DoesCollide(pos)))
                 {
                     HoldingNotes.Add(finger.Index, holdNote);
-                    holdNote.SetHoldingBy(finger.Index, true);
+                    holdNote.UpdateFinger(finger.Index, true);
                     break;
                 }
             }
@@ -188,7 +187,7 @@ public class InputController : MonoBehaviour
             }
             else if (!holdNote.DoesCollide(pos)) // If holding elsewhere
             {
-                holdNote.SetHoldingBy(finger.Index, false);
+                holdNote.UpdateFinger(finger.Index, false);
                 HoldingNotes.Remove(finger.Index);
             }
         }
@@ -199,7 +198,7 @@ public class InputController : MonoBehaviour
         if (HoldingNotes.ContainsKey(finger.Index))
         {
             var holdNote = HoldingNotes[finger.Index];
-            holdNote.SetHoldingBy(finger.Index, false);
+            holdNote.UpdateFinger(finger.Index, false);
             HoldingNotes.Remove(finger.Index);
         }
     }

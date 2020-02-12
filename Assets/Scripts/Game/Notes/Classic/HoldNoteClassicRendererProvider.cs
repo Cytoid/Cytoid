@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class LongHoldNoteRendererProvider : SingletonMonoBehavior<LongHoldNoteRendererProvider>
+public class HoldNoteClassicRendererProvider : SingletonMonoBehavior<HoldNoteClassicRendererProvider>
 {
     public GameObject linePrefab;
     public GameObject completedLinePrefab;

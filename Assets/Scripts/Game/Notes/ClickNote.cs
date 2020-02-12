@@ -1,7 +1,9 @@
-﻿public class ClickNote : Note
+﻿using Random = UnityEngine.Random;
+
+public class ClickNote : Note
 {
     protected override NoteRenderer CreateRenderer()
     {
-        return new ClickNoteRenderer(this);
+        return new ClickNoteClassicRenderer(this);
     }
 }

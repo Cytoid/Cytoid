@@ -10,7 +10,7 @@ public class ScoreText : MonoBehaviour
     public float punchDuration = 0.2f;
     public Ease ease = Ease.OutCubic;
 
-    private float lastScore;
+    private double lastScore;
     private Sequence lastSequence;
 
     protected void Awake()
@@ -38,7 +38,7 @@ public class ScoreText : MonoBehaviour
                 }
 
                 lastScore = game.State.Score;
-                text.text = Mathf.FloorToInt(lastScore).ToString("D6");
+                text.text = ((int) lastScore).ToString("D6");
             }
             else
             {

@@ -3,19 +3,7 @@ using UnityEngine;
 
 public class HoldNote : Note
 {
-    private bool holding;
-    public bool Holding
-    {
-        get => holding;
-        set
-        {
-            if (holding != value)
-            {
-                holding = value;
-                OnSetHolding(value);
-            }
-        }
-    }
+    public bool IsHolding => HoldingFingers.Count > 0;
     public float HoldingStartTime  { get; protected set; }
     public float HeldDuration  { get; protected set; }
     public float HoldProgress { get; protected set; }
@@ -23,16 +11,29 @@ public class HoldNote : Note
 
     protected override NoteRenderer CreateRenderer()
     {
-        return new HoldNoteRenderer(this);
+        return new HoldNoteClassicRenderer(this);
     }
 
-    protected virtual void OnSetHolding(bool holding)
+    protected override void OnGameUpdate()
     {
-        if (holding)
+        base.OnGameUpdate();
+        if (IsHolding)
         {
-            HoldingStartTime = Game.Time;
+            HeldDuration = Game.Time - HoldingStartTime;
+            HoldProgress = (Game.Time - Model.start_time) / Model.Duration;
+
+            // Already completed?
+            if (Game.Time >= Model.end_time)
+            {
+                HoldingFingers.Clear();
+            }
         }
         else
+        {
+            HoldProgress = 0;
+        }
+        
+        if (!IsHolding)
         {
             if (Game.Time > Model.start_time && Game.State.IsPlaying)
             {
@@ -41,29 +42,9 @@ public class HoldNote : Note
         }
     }
 
-    protected override void OnGameUpdate()
-    {
-        base.OnGameUpdate();
-        if (Holding)
-        {
-            HeldDuration = Game.Time - HoldingStartTime;
-            HoldProgress = (Game.Time - Model.start_time) / Model.Duration;
-
-            // Already completed?
-            if (Game.Time >= Model.end_time)
-            {
-                Holding = false;
-            }
-        }
-        else
-        {
-            HoldProgress = 0;
-        }
-    }
-
     public override bool ShouldMiss()
     {
-        return !Holding && base.ShouldMiss();
+        return !IsHolding && base.ShouldMiss();
     }
     
     public override void OnTouch(Vector2 screenPos)
@@ -71,21 +52,21 @@ public class HoldNote : Note
         // Do nothing
     }
 
-    public void SetHoldingBy(int finger, bool holding)
+    public void UpdateFinger(int finger, bool isHolding)
     {
-        Holding = holding;
-        if (holding)
+        var previouslyHolding = IsHolding;
+        
+        if (isHolding)
         {
             HoldingFingers.Add(finger);
-            Holding = true;
+            if (!previouslyHolding)
+            {
+                HoldingStartTime = Game.Time;
+            }
         }
         else
         {
             HoldingFingers.Remove(finger);
-            if (HoldingFingers.Count == 0)
-            {
-                Holding = false;
-            }
         }
     }
 
@@ -117,8 +98,8 @@ public class HoldNote : Note
             }
         }
 
-        if (Game.State.IsRanked && rankedGrade > grade)
-            return rankedGrade; // Return the "worse" ranking (Note miss > bad > good > great > perfect)
+        if (Game.State.IsRanked && rankedGrade < grade)
+            return rankedGrade; // Return the "worse" ranking (Note miss < bad < good < great < perfect)
         return grade;
     }
 

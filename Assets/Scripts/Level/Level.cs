@@ -16,7 +16,7 @@ public class Level
         set
         {
             playedDate = value;
-            Context.LocalPlayer.SetLastPlayedTime(Id, value);
+            Context.LocalPlayer.SetLastPlayedDate(Id, value);
         }
     }
 

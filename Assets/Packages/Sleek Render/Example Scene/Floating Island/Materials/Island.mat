@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: Island
+  m_Shader: {fileID: 4800000, guid: c38904844ac1a7149a44f43ba1ca99bf, type: 3}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 4
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  m_SavedProperties:
+    serializedVersion: 2
+    m_TexEnvs:
+      data:
+        first:
+          name: _MainTex
+        second:
+          m_Texture: {fileID: 2800000, guid: d50b215407e874f4b950d42657abcce6, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _FlickerNoise
+        second:
+          m_Texture: {fileID: 2800000, guid: 5f9fe8be9ab6d3d4cad6f34eefae66ac, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+    m_Floats: {}
+    m_Colors:
+      data:
+        first:
+          name: _Luminance
+        second: {r: 1, g: 1, b: 1, a: 1}
+      data:
+        first:
+          name: _BonfireColor
+        second: {r: 0.9490196, g: 0.4, b: 0.047058824, a: 1}
+      data:
+        first:
+          name: _TentColor
+        second: {r: 1, g: 0.90588236, b: 0.7411765, a: 0.99215686}
+      data:
+        first:
+          name: _FillLightColor
+        second: {r: 0.20784314, g: 0.36078432, b: 0.49019608, a: 1}

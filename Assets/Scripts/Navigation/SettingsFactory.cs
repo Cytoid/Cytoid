@@ -50,7 +50,14 @@ public static class SettingsFactory
         Object.Instantiate(provider.pillRadioGroup, parent)
             .SetContent("Early hit sounds", "Play all hit sounds on note start",
                 () => lp.PlayHitSoundsEarly, it => lp.PlayHitSoundsEarly = it);
-        
+
+        if (Application.platform == RuntimePlatform.IPhonePlayer)
+        {
+            /*Object.Instantiate(provider.pillRadioGroup, parent)
+                .SetContent("Hit taptic feedback", "Provide taptic feedback when note is cleared",
+                    () => lp.HitTapticFeedback, it => lp.HitTapticFeedback = it);*/
+        }
+
         Object.Instantiate(provider.select, parent).Apply(element =>
             {
                 element.SetContent("Graphics quality", "Lower quality saves battery and results in higher framerates",
@@ -140,6 +147,14 @@ public static class SettingsFactory
                     ("50%", -0.5f), ("60%", -0.4f), ("70%", -0.3f), ("80%", -0.2f), ("90%", -0.1f), ("100%", 0),
                     ("110%", 0.1f), ("120%", 0.2f), ("130%", 0.3f), ("140%", 0.4f), ("150%", 0.5f)
                 });
+        Object.Instantiate(provider.select, parent)
+            .SetContent("Clear FX size", "Display size of note clear effects",
+                () => lp.ClearFXSize, it => lp.ClearFXSize = it, new[]
+                {
+                    ("50%", -0.5f), ("60%", -0.4f), ("70%", -0.3f), ("80%", -0.2f), ("90%", -0.1f), ("100%", 0),
+                    ("110%", 0.1f), ("120%", 0.2f), ("130%", 0.3f), ("140%", 0.4f), ("150%", 0.5f)
+                });
+        
         Object.Instantiate(provider.pillRadioGroup, parent)
             .SetContent("Show boundaries", "Display play area boundaries",
                 () => lp.ShowBoundaries, it => lp.ShowBoundaries = it);
@@ -210,6 +225,24 @@ public static class SettingsFactory
     {
         var lp = Context.LocalPlayer;
         var provider = PreferenceElementProvider.Instance;
+
+        if (Application.platform == RuntimePlatform.Android)
+        {
+            Object.Instantiate(provider.select, parent).Apply(element =>
+            {
+                element.SetContent("DSP buffer size", "Adjust only if music is not playing properly",
+                    () => lp.DspBufferSize, it => lp.DspBufferSize = it, new[]
+                    {
+                        ("Default", -1), ("128", 128), ("256", 256), ("512", 512), ("1024", 1024), ("2048", 2048)
+                    });
+                element.caretSelect.onSelect.AddListener((_, value) =>
+                {
+                    var audioConfig = AudioSettings.GetConfiguration();
+                    audioConfig.dspBufferSize = Context.LocalPlayer.DspBufferSize > 0 ? Context.LocalPlayer.DspBufferSize : Context.DefaultDspBufferSize;
+                    AudioSettings.Reset(audioConfig);
+                });
+            });
+        }
 
         Object.Instantiate(provider.pillRadioGroup, parent)
             .SetContent("Display profiler", "Display frame rates and RAM usage",

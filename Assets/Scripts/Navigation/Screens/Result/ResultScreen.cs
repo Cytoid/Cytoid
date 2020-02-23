@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using DG.Tweening;
@@ -30,8 +32,11 @@ public class ResultScreen : Screen, ScreenChangeListener
 
     public RankingsTab rankingsTab;
     public RatingTab ratingTab;
+
+    public InteractableMonoBehavior shareButton;
     
     private GameResult result;
+    private bool uploadRecordSuccess;
 
     public override string GetId() => Id;
 
@@ -105,7 +110,7 @@ public class ResultScreen : Screen, ScreenChangeListener
         image.DOColor(Color.white.WithAlpha(0), 0.4f);
 
         // Update performance info
-        scoreText.text = result.Score.ToString("D6");
+        scoreText.text = Mathf.FloorToInt((float) result.Score).ToString("D6");
         accuracyText.text = (Math.Floor(result.Accuracy * 100) / 100).ToString("0.00") + "% accuracy";
         if (Math.Abs(result.Accuracy - 100.0) < 0.000001) accuracyText.text = "Full accuracy";
         maxComboText.text = result.MaxCombo + " max combo";
@@ -168,7 +173,7 @@ public class ResultScreen : Screen, ScreenChangeListener
             };
             if (result.Score > historicBest.Score)
             {
-                newBestText.text = $"+{result.Score - historicBest.Score}";
+                newBestText.text = $"+{Mathf.FloorToInt((float) (result.Score - historicBest.Score))}";
                 newBest.Score = (int) result.Score;
                 newBest.ClearType = clearType;
             }
@@ -185,6 +190,8 @@ public class ResultScreen : Screen, ScreenChangeListener
             Context.LocalPlayer.SetBestPerformance(result.LevelId, result.ChartType.Id,
                 Context.LocalPlayer.PlayRanked, newBest);
         }
+        
+        shareButton.onPointerClick.AddListener(_ => StartCoroutine(Share()));
 
         await Resources.UnloadUnusedAssets();
     }
@@ -239,6 +246,43 @@ public class ResultScreen : Screen, ScreenChangeListener
         Run.After(0.4f, () => TranslucentCover.Instance.image.color = Color.white.WithAlpha(0));
     }
 
+    private bool isSharing;
+
+    public IEnumerator Share()
+    {
+        if (isSharing) yield break;
+        
+        isSharing = true;
+        Context.AudioManager.Get("Navigate1").Play(ignoreDsp: true);
+        
+        var levelMeta = Context.SelectedLevel.Meta;
+
+        yield return new WaitForEndOfFrame();
+        
+        var screenshot = new Texture2D(UnityEngine.Screen.width, UnityEngine.Screen.height, TextureFormat.RGB24, false);
+        screenshot.ReadPixels(new Rect(0, 0, UnityEngine.Screen.width, UnityEngine.Screen.height), 0, 0);
+        screenshot.Apply();
+
+        var tmpPath = Path.Combine(Application.temporaryCachePath, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + ".png");
+        File.WriteAllBytes(tmpPath, screenshot.EncodeToPNG());
+
+        Destroy(screenshot);
+
+        var diff = Difficulty.ConvertToDisplayLevel(levelMeta.GetDifficultyLevel(Context.SelectedDifficulty.Id));
+        var shareText = $"#cytoid [Lv.{diff}] {levelMeta.artist} - {levelMeta.title} / Charter: {levelMeta.charter}";
+        if (uploadRecordSuccess)
+        {
+            shareText += $"\nhttps://cytoid.io/levels/{levelMeta.id}";
+        }
+
+        new NativeShare()
+            .AddFile(tmpPath)
+            .SetText(shareText)
+            .Share();
+
+        isSharing = false;
+    }
+
     public void UploadRecord()
     {
         rankingsTab.spinner.IsSpinning = true;
@@ -267,6 +311,7 @@ public class ResultScreen : Screen, ScreenChangeListener
             EnableDebug = true
         }).Then(_ =>
             {
+                uploadRecordSuccess = true;
                 Toast.Next(Toast.Status.Success, "Performance synchronized.".Localized());
                 EnterControls();
                 rankingsTab.UpdateRankings(result.LevelId, result.ChartType.Id);

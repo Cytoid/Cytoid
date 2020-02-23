@@ -8,6 +8,7 @@ public class DefaultNoteRendererProvider : SingletonMonoBehavior<DefaultNoteRend
 {
 
     public UnityDragonBonesData ClickDragonBonesData;
+    public UnityDragonBonesData ClickAltDragonBonesData;
     [HideInInspector] public Dictionary<Color, string> DragonBonesDataColorVariants = new Dictionary<Color, string>();
 
     public string GetDragonBonesDataColorVariant(NoteType noteType, Color color)
@@ -63,6 +64,7 @@ public class DefaultNoteRendererProvider : SingletonMonoBehavior<DefaultNoteRend
         else
         {
             UnityFactory.factory.LoadData(ClickDragonBonesData);
+            UnityFactory.factory.LoadData(ClickAltDragonBonesData);
         }
     }
 }

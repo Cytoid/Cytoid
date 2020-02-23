@@ -26,19 +26,15 @@ public class HoldNote : Note
             if (Game.Time >= Model.end_time)
             {
                 HoldingFingers.Clear();
+                if (Game.Time > Model.start_time && Game.State.IsPlaying)
+                {
+                    Clear(IsAutoEnabled() ? NoteGrade.Perfect : CalculateGrade());
+                }
             }
         }
         else
         {
             HoldProgress = 0;
-        }
-        
-        if (!IsHolding)
-        {
-            if (Game.Time > Model.start_time && Game.State.IsPlaying)
-            {
-                Clear(IsAutoEnabled() ? NoteGrade.Perfect : CalculateGrade());
-            }
         }
     }
 
@@ -67,6 +63,14 @@ public class HoldNote : Note
         else
         {
             HoldingFingers.Remove(finger);
+        }
+
+        if (HoldingFingers.Count == 0 && Game.Time > Model.start_time)
+        {
+            if (Game.Time > Model.start_time && Game.State.IsPlaying)
+            {
+                Clear(IsAutoEnabled() ? NoteGrade.Perfect : CalculateGrade());
+            }
         }
     }
 

@@ -263,7 +263,7 @@ namespace Cytoid.Storyboard
         private void AddStates<T>(List<T> states, T baseState, JObject rootObject, float? rootBaseTime)
             where T : ObjectState
         {
-            var baseTime = ParseTime(rootObject.SelectToken("time")) ?? rootBaseTime ?? float.MinValue;
+            var baseTime = ParseTime(rootObject.SelectToken("time")) ?? rootBaseTime ?? float.MaxValue; // We set this to float.MaxValue, so if time is not set, the object is not displayed
 
             if (rootObject["states"] != null && rootObject["states"].Type != JTokenType.Null)
             {
@@ -281,7 +281,7 @@ namespace Cytoid.Storyboard
                     var stateObject = stateJson.ToObject<JObject>();
                     var objectState = CreateState(typeof(T), baseState, stateObject);
 
-                    if (objectState.Time.IsSet()) baseTime = objectState.Time;
+                    if (objectState.Time != float.MaxValue) baseTime = objectState.Time;
 
                     var relativeTime = (float?) stateObject["relative_time"];
 

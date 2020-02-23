@@ -80,6 +80,7 @@ namespace Cytoid.Storyboard
                 new ArcadeEaser(),
                 new ChromaticalEaser(),
                 new TapeEaser(),
+                new BloomEaser(),
 
                 new CameraEaser()
             };
@@ -123,6 +124,14 @@ namespace Cytoid.Storyboard
             Game.onGameAborted.AddListener(_ => Clear());
             Game.onGameRetried.AddListener(_ => Clear());
             Game.onGameCompleted.AddListener(_ => Clear());
+            Game.onGamePaused.AddListener(_ =>
+            {
+                // TODO: Pause SB
+            });
+            Game.onGameWillUnpause.AddListener(_ =>
+            {
+                // TODO: Unpause SB
+            });
         }
 
         public void OnGameUpdate(Game _)
@@ -132,8 +141,6 @@ namespace Cytoid.Storyboard
             UpdateTexts();
             UpdateSprites();
             UpdateControllers();
-            
-            // TODO: If pause, reset controller effects
         }
 
         protected virtual void UpdateTexts()

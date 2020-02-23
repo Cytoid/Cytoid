@@ -96,6 +96,7 @@ public class SpriteCache
 
             // Fit crop
             // TODO: For some reasons, the texture read would be black unless I do stupid I/O like this...
+            // TODO: Apparently still partially broken on iOS
             if (fitCropSize != default && (coverTexture.width != fitCropSize[0] || coverTexture.height != fitCropSize[1]))
             {
                 Debug.Log("start cropping!!!");

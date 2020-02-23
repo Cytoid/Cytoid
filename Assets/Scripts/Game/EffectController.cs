@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 public class EffectController : MonoBehaviour
 {
@@ -11,6 +12,18 @@ public class EffectController : MonoBehaviour
     public ParticleSystem clearDragFx;
     public ParticleSystem missFx;
     public ParticleSystem holdFx;
+
+    private float clearEffectSizeMultiplier;
+
+    private void Awake()
+    {
+        game.onGameLoaded.AddListener(_ => OnGameLoaded());
+    }
+
+    public void OnGameLoaded()
+    {
+        clearEffectSizeMultiplier = Context.LocalPlayer.ClearFXSize;
+    }
 
     public void PlayClearEffect(NoteRenderer noteRenderer, NoteGrade grade, float timeUntilEnd)
     {
@@ -49,8 +62,8 @@ public class EffectController : MonoBehaviour
         settings.start.innerColor = settings.start.outerColor = color.WithAlpha(1);
         settings.end.innerColor = settings.end.outerColor = color.WithAlpha(0);
         settings.end.size = (noteRenderer.Note.Type == NoteType.DragHead || noteRenderer.Note.Type == NoteType.DragChild
-            ? 4f
-            : 5f) * noteRenderer.Game.Config.NoteSizeMultiplier;
+                                ? 4f
+                                : 5f) * noteRenderer.Game.Config.NoteSizeMultiplier * (1 + clearEffectSizeMultiplier);
         settings.start.thickness = 1.333f;
         settings.end.thickness = 0.333f;
         flatFx.AddEffect(at, 1);

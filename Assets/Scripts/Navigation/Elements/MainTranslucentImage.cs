@@ -40,6 +40,7 @@ public class MainTranslucentImage : SingletonMonoBehavior<MainTranslucentImage>,
         }
         if (to is ResultScreen)
         {
+            TranslucentImageSource.Disabled = false;
             parallaxElement.gameObject.SetActive(false);
             translucentImage.color = Color.black;
         }

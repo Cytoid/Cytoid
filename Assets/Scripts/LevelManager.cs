@@ -34,10 +34,12 @@ public class LevelManager
             if (Directory.Exists(inboxPath))
             {
                 files.AddRange(Directory.GetFiles(inboxPath, "*.cytoidlevel"));
+                files.AddRange(Directory.GetFiles(inboxPath, "*.cytoidlevel.zip"));
             }
             if (Directory.Exists(Context.iOSTemporaryInboxPath))
             {
                 files.AddRange(Directory.GetFiles(Context.iOSTemporaryInboxPath, "*.cytoidlevel"));
+                files.AddRange(Directory.GetFiles(Context.iOSTemporaryInboxPath, "*.cytoidlevel.zip"));
             }
             
             foreach (var file in files)
@@ -71,10 +73,11 @@ public class LevelManager
             }
         }
 
-        string[] levelFiles;
+        var levelFiles = new List<string>();
         try
         {
-            levelFiles = Directory.GetFiles(Context.DataPath, "*.cytoidlevel");
+            levelFiles.AddRange(Directory.GetFiles(Context.DataPath, "*.cytoidlevel"));
+            levelFiles.AddRange(Directory.GetFiles(Context.DataPath, "*.cytoidlevel.zip"));
         }
         catch (Exception e)
         {
@@ -88,17 +91,17 @@ public class LevelManager
         foreach (var levelFile in levelFiles)
         {
             var fileName = Path.GetFileNameWithoutExtension(levelFile);
-            OnLevelInstallProgress.Invoke(fileName, index, levelFiles.Length);
+            OnLevelInstallProgress.Invoke(fileName, index, levelFiles.Count);
 
             var destFolder = $"{Context.DataPath}/{fileName}";
             if (await UnpackLevelPackage(levelFile, destFolder))
             {
                 loadedLevelJsonFiles.Add(destFolder + "/level.json");
-                Debug.Log($"Installed {index}/{levelFiles.Length}: {levelFile}");
+                Debug.Log($"Installed {index}/{levelFiles.Count}: {levelFile}");
             }
             else
             {
-                Debug.LogWarning($"Could not install {index}/{levelFiles.Length}: {levelFile}");
+                Debug.LogWarning($"Could not install {index}/{levelFiles.Count}: {levelFile}");
             }
 
             try
@@ -325,8 +328,14 @@ public class LevelManager
                     continue;
                 }
 
-                var level = new Level(path, meta, info.LastWriteTimeUtc,
-                    Context.LocalPlayer.GetLastPlayedTime(meta.id));
+                var addedDate = Context.LocalPlayer.GetAddedDate(meta.id);
+                if (addedDate == default)
+                {
+                    addedDate = info.LastWriteTimeUtc;
+                    Context.LocalPlayer.SetAddedDate(meta.id, addedDate);
+                }
+
+                var level = new Level(path, meta, addedDate, Context.LocalPlayer.GetLastPlayedDate(meta.id));
 
                 LoadedLocalLevels[meta.id] = level;
                 loadedPaths.Add(jsonPath);

@@ -178,7 +178,7 @@ public class Game : MonoBehaviour
         Context.SetAutoRotation(false);
         
         // Update last played time
-        Context.LocalPlayer.SetLastPlayedTime(level.Id, DateTime.UtcNow);
+        Context.LocalPlayer.SetLastPlayedDate(level.Id, DateTime.UtcNow);
 
         IsLoaded = true;
         onGameLoaded.Invoke(this);

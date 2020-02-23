@@ -29,22 +29,27 @@ public class DefaultNoteRenderer : NoteRenderer
             // Chart note override?
             SizeMultiplier = (float) Note.Model.size / (float) Game.Chart.Model.size * SizeMultiplier;
         }
-        
+
         BaseTransformSize = config.NoteSizes[Note.Type] * SizeMultiplier / MagicNumber;
 
         // Colors
         BaseRingColor = Note.Model.ring_color?.ToColor() ?? config.GetRingColor(Note.Model);
         BaseFillColor = Note.Model.fill_color?.ToColor() ?? config.GetFillColor(Note.Model);
 
-        ArmatureComponent = UnityFactory.factory.BuildArmatureComponent("Armature", gameObject: Note.gameObject);
+        ArmatureComponent = UnityFactory.factory.BuildArmatureComponent("Armature",
+            (config.IsAlternativeColor(Note.Model)
+                ? DefaultNoteRendererProvider.Instance.ClickAltDragonBonesData
+                : DefaultNoteRendererProvider.Instance.ClickDragonBonesData).dataName,
+            gameObject: Note.gameObject
+        );
         ArmatureComponent.animation.Play();
         ArmatureComponent.animation.Stop();
         ArmatureComponent.color.alphaMultiplier = 0f;
-        
+
         Note.transform.localScale = new Vector3(BaseTransformSize, BaseTransformSize, 6);
         Note.gameObject.SetLayerRecursively(LayerMask.NameToLayer("Content"));
 
-        ArmatureComponent.sortingOrder = Note.Model.id - 5000; // -5000 to 5000 reserved for notes
+        ArmatureComponent.sortingOrder = 5000 - Note.Model.id; // 0 to 5000 reserved for notes
     }
 
     protected override void Render()

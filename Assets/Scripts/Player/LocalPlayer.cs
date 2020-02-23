@@ -87,7 +87,7 @@ public class LocalPlayer
         get => PlayerPrefs.GetFloat("CoverOpacity", 0.15f);
         set => PlayerPrefs.SetFloat("CoverOpacity", value);
     }
-    
+
     // Bounded by 0~1.
     public float MusicVolume
     {
@@ -107,7 +107,13 @@ public class LocalPlayer
         get => PlayerPrefs.GetString("HitSound", "none").ToLower();
         set => PlayerPrefs.SetString("HitSound", value.ToLower());
     }
-    
+
+    public bool HitTapticFeedback
+    {
+        get => PlayerPrefsExtensions.GetBool("HitTapticFeedback", true);
+        set => PlayerPrefsExtensions.SetBool("HitTapticFeedback", value);
+    }
+
     public bool UseStoryboardEffects
     {
         get => PlayerPrefsExtensions.GetBool("StoryboardEffects", true);
@@ -134,6 +140,12 @@ public class LocalPlayer
         set => PlayerPrefs.SetFloat("headset chart offset", value);
     }
     
+    public float ClearFXSize
+    {
+        get => PlayerPrefs.GetFloat("ClearFXSize", 0);
+        set => PlayerPrefs.SetFloat("ClearFXSize", value);
+    }
+    
     public bool DisplayProfiler
     {
         get => PlayerPrefsExtensions.GetBool("profiler", true);
@@ -154,6 +166,12 @@ public class LocalPlayer
     {
         get => PlayerPrefs.GetString("local levels sort by", LevelSort.AddedDate.ToString());
         set => PlayerPrefs.SetString("local levels sort by", value);
+    }
+    
+    public int DspBufferSize
+    {
+        get => PlayerPrefs.GetInt("AndroidDspBufferSize", -1);
+        set => PlayerPrefs.SetInt("AndroidDspBufferSize", value);
     }
 
     public bool LocalLevelsSortInAscendingOrder
@@ -237,14 +255,26 @@ public class LocalPlayer
         SecuredPlayerPrefs.SetString(BestClearTypeKey(levelId, chartType, ranked), performance.ClearType);
     }
     
-    public DateTime GetLastPlayedTime(string levelId)
+    public DateTime GetAddedDate(string levelId)
+    {
+        return SecuredPlayerPrefs.HasKey(AddedKey(levelId)) ? 
+            DateTime.Parse(SecuredPlayerPrefs.GetString(AddedKey(levelId), null)) : 
+            default;
+    }
+    
+    public void SetAddedDate(string levelId, DateTime dateTime)
+    {
+        SecuredPlayerPrefs.SetString(AddedKey(levelId), dateTime.ToString("s"));
+    }
+    
+    public DateTime GetLastPlayedDate(string levelId)
     {
         return SecuredPlayerPrefs.HasKey(LastPlayedKey(levelId)) ? 
             DateTime.Parse(SecuredPlayerPrefs.GetString(LastPlayedKey(levelId), null)) : 
             DateTime.MinValue;
     }
 
-    public void SetLastPlayedTime(string levelId, DateTime dateTime)
+    public void SetLastPlayedDate(string levelId, DateTime dateTime)
     {
         SecuredPlayerPrefs.SetString(LastPlayedKey(levelId), dateTime.ToString("s"));
     }
@@ -259,6 +289,8 @@ public class LocalPlayer
         SecuredPlayerPrefs.SetInt(PlayCountKey(levelId, chartType), playCount);
     }
 
+    private static string AddedKey(string level) => level + " : " + "added";
+    
     private static string LastPlayedKey(string level) => level + " : " + "last played";
     
     private static string BestScoreKey(string level, string type, bool ranked) => level + " : " + type + " : " + "best score" + (ranked ? " ranked" : "");

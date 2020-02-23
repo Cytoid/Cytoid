@@ -15,7 +15,7 @@ public class Context : SingletonMonoBehavior<Context>
     
     public const int ReferenceWidth = 1920;
     public const int ReferenceHeight = 1080;
-
+    
     public static int ThumbnailWidth = 576;
     public static int ThumbnailHeight = 360;
 
@@ -25,6 +25,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static string iOSTemporaryInboxPath;
     public static int InitialWidth;
     public static int InitialHeight;
+    public static int DefaultDspBufferSize { get; private set; }
     
     public static AudioManager AudioManager;
     public static ScreenManager ScreenManager;
@@ -72,6 +73,20 @@ public class Context : SingletonMonoBehavior<Context>
 
     private async void InitializeApplication()
     {
+        var audioConfig = AudioSettings.GetConfiguration();
+        DefaultDspBufferSize = audioConfig.dspBufferSize;
+        
+        if (Application.platform == RuntimePlatform.Android && LocalPlayer.DspBufferSize > 0)
+        {
+            audioConfig.dspBufferSize = LocalPlayer.DspBufferSize;
+            AudioSettings.Reset(audioConfig);
+        }
+
+        if (Application.platform == RuntimePlatform.IPhonePlayer)
+        {
+            // MMVibrationManager.iOSInitializeHaptics();
+        }
+
         InitialWidth = UnityEngine.Screen.width;
         InitialHeight = UnityEngine.Screen.height;
         UpdateGraphicsQuality();
@@ -84,7 +99,6 @@ public class Context : SingletonMonoBehavior<Context>
         DataPath = Application.persistentDataPath;
         print("Data path: " + DataPath);
 
-        // On Android...
 		if (Application.platform == RuntimePlatform.Android)
 		{
 			var dir = GetAndroidStoragePath();

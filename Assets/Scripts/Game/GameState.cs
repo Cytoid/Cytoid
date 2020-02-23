@@ -156,7 +156,7 @@ public class GameState
             }
         }
         if (Score > 1000000) Score = 1000000;
-        if (Score == 1000000 && isFullScorePossible) Score = 999999; // In case of double inaccuracy
+        if (Score == 1000000 && !isFullScorePossible) Score = 999999; // In case of double inaccuracy
 
         // Accuracy
         if (!IsRanked || grade != NoteGrade.Great)

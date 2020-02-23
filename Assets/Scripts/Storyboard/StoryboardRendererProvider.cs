@@ -1,3 +1,4 @@
+using SleekRender;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -29,6 +30,8 @@ namespace Cytoid.Storyboard
         public CameraFilterPack_Color_Sepia Sepia;
         public CameraFilterPack_Distortion_ShockWave Shockwave;
         public CameraFilterPack_TV_Videoflip Tape;
+
+        public SleekRenderPostProcess SleekRender;
 
         public UnityEngine.UI.Text TextPrefab;
         public Image SpritePrefab;

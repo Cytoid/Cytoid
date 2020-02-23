@@ -1,5 +1,6 @@
 using System;
 using DG.Tweening;
+using UniRx.Async;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,7 +19,7 @@ public class SpinnerOverlay : SingletonMonoBehavior<SpinnerOverlay>
         message.text = "";
     }
 
-    public static void Show()
+    public static async void Show(Action onFullyShown = null)
     {
         Instance.Apply(it =>
         {
@@ -28,9 +29,14 @@ public class SpinnerOverlay : SingletonMonoBehavior<SpinnerOverlay>
             it.canvasGroup.DOKill();
             it.canvasGroup.DOFade(1, 0.2f).SetEase(Ease.OutCubic);
         });
+        if (onFullyShown != null)
+        {
+            await UniTask.Delay(TimeSpan.FromSeconds(0.2f));
+            onFullyShown();
+        }
     }
 
-    public static void Hide()
+    public static async void Hide(Action onFullyHidden = null)
     {
         Instance.Apply(it =>
         {
@@ -39,5 +45,10 @@ public class SpinnerOverlay : SingletonMonoBehavior<SpinnerOverlay>
             it.canvasGroup.DOKill();
             it.canvasGroup.DOFade(0, 0.2f).SetEase(Ease.OutCubic);
         });
+        if (onFullyHidden != null)
+        {
+            await UniTask.Delay(TimeSpan.FromSeconds(0.2f));
+            onFullyHidden();
+        }
     }
 }

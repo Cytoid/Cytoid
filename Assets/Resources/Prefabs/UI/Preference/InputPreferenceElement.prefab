@@ -571,7 +571,7 @@ MonoBehaviour:
     m_AlignByGeometry: 0
     m_RichText: 0
     m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
+    m_VerticalOverflow: 1
     m_LineSpacing: 1
   m_Text: seconds
 --- !u!114 &5417053018035381798
@@ -614,6 +614,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: InputField
+      objectReference: {fileID: 0}
+    - target: {fileID: 7127207444520647297, guid: e389d791780bd45419f1818454246d65,
+        type: 3}
+      propertyPath: m_Text
+      value: '#000000'
       objectReference: {fileID: 0}
     - target: {fileID: 7127207445422034541, guid: e389d791780bd45419f1818454246d65,
         type: 3}
@@ -744,11 +749,6 @@ PrefabInstance:
         type: 3}
       propertyPath: m_SizeDelta.x
       value: 132
-      objectReference: {fileID: 0}
-    - target: {fileID: 7127207444520647297, guid: e389d791780bd45419f1818454246d65,
-        type: 3}
-      propertyPath: m_Text
-      value: '#000000'
       objectReference: {fileID: 0}
     - target: {fileID: 7127207445079723955, guid: e389d791780bd45419f1818454246d65,
         type: 3}

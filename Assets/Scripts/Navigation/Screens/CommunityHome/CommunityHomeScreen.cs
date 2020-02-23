@@ -129,7 +129,7 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
                 Toast.Next(Toast.Status.Failure, "Please check your network connection.");
                 Debug.LogError(error);
             })
-            .Finally(SpinnerOverlay.Hide);
+            .Finally(() => SpinnerOverlay.Hide());
     }
 
     public async void OnContentLoaded(Content content)

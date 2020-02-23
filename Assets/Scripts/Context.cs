@@ -3,13 +3,18 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using DG.Tweening;
+using Polyglot;
 using Tayx.Graphy;
 using UniRx.Async;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
+using UnityEngine.SocialPlatforms;
 
 public class Context : SingletonMonoBehavior<Context>
 {
+    public const string Version = "2.0 Alpha 3";
+    
     public const string ApiBaseUrl = "https://api.cytoid.io";
     public const string WebsiteUrl = "https://cytoid.io";
     
@@ -20,6 +25,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static int ThumbnailHeight = 360;
 
     public static readonly LevelEvent OnSelectedLevelChanged = new LevelEvent();
+    public static readonly UnityEvent OnLanguageChanged = new UnityEvent();
     
     public static string DataPath;
     public static string iOSTemporaryInboxPath;
@@ -125,6 +131,8 @@ public class Context : SingletonMonoBehavior<Context>
 #endif
 
         SelectedMods = new HashSet<Mod>(LocalPlayer.EnabledMods);
+
+        Localization.Instance.SelectLanguage((Language) LocalPlayer.Language);
 
         if (SceneManager.GetActiveScene().name == "Game")
         {

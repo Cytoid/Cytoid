@@ -43,8 +43,17 @@ public class SettingsScreen : Screen, ScreenChangeListener
     public override void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
-        
-        SettingsFactory.InstantiateGeneralSettings(generalTab);
+        InstantiateSettings();
+        Context.OnLanguageChanged.AddListener(() =>
+        {
+            DestroySettings();
+            InstantiateSettings();
+        });
+    }
+    
+    private void InstantiateSettings()
+    {
+        SettingsFactory.InstantiateGeneralSettings(generalTab, true);
         SettingsFactory.InstantiateGameplaySettings(gameplayTab);
         SettingsFactory.InstantiateVisualSettings(visualTab);
         SettingsFactory.InstantiateAdvancedSettings(advancedTab);
@@ -62,17 +71,19 @@ public class SettingsScreen : Screen, ScreenChangeListener
         Fix(advancedTab.parent);
     }
 
+    private void DestroySettings()
+    {
+        foreach (Transform child in generalTab) Destroy(child.gameObject);
+        foreach (Transform child in gameplayTab) Destroy(child.gameObject);
+        foreach (Transform child in visualTab) Destroy(child.gameObject);
+        foreach (Transform child in advancedTab) Destroy(child.gameObject);
+    }
+
     public void OnScreenChangeStarted(Screen from, Screen to) => Expression.Empty();
 
     public void OnScreenChangeFinished(Screen from, Screen to)
     {
-        if (from == this)
-        {
-            foreach (Transform child in generalTab) Destroy(child.gameObject);
-            foreach (Transform child in gameplayTab) Destroy(child.gameObject);
-            foreach (Transform child in visualTab) Destroy(child.gameObject);
-            foreach (Transform child in advancedTab) Destroy(child.gameObject);
-        }
+        if (from == this) DestroySettings();
     }
 
     public override void OnScreenDestroyed()

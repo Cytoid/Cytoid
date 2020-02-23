@@ -11,7 +11,9 @@ TrueTypeFontImporter:
   fontName: Nunito ExtraLight
   fontNames:
   - Nunito ExtraLight
-  fallbackFontReferences: []
+  - Source Han Sans HW TC
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 4a1ce5d9c5e565042b3cb2bbbeaea11e, type: 3}
   customCharacters: 
   fontRenderingMode: 0
   ascentCalculationMode: 1

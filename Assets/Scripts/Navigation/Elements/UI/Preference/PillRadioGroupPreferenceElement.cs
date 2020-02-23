@@ -21,7 +21,7 @@ public class PillRadioGroupPreferenceElement : PreferenceElement
     public void SetContent(string title, string description,
         Func<string> getter, Action<string> setter)
     {
-        var labelsToValues = new List<(string, bool)> {("Off", false), ("On", true)};
+        var labelsToValues = new List<(string, bool)> {("SETTINGS_OFF".Get(), false), ("SETTINGS_ON".Get(), true)};
         radioGroup.labels = labelsToValues.Select(it => it.Item1).ToList();
         radioGroup.values = labelsToValues.Select(it => it.Item2.ToString()).ToList();
         radioGroup.defaultValue = getter();
@@ -57,7 +57,7 @@ public class PillRadioGroupPreferenceElement : PreferenceElement
     public void SetContent(string title, string description,
         Func<bool> getter, Action<bool> setter)
     {
-        var labelsToValues = new List<(string, bool)> {("Off", false), ("On", true)};
+        var labelsToValues = new List<(string, bool)> {("SETTINGS_OFF".Get(), false), ("SETTINGS_ON".Get(), true)};
         radioGroup.labels = labelsToValues.Select(it => it.Item1).ToList();
         radioGroup.values = labelsToValues.Select(it => it.Item2.ToString()).ToList();
         radioGroup.defaultValue = getter().ToString();

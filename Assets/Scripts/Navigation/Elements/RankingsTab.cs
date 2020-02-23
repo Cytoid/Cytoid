@@ -39,7 +39,7 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
         rankingText.text = "";
         rankingContainer.Clear();
         spinner.IsSpinning = true;
-        rankingContainerStatusText.text = "Downloading level rankings...";
+        rankingContainerStatusText.text = "GAME_PREP_RANKINGS_DOWNLOADING".Get();
         updateRankingToken = DateTime.Now.ToFileTimeUtc();
         var token = updateRankingToken;
         return Context.OnlinePlayer.GetLevelRankings(levelId, chartType)
@@ -58,7 +58,7 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
                 rankingContainerStatusText.text = "";
                 if (entries.Count == 0)
                 {
-                    rankingContainerStatusText.text = "No performances yet. Be the first!";
+                    rankingContainerStatusText.text = "GAME_PREP_RANKINGS_BE_THE_FIRST".Get();
                 }
                 
                 if (entries.Count > 0)
@@ -89,7 +89,7 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
                     Debug.LogError(error);
                 }
                 rankingText.text = "N/A";
-                rankingContainerStatusText.text = "Could not download level rankings.";
+                rankingContainerStatusText.text = "GAME_PREP_RANKINGS_COULD_NOT_DOWNLOAD".Get();
                 throw error;
             })
             .Finally(() =>

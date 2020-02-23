@@ -44,12 +44,14 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
     
     private void OnLevelInstallProgress(string fileName, int current, int total)
     {
-        SpinnerOverlay.Instance.message.text = $"Unpacking {fileName} " + (total > 1 ? $"({current}/{total})" : "");
+        SpinnerOverlay.Instance.message.text = total > 1
+            ? "INIT_UNPACKING_X_Y".Get(fileName, current, total)
+            : "INIT_UNPACKING_X".Get(fileName);
     }
     
     private void OnLevelLoadProgress(string levelId, int current, int total)
     {
-        SpinnerOverlay.Instance.message.text = $"Loading {levelId} ({current}/{total})";
+        SpinnerOverlay.Instance.message.text = "INIT_LOADING_X_Y".Get(levelId, current, total);
     }
 
 }

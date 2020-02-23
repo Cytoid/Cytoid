@@ -33,49 +33,55 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
     {
         base.OnScreenInitialized();
 
-        sortRadioGroup.SetContent(null, null,
-            () => "creation_date", it => LoadContent(),
-            new []
-            {
-                ("Uploaded date", "creation_date"),
-                ("Modified date", "modified_date"),
-                ("Rating", "rating"),
-                ("Downloads", "downloads"),
-                ("Difficulty", "difficulty"),
-                ("Duration", "duration")
-            });
-        orderRadioGroup.SetContent(null, null,
-            () => "desc", it => LoadContent(),
-            new []
-            {
-                ("Ascending", "asc"),
-                ("Descending", "desc")
-            });
-        categoryRadioGroup.SetContent(null, null,
-            () => "category", it => LoadContent(),
-            new []
-            {
-                ("All", "all"),
-                ("Featured", "featured")
-            });
-        timeRadioGroup.SetContent(null, null,
-            () => "all", it => LoadContent(),
-            new []
-            {
-                ("Any time", "all"),
-                ("Past week", "week"),
-                ("Past month", "month"),
-                ("Past 6 months", "halfyear"),
-                ("Past year", "year")
-            });
+        void InstantiateOptions()
+        {
+            titleText.text = "COMMUNITY_SELECT_BROWSE".Get();
+            sortRadioGroup.SetContent(null, null,
+                () => "creation_date", it => LoadContent(),
+                new []
+                {
+                    ("COMMUNITY_SELECT_SORT_BY_UPLOADED_DATE".Get(), "creation_date"),
+                    ("COMMUNITY_SELECT_SORT_BY_MODIFIED_DATE".Get(), "modified_date"),
+                    ("COMMUNITY_SELECT_SORT_BY_RATING".Get(), "rating"),
+                    ("COMMUNITY_SELECT_SORT_BY_DOWNLOADS".Get(), "downloads"),
+                    ("COMMUNITY_SELECT_SORT_BY_DIFFICULTY".Get(), "difficulty"),
+                    ("COMMUNITY_SELECT_SORT_BY_DURATION".Get(), "duration")
+                });
+            orderRadioGroup.SetContent(null, null,
+                () => "desc", it => LoadContent(),
+                new []
+                {
+                    ("COMMUNITY_SELECT_SORT_ORDER_ASC".Get(), "asc"),
+                    ("COMMUNITY_SELECT_SORT_ORDER_DESC".Get(), "desc")
+                });
+            categoryRadioGroup.SetContent(null, null,
+                () => "category", it => LoadContent(),
+                new []
+                {
+                    ("COMMUNITY_SELECT_CATEGORY_ALL".Get(), "all"),
+                    ("COMMUNITY_SELECT_CATEGORY_FEATURED".Get(), "featured")
+                });
+            timeRadioGroup.SetContent(null, null,
+                () => "all", it => LoadContent(),
+                new []
+                {
+                    ("COMMUNITY_SELECT_TIME_ANY_TIME".Get(), "all"),
+                    ("COMMUNITY_SELECT_TIME_PAST_WEEK".Get(), "week"),
+                    ("COMMUNITY_SELECT_TIME_PAST_MONTH".Get(), "month"),
+                    ("COMMUNITY_SELECT_TIME_PAST_6_MONTHS".Get(), "halfyear"),
+                    ("COMMUNITY_SELECT_TIME_PAST_YEAR".Get(), "year")
+                });
+        }
+        
+        InstantiateOptions();
+        Context.OnLanguageChanged.AddListener(InstantiateOptions);
+        
         searchInputField.onEndEdit.AddListener(value =>
         {
             actionTabs.Close();
             LoadContent();
         });
-
-        titleText.text = "Browse";
-
+        
         Context.LevelManager.OnLevelDeleted.AddListener(_ =>
         {
             if (State != ScreenState.Active) return;
@@ -193,18 +199,18 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
             OnContentLoaded(SavedContent, append);
         }).Catch(error =>
         {
-            Toast.Next(Toast.Status.Failure, "Please check your network connection.");
+            Toast.Next(Toast.Status.Failure, "TOAST_CHECK_NETWORK_CONNECTION".Get());
             Debug.LogError(error);
         }).Finally(() =>
         {
             SpinnerOverlay.Hide();
             if (string.IsNullOrWhiteSpace(content.Query.search))
             {
-                titleText.text = "Browse";
+                titleText.text = "COMMUNITY_SELECT_BROWSE".Get();
             }
             else
             {
-                titleText.text = "Search: " + content.Query.search.Trim();
+                titleText.text = "COMMUNITY_SELECT_SEARCH_QUERY".Get(content.Query.search.Trim());
             }
         });
     }

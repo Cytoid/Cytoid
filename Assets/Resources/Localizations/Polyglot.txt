@@ -1,0 +1,712 @@
+STRING ID	DESCRIPTION	ENGLISH	FRENCH / FRANÇAIS	SPANISH / ESPAÑOL	GERMAN / DEUTSCH	ITALIAN / ITALIANO	PORTUGUESE / PORTUGUÊS (BR)	PORTUGUESE / PORTUGUÊS (PT)	RUSSIAN / РУССКИЙ	GREEK / ΕΛΛΗΝΙΚΑ	TURKISH / TÜRKÇE	DANISH / DANSK	NORWEGIAN (NB) / NORSK BOKMÅL	SWEDISH / SVENSKA	DUTCH / NEDERLANDS	POLISH / POLSKI	FINNISH / SUOMI	JAPANESE / 日本語	SIMPLIFIED CHINESE / 简体中文	TRADITIONAL CHINESE / 繁體中文	KOREAN / 한국어	CZECH / ČEŠTINA	HUNGARIAN / MAGYAR	ROMANIAN / ROMÂNĂ	THAI / ภาษาไทย	BULGARIAN / БЪЛГАРСКИ	עברית / HEBREW	 العربية / ARABIC	BOSNIAN	VIETNAMESE / TIẾNG VIỆT	FILIPINO / TAGALOG	INDONESIA / BAHASA INDONESIA	FUJAOESE / AWEE
+LANGUAGE_CODE	IETF language tag(s) without dash	enUS enGB	frFR	esES esAR esMX	deDE deCH deAT	itIT itCH	ptBR	ptPT	ruRU	elGR	trTR	daDK	noNB	svSE	nlNL	plPL	fiFI	jaJP	zhCN zhSG	zhTW zhHK zhMO	koKR	csCZ	huHU	roRO	thTH	bgBG	heIL	ar001	bsBS	viVN	filPH	indID	NAN
+LANGUAGE_EN	[LanguageName] in english	English	French	Spanish	German	Italian 	Portuguese (Brazil)	Portuguese	Russian	Greek	Turkish	Danish	Norwegian	Swedish	Dutch	Polish	Finnish	Japanese	Simplified Chinese	Traditional Chinese	Korean	Czech	Hungarian	Romanian	Thai	Bulgarian	Hebrew	Arabic	Bosnian	Vietnamese	Filipino	Bahasa Indonesia (Indonesia)	FUJAO (Awee)
+LANGUAGE_DIRECTION	ltr or rtl (text direction used by game code)	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	rtl	rtl	ltr	ltr	ltr	itr	ltr
+																																	
+Polyglot	100																																
+TRANSLATORS	Enter your Cytoid ID here!	tigerhix																	tigerhix / teages / 2394425147 / ......（都来填啊）	lumixanth												speedymlg7	2394425147 / tigerhix
+INIT_TOUCH_TO_START		Touch to start		Toque para comenzar			Toque para começar												轻触以开始		터치하세요									Nhấn để bắt đầu	Pindutin para magsimula	Sentuh layar untuk memulai	Tuoch to AWEE
+INIT_VERSION		VERSION {0}		Versión {0}			Versão {0}												版本 {0}		버전 {0}									Phiên bản {0}	Bersyon {0}	Versi (0)	贵阳编码 {0}
+INIT_UNPACKING_X		Unpacking {0}																															
+INIT_UNPACKING_X_Y		Unpacking {0} ({1}/{2})																														Mengunpack {0} ({1}/{2})	
+INIT_LOADING_X_Y		Loading {0} ({1}/{2})																														Memuat {0} ({1}/{2})	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+SIGN_IN_TITLE		Sign in																	登录	登入												Masuk	多日你娃路军哥
+SIGN_IN_DESC		Synchronize play data, unlock new gamemodes, and access other multiplayer features.																	同步游玩数据，解锁新的游戏模式，及使用其他多人游戏功能。	同步遊玩數據，解鎖新的遊戲模式，及使用其它線上功能。												Sinkronkan data bermain, membuka mode permainan lainnya, dan mengakses fitur multiplayer.	大括号不换行的跟换行的打，变量名首字母大写的跟不大写的打，私有域前面加下划线的跟不加下划线的打
+SIGN_IN_CYTOID_ID		CYTOID ID																	Cytoid ID	Cytoid ID													我会怒拆额！！！
+SIGN_IN_PASSWORD		PASSWORD																	密码	密碼													工信部了！
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+MAIN_FREE_PLAY		Free play!					Partida Livre!											フリープレイ！	自由模式	自由模式	자유 플레이									Chơi tự do	Libreng laro!	Mulai	碹镑铱鸹
+MAIN_LEVELS_LOADED		{0} LEVELS LOADED		{0} Niveles Cargados			{0} NÍVEIS CARREGADOS												已加载 {0} 关卡	已加載 {0} 關卡	현재 (0) 개의 채보를 플레이 하실수 있습니다									{0} LEVELS SẴN SÀNG	{0} Lebel na naload	{0} Level Dimuat	{0} 鸡e句NBA
+MAIN_COMMUNITY		Community		Comunidad			Comunidade											コミュニティ	社区	社區	커뮤니티									Cộng đồng	Komunidad	Komunitas	花鸟风月
+MAIN_EVENTS		Events		Eventos			Eventos											イベント	活动	活動	이벤트									Sự kiện	Pangyayari	Event	紫薯布丁
+MAIN_TRAINING		Training		Entrenamiento			Treinamento											トレーニング	训练	訓練	연습 모드									Tập luyện	Pagsasanay	Latihan	则不呢就美丽了
+MAIN_TIERS		Tiers		Tier			Tier											段位認定	段位	段位	랭크 모드									Cấp bậc	Tier	Tier	那看来是马超
+																																	
+																																	
+																																	
+																																	
+TOAST_SUCCESSFULLY_SIGNED_IN		Successfully signed in.																	登录成功。	登入成功。											Nakasign-in na!	Berhasil masuk ke akun.	啊wee改哈鞥嫦娥我剛不疤痕處哈維楚王嗡阿格王朔！
+TOAST_COULD_NOT_DOWNLOAD_AVATAR		Could not download the avatar.																	头像下载失败。												Di' nadownload ang avatar	Tidak dapat memuat avatar.	啊wee改哈鞥嫦娥我剛不疤痕處哈維楚王嗡阿格王朔！
+TOAST_SUCCESSFULLY_RATED_LEVEL		Successfully rated level.																	评分成功。												Namarkahan na ang lebel	Berhasil mengerate level.	啊wee改哈鞥嫦娥我剛不疤痕處哈維楚王嗡阿格王朔！
+TOAST_RATING_CANCELLED		Rating cancelled.																	取消了评分。												Kinanselan ang marka	Rating dibatalkan.	啊wee改哈鞥嫦娥我剛不疤痕處哈維楚王嗡阿格王朔！
+TOAST_LEVEL_METADATA_SYNCHRONIZED		Level metadata synchronized.																	关卡数据已同步。												Lebel Metadata naka-synchronize	Berhasil memuat metadata level.	啊wee改哈鞥嫦娥我剛不疤痕處哈維楚王嗡阿格王朔！
+TOAST_SUCCESSFULLY_DOWNLOADED_LEVEL		Successfully downloaded level.																	关卡下载成功。												Matagumpay sa pagkadownload ng lebel	Mengunduh level berhasil.	啊wee改哈鞥嫦娥我剛不疤痕處哈維楚王嗡阿格王朔！
+TOAST_DOWNLOAD_CANCELLED		Download cancelled.																	取消了关卡下载。												Kinansela ang pagkadownload	Pengunduhan dibatalkan.	啊wee改哈鞥嫦娥我剛不疤痕處哈維楚王嗡阿格王朔！
+TOAST_COULD_NOT_RATE_LEVEL		Could not rate level.																	评分失败。												Di' makamarka ang lebel	Tidak dapat mengerate level.	啊wee改哈鞥嫦娥我剛不疤痕處哈維楚王嗡阿格王朔！
+TOAST_CHECK_NETWORK_CONNECTION		Please check your network connection.																	请检查网络连接。												Pakitignan ang iyong connection sa network	Mohon periksa sambungan koneksi anda.	啊wee改哈鞥嫦娥我剛不疤痕處哈維楚王嗡阿格王朔！
+TOAST_PERFORMANCE_SYNCHRONIZED		Performance sychronized.																	成绩已同步。													Performa disinkronkan	啊wee改哈鞥嫦娥我剛不疤痕處哈維楚王嗡阿格王朔！
+TOAST_BEST_PERFORMANCE_SYNCHRONIZED		Best performance synchronized.																	最佳成绩已同步。												Nasynchronized ang mahusay na paglaro	Performa terbaik disinkronkan.	啊wee改哈鞥嫦娥我剛不疤痕處哈維楚王嗡阿格王朔！
+TOAST_SIGN_IN_REQUIRED		Please sign in first.																	请先登录。												Sign-in ka muna	Mohon masuk terlebih dahulu.	啊wee改哈鞥嫦娥我剛不疤痕處哈維楚王嗡阿格王朔！
+TOAST_COULD_NOT_UNPACK_LEVEL		Could not unpack level.																	关卡解包失败。												Di' makapagUnpack ng level	Tidak dapat memuat level.	啊wee改哈鞥嫦娥我剛不疤痕處哈維楚王嗡阿格王朔！
+TOAST_COULD_NOT_DOWNLOAD_LEVEL		Could not download level.																	关卡下载失败。												Di' makapagDownload ng lebel	Tidak dapat mengunduh level.	啊wee改哈鞥嫦娥我剛不疤痕處哈維楚王嗡阿格王朔！
+TOAST_SUCCESSFULLY_DELETED_LEVEL		Successfully deleted level.																	关卡删除成功。												Nabura na ang lebel	Berhasil menghapus level.	啊wee改哈鞥嫦娥我剛不疤痕處哈維楚王嗡阿格王朔！
+TOAST_SUCCESSFULLY_SIGNED_OUT		Successfully signed out.																	注销成功。												Matagumpay na nakapagsign-out	Berhasil keluar.	啊wee改哈鞥嫦娥我剛不疤痕處哈維楚王嗡阿格王朔！
+TOAST_LEVEL_NOT_RANKED		This level is not ranked!																	此关卡未打开排名！												Itong lebel ay hindi nakaRank!	Level ini bukan level ranked!	啊wee改哈鞥嫦娥我剛不疤痕處哈維楚王嗡阿格王朔！
+TOAST_ENTER_ID		Please enter your Cytoid ID.																	请输入你的 Cytoid ID。												Ilagay ang iyong Cytoid ID	Mohon masukan ID Cytoid anda.	啊wee改哈鞥嫦娥我剛不疤痕處哈維楚王嗡阿格王朔！
+TOAST_ENTER_PASSWORD		Please enter your password.																	请输入你的密码。												Ilagay ang iyong password	Mohon masukan password anda.	鸡e句工信部了！
+TOAST_INCORRECT_ID_OR_PASSWORD		Incorrect Cytoid ID or password.																	Cytoid ID 或者密码错误。												Mali ang iyong Cytoid ID o Password	Cytoid ID atau password yang salah telah dimasukkan.	你号的骨灰扬了
+TOAST_STATUS_CODE		Status code: {0}																	状态代码：{0}												Status code: {0}	Kode status: {0}	{0}啊wee！
+																																	
+																																	
+																																	
+																																	
+																																	
+DIALOG_RATE_THIS_LEVEL		Rate this level!																	给关卡打个分吧！												Markahan ang lebel	Beri nilai level ini!	打分啊111111
+DIALOG_LEVEL_OUTDATED		This level is outdated.\nWould you like to update now?																	侦测到当前关卡不是最新版本。\n是否立即更新？												Ang lebel na ito ay outdated. Gusto mo bang i-update ito?	Level ini outdated. Apakah anda ingin mengupdatenya?	关卡过期了。\n更新吗bbb
+DIALOG_DOWNLOADING		Downloading...																	下载中...												Nagdadownload...	Mengunduh...	贵阳中...
+DIALOG_DOWNLOADING_X_Y		Downloading...({0} / {1})																	下载中...（{0} / {1}）												Nagdadownload...({0} / {1})	Mengunduh...({0} / {1})	贵阳中...({0} / {1})
+DIALOG_CONFIRM_DELETE		Delete "{0}"?\nYour best performance will not be deleted.																	确定要删除关卡「{0}」吗？\n最佳成绩不会被删除。												Burahin ang "{0}"? Ang iyong performance ay hindi mawawala.	Apakah anda ingin menghapus "{0}"? Performa anda tidak akan dihapus.	"{0}" 踢不踢？\n（你的成绩不会被踢。）
+DIALOG_COMING_SOON		Coming soon!																	即将上线，敬请期待！												Malapit na!	Coming soon!	贵阳贵阳咕咕咕
+DIALOG_RETRY_SYNCHRONIZE_PERFORMANCE		Could not synchronize performance. Retry?																	成绩同步失败。\n是否重试？												Di' makasynchronize ang iyong performance. Ulitin?	Tidak dapat menyinkron performa. Coba lagi?	无法贵阳。是否贵阳？
+DIALOG_UNPACKING		Unpacking...																	解包中...												Tatangalin...	Memuat...	欢迎新魔王中...
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+PROFILE_WIDGET_NOT_SIGNED_IN		Not signed in		No ha iniciado sesión			Não Logado												未登录	未登入	로그인 안됨									Chưa đăng nhập	Di' pa signed-in	Belum Masuk	未阿格王朔
+PROFILE_WIDGET_SIGNING_IN		Signing in...																															阿格王朔中...
+PROFILE_WIDGET_RATING	Cytoid-specific term	Rating		Rating			Classificação												Rating	Rating	평가									Hạng	Marka	Rating	ptt
+PROFILE_WIDGET_LEVEL		Level		Nivel			Nível												等级	等級	레벨									Level	Level	Level	群地位
+PROFILE_WIDGET_TIER		Tier		Tier			Tier												段位	段位	등급									Cấp	Tier	Tier	段位
+PROFILE_WIDGET_EXP		Exp		Exp			Exp												经验	經驗	경험치									Exp	Exp	Exp	fjb
+																																	
+																																	
+																																	
+																																	
+																																	
+PROFILE_PROFILE		Profile		Perfil			Perfil												资料	資料	프로필									Cá nhân	Profile	Profil	群名片
+PROFILE_LEADERBOARD		Leaderboard					Placar												排行榜	排行榜	랭킹 리더보드									BXH	Mga posisyon	Peringkat	群成员
+PROFILE_SIGN_OUT		Sign Out		Cerrar Sesión			Sair												注销	登出										Đăng xuất	Mag-sisign out	Keluar	退群
+PROFILE_TOTAL_RANKED_PLAYS	Not necessarily required to translate "ranked"	TOTAL RANKED PLAYS																	总游玩数												Kabuuan ng laro na ranked	Total level ranked yang dimainkan	
+PROFILE_TOTAL_CLEARED_NOTES		TOTAL CLEARED NOTES																	总 Note 数												Kabuuan na nota na napindot	Total note yang berhasil disentuh.	
+PROFILE_HIGHEST_MAX_COMBO		HIGHEST MAX COMBO																	最高连击数												Pinakamataas na combo	Max combo tertinggi.	
+PROFILE_AVG_RANKED_ACCURACY	Not necessarily required to translate "ranked"	AVG RANKED ACCURACY																	平均精准度												Average na ranked accuracy	Akurasi ranked rata - rata.	
+PROFILE_TOTAL_RANKED_SCORE	Not necessarily required to translate "ranked"	TOTAL RANKED SCORE																	总分数												Kabuuan ng ranked score	Total nilai ranked.	
+PROFILE_TOTAL_PLAY_TIME		TOTAL PLAY TIME																	总游玩时间												Kabuuan na oras ng paglaro	Total waktu bermain.	
+LEADERBOARD_TOP		Top																	榜首排行												Top	Top	
+LEADERBOARD_ME		Me		Yo															我的排名												Ako	Me	
+																																	
+																																	
+																																	
+																																	
+																																	
+SETTINGS_GENERAL		General																	通用													Umum	
+SETTINGS_GAMEPLAY		Gameplay																	游玩													Permainan	
+SETTINGS_VISUAL		Visual																	视觉													Visual	
+SETTINGS_ADVANCED		Advanced																	进阶													Advanced	
+SETTINGS_LANGUAGE		Language																	语言													Bahasa	
+SETTINGS_MUSIC_VOLUME		Music volume																	音乐音量	音樂音量											Music volume	Volume musik	
+SETTINGS_SOUND_EFFECT_VOLUME		Sound effect volume																	音效音量	音效音量											Sound effect volume	Volume suara efek	
+SETTINGS_HIT_SOUND		Hit sound																	打击音	打擊音											Hit sound	Hit sound	
+SETTINGS_HIT_SOUND_DESC		Played when note is cleared																	击中 Note 时播放												Sound kapag ang nota ay napindot	Dimainkan jika ada not yang berhasil ditekan	
+SETTINGS_HOLD_HIT_SOUND_TIMING		Hold hit sound timing																	Hold 打击音												Hold hit sound timing	Timing hit sound	
+SETTINGS_HOLD_HIT_SOUND_TIMING_DESC		When to play hit sounds for hold notes																	Hold 打击音在何时播放												Sound kapagnapindot ang hold na nota	Kapan diputarnya hit sound pada not Hold	
+SETTINGS_HOLD_HIT_SOUNDS_TIMING_BEGIN		Begin																	开始时												Simula	Awal	
+SETTINGS_HOLD_HIT_SOUNDS_TIMING_END		End																	结束时												Wakas	Akhir	
+SETTINGS_HOLD_HIT_SOUNDS_TIMING_BOTH		Begin & End																	开始和结束时												Simula at wakas	Awal dan akhir	
+SETTINGS_GRAPHICS_QUALITY		Graphics quality																	画面质量												Kalidad ng graphics	Kualitas grafik	
+SETTINGS_GRAPHICS_QUALITY_DESC		Lower quality saves battery and results in higher frame rates																	调低画质可省电并提高帧数												Ibaba ang kalidad para makatipid ng baterya at mataas ang frame rates	Kualitas yang rendah melambatkan kecepatan baterai untuk habis	
+SETTINGS_STORYBOARD_EFFECTS		Storyboard effects																	故事板效果												Storyboard effects	Efek storyboard	
+SETTINGS_STORYBOARD_EFFECTS_DESC		Recommended for high-end devices only																	仅建议高端设备开启												Inirerekumenda para lang sa high-end device 	Direkomendasikan hanya untuk perangkat high-end	
+SETTINGS_BASE_NOTE_OFFSET	You can replace "note offset" with "chart offset" if that makes more sense in your language	Base note offset																	全局谱面偏移												Base note offset	Offset nada	
+SETTINGS_BASE_NOTE_OFFSET_DESC		Added to each level's individual note offset																	叠加在关卡谱面偏移上												Ilalagay sa lahat ng lebel ng nota ang offset	Ditetapkan pada setiap level	
+SETTINGS_HEADSET_NOTE_OFFSET		Headset note offset																	耳机谱面偏移												Headset note offset	Offset nada untuk headset	
+SETTINGS_HEADSET_NOTE_OFFSET_DESC		Added to note offset when using headset																	耳机插入时叠加在当前谱面偏移上												Ilalagay sa offset ng nota kapag gumagamit ng headset	Ditetapkan saat menggunakan headset	
+SETTINGS_EARLY_LATE_INDICATORS		Early/Late indicators																	Early / Late 指示器												Maaga/Huli na tagapagpahiwatig	Indikator Early (Cepat)/Late (Lambat)	
+SETTINGS_EARLY_LATE_INDICATORS_DESC		Displayed when notes cleared early/late																	Note 判定时显示 Early（过早）或 Late（过迟）													Ditampilkan apabila not disentuh terlalu Cepat/Lambat	
+SETTINGS_HITBOX_SIZE_CLICK		Hitbox size (click)																	判定区域大小（Click）													Ukuran hitbox (Tap)	
+SETTINGS_HITBOX_SIZE_DESC		Larger hitboxes make notes easier to hit																	更大的判定区域让 Note 更容易被击中													Hitbox yang lebih besar membuat nada lebih mudah disentuh	
+SETTINGS_HITBOX_SIZE_DRAG		Hitbox size (drag)																	判定区域大小（Drag）													Ukuran hitbox (Drag)	
+SETTINGS_HITBOX_SIZE_HOLD		Hitbox size (hold)																	判定区域大小（Hold）													Ukuran hitbox (Hold)	
+SETTINGS_HITBOX_SIZE_FLICK		Hitbox size (flick)																	判定区域大小（Flick）													Ukuran hitbox (Flick)	
+SETTINGS_HORIZONTAL_MARGIN		Horizontal margin																	左右边距													Margin kiri dan kanan	
+SETTINGS_HORIZONTAL_MARGIN_DESC		The left/right spacings of play area																	调整左右边距的大小													Ukuran area bermain kiri dan kanan	
+SETTINGS_VERTICAL_MARGIN		Vertical margin																	上下边距													Margin atas dan bawah	
+SETTINGS_VERTICAL_MARGIN_DESC		The top/bottom spacings of play area																	调整上下边距的大小													Ukuran area bermain atas dan bawah	
+SETTINGS_NOTE_SIZE		Note size																	Note 显示大小													Ukuran not	
+SETTINGS_NOTE_SIZE_DESC		Display size of notes (hitboxes unaffected)																	调整 Note 的显示大小（不影响判定区域）														
+SETTINGS_CLEAR_FX_SIZE		Clear FX size																	判定效果大小														
+SETTINGS_CLEAR_FX_SIZE_DESC		Display size of note clear effects																	调整 Note 判定效果的大小														
+SETTINGS_SHOW_BOUNDARIES		Play area boundaries																	游玩区域边界														
+SETTINGS_SHOW_BOUNDARIES_DESC		Display play area boundaries																	是否显示游玩区域的边界														
+SETTINGS_BACKGROUND_OPACITY		Background opacity																	背景不透明度														
+SETTINGS_BACKGROUND_OPACITY_DESC		Adjust the background brightness																	调整游玩背景的亮度														
+SETTINGS_RING_COLOR		Ring color																	外圈颜色														
+SETTINGS_RING_COLOR_DESC		Change the note ring color																	调整 Note 外圈的颜色														
+SETTINGS_FILL_COLOR_CLICK_UP		Fill color (click, up)																	内圆颜色（Click，上）														
+SETTINGS_FILL_COLOR_CLICK_DOWN		Fill color (click, down)																	内圆颜色（Click，下）														
+SETTINGS_FILL_COLOR_CLICK_DESC		Change the click note fill color																	调整 Click 内圆的颜色														
+SETTINGS_FILL_COLOR_DRAG_UP		Fill color (drag, up)																	内圆颜色（Drag，上）														
+SETTINGS_FILL_COLOR_DRAG_DOWN		Fill color (drag, down)																	内圆颜色（Drag，下）														
+SETTINGS_FILL_COLOR_DRAG_DESC		Change the drag note fill color																	调整 Drag 内圆的颜色														
+SETTINGS_FILL_COLOR_HOLD_UP		Fill color (hold, up)																	内圆颜色（Hold，上）														
+SETTINGS_FILL_COLOR_HOLD_DOWN		Fill color (hold, down)																	内圆颜色（Hold，下）														
+SETTINGS_FILL_COLOR_HOLD_DESC		Change the holdnote fill color																	调整 Hold 内圆的颜色														
+SETTINGS_FILL_COLOR_LONG_HOLD_UP		Fill color (long hold, up)																	内圆颜色（Long Hold，上）														
+SETTINGS_FILL_COLOR_LONG_HOLD_DOWN		Fill color (long hold, down)																	内圆颜色（Long Hold，下）														
+SETTINGS_FILL_COLOR_LONG_HOLD_DESC		Change the long hold note fill color																	调整 Long Hold 内圆的颜色														
+SETTINGS_FILL_COLOR_FLICK_UP		Fill color (flick, up)																	内圆颜色（Flick，上）														
+SETTINGS_FILL_COLOR_FLICK_DOWN		Fill color (flick, down)																	内圆颜色（Flick，下）														
+SETTINGS_FILL_COLOR_FLICK_DESC		Change the flick note fill color																	调整 Flick 内圆的颜色														
+SETTINGS_DSP_BUFFER_SIZE		DSP buffer size																	DSP 缓冲区大小														
+SETTINGS_DSP_BUFFER_SIZE_DESC		Adjust only if music is not playing properly																	在音频无法正常播放时调整														
+SETTINGS_DISPLAY_PROFILER		Profiler																	分析器														
+SETTINGS_DISPLAY_PROFILER_DESC		Display frame rates and RAM usage																	显示帧数和内存使用信息														
+SETTINGS_DISPLAY_NOTE_IDS		Note IDs																	Note ID														
+SETTINGS_DISPLAY_NOTE_IDS_DESC		For level debugging purposes																	用作关卡制作调试														
+SETTINGS_NONE	Space is limited for these values. Try to keep your translation compact!	None																	无														
+SETTINGS_DEFAULT		Default																	默认														
+SETTINGS_HIT_SOUND_CLICK_1	Not necessary to translate those	Click 1																	敲击声1														
+SETTINGS_HIT_SOUND_CLICK_2		Click 2																	敲击声2														
+SETTINGS_HIT_SOUND_CLICK_3		Click 3																	敲击声3														
+SETTINGS_HIT_SOUND_SHAKER		Shaker																	沙筒														
+SETTINGS_HIT_SOUND_TAMBOURINE		Tambourine																	手鼓声														
+SETTINGS_HIT_SOUND_RIM		Rim																	鼓边														
+SETTINGS_HIT_SOUND_HAT		Hat																	镲														
+SETTINGS_HIT_SOUND_CLAP		Clap																	拍掌														
+SETTINGS_HIT_SOUND_DONK		Donk																	咚														
+SETTINGS_HIT_SOUND_8_BIT		8-bit																	老式游戏机														
+SETTINGS_HIT_SOUND_QUACK		Quack																	呱														
+SETTINGS_OFF		Off																	关														
+SETTINGS_ON		On																	开														
+SETTINGS_QUALITY_LOW		Low																	低														
+SETTINGS_QUALITY_MEDIUM		Medium																	中														
+SETTINGS_QUALITY_HIGH		High																	高														
+SETTINGS_UNIT_SECONDS		Seconds																	秒														
+SETTINGS_SIZE_SMALL		Small																	小														
+SETTINGS_SIZE_MEDIUM		Medium																	中														
+SETTINGS_SIZE_LARGE		Large																	大														
+																																	
+																																	
+LEVEL_SELECT_CATEGORY_ALL		All																全部	全部	全部													
+LEVEL_SELECT_CATEGORY_OFFICIAL		Official																オフィシャル	官方	官方													
+LEVEL_SELECT_CATEGORY_COMMUNITY		Community																コミュニティ	社区	社區													
+LEVEL_SELECT_SORT_BY		SORT BY																ソート条件	排序方式	排序方式													
+LEVEL_SELECT_SORT_BY_ADDED_DATE		Added date																	添加日期														
+LEVEL_SELECT_SORT_BY_PLAYED_DATE		Played date																クリア顺	上次游玩日期														
+LEVEL_SELECT_SORT_BY_DIFFICULTY		Difficulty																難易度顺	难度														
+LEVEL_SELECT_SORT_BY_TITLE		Title																曲名	歌名														
+LEVEL_SELECT_SORT_ORDER		SORT ORDER																	顺序														
+LEVEL_SELECT_SORT_ORDER_ASC		Ascending																	升序														
+LEVEL_SELECT_SORT_ORDER_DESC		Descending																	降序														
+LEVEL_SELECT_SEARCH_QUERY		SEARCH QUERY																	搜索														
+LEVEL_SELECT_SEARCH_QUERY_HINT		Title / artist / charter...																	曲名 / 曲师 / 谱师...														
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+GAME_PREP_START		Start!																	开始！														
+GAME_PREP_PRACTICE		Practice!																	开始练习！														
+GAME_PREP_DOWNLOAD		Download!																	下载！														
+GAME_PREP_RANKINGS_VIEW_MORE		View more																	查看更多														
+GAME_PREP_RANKINGS_DOWNLOADING		Downloading level rankings...																	下载关卡排行中...														
+GAME_PREP_RANKINGS_COULD_NOT_DOWNLOAD		Could not download level rankings.																	无法下载关卡排行。														
+GAME_PREP_RANKINGS_BE_THE_FIRST		No performances yet. Be the first!																	暂无排行。成为第一个人吧！														
+GAME_PREP_RATINGS_AVG_RATING		AVERAGE RATING																	平均评分														
+GAME_PREP_RATINGS_UNIT_RATING		rating																	个评分														
+GAME_PREP_RATINGS_UNIT_RATINGS		ratings																	个评分														
+GAME_PREP_RATINGS_YOU_RATED_X		You rated {0}/5.																	你打了 {0}/5 分。														
+GAME_PREP_RATINGS_YOU_HAVENT_RATED		You haven't rated yet.																	你还没有评分。														
+GAME_PREP_RATINGS_BE_THE_FIRST		Be the first!																	做第一个评分的人吧！														
+GAME_PREP_RATINGS_RATE		Rate																	打分														
+GAME_PREP_GAMEPLAY_PRACTICE_MODE	Space very limited. Keep translation compact!	Practice Mode																	练习模式														
+GAME_PREP_GAMEPLAY_PRACTICE_MODE_DESC		Relaxed note timing judgements, but your performance will not be shown on the leaderboard.																	更为宽松的 Note 时间判定，\n但你的纪录将不会显示在排行榜上。														
+GAME_PREP_GAMEPLAY_PRACTICE_MODE_HINT		RECOMMENDED FOR UNDER LEVEL 20																	推荐等级 20 以下使用														
+GAME_PREP_GAMEPLAY_MODS		MODS																	Mods														
+MODS_HYPER	Try to keep mod names concise.	HYPER																	HYPER														
+MODS_HYPER_DESC		Adds a health bar to the game.																	血条模式。														
+MODS_ANOTHER		ANOTHER																	ANOTHER														
+MODS_ANOTHER_DESC		Same as HYPER, but more difficult.																	比 HYPER 更加困难的血条模式。														
+MODS_FC		Full Combo																	Full Combo														
+MODS_FC_DESC		Game over if missed a note.																	任意 Bad / Miss 判定都会致使游戏失败。														
+MODS_AP		All Perfect																	All Perfect														
+MODS_AP_DESC		Game over if the note cleared is not perfect.																	任意非 Perfect 判定都会致使游戏失败。														
+MODS_FLIP_X		Flip X																	Flip X														
+MODS_FLIP_X_DESC		Flip the level on the x-axis.																	水平翻转谱面。														
+MODS_FLIP_Y		Flip Y																	Flip Y														
+MODS_FLIP_Y_DESC		Flip the level on the y-axis.																	垂直翻转谱面。														
+MODS_FLIP_ALL		Flip All																	Flip All														
+MODS_FLIP_ALL_DESC		Flip the level on both axes, i.e. rotate by 180°.																	旋转谱面 180 度。														
+MODS_FAST		Fast																	Fast														
+MODS_FAST_DESC		Notes fade in later.																	Note 淡入时间变短。														
+MODS_SLOW		Slow																	Slow														
+MODS_SLOW_DESC		Notes fade in earlier.																	Note 淡入时间变长。														
+MODS_NO_SCANNER		No Scanner																	No Scanner														
+MODS_NO_SCANNER_DESC		The scanner is hidden.																	隐藏扫描线。														
+MODS_INVISIBLE		Invisible																	Invisible														
+MODS_INVISIBLE_DESC		All notes are hidden.																	隐藏所有的 Note。														
+MODS_AUTO		Auto																	Auto														
+MODS_AUTO_DESC		Autoplay the level.																	自动游玩关卡。														
+MODS_AUTO_DRAG		Auto Drag																	Auto Drag														
+MODS_AUTO_DRAG_DESC		Autoplay the drag notes.																	自动游玩关卡（仅限 Drag）。														
+MODS_AUTO_FLICK		Auto Flick																	Auto Flick														
+MODS_AUTO_FLICK_DESC		Autoplay the flick notes.																	自动游玩关卡（仅限 Flick）。														
+MODS_AUTO_HOLD		Auto Hold																	Auto Hold														
+MODS_AUTO_HOLD_DESC		Autoplay the hold notes.																	自动游玩关卡（仅限 Hold）。														
+GAME_PREP_SETTINGS_GENERAL		GENERAL SETTINGS																	通用设置														
+GAME_PREP_SETTINGS_GAMEPLAY		GAMEPLAY SETTINGS																	游玩设置														
+GAME_PREP_SETTINGS_VISUAL		VISUAL SETTINGS																	视觉设置														
+GAME_PREP_SETTINGS_ADVANCED		ADVANCED SETTINGS																	进阶设置														
+GAME_PREP_SETTINGS_CURRENT_LEVEL_SETTINGS		CURRENT LEVEL SETTINGS																	当前关卡设置														
+GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET		Level note offset																	当前关卡谱面偏移														
+GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET_DESC		Notes not syncing well with music? \nPress "Calibrate" or manually enter a desired note offset.																	觉得 Note 和音乐不同步？\n请按下「校准」按钮，或者手动输入谱面偏移值。														
+GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET_CALIBRATE		Calibrate																	校准														
+GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET_OR		or																	或														
+GAME_PREP_INFO_COVER_ARTIST		COVER ARTIST																	曲绘														
+GAME_PREP_INFO_CHARTER		CHARTER																	谱师														
+GAME_PREP_INFO_STORYBOARDER		STORYBOARDER																	Storyboard 制作														
+GAME_PREP_INFO_ID		ID																	ID														
+GAME_PREP_INFO_VERSION		VERSION																	版本														
+GAME_PREP_BEST_PERFORMANCE		BEST PERFORMANCE																	最佳纪录														
+GAME_PREP_BEST_PERFORMANCE_PRACTICE		BEST PERFORMANCE (PRACTICE)																	最佳纪录（练习模式）														
+																																	
+																																	
+																																	
+																																	
+COMMUNITY_HOME_COMMUNITY		Community																	社区	社區													
+COMMUNITY_HOME_VIEW_ALL		View all																	查看全部	查看全部													
+COMMUNITY_HOME_NEW_UPLOADS		New uploads																	最新上传														
+COMMUNITY_HOME_TRENDING_THIS_MONTH		Trending this month																	备受瞩目														
+COMMUNITY_HOME_BEST_OF_CYTOID		Best of Cytoid																	编辑推荐														
+COMMUNITY_SEARCH_QUERY		SEARCH QUERY																	搜索														
+COMMUNITY_SEARCH_QUERY_HINT		Title / artist / charter / tags...																	曲名 / 曲师 / 谱师 / Tag...														
+																																	
+																																	
+																																	
+COMMUNITY_SELECT_BROWSE		Browse																	浏览	瀏覽													
+COMMUNITY_SELECT_SEARCH_QUERY		Search: {0}																	搜索：{0}	搜索：{0}													
+COMMUNITY_SELECT_SORT_BY		SORT BY																	排序方式	排序方式													
+COMMUNITY_SELECT_SORT_BY_UPLOADED_DATE		Uploaded date																	上传日期	上傳日期													
+COMMUNITY_SELECT_SORT_BY_MODIFIED_DATE		Modified date																	最后修改日期	最後修改日期													
+COMMUNITY_SELECT_SORT_BY_RATING		Rating																	评分	評分													
+COMMUNITY_SELECT_SORT_BY_DOWNLOADS		Downloads																	下载数	下載數													
+COMMUNITY_SELECT_SORT_BY_DIFFICULTY		Difficulty																	难度	難度													
+COMMUNITY_SELECT_SORT_BY_DURATION		Duration																	时长	時長													
+COMMUNITY_SELECT_SORT_ORDER		SORT ORDER																	顺序	順序													
+COMMUNITY_SELECT_SORT_ORDER_ASC		Ascending																	升序	升序													
+COMMUNITY_SELECT_SORT_ORDER_DESC		Descending																	降序	降序													
+COMMUNITY_SELECT_CATEGORY		CATEGORY																	类别	類別													
+COMMUNITY_SELECT_CATEGORY_ALL		All																	全部	全部													
+COMMUNITY_SELECT_CATEGORY_FEATURED		Featured																	精选	精選													
+COMMUNITY_SELECT_TIME		TIME																	时间	時間													
+COMMUNITY_SELECT_TIME_ANY_TIME		Any time																	全部时间	全部時間													
+COMMUNITY_SELECT_TIME_PAST_WEEK		Past week																	最近一周	最近一週													
+COMMUNITY_SELECT_TIME_PAST_MONTH		Past month																	最近一个月	最近一個月													
+COMMUNITY_SELECT_TIME_PAST_6_MONTHS		Past 6 months																	最近六个月	最近六個月													
+COMMUNITY_SELECT_TIME_PAST_YEAR		Past year																	最近一年	最近一年													
+																																	
+RESULT_MODE_PRACTICE		Practice																	练习模式														
+RESULT_SHARE		Share																	分享														
+RESULT_X_ACCURACY		{0}% accuracy																	{0} 精准度														
+RESULT_FULL_ACCURACY		Full accuracy																	完美精准度														
+RESULT_X_COMBO		{0} max combo																	{0} 最大连击														
+RESULT_FULL_COMBO		Full combo																	全连击														
+RESULT_AVG_TIMING_ERR		ATE																	平均判定误差														
+RESULT_STD_TIMING_ERR		STE																	标准判定误差														
+RESULT_RETRY		Retry																	重试														
+RESULT_NEXT		Next!																	继续！														
+RESULT_NEW	Basically "new best"	New!																	初见！														
+																																	
+GAME_PRACTICE_MODE		PRACTICE MODE																	练习模式														
+GAME_CALIBRATION_MODE		CALIBRATION MODE																	校准模式														
+GAME_SPEED_UP		SPEED UP																	加速														
+GAME_SLOW_DOWN		SLOW DOWN																	减速														
+GAME_RESUME_IN_X		RESUMING IN {0}S																	{0} 秒后继续														
+GAME_CALIBRATION_AUTOPLAY		AUTOPLAY																	自动播放														
+GAME_CALIBRATION_HIT_SOUND		HIT SOUND																	打击音														
+GAME_CALIBRATION_NOTE_OFFSET		NOTE OFFSET																	谱面偏移														
+GAME_CALIBRATION_NOTE_OFFSET_DESC		If you feel the notes are <b>ahead</b> of the music, <b>increase</b> the offset. Vice versa.																	如果你觉得 Note 比音乐要<b>早</b>，请<b>增加</b>偏移；\n否则，请减少偏移。														
+GAME_PAUSED_DESC		Take a break...																	休息一下...														
+GAME_TRY_AGAIN		Try again?																	重新来过吧？														
+GAME_GO_BACK		Go back																	返回														
+GAME_RETRY		Retry																	重试														
+GAME_RESUME		Resume																	继续														
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																															Translator: HPTuse		

@@ -23,12 +23,12 @@ public class SignInScreen : Screen
     {
         if (uidInput.text == "")
         {
-            Toast.Next(Toast.Status.Failure, "Please enter your Cytoid ID.".Localized());
+            Toast.Next(Toast.Status.Failure, "TOAST_ENTER_ID".Get());
             return;
         }
         if (passwordInput.text == "")
         {
-            Toast.Next(Toast.Status.Failure, "Please enter your password.".Localized());
+            Toast.Next(Toast.Status.Failure, "TOAST_ENTER_PASSWORD".Get());
             return;
         }
 
@@ -40,7 +40,7 @@ public class SignInScreen : Screen
         Context.OnlinePlayer.Authenticate(passwordInput.text)
             .Then(profile =>
             {
-                Toast.Next(Toast.Status.Success, "Successfully signed in.");
+                Toast.Next(Toast.Status.Success, "TOAST_SUCCESSFULLY_SIGNED_IN".Get());
                 ProfileWidget.Instance.SetSignedIn(profile);
                 Context.AudioManager.Get("ActionSuccess").Play();
                 Context.ScreenManager.ChangeScreen(Context.ScreenManager.PopAndPeekHistory(), ScreenTransition.In, addToHistory: false);

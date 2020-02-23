@@ -200,13 +200,13 @@ public class LevelCard : InteractableMonoBehavior
             Context.ScreenManager.ActiveScreenId != CommunityLevelSelectionScreen.Id) return;
         
         var dialog = Dialog.Instantiate();
-        dialog.Message = $"Delete \"{level.Meta.title}\"?\nYour best performance will not be deleted.";
+        dialog.Message = "DIALOG_CONFIRM_DELETE".Get(level.Meta.title);
         dialog.UsePositiveButton = true;
         dialog.UseNegativeButton = true;
         dialog.OnPositiveButtonClicked = _ =>
         {
             Context.LevelManager.DeleteLocalLevel(level.Id);
-            Toast.Next(Toast.Status.Success, "Successfully deleted level.");
+            Toast.Next(Toast.Status.Success, "TOAST_SUCCESSFULLY_DELETED_LEVEL".Get());
             dialog.Close();
         };
         dialog.Open();

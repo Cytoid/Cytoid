@@ -43,7 +43,7 @@ public class ProfileScreen : Screen, ScreenChangeListener
         {
             Context.OnlinePlayer.Deauthenticate();
             Context.ScreenManager.ChangeScreen(Context.ScreenManager.PopAndPeekHistory(), ScreenTransition.In, addToHistory: false);
-            Toast.Next(Toast.Status.Success, "Successfully signed out.");
+            Toast.Next(Toast.Status.Success, "TOAST_SUCCESSFULLY_SIGNED_OUT".Get());
             ProfileWidget.Instance.SetSignedOut();
             Context.ScreenManager.GetScreen<SignInScreen>().passwordInput.text = "";
         });
@@ -83,9 +83,9 @@ public class ProfileScreen : Screen, ScreenChangeListener
         levelProgressImage.fillAmount = (profile.exp.totalExp - profile.exp.currentLevelExp)
                                         / (profile.exp.nextLevelExp - profile.exp.currentLevelExp);
         uidText.text = profile.user.uid;
-        ratingText.text = "Rating " + profile.rating.ToString("0.00");
-        levelText.text = "Level " + profile.exp.currentLevel;
-        expText.text = $"Exp {profile.exp.totalExp}/{profile.exp.nextLevelExp}";
+        ratingText.text = $"{"PROFILE_WIDGET_RATING".Get()} {profile.rating:0.00}";
+        levelText.text = $"{"PROFILE_WIDGET_LEVEL".Get()} {profile.exp.currentLevel}";
+        expText.text = $"{"PROFILE_WIDGET_EXP".Get()} {profile.exp.totalExp}/{profile.exp.nextLevelExp}";
         totalRankedPlaysText.text = profile.activities.total_ranked_plays.ToString("N0");
         totalClearedNotesText.text = profile.activities.cleared_notes.ToString("N0");
         highestMaxComboText.text = profile.activities.max_combo.ToString("N0");

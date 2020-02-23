@@ -37,7 +37,7 @@ public class RateLevelDialog : Dialog
     protected override void Awake()
     {
         base.Awake();
-        Message = "Rate this level!";
+        Message = "DIALOG_RATE_THIS_LEVEL".Get();
         UsePositiveButton = true;
         UseNegativeButton = true;
         UseProgress = false;
@@ -79,19 +79,19 @@ public class RateLevelDialog : Dialog
                 .Then(it =>
                 {
                     onLevelRated.Invoke(it);
-                    Toast.Enqueue(Toast.Status.Success, $"Successfully rated level.");
+                    Toast.Enqueue(Toast.Status.Success, "TOAST_SUCCESSFULLY_RATED_LEVEL".Get());
                     dialog.Close();
                 })
                 .Catch(error =>
                 {
                     if (request != null && request.IsAborted)
                     {
-                        Toast.Enqueue(Toast.Status.Success, "Rating cancelled.");
+                        Toast.Enqueue(Toast.Status.Success, "TOAST_RATING_CANCELLED".Get());
                     }
                     else
                     {
                         Debug.LogError(error);
-                        Toast.Next(Toast.Status.Failure, "Could not rate level.");
+                        Toast.Next(Toast.Status.Failure, "TOAST_COULD_NOT_RATE_LEVEL".Get());
                     }
 
                     dialog.Close();

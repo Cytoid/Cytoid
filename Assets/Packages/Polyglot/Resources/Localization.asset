@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8b4bc5aeb29cde458fe1bd25d63edaa, type: 3}
+  m_Name: Localization
+  m_EditorClassIdentifier: 
+  polyglotDocument:
+    docsId: 17f0dQawb-s_Fd7DHgmVvJoEGDMH_yoSd8EYigrb0zmM
+    sheetId: 296134756
+    format: 1
+    textAsset: {fileID: 4900000, guid: c4dc0d059266d8d47862f46460cf8f31, type: 3}
+    downloadOnStart: 0
+  customDocument:
+    docsId: 1R3UlwPlVUZEbbSFaJWfzGNdyREPLDIvSKKSA9XTHCL8
+    sheetId: 296134756
+    format: 1
+    textAsset: {fileID: 4900000, guid: ffaae481ec7dcfe45881a113c724b7b6, type: 3}
+    downloadOnStart: 0
+  inputFiles:
+  - textAsset: {fileID: 4900000, guid: c4dc0d059266d8d47862f46460cf8f31, type: 3}
+    format: 1
+  - textAsset: {fileID: 4900000, guid: ffaae481ec7dcfe45881a113c724b7b6, type: 3}
+    format: 1
+  supportedLanguages: 0000000011000000110000001100000011000000110000001100000011000000110000001f000000
+  selectedLanguage: 17
+  fallbackLanguage: 0
+  Localize:
+    m_PersistentCalls:
+      m_Calls: []

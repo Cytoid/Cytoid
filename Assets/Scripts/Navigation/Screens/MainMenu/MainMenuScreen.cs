@@ -1,4 +1,5 @@
 using LeTai.Asset.TranslucentImage;
+using Polyglot;
 using UnityEngine.UI;
 
 public class MainMenuScreen : Screen
@@ -36,7 +37,7 @@ public class MainMenuScreen : Screen
         }
         TranslucentImageSource.Disabled = Context.LocalPlayer.GraphicsQuality == "low";
 
-        freePlayText.text = $"{Context.LevelManager.LoadedLocalLevels.Count} LEVEL{(Context.LevelManager.LoadedLocalLevels.Count == 1 ? "" : "S")} LOADED";
+        freePlayText.text = "MAIN_LEVELS_LOADED".Get(Context.LevelManager.LoadedLocalLevels.Count);
         freePlayText.transform.RebuildLayout();
         ProfileWidget.Instance.Enter();
     }

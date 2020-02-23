@@ -6,6 +6,12 @@ using UnityEngine;
 public class LocalPlayer
 {
     
+    public int Language
+    {
+        get => PlayerPrefs.GetInt("Language", 0);
+        set => PlayerPrefs.SetInt("Language", value);
+    }
+    
     public bool PlayRanked
     {
         get => PlayerPrefsExtensions.GetBool("ranked");
@@ -54,10 +60,10 @@ public class LocalPlayer
         set => PlayerPrefs.SetInt("flick hitbox size", value);
     }
 
-    public bool PlayHitSoundsEarly
+    public int HoldHitSoundTiming
     {
-        get => PlayerPrefsExtensions.GetBool("early hit sounds", false);
-        set => PlayerPrefsExtensions.SetBool("early hit sounds", value);
+        get => PlayerPrefs.GetInt("HoldHitSoundTiming", (int) global::HoldHitSoundTiming.Both);
+        set => PlayerPrefs.GetInt("HoldHitSoundTiming", value);
     }
     
     // Bounded by -0.5~0.5.

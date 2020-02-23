@@ -26,30 +26,35 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         base.OnScreenInitialized();
 
         categorySelect.onSelect.AddListener((index, canvasGroup) => RefillLevels());
-
-        var lp = Context.LocalPlayer;
-        sortByRadioGroup.SetContent("SORT BY", null, () => lp.LocalLevelsSortBy,
-            it => lp.LocalLevelsSortBy = it, new []
-            {
-                ("Added date", LevelSort.AddedDate.ToString()),
-                ("Played date", LevelSort.PlayedDate.ToString()),
-                ("Difficulty", LevelSort.Difficulty.ToString()),
-                ("Title", LevelSort.Title.ToString())
-            });
-        sortByRadioGroup.radioGroup.onSelect.AddListener(value => RefillLevels());
-        sortOrderRadioGroup.SetContent("SORT BY", null, () => lp.LocalLevelsSortInAscendingOrder,
-            it => lp.LocalLevelsSortInAscendingOrder = it, new []
-            {
-                ("Ascending", true),
-                ("Descending", false)
-            });
-        sortOrderRadioGroup.radioGroup.onSelect.AddListener(value => RefillLevels());
-        searchInputField.onEndEdit.AddListener(value =>
-        {
-            actionTabs.Close();
-            RefillLevels();
-        });
         
+        void InstantiateOptions() {
+            var lp = Context.LocalPlayer;
+            sortByRadioGroup.SetContent("LEVEL_SELECT_SORT_BY".Get(), null, () => lp.LocalLevelsSortBy,
+                it => lp.LocalLevelsSortBy = it, new []
+                {
+                    ("LEVEL_SELECT_SORT_BY_ADDED_DATE".Get(), LevelSort.AddedDate.ToString()),
+                    ("LEVEL_SELECT_SORT_BY_PLAYED_DATE".Get(), LevelSort.PlayedDate.ToString()),
+                    ("LEVEL_SELECT_SORT_BY_DIFFICULTY".Get(), LevelSort.Difficulty.ToString()),
+                    ("LEVEL_SELECT_SORT_BY_TITLE".Get(), LevelSort.Title.ToString())
+                });
+            sortByRadioGroup.radioGroup.onSelect.AddListener(value => RefillLevels());
+            sortOrderRadioGroup.SetContent("LEVEL_SELECT_SORT_ORDER".Get(), null, () => lp.LocalLevelsSortInAscendingOrder,
+                it => lp.LocalLevelsSortInAscendingOrder = it, new []
+                {
+                    ("LEVEL_SELECT_SORT_ORDER_ASC".Get(), true),
+                    ("LEVEL_SELECT_SORT_ORDER_DESC".Get(), false)
+                });
+            sortOrderRadioGroup.radioGroup.onSelect.AddListener(value => RefillLevels());
+            searchInputField.onEndEdit.AddListener(value =>
+            {
+                actionTabs.Close();
+                RefillLevels();
+            });
+        }
+        
+        InstantiateOptions();
+        Context.OnLanguageChanged.AddListener(InstantiateOptions);
+
         Context.LevelManager.OnLevelDeleted.AddListener(_ =>
         {
             if (State != ScreenState.Active) return;

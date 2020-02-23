@@ -1,7 +1,11 @@
+using System.Text.RegularExpressions;
+using Polyglot;
+
 public static class LocalizationExtensions
 {
-    public static string Localized(this string originalText, params object[] parameters)
+    public static string Get(this string originalText, params object[] parameters)
     {
-        return string.Format(originalText, parameters);
+        return Regex.Unescape(Localization.GetFormat(originalText, parameters));
     }
+    
 }

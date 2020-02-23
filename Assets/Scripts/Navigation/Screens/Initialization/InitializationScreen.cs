@@ -11,17 +11,20 @@ public class InitializationScreen : Screen
     
     public SpinnerElement spinnerElement;
     public Text statusText;
+    public Text versionText;
     public InteractableMonoBehavior detectionArea;
 
     public override string GetId() => Id;
 
     public override async void OnScreenBecameActive()
     {
+        versionText.text = "INIT_VERSION".Get(Context.Version.ToUpper());
+        
         var image = TranslucentCover.Instance.image;
         image.color = Color.black;
         image.DOFade(0.5f, 2f);
         spinnerElement.IsSpinning = true;
-        statusText.text = "Scanning levels";
+        statusText.text = "";
         
         Context.LevelManager.OnLevelInstallProgress.AddListener(OnLevelInstallProgress);
         await Context.LevelManager.InstallAllFromDataPath();
@@ -32,7 +35,7 @@ public class InitializationScreen : Screen
         Context.LevelManager.OnLevelLoadProgress.RemoveListener(OnLevelLoadProgress);
 
         spinnerElement.gameObject.SetActive(false);
-        statusText.text = "Touch to start";
+        statusText.text = "INIT_TOUCH_TO_START".Get();
         statusText.DOFade(0, 1.4f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutFlash);
         detectionArea.onPointerDown.AddListener(_ =>
         {
@@ -47,13 +50,13 @@ public class InitializationScreen : Screen
 
     private void OnLevelInstallProgress(string fileName, int current, int total)
     {
-        statusText.text = $"Unpacking {fileName} ({current}/{total})";
+        statusText.text = "INIT_UNPACKING_X_Y".Get(fileName, current, total);
         statusText.transform.RebuildLayout();
     }
     
     private void OnLevelLoadProgress(string levelId, int current, int total)
     {
-        statusText.text = $"Loading {levelId} ({current}/{total})";
+        statusText.text = "INIT_LOADING_X_Y".Get(levelId, current, total);
         statusText.transform.RebuildLayout();
     }
     

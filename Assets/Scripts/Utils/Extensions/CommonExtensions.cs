@@ -314,17 +314,17 @@ public static class CommonExtensions
         {
             if (error.IsNetworkError)
             {
-                Toast.Next(Toast.Status.Failure, "Please check your network connection.");
+                Toast.Next(Toast.Status.Failure, "TOAST_CHECK_NETWORK_CONNECTION".Get());
             }
             else
             {
                 switch (error.StatusCode)
                 {
                     case 401:
-                        Toast.Next(Toast.Status.Failure, "Incorrect Cytoid ID or password.");
+                        Toast.Next(Toast.Status.Failure, "TOAST_INCORRECT_ID_OR_PASSWORD".Get());
                         break;
                     default:
-                        Toast.Next(Toast.Status.Failure, "Status code: " + error.StatusCode);
+                        Toast.Next(Toast.Status.Failure, "TOAST_STATUS_CODE".Get(error.StatusCode));
                         break;
                 }
             }

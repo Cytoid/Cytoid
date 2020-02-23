@@ -56,6 +56,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
     public void Enter()
     {
         FadeIn();
+        SetSignedOut();
         if (Context.OnlinePlayer.IsAuthenticated)
         {
             SetSignedIn(Context.OnlinePlayer.LastProfile);
@@ -67,7 +68,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
             Context.OnlinePlayer.AuthenticateWithJwtToken()
                 .Then(profile =>
                 {
-                    Toast.Next(Toast.Status.Success, "Successfully signed in.");
+                    Toast.Next(Toast.Status.Success, "TOAST_SUCCESSFULLY_SIGNED_IN".Get());
                     SetSignedIn(profile);
                 })
                 .Catch(error => SetSignedOut())
@@ -89,7 +90,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
 
     public void SetSigningIn()
     {
-        name.text = "Signing in...";
+        name.text = "PROFILE_WIDGET_SIGNING_IN".Get();
         name.DOFade(0, 0.4f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutFlash);
         infoLayoutGroup.gameObject.SetActive(false);
         LayoutFixer.Fix(layoutGroup.transform);
@@ -126,7 +127,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
                         var sprite = texture.CreateSprite();
                         Context.SpriteCache.PutSprite("avatar://" + profile.user.uid, "UserAvatar", sprite);
                         SetAvatarSprite(sprite);
-                    }).Catch(error => { Toast.Enqueue(Toast.Status.Failure, "Could not download the avatar."); })
+                    }).Catch(error => { Toast.Enqueue(Toast.Status.Failure, "TOAST_COULD_NOT_DOWNLOAD_AVATAR".Get()); })
                     .Finally(() => spinner.IsSpinning = false);
             }
         }
@@ -145,7 +146,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
 
     public void SetSignedOut()
     {
-        name.text = "Not signed in";
+        name.text = "PROFILE_WIDGET_NOT_SIGNED_IN".Get();
         name.DOKill();
         name.DOFade(1, 0.2f);
         infoLayoutGroup.gameObject.SetActive(false);
@@ -215,8 +216,8 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
 
     public void UpdateRatingAndLevel(Profile profile, bool showChange = false)
     {
-        rating.text = "Rating " + profile.rating.ToString("N2");
-        level.text = "Level " + profile.exp.currentLevel;
+        rating.text = $"{"PROFILE_WIDGET_RATING".Get()} {profile.rating:N2}";
+        level.text = $"{"PROFILE_WIDGET_LEVEL".Get()} {profile.exp.currentLevel}";
 
         if (showChange && lastProfile != null)
         {

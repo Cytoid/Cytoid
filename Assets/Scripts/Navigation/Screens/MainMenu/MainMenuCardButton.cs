@@ -18,7 +18,7 @@ public class MainMenuCardButton : NavigationElement
             var dialog = Dialog.Instantiate();
             dialog.UseNegativeButton = false;
             dialog.UsePositiveButton = true;
-            dialog.Message = "Coming soon!";
+            dialog.Message = "DIALOG_COMING_SOON".Get();
             dialog.Open();
         }
     }

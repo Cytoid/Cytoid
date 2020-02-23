@@ -1,0 +1,23 @@
+fileFormatVersion: 2
+guid: 0a9230741fb29934696ce39008fef96f
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: Source Han Sans HW TC Bold
+  fontNames:
+  - Source Han Sans HW TC
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 4a1ce5d9c5e565042b3cb2bbbeaea11e, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

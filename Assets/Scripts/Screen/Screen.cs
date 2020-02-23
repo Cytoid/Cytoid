@@ -16,6 +16,8 @@ public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveLi
     
     private ScreenState state = ScreenState.Destroyed;
 
+    private bool rebuiltLayoutGroups;
+
     public ScreenState State
     {
         get => state;
@@ -74,6 +76,7 @@ public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveLi
     {
         CanvasGroup = GetComponent<CanvasGroup>();
         RectTransform = GetComponent<RectTransform>();
+        Context.OnLanguageChanged.AddListener(() => rebuiltLayoutGroups = false);
     }
 
     protected void OnEnable()
@@ -149,6 +152,11 @@ public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveLi
     public virtual void OnScreenPostActive()
     {
         onScreenPostActive.Invoke();
+        if (!rebuiltLayoutGroups)
+        {
+            rebuiltLayoutGroups = true;
+            GetComponentsInChildren<LayoutGroup>().ForEach(it => LayoutFixer.Fix(it.transform));
+        }
     }
 }
 

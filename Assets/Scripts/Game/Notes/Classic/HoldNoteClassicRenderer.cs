@@ -12,7 +12,7 @@ public class HoldNoteClassicRenderer : ClassicNoteRenderer
     protected SpriteMask SpriteMask;
     protected float NextHoldEffectTimestamp;
 
-    private bool playedEarlyHitSound;
+    private bool playedHitSoundAtBegin;
 
     public HoldNoteClassicRenderer(HoldNote holdNote) : base(holdNote)
     {
@@ -89,9 +89,9 @@ public class HoldNoteClassicRenderer : ClassicNoteRenderer
                 {
                     if (Note.Game.Time > Note.Model.start_time)
                     {
-                        if (!playedEarlyHitSound && Context.LocalPlayer.PlayHitSoundsEarly)
+                        if (!playedHitSoundAtBegin && Context.LocalPlayer.HoldHitSoundTiming.Let(it => it == (int) HoldHitSoundTiming.Begin || it == (int) HoldHitSoundTiming.Both))
                         {
-                            playedEarlyHitSound = true;
+                            playedHitSoundAtBegin = true;
                             Note.PlayHitSound();
                         }
 

@@ -18,12 +18,12 @@ public class StatusText : MonoBehaviour
     {
         if (game.Config.IsCalibration)
         {
-            text.text = "CALIBRATION MODE";
+            text.text = "GAME_CALIBRATION_MODE".Get();
             text.color = "#728CE4".ToColor().WithAlpha(0.7f);
         }
         else if (!game.State.IsRanked)
         {
-            text.text = "PRACTICE MODE";
+            text.text = "GAME_PRACTICE_MODE".Get();
             text.color = "#F953C6".ToColor().WithAlpha(0.7f);
         }
         else

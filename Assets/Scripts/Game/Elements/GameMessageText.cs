@@ -24,13 +24,13 @@ public class GameMessageText : MonoBehaviour
         {
             Type = GameMessage.AnimationType.Expand, 
             Color = Scanner.SpeedUpColor, 
-            TextFunction = () => "SPEED UP"
+            TextFunction = () => "GAME_SPEED_UP".Get()
         }));
         game.onGameSpeedDown.AddListener(_ => Animate(new GameMessage
         {
             Type = GameMessage.AnimationType.Shrink,
             Color = Scanner.SpeedDownColor,
-            TextFunction = () => "SLOW DOWN"
+            TextFunction = () => "GAME_SLOW_DOWN".Get()
         }));
         game.onGameWillUnpause.AddListener(async _ =>
         {
@@ -39,7 +39,7 @@ public class GameMessageText : MonoBehaviour
             {
                 Type = GameMessage.AnimationType.Expand,
                 Color = Color.white,
-                TextFunction = () => "RESUMING IN " + Mathf.Max(0.1f, game.UnpauseCountdown).ToString("0.0") + "S",
+                TextFunction = () => "GAME_RESUME_IN_X".Get(Mathf.Max(0.1f, game.UnpauseCountdown).ToString("0.0")),
                 MaxSpacing = 96
             }, 2.1f);
         });

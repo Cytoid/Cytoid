@@ -23,19 +23,19 @@ public class RateLevelElement : MonoBehaviour
         if (data.total > 0)
         {
             averageRatingText.text = (data.average / 2.0).ToString("0.00");
-            numRatingsText.text = $"{data.total} rating" + (data.total > 1 ? "s" : "");
+            numRatingsText.text = $"{data.total} " + (data.total > 1 ? "GAME_PREP_RATINGS_UNIT_RATINGS" : "GAME_PREP_RATINGS_UNIT_RATING").Get();
         }
         else
         {
             averageRatingText.text = "N/A";
-            numRatingsText.text = "0 ratings";
+            numRatingsText.text = "0 " + "GAME_PREP_RATINGS_UNIT_RATINGS".Get();
         }
 
         if (Context.OnlinePlayer.IsAuthenticated && Context.LevelManager.LoadedLocalLevels.ContainsKey(levelId))
         {
             messageText.text = data.rating > 0
-                ? $"You rated {data.rating / 2.0:0.#}/5."
-                : (data.total > 0 ? "You haven't rated yet." : "Be the first!");
+                ? "GAME_PREP_RATINGS_YOU_RATED_X".Get($"{data.rating / 2.0 : 0.#}")
+                : (data.total > 0 ? "GAME_PREP_RATINGS_YOU_HAVENT_RATED" : "GAME_PREP_RATINGS_BE_THE_FIRST").Get();
             rateButton.gameObject.SetActive(true);
         }
         else

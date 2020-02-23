@@ -11,9 +11,10 @@ TrueTypeFontImporter:
   fontName: Nunito ExtraBold
   fontNames:
   - Nunito ExtraBold
-  - Rounded Mplus 1c Bold
+  - Source Han Sans HW TC
   fallbackFontReferences:
-  - {fileID: 12800000, guid: 7625d49d3fa0c427295ed289c6bfacbb, type: 3}
+  - {fileID: 12800000, guid: 0a9230741fb29934696ce39008fef96f, type: 3}
+  - {fileID: 12800000, guid: 4a1ce5d9c5e565042b3cb2bbbeaea11e, type: 3}
   customCharacters: 
   fontRenderingMode: 0
   ascentCalculationMode: 1

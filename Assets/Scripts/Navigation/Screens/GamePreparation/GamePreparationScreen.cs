@@ -81,6 +81,8 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
             LoadLevelPerformance();
             UpdateStartButton();
         });
+        
+        Context.OnLanguageChanged.AddListener(() => initializedSettingsTab = false);
     }
 
     public override void OnScreenBecameActive()
@@ -113,7 +115,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
             {
                 // Ask the user to update
                 var dialog = Dialog.Instantiate();
-                dialog.Message = "This level is outdated.\nWould you like to update now?";
+                dialog.Message = "DIALOG_LEVEL_OUTDATED".Get();
                 dialog.UsePositiveButton = true;
                 dialog.UseNegativeButton = true;
                 dialog.OnPositiveButtonClicked = _ =>
@@ -149,21 +151,21 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
                     ? new ColorGradient("#12D8FA".ToColor(), "#A6FFCB".ToColor(), -45)
                     : new ColorGradient("#F953C6".ToColor(), "#B91D73".ToColor(), 135)
             );
-            startButtonText.text = Context.LocalPlayer.PlayRanked ? "Start!" : "Practice!";
+            startButtonText.text = (Context.LocalPlayer.PlayRanked ? "GAME_PREP_START" : "GAME_PREP_PRACTICE").Get();
         }
         else
         {
             startButtonGradient.SetGradient(
                 new ColorGradient("#476ADC".ToColor(), "#9CAFEC".ToColor(), -45)
             );
-            startButtonText.text = "Download!";
+            startButtonText.text = "GAME_PREP_DOWNLOAD".Get();
         }
     }
 
     private void OnLevelMetaUpdated(Level level)
     {
         if (level != Level) return;
-        Toast.Enqueue(Toast.Status.Success, "Level metadata synchronized.");
+        Toast.Enqueue(Toast.Status.Success, "TOAST_LEVEL_METADATA_SYNCHRONIZED".Get());
         Context.OnSelectedLevelChanged.Invoke(Context.SelectedLevel);
     }
 
@@ -276,7 +278,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
     public void LoadLevelPerformance()
     {
         bestPerformanceDescriptionText.text =
-            Context.LocalPlayer.PlayRanked ? "BEST PERFORMANCE" : "BEST PERFORMANCE (PRACTICE)";
+            (Context.LocalPlayer.PlayRanked ? "GAME_PREP_BEST_PERFORMANCE" : "GAME_PREP_BEST_PERFORMANCE_PRACTICE").Get();
         if (!Context.LocalPlayer.HasPerformance(Context.SelectedLevel.Id, Context.SelectedDifficulty.Id,
             Context.LocalPlayer.PlayRanked))
         {
@@ -297,7 +299,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
     {
         if (levelId != Level.Id) return;
         LoadLevelPerformance();
-        Toast.Next(Toast.Status.Success, "Best performance synchronized.");
+        Toast.Next(Toast.Status.Success, "TOAST_BEST_PERFORMANCE_SYNCHRONIZED".Get());
     }
 
     public void LoadLevelSettings()
@@ -306,7 +308,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         calibratePreferenceElement.SetContent(null, null,
             () => lp.GetLevelNoteOffset(Context.SelectedLevel.Id),
             it => lp.SetLevelNoteOffset(Context.SelectedLevel.Id, it),
-            "seconds",
+            "SETTINGS_UNIT_SECONDS".Get(),
             0.ToString());
     }
 
@@ -405,12 +407,12 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
     {
         if (!Context.OnlinePlayer.IsAuthenticated)
         {
-            Toast.Next(Toast.Status.Failure, "Please sign in first.");
+            Toast.Next(Toast.Status.Failure, "TOAST_SIGN_IN_REQUIRED".Get());
             return;
         }
         
         var dialog = Dialog.Instantiate();
-        dialog.Message = "Downloading...";
+        dialog.Message = "DIALOG_DOWNLOADING".Get();
         dialog.UseProgress = true;
         dialog.UsePositiveButton = false;
         dialog.UseNegativeButton = true;
@@ -472,7 +474,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
             dialog.OnNegativeButtonClicked = it => { };
             dialog.UseNegativeButton = false;
             dialog.Progress = 0;
-            dialog.Message = "Unpacking...";
+            dialog.Message = "DIALOG_UNPACKING".Get();
             DOTween.To(() => dialog.Progress, value => dialog.Progress = value, 1f, 1f).SetEase(Ease.OutCubic);
 
             if (Level.IsLocal)
@@ -493,7 +495,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
                     (await Context.LevelManager.LoadFromMetadataFiles(new List<string> {destFolder + "/level.json"}))
                     .First();
                 Context.SelectedLevel = Level;
-                Toast.Enqueue(Toast.Status.Success, "Successfully downloaded level.");
+                Toast.Enqueue(Toast.Status.Success, "TOAST_SUCCESSFULLY_DOWNLOADED_LEVEL".Get());
 
                 UpdateTopMenu();
                 LoadPreview(true);
@@ -503,7 +505,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
             }
             else
             {
-                Toast.Next(Toast.Status.Failure, "Could not unpack level.");
+                Toast.Next(Toast.Status.Failure, "TOAST_COULD_NOT_UNPACK_LEVEL".Get());
             }
 
             dialog.Close();
@@ -512,12 +514,12 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         {
             if (aborted || error is OperationCanceledException || (req != null && req.IsAborted))
             {
-                Toast.Enqueue(Toast.Status.Success, "Download cancelled.");
+                Toast.Enqueue(Toast.Status.Success, "TOAST_DOWNLOAD_CANCELLED".Get());
             }
             else
             {
                 Debug.LogError(error);
-                Toast.Next(Toast.Status.Failure, "Could not download level.");
+                Toast.Next(Toast.Status.Failure, "TOAST_COULD_NOT_DOWNLOAD_LEVEL".Get());
             }
 
             dialog.Close();
@@ -530,12 +532,11 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
             {
                 downloadedSize = req.DownloadedBytes;
                 it.Progress = downloadedSize * 1.0f / totalSize;
-                it.Message =
-                    $"Downloading... ({downloadedSize.ToHumanReadableFileSize()} / {totalSize.ToHumanReadableFileSize()})";
+                it.Message = "DIALOG_DOWNLOADING_X_Y".Get(downloadedSize.ToHumanReadableFileSize(), totalSize.ToHumanReadableFileSize());
             }
             else
             {
-                it.Message = "Downloading...";
+                it.Message = "DIALOG_DOWNLOADING".Get();
             }
         });
         dialog.OnNegativeButtonClicked = it =>
@@ -548,16 +549,17 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
 
     public async void InitializeSettingsTab()
     {
-        var lp = Context.LocalPlayer;
-        calibratePreferenceElement.SetContent("Level note offset", "Notes not syncing well with music?\n" +
-                                                                   "Press \"Calibrate\" or manually enter\n" +
-                                                                   "a desired note offset.");
+        calibratePreferenceElement.SetContent("GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET".Get(), "GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET_DESC".Get());
         calibratePreferenceElement.calibrateButton.onPointerClick.AddListener(_ =>
         {
             Context.WillCalibrate = true;
             OnStartButton();
         });
 
+        foreach (Transform child in generalSettingsHolder) Destroy(child.gameObject);
+        foreach (Transform child in gameplaySettingsHolder) Destroy(child.gameObject);
+        foreach (Transform child in visualSettingsHolder) Destroy(child.gameObject);
+        foreach (Transform child in advancedSettingsHolder) Destroy(child.gameObject);
         SettingsFactory.InstantiateGeneralSettings(generalSettingsHolder);
         SettingsFactory.InstantiateGameplaySettings(gameplaySettingsHolder);
         SettingsFactory.InstantiateVisualSettings(visualSettingsHolder);

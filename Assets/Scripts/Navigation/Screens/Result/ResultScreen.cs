@@ -7,7 +7,6 @@ using System.Linq.Expressions;
 using DG.Tweening;
 using Newtonsoft.Json.Linq;
 using Proyecto26;
-using RSG;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -111,12 +110,15 @@ public class ResultScreen : Screen, ScreenChangeListener
 
         // Update performance info
         scoreText.text = Mathf.FloorToInt((float) result.Score).ToString("D6");
-        accuracyText.text = (Math.Floor(result.Accuracy * 100) / 100).ToString("0.00") + "% accuracy";
-        if (Math.Abs(result.Accuracy - 100.0) < 0.000001) accuracyText.text = "Full accuracy";
-        maxComboText.text = result.MaxCombo + " max combo";
+        accuracyText.text = "RESULT_X_ACCURACY".Get((Math.Floor(result.Accuracy * 100) / 100).ToString("0.00"));
+        if (Math.Abs(result.Accuracy - 100.0) < 0.000001)
+        {
+            accuracyText.text = "RESULT_FULL_ACCURACY".Get();
+        }
+        maxComboText.text = "RESULT_X_COMBO".Get(result.MaxCombo);
         if (result.GradeCounts[NoteGrade.Bad] == 0 && result.GradeCounts[NoteGrade.Miss] == 0)
         {
-            maxComboText.text = "Full combo";
+            maxComboText.text = "RESULT_FULL_COMBO".Get();
         }
 
         var scoreGrade = ScoreGrades.From(result.Score);
@@ -138,8 +140,8 @@ public class ResultScreen : Screen, ScreenChangeListener
                                   $"<b>Miss</b> {result.GradeCounts[NoteGrade.Miss]}";
         advancedMetricText.text = $"<b>Early</b> {result.EarlyCount}    " +
                                   $"<b>Late</b> {result.LateCount}    " +
-                                  $"<b>ATE</b> {result.AverageTimingError:0.000}s    " +
-                                  $"<b>STE</b> {result.StandardTimingError:0.000}s";
+                                  $"<b>{"RESULT_AVG_TIMING_ERR".Get()}</b> {result.AverageTimingError:0.000}s    " +
+                                  $"<b>{"RESULT_STD_TIMING_ERR".Get()}</b> {result.StandardTimingError:0.000}s";
         if (!Context.LocalPlayer.DisplayEarlyLateIndicators) advancedMetricText.text = "";
 
         // Increment local play count
@@ -155,7 +157,7 @@ public class ResultScreen : Screen, ScreenChangeListener
 
         if (!Context.LocalPlayer.HasPerformance(result.LevelId, result.ChartType.Id, Context.LocalPlayer.PlayRanked))
         {
-            newBestText.text = "NEW!";
+            newBestText.text = "RESULT_NEW".Get();
             Context.LocalPlayer.SetBestPerformance(result.LevelId, result.ChartType.Id,
                 Context.LocalPlayer.PlayRanked,
                 new LocalPlayer.Performance
@@ -312,7 +314,7 @@ public class ResultScreen : Screen, ScreenChangeListener
         }).Then(_ =>
             {
                 uploadRecordSuccess = true;
-                Toast.Next(Toast.Status.Success, "Performance synchronized.".Localized());
+                Toast.Next(Toast.Status.Success, "TOAST_PERFORMANCE_SYNCHRONIZED".Get());
                 EnterControls();
                 rankingsTab.UpdateRankings(result.LevelId, result.ChartType.Id);
                 Context.OnlinePlayer.FetchProfile();
@@ -322,15 +324,15 @@ public class ResultScreen : Screen, ScreenChangeListener
             Debug.Log(error.Response);
             if (error.IsNetworkError)
             {
-                Toast.Next(Toast.Status.Failure, "Please check your network connection.");
+                Toast.Next(Toast.Status.Failure, "TOAST_CHECK_NETWORK_CONNECTION".Get());
             }
             else if (error.IsHttpError)
             {
-                Toast.Next(Toast.Status.Failure, "This level is not ranked!".Localized());
+                Toast.Next(Toast.Status.Failure, "TOAST_LEVEL_NOT_RANKED".Get());
             }
 
             var dialog = Dialog.Instantiate();
-            dialog.Message = "Could not synchronize performance. Retry?";
+            dialog.Message = "DIALOG_RETRY_SYNCHRONIZE_PERFORMANCE".Get();
             dialog.UseProgress = false;
             dialog.UsePositiveButton = true;
             dialog.UseNegativeButton = true;

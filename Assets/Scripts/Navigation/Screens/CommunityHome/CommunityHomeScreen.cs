@@ -18,7 +18,7 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
         {
             new Layout.Section
             {
-                Title = "New uploads",
+                TitleKey = "COMMUNITY_HOME_NEW_UPLOADS",
                 Query = new OnlineLevelQuery
                 {
                     sort = "creation_date",
@@ -28,7 +28,7 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
             },
             new Layout.Section
             {
-                Title = "Trending this month",
+                TitleKey = "COMMUNITY_HOME_TRENDING_THIS_MONTH",
                 Query = new OnlineLevelQuery
                 {
                     sort = "rating",
@@ -39,7 +39,7 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
             },
             new Layout.Section
             {
-                Title = "Best of Cytoid",
+                TitleKey = "COMMUNITY_HOME_BEST_OF_CYTOID",
                 Query = new OnlineLevelQuery
                 {
                     sort = "creation_date",
@@ -126,7 +126,7 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
             })
             .Catch(error =>
             {
-                Toast.Next(Toast.Status.Failure, "Please check your network connection.");
+                Toast.Next(Toast.Status.Failure, "TOAST_CHECK_NETWORK_CONNECTION".Get());
                 Debug.LogError(error);
             })
             .Finally(() => SpinnerOverlay.Hide());
@@ -142,7 +142,7 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
             var section = content.Layout.Sections[index];
             var sectionGameObject = Instantiate(sectionPrefab, sectionHolder.transform);
             var sectionBehavior = sectionGameObject.GetComponent<CommunityHomeSection>();
-            sectionBehavior.titleText.text = section.Title;
+            sectionBehavior.titleText.text = section.TitleKey.Get();
             foreach (var onlineLevel in onlineLevels)
             {
                 var levelCardGameObject = Instantiate(levelCardPrefab, sectionBehavior.levelCardHolder.transform);
@@ -208,7 +208,7 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
 
         public class Section
         {
-            public string Title;
+            public string TitleKey;
             public int PreviewSize = 6;
             public OnlineLevelQuery Query;
         }

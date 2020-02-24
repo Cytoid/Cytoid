@@ -34,7 +34,7 @@ public class RateLevelElement : MonoBehaviour
         if (Context.OnlinePlayer.IsAuthenticated && Context.LevelManager.LoadedLocalLevels.ContainsKey(levelId))
         {
             messageText.text = data.rating > 0
-                ? "GAME_PREP_RATINGS_YOU_RATED_X".Get($"{data.rating / 2.0 : 0.#}")
+                ? "GAME_PREP_RATINGS_YOU_RATED_X".Get($"{data.rating / 2.0:0.#}")
                 : (data.total > 0 ? "GAME_PREP_RATINGS_YOU_HAVENT_RATED" : "GAME_PREP_RATINGS_BE_THE_FIRST").Get();
             rateButton.gameObject.SetActive(true);
         }

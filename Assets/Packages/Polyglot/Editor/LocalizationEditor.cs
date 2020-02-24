@@ -282,7 +282,7 @@ namespace Polyglot
         }
 
         [MenuItem(MenuItemPath + "Download Custom Sheet", false, 30)]
-        private static void DownloadCustomSheet()
+        public static void DownloadCustomSheet()
         {
             var doc = Localization.Instance.CustomDocument;
             DownloadGoogleSheet(doc);

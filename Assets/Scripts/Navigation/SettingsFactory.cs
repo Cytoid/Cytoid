@@ -18,7 +18,16 @@ public static class SettingsFactory
                 element.SetContent("SETTINGS_LANGUAGE".Get(), "",
                     () => lp.Language, it => lp.Language = it, new[]
                     {
-                        ("English", (int) Language.English), ("简体中文", (int) Language.Simplified_Chinese),
+                        ("English", (int) Language.English),
+                        ("Español", (int) Language.Spanish),
+                        ("Indonesia", (int) Language.Indonesian),
+                        ("Português BR", (int) Language.Portuguese_Brazil),
+                        ("Tagalog", (int) Language.Filipino),
+                        ("Tiếng Việt", (int) Language.Vietnamese),
+                        ("简体中文", (int) Language.Simplified_Chinese),
+                        ("正體中文", (int) Language.Traditional_Chinese),
+                        ("日本語", (int) Language.Japanese),
+                        ("한국어", (int) Language.Korean),
                         ("符语", (int) Language.Fujaoese)
                     });
                 element.caretSelect.onSelect.AddListener(async (_, value) =>

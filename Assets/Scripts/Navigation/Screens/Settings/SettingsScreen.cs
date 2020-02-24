@@ -1,6 +1,9 @@
 using System.Linq.Expressions;
+using Polyglot;
 using UniRx.Async;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class SettingsScreen : Screen, ScreenChangeListener
 {
@@ -14,6 +17,8 @@ public class SettingsScreen : Screen, ScreenChangeListener
     public RectTransform visualTab;
     public RectTransform advancedTab;
     public ContentTabs contentTabs;
+
+    public InteractableMonoBehavior updateLocalizationButton;
 
     public override void OnScreenInitialized()
     {
@@ -38,6 +43,27 @@ public class SettingsScreen : Screen, ScreenChangeListener
                     break;
             }
         });
+        
+        updateLocalizationButton.onPointerClick.AddListener(async _ =>
+            {
+                SpinnerOverlay.Show();
+                await LocalizationImporter.DownloadCustomSheet();
+                
+                foreach (var gameObject in SceneManager.GetActiveScene().GetRootGameObjects())
+                {
+                    gameObject.transform.GetComponentsInChildren<Screen>(true)
+                        .ForEach(it => LayoutStaticizer.Activate(it.transform));
+                        
+                    gameObject.transform.GetComponentsInChildren<LocalizedText>(true)
+                        .ForEach(it => it.OnLocalize());
+                        
+                    gameObject.transform.GetComponentsInChildren<LayoutGroup>(true)
+                        .ForEach(it => it.transform.RebuildLayout());
+                }
+                
+                SpinnerOverlay.Hide();
+                Toast.Next(Toast.Status.Success, "Applied latest localization (cleared on restart).");
+            });
     }
 
     public override void OnScreenBecameActive()

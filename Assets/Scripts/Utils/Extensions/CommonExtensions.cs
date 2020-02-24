@@ -323,6 +323,9 @@ public static class CommonExtensions
                     case 401:
                         Toast.Next(Toast.Status.Failure, "TOAST_INCORRECT_ID_OR_PASSWORD".Get());
                         break;
+                    case 404:
+                        Toast.Next(Toast.Status.Failure, "TOAST_ID_NOT_FOUND".Get());
+                        break;
                     default:
                         Toast.Next(Toast.Status.Failure, "TOAST_STATUS_CODE".Get(error.StatusCode));
                         break;

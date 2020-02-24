@@ -22,7 +22,7 @@ public class AccentOverlay : MonoBehaviour, ScreenBecameActiveListener
                 if (!Context.LocalPlayer.PlayRanked)
                 {
                     image.color = "#F953C6".ToColor().WithAlpha(0.7f);
-                    text.text = "Practice";
+                    text.text = "RESULT_MODE_PRACTICE".Get();
                     transitionElement.Enter();
                 }
                 break; 

@@ -15,6 +15,12 @@ public class ToggleRadioGroup : RadioGroup
         {
             radioButtonPrefab = Resources.Load<GameObject>("Prefabs/UI/Preference/ToggleRadioButton");
         }
+        
+        // Clear existing
+        foreach (Transform child in transform)
+        {
+            Destroy(child.gameObject);
+        }
 
         Assert.IsTrue(labels.Count == values.Count);
         for (var i = 0; i < labels.Count; i++)

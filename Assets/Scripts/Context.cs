@@ -13,7 +13,7 @@ using UnityEngine.SocialPlatforms;
 
 public class Context : SingletonMonoBehavior<Context>
 {
-    public const string Version = "2.0 Alpha 3";
+    public const string Version = "2.0 Alpha 4";
     
     public const string ApiBaseUrl = "https://api.cytoid.io";
     public const string WebsiteUrl = "https://cytoid.io";

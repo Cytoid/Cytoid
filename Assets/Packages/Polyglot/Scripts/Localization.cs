@@ -364,7 +364,9 @@ namespace Polyglot
                 if (string.IsNullOrEmpty(currentString) || LocalizationImporter.IsLineBreak(currentString))
                 {
                     Debug.LogWarning("Could not find key " + key + " for current language " + language + ". Falling back to " + Instance.fallbackLanguage + " with " + languages[(int)Instance.fallbackLanguage]);
-                    selected = (int) Instance.fallbackLanguage;
+                    // EDIT: Cytoid
+                    // Default Fujaoese to Simplified Chinese
+                    selected = language == Language.Fujaoese ? (int) Language.Simplified_Chinese : (int) Instance.fallbackLanguage;
                     currentString = languages[selected];
                 }
 

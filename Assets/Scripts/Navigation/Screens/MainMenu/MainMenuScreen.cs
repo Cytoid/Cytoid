@@ -18,7 +18,7 @@ public class MainMenuScreen : Screen
         aboutButton.onPointerClick.AddListener(it =>
         {
             var dialog = Dialog.Instantiate();
-            dialog.Message = "<b>Cytoid 2.0 Alpha 3</b>\nThank you for playing!";
+            dialog.Message = $"<b>Cytoid {Context.Version}</b>\nThank you for playing!";
             dialog.UseProgress = false;
             dialog.UsePositiveButton = true;
             dialog.UseNegativeButton = false;

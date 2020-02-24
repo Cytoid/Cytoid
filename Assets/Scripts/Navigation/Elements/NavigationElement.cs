@@ -6,7 +6,7 @@ using UniRx.Async;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class NavigationElement : InteractableMonoBehavior
+public class NavigationElement : InteractableMonoBehavior, ScreenBecameActiveListener
 {
     public bool navigateToLastScreen;
     public string targetScreenId;
@@ -16,6 +16,8 @@ public class NavigationElement : InteractableMonoBehavior
     public float newScreenDelay;
     public Vector2 transitionFocus;
     public string soundName = "Navigate1";
+
+    private bool navigated;
 
     public override async void OnPointerClick(PointerEventData eventData)
     {
@@ -28,10 +30,19 @@ public class NavigationElement : InteractableMonoBehavior
                 cancellationToken: cancellationSource.Token);
         }
         if (!string.IsNullOrWhiteSpace(soundName)) Context.AudioManager.Get(soundName).Play(ignoreDsp: true);
+
+        if (navigated) return;
+        navigated = true;
         Context.ScreenManager.ChangeScreen(
             navigateToLastScreen ? Context.ScreenManager.PopAndPeekHistory() : targetScreenId, transition,
             duration, currentScreenDelay, newScreenDelay, transitionFocus, OnScreenChanged, addToHistory: !navigateToLastScreen);
     }
 
     protected virtual void OnScreenChanged(Screen screen) => Expression.Empty();
+    
+    public void OnScreenBecameActive()
+    {
+        navigated = false;
+    }
+    
 }

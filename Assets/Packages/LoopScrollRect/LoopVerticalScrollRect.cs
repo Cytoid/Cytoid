@@ -8,8 +8,8 @@ namespace UnityEngine.UI
     [DisallowMultipleComponent]
     public class LoopVerticalScrollRect : LoopScrollRect
     {
-        public float newItemAtStartThreshold = 156;
-        
+        private VerticalLayoutGroup contentVerticalLayoutGroup; // EDIT: Cytoid
+
         protected override float GetSize(RectTransform item)
         {
             float size = contentSpacing;
@@ -44,15 +44,36 @@ namespace UnityEngine.UI
             {
                 Debug.LogError("[LoopHorizontalScrollRect] unsupported GridLayoutGroup constraint");
             }
+            
+            // EDIT: Cytoid
+            contentVerticalLayoutGroup = content.GetComponent<VerticalLayoutGroup>();
+            // End of EDIT
         }
+        
+        // EDIT: Cytoid
+        protected override float GetTopPadding()
+        {
+            return contentVerticalLayoutGroup?.padding.top ?? 0;
+        }
+
+        protected override float GetBottomPadding()
+        {
+            return contentVerticalLayoutGroup?.padding.bottom ?? 0;
+        }
+        // End of EDIT
 
         protected override bool UpdateItems(Bounds viewBounds, Bounds contentBounds)
         {
             bool changed = false;
-            if (viewBounds.min.y < contentBounds.min.y)
+
+            // EDIT: Cytoid
+            float dBottom = GetBottomPadding(), dTop = GetTopPadding();
+            // End of EDIT
+
+            if (viewBounds.min.y < contentBounds.min.y + dBottom) // EDIT: Cytoid
             {
                 float size = NewItemAtEnd(), totalSize = size;
-                while(size > 0 && viewBounds.min.y < contentBounds.min.y - totalSize)
+                while (size > 0 && viewBounds.min.y < contentBounds.min.y - totalSize)
                 {
                     size = NewItemAtEnd();
                     totalSize += size;
@@ -60,7 +81,20 @@ namespace UnityEngine.UI
                 if (totalSize > 0)
                     changed = true;
             }
-            else if (viewBounds.min.y > contentBounds.min.y + threshold)
+
+            if (viewBounds.max.y > contentBounds.max.y - dTop) // EDIT: Cytoid
+            {
+                float size = NewItemAtStart(), totalSize = size;
+                while (size > 0 && viewBounds.max.y > contentBounds.max.y + totalSize)
+                {
+                    size = NewItemAtStart();
+                    totalSize += size;
+                }
+                if (totalSize > 0)
+                    changed = true;
+            }
+
+            if (viewBounds.min.y > contentBounds.min.y + threshold)
             {
                 float size = DeleteItemAtEnd(), totalSize = size;
                 while (size > 0 && viewBounds.min.y > contentBounds.min.y + threshold + totalSize)
@@ -72,18 +106,7 @@ namespace UnityEngine.UI
                     changed = true;
             }
 
-            if (viewBounds.max.y > contentBounds.max.y - newItemAtStartThreshold)
-            {
-                float size = NewItemAtStart(), totalSize = size;
-                while (size > 0 && viewBounds.max.y > contentBounds.max.y + totalSize)
-                {
-                    size = NewItemAtStart();
-                    totalSize += size;
-                }
-                if (totalSize > 0)
-                    changed = true;
-            }
-            else if (viewBounds.max.y < contentBounds.max.y - threshold)
+            if (viewBounds.max.y < contentBounds.max.y - threshold)
             {
                 float size = DeleteItemAtStart(), totalSize = size;
                 while (size > 0 && viewBounds.max.y < contentBounds.max.y - threshold - totalSize)
@@ -94,6 +117,7 @@ namespace UnityEngine.UI
                 if (totalSize > 0)
                     changed = true;
             }
+
             return changed;
         }
     }

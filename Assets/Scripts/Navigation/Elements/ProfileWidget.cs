@@ -98,7 +98,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
         spinner.IsSpinning = true;
     }
 
-    public void SetSignedIn(Profile profile)
+    public async void SetSignedIn(Profile profile)
     {
         name.text = profile.user.uid;
         name.DOKill();
@@ -108,27 +108,19 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
         if (avatarImage.sprite == null)
         {
             spinner.IsSpinning = true;
-
-            var cachedSprite = Context.SpriteCache.GetCachedSprite("avatar://" + profile.user.uid);
-            if (cachedSprite != null)
+            var sprite = await Context.SpriteCache.CacheSpriteInMemory(
+                profile.user.avatarURL.WithSizeParam(512, 512), 
+                "UserAvatar",
+                useFileCache: true
+            );
+            spinner.IsSpinning = false;
+            if (sprite != null)
             {
-                SetAvatarSprite(cachedSprite);
-                spinner.IsSpinning = false;
+                SetAvatarSprite(sprite);
             }
             else
             {
-                RestClient.Get(new RequestHelper
-                    {
-                        Uri = profile.user.avatarURL,
-                        DownloadHandler = new DownloadHandlerTexture()
-                    }).Then(response =>
-                    {
-                        var texture = ((DownloadHandlerTexture) response.Request.downloadHandler).texture;
-                        var sprite = texture.CreateSprite();
-                        Context.SpriteCache.PutSprite("avatar://" + profile.user.uid, "UserAvatar", sprite);
-                        SetAvatarSprite(sprite);
-                    }).Catch(error => { Toast.Enqueue(Toast.Status.Failure, "TOAST_COULD_NOT_DOWNLOAD_AVATAR".Get()); })
-                    .Finally(() => spinner.IsSpinning = false);
+                Toast.Enqueue(Toast.Status.Failure, "TOAST_COULD_NOT_DOWNLOAD_AVATAR".Get());
             }
         }
         UpdateRatingAndLevel(profile);

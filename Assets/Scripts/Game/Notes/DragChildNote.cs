@@ -6,7 +6,9 @@ public class DragChildNote : Note
 
     protected override NoteRenderer CreateRenderer()
     {
-        return new DragChildNoteClassicRenderer(this);
+        return Game.Config.UseClassicStyle
+            ? (NoteRenderer) new DragChildNoteClassicRenderer(this)
+            : new DragChildDefaultNoteRenderer(this);
     }
 
     public override void OnTouch(Vector2 screenPos)

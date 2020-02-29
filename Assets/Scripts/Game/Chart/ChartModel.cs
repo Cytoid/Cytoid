@@ -110,5 +110,12 @@ public class ChartModel
             Assert.IsTrue((NoteType) type == NoteType.DragHead || (NoteType) type == NoteType.DragChild, $"Expected DragHead or DragChild, but type is {((NoteType) type).ToString()} for note {id}");
             return next_id <= 0 ? this : parent.note_map[next_id].GetDragEndNote(parent);
         }
+
+        public bool UseAlternativeColor()
+        {
+            var alt = direction > 0;
+            if (is_forward) alt = !alt;
+            return alt;
+        }
     }
 }

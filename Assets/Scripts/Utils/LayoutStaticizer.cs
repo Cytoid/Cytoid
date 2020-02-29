@@ -41,6 +41,10 @@ public class LayoutStaticizer : MonoBehaviour, ScreenBecameActiveListener
         {
             Activate(child);
         }
+
+        var ignore = gameObject.GetComponent<LayoutStaticizerIgnore>();
+        if (ignore != null) return;
+        
         var contentSizeFitter = gameObject.GetComponent<ContentSizeFitter>();
         if (contentSizeFitter != null)
         {

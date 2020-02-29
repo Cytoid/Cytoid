@@ -42,6 +42,9 @@ public class Game : MonoBehaviour
     
     public bool ResynchronizeChartOnNextFrame { get; set; }
 
+    public float MusicInitialPosition;
+    public bool ForceAutoMod;
+    
     public AudioManager.Controller Music { get; protected set; }
     
     public List<UniTask> BeforeStartTasks { get; protected set; } = new List<UniTask>();
@@ -102,7 +105,9 @@ public class Game : MonoBehaviour
             chartText = Encoding.UTF8.GetString(request.downloadHandler.data);
         }
 
-        var mods = Context.SelectedMods;
+        var mods = new HashSet<Mod>(Context.SelectedMods);
+        if (ForceAutoMod) mods.Add(Mod.Auto);
+        
         var ratio = UnityEngine.Screen.width * 1.0f / UnityEngine.Screen.height;
         var height = Camera.main.orthographicSize * 2.0f;
         var width = height * ratio;
@@ -178,7 +183,7 @@ public class Game : MonoBehaviour
         Context.SetAutoRotation(false);
         
         // Update last played time
-        Context.LocalPlayer.SetLastPlayedDate(level.Id, DateTime.UtcNow);
+        level.PlayedDate = DateTime.UtcNow;
 
         IsLoaded = true;
         onGameLoaded.Invoke(this);
@@ -202,6 +207,12 @@ public class Game : MonoBehaviour
         await UniTask.WaitUntil(
             () => AudioSettings.dspTime >= MusicStartedTimestamp,
             PlayerLoopTiming.Initialization);
+
+        if (MusicInitialPosition > 0)
+        {
+            Music.PlaybackTime = MusicInitialPosition;
+            MusicStartedTimestamp -= MusicInitialPosition;
+        }
 
         GameStartedOrResumedTimestamp = UnityEngine.Time.realtimeSinceStartup;
         State.IsStarted = true;
@@ -432,7 +443,7 @@ public class Game : MonoBehaviour
         
         // Unload resources
         Context.AudioManager.Unload("Level");
-        Context.SpriteCache.DisposeTagged("GameCover");
+        Context.SpriteCache.DisposeTaggedSpritesInMemory("GameCover");
         
         onGameAborted.Invoke(this);
 
@@ -536,7 +547,7 @@ public class Game : MonoBehaviour
             };
         }
         
-        Context.SpriteCache.DisposeTagged("Game");
+        Context.SpriteCache.DisposeTaggedSpritesInMemory("Game");
         sceneLoader.Activate();
     }
 

@@ -40,6 +40,8 @@ public class MainMenuScreen : Screen
         freePlayText.text = "MAIN_LEVELS_LOADED".Get(Context.LevelManager.LoadedLocalLevels.Count);
         freePlayText.transform.RebuildLayout();
         ProfileWidget.Instance.Enter();
+
+        Context.SpriteCache.DisposeTaggedSpritesInMemory("CharacterPreview");
     }
 
 }

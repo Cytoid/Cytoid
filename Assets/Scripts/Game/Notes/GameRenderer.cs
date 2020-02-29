@@ -55,7 +55,7 @@ public class GameRenderer
         // Cover
         cover = GameObjectProvider.Instance.cover;
         // Is cover specified in cache?
-        var sprite = Context.SpriteCache.GetCachedSprite("game://cover");
+        var sprite = Context.SpriteCache.GetCachedSpriteFromMemory("game://cover");
         if (sprite == null)
         {
             var path = "file://" + Game.Level.Path + Game.Level.Meta.background.path;

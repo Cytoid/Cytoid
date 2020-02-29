@@ -4,12 +4,12 @@ LANGUAGE_EN	[LanguageName] in english	English	French	Spanish	German	Italian 	Por
 LANGUAGE_DIRECTION	ltr or rtl (text direction used by game code)	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	rtl	rtl	ltr	ltr	ltr	itr	ltr
 																																	
 Polyglot	100																																
-TRANSLATORS	Enter your Cytoid ID here!	tigerhix		beasten			bearusu_myo											ミソオデン	tigerhix / teages_0v0 / 2394425147 / water_lift	lumixanth										lunaflina		speedymlg7	2394425147 / tigerhix
-INIT_TOUCH_TO_START		Touch to start		Toque para comenzar			Toque para começar											画面をタップしてください	轻触以开始	T O U C H   S C R E E N   T O   S T A R T	터치하세요									Nhấn để bắt đầu	Pindutin para magsimula	Sentuh layar untuk memulai	啊wee改哈鞥嫦娥我剛不疤痕處哈維楚王嗡阿格王朔！
-INIT_VERSION		VERSION {0}		Versión {0}			Versão {0}											バージョン	版本 {0}	VERSION {0}	버전 {0}									Phiên bản {0}	Bersyon {0}	Versi {0}	贵阳市政厅 {0}
-INIT_UNPACKING_X		Unpacking {0}		Extrayendo {0}			Extraindo {0}											展開中… {0}												Đang giải nén {0}			
-INIT_UNPACKING_X_Y		Unpacking {0} ({1}/{2})		Extrayendo {0} ({1}/{2})			Extraindo {0} ({1}/{2})											展開中… {0} ({1}/{2})												Đang giải nén {0} ({1}/{2})		Mengunpack {0} ({1}/{2})	剃毛刀僧尼 {0} (小彬彬 {0}/发霉n饭 {2})
-INIT_LOADING_X_Y		Loading {0} ({1}/{2})		Cargando {0} ({1}/{2})			Carregando {0} ({1}/{2})											ロード中 {0} ({1}/{2})												Đang load {0} ({1}/{2})		Memuat {0} ({1}/{2})	碹镑铱鸹 {0} (小彬彬 {0}/发霉n饭 {2})
+TRANSLATORS	Enter your Cytoid ID here!	tigerhix		beasten			bearusu_myo		sinednikral									miso-oden	tigerhix / teages_0v0 / 2394425147 / water_lift	lumixanth										lunaflina / exogram	howtopassthisuse	speedymlg7	2394425147 / tigerhix
+INIT_TOUCH_TO_START		Touch to start		Toque para comenzar			Toque para começar		Нажмите чтобы продолжить									画面をタップしてください	轻触以开始	—　點　擊　開　始　—	터치하세요									Nhấn để bắt đầu	Pindutin para magsimula	Sentuh layar untuk memulai	啊wee改哈鞥嫦娥我剛不疤痕處哈維楚王嗡阿格王朔！
+INIT_VERSION		VERSION {0}		Versión {0}			Versão {0}		Версия {0}									バージョン {0}	版本 {0}	{0} 版本	버전 {0}									Phiên bản {0}	Bersyon {0}	Versi {0}	贵阳市政厅 {0}
+INIT_UNPACKING_X		Unpacking {0}		Extrayendo {0}			Extraindo {0}		Распаковка {0}									展開中… {0}	解压 {0}	解壓「{0}」中……										Đang giải nén {0}			
+INIT_UNPACKING_X_Y		Unpacking {0} ({1}/{2})		Extrayendo {0} ({1}/{2})			Extraindo {0} ({1}/{2})		Распаковка {0} ({1}/{2})									展開中… {0} ({1}/{2})	解压 {0}（{1}/{2}）	解壓「{0}」中……（{1}/{2}）										Đang giải nén {0} ({1}/{2})		Mengunpack {0} ({1}/{2})	剃毛刀僧尼 {0} (小彬彬 {0}/发霉n饭 {2})
+INIT_LOADING_X_Y		Loading {0} ({1}/{2})		Cargando {0} ({1}/{2})			Carregando {0} ({1}/{2})		Загрузка {0} ({1}/{2})									ロード中 {0} ({1}/{2})	加载 {0}（{1}/{2}）	載入「{0}」中……（{1}/{2}）										Đang tải {0} ({1}/{2})		Memuat {0} ({1}/{2})	碹镑铱鸹 {0} (小彬彬 {0}/发霉n饭 {2})
 																																	
 																																	
 																																	
@@ -19,60 +19,60 @@ INIT_LOADING_X_Y		Loading {0} ({1}/{2})		Cargando {0} ({1}/{2})			Carregando {0}
 																																	
 																																	
 																																	
-SIGN_IN_TITLE		Sign in		Inicie Sesión			Logar											サインイン	登录	登入										Đăng nhập		Masuk	多日你娃路军哥
-SIGN_IN_DESC		Synchronize play data, unlock new gamemodes, and access other multiplayer features.		Sincronice su progreso, desbloquee nuevos modos de juegos, y tenga acceso a otras caracteristicas de multijugador			Sincronize seu progresso, desbloqueie novos modos de jogo e acesse outros recursos de multiplayer											ゲームデータをオンラインに同期することで、新しいゲームモード、マルチプレイヤー機能などをアンロックすることができます。	同步游玩数据，解锁新的游戏模式，及使用其他多人游戏功能。	同步遊玩數據，解鎖新的遊戲模式，及使用其它線上功能。										Đồng bộ hoá dữ liệu, mở thêm gamemodes, cũng như các tính năng multiplayer khác	I-synchronize ang play data, mabuksan ang bagong gamemodes, at makapasok sa multiplayer features	Sinkronkan data bermain, membuka mode permainan lainnya, dan mengakses fitur multiplayer.	顿珍汉汉堡汉堡，刃図羅也有！！！！！双！！！！！！！！！！！！！！！！！！！！！！这他妈牛逼力11111
-SIGN_IN_CYTOID_ID		CYTOID ID		CYTOID ID			CYTOID ID											Cytoid ID	Cytoid ID	Cytoid ID										CYTOID ID			我会怒拆额！！！
-SIGN_IN_PASSWORD		PASSWORD		CONTRASEÑA			SENHA											パスワード	密码	密碼										Mật khẩu			工信部了！
+SIGN_IN_TITLE		Sign in		Inicie Sesión			Logar		Войти									サインイン	登录	歡迎回來！										Đăng nhập		Masuk	多日你娃路军哥
+SIGN_IN_DESC		Synchronize play data, unlock new gamemodes, and access other multiplayer features.		Sincronice su progreso, desbloquee nuevos modos de juegos, y tenga acceso a otras caracteristicas de multijugador			Sincronize seu progresso, desbloqueie novos modos de jogo e acesse outros recursos de multiplayer		Синхронизируйте данные, открывайте новые режимы и получите доступ к другим возможностям мультиплеера									ゲームデータをオンラインに同期することで、新しいゲームモード、マルチプレイヤー機能などをアンロックすることができます。	同步游玩数据，解锁新的游戏模式，及使用其他多人游戏功能。	登入即可同步遊玩資料、解鎖新的遊戲模式以及使用其餘線上功能。										Đồng bộ hoá dữ liệu, mở thêm chế độ chơi, cũng như các tính năng nhiều người chơi khác.	I-synchronize ang play data, mabuksan ang bagong gamemodes, at makapasok sa multiplayer features	Sinkronkan data bermain, membuka mode permainan lainnya, dan mengakses fitur multiplayer.	顿珍汉汉堡汉堡，刃図羅也有！！！！！双！！！！！！！！！！！！！！！！！！！！！！这他妈牛逼力11111
+SIGN_IN_CYTOID_ID		CYTOID ID		CYTOID ID			CYTOID ID		CYTOID ID									Cytoid ID	Cytoid ID	Cytoid ID										CYTOID ID			我会怒拆额！！！
+SIGN_IN_PASSWORD		PASSWORD		CONTRASEÑA			SENHA		ПАРОЛЬ									パスワード	密码	密碼										Mật khẩu			工信部了！
 																																	
 																																	
 																																	
 																																	
 																																	
 																																	
-MAIN_FREE_PLAY		Free play!		Juego Libre!			Partida Livre!											FREE PLAY!	自由模式	自由模式	자유 플레이									Chơi tự do	Libreng laro!	Mulai	碹镑铱鸹
-MAIN_LEVELS_LOADED		{0} LEVELS LOADED		{0} NIVELES CARGADOS			{0} NÍVEIS CARREGADOS											{0} 譜面がアクティブ	已加载 {0} 关卡	已加載 {0} 關卡	현재 (0) 개의 채보를 플레이 하실수 있습니다									{0} LEVELS SẴN SÀNG	{0} Lebel na naload	{0} Level Dimuat	{0} 鸡e句NBA
-MAIN_COMMUNITY		Community		Comunidad			Comunidade											コミュニティー	社区	社區	커뮤니티									Cộng đồng	Komunidad	Komunitas	花鸟风月
-MAIN_EVENTS		Events		Eventos			Eventos											イベント	活动	活動	이벤트									Sự kiện	Pangyayari	Event	紫薯布丁*8
-MAIN_TRAINING		Training		Entrenamiento			Treinamento											トレーニング	训练	訓練	연습 모드									Tập luyện	Pagsasanay	Latihan	则不呢就美丽了
-MAIN_TIERS		Tiers		Tier			Tiers											段位認定	段位	段位	랭크 모드									Cấp bậc	Tier	Tier	那看来是马超
+MAIN_FREE_PLAY		Free play!		Juego Libre!			Partida Livre!		Свободная игра!									FREE PLAY!	自由模式	自由遊玩	자유 플레이									Chơi tự do!	Libreng laro!	Mulai	碹镑铱鸹
+MAIN_LEVELS_LOADED		{0} LEVELS LOADED		{0} NIVELES CARGADOS			{0} NÍVEIS CARREGADOS		{0} УРОВНЕЙ ЗАГРУЖЕНО									{0} 譜面がアクティブ	已加载 {0} 关卡	已載入共 {0} 個關卡	현재 (0) 개의 채보를 플레이 하실수 있습니다									{0} LEVELS SẴN SÀNG	{0} Lebel na naload	{0} Level Dimuat	{0} 鸡e句NBA
+MAIN_COMMUNITY		Community		Comunidad			Comunidade		Сообщество									コミュニティー	社区	社群瀏覽	커뮤니티									Cộng đồng	Komunidad	Komunitas	花鸟风月
+MAIN_EVENTS		Events		Eventos			Eventos		События									イベント	活动	活動	이벤트									Sự kiện	Pangyayari	Event	紫薯布丁*8
+MAIN_TRAINING		Training		Entrenamiento			Treinamento		Тренировка									トレーニング	训练	訓練模式	연습 모드									Tập luyện	Pagsasanay	Latihan	则不呢就美丽了
+MAIN_TIERS		Tiers		Tier			Tiers		Ранг									段位認定	段位	段位考核	랭크 모드									Cấp bậc	Tier	Tier	那看来是马超
 																																	
 																																	
 																																	
 																																	
-TOAST_SUCCESSFULLY_SIGNED_IN		Successfully signed in.		Ingresó exitosamente.			Logado com sucesso.											接続完了。	登录成功。	登入成功。										Đã đăng nhập	Nakasign-in na!	Berhasil masuk ke akun.	成功上市
-TOAST_COULD_NOT_DOWNLOAD_AVATAR		Could not download the avatar.		No se pudo descargar el avatar.			Não foi possível baixar o avatar.											ダウンロードに失敗しました。	头像下载失败。	頭像下載失敗。										Không thể load avatar	Di' nadownload ang avatar	Tidak dapat memuat avatar.	则不呢就美丽了
-TOAST_SUCCESSFULLY_RATED_LEVEL		Successfully rated level.		Nivel calificado con éxito.			Nível avaliado com sucesso.											レーティング完了。	评分成功。	評分成功。										Đã rate level	Namarkahan na ang lebel	Berhasil mengerate level.	成功上市
-TOAST_RATING_CANCELLED		Rating cancelled.		Calificación cancelada.			Avaliação cancelada.											レーティングがキャンセルされました。	取消了评分。	取消了評分。										Đã hủy rate	Kinanselan ang marka	Rating dibatalkan.	则不呢就美丽了
-TOAST_LEVEL_METADATA_SYNCHRONIZED		Level metadata synchronized.		Metadatos de nivel sincronizados.			Metadados do nível sincronizados.											レベルデータの同期が完了しました。	关卡数据已同步。	關卡數據已同步。										Đã đồng bộ level data	Lebel Metadata naka-synchronize	Berhasil memuat metadata level.	啊wee改哈鞥嫦娥我刚不疤痕处哈维楚王嗡阿格王朔！！！！！！！！！！！！
-TOAST_SUCCESSFULLY_DOWNLOADED_LEVEL		Successfully downloaded level.		Nivel descargado exitosamente.			Nível baixado com sucesso.											ダウンロード成功！	关卡下载成功。	關卡下載成功。											Matagumpay sa pagkadownload ng lebel	Mengunduh level berhasil.	啊wee改哈鞥嫦娥我刚不疤痕处哈维楚王嗡阿格王朔！！！！！！！！！！！！
-TOAST_DOWNLOAD_CANCELLED		Download cancelled.		Descarga cancelada.			Download cancelado.											ダウンロードを取り消しました…	取消了关卡下载。	取消了關卡下載。											Kinansela ang pagkadownload	Pengunduhan dibatalkan.	则不呢就美丽了
-TOAST_COULD_NOT_RATE_LEVEL		Could not rate level.		No se pudo calificar el nivel.			Não foi possível avaliar o nível.											レーティングに失敗しました。	评分失败。	評分失敗。											Di' makamarka ang lebel	Tidak dapat mengerate level.	则不呢就美丽了
-TOAST_CHECK_NETWORK_CONNECTION		Please check your network connection.		Por favor revise su conexión.			Por favor, verifique sua conexão com a internet.											ネットワーク状況を確認してください。	请检查网络连接。	請檢查網絡連接。											Pakitignan ang iyong connection sa network	Mohon periksa sambungan koneksi anda.	则不呢就美丽了
-TOAST_PERFORMANCE_SYNCHRONIZED	This means that the score is uploaded to the server after a play.	Performance sychronized.		Resultado sincronizado.			Performance sincronizada.											スコアをアップロードしました。	成绩已同步。	成績已同步，											Iyong laro ay na-synchronized	Performa disinkronkan	啊wee改哈鞥嫦娥我刚不疤痕处哈维楚王嗡阿格王朔！！！！！！！！！！！！
-TOAST_BEST_PERFORMANCE_SYNCHRONIZED	This means that the best score is downloaded from the server when entering a level.	Best performance synchronized.		Mejor resultado sincronizado.			Melhor performance sincronizada.											最新のスコアをロードしました。	最佳成绩已同步。	最佳成績已同步。											Nasynchronized ang mahusay na paglaro	Performa terbaik disinkronkan.	啊wee改哈鞥嫦娥我刚不疤痕处哈维楚王嗡阿格王朔！！！！！！！！！！！！
-TOAST_SIGN_IN_REQUIRED		Please sign in first.		Por favor inicie sesión primero.			Por favor, conecte-se à sua conta primeiro.											サインインしてください！	请先登录。	請先登入。											Sign-in ka muna	Mohon masuk terlebih dahulu.	啊wee改哈鞥嫦娥我刚不疤痕处哈维楚王嗡阿格王朔！！！！！！！！！！！！
-TOAST_COULD_NOT_UNPACK_LEVEL		Could not unpack level.		No se pudo extraer el nivel.			Não foi possível extrair o nível.											レベルを展開できませんでした…	关卡解包失败。	關卡解包失敗。											Di' makapagUnpack ng level	Tidak dapat memuat level.	则不呢就美丽了
-TOAST_COULD_NOT_DOWNLOAD_LEVEL		Could not download level.		No se pudo descargar el nivel.			Não foi possível baixar o nível.											レベルをダウンロードできませんでした…	关卡下载失败。	關卡下載失敗。											Di' makapagDownload ng lebel	Tidak dapat mengunduh level.	则不呢就美丽了
-TOAST_SUCCESSFULLY_DELETED_LEVEL		Successfully deleted level.		Nivel borrado exitosamente.			Nível deletado com sucesso.											レベルの削除が完了しました。	关卡删除成功。	關卡下載成功。											Nabura na ang lebel	Berhasil menghapus level.	则不呢就美丽了
-TOAST_SUCCESSFULLY_SIGNED_OUT		Successfully signed out.		Se cerró la sesión exitosamente.			Saiu com sucesso.											サインアウトしました。	退出成功。	登出成功。											Matagumpay na nakapagsign-out	Berhasil keluar.	则不呢就美丽了
-TOAST_LEVEL_NOT_RANKED		This level is not ranked!		Este nivel no esta calificado!			Esse nível não é ranqueado!											このレベルはランキングに対応していません！	此关卡未打开排名！	此關卡未打開排名！											Itong lebel ay hindi nakaRank!	Level ini bukan level ranked!	我草我这个键盘的1是不是坏了
-TOAST_ENTER_ID		Please enter your Cytoid ID.		Por favor, ingrese su Cytoid ID.			Por favor, insira seu Cytoid ID.											Cytoid ID を入力してください。	请输入你的 Cytoid ID。												Ilagay ang iyong Cytoid ID	Mohon masukan ID Cytoid anda.	啊wee改哈鞥嫦娥我刚不疤痕处哈维楚王嗡阿格王朔！！！！！！！！！！！！
-TOAST_ENTER_PASSWORD		Please enter your password.		Por favor, ingrese su contraseña.			Por favor, insira sua senha											パスワードを入力してください。	请输入你的密码。	請輸入你的密碼。											Ilagay ang iyong password	Mohon masukan password anda.	鸡e句工信部了！
-TOAST_INCORRECT_ID_OR_PASSWORD		Incorrect Cytoid ID or password.		Cytoid ID o contraseña incorrecta.			Senha ou Cytoid ID incorretos.											Cytoid ID か パスワード が間違ってます。	Cytoid ID 或者密码错误。												Mali ang iyong Cytoid ID o Password	Cytoid ID atau password yang salah telah dimasukkan.	你号的骨灰扬了
-TOAST_STATUS_CODE		Status code: {0}		Código de estado: {0}			Código de status: {0}											ステータスコード: {0}	状态代码：{0}												Status code: {0}	Kode status: {0}	{0}啊wee！
-TOAST_ID_NOT_FOUND		This Cytoid ID does not exist.		Este Cytoid ID no existe			Esse Cytoid ID não existe.											Cytoid ID が存在しません。	此 Cytoid ID 不存在。												Wala ang iyong inilagay na Cytoid ID		啊wee改哈鞥嫦娥我刚不疤痕处哈维楚王嗡阿格王朔！！！！！！！！！！！！
+TOAST_SUCCESSFULLY_SIGNED_IN		Successfully signed in.		Ingresó exitosamente.			Logado com sucesso.		Вход выполнен успешно.									接続完了。	登录成功。	登入成功！										Đã đăng nhập.	Nakasign-in na!	Berhasil masuk ke akun.	成功上市
+TOAST_COULD_NOT_DOWNLOAD_AVATAR		Could not download the avatar.		No se pudo descargar el avatar.			Não foi possível baixar o avatar.		Не удалось загрузить аватар.									画像のロードに失敗しました。	头像下载失败。	頭貼下載失敗。										Không thể tải hình đại diện.	Di' nadownload ang avatar	Tidak dapat memuat avatar.	则不呢就美丽了
+TOAST_SUCCESSFULLY_RATED_LEVEL		Successfully rated level.		Nivel calificado con éxito.			Nível avaliado com sucesso.		Уровень оценен успешно.									レーティング完了。	评分成功。	評分成功！										Level đã được đánh giá.	Namarkahan na ang lebel	Berhasil mengerate level.	成功上市
+TOAST_RATING_CANCELLED		Rating cancelled.		Calificación cancelada.			Avaliação cancelada.		Оценка убрана.									レーティングがキャンセルされました。	取消了评分。	評分已取消。										Đã hủy đánh giá.	Kinanselan ang marka	Rating dibatalkan.	则不呢就美丽了
+TOAST_LEVEL_METADATA_SYNCHRONIZED		Level metadata synchronized.		Metadatos de nivel sincronizados.			Metadados do nível sincronizados.		Метаданные уровня синхронизированы.									レベルデータの同期が完了しました。	关卡数据已同步。	關卡資料已同步！										Đã đồng bộ hoá dữ liệu level.	Lebel Metadata naka-synchronize	Berhasil memuat metadata level.	啊wee改哈鞥嫦娥我刚不疤痕处哈维楚王嗡阿格王朔！！！！！！！！！！！！
+TOAST_SUCCESSFULLY_DOWNLOADED_LEVEL		Successfully downloaded level.		Nivel descargado exitosamente.			Nível baixado com sucesso.		Уровень скачан успешно.									ダウンロード成功！	关卡下载成功。	關卡下載成功！										Đã tải level.	Matagumpay sa pagkadownload ng lebel	Mengunduh level berhasil.	啊wee改哈鞥嫦娥我刚不疤痕处哈维楚王嗡阿格王朔！！！！！！！！！！！！
+TOAST_DOWNLOAD_CANCELLED		Download cancelled.		Descarga cancelada.			Download cancelado.		Скачивание отменено.									ダウンロードを取り消しました…	取消了关卡下载。	關卡下載已取消。										Đã dừng tải level.	Kinansela ang pagkadownload	Pengunduhan dibatalkan.	则不呢就美丽了
+TOAST_COULD_NOT_RATE_LEVEL		Could not rate level.		No se pudo calificar el nivel.			Não foi possível avaliar o nível.		Не удалось оценить уровень.									レーティングに失敗しました。	评分失败。	評分失敗。										Không đánh giá level được.	Di' makamarka ang lebel	Tidak dapat mengerate level.	则不呢就美丽了
+TOAST_CHECK_NETWORK_CONNECTION		Please check your network connection.		Por favor revise su conexión.			Por favor, verifique sua conexão com a internet.		Проверьте интернет-соединение.									ネットワーク状況を確認してください。	请检查网络连接。	請檢查網路連接是否順暢。										Xin hãy kiểm tra kết nối mạng của bạn.	Pakitignan ang iyong connection sa network	Mohon periksa sambungan koneksi anda.	则不呢就美丽了
+TOAST_PERFORMANCE_SYNCHRONIZED	This means that the score is uploaded to the server after a play.	Performance sychronized.		Resultado sincronizado.			Performance sincronizada.		Счет синхронизирован.									スコアをアップロードしました。	成绩已同步。	紀錄已同步至伺服器！										Thành tích đã được tải lên.	Iyong laro ay na-synchronized	Performa disinkronkan	啊wee改哈鞥嫦娥我刚不疤痕处哈维楚王嗡阿格王朔！！！！！！！！！！！！
+TOAST_BEST_PERFORMANCE_SYNCHRONIZED	This means that the best score is downloaded from the server when entering a level.	Best performance synchronized.		Mejor resultado sincronizado.			Melhor performance sincronizada.		Лучший счет синхронизирован.									最新のスコアをアップロードしました。	最佳成绩已同步。	最高紀錄已與伺服器同步！										Thành tích tốt nhất đã được cập nhật.	Nasynchronized ang mahusay na paglaro	Performa terbaik disinkronkan.	啊wee改哈鞥嫦娥我刚不疤痕处哈维楚王嗡阿格王朔！！！！！！！！！！！！
+TOAST_SIGN_IN_REQUIRED		Please sign in first.		Por favor inicie sesión primero.			Por favor, conecte-se à sua conta primeiro.		Пожалуйста, войдите сначала.									サインインしてください。	请先登录。	登入後才能執行操作！										Xin hãy đăng kí.	Sign-in ka muna	Mohon masuk terlebih dahulu.	啊wee改哈鞥嫦娥我刚不疤痕处哈维楚王嗡阿格王朔！！！！！！！！！！！！
+TOAST_COULD_NOT_UNPACK_LEVEL		Could not unpack level.		No se pudo extraer el nivel.			Não foi possível extrair o nível.		Не удалось распаковать уровень.									ファイルを展開できませんでした…	关卡解包失败。	關卡解壓失敗。										Không giải nén level được.	Di' makapagUnpack ng level	Tidak dapat memuat level.	则不呢就美丽了
+TOAST_COULD_NOT_DOWNLOAD_LEVEL		Could not download level.		No se pudo descargar el nivel.			Não foi possível baixar o nível.		Не удалось скачать уровень.									ファイルをダウンロードできませんでした…	关卡下载失败。	關卡下載失敗。										Không tải level được.	Di' makapagDownload ng lebel	Tidak dapat mengunduh level.	则不呢就美丽了
+TOAST_SUCCESSFULLY_DELETED_LEVEL		Successfully deleted level.		Nivel borrado exitosamente.			Nível deletado com sucesso.		Уровень удален успешно.									ファイルの削除が完了しました。	关卡删除成功。	關卡刪除成功！										Đã xóa level.	Nabura na ang lebel	Berhasil menghapus level.	踢了
+TOAST_SUCCESSFULLY_SIGNED_OUT		Successfully signed out.		Se cerró la sesión exitosamente.			Saiu com sucesso.		Выход прошел успешно.									サインアウトしました。	退出成功。	登出成功！										Đã đăng xuất thành công.	Matagumpay na nakapagsign-out	Berhasil keluar.	退群成功
+TOAST_LEVEL_NOT_RANKED		This level is not ranked!		Este nivel no esta calificado!			Esse nível não é ranqueado!		Уровень вне ранка!									このレベルはランキングに対応していません！	此关卡未打开排名！	此關卡尚未開啟排名！										Level này không được xếp hạng!	Itong lebel ay hindi nakaRank!	Level ini bukan level ranked!	我草我这个键盘的1是不是坏了
+TOAST_ENTER_ID		Please enter your Cytoid ID.		Por favor, ingrese su Cytoid ID.			Por favor, insira seu Cytoid ID.		Пожалуйста, введите свой Cytoid ID.									Cytoid ID を入力してください。	请输入你的 Cytoid ID。	請輸入 Cytoid ID！										Xin hãy nhập ID Cytoid.	Ilagay ang iyong Cytoid ID	Mohon masukan ID Cytoid anda.	啊wee改哈鞥嫦娥我刚不疤痕处哈维楚王嗡阿格王朔！！！！！！！！！！！！
+TOAST_ENTER_PASSWORD		Please enter your password.		Por favor, ingrese su contraseña.			Por favor, insira sua senha		Пожалуйста, введите пароль.									パスワードを入力してください。	请输入你的密码。	請輸入密碼！										Xin hãy nhập mật khẩu.	Ilagay ang iyong password	Mohon masukan password anda.	鸡e句工信部了！
+TOAST_INCORRECT_ID_OR_PASSWORD		Incorrect Cytoid ID or password.		Cytoid ID o contraseña incorrecta.			Senha ou Cytoid ID incorretos.		Неверный Cytoid ID или пароль.									Cytoid ID か パスワード が間違ってます。	Cytoid ID 或者密码错误。	Cytoid ID 或者密碼錯誤。										ID Cytoid hoặc mật khẩu không đúng.	Mali ang iyong Cytoid ID o Password	Cytoid ID atau password yang salah telah dimasukkan.	你号的骨灰扬了
+TOAST_STATUS_CODE		Status code: {0}		Código de estado: {0}			Código de status: {0}		Статус-код: {0}									ステータスコード: {0}	状态代码：{0}	伺服器狀態代碼：{0}										Mã trạng thái: {0}	Status code: {0}	Kode status: {0}	{0}啊wee！
+TOAST_ID_NOT_FOUND		This Cytoid ID does not exist.		Este Cytoid ID no existe			Esse Cytoid ID não existe.		Этот Cytoid ID не существует.									この Cytoid ID は存在しません。	此 Cytoid ID 不存在。	該 Cytoid ID 不存在！										ID Cytoid này không tồn tại.	Wala ang iyong inilagay na Cytoid ID		啊wee改哈鞥嫦娥我刚不疤痕处哈维楚王嗡阿格王朔！！！！！！！！！！！！
 																																	
 																																	
 																																	
 																																	
-DIALOG_RATE_THIS_LEVEL		Rate this level!		Califique este nivel!			Avalie esse nível!											このレベルを評価しよう！	给关卡打个分吧！												Markahan ang lebel	Beri nilai level ini!	打分啊111111
-DIALOG_LEVEL_OUTDATED		This level is outdated.\nWould you like to update now?		Este nivel está desactualizado. \n¿Desea actualizarlo ahora?			Esse nível está desatualizado.\nGostaria de atualizá-lo agora?											最新版のレベルがあります。\nアップデートしますか？	侦测到当前关卡不是最新版本。\n是否立即更新？												Ang lebel na ito ay outdated. Gusto mo bang i-update ito?	Level ini outdated. Apakah anda ingin mengupdatenya?	关卡过期了。\n更新吗bbb
-DIALOG_DOWNLOADING		Downloading...		Descargando...			Baixando...											ダウンロード中…	下载中...												Nagdadownload...	Mengunduh...	这个杯子是拿来喝水的吗
-DIALOG_DOWNLOADING_X_Y		Downloading... ({0} / {1})		Descargando... ({0}/{1})			Baixando... ({0} / {1})											ダウンロード中… ({0} / {1})	下载中...（{0} / {1}）												Nagdadownload... ({0} / {1})	Mengunduh... ({0} / {1})	贵阳中... ({0} / {1})
-DIALOG_CONFIRM_DELETE		Delete "{0}"?\nYour best performance will not be deleted.		¿Borrar "{0}"?\n Su mejor rendimiento no será borrado			Deletar "{0}"?\nSua melhor perfomance não será apagada.											この "{0}" を削除しますか？\nプレイデータは削除しても残ります。	确定要删除关卡「{0}」吗？\n最佳成绩不会被删除。												Burahin ang "{0}"? Ang iyong performance ay hindi mawawala.	Apakah anda ingin menghapus "{0}"? Performa anda tidak akan dihapus.	"{0}" 踢不踢？\n（你的成绩不会被踢。）
-DIALOG_COMING_SOON		Coming soon!		Pronto!			Em breve!											お楽しみに！	即将上线，敬请期待！												Malapit na!	Coming soon!	贵阳贵阳咕咕咕
-DIALOG_RETRY_SYNCHRONIZE_PERFORMANCE		Could not synchronize performance. Retry?		No se pudo sincronizar su rendimiento. ¿Desea Intentar otra vez?			Não foi possível sincronizar sua performance. Tentar outra vez?											同期に失敗しました。再試行しますか？	成绩同步失败。\n是否重试？												Di' makasynchronize ang iyong performance. Ulitin?	Tidak dapat menyinkron performa. Coba lagi?	无法贵阳。是否贵阳？
-DIALOG_UNPACKING		Unpacking...		Extrayendo...			Extraindo...											展開中…	解包中...												Tatangalin...	Memuat...	欢迎新魔王中...
+DIALOG_RATE_THIS_LEVEL		Rate this level!		Califique este nivel!			Avalie esse nível!		Оцените этот уровень!									このレベルを評価しよう！	给关卡打个分吧！	評分一下吧！										Hãy đánh giá level!	Markahan ang lebel	Beri nilai level ini!	打分啊111111
+DIALOG_LEVEL_OUTDATED		This level is outdated.\nWould you like to update now?		Este nivel está desactualizado. \n¿Desea actualizarlo ahora?			Esse nível está desatualizado.\nGostaria de atualizá-lo agora?		Уровень устарел. \nЖелаете обновить его?									最新版のレベルがあります。\nアップデートしますか？	侦测到当前关卡不是最新版本。\n是否立即更新？	裝置內的關卡並非最新版本。\n要立即更新嗎？										Level này đã cũ. \nBạn có muốn cập nhật level bây giờ không?	Ang lebel na ito ay outdated. Gusto mo bang i-update ito?	Level ini outdated. Apakah anda ingin mengupdatenya?	关卡过期了。\n更新吗bbb
+DIALOG_DOWNLOADING		Downloading...		Descargando...			Baixando...		Скачивание...									ダウンロード中…	下载中...	下載中……										Đang tải...	Nagdadownload...	Mengunduh...	这个杯子是拿来喝水的吗
+DIALOG_DOWNLOADING_X_Y		Downloading... ({0} / {1})		Descargando... ({0}/{1})			Baixando... ({0} / {1})		Скачивание... ({0} / {1})									ダウンロード中… ({0} / {1})	下载中...（{0} / {1}）	下載中……（{0} / {1}）										Đang tải... ({0} / {1})	Nagdadownload... ({0} / {1})	Mengunduh... ({0} / {1})	贵阳中... ({0} / {1})
+DIALOG_CONFIRM_DELETE		Delete "{0}"?\nYour best performance will not be deleted.		¿Borrar "{0}"?\n Su mejor rendimiento no será borrado			Deletar "{0}"?\nSua melhor perfomance não será apagada.		Удалить "{0}"?\nВаш лучший счет не будет удален.									この "{0}" を削除しますか？\n削除してもプレイデータは残ります。	确定要删除关卡「{0}」吗？\n最佳成绩不会被删除。	確定要刪除「{0}」嗎？\n（不會刪除成績）										Xoá "{0}"? \nThành tích tốt nhất của bạn sẽ không bị xoá.	Burahin ang "{0}"? Ang iyong performance ay hindi mawawala.	Apakah anda ingin menghapus "{0}"? Performa anda tidak akan dihapus.	"{0}" 踢不踢？\n（你的成绩不会被踢。）
+DIALOG_COMING_SOON		Coming soon!		Muy pronto!			Em breve!		Скоро!									お楽しみに！	即将上线，敬请期待！	賣力施工中，敬請期待！										Sẽ có trong thời gian ngắn!	Malapit na!	Coming soon!	贵阳贵阳咕咕咕
+DIALOG_RETRY_SYNCHRONIZE_PERFORMANCE		Could not synchronize performance. Retry?		No se pudo sincronizar su rendimiento. ¿Desea Intentar otra vez?			Não foi possível sincronizar sua performance. Tentar outra vez?		Не удалось синхронизировать счёт. Повторить?									同期に失敗しました。再試行しますか？	成绩同步失败。\n是否重试？	成績同步失敗。\n要重試嗎？										Không thể tải thành tích lên. Thử lại?	Di' makasynchronize ang iyong performance. Ulitin?	Tidak dapat menyinkron performa. Coba lagi?	无法贵阳。是否贵阳？
+DIALOG_UNPACKING		Unpacking...		Extrayendo...			Extraindo...		Распаковка...									展開中…	解包中...	解壓中……										Đang giải nén...	Tatangalin...	Memuat...	欢迎新魔王中...
 																																	
 																																	
 																																	
@@ -85,301 +85,303 @@ DIALOG_UNPACKING		Unpacking...		Extrayendo...			Extraindo...											展開中
 																																	
 																																	
 																																	
-PROFILE_WIDGET_NOT_SIGNED_IN		Not signed in		No ha iniciado sesión			Não está logado											サインインしていません	未登录	未登入	로그인 안됨									Chưa đăng nhập	Di' pa signed-in	Belum Masuk	未阿格王朔
-PROFILE_WIDGET_SIGNING_IN		Signing in...		Ingresando...			Logando...											サインイン中…															阿格王朔中...
-PROFILE_WIDGET_RATING	Cytoid-specific term	Rating		Rating			Rating											Rating	Rating	Rating	평가									Hạng	Rating	Rating	PPT
-PROFILE_WIDGET_LEVEL		Level		Nivel			Nível											レベル	等级	等級	레벨									Level	Level	Level	群地位
-PROFILE_WIDGET_TIER		Tier		Tier			Tier											段位	段位	段位	등급									Cấp	Tier	Tier	簖位
-PROFILE_WIDGET_EXP		Exp		Exp			Exp											EXP	经验	經驗	경험치									Exp	Exp	Exp	fjb
-																																	
-																																	
-																																	
-																																	
-																																	
-PROFILE_PROFILE		Profile		Perfil			Perfil											プロフィール	资料	資料	프로필									Cá nhân	Profile	Profil	群名片
-PROFILE_LEADERBOARD		Leaderboard		Tabla de lideres			Placar											ランキング	排行榜	排行榜	랭킹 리더보드									BXH	Mga posisyon	Peringkat	群成员
-PROFILE_SIGN_OUT		Sign Out		Cerrar Sesión			Sair											サインアウト	退出账号	登出										Đăng xuất	Mag-sisign out	Keluar	退群
-PROFILE_TOTAL_RANKED_PLAYS	Not necessarily required to translate "ranked"	TOTAL RANKED PLAYS		TOTAL DE PARTIDAS CLASIFICATORIAS			TOTAL DE PARTIDAS RANQUEADAS											ランクモードプレイ数	总游玩次数												Kabuuan ng laro na ranked	Total level ranked yang dimainkan	总wee数
-PROFILE_TOTAL_CLEARED_NOTES		TOTAL CLEARED NOTES		TOTAL DE NOTAS COMPLETADAS			TOTAL DE NOTAS COMPLETAS											タップしたノーツ数	总 Note 数												Kabuuan na nota na napindot	Total note yang berhasil disentuh.	总踢数
-PROFILE_HIGHEST_MAX_COMBO		HIGHEST MAX COMBO		MAYOR COMBO MÁXIMO			MAIOR COMBO MÁXIMO											最高コンボ数	最高连击数												Pinakamataas na combo	Max combo tertinggi.	最高连踢数
-PROFILE_AVG_RANKED_ACCURACY	Not necessarily required to translate "ranked"	AVG RANKED ACCURACY		PRECISIÓN PROMEDIO EN CLASIFICATORIAS			PRECISÃO RANQUEADA MÉDIA											平均レート上昇率	平均精准度												Average na ranked accuracy	Akurasi ranked rata - rata.	平均踢中
-PROFILE_TOTAL_RANKED_SCORE	Not necessarily required to translate "ranked"	TOTAL RANKED SCORE		PUNTUACIÓN CLASIFICATORIA TOTAL			PONTUAÇÃO RANQUEADA TOTAL											合計ランクモードスコア	总分数												Kabuuan ng ranked score	Total nilai ranked.	踢分
-PROFILE_TOTAL_PLAY_TIME		TOTAL PLAY TIME		TIEMPO TOTAL JUGADO			TEMPO JOGADO TOTAL											合計プレイ時間	总游玩时间												Kabuuan na oras ng paglaro	Total waktu bermain.	啊wee改时间
-LEADERBOARD_TOP		Top		Top			Top											トップ	榜首排行												Top	Top	椰叶
-LEADERBOARD_ME		Me		Yo			Eu											自分	我的排名												Ako	Me	dd
-																																	
-																																	
-																																	
-																																	
-																																	
-SETTINGS_GENERAL		General		General			Geral											基本設定	通用												Pangkalahatan	Umum	阿
-SETTINGS_GAMEPLAY		Gameplay		Jugabilidad			Gameplay											プレイ設定	游玩												Gameplay	Permainan	格
-SETTINGS_VISUAL		Visual		Visual			VIsual											表示設定	视觉												Biswal	Visual	王
-SETTINGS_ADVANCED		Advanced		Avanzado			Avançado											上級設定	进阶												Advance	Advanced	朔
-SETTINGS_LANGUAGE		Language		Idioma			Idioma											表示言語	语言												Wika	Bahasa	符语更换
-SETTINGS_MUSIC_VOLUME		Music volume		Volumen de música			Volume da música											音量	音乐音量	音樂音量											Ingay ng musika	Volume musik	
-SETTINGS_SOUND_EFFECT_VOLUME		Sound effect volume		Volumen de efectos de sonido			Volume dos efeitos sonoros											SE音量	音效音量	音效音量											Sound effect volume	Volume suara efek	
-SETTINGS_HIT_SOUND		Hit sound		Sonidoal presionar			Som de acerto											タップ音	打击音	打擊音											Ingay ng pagpindot	Hit sound	
-SETTINGS_HIT_SOUND_DESC		Played when note is cleared		Reproducido cuando una nota es completada			Tocado quando uma nota é acertada											ノーツをタップした時に鳴る音を設定します	击中 Note 时播放												Sound kapag ang nota ay napindot	Dimainkan jika ada note yang berhasil ditekan	
-SETTINGS_HOLD_HIT_SOUND_TIMING		Hold hit sound timing					Timing da nota de segurar											ホールド・ロングの \n発音タイミング	Hold 打击音												Hold hit sound timing	Timing hit sound	
-SETTINGS_HOLD_HIT_SOUND_TIMING_DESC		When to play hit sounds for hold notes					Quando tocar os sons de acerto para as notas de segurar											どのタイミングで音を発生するかを設定します	Hold 打击音在何时播放												Sound kapagnapindot ang hold na nota	Kapan diputarnya hit sound pada note Hold	
-SETTINGS_HOLD_HIT_SOUNDS_TIMING_BEGIN		Begin		Inicio			Começo											開始時	开始时												Simula	Awal	
-SETTINGS_HOLD_HIT_SOUNDS_TIMING_END		End		Fin			Fim											終了時	结束时												Wakas	Akhir	
-SETTINGS_HOLD_HIT_SOUNDS_TIMING_BOTH		Begin & End		Inicio y Fin			Começo e fim											開始と終了時	开始和结束时												Simula at wakas	Awal & akhir	
-SETTINGS_GRAPHICS_QUALITY		Graphics quality		Calidad de gráficos			Qualidade gráfica											画面解像度	画面质量												Kalidad ng graphics	Kualitas grafik	
-SETTINGS_GRAPHICS_QUALITY_DESC		Lower quality saves battery and results in higher frame rates		Menor calidad ahorra batería y resulta en mayores cuadros por segundo			Baixas qualidades economizam bateria e resultam em altos frame rates											低解像度に設定すると、バッテリーの消費を抑え、高FPSを維持できます	调低画质可省电并提高帧数												Ibaba ang kalidad para makatipid ng baterya at mataas ang frame rates	Kualitas yang rendah melambatkan kecepatan baterai untuk habis	
-SETTINGS_STORYBOARD_EFFECTS		Storyboard effects		Efectos de Storyboard			Efeitos de storyboard											ストーリーボード効果	故事板效果												Storyboard effects	Efek storyboard	
-SETTINGS_STORYBOARD_EFFECTS_DESC		Recommended for high-end devices only		Recomendado solo para dispositivos de gama alta			Recomendado para dispositivos de ponta somente											この設定は高性能の端末でプレイする人に推薦されます	仅建议高端设备开启												Inirerekumenda para lang sa high-end device 	Direkomendasikan hanya untuk perangkat high-end	
-SETTINGS_BASE_NOTE_OFFSET	You can replace "note offset" with "chart offset" if that makes more sense in your language	Base note offset					Deslocamento base do chart											タイミング調整	全局谱面偏移												Base note offset	Offset nada	
-SETTINGS_BASE_NOTE_OFFSET_DESC		Added to each level's individual note offset					Adiciona um deslocamento de nota individual de cada nível											全てのレベルに対応する画面の音ズレ調整をします	叠加在关卡谱面偏移上												Ilalagay sa lahat ng lebel ng nota ang offset	Ditetapkan pada setiap level	
-SETTINGS_HEADSET_NOTE_OFFSET		Headset note offset					Deslocamento de nota para headset/fones de ouvido											ヘッドセットのタイミング調整	耳机谱面偏移												Headset note offset	Offset nada untuk headset	
-SETTINGS_HEADSET_NOTE_OFFSET_DESC		Added to note offset when using headset					Adicionado quando se usa fones de ouvido.											ヘッドセットを使用したときの音ズレを調整します	耳机插入时叠加在当前谱面偏移上												Ilalagay sa offset ng nota kapag gumagamit ng headset	Ditetapkan saat menggunakan headset	
-SETTINGS_EARLY_LATE_INDICATORS		Early/Late indicators		Indicadores de temprano o tarde			Indicadores de Adiantado/Atrasado											Early/Late を表示	Early / Late 指示器												Maaga/Huli na tagapagpahiwatig	Indikator Early (Cepat)/Late (Lambat)	
-SETTINGS_EARLY_LATE_INDICATORS_DESC		Displayed when notes cleared early/late		Mostrado cuando una nota fue completada temprano o tarde			Mostra quando as notas são acertadas antes ou depois do ideal											ノーツをタップした時 Early/Late を表示します	Note 判定时显示 Early（过早）或 Late（过迟）												Ipapakita kapag ang nota ay napindot ng maaga/huli	Ditampilkan apabila note disentuh terlalu Cepat/Lambat	
-SETTINGS_HITBOX_SIZE_CLICK		Hitbox size (click)					Tamanho da hitbox (clique)											ヒットボックスの大きさ	判定区域大小（Click）													Ukuran hitbox (Tap)	
-SETTINGS_HITBOX_SIZE_DESC		Larger hitboxes make notes easier to hit					Hitboxes maiores são mais fáceis de acertar											大きいほどノーツをタップしやすくなります	更大的判定区域让 Note 更容易被击中												Lakihan ang hitbox para madali pindutin ang nota 	Hitbox yang lebih besar membuat nada lebih mudah disentuh	
-SETTINGS_HITBOX_SIZE_DRAG		Hitbox size (drag)					Tamanho da hitbox (arrastar)											タップ時	判定区域大小（Drag）												Laki ng hitbox (Drag)	Ukuran hitbox (Drag)	
-SETTINGS_HITBOX_SIZE_HOLD		Hitbox size (hold)					Tamanho da hitbox (segurar)											ホールド時	判定区域大小（Hold）												Laki ng hitbox (Hold)	Ukuran hitbox (Hold)	
-SETTINGS_HITBOX_SIZE_FLICK		Hitbox size (flick)					Tamanho da hitbox (flick)											フリック時	判定区域大小（Flick）													Ukuran hitbox (Flick)	
-SETTINGS_HORIZONTAL_MARGIN		Horizontal margin		Margen horizontal			Margem horizontal											横幅の大きさ	左右边距													Margin kiri dan kanan	
-SETTINGS_HORIZONTAL_MARGIN_DESC		The left/right spacings of play area		El espacio izquierdo/derecho del area del juego			Espaçamento da área jogável na esquerda/direita											左右のプレイ範囲を調整します	调整左右边距的大小												Spacing ng kaliwa/kanan ng play area	Ukuran area bermain kiri dan kanan	
-SETTINGS_VERTICAL_MARGIN		Vertical margin		Margen vertical			Margem vertical											縦幅の大きさ	上下边距													Margin atas dan bawah	
-SETTINGS_VERTICAL_MARGIN_DESC		The top/bottom spacings of play area		El espacio de arriba/abajo del area de juego			Espaçamento da área jogável acima/abaixo											上下のプレイ範囲を調整します	调整上下边距的大小												Spacing ng taas/baba ng play area	Ukuran area bermain atas dan bawah	
-SETTINGS_NOTE_SIZE		Note size		Tamano de nota			Tamanho da nota											ノーツの大きさ	Note 显示大小												Laki ng nota	Ukuran not	
-SETTINGS_NOTE_SIZE_DESC		Display size of notes (hitboxes unaffected)					Define o tamanho das notas (isso não afeta as Hitboxes)											画面に表示されるノーツの大きさを設定します(この設定でタップ範囲が大きくなるわけではありません)	调整 Note 的显示大小\n（不影响判定区域）												Ipapakita ang laki ng nota (Di' maapektohan ang hitbox)	Mengubah ukuran note (Hitbox tidak akan berubah)	
-SETTINGS_CLEAR_FX_SIZE		Clear FX size					Tamanho da Clear FX											タップFX	判定效果大小												Laki ng clear FX	Ukuran hit effect	
-SETTINGS_CLEAR_FX_SIZE_DESC		Display size of note clear effects					Define o tamanho dos efeitos de acerto das notas											タップした時のエフェクト(水玉効果)の大きさを設定します	调整 Note 判定效果的大小												Ipapakita ang laki ng note clear effects	Mengubah ukuran effect saat note disentuh	
-SETTINGS_SHOW_BOUNDARIES		Play area boundaries					Limites da área jogável											プレイ範囲を表示	游玩区域边界												Hangganan ng play area	Pembatas area bermain	
-SETTINGS_SHOW_BOUNDARIES_DESC		Display play area boundaries					Define os limites da área jogável											上下にタップ可能範囲を表示します	是否显示游玩区域的边界												Ipakita ang hangganan ng play area	Menanampilkan garis batas area main	
-SETTINGS_BACKGROUND_OPACITY		Background opacity					Opacidade do plano de fundo											背景の明るさ	背景不透明度												Kalinawan ng background 	Opasitas latar belakang	
-SETTINGS_BACKGROUND_OPACITY_DESC		Adjust the background brightness					Ajusta o brilho do plano de fundo											プレイ中の背景の明るさを設定します	调整游玩背景的亮度												Ayusin ang kalinawan ng background	Mengatur kecerahan latar belakang	
-SETTINGS_RING_COLOR		Ring color					Cor do anel											ノーツの色	外圈颜色												Kulay ng ring	Warna cincin	
-SETTINGS_RING_COLOR_DESC		Change the note ring color					Muda a cor do anel da nota											リングの色を変更します	调整 Note 外圈的颜色												Ibahin ang kulay ng ring	Mengubah warna cincin pada nada	
-SETTINGS_FILL_COLOR_CLICK_UP		Fill color (click, up)					Cor de preenchimento (clique, acima)											タップ (登り)	内圆颜色（Click，上）												Punuin ng kulay (click, taas)	Warna tengah (tap, atas)	
-SETTINGS_FILL_COLOR_CLICK_DOWN		Fill color (click, down)					Cor de preenchimento (clique, abaixo)											タップ (下り)	内圆颜色（Click，下）												Punuin ng kulay (click, baba)	Warna tengah (tap, bawah)	
-SETTINGS_FILL_COLOR_CLICK_DESC		Change the click note fill color					Muda a cor do preenchimento da nota de clique quando a linha de julgamento sobe ou desce											タップノーツの色を変更します	调整 Click 内圆的颜色												Ibahin ang kulay ng nota 	Mengubah warna tengah pada note tap	
-SETTINGS_FILL_COLOR_DRAG_UP		Fill color (drag, up)					Cor de preenchimento (arrastar, acima)											スライド (登り)	内圆颜色（Drag，上）												Punuin ng kulay (drag, taas)	Warna tengah (drag, atas)	
-SETTINGS_FILL_COLOR_DRAG_DOWN		Fill color (drag, down)					Cor de preenchimento (arrastar, abaixo)											スライド (下り)	内圆颜色（Drag，下）												Punuin ng kulay (drag, baba)	Warna tengah (drag, bawah)	
-SETTINGS_FILL_COLOR_DRAG_DESC		Change the drag note fill color					Muda a cor do preenchimento da nota de arrastar quando a linha de julgamento sobe ou desce											スライドノーツの色を変更します	调整 Drag 内圆的颜色												Ibahin ang kulay ng nota	Mengubah warna tengah pada note drag	
-SETTINGS_FILL_COLOR_HOLD_UP		Fill color (hold, up)					Cor de preenchimento (segurar, acima)											ホールド (登り)	内圆颜色（Hold，上）												Punuin ng kulay (hold, taas)	Warna tengah (hold, atas)	
-SETTINGS_FILL_COLOR_HOLD_DOWN		Fill color (hold, down)					Cor de preenchimento (segurar, abaixo)											ホールド (下り)	内圆颜色（Hold，下）												Punuin ng kulay (hold, baba)	Warna tengah (hold, bawah)	
-SETTINGS_FILL_COLOR_HOLD_DESC		Change the holdnote fill color					Muda a cor de preeenchimento da nota de segurar quando a linha de julgamento sobe ou desce											ホールドノーツの色を変更します	调整 Hold 内圆的颜色												Ibahin ang kulay ng notang hold	Mengubah warna tengah pada note hold	
-SETTINGS_FILL_COLOR_LONG_HOLD_UP		Fill color (long hold, up)					Cor de preenchimento (segurar longa, acima)											ロングノーツ (登り)	内圆颜色（Long Hold，上）												Punuin ng kulay (long hold, taas)	Warna tengah (long hold, atas)	
-SETTINGS_FILL_COLOR_LONG_HOLD_DOWN		Fill color (long hold, down)					Cor de preenchimento (segurar longa, abaixo)											ロングノーツ (下り)	内圆颜色（Long Hold，下）												Punuin ng kulay (long hold, baba)	Warna tengah (long hold, bawah)	
-SETTINGS_FILL_COLOR_LONG_HOLD_DESC		Change the long hold note fill color					Muda a cor de preeenchimento da nota de segurar longa quando a linha de julgamento sobe ou desce											ロングノーツの色を変更します	调整 Long Hold 内圆的颜色												Ibahin ang kulay ng notang long hold	Mengubah warna tengah pada note long hold	
-SETTINGS_FILL_COLOR_FLICK_UP		Fill color (flick, up)					Cor de preenchimento (flick, acima)											フリック (登り)	内圆颜色（Flick，上）												Punuin ng kulay (flick, taas)	Warna tengah (flick, atas)	
-SETTINGS_FILL_COLOR_FLICK_DOWN		Fill color (flick, down)					Cor de preenchimento (flick, abaixo)											フリック (下り)	内圆颜色（Flick，下）												Punuin ng kulay (flick, baba)	Warna tengah (flick, bawah)	
-SETTINGS_FILL_COLOR_FLICK_DESC		Change the flick note fill color					Muda a cor de preenchimeto da nota flick quando a linha de julgamento sobe ou desce											フリックノーツの色を変更します	调整 Flick 内圆的颜色												Ibahin ang kulay ng notang flick	Mengubah warna tengah pada note flick	
-SETTINGS_DSP_BUFFER_SIZE		DSP buffer size					Tamanho do buffer DSP											DSPバッファサイズ	DSP 缓冲区大小												Laki ng DSP buffer	Ukuran buffer DSP	
-SETTINGS_DSP_BUFFER_SIZE_DESC		Adjust only if music is not playing properly					Ajuste somente se a música não estiver tocando normalmente											音楽が正常に再生されないときに調整してください	在音频无法正常播放时调整												Pagbabago kapag ang musika ay di' tumutugtog ng tama	Ubahlah jika lagu tidak berputar dengan seharusnya	
-SETTINGS_DISPLAY_PROFILER		Profiler					Profiler											デバッガーの表示	分析器													Profiler	
-SETTINGS_DISPLAY_PROFILER_DESC		Display frame rates and RAM usage					Exibe os frame rates e o uso de RAM											FPSとRAMの使用状況を表示します	显示帧数和内存使用信息												Ipakita ang frame rates at ang paggamit ng RAM	Menampilkan FPS, penggunaan RAM, and ID pada note	
-SETTINGS_DISPLAY_NOTE_IDS		Note IDs					ID das notas											IDの表示	Note ID												ID ng nota	ID note	
-SETTINGS_DISPLAY_NOTE_IDS_DESC		For level debugging purposes					Para fins de debug do nível											ノーツIDを表示します(デバッグ用機能)	用作关卡制作调试													For level debugging purposes	
-SETTINGS_NONE	Space is limited for these values. Try to keep your translation compact!	None		Nulo			Nenhum											なし	无												Wala	None	妹有
-SETTINGS_DEFAULT		Default		por defecto			Padrão											デフォルト	默认													Default	buyao
-SETTINGS_HIT_SOUND_CLICK_1	Not necessary to translate those	Click 1		Click 1			Clique 1											クリック1	敲击声1													Click 1	who
-SETTINGS_HIT_SOUND_CLICK_2		Click 2		Click 2			Clique 2											クリック2	敲击声2													Click 2	the
-SETTINGS_HIT_SOUND_CLICK_3		Click 3		Click 3			Clique 3											クリック3	敲击声3													Click 3	hell
-SETTINGS_HIT_SOUND_SHAKER		Shaker					Chocalho											マラカス	沙筒													Shaker	is
-SETTINGS_HIT_SOUND_TAMBOURINE		Tambourine					Tamborim											タンバリン	手鼓声													Tambourine	[he]
-SETTINGS_HIT_SOUND_RIM		Rim					Pandeiro											リム	鼓边													Rim	I
-SETTINGS_HIT_SOUND_HAT		Hat					Pratos											ハット	镲													Hat	swear
-SETTINGS_HIT_SOUND_CLAP		Clap					Palmas											拍手	拍掌													Clap	that
-SETTINGS_HIT_SOUND_DONK		Donk					Donk											太鼓	咚													Donk	guy
-SETTINGS_HIT_SOUND_8_BIT		8-bit		8-bit			8-bit											8-bit	老式游戏机													8-bit	uploads
-SETTINGS_HIT_SOUND_QUACK		Quack		Quack			Quack											アヒル	呱													Quack	everyday
-SETTINGS_OFF		Off		Apagado			Desligado											オフ	关													Mati	
-SETTINGS_ON		On		Encendido			Ligado											オン	开													Nyala	yeaj 
-SETTINGS_QUALITY_LOW		Low					Baixo											低	低													Rendah	
-SETTINGS_QUALITY_MEDIUM		Medium					Médio											中	中													Sedang	
-SETTINGS_QUALITY_HIGH		High					Alto											高	高													Tinggi	
-SETTINGS_UNIT_SECONDS		Seconds		Segundos			Segundos											秒	秒													Detik	
-SETTINGS_SIZE_SMALL		Small					Pequeno											小	小													Kecil	
-SETTINGS_SIZE_MEDIUM		Medium					Médio											中	中													Sedang	
-SETTINGS_SIZE_LARGE		Large					Grande											大	大													Besar	
-																																	
-																																	
-LEVEL_SELECT_CATEGORY_ALL		All		Todos			Todos											すべて	全部	全部											Lahat	Semua	
-LEVEL_SELECT_CATEGORY_OFFICIAL		Official		Oficial			Oficial											公式	官方	官方											Opisyal	Official	TD
-LEVEL_SELECT_CATEGORY_COMMUNITY		Community		Comunidad			Comunidade											コミュニティー	社区	社區											Komunidad	Komunitas	
-LEVEL_SELECT_SORT_BY		SORT BY		ORDENAR POR			CLASSIFICAR POR											ソート条件	排序	排序											Pag-uuri ng	URUT DARI	
-LEVEL_SELECT_SORT_BY_ADDED_DATE		Added date		Fecha agregada			Data de adição											追加日	添加日期												Petsa na inilagay	Tanggal ditambahkan	
-LEVEL_SELECT_SORT_BY_PLAYED_DATE		Played date		Fecha jugada			Data em que foi jogado											クリア順	上次游玩日期												Petsa na inilaro	Tanggal dimainkan	
-LEVEL_SELECT_SORT_BY_DIFFICULTY		Difficulty		Dificultad			Dificuldade											難易度順	难度												Ang kahirapan	Tingkat Kesulitan	
-LEVEL_SELECT_SORT_BY_TITLE		Title		Titulo			Título											曲名	歌名												Pamagat	Judul	
-LEVEL_SELECT_SORT_ORDER		SORT ORDER					ORDEM DE CLASSIFICAÇÂO											ソート…	顺序												Pagkakasunud-sunod	URUTAN SORT	
-LEVEL_SELECT_SORT_ORDER_ASC		Ascending					Crescente											昇順	升序												Pataas	Naik	
-LEVEL_SELECT_SORT_ORDER_DESC		Descending					Decrescente											降順	降序												Pababa	Turun	
-LEVEL_SELECT_SEARCH_QUERY		SEARCH QUERY					PESQUISAR											検索	搜索												Hanapin	PENCARIAN	
-LEVEL_SELECT_SEARCH_QUERY_HINT		Title / artist / charter...					Título / artista / charter...											曲名 / 作曲者 / 譜面製作者…	曲名 / 曲师 / 谱师...												Pamagat / artista / charter...	Judul / artist / charter...	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-GAME_PREP_START		Start!					Começar!											Start!	开始！												Magsimula!	Mulai!	铲车！
-GAME_PREP_PRACTICE		Practice!					Praticar!											Practice!	开始练习！												Pagsasanay!	Latihan!	给我打R判啊！
-GAME_PREP_DOWNLOAD		Download!					Baixar!											Download!	下载！												I-Download!	Unduh!	jaja
-GAME_PREP_RANKINGS_VIEW_MORE		View more		Ver mas			Ver mais											詳細	查看更多												Tignan pa	Lihat lebih banyak	全来
-GAME_PREP_RANKINGS_DOWNLOADING		Downloading level rankings...					Baixando ranking do nível.											ランキングをロード中…	下载关卡排行中...												Nagdodownload ng level rankings...	Mengunduh ranking pada level...	
-GAME_PREP_RANKINGS_COULD_NOT_DOWNLOAD		Could not download level rankings.					Não foi possível baixar o ranking do nível.											ランキング情報を取得できませんでした…	无法下载关卡排行。												Di' kaya makapagdownload ng level rankings.	Tidak dapat mengunduh rangking pada level.	没网了111111
-GAME_PREP_RANKINGS_BE_THE_FIRST		No performances yet. Be the first!					Ninguém jogou este nível ainda. Seja o primeiro!											ランキングがありません…一番乗りしよう！	暂无排行。成为第一个人吧！												Wala pang iskor. Maging una kang maglaro!	Beluh ada performa dari pemain lain.	没人玩111111
-GAME_PREP_RATINGS_AVG_RATING		AVERAGE RATING		CALIFICACION PROMEDIO			AVALIAÇÃO MÉDIA											平均レート	平均评分													RATING RATA - RATA	
-GAME_PREP_RATINGS_UNIT_RATING		rating					avaliação											評価	个评分												Marka	rating	个人骂上了
-GAME_PREP_RATINGS_UNIT_RATINGS		ratings					avaliações											評価	个评分												Mga marka	ratings	个人骂上了
-GAME_PREP_RATINGS_YOU_RATED_X		You rated {0}/5.					Você avaliou {0}/5.											{0}/5 の評価をしました！	你打了 {0}/5 分。												Nagmarka ka nang {0}/5	Anda mengerate {0}/5.	你问候了 {0}/5 次谱师。
-GAME_PREP_RATINGS_YOU_HAVENT_RATED		You haven't rated yet.					Você ainda não avaliou esse nível											まだこの譜面を評価していません。	你还没有评分。												Di' kapa naka marka	Anda belum mengerate level ini.	你还没骂上。
-GAME_PREP_RATINGS_BE_THE_FIRST		Be the first!		Sea el primero!			Seja o primeiro!											一番乗りしよう！	做第一个评分的人吧！												Mauna ka magmarka!	Jadi yang pertama!	来骂谱吧！
-GAME_PREP_RATINGS_RATE		Rate					Avaliar											評価	打分												Rate	Rate	骂
-GAME_PREP_GAMEPLAY_PRACTICE_MODE	Space very limited. Keep translation compact!	Practice Mode		Modo de Practica			Modo prática											練習モード	练习模式												Pagsasanay	Mode Latihan	dd模式
-GAME_PREP_GAMEPLAY_PRACTICE_MODE_DESC		Relaxed note timing judgements, but your performance will not be shown on the leaderboard.					Timing mais relaxado, porém seu score não será exibido no placar ranqueado.											判定は緩やかですが、このモードでプレイしたスコアはランキングにのりません。	更为宽松的 Note 时间判定，\n但你的纪录将不会显示在排行榜上。												Nakarelax ang timing ng nota, pero ang iyong laro ay hindi ipapakita sa leaderboard.	Ruang timing lebih luas, tetapi skor anda tidak akan dikirim ke leaderboard.	不开R判的都是dd。（迫真）
-GAME_PREP_GAMEPLAY_PRACTICE_MODE_HINT		RECOMMENDED FOR UNDER LEVEL 20					RECOMENDADO PARA JOGADORES ABAIXO DO NÍVEL 20											レベル20以下推薦	推荐等级 20 以下使用												Inirerekumenda para sa mga Level 20 at pababa.	DISARANKAN UNTUK PEMAIN DIBAWAH LEVEL 20	汉堡汉堡王王汉堡王王
-GAME_PREP_GAMEPLAY_MODS		MODS					MODS											アドバンス	Mods														马组
-MODS_HYPER	Try to keep mod names concise.	HYPER		HYPER			HYPER											HYPER	HYPER														wee
-MODS_HYPER_DESC		Adds a health bar to the game.		Agrega una barra de salud al juego.			Adiciona uma barra de saúde à partida.											フレイ中にHPが追加されます	血条模式。												Lalagyan ng health bar sa iyong laro	Menambah health bar pada game.	整个wee111
-MODS_ANOTHER		ANOTHER					ANOTHER											ANOTHER	ANOTHER														啊wee
-MODS_ANOTHER_DESC		Same as HYPER, but more difficult.					Igual à HYPER porém mais difícil.											”HYPER”のより難しくなるモードです	比 HYPER 更加困难的血条模式。												Parehas lang ng HYPER, pero mas mahirap.	Sama dengan HYPER, letapi lebih sulit.	整个啊wee111111
-MODS_FC		Full Combo		Full Combo			Full Combo											Full Combo	Full Combo														牛逼力
-MODS_FC_DESC		Game over if missed a note.		Fin del juego si falla una nota.			O jogo se encerra se você erra uma nota.											ミスをするとゲームオーバーになります	任意 Bad / Miss 判定都会致使游戏失败。												Tapos na ang laro kapag may naiwanan na nota	Lagu akan berakhir jika ada note yang terlewatkan.	则不呢就美丽了
-MODS_AP		All Perfect		Todo Perfecto			All Perfect											All Perfect	All Perfect														他妈牛逼力
-MODS_AP_DESC		Game over if the note cleared is not perfect.		Fin del juego si la nota completada no es perfecta.			Fim de jogo se a nota acertada não é perfeita.											Perfect以下を取ってしまうとゲームオーバーになります。	任意非 Perfect 判定都会致使游戏失败。												Tapos na ang laro kapag hindi perpekto ang nota	Semua note harus perfect.	则不呢就美丽了
-MODS_FLIP_X		Flip X		Volteo X			Flip X											Flip X	Flip X														换行
-MODS_FLIP_X_DESC		Flip the level on the x-axis.		Voltea el nivel en el eje X.			Virar o nível no eixo X.											譜面が左右反転します	水平翻转谱面。												Ibabaliktad ang lebel sa axis na x	Memutar level pada axis-x.	大括号不换行的跟换行的打
-MODS_FLIP_Y		Flip Y		Volteo Y			Flip Y											Flip Y	Flip Y														大写
-MODS_FLIP_Y_DESC		Flip the level on the y-axis.		Voltea el nivel en el eje Y.			Virar o nível no eixo Y.											譜面が上下に反転します	垂直翻转谱面。												Ibabaliktad ang lebel sa axis na y	Memutar level dalam axis-y.	变量名首字母大写的跟不大写的打
-MODS_FLIP_ALL		Flip All		Volear Todo			Flip All											Flip All	Flip All														下划线
-MODS_FLIP_ALL_DESC		Flip the level on both axes, i.e. rotate by 180°.		Voltrea el nivel on ambos ejes. p.e. rotandolo por 180			Virar o nível em ambos os eixos, ou seja, rotaciona o nível em 180°.											譜面が左右、上下に反転します(１８０°回転)	旋转谱面 180 度。												Ibabaliktad sa parehas na axis ang lebel	Memutar level 180 derajat.	私有域前面加下划线的跟不加下划线的打
-MODS_FAST		Fast		Rapido			Rápido											Fast	Fast												Mabilis		速回
-MODS_FAST_DESC		Notes fade in later.		Las notas desaparecen mas tarde.			As notas somem depois.											ノーツの出現が遅くなります	Note 淡入时间变短。												Nag nota ay mawawala ng huli	Note akan muncul lebih lambat.	明天吧速回
-MODS_SLOW		Slow		Lento			Lento											Slow	Slow												Mabagal		慢
-MODS_SLOW_DESC		Notes fade in earlier.					As notas somem antes.											ノーツの出現が早くなります	Note 淡入时间变长。												Nag nota ay mawawala ng maaga	Note akan muncul lebih cepat.	陈赫好慢啊
-MODS_NO_SCANNER		No Scanner					No Scanner											No Scanner	No Scanner														影梭
-MODS_NO_SCANNER_DESC		The scanner is hidden.					A linha de julgamento está oculta.											判定線が非表示になります	隐藏扫描线。												Nakatago ang scanner	Garis pembantu akan dihilangkan.	剃毛刀
-MODS_INVISIBLE		Invisible					Invisível											Invisible	Invisible														时空阁
-MODS_INVISIBLE_DESC		All notes are hidden.		Todas las notas estan escondidas			Todas as notas estão ocultas.											全てのノーツが非表示になります	隐藏所有的 Note。												Nakatago ang lahat ng nota	Semua not tidak dapat terlihat.	这冒号时空阁吧。。
-MODS_AUTO		Auto					Auto											Auto	Auto														娘比起重机
-MODS_AUTO_DESC		Autoplay the level.					O nível é executado automaticamente.											自動プレイモードです	自动游玩关卡。												I-autoplay ang lebel	Memainkan level secara otomatis.	2分钟最速手术室传说
-MODS_AUTO_DRAG		Auto Drag					Auto Drag											Auto Drag	Auto Drag														宗龙娘比起重机
-MODS_AUTO_DRAG_DESC		Autoplay the drag notes.					As notas de arrastar são completadas automaticamente.											スライドノーツのみ自動で取ってくれます	自动游玩关卡（仅限 Drag）。												I-autoplay ang drag note	Memainkan note drag secara otomatis.	宗龙图个！？
-MODS_AUTO_FLICK		Auto Flick					Auto Flick											Auto Flic	Auto Flick														施工科娘比起重机
-MODS_AUTO_FLICK_DESC		Autoplay the flick notes.					As notas flick são completadas automaticamente.											フリックのみ自動で取ってくれます	自动游玩关卡（仅限 Flick）。												I-autoplay ang flick note 	Memainkan note flick secara otomatis.	那里我偷懒写了个四训韩
-MODS_AUTO_HOLD		Auto Hold					Auto Hold											Auto Hold	Auto Hold														疯怒娘比起重机
-MODS_AUTO_HOLD_DESC		Autoplay the hold notes.					Todas as notas de segurar são completadas automaticamente.											ホールドのみ自動で取ってくれます	自动游玩关卡（仅限 Hold）。												I-autoplay ang hold note	Memainkan note hold secara otomatis.	我疯怒傻了？？？？？、
-GAME_PREP_SETTINGS_GENERAL		GENERAL SETTINGS		AJUSTES GENERALES			CONFIGURAÇÕES GERAIS											基本設定	通用设置												Pangkalahatang Setting	SETELAN UMUM	
-GAME_PREP_SETTINGS_GAMEPLAY		GAMEPLAY SETTINGS					CONFIGURAÇÕES DE GAMEPLAY											プレイ設定	游玩设置													SETELAN PERMAINAN	
-GAME_PREP_SETTINGS_VISUAL		VISUAL SETTINGS		AJUSTES VISUALES			CONFIGURAÇÕES VISUAIS											表示設定	视觉设置												Biswal Setting	SETELAN VISUAL	
-GAME_PREP_SETTINGS_ADVANCED		ADVANCED SETTINGS		AJUSTES AVANZADOS			CONFIGURAÇÕES AVANÇADAS											上級設定	进阶设置													SETELAN ADVANCED	
-GAME_PREP_SETTINGS_CURRENT_LEVEL_SETTINGS		CURRENT LEVEL SETTINGS					CONFIGURAÇÕES DO NÍVEL ATUAL											レベル別の設定	当前关卡设置													SETELAN PADA LEVEL INI	
-GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET		Level note offset					Offset das notas do nível											ノーツ調整	当前关卡谱面偏移												Offset ng nota sa lebel	Offset note pada level ini	
-GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET_DESC		Notes not syncing well with music? \nPress "Calibrate" or manually enter a desired note offset.					As notas parecem não estarem sincronizadas com a música? \nPressione "Calibrar" ou manualmente entre com o deslocamento desejado.											この譜面にノーツとのタイミングずれが生じる場合 \n”調整”を押すか、ノーツオフセットを手動で入力してください。	觉得 Note 和音乐不同步？\n请按下「校准」按钮，或者手动输入谱面偏移值。												Nota hindi nakakatugma sa musika? Pindutin ang "Calibrate" o manual ang paglagay ng offset.	Note tidak tersinkron pada musik? Tekan "Kalibrasi" atau dengan manual mengisi dengan angka yang dimaui.	
-GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET_CALIBRATE		Calibrate		Calibrar			Calibrar											調整	校准													Kalibrasi	
-GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET_OR		or					ou											or	或												o	atau	
-GAME_PREP_INFO_COVER_ARTIST		COVER ARTIST		Artista de caratula			ARTISTA DA CAPA											イラスト	曲绘														
-GAME_PREP_INFO_CHARTER		CHARTER					CHARTER											譜面製作者	谱师														
-GAME_PREP_INFO_STORYBOARDER		STORYBOARDER					STORYBOARDER											ストーリーボード	故事板制作														
-GAME_PREP_INFO_ID		ID		ID			ID											ID	ID														
-GAME_PREP_INFO_VERSION		VERSION		VERSION			VERSÃO											バージョン	版本												Versyon	VERSI	
-GAME_PREP_BEST_PERFORMANCE		BEST PERFORMANCE		MEJOR RENDIMIENTO			MELHOR PERFORMANCE											HIGH SCORE	最佳纪录												Pinakamahusay na laro	PERFORMA TERBAIK	最佳纪录
-GAME_PREP_BEST_PERFORMANCE_PRACTICE		BEST PERFORMANCE (PRACTICE)		MEJOR RENDIMIENTO (PRACTICA)			MELHOR PERFORMANCE (PRÁTICA)											HIGH SCORE (練習モード)	最佳纪录（练习模式）												Pinakamahusay na laro (pagsasanay)	PERFORMA TERBAIK (LATIHAN)	最佳纪录（dd模式）
-																																	
-																																	
-																																	
-																																	
-COMMUNITY_HOME_COMMUNITY		Community		Comunidad			Comunidade											コミュニティー	社区	社區											Komunidad	Komunitas	
-COMMUNITY_HOME_VIEW_ALL		View all		Ver todo			Ver todos											もっと見る	查看全部	查看全部											Tignan lahat	Lihat semua	
-COMMUNITY_HOME_NEW_UPLOADS		New uploads					Novos uploads											最新の譜面	最新上传												Bagong labas	Upload terbaru	成功上市
-COMMUNITY_HOME_TRENDING_THIS_MONTH		Trending this month					Em alta nesse mês											今月のトレンド	时下流行												Trending sa buwan na ito	Trending bulan ini	当月2分钟最速手术室传说
-COMMUNITY_HOME_BEST_OF_CYTOID		Best of Cytoid		Lo mejor de Cytoid			O Melhor do Cytoid											Best of Cytoid	备受瞩目													Terbaik dari Cytoid	CFHSS 认证的最佳谱面
-COMMUNITY_SEARCH_QUERY		SEARCH QUERY					BUSCA											検索	搜索												Hanapin	PENCARIAN	
-COMMUNITY_SEARCH_QUERY_HINT		Title / artist / charter / tags...					Título / artista / charter / tags...											曲名 / 作曲者 / 譜面製作者 / タグ…	曲名 / 曲师 / 谱师 / Tag...												Pamagat / artista / charter / tags...	Judul / artist / charter / tags...	
-																																	
-																																	
-																																	
-COMMUNITY_SELECT_BROWSE		Browse					Navegar											閲覧	浏览	瀏覽											Suriin	Menelusuri	铲车
-COMMUNITY_SELECT_SEARCH_QUERY		Search: {0}					Busca: {0}											検索 : {0}	搜索：{0}	搜索：{0}											Hanapin: {0}	Cari: {0}	铲车：{0}
-COMMUNITY_SELECT_SORT_BY		SORT BY					CLASSIFICAR POR											ソート条件	排序	排序												URUTKAN DARI	
-COMMUNITY_SELECT_SORT_BY_UPLOADED_DATE		Uploaded date		Fecha subida			Data de upload											アップロード順	上传日期	上傳日期												Tanggal diupload	
-COMMUNITY_SELECT_SORT_BY_MODIFIED_DATE		Modified date		Fecha modificada			Data de modificação											更新日時	最后修改日期	最後修改日期												Tanggal diupdate	
-COMMUNITY_SELECT_SORT_BY_RATING		Rating		Calificacion			Avaliação											評価	评分	評分												Rating	
-COMMUNITY_SELECT_SORT_BY_DOWNLOADS		Downloads		Descargas			Downloads											ダウンロード数	下载数	下載數												Unduhan	
-COMMUNITY_SELECT_SORT_BY_DIFFICULTY		Difficulty		Dificultad			Dificuldade											難易度	难度	難度												Tingkat kesulitan	
-COMMUNITY_SELECT_SORT_BY_DURATION		Duration					Duração											経過時間	时长	時長												Durasi	
-COMMUNITY_SELECT_SORT_ORDER		SORT ORDER					ORDEM DE CLASSIFICAÇÃO											表示順	顺序	順序												URUTAN SORT	
-COMMUNITY_SELECT_SORT_ORDER_ASC		Ascending		Ascendiente			Crescente											昇順	升序	升序												Keatas	
-COMMUNITY_SELECT_SORT_ORDER_DESC		Descending		Descendiente			Decrescente											降順	降序	降序												Kebawah	
-COMMUNITY_SELECT_CATEGORY		CATEGORY		CATEGORIA			CATEGORIA											カテゴリ	类别	類別												KATEGORI	
-COMMUNITY_SELECT_CATEGORY_ALL		All		Todo			Todos											すべて	全部	全部												Semua	
-COMMUNITY_SELECT_CATEGORY_FEATURED		Featured		Destacado			Em destaque											おすすめ	精选	精選													
-COMMUNITY_SELECT_TIME		TIME					DATA											時間	时间	時間												WAKTU	
-COMMUNITY_SELECT_TIME_ANY_TIME		Any time					Qualquer data											すべて	全部时间	全部時間												Kapanpun	
-COMMUNITY_SELECT_TIME_PAST_WEEK		Past week		Ultima semana			Semana passada											1週間以内	最近一周	最近一週												Minggu terakhir	
-COMMUNITY_SELECT_TIME_PAST_MONTH		Past month		Ultimo mes			Mês passado											1か月以内	最近一个月	最近一個月												Bulan terakhir	
-COMMUNITY_SELECT_TIME_PAST_6_MONTHS		Past 6 months		Ultimos 6 meses			Semestre passado											半年以内	最近六个月	最近六個月												6 bulan yang lalu	
-COMMUNITY_SELECT_TIME_PAST_YEAR		Past year		Ultimo ano			Ano passado											1年以上	最近一年	最近一年												Tahun lalu	
-																																	
-RESULT_MODE_PRACTICE		Practice		Practica			Prática											精度	练习模式													Latihan	dd模式
-RESULT_SHARE		Share		Compartir			Compartilhar											共有	分享													Bagikan	发群炫耀
-RESULT_X_ACCURACY		{0}% accuracy					{0}% de precisão											精度 {0}% 	{0} 精准度														
-RESULT_FULL_ACCURACY		Full accuracy					Full accuracy											Full accuracy	完美精准度												Lahat perpekto		
-RESULT_X_COMBO		{0} max combo					Combo máximo de {0}											{0} max combo	{0} 最大连击														
-RESULT_FULL_COMBO		Full combo					Full combo											Full combo	全连击												Lahat napindot		
-RESULT_AVG_TIMING_ERR		ATE		ATE			ATE											ATE	平均判定误差														
-RESULT_STD_TIMING_ERR		STE		STE			STE											STE	标准判定误差														
-RESULT_RETRY		Retry		Reintentar			Tentar\noutra\nvez											Retry	重试												Ulitin	Coba lagi	铲车！
-RESULT_NEXT		Next!		Siguiente!			Próximo!											Next!	继续！												Susunod!	Lanjut!	贵阳！
-RESULT_NEW	This is only shown after the initial play	New!		Nuevo!			Novo recorde!											ハイスコア更新！	初见！												Bago!	High Score!	大爸爸！
-																																	
-GAME_PRACTICE_MODE		PRACTICE MODE		MODO DE PRACTICA			MODO PRÁTICA											練習モード	练习模式												Pagsasanay mode	MODE LATIHAN	dd模式
-GAME_CALIBRATION_MODE		CALIBRATION MODE		MODO DE CALIBRACION			MODO CALIBRAÇÃO											調整モード	校准模式													MODE KALIBRASI	面包海
-GAME_SPEED_UP	Only latin characters are supported!	SPEED UP					ACELERANDO											SPEED UP	SPEED UP												Bibilis na!	TAMBAH KECEPATAN	MUDAMUDAMUDAMUDAMUDA
-GAME_SLOW_DOWN	Only latin characters are supported!	SLOW DOWN					DESACELERANDO											SPEED DOWN	SLOW DOWN												Mabagal na!	KURANG KECEPATAN	zenzenzense
-GAME_RESUME_IN_X	Only latin characters are supported!	RESUMING IN {0}S					RETOMANDO EM {0} SEG											RESUMING IN {0}S	RESUMING IN {0}S												Itutuloy na sa {0} segundo	MELANJUTKAN DALAM {0} DETIK	{0} cont'
-GAME_CALIBRATION_AUTOPLAY		AUTOPLAY					AUTOPLAY											AUTOPLAY	自动播放														
-GAME_CALIBRATION_HIT_SOUND		HIT SOUND					SOM DE ACERTO											タップ音	打击音														
-GAME_CALIBRATION_NOTE_OFFSET		NOTE OFFSET					DESLOCAMENTO DE NOTA											ノーツ調整	谱面偏移												Offset ng nota	OFFSET PADA NOTE	
-GAME_CALIBRATION_NOTE_OFFSET_DESC		If you feel the notes are <b>ahead</b> of the music, <b>increase</b> the offset. Vice versa.					Se você sente que as notas estão <b>à frente</b> da música, <b>aumente</b> o deslocamento ou vice-versa.											ノーツとのタイミングが <b>遅い</b> 場合、数値を <b>増やして</b> 下さい。また、逆も同様です。	如果你觉得 Note 比音乐要<b>早</b>，请<b>增加</b>偏移；\n否则，请减少偏移。												Kung sa tingin mo ang nota ay maaga sa musika, itaas ang offset. Baliktarin kapag baliktad ang resulta	Jika nada terasa lebih cepat dari musik, tambahkan offset. Sama dengan jika note terasa lebih lambat, kurangi offset.	
-GAME_PAUSED_DESC		Take a break...		Tome un descanso...			Dê uma pausa...											一休み…	休息一下...												Pahinga ka muna...	Istirahat...	贵阳一下...
-GAME_TRY_AGAIN		Try again?		Intentar de nuevo?			Tentar outra vez?											リスタート？	重新来过吧？												Isa pa?	Cobal lagi?	你没了
-GAME_GO_BACK		Go back		Volver atras			Voltar											曲選択へ	返回												Bumalik na	Kembali	贵阳
-GAME_RETRY		Retry		Reintentar			Tentar de novo											リトライ	重试												Ulitin	Ulangi	重新铲车
-GAME_RESUME		Resume		Continuar			Retomar											再開	继续												Ituloy	Lajutkan	铲车
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
+PROFILE_WIDGET_NOT_SIGNED_IN		Not signed in		No ha iniciado sesión			Não está logado		Вход не выполнен									サインインしていません	未登录	尚未登入	로그인 안됨									Chưa đăng nhập	Di' pa signed-in	Belum Masuk	未阿格王朔
+PROFILE_WIDGET_SIGNING_IN		Signing in...		Ingresando...			Logando...		Вход...									サインイン中…		登入中……										Đang đăng nhập...			阿格王朔中...
+PROFILE_WIDGET_RATING	Cytoid-specific term	Rating		Rating			Rating		Рейтинг									Rating	Rating	Rating	평가									Hạng	Rating	Rating	PPT
+PROFILE_WIDGET_LEVEL		Level		Nivel			Nível		Уровень									レベル	等级	等級	레벨									Level	Level	Level	群地位
+PROFILE_WIDGET_TIER		Tier		Tier			Tier		Ранг									段位	段位	段位	등급									Cấp	Tier	Tier	簖位
+PROFILE_WIDGET_EXP		Exp		Exp			Exp		Опыт									EXP	经验	經驗值	경험치									Exp	Exp	Exp	fjb
+																																	
+																																	
+																																	
+																																	
+																																	
+PROFILE_PROFILE		Profile		Perfil			Perfil		Профиль									プロフィール	资料	個人檔案	프로필									Cá nhân	Profile	Profil	群名片
+PROFILE_LEADERBOARD		Leaderboard		Tabla de lideres			Placar		Таблица лидеров									ランキング	排行榜	排行榜	랭킹 리더보드									BXH	Mga posisyon	Peringkat	群成员
+PROFILE_SIGN_OUT		Sign Out		Cerrar Sesión			Sair		Выйти									サインアウト	退出账号	登出										Đăng xuất	Mag-sisign out	Keluar	退群
+PROFILE_TOTAL_RANKED_PLAYS	Not necessarily required to translate "ranked"	TOTAL RANKED PLAYS		TOTAL DE PARTIDAS CLASIFICATORIAS			TOTAL DE PARTIDAS RANQUEADAS		ВСЕГО СЫГРАНО РАНГОВЫХ ИГР									ランクモードプレイ数	总游玩次数	總遊玩次數										Lượt chơi xếp hạng tổng cộng	Kabuuan ng laro na ranked	Total level ranked yang dimainkan	总铲车数
+PROFILE_TOTAL_CLEARED_NOTES		TOTAL CLEARED NOTES		TOTAL DE NOTAS COMPLETADAS			TOTAL DE NOTAS COMPLETAS		ВСЕГО ЗАЧТЕНО НОТ									タップしたノーツ数の合計	总 Note 数	總清除拍點數										Số nốt đã được clear tổng cộng	Kabuuan na nota na napindot	Total note yang berhasil disentuh.	总踢数
+PROFILE_HIGHEST_MAX_COMBO		HIGHEST MAX COMBO		MAYOR COMBO MÁXIMO			MAIOR COMBO MÁXIMO		ВЫСШИЙ СЧЁТ КОМБО									最高コンボ数	最高连击数	最高 COMBO 數										Combo cao nhất	Pinakamataas na combo	Max combo tertinggi.	最高连踢数
+PROFILE_AVG_RANKED_ACCURACY	Not necessarily required to translate "ranked"	AVG RANKED ACCURACY		PRECISIÓN PROMEDIO EN CLASIFICATORIAS			PRECISÃO RANQUEADA MÉDIA		СР РАНГОВАЯ ТОЧНОСТЬ									平均レート上昇率	平均精准度	平均準確度										Độ chính xác TB trong xếp hạng	Average na ranked accuracy	Akurasi ranked rata - rata.	平均踢中
+PROFILE_TOTAL_RANKED_SCORE	Not necessarily required to translate "ranked"	TOTAL RANKED SCORE		PUNTUACIÓN CLASIFICATORIA TOTAL			PONTUAÇÃO RANQUEADA TOTAL		ОБЩИЙ СЧЁТ									合計ランクモードスコア	总分数	總分數										Điểm xếp hạng tổng cộng	Kabuuan ng ranked score	Total nilai ranked.	踢分
+PROFILE_TOTAL_PLAY_TIME		TOTAL PLAY TIME		TIEMPO TOTAL JUGADO			TEMPO JOGADO TOTAL		ОБЩЕЕ ВРЕМЯ В ИГРЕ									合計プレイ時間	总游玩时间	總遊玩時間										Tổng thời gian chơi	Kabuuan na oras ng paglaro	Total waktu bermain.	啊wee改时间
+LEADERBOARD_TOP		Top		Top			Top		Топ									トップ	榜首排行	世界										Đầu bảng	Top	Top	椰叶
+LEADERBOARD_ME		Me		Yo			Eu		Я									自分	我的排名	我的										Tôi	Ako	Me	dd
+																																	
+																																	
+																																	
+																																	
+																																	
+SETTINGS_GENERAL		General		General			Geral		Основные									基本設定	通用	基本設定										Chung	Pangkalahatan	Umum	阿
+SETTINGS_GAMEPLAY		Gameplay		Jugabilidad			Gameplay		Геймплей									プレイ設定	游玩	遊玩設定										Trò chơi	Gameplay	Permainan	格
+SETTINGS_VISUAL		Visual		Visual			Visual		Визуал									表示設定	视觉	視覺設定										Cấu hình	Biswal	Visual	王
+SETTINGS_ADVANCED		Advanced		Avanzado			Avançado		Расширенные									上級設定	进阶	進階設定										Nâng cao	Advance	Advanced	朔
+SETTINGS_LANGUAGE		Language		Idioma			Idioma		Язык									表示言語	语言	語言變更										Ngôn ngữ	Wika	Bahasa	符语更换
+SETTINGS_MUSIC_VOLUME		Music volume		Volumen de música			Volume da música		Громкость музыки									音量	音乐音量	音樂音量										Âm lượng nhạc	Ingay ng musika	Volume musik	
+SETTINGS_SOUND_EFFECT_VOLUME		Sound effect volume		Volumen de efectos de sonido			Volume dos efeitos sonoros		Громкость звуковых эффектов									SE音量	音效音量	音效音量										Âm lượng FX	Sound effect volume	Volume suara efek	
+SETTINGS_HIT_SOUND		Hit sound		Sonido al presionar			Som de acerto		Хит-саунд									タップ音	打击音	打擊音效										Âm của nốt	Ingay ng pagpindot	Hit sound	
+SETTINGS_HIT_SOUND_DESC		Played when note is cleared		Reproducido cuando una nota es completada			Tocado quando uma nota é acertada		Проигрывается когда нота зачтена									ノーツをタップした時に鳴る音を設定します	击中 Note 时播放	於拍點清除時播放										Phát ra khi nốt được bấm	Sound kapag ang nota ay napindot	Dimainkan jika ada note yang berhasil ditekan	
+SETTINGS_HOLD_HIT_SOUND_TIMING		Hold hit sound timing		Sincronización de sonido de la nota sostener			Timing da nota de segurar		Тайминг хит-саунда холд ноты									ホールド・ロングノーツの \n発音タイミング	Hold 打击音	Hold 打擊音效播放時間										Thời gian phát âm thanh nốt hold	Hold hit sound timing	Timing hit sound	
+SETTINGS_HOLD_HIT_SOUND_TIMING_DESC		When to play hit sounds for hold notes		Cuando reproducir el sonido al presionar para notas sostener			Quando tocar os sons de acerto para as notas de segurar		Когда проигрывать хит-саунд для холд ноты									どのタイミングで音を発生するかを設定します	Hold 打击音在何时播放	可單獨調整 Hold 打擊音效的播放時間\n（一般狀況下為僅清除時）										Khi nào phát âm thanh cho nốt hold	Sound kapagnapindot ang hold na nota	Kapan diputarnya hit sound pada note Hold	
+SETTINGS_HOLD_HIT_SOUNDS_TIMING_BEGIN		Begin		Inicio			Começo		Начало									開始時	开始时	僅按住時										Bắt đầu (Begin)	Simula	Awal	
+SETTINGS_HOLD_HIT_SOUNDS_TIMING_END		End		Fin			Fim		Конец									終了時	结束时	僅清除時										Kết thúc (End)	Wakas	Akhir	
+SETTINGS_HOLD_HIT_SOUNDS_TIMING_BOTH		Begin & End		Inicio y Fin			Começo e fim		Начало и Конец									開始と終了時	开始和结束时	按住與清除時										Begin / End	Simula at wakas	Awal & akhir	
+SETTINGS_GRAPHICS_QUALITY		Graphics quality		Calidad de gráficos			Qualidade gráfica		Качество графики									画面解像度	画面质量	畫質調整										Chất lượng hình ảnh	Kalidad ng graphics	Kualitas grafik	
+SETTINGS_GRAPHICS_QUALITY_DESC		Lower quality saves battery and results in higher frame rates		Menor calidad ahorra batería y resulta en mayores cuadros por segundo			Baixas qualidades economizam bateria e resultam em altos frame rates		Низкое качество сохраняет заряд батареи и повышает FPS									低解像度に設定すると、バッテリーの消費を抑え、高FPSを維持できます	调低画质可省电并提高帧数	畫質越低耗電量越少也能同時提升幀數										Chất lượng hình ảnh thấp hơn sẽ giảm tiêu thụ pin và làm FPS cao hơn	Ibaba ang kalidad para makatipid ng baterya at mataas ang frame rates	Kualitas yang rendah melambatkan kecepatan baterai untuk habis	
+SETTINGS_STORYBOARD_EFFECTS		Storyboard effects		Efectos de Storyboard			Efeitos de storyboard		Эффект раскадровки									ストーリーボード効果	故事板效果	Storyboard 效果顯示										Hiệu ứng Storyboard	Storyboard effects	Efek storyboard	
+SETTINGS_STORYBOARD_EFFECTS_DESC		Recommended for high-end devices only		Recomendado solo para dispositivos de gama alta			Recomendado para dispositivos de ponta somente		Рекомендуется для мощных устройств									この設定は高性能端末でプレイする人に推薦されます	仅建议高端设备开启	僅建議高性能裝置開啟否則可能出現卡頓										Chỉ khuyên dùng cho các thiết bị mạnh	Inirerekumenda para lang sa high-end device 	Direkomendasikan hanya untuk perangkat high-end	
+SETTINGS_BASE_NOTE_OFFSET	You can replace "note offset" with "chart offset" if that makes more sense in your language	Base note offset		Equilibro base de notas			Deslocamento base do chart		Основная задержка нот									タイミング調整	全局谱面偏移	譜面校正										Cân chỉnh thời gian gốc	Base note offset	Offset nada	
+SETTINGS_BASE_NOTE_OFFSET_DESC		Added to each level's individual note offset		Agregado al equilibrio individual de cada notal de cada nivel			Adiciona um deslocamento de nota individual de cada nível		Добавляет к каждому уровню индивидуальную задержку нот									全てのレベルに対応する画面の音ズレ調整をします	叠加在关卡谱面偏移上	該數值會疊加至全部關卡上										Thời gian cân chỉnh nốt của từng level	Ilalagay sa lahat ng lebel ng nota ang offset	Ditetapkan pada setiap level	
+SETTINGS_HEADSET_NOTE_OFFSET		Headset note offset		Equilibrio de notas con auriculares			Deslocamento de nota para headset/fones de ouvido		Задержка нот для наушников									ヘッドセットのタイミング調整	耳机谱面偏移	譜面校正（耳機）										Thời gian cân chỉnh khi đeo tai nghe	Headset note offset	Offset nada untuk headset	
+SETTINGS_HEADSET_NOTE_OFFSET_DESC		Added to note offset when using headset		Agregado al equilibrio de notas cuando se usan auriculares			Adicionado quando se usa fones de ouvido.		Добавляет к ноте задержку, когда используете наушники									ヘッドセットを使用したときの画面との音ズレを調整します	耳机插入时叠加在当前谱面偏移上	如果使用耳機遊玩該數值會與通用校正疊加										Thêm vào thời gian cân chỉnh khi dùng tai nghe	Ilalagay sa offset ng nota kapag gumagamit ng headset	Ditetapkan saat menggunakan headset	
+SETTINGS_EARLY_LATE_INDICATORS		Early/Late indicators		Indicadores de temprano o tarde			Indicadores de Adiantado/Atrasado		Индикатор "Рано или Поздно"									Early/Late を表示	Early / Late 指示器	顯示提早／過晚										Báo hiệu Sớm/Muộn	Maaga/Huli na tagapagpahiwatig	Indikator Early (Cepat)/Late (Lambat)	
+SETTINGS_EARLY_LATE_INDICATORS_DESC		Displayed when notes cleared early/late		Mostrado cuando una nota fue completada temprano o tarde			Mostra quando as notas são acertadas antes ou depois do ideal		Показывает когда нота была зачтена рано или поздно									ノーツをタップした時 Early/Late を表示します	Note 判定时显示 Early（过早）或 Late（过迟）	如拍點清除時間太早即顯示 Early（提早）\n反之若清除時間太晚則顯示 Late（過晚）										Hiển thị khi note được bấm sớm / muộn	Ipapakita kapag ang nota ay napindot ng maaga/huli	Ditampilkan apabila note disentuh terlalu Cepat/Lambat	
+SETTINGS_HITBOX_SIZE_CLICK		Hitbox size (click)		Tamaño de caja de golpe (click)			Tamanho da hitbox (clique)		Размер хитбокса (клик)									ヒットボックスの大きさ	判定区域大小（Click）	Click 打擊區域大小										Kích cỡ hitbox (click)		Ukuran hitbox (Tap)	
+SETTINGS_HITBOX_SIZE_DESC		Larger hitboxes make notes easier to hit		Una caja de golpe mas grande hace las notas mas fácil de golpear			Hitboxes maiores são mais fáceis de acertar		Увеличивает хитбоксы, чтобы ноты легче засчитывались									大きいほどノーツをタップしやすくなります	更大的判定区域让 Note 更容易被击中	打擊區域越大則拍點越容易擊中										Hitbox lớn hơn làm note dễ bấm trúng hơn	Lakihan ang hitbox para madali pindutin ang nota 	Hitbox yang lebih besar membuat nada lebih mudah disentuh	
+SETTINGS_HITBOX_SIZE_DRAG		Hitbox size (drag)		Tamaño de caja de golpe (arrastrar)			Tamanho da hitbox (arrastar)		Размер хитбокса (драг)									タップ時	判定区域大小（Drag）	Drag 打擊區域大小										Kích cỡ hitbox (drag)	Laki ng hitbox (Drag)	Ukuran hitbox (Drag)	
+SETTINGS_HITBOX_SIZE_HOLD		Hitbox size (hold)		Tamaño de caja de golpe (sostener)			Tamanho da hitbox (segurar)		Размер хитбокса (холд)									ホールド時	判定区域大小（Hold）	Hold 打擊區域大小										Kích cỡ hitbox (hold)	Laki ng hitbox (Hold)	Ukuran hitbox (Hold)	
+SETTINGS_HITBOX_SIZE_FLICK		Hitbox size (flick)		Tamaño de caja de golpe (flick)			Tamanho da hitbox (flick)		Размер хитбокса (флик)									フリック時	判定区域大小（Flick）	Flick 打擊區域大小										Kích cỡ hitbox (flick)		Ukuran hitbox (Flick)	
+SETTINGS_HORIZONTAL_MARGIN		Horizontal margin		Margen horizontal			Margem horizontal		Поле по-горизонтали									横幅の大きさ	左右边距	左右邊界調整										Biên giới ngang		Margin kiri dan kanan	
+SETTINGS_HORIZONTAL_MARGIN_DESC		The left/right spacings of play area		El espacio izquierdo/derecho del area del juego			Espaçamento da área jogável na esquerda/direita		Левая и правая часть игрового поля									左右のプレイ範囲を調整します	调整左右边距的大小	數值越大則左右遊玩區域越窄反之越寬\n（建議維持 0 即可）										Khoảng trống trái/phải của khu vực chơi	Spacing ng kaliwa/kanan ng play area	Ukuran area bermain kiri dan kanan	
+SETTINGS_VERTICAL_MARGIN		Vertical margin		Margen vertical			Margem vertical		Поле по-вертикали									縦幅の大きさ	上下边距	上下邊界調整										Biên giới dọc		Margin atas dan bawah	
+SETTINGS_VERTICAL_MARGIN_DESC		The top/bottom spacings of play area		El espacio de arriba/abajo del area de juego			Espaçamento da área jogável acima/abaixo		Верхняя и нижняя часть игрового поля									上下のプレイ範囲を調整します	调整上下边距的大小	數值越大則上下遊玩區域越窄反之越寬\n（建議維持 0 即可）										Khoảng trống trên/dưới của khu vực chơi	Spacing ng taas/baba ng play area	Ukuran area bermain atas dan bawah	
+SETTINGS_NOTE_SIZE		Note size		Tamano de nota			Tamanho da nota		Размер ноты									ノーツサイズ	Note 显示大小	拍點大小										Kích cỡ nốt	Laki ng nota	Ukuran not	
+SETTINGS_NOTE_SIZE_DESC		Display size of notes (hitboxes unaffected)		Tamaño de visualización de las notas (las cajas de golpe no son afectadas)			Define o tamanho das notas (isso não afeta as Hitboxes)		Отображаемый размер ноты (не влияет на хитбокс)									画面に表示されるノーツの大きさを設定します(この設定でタップ範囲が大きくなるわけではありません)	调整 Note 的显示大小\n（不影响判定区域）	調整拍點顯示大小（不影響打擊區域）										Kích cỡ hiển thị của nốt (hitbox không bị ảnh hưởng)	Ipapakita ang laki ng nota (Di' maapektohan ang hitbox)	Mengubah ukuran note (Hitbox tidak akan berubah)	
+SETTINGS_CLEAR_FX_SIZE		Clear FX size		Tamaño de efecto de completación			Tamanho da Clear FX		Размер эффекта зачёта									タップFXサイズ	判定效果大小	拍點清除特效大小										Kích cỡ hiệu ứng clear nốt	Laki ng clear FX	Ukuran hit effect	
+SETTINGS_CLEAR_FX_SIZE_DESC		Display size of note clear effects		Tamaño de visualización de efecto de compleatición de notas			Define o tamanho dos efeitos de acerto das notas		Отображает размер эффекта зачёта									タップ時のエフェクト(水玉効果)の大きさを設定します	调整 Note 判定效果的大小	調整拍點清除時的特效大小										Kích cỡ hiển thị của hiệu ứng clear nốt	Ipapakita ang laki ng note clear effects	Mengubah ukuran effect saat note disentuh	
+SETTINGS_SHOW_BOUNDARIES		Play area boundaries		Límite de área de juego			Limites da área jogável		Рамки игрового поля									プレイ範囲表示	游玩区域边界	遊玩區域上下邊界線										Giới hạn khu vực chơi	Hangganan ng play area	Pembatas area bermain	
+SETTINGS_SHOW_BOUNDARIES_DESC		Display play area boundaries					Define os limites da área jogável		Отображает рамки игрового поля									上下にタップ可能範囲を表示します	是否显示游玩区域的边界	開啟後上下側會顯示邊界線\n可當作打擊時間的判定輔助										Hiển thị giới hạn khu vực chơi	Ipakita ang hangganan ng play area	Menanampilkan garis batas area main	
+SETTINGS_BACKGROUND_OPACITY		Background opacity		Opacidad del fondo de pantalla			Opacidade do plano de fundo		Непрозрачность заднего фона									背景の明るさ	背景不透明度	背景遮罩不透明度										Độ sáng của nền	Kalinawan ng background 	Opasitas latar belakang	
+SETTINGS_BACKGROUND_OPACITY_DESC		Adjust the background brightness		Ajuste el brillo al fondo de pantalla			Ajusta o brilho do plano de fundo		Настроить яркость заднего фона									プレイ中の背景の明るさを設定します	调整游玩背景的亮度	可調整從全黑（0%）到無遮罩（100%）										Điều chỉnh độ sáng của nền	Ayusin ang kalinawan ng background	Mengatur kecerahan latar belakang	
+SETTINGS_RING_COLOR		Ring color		Color del aro			Cor do anel		Цвет кольца									ノーツの色	外圈颜色	拍點外圈顏色										Màu vòng nốt	Kulay ng ring	Warna cincin	
+SETTINGS_RING_COLOR_DESC		Change the note ring color		Cambie el color del aro de la nota			Muda a cor do anel da nota		Сменить цвет кольца нот									リングの色を変更します	调整 Note 外圈的颜色	調整拍點外圈的顏色\n（以下皆使用十六進位色碼）										Thay đổi màu vòng nốt	Ibahin ang kulay ng ring	Mengubah warna cincin pada nada	
+SETTINGS_FILL_COLOR_CLICK_UP		Fill color (click, up)		Color de relleno (click, arriba)			Cor de preenchimento (clique, acima)		Цвет заливки (клик, вверх)									タップ (登り)	内圆颜色（Click，上）	Click 填充顏色（↑）										Màu trong (bấm, trên)	Punuin ng kulay (click, taas)	Warna tengah (tap, atas)	
+SETTINGS_FILL_COLOR_CLICK_DOWN		Fill color (click, down)		Color de relleno (click abajo)			Cor de preenchimento (clique, abaixo)		Цвет заливки (клик, вниз)									タップ (下り)	内圆颜色（Click，下）	Click 填充顏色（↓）										Màu trong (bấm, dưới)	Punuin ng kulay (click, baba)	Warna tengah (tap, bawah)	
+SETTINGS_FILL_COLOR_CLICK_DESC		Change the click note fill color		Cambia el color de relleno de las notas			Muda a cor do preenchimento da nota de clique quando a linha de julgamento sobe ou desce		Изменяет цвет заливки клик-ноты									タップノーツの色を変更します	调整 Click 内圆的颜色	調整 Click 的填充顏色										Thay đổi màu trong của nốt bấm	Ibahin ang kulay ng nota 	Mengubah warna tengah pada note tap	
+SETTINGS_FILL_COLOR_DRAG_UP		Fill color (drag, up)		Color de relleno (arrastrar, arriba)			Cor de preenchimento (arrastar, acima)		Цвет заливки (драг, вверх)									スライド (登り)	内圆颜色（Drag，上）	Drag 填充顏色（↑）										Màu trong (kéo, trên)	Punuin ng kulay (drag, taas)	Warna tengah (drag, atas)	
+SETTINGS_FILL_COLOR_DRAG_DOWN		Fill color (drag, down)		Color de relleno (arrastrar, abajo)			Cor de preenchimento (arrastar, abaixo)		Цвет заливки (драг, вниз)									スライド (下り)	内圆颜色（Drag，下）	Drag 填充顏色（↓）										Màu trong (kéo, dưới)	Punuin ng kulay (drag, baba)	Warna tengah (drag, bawah)	
+SETTINGS_FILL_COLOR_DRAG_DESC		Change the drag note fill color		Cambia el color de relleno a las notas arrastrar			Muda a cor do preenchimento da nota de arrastar quando a linha de julgamento sobe ou desce		Изменяет цвет заливки драг-ноты									スライドノーツの色を変更します	调整 Drag 内圆的颜色	調整 Drag 的填充顏色										Thay đổi màu trong của nốt kéo	Ibahin ang kulay ng nota	Mengubah warna tengah pada note drag	
+SETTINGS_FILL_COLOR_HOLD_UP		Fill color (hold, up)		Color de relleno (sostener, arriba)			Cor de preenchimento (segurar, acima)		Цвет заливки (холд, вверх)									ホールド (登り)	内圆颜色（Hold，上）	Hold 填充顏色（↑）										Màu trong (giữ, trên)	Punuin ng kulay (hold, taas)	Warna tengah (hold, atas)	
+SETTINGS_FILL_COLOR_HOLD_DOWN		Fill color (hold, down)		Color de relleno (sostener, abajo)			Cor de preenchimento (segurar, abaixo)		Цвет заливки (холд, вниз)									ホールド (下り)	内圆颜色（Hold，下）	Hold 填充顏色（↓）										Màu trong (giữ, dưới)	Punuin ng kulay (hold, baba)	Warna tengah (hold, bawah)	
+SETTINGS_FILL_COLOR_HOLD_DESC		Change the hold note fill color		Cambial el color de relleno de las notas sostener			Muda a cor de preeenchimento da nota de segurar quando a linha de julgamento sobe ou desce		Изменяет цвет заливки холд-ноты									ホールドノーツの色を変更します	调整 Hold 内圆的颜色	調整 Hold 的填充顏色										Thay đổi màu trong của nốt giữ	Ibahin ang kulay ng notang hold	Mengubah warna tengah pada note hold	
+SETTINGS_FILL_COLOR_LONG_HOLD_UP		Fill color (long hold, up)		Color de relleno (sostener largo, arriba)			Cor de preenchimento (segurar longa, acima)		Цвет заливки (долгий холд, вверх)									ロングノーツ (登り)	内圆颜色（Long Hold，上）	Long Hold 填充顏色（↑）										Màu trong (giữ dài, trên)	Punuin ng kulay (long hold, taas)	Warna tengah (long hold, atas)	
+SETTINGS_FILL_COLOR_LONG_HOLD_DOWN		Fill color (long hold, down)		Color de relleno (sostener largo, abajo)			Cor de preenchimento (segurar longa, abaixo)		Цвет заливки (долгий холд, вниз)									ロングノーツ (下り)	内圆颜色（Long Hold，下）	Long Hold 填充顏色（↓）										Màu trong (giữ dài, dưới)	Punuin ng kulay (long hold, baba)	Warna tengah (long hold, bawah)	
+SETTINGS_FILL_COLOR_LONG_HOLD_DESC		Change the long hold note fill color		Cambia el color de relleno de las notas sostener largas			Muda a cor de preeenchimento da nota de segurar longa quando a linha de julgamento sobe ou desce		Изменяет цвет заливки долгой холд-ноты									ロングノーツの色を変更します	调整 Long Hold 内圆的颜色	調整 Long Hold 的填充顏色										Thay đổi màu trong của nốt giữ dài	Ibahin ang kulay ng notang long hold	Mengubah warna tengah pada note long hold	
+SETTINGS_FILL_COLOR_FLICK_UP		Fill color (flick, up)		Color de relleno (flick, arriba)			Cor de preenchimento (flick, acima)		Цвет заливки (флик, вверх)									フリック (登り)	内圆颜色（Flick，上）	Flick 填充顏色（↑）										Màu trong (gạt, trên)	Punuin ng kulay (flick, taas)	Warna tengah (flick, atas)	
+SETTINGS_FILL_COLOR_FLICK_DOWN		Fill color (flick, down)		Color de relleno (flick, abajo)			Cor de preenchimento (flick, abaixo)		Цвет заливки (флик, вниз)									フリック (下り)	内圆颜色（Flick，下）	Flick 填充顏色（↓）										Màu trong (gạt, dưới)	Punuin ng kulay (flick, baba)	Warna tengah (flick, bawah)	
+SETTINGS_FILL_COLOR_FLICK_DESC		Change the flick note fill color		Cambia el color de relleno de las notas flick			Muda a cor de preenchimeto da nota flick quando a linha de julgamento sobe ou desce		Изменяет цвет заливки флик-ноты									フリックノーツの色を変更します	调整 Flick 内圆的颜色	調整 Flick 的填充顏色										Thay đổi màu trong của nốt gạt	Ibahin ang kulay ng notang flick	Mengubah warna tengah pada note flick	
+SETTINGS_DSP_BUFFER_SIZE		DSP buffer size		Tamaño de buffer DSP			Tamanho do buffer DSP		Размер буфера DSP									DSPバッファサイズ	DSP 缓冲区大小	DSP 緩衝區大小										Kích cỡ bộ nhớ tạm thời	Laki ng DSP buffer	Ukuran buffer DSP	
+SETTINGS_DSP_BUFFER_SIZE_DESC		Adjust only if music is not playing properly		Ajuste solo si la música no se reproduce apropiadamente			Ajuste somente se a música não estiver tocando normalmente		Менять только если музыка не играет корректно									音楽が正常に再生されないときに調整してください	在音频无法正常播放时调整	僅於音樂無法正常播放時調整										Chỉ điều chỉnh khi nhạc không phát 	Pagbabago kapag ang musika ay di' tumutugtog ng tama	Ubahlah jika lagu tidak berputar dengan seharusnya	
+SETTINGS_DISPLAY_PROFILER		Profiler		Profiler			Profiler		Профайлер									デバッガーの表示	分析器	除錯工具										Bảng kiểm soát		Profiler	
+SETTINGS_DISPLAY_PROFILER_DESC		Display frame rates and RAM usage		Visualiza la velocidad de cuadros y el uso de RAM			Exibe os frame rates e o uso de RAM		Показывает FPS и использование оперативной памяти									FPSとRAMの使用状況を表示します	显示帧数和内存使用信息	可顯示幀數與記憶體存取資訊										Hiển thị FPS và lượng RAM đang dùng	Ipakita ang frame rates at ang paggamit ng RAM	Menampilkan FPS, penggunaan RAM, and ID pada note	
+SETTINGS_DISPLAY_NOTE_IDS		Note IDs		ID de nota			ID das notas		ID нот									IDの表示	Note ID	拍點編號顯示										ID nốt	ID ng nota	ID note	
+SETTINGS_DISPLAY_NOTE_IDS_DESC		For level debugging purposes		Para usos de depuración de niveles			Para fins de debug do nível		Для дебаг целей на уровне									ノーツIDを表示します(デバッグ用機能)	用作关卡制作调试	在進行譜面除錯或調試時使用										Cho mục đích sửa lỗi level		For level debugging purposes	
+SETTINGS_NONE	Space is limited for these values. Try to keep your translation compact!	None		Nulo			Nenhum		Ничего									なし	无	不使用										Không có	Wala	None	妹有
+SETTINGS_DEFAULT		Default		Por defecto			Padrão		По умолчанию									デフォルト	默认	預設										Mặc định		Default	buyao
+SETTINGS_HIT_SOUND_CLICK_1	Not necessary to translate those	Click 1		Click 1			Clique 1		Клик 1									クリック1	敲击声1	Click 1										Click 1		Click 1	who
+SETTINGS_HIT_SOUND_CLICK_2		Click 2		Click 2			Clique 2		Клик 2									クリック2	敲击声2	Click 2										Click 2		Click 2	the
+SETTINGS_HIT_SOUND_CLICK_3		Click 3		Click 3			Clique 3		Клик 3									クリック3	敲击声3	Click 3										Click 3		Click 3	hell
+SETTINGS_HIT_SOUND_SHAKER		Shaker		Sacudidor			Chocalho		Шейкер									マラカス	沙筒	Shaker										Đồ lắc		Shaker	is
+SETTINGS_HIT_SOUND_TAMBOURINE		Tambourine		Pandereta			Tamborim		Бубен									タンバリン	手鼓声	Tambourine										Lục lạc		Tambourine	[he]
+SETTINGS_HIT_SOUND_RIM		Rim		Tambor			Pandeiro		Обод									リム	鼓边	Rim										Viền trống		Rim	I
+SETTINGS_HIT_SOUND_HAT		Hat		Hi-hat			Pratos		Цилиндр									ハット	镲	Hat										Hat		Hat	swear
+SETTINGS_HIT_SOUND_CLAP		Clap		Aplauso			Palmas		Хлопанье									拍手	拍掌	Clap										Vỗ tay		Clap	that
+SETTINGS_HIT_SOUND_DONK		Donk		Donk			Donk		Донк									太鼓	咚	Donk										Donk		Donk	guy
+SETTINGS_HIT_SOUND_8_BIT		8-bit		8-bit			8-bit		8 бит									8-bit	老式游戏机	8-bit										8-bit		8-bit	uploads
+SETTINGS_HIT_SOUND_QUACK		Quack		Quack			Quack		Кряканье									アヒル	呱	Quack										Quạc quạc		Quack	everyday
+SETTINGS_OFF		Off		Apagado			Desligado		Выкл									オフ	关	關閉										Tắt		Mati	
+SETTINGS_ON		On		Encendido			Ligado		Вкл									オン	开	開啟										Bật		Nyala	yeaj 
+SETTINGS_QUALITY_LOW		Low		Bajo			Baixa		Низко									低	低	低										Thấp		Rendah	
+SETTINGS_QUALITY_MEDIUM		Medium		Medio			Média		Средне									中	中	中										Trung bình		Sedang	
+SETTINGS_QUALITY_HIGH		High		Alto			Alta		Высоко									高	高	高										Cao		Tinggi	
+SETTINGS_UNIT_SECONDS		Seconds		Segundos			Segundos		Секунды									秒	秒	秒										Giây		Detik	
+SETTINGS_SIZE_SMALL		Small		Pequeño			Pequeno		Маленькие									小	小	小										Nhỏ		Kecil	
+SETTINGS_SIZE_MEDIUM		Medium		Mediano			Médio		Средние									中	中	中										T/bình		Sedang	
+SETTINGS_SIZE_LARGE		Large		Grande			Grande		Большие									大	大	大										Lớn		Besar	
+																																	
+																																	
+LEVEL_SELECT_CATEGORY_ALL		All		Todos			Todos		Все									すべて	全部	全部										Tất cả	Lahat	Semua	
+LEVEL_SELECT_CATEGORY_OFFICIAL		Official		Oficial			Oficial		Официальные									公式	官方	官方										Chính thức	Opisyal	Official	TD
+LEVEL_SELECT_CATEGORY_COMMUNITY		Community		Comunidad			Comunidade		Пользовательские									コミュニティー	社区	非官方										Cộng đồng	Komunidad	Komunitas	
+LEVEL_SELECT_SORT_BY		SORT BY		ORDENAR POR			CLASSIFICAR POR		СОРТИРОВАТЬ ПО									ソート条件	排序	排序依據										Sắp xếp theo	Pag-uuri ng	URUT DARI	
+LEVEL_SELECT_SORT_BY_ADDED_DATE		Added date		Fecha agregada			Data de adição		Дате добавления									追加日	添加日期	添加日期										Thời gian được thêm	Petsa na inilagay	Tanggal ditambahkan	
+LEVEL_SELECT_SORT_BY_PLAYED_DATE		Played date		Fecha jugada			Data em que foi jogado		Дате последней игры									クリア順	上次游玩日期	遊玩日期										Thời gian chơi	Petsa na inilaro	Tanggal dimainkan	
+LEVEL_SELECT_SORT_BY_DIFFICULTY		Difficulty		Dificultad			Dificuldade		Сложности									難易度順	难度	難度										Độ khó	Ang kahirapan	Tingkat Kesulitan	
+LEVEL_SELECT_SORT_BY_TITLE		Title		Titulo			Título		Заголовкам									曲名	歌名	樂曲名稱										Tên	Pamagat	Judul	
+LEVEL_SELECT_SORT_ORDER		SORT ORDER		ORDEN DE CLASIFICACIÓN			ORDEM DE CLASSIFICAÇÂO		ПОРЯДОК СОРТИРОВКИ									ソート…	顺序	排序模式										Trình tự sắp xếp	Pagkakasunud-sunod	URUTAN SORT	
+LEVEL_SELECT_SORT_ORDER_ASC		Ascending		Ascendiente			Crescente		По возрастанию									昇順	升序	升冪										Từ dưới lên	Pataas	Naik	
+LEVEL_SELECT_SORT_ORDER_DESC		Descending		Descendiente			Decrescente		По убыванию									降順	降序	降冪										Từ trên xuống	Pababa	Turun	
+LEVEL_SELECT_SEARCH_QUERY		SEARCH QUERY		CONSULTA DE BUSQUEDA			PESQUISAR		ПОИСК									検索	搜索	內部搜尋										Thanh tìm kiếm	Hanapin	PENCARIAN	
+LEVEL_SELECT_SEARCH_QUERY_HINT		Title / artist / charter...		Título / Artista / Charter...			Título / artista / charter...		Заголовок / композитор / чартер									曲名 / 作曲者 / 譜面製作者…	曲名 / 曲师 / 谱师...	樂曲名稱／樂曲創作者／譜面設計師……										Tên / họa sĩ / người làm level...	Pamagat / artista / charter...	Judul / artist / charter...	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+GAME_PREP_START		Start!		Comenzar!			Começar!		Начать!									Start!	开始！	開始！										Bắt đầu!	Magsimula!	Mulai!	铲车！
+GAME_PREP_PRACTICE		Practice!		Práctica!			Praticar!		Практика!									Practice!	开始练习！	練習！										Tập luyện!	Pagsasanay!	Latihan!	给我打R判啊！
+GAME_PREP_DOWNLOAD		Download!		Descargar!			Baixar!		Скачать!									Download!	下载！	下載！										Tải về!	I-Download!	Unduh!	jaja
+GAME_PREP_RANKINGS_VIEW_MORE		View more		Ver mas			Ver mais		Развернуть									詳細	查看更多	查看全部										Xem thêm	Tignan pa	Lihat lebih banyak	全来
+GAME_PREP_RANKINGS_DOWNLOADING		Downloading level rankings...		Descargando las clasificaciones del nivel...			Baixando ranking do nível.		Скачивание ранков на уровне									ランキングをロード中…	下载关卡排行中...	關卡排行下載中……										Đang tải thứ hạng level...	Nagdodownload ng level rankings...	Mengunduh ranking pada level...	
+GAME_PREP_RANKINGS_COULD_NOT_DOWNLOAD		Could not download level rankings.		No se pudieron descargar las clasificaciones del nivel.			Não foi possível baixar o ranking do nível.		Не удалось скачать ранки на уровне									ランキング情報を取得できませんでした…	无法下载关卡排行。	無法下載關卡排行。										Không thể tải thứ hạng level.	Di' kaya makapagdownload ng level rankings.	Tidak dapat mengunduh rangking pada level.	没网了111111
+GAME_PREP_RANKINGS_BE_THE_FIRST		No performances yet. Be the first!		Nadie ha jugado el nivel. ¡Sea el primero!			Ninguém jogou este nível ainda. Seja o primeiro!		Нет результатов! Будьте первыми!									ランキングがありません…一番乗りしよう！	暂无排行。成为第一个人吧！	尚無排行紀錄，搶個頭香吧！										Chưa có thành tích nào. Hãy là người đầu tiên!	Wala pang iskor. Maging una kang maglaro!	Beluh ada performa dari pemain lain.	没人玩111111
+GAME_PREP_RATINGS_AVG_RATING		AVERAGE RATING		CALIFICACION PROMEDIO			AVALIAÇÃO MÉDIA		СРЕДНИЙ РЕЙТИНГ									平均レート	平均评分	平均評分										Mức đánh giá trung bình		RATING RATA - RATA	
+GAME_PREP_RATINGS_UNIT_RATING		rating		clasificación			avaliação		рейтинг									人の評価	个评分	個評分										Rating	Marka	rating	个人骂上了
+GAME_PREP_RATINGS_UNIT_RATINGS		ratings		clasificaciones			avaliações		рейтинги									人の評価	个评分	個評分										Lượt đánh giá	Mga marka	ratings	个人骂上了
+GAME_PREP_RATINGS_YOU_RATED_X		You rated {0}/5.		Usted puntuó {0}/5.			Você avaliou {0}/5.		Вы оценили на {0}/5.									{0}/5 の評価をしました！	你打了 {0}/5 分。	已評了 {0}/5 分。										Bạn đã đánh giá {0}/5.	Nagmarka ka nang {0}/5	Anda mengerate {0}/5.	你问候了 {0}/5 次谱师。
+GAME_PREP_RATINGS_YOU_HAVENT_RATED		You haven't rated yet.		No ha puntuado todavía.			Você ainda não avaliou esse nível		Вы не оценили ещё.									まだこの譜面を評価していません。	你还没有评分。	尚未評分。										Bạn chưa đánh giá.	Di' kapa naka marka	Anda belum mengerate level ini.	你还没骂上。
+GAME_PREP_RATINGS_BE_THE_FIRST		Be the first!		Sea el primero!			Seja o primeiro!		Будьте первыми!									一番乗りしよう！	做第一个评分的人吧！	搶個頭香吧！										Hãy là người đầu tiên!	Mauna ka magmarka!	Jadi yang pertama!	来骂谱吧！
+GAME_PREP_RATINGS_RATE		Rate		Puntue			Avaliar		Оценить									評価	打分	評分										Đánh giá	Rate	Rate	骂
+GAME_PREP_GAMEPLAY_PRACTICE_MODE	Space very limited. Keep translation compact!	Practice Mode		Modo de Practica			Modo prática		Режим Практики									練習モード	练习模式	練習模式										Chế độ Luyện tập	Pagsasanay	Mode Latihan	dd模式
+GAME_PREP_GAMEPLAY_PRACTICE_MODE_DESC		Relaxed note timing judgements, but your performance will not be shown on the leaderboard.		Juicio de sincronización de notas relajado, pero su rendimiento no será mostrado en la tabla de clasificaciones.			Timing mais relaxado, porém seu score não será exibido no placar ranqueado.		Упрощённая оценка вашей игре, но это не будет отображаться в таблице лидеров.									判定は緩やかですが、このモードでプレイしたスコアはランキングに残りません。	更为宽松的 Note 时间判定，\n但你的纪录将不会显示在排行榜上。	拍點判定時間較為寬鬆，\n遊玩紀錄也不會上傳至排行榜。										Mức độ đánh giá thời gian bấm nốy được thả lỏng, nhưng thành tích của bạn sẽ không xuất hiện trên bảng xếp hạng.	Nakarelax ang timing ng nota, pero ang iyong laro ay hindi ipapakita sa leaderboard.	Ruang timing lebih luas, tetapi skor anda tidak akan dikirim ke leaderboard.	不开R判的都是dd。（迫真）
+GAME_PREP_GAMEPLAY_PRACTICE_MODE_HINT		RECOMMENDED FOR UNDER LEVEL 20		RECOMENDADO PARA MENORES QUE NIVEL 20			RECOMENDADO PARA JOGADORES ABAIXO DO NÍVEL 20		РЕКОМЕНДУЕТСЯ ДЛЯ ТЕХ КТО НИЖЕ 20 УРОВНЯ									レベル <b>20以下</b> 推薦	推荐等级 20 以下使用	如等級在 20 以下建議開啟										Đề nghị cho những người dưới Level 20	Inirerekumenda para sa mga Level 20 at pababa.	DISARANKAN UNTUK PEMAIN DIBAWAH LEVEL 20	汉堡汉堡王王汉堡王王
+GAME_PREP_GAMEPLAY_MODS		MODS		MODS			MODS		МОДЫ									追加モード	Mods	遊玩模組										Điều chỉnh độ khó			马组
+MODS_HYPER	Try to keep mod names concise.	HYPER		HYPER			HYPER		HYPER									HYPER	HYPER	HYPER										HYPER			wee
+MODS_HYPER_DESC		Adds a health bar to the game.		Agrega una barra de salud al juego.			Adiciona uma barra de saúde à partida.		Добавляет полоску жизни.									フレイ中にHPが追加されます	血条模式。	遊玩時最上方會出現血條，失誤過多就會強制中止遊戲。										Thêm 1 thanh HP vào game.	Lalagyan ng health bar sa iyong laro	Menambah health bar pada game.	整个wee111
+MODS_ANOTHER		ANOTHER		ANOTHER			ANOTHER		ANOTHER									ANOTHER	ANOTHER	ANOTHER										ANOTHER			啊wee
+MODS_ANOTHER_DESC		Same as HYPER, but more difficult.		Igual que HYPER, pero más dificil			Igual à HYPER porém mais difícil.		То же самое что и HYPER, но сложнее.									”HYPER”より難しいモードです	比 HYPER 更加困难的血条模式。	與 HYPER 類似但過關難度提升。										Giống HYPER, nhưng khó hơn.	Parehas lang ng HYPER, pero mas mahirap.	Sama dengan HYPER, letapi lebih sulit.	整个啊wee111111
+MODS_FC		Full Combo		Full Combo			Full Combo		Full Combo									Full Combo	Full Combo	Full Combo										Full Combo			牛逼力
+MODS_FC_DESC		Game over if missed a note.		Fin del juego si falla una nota.			O jogo se encerra se você erra uma nota.		Вы проиграете если промахнетесь									ミスをするとゲームオーバーになります	任意 Bad / Miss 判定都会致使游戏失败。	只要 Combo 一斷就會強制中止遊戲。										Thua nếu trượt 1 nốt.	Tapos na ang laro kapag may naiwanan na nota	Lagu akan berakhir jika ada note yang terlewatkan.	则不呢就美丽了
+MODS_AP		All Perfect		All Perfect			All Perfect		All Perfect									All Perfect	All Perfect	All Perfect										All Perfect			他妈牛逼力
+MODS_AP_DESC		Game over if the note cleared is not perfect.		Fin del juego si la nota completada no es perfecta.			Fim de jogo se a nota acertada não é perfeita.		Вы проиграете, если нота будет не на Perfect									Perfect以下を取ってしまうとゲームオーバーになります。	任意非 Perfect 判定都会致使游戏失败。	打出任一非 Perfect 判定就會強制中止遊戲。										Thua nếu nốt clear không phải Perfect	Tapos na ang laro kapag hindi perpekto ang nota	Semua note harus perfect.	则不呢就美丽了
+MODS_FLIP_X		Flip X		Flip X			Flip X		Flip X									Flip X	Flip X	Flip X										Flip X			换行
+MODS_FLIP_X_DESC		Flip the level on the x-axis.		Voltea el nivel en el eje X.			Virar o nível no eixo X.		Повернуть поле по оси Х									譜面が左右反転します	水平翻转谱面。	讓譜面左右翻轉。										Lật level theo trục X.	Ibabaliktad ang lebel sa axis na x	Memutar level pada axis-x.	大括号不换行的跟换行的打
+MODS_FLIP_Y		Flip Y		Flip Y			Flip Y		Flip Y									Flip Y	Flip Y	Flip Y										Flip Y			大写
+MODS_FLIP_Y_DESC		Flip the level on the y-axis.		Voltea el nivel en el eje Y.			Virar o nível no eixo Y.		Повернуть поле по оси Y									譜面が上下に反転します	垂直翻转谱面。	讓譜面上下翻轉。										Lật level theo trục Y.	Ibabaliktad ang lebel sa axis na y	Memutar level dalam axis-y.	变量名首字母大写的跟不大写的打
+MODS_FLIP_ALL		Flip All		Flip All			Flip All		Flip All									Flip All	Flip All	Rotate										Flip All			下划线
+MODS_FLIP_ALL_DESC		Flip the level on both axes, i.e. rotate by 180°.		Voltear el nivel en ambos ejes. p.e. rotandolo por 180			Virar o nível em ambos os eixos, ou seja, rotaciona o nível em 180°.		Повернуть поле по обоим осям, т.е. на 180°									譜面が左右、上下に反転します(１８０°回転)	旋转谱面 180 度。	讓譜面旋轉 180 度。										Lật level trên cả 2 trục, xoay 180°.	Ibabaliktad sa parehas na axis ang lebel	Memutar level 180 derajat.	私有域前面加下划线的跟不加下划线的打
+MODS_FAST		Fast		Rapido			Rápido		Быстро									Fast	Fast	Fast										Nhanh	Mabilis		速回
+MODS_FAST_DESC		Notes fade in later.		Las notas desaparecen más tarde.			As notas somem depois.		Ноты появляются позднее									ノーツの出現が遅くなります	Note 淡入时间变短。	拍點漸入時間縮短。										Nốt xuất hiện chậm hơn.	Nag nota ay mawawala ng huli	Note akan muncul lebih lambat.	明天吧速回
+MODS_SLOW		Slow		Lento			Lento		Медленно									Slow	Slow	Slow										Chậm	Mabagal		慢
+MODS_SLOW_DESC		Notes fade in earlier.		Las notas desaparecen antes.			As notas somem antes.		Ноты появляются раньше									ノーツの出現が早くなります	Note 淡入时间变长。	拍點漸入時間延長。										Nốt xuất hiện sớm hơn.	Nag nota ay mawawala ng maaga	Note akan muncul lebih cepat.	陈赫好慢啊
+MODS_NO_SCANNER		No Scanner		No Scanner			No Scanner		Нет Линии									No Scanner	No Scanner	No Scanline										No Scanner			影梭
+MODS_NO_SCANNER_DESC		The scanner is hidden.		La línea de juego está oculta			A linha de julgamento está oculta.		Линия спрятана									判定線が非表示になります	隐藏扫描线。	不顯示判定線。										Thanh quét bị ẩn đi.	Nakatago ang scanner	Garis pembantu akan dihilangkan.	剃毛刀
+MODS_INVISIBLE		Invisible		Invisible			Invisível		Невидимость									Invisible	Invisible	Invisible										Invisible			时空阁
+MODS_INVISIBLE_DESC		All notes are hidden.		Todas las notas estan escondidas			Todas as notas estão ocultas.		Все ноты скрыты									全てのノーツが非表示になります	隐藏所有的 Note。	不顯示任何拍點。										Tất cả nốt bị ẩn đi.	Nakatago ang lahat ng nota	Semua not tidak dapat terlihat.	这冒号时空阁吧。。
+MODS_AUTO		Auto		Auto			Auto		Авто									Auto	Auto	Auto										Auto			娘比起重机
+MODS_AUTO_DESC		Autoplay the level.		El nivel se juega solo.			O nível é executado automaticamente.		Автоплей уровня									自動プレイモードです	自动游玩关卡。	自動演示譜面。										Tự động chơi level.	I-autoplay ang lebel	Memainkan level secara otomatis.	2分钟最速手术室传说
+MODS_AUTO_DRAG		Auto Drag		Auto Drag			Auto Drag		Авто Драг									Auto Drag	Auto Drag	Auto (Drag)										Auto Drag			宗龙娘比起重机
+MODS_AUTO_DRAG_DESC		Autoplay the drag notes.		Las notas arrastrar se reproducen solas.			As notas de arrastar são completadas automaticamente.		Автоплей драг-нот									スライドノーツのみ自動で取ってくれます	自动游玩关卡（仅限 Drag）。	僅自動演示 Drag 拍點。										Tự động chơi những nốt kéo.	I-autoplay ang drag note	Memainkan note drag secara otomatis.	宗龙图个！？
+MODS_AUTO_FLICK		Auto Flick		Auto Flick			Auto Flick		Авто Флик									Auto Flic	Auto Flick	Auto (Flick)										Auto Flick			施工科娘比起重机
+MODS_AUTO_FLICK_DESC		Autoplay the flick notes.		Las notas flick se reproducirán solas			As notas flick são completadas automaticamente.		Автоплей флик-нот									フリックのみ自動で取ってくれます	自动游玩关卡（仅限 Flick）。	僅自動演示 Flick 拍點。										Tự động chơi những nốt gạt.	I-autoplay ang flick note 	Memainkan note flick secara otomatis.	那里我偷懒写了个四训韩
+MODS_AUTO_HOLD		Auto Hold		Auto Hold			Auto Hold		Авто Холд									Auto Hold	Auto Hold	Auto (Hold)										Auto Hold			疯怒娘比起重机
+MODS_AUTO_HOLD_DESC		Autoplay the hold notes.		Las notas sostener se reproducirán solas			Todas as notas de segurar são completadas automaticamente.		Автоплей холд-нот									ホールドのみ自動で取ってくれます	自动游玩关卡（仅限 Hold）。	僅自動演示 Hold 與 Long Hold 拍點。										Tự động chơi những nốt giữ.	I-autoplay ang hold note	Memainkan note hold secara otomatis.	我疯怒傻了？？？？？、
+GAME_PREP_SETTINGS_GENERAL		GENERAL SETTINGS		AJUSTES GENERALES			CONFIGURAÇÕES GERAIS		ОСНОВНЫЕ НАСТРОЙКИ									基本設定	通用设置	基本設定										Cài đặt chung	Pangkalahatang Setting	SETELAN UMUM	
+GAME_PREP_SETTINGS_GAMEPLAY		GAMEPLAY SETTINGS		AJUSTES DE JUGABILIDAD			CONFIGURAÇÕES DE GAMEPLAY		НАСТРОЙКИ ГЕЙМПЛЕЯ									プレイ設定	游玩设置	遊玩設定										Cài đặt trò chơi		SETELAN PERMAINAN	
+GAME_PREP_SETTINGS_VISUAL		VISUAL SETTINGS		AJUSTES VISUALES			CONFIGURAÇÕES VISUAIS		НАСТРОЙКИ ВИЗУАЛА									表示設定	视觉设置	視覺設定										Cài đặt cấu hình	Biswal Setting	SETELAN VISUAL	
+GAME_PREP_SETTINGS_ADVANCED		ADVANCED SETTINGS		AJUSTES AVANZADOS			CONFIGURAÇÕES AVANÇADAS		РАСШИРЕННЫЕ НАСТРОЙКИ									上級設定	进阶设置	進階設定										Cài đặt nâng cao		SETELAN ADVANCED	
+																																	
+GAME_PREP_SETTINGS_CURRENT_LEVEL_SETTINGS		CURRENT LEVEL SETTINGS		AJUSTES DEL NIVEL ACTUAL			CONFIGURAÇÕES DO NÍVEL ATUAL		НАСТРОЙКИ ТЕКУЩЕГО УРОВНЯ									レベル別の設定	当前关卡设置	當前關卡設定										Cài đặt level hiện tại		SETELAN PADA LEVEL INI	
+GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET		Level note offset		Equilibrio de las notas del nivel			Offset das notas do nível		Задержка нот на уровне									ノーツ調整	当前关卡谱面偏移	當前關卡譜面校正										Cân chỉnh thời gian level	Offset ng nota sa lebel	Offset note pada level ini	
+GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET_DESC		Notes not syncing well with music? \nPress "Calibrate" or manually enter a desired note offset.		Las notas no se sincronizan bien con la música? \n Presione "Calibrar" o ingrese el equilibrio de notas manualmente.			As notas parecem não estarem sincronizadas com a música? \nPressione "Calibrar" ou manualmente entre com o deslocamento desejado.		Ноты не синхронизированы с музыкой?/nНажмите "Откалибровать" или сами введите нужную задержку.									この譜面にノーツとのタイミングずれが生じる場合 \n”調整”を押すか、ノーツオフセットを手動で入力してください。	觉得 Note 和音乐不同步？\n请按下「校准」按钮，或者手动输入谱面偏移值。	若發現譜面與音樂不同步，可直接點擊「判定校正」按鈕進入校正模式（可以邊遊玩邊調整），或是直接輸入數值也可以。\n該數值會疊加至通用（+耳機）校正上。										Nốt không trùng với nhạc? \n Nhấn "Điều chỉnh" để thêm vào thời gian bù mong muốn.	Nota hindi nakakatugma sa musika? Pindutin ang "Calibrate" o manual ang paglagay ng offset.	Note tidak tersinkron pada musik? Tekan "Kalibrasi" atau dengan manual mengisi dengan angka yang dimaui.	
+GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET_CALIBRATE		Calibrate		Calibrar			Calibrar		Откалибровать									調整	校准	判定校正										Điều chỉnh		Kalibrasi	
+GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET_OR		or		o			ou		или									or	或	或是										hoặc	o	atau	
+GAME_PREP_INFO_COVER_ARTIST		COVER ARTIST		Artista de caratula			ARTISTA DA CAPA		СОЗДАТЕЛЬ ОБЛОЖКИ									イラスト	曲绘	繪圖創作者										Người vẽ			
+GAME_PREP_INFO_CHARTER		CHARTER		CHARTER			CHARTER		ЧАРТЕР									譜面製作者	谱师	譜面設計師										Người làm level			
+GAME_PREP_INFO_STORYBOARDER		STORYBOARDER		STORYBOARDER			STORYBOARDER		РАСКАДРОВКА									ストーリーボード	故事板制作	Storyboard 製作者										Người làm Storyboard			
+GAME_PREP_INFO_ID		ID		ID			ID		ID									ID	ID	ID										ID			
+GAME_PREP_INFO_VERSION		VERSION		VERSION			VERSÃO		ВЕРСИЯ									バージョン	版本	版本										Phiên bản	Versyon	VERSI	
+GAME_PREP_BEST_PERFORMANCE		BEST PERFORMANCE		MEJOR RENDIMIENTO			MELHOR PERFORMANCE		ЛУЧШИЙ СЧЁТ									HIGH SCORE	最佳纪录	最高紀錄										Thành tích tốt nhất	Pinakamahusay na laro	PERFORMA TERBAIK	最佳纪录
+GAME_PREP_BEST_PERFORMANCE_PRACTICE		BEST PERFORMANCE (PRACTICE)		MEJOR RENDIMIENTO (PRACTICA)			MELHOR PERFORMANCE (PRÁTICA)		ЛУЧШИЙ СЧЁТ (ПРАКТИКА)									HIGH SCORE (練習モード)	最佳纪录（练习模式）	最高紀錄（練習）										Thành tích tốt nhất (Tập luyện)	Pinakamahusay na laro (pagsasanay)	PERFORMA TERBAIK (LATIHAN)	最佳纪录（dd模式）
+																																	
+																																	
+																																	
+																																	
+COMMUNITY_HOME_COMMUNITY		Community		Comunidad			Comunidade		Сообщество									コミュニティー	社区	社群瀏覽										Cộng đồng	Komunidad	Komunitas	
+COMMUNITY_HOME_VIEW_ALL		View all		Ver todo			Ver todos		Посмотреть все									もっと見る	查看全部	查看全部										Xem tất cả	Tignan lahat	Lihat semua	全来
+COMMUNITY_HOME_NEW_UPLOADS		New uploads		Nuevas subidas			Novos uploads		Новые публикации									最新の譜面	最新上传	近期上傳										Level mới	Bagong labas	Upload terbaru	成功上市
+COMMUNITY_HOME_TRENDING_THIS_MONTH		Trending this month		Tendencias de este mes			Em alta nesse mês		Популярно в этом месяце									今月のトレンド	时下流行	本月最夯										Đang thịnh hành tháng này	Trending sa buwan na ito	Trending bulan ini	当月2分钟最速手术室传说
+COMMUNITY_HOME_BEST_OF_CYTOID		Best of Cytoid		Lo mejor de Cytoid			O Melhor do Cytoid		Лучшее в Cytoid									Best of CYTOID	备受瞩目	推薦關卡										Tốt nhất của Cytoid		Terbaik dari Cytoid	CFHSS 认证的最佳谱面
+COMMUNITY_SEARCH_QUERY		SEARCH QUERY		Consulta de búsqueda			BUSCA		ПОИСК									検索	搜索	線上搜尋										Thanh tìm kiếm	Hanapin	PENCARIAN	
+COMMUNITY_SEARCH_QUERY_HINT		Title / artist / charter / tags...		Título / artista / charter / etiquetas...			Título / artista / charter / tags...		Название / композитор / чартер / теги...									曲名 / 作曲者 / 譜面製作者 / タグ…	曲名 / 曲师 / 谱师 / Tag...	樂曲名稱／樂曲創作者／譜面設計師／標記……										Tên / họa sĩ / người làm level / tag...	Pamagat / artista / charter / tags...	Judul / artist / charter / tags...	
+																																	
+																																	
+																																	
+COMMUNITY_SELECT_BROWSE		Browse		Navegar			Navegar		Обзор									閲覧	浏览	瀏覽										Duyệt	Suriin	Menelusuri	铲车
+COMMUNITY_SELECT_SEARCH_QUERY		Search: {0}		Busqueda: {0}			Busca: {0}		Найдено: {0}									検索 : {0}	搜索：{0}	搜尋結果「{0}」										Tìm kiếm: {0}	Hanapin: {0}	Cari: {0}	铲车：{0}
+COMMUNITY_SELECT_SORT_BY		SORT BY		ORDENAR POR			CLASSIFICAR POR		СОРТИРОВАТЬ ПО									ソート条件	排序	排序依據										Phân loại theo		URUTKAN DARI	
+COMMUNITY_SELECT_SORT_BY_UPLOADED_DATE		Uploaded date		Fecha subida			Data de upload		Дате публикации									アップロード順	上传日期	上傳日期										Ngày tải lên		Tanggal diupload	初次贵阳日期
+																																	
+COMMUNITY_SELECT_SORT_BY_MODIFIED_DATE		Modified date		Fecha modificada			Data de modificação		Дате модификации									更新日時	最后修改日期	修改日期										Ngày điều chỉnh		Tanggal diupdate	最后贵阳日期
+COMMUNITY_SELECT_SORT_BY_RATING		Rating		Calificacion			Avaliação		Рейтингу									評価	评分	評分										Đánh giá		Rating	
+COMMUNITY_SELECT_SORT_BY_DOWNLOADS		Downloads		Descargas			Downloads		Загрузкам									ダウンロード数	下载数	下載次數										Lượt tải		Unduhan	
+COMMUNITY_SELECT_SORT_BY_DIFFICULTY		Difficulty		Dificultad			Dificuldade		Сложности									難易度	难度	難度										Độ khó		Tingkat kesulitan	
+COMMUNITY_SELECT_SORT_BY_DURATION		Duration					Duração		Длительности									経過時間	时长	樂曲時長										Thời gian		Durasi	
+COMMUNITY_SELECT_SORT_ORDER		SORT ORDER		ORDEN DE CLASIFICACION			ORDEM DE CLASSIFICAÇÃO		ПОРЯДОК СОРТИРОВКИ									表示順	顺序	排序模式										Trình tự sắp xếp		URUTAN SORT	
+COMMUNITY_SELECT_SORT_ORDER_ASC		Ascending		Ascendiente			Crescente		Возрастние									昇順	升序	升冪										Từ dưới lên		Keatas	
+COMMUNITY_SELECT_SORT_ORDER_DESC		Descending		Descendiente			Decrescente		Убывание									降順	降序	降冪										Từ trên xuống		Kebawah	
+COMMUNITY_SELECT_CATEGORY		CATEGORY		CATEGORIA			CATEGORIA		КАТЕГОРИЯ									カテゴリ	类别	分類										Phân loại		KATEGORI	
+COMMUNITY_SELECT_CATEGORY_ALL		All		Todo			Todos		Все									すべて	全部	全部										Tất cả		Semua	
+COMMUNITY_SELECT_CATEGORY_FEATURED		Featured		Destacado			Em destaque		Утвержденные									おすすめ	精选	推薦										Được giới thiệu			
+COMMUNITY_SELECT_TIME		TIME		TIEMPO			DATA		ВРЕМЯ									時間	时间	上傳時間篩選										Thời gian		WAKTU	
+COMMUNITY_SELECT_TIME_ANY_TIME		Any time		Cualquier tiempo			Qualquer data		Любое время									すべて	全部时间	全部										Mọi thời gian		Kapanpun	
+COMMUNITY_SELECT_TIME_PAST_WEEK		Past week		Ultima semana			Semana passada		Прошлая неделя									1週間以内	最近一周	一星期內										Tuần qua		Minggu terakhir	
+COMMUNITY_SELECT_TIME_PAST_MONTH		Past month		Ultimo mes			Mês passado		Прошлый месяц									1か月以内	最近一个月	一個月內										Tháng qua		Bulan terakhir	
+COMMUNITY_SELECT_TIME_PAST_6_MONTHS		Past 6 months		Ultimos 6 meses			Semestre passado		Прошлые 6 месяцев									半年以内	最近六个月	半年內										6 tháng qua		6 bulan yang lalu	
+COMMUNITY_SELECT_TIME_PAST_YEAR		Past year		Ultimo año			Ano passado		Прошлый год									1年以上	最近一年	一年內										Năm ngoái		Tahun lalu	
+																																	
+RESULT_MODE_PRACTICE		Practice		Practica			Prática		Практика									練習モード	练习模式	練習模式										Luyện tập		Latihan	dd模式
+RESULT_SHARE		Share		Compartir			Compartilhar		Поделиться									共有	分享	分享										Chia sẻ		Bagikan	发群炫耀
+RESULT_X_ACCURACY		{0}% accuracy		{0}% de presición			{0}% de precisão		{0}% точность									精度 {0}% 	{0} 精准度	<b>準確度</b> {0}%										{0}% độ chính xác			
+RESULT_FULL_ACCURACY		Full accuracy		Precisión total			Full accuracy		Абсолютная точность									Full accuracy	完美精准度	<b>準確度</b> 100.00%										Độ chính xác hoàn hảo	Lahat Perpekto!		
+RESULT_X_COMBO		{0} max combo		{0} combo máximo			Combo máximo de {0}		{0} макс. комбо									{0} max combo	{0} 最大连击	<b>Max Combo</b> {0}										{0} Combo tối đa			
+RESULT_FULL_COMBO		Full combo		Full Combo			Full combo		Полное комбо									Full combo	全连击	<b>Full Combo</b>										Combo hoàn hảo	All Combo		
+RESULT_AVG_TIMING_ERR		ATE		ATE			ATE		АТЕ									ATE	平均判定误差	平均差										S/số t/gian TB			
+RESULT_STD_TIMING_ERR		STE		STE			STE		STE									STE	标准判定误差	標準差										S/số t/gian chuẩn			
+RESULT_RETRY		Retry		Reintentar			Tentar\noutra\nvez		Повторить									Retry	重试	重新開始										Thử lại	Ulitin	Ulangi	铲车！
+RESULT_NEXT		Next!		Siguiente!			Próximo!		Дальше!									Next!	继续！	繼續！										Tiếp!	Susunod!	Lanjut!	贵阳！
+RESULT_NEW	This is only shown after the initial play	New!		Nuevo!			Novo recorde!		Новый!									New!	初见！	初次過關！										Mới!	Bago!	High Score!	大爸爸！
+																																	
+GAME_PRACTICE_MODE		PRACTICE MODE		MODO DE PRACTICA			MODO PRÁTICA		РЕЖИМ ПРАКТИКИ									練習モード	练习模式	練習模式										Chế độ Luyện tập	Pagsasanay	MODE LATIHAN	dd模式
+GAME_CALIBRATION_MODE		CALIBRATION MODE		MODO DE CALIBRACION			MODO CALIBRAÇÃO		РЕЖИМ КАЛИБРОВКИ									調整モード	校准模式	校正模式										Chế độ Điều chỉnh		MODE KALIBRASI	面包海
+GAME_SPEED_UP	Only latin characters are supported!	SPEED UP		ACELERA			ACELERANDO		УСКОРЕНИЕ									SPEED UP	SPEED UP	SPEED UP										TĂNG TỐC ĐỘ!	BIBILIS NA!	TAMBAH KECEPATAN	MUDAMUDAMUDAMUDAMUDA
+GAME_SLOW_DOWN	Only latin characters are supported!	SLOW DOWN		DESACELERA			DESACELERANDO		ТОРМОЖЕНИЕ									SPEED DOWN	SLOW DOWN	SPEED DOWN										GIẢM TỐC ĐỘ!	MABAGAL NA...	KURANG KECEPATAN	zenzenzense
+GAME_RESUME_IN_X	Only latin characters are supported!	RESUMING IN {0}S		Continuando en {0}S			RETOMANDO EM {0} SEG		ПРОДОЛЖАЕМ ЧЕРЕЗ {0}С									RESUMING IN {0}S	RESUMING IN {0}S	RESUMING IN {0}s...										BẮT ĐẦU TRONG {0} GIÂY	Itutuloy na sa {0} segundo	MELANJUTKAN DALAM {0} DETIK	{0} cont'
+GAME_CALIBRATION_AUTOPLAY		AUTOPLAY		AUTOPLAY			AUTOPLAY		АВТОПЛЕЙ									AUTOPLAY	自动播放	自動演示										TỰ ĐỘNG CHƠI			
+GAME_CALIBRATION_HIT_SOUND		HIT SOUND		SONIDO DE ACIERTO			SOM DE ACERTO		ХИТ-САУНД									タップ音	打击音	打擊音效										TIẾNG BẤM			
+GAME_CALIBRATION_NOTE_OFFSET		NOTE OFFSET		EQUILIBRIO DE NOTA			DESLOCAMENTO DE NOTA		ЗАДЕРЖКА НОТЫ									ノーツ調整	谱面偏移	譜面校正										CÂN CHỈNH THỜI GIAN NỐT	Offset ng nota	OFFSET PADA NOTE	
+GAME_CALIBRATION_NOTE_OFFSET_DESC		If you feel the notes are <b>ahead</b> of the music, <b>increase</b> the offset. Vice versa.		Si usted siente que las notas están <b>más adelante</b> que la música, <b>aumente</b> el equilibrio. Vice versa.			Se você sente que as notas estão <b>à frente</b> da música, <b>aumente</b> o deslocamento ou vice-versa.		Если ноты <b>несовместимы<b> с музыкой, <повысьте> задержку. Или наоборот.									ノーツとのタイミングが <b>遅い</b> 場合、数値を <b>増やして</b> 下さい。また、逆も同様です。	如果你觉得 Note 比音乐要<b>早</b>，请<b>增加</b>偏移；\n否则，请减少偏移。	音樂<b>太慢</b>就<b>增加</b>數值；音樂<b>太快</b>則<b>減少</b>數值。\n以 0.01 秒（方框）／0.05 秒（圓框）為單位\n左右增減來進行調整。										Nếu bạn cảm thấy nốt đang <b> trước</b> nhạc thì <b> tăng </b> mức bù thời gian và ngược lại.	Kung sa tingin mo ang nota ay maaga sa musika, itaas ang offset. Baliktarin kapag baliktad ang resulta	Jika nada terasa lebih cepat dari musik, tambahkan offset. Sama dengan jika note terasa lebih lambat, kurangi offset.	
+GAME_PAUSED_DESC		Take a break...		Tome un descanso...			Dê uma pausa...		Передохните...									ちょっと休憩…	休息一下...	休息一下吧。										Nghỉ 1 chút đi...	Pahinga ka muna...	Istirahat...	贵阳一下...
+GAME_TRY_AGAIN		Try again?		Intentar de nuevo?			Tentar outra vez?		Ещё раз?									リスタート？	重新来过吧？	再加把勁吧。										Thử lại?	Isa pa?	Cobal lagi?	你美丽jajajaja
+GAME_GO_BACK		Go back		Volver atras			Voltar		Вернуться?									曲選択へ	返回	返回										Quay về	Bumalik na	Kembali	贵阳
+GAME_RETRY		Retry		Reintentar			Tentar de novo		Повторить									リトライ	重试	重新開始										Thử lại	Ulitin	Ulangi	重新铲车
+GAME_RESUME		Resume		Continuar			Retomar		Возобновить									再開	继续	繼續										Tiếp tục	Ituloy	Lajutkan	铲车
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+TIER_TIERS	WORK IN PROGRESS, DON'T TRANSLATE BELOW ENTRIES YET!	Tiers							Ранги										段位														
+TIER_INFO_TITLE		What are <b>Tiers</b>?							Что такое <b>Ранги<b>?																								
+TIER_INFO_CONTENT		[To be written]							[Waiting for info]																								
+TIER_1		Tier 1							Ранг 1																								
+TIER_2		Tier 2							Ранг 2																								
+TIER_3		Tier 3							Ранг 3																								
+TIER_4		Tier 4							Ранг 4																								
+TIER_5		Tier 5							Ранг 5																								
+TIER_6		Tier 6							Ранг 6																								
+TIER_7		Tier 7							Ранг 7																								
+TIER_8		Tier 8							Ранг 8																								
+TIER_9		Tier 9							Ранг 9																								
+TIER_10		Tier 10							Ранг 10																								
+TIER_11		Chūden							Ранг 11																								
+TIER_12		Kaiden							Ранг 12																								
+TIER_COMPLETION_PERCENTAGE		{0}% of players have completed this tier							{0}% игроков прошли этот ранг																								
+TIER_OBJECTIVES		OBJECTIVES							ЦЕЛИ																								
+TIER_OBJECTIVE_FC		Full Combo							Полное комбо																								
+TIER_OBJECTIVE_MISS_X		Number of misses ≤ {0}							Количество промахов ≤ {0}																								
+TIER_OBJECTIVE_MAX_COMBO_X		Max combo ≥ {0}							Макс. комбо ≥ {0}																								
+TIER_OBJECTIVE_ACC_X		Accuracy ≥ {0}%							Точность {0}%																								
+TIER_OBJECTIVE_SCORE_X		Score ≥ {0}							Счёт ≥ {0}																								
+TIER_START		Start!							Начать!																								
 																																	
 																																	
 																																	

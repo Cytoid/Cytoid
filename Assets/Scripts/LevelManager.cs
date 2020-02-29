@@ -263,7 +263,7 @@ public class LevelManager
         {
             LoadedLocalLevels.Clear();
             loadedPaths.Clear();
-            Context.SpriteCache.DisposeTagged("LocalLevelCoverThumbnail");
+            Context.SpriteCache.DisposeTaggedSpritesInMemory("LocalLevelCoverThumbnail");
         }
 
         var jsonPaths = Directory.GetFiles(Context.DataPath, "level.json", SearchOption.AllDirectories).ToList();

@@ -22,30 +22,18 @@ public class Avatar : InteractableMonoBehavior
         });
     }
 
-    public void SetModel(OnlineUser user)
+    public async void SetModel(OnlineUser user)
     {
         avatarSpinner.IsSpinning = true;
-        var cachedSprite = Context.SpriteCache.GetCachedSprite("avatar://" + user.uid);
-        if (cachedSprite != null)
+        var sprite = await Context.SpriteCache.CacheSpriteInMemory(
+            user.avatarURL.WithSizeParam(128, 128), 
+            "Avatar",
+            useFileCache: true
+        );
+        avatarSpinner.IsSpinning = false;
+        if (sprite != null)
         {
-            SetAvatarSprite(cachedSprite);
-        }
-        else
-        {
-            var avatarUri = user.avatarURL.WithSizeParam(128, 128);
-            // Debug.Log("Downloading avatar from " + avatarUri);
-            RestClient.Get(new RequestHelper
-            {
-                Uri = avatarUri,
-                DownloadHandler = new DownloadHandlerTexture(),
-                RedirectLimit = 10
-            }).Then(response =>
-            {
-                var texture = ((DownloadHandlerTexture) response.Request.downloadHandler).texture;
-                var sprite = texture.CreateSprite();
-                Context.SpriteCache.PutSprite("avatar://" + user.uid, "Avatar", sprite);
-                SetAvatarSprite(sprite);
-            }).Finally(() => avatarSpinner.IsSpinning = false);
+            SetAvatarSprite(sprite);
         }
         profileUrl = Context.WebsiteUrl + "/profile/" + user.uid;
     }

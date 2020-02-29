@@ -1,13 +1,13 @@
 ﻿using UnityEngine;
 using Object = UnityEngine.Object;
 
-public class DragHeadNoteClassicRenderer : ClassicNoteRenderer
+public class DragHeadClassicNoteRenderer : ClassicNoteRenderer
 {
     public DragHeadNote DragHeadNote => (DragHeadNote) Note;
     
     protected SpriteMask SpriteMask;
 
-    public DragHeadNoteClassicRenderer(DragHeadNote dragHeadNote) : base(dragHeadNote)
+    public DragHeadClassicNoteRenderer(DragHeadNote dragHeadNote) : base(dragHeadNote)
     {
         SpriteMask = Note.transform.GetComponentInChildren<SpriteMask>();
     }

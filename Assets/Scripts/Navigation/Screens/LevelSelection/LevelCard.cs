@@ -29,6 +29,11 @@ public class LevelCard : InteractableMonoBehavior
     public void ScrollCellReturn()
     {
         loadedCover = false;
+        if (coverToken != null && !coverToken.IsCancellationRequested)
+        {
+            coverToken.Cancel();
+            coverToken = null;
+        }
         cover.sprite = null;
         cover.DOKill();
         cover.SetAlpha(0);
@@ -70,24 +75,27 @@ public class LevelCard : InteractableMonoBehavior
         LoadCover();
     }
 
-    private CancellationTokenSource cancelToken = new CancellationTokenSource();
+    private CancellationTokenSource coverToken;
 
     public async void LoadCover()
     {
         loadedCover = false;
         cover.DOKill();
         cover.SetAlpha(0);
-        if (cancelToken != null)
+        if (coverToken != null)
         {
-            if (!cancelToken.IsCancellationRequested) cancelToken.Cancel();
+            print("Cancelling previous token!!");
+            if (!coverToken.IsCancellationRequested) coverToken.Cancel();
+            coverToken = null;
         }
+        
         if (!((RectTransform) transform).IsVisible())
         {
-            cancelToken = new CancellationTokenSource();
+            coverToken = new CancellationTokenSource();
             try
             {
                 await UniTask.WaitUntil(() => ((RectTransform) transform).IsVisible(),
-                    cancellationToken: cancelToken.Token);
+                    cancellationToken: coverToken.Token);
                 await UniTask.DelayFrame(0);
             }
             catch
@@ -96,22 +104,22 @@ public class LevelCard : InteractableMonoBehavior
             }
         }
         
-        cancelToken = new CancellationTokenSource();
+        coverToken = new CancellationTokenSource();
         Sprite sprite = null;
         try
         {
             if (level.IsLocal)
             {
                 var path = "file://" + level.Path + LevelManager.CoverThumbnailFilename;
-                sprite = await Context.SpriteCache.CacheSprite(path, "LocalLevelCoverThumbnail",
-                    cancelToken.Token);
+                sprite = await Context.SpriteCache.CacheSpriteInMemory(path, "LocalLevelCoverThumbnail",
+                    coverToken.Token);
             }
             else
             {
                 var path = level.Meta.background.path.WithImageCdn().WithSizeParam(
                     Context.ThumbnailWidth, Context.ThumbnailHeight);
-                sprite = await Context.SpriteCache.CacheSprite(path, "RemoteLevelCoverThumbnail",
-                    cancelToken.Token, new []{ Context.ThumbnailWidth, Context.ThumbnailHeight });
+                sprite = await Context.SpriteCache.CacheSpriteInMemory(path, "RemoteLevelCoverThumbnail",
+                    coverToken.Token, new []{ Context.ThumbnailWidth, Context.ThumbnailHeight }, true);
             }
         }
         catch
@@ -138,6 +146,8 @@ public class LevelCard : InteractableMonoBehavior
                 }
             }
         }
+
+        coverToken = null;
     }
 
     private bool ignoreNextPointerUp;

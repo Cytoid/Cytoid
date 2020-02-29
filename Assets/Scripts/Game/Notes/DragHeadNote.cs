@@ -7,7 +7,9 @@ public class DragHeadNote : Note
 {
     protected override NoteRenderer CreateRenderer()
     {
-        return new DragHeadNoteClassicRenderer(this);
+        return Game.Config.UseClassicStyle
+            ? (NoteRenderer) new DragHeadClassicNoteRenderer(this)
+            : new DragHeadDefaultNoteRenderer(this);
     }
 
     // Drag head is constantly moving from drag note to drag note

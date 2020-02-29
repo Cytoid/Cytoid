@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 3705549436981060210}
   - component: {fileID: 3705549436981060211}
   - component: {fileID: 3705549436981060221}
+  - component: {fileID: 7416312345160397490}
   m_Layer: 5
   m_Name: CommunityHomeSection
   m_TagString: Untagged
@@ -95,6 +96,18 @@ MonoBehaviour:
   titleText: {fileID: 3705549438436565286}
   levelCardHolder: {fileID: 3705549439107077142}
   viewMoreButton: {fileID: 8402345231724468147}
+--- !u!114 &7416312345160397490
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3705549436981060209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31f6a0ba801343f3a4a9d3fb3a8022d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &3705549438436565285
 GameObject:
   m_ObjectHideFlags: 0

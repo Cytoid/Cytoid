@@ -591,6 +591,7 @@ GameObject:
   - component: {fileID: 6529087675108353988}
   - component: {fileID: 6529087675108353991}
   - component: {fileID: 3171350341311594999}
+  - component: {fileID: -8198327515343482648}
   m_Layer: 5
   m_Name: SelectPreferenceElement
   m_TagString: Untagged
@@ -673,6 +674,18 @@ MonoBehaviour:
   title: {fileID: 6529087673550452896}
   description: {fileID: 6529087674750710293}
   caretSelect: {fileID: 6529087675469626314}
+--- !u!114 &-8198327515343482648
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6529087675108353985}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31f6a0ba801343f3a4a9d3fb3a8022d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6529087675469626308
 GameObject:
   m_ObjectHideFlags: 0

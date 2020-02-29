@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1610847395866861273}
   - component: {fileID: 1610847395866861272}
   - component: {fileID: 4429216544690857113}
+  - component: {fileID: 2205265939525267318}
   m_Layer: 5
   m_Name: PillRadioGroupPreferenceElement
   m_TagString: Untagged
@@ -94,6 +95,18 @@ MonoBehaviour:
   title: {fileID: 1610847397580252780}
   description: {fileID: 1610847396792637993}
   radioGroup: {fileID: 993003229734465873}
+--- !u!114 &2205265939525267318
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1610847395866861270}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31f6a0ba801343f3a4a9d3fb3a8022d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1610847396669320713
 GameObject:
   m_ObjectHideFlags: 0

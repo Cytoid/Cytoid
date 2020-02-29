@@ -16,7 +16,14 @@ using Object = System.Object;
 
 public static class CommonExtensions
 {
-    
+
+    public static TSource MinBy<TSource, TMin>(
+        this IEnumerable<TSource> source,
+        Func<TSource, TMin> selector)
+    {
+        return source.Select(it => (selector(it), it)).Min().Item2;
+    }
+
     public static void SetLayerRecursively(this GameObject go, int layerNumber)
     {
         foreach (var trans in go.GetComponentsInChildren<Transform>(true))
@@ -250,7 +257,8 @@ public static class CommonExtensions
 
     public static Rect GetScreenSpaceRect(this RectTransform rectTransform)
     {
-        var canvas = rectTransform.GetComponentInParent<Canvas>();
+        var canvas = rectTransform.GetComponent<Canvas>();
+        if (canvas == null) canvas = rectTransform.GetComponentInParent<Canvas>();
         var camera = canvas.worldCamera;
         var corners = new Vector3[4];
         rectTransform.GetWorldCorners(corners);
@@ -442,6 +450,11 @@ public static class CommonExtensions
         var position = transform.position;
         position = new Vector3(position.x, position.y, z);
         transform.position = position;
+    }
+    
+    public static void SetLocalScale(this Transform transform, float xyz)
+    {
+        transform.localScale = new Vector3(xyz, xyz, xyz);
     }
 
     public static void SetLocalScaleX(this Transform transform, float x)

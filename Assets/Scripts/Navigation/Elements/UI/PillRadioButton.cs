@@ -13,20 +13,12 @@ public class PillRadioButton : RadioButton
     [GetComponent] public PulseElement pulseElement;
 
     public Color activeTextColor = Color.black;
-    
-    private static Font regularFont;
-    private static Font boldFont;
 
     private void Awake()
     {
         image = GetComponent<ProceduralImage>();
         pulseElement = GetComponent<PulseElement>();
         label.fontStyle = FontStyle.Normal;
-        if (regularFont == null)
-        {
-            regularFont = Resources.Load<Font>("Fonts/Nunito-Regular");
-            boldFont = Resources.Load<Font>("Fonts/Nunito-Bold");
-        }
     }
 
     private void Start()
@@ -63,7 +55,7 @@ public class PillRadioButton : RadioButton
         base.Select(pulse);
         if (pulse) pulseElement.Pulse();
         image.BorderWidth = 0;
-        label.font = boldFont;
+        label.font = Context.FontManager.BoldFont;
         label.DOColor(activeTextColor, 0.2f).SetEase(Ease.OutCubic);
     }
 
@@ -71,7 +63,7 @@ public class PillRadioButton : RadioButton
     {
         base.Unselect();
         image.BorderWidth = 2;
-        label.font = regularFont;
+        label.font = Context.FontManager.RegularFont;
         label.DOColor(Color.white, 0.2f).SetEase(Ease.OutCubic);
     }
 }

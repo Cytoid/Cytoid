@@ -58,8 +58,17 @@ public class DragLineElement : MonoBehaviour
             var note = game.Notes[fromNoteModel.id];
             if (!note.IsCleared)
             {
-                var fill = ((ClassicNoteRenderer) note.Renderer).Fill;
-                spriteRenderer.color = spriteRenderer.color.WithAlpha(fill.enabled ? fill.color.a : 0);
+                if (note.Renderer is ClassicNoteRenderer classicNoteRenderer)
+                {
+                    var fill = classicNoteRenderer.Fill;
+                    spriteRenderer.color = spriteRenderer.color.WithAlpha(fill.enabled ? fill.color.a : 0);
+                }
+                else
+                {
+                    var f = 1 - note.TimeUntilStart / (note.Model.start_time - note.Model.intro_time);
+                    f = Mathf.Clamp01(f);
+                    spriteRenderer.color = Color.white.WithAlpha(f);
+                }
             }
         }
 

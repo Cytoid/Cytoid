@@ -1,14 +1,14 @@
 ﻿using System.Linq.Expressions;
 using UnityEngine;
 
-public class LongHoldNoteClassicRenderer : HoldNoteClassicRenderer
+public class LongHoldClassicNoteRenderer : HoldClassicNoteRenderer
 {
     public SpriteRenderer Line2;
     public SpriteRenderer CompletedLine2;
 
     private readonly float orthographicSize = Camera.main.orthographicSize;
 
-    public LongHoldNoteClassicRenderer(LongHoldNote holdNote) : base(holdNote) => Expression.Empty();
+    public LongHoldClassicNoteRenderer(LongHoldNote holdNote) : base(holdNote) => Expression.Empty();
 
     protected override void InitializeHoldComponents()
     {

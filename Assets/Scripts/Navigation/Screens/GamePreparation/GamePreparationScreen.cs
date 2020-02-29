@@ -381,7 +381,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
                 await UniTask.WaitUntil(() => coverSprite != null);
             }
 
-            Context.SpriteCache.PutSprite("game://cover", "GameCover", coverSprite);
+            Context.SpriteCache.PutSpriteInMemory("game://cover", "GameCover", coverSprite);
             coverSprite = null; // Prevent sprite being unloaded by UnloadCoverSprite()
 
             Context.SelectedMods = Context.LocalPlayer.EnabledMods;

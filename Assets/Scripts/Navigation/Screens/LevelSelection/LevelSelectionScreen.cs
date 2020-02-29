@@ -223,7 +223,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
     {
         if (from == this)
         {
-            Context.SpriteCache.DisposeTagged("LocalLevelCoverThumbnail");
+            Context.SpriteCache.DisposeTaggedSpritesInMemory("LocalLevelCoverThumbnail");
             scrollRect.ClearCells();
             if (to is MainMenuScreen)
             {

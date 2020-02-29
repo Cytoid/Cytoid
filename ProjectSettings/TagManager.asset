@@ -9,6 +9,7 @@ TagManager:
   - Early
   - Late
   - Note
+  - FontManager
   layers:
   - Default
   - TransparentFX

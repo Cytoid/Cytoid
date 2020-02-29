@@ -13,6 +13,7 @@ public class GameConfig
     public Color GlobalRingColorOverride;
     public readonly Dictionary<NoteType, Color[]> GlobalFillColorsOverride = new Dictionary<NoteType, Color[]>();
 
+    public bool UseClassicStyle = false;
     public float NoteSizeMultiplier;
     public readonly Dictionary<NoteType, float> NoteSizes = new Dictionary<NoteType, float>();
     public readonly Dictionary<NoteType, float> NoteHitboxSizes = new Dictionary<NoteType, float>();
@@ -108,22 +109,15 @@ public class GameConfig
         Context.UpdateGraphicsQuality();
     }
 
-    public bool IsAlternativeColor(ChartModel.Note note)
-    {
-        var alt = note.direction > 0;
-        if (note.is_forward) alt = !alt;
-        return alt;
-    }
-
     public Color GetRingColor(ChartModel.Note note)
     {
-        return IsAlternativeColor(note) ? NoteRingColors[(NoteType) note.type][0] : NoteRingColors[(NoteType) note.type][1];
+        return note.UseAlternativeColor() ? NoteRingColors[(NoteType) note.type][0] : NoteRingColors[(NoteType) note.type][1];
     }
 
     public Color GetFillColor(ChartModel.Note note)
     {
         if ((NoteType) note.type == NoteType.DragChild) return GetRingColor(note); // Special case: drag child
-        return IsAlternativeColor(note) ? NoteFillColors[(NoteType) note.type][0] : NoteFillColors[(NoteType) note.type][1];
+        return note.UseAlternativeColor() ? NoteFillColors[(NoteType) note.type][0] : NoteFillColors[(NoteType) note.type][1];
     }
 
     public Color GetRingColorOverride(ChartModel.Note note)

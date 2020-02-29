@@ -32,6 +32,8 @@ public class NoteRenderer
         return Collider.OverlapPoint(pos);
     }
 
+    public CircleCollider2D GetCollider() => Collider;
+
     public virtual void Cleanup() => Expression.Empty();
     
 }

@@ -6,10 +6,12 @@ using DG.Tweening;
 using Polyglot;
 using Tayx.Graphy;
 using UniRx.Async;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.SocialPlatforms;
+using UnityEngine.UI;
 
 public class Context : SingletonMonoBehavior<Context>
 {
@@ -36,6 +38,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static AudioManager AudioManager;
     public static ScreenManager ScreenManager;
     
+    public static FontManager FontManager = new FontManager();
     public static LevelManager LevelManager = new LevelManager();
     public static SpriteCache SpriteCache = new SpriteCache();
 
@@ -79,6 +82,8 @@ public class Context : SingletonMonoBehavior<Context>
 
     private async void InitializeApplication()
     {
+        FontManager.LoadFonts();
+        
         var audioConfig = AudioSettings.GetConfiguration();
         DefaultDspBufferSize = audioConfig.dspBufferSize;
         
@@ -132,12 +137,14 @@ public class Context : SingletonMonoBehavior<Context>
 
         SelectedMods = new HashSet<Mod>(LocalPlayer.EnabledMods);
 
+        OnLanguageChanged.AddListener(FontManager.UpdateSceneTexts);
         Localization.Instance.SelectLanguage((Language) LocalPlayer.Language);
+        OnLanguageChanged.Invoke();
 
         if (SceneManager.GetActiveScene().name == "Game")
         {
             // Load test level
-            await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/encopda.grandescape.mafu/level.json" });
+            await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/tar1412.iwannabeit/level.json" });
             SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
             SelectedDifficulty = Difficulty.Extreme;
             SelectedMods.Remove(Mod.Auto);
@@ -145,14 +152,14 @@ public class Context : SingletonMonoBehavior<Context>
         else
         {
             await UniTask.WaitUntil(() => ScreenManager != null);
-            if (true)
+            if (false)
             {
                 ScreenManager.ChangeScreen(InitializationScreen.Id, ScreenTransition.None);
             }
             
-            if (false)
+            if (true)
             {
-                ScreenManager.ChangeScreen(CommunityLevelSelectionScreen.Id, ScreenTransition.None);
+                ScreenManager.ChangeScreen(TierSelectionScreen.Id, ScreenTransition.None);
             }
             
             if (false)
@@ -178,7 +185,7 @@ public class Context : SingletonMonoBehavior<Context>
         graphyManager = GraphyManager.Instance;
         UpdateProfilerDisplay();
     }
-    
+
     public static void PreSceneChanged(string prev, string next)
     {
         if (prev == "Navigation" && next == "Game")
@@ -216,6 +223,8 @@ public class Context : SingletonMonoBehavior<Context>
                 LoopAudioPlayer.Instance.PlayMainLoopAudio();
             }
         }
+
+        FontManager.UpdateSceneTexts();
     }
 
     public static void Vibrate()
@@ -268,6 +277,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static void UpdateProfilerDisplay()
     {
         print("Profiler display: " + LocalPlayer.DisplayProfiler);
+        if (graphyManager == null) return;
         if (LocalPlayer.DisplayProfiler)
         {
             graphyManager.Enable();

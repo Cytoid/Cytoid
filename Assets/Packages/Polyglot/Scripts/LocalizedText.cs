@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,6 +9,7 @@ namespace Polyglot
     [RequireComponent(typeof(Text))]
     public class LocalizedText : LocalizedTextComponent<Text>
     {
+        
         protected override void SetText(Text text, string value)
         {
             if (text == null)
@@ -15,8 +17,11 @@ namespace Polyglot
                 Debug.LogWarning("Missing Text Component on " + gameObject, gameObject);
                 return;
             }
-
-            text.text = Regex.Unescape(value); // EDIT: Cytoid
+            
+            // EDIT: Cytoid
+            text.text = Regex.Unescape(value);
+            text.verticalOverflow = VerticalWrapMode.Overflow;
+            // End of EDIT
         }
 
         protected override void UpdateAlignment(Text text, LanguageDirection direction)

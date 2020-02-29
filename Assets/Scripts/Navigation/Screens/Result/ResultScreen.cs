@@ -86,7 +86,7 @@ public class ResultScreen : Screen, ScreenChangeListener
         // Load translucent cover
         var image = TranslucentCover.Instance.image;
         image.color = Color.black;
-        var sprite = Context.SpriteCache.GetCachedSprite("game://cover");
+        var sprite = Context.SpriteCache.GetCachedSpriteFromMemory("game://cover");
         if (sprite == null)
         {
             var path = "file://" + Context.SelectedLevel.Path + Context.SelectedLevel.Meta.background.path;
@@ -392,7 +392,7 @@ public class ResultScreen : Screen, ScreenChangeListener
         if (from == this)
         {
             // Dispose game cover
-            Context.SpriteCache.DisposeTagged("GameCover");
+            Context.SpriteCache.DisposeTaggedSpritesInMemory("GameCover");
         }
     }
 }

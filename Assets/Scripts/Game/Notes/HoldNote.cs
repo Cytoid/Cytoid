@@ -9,9 +9,13 @@ public class HoldNote : Note
     public float HoldProgress { get; protected set; }
     public List<int> HoldingFingers { get; } = new List<int>(2);
 
+    private bool playedHitSoundAtBegin;
+
     protected override NoteRenderer CreateRenderer()
     {
-        return new HoldNoteClassicRenderer(this);
+        return Game.Config.UseClassicStyle
+            ? (NoteRenderer) new HoldClassicNoteRenderer(this)
+            : new HoldDefaultNoteRenderer(this);
     }
 
     protected override void OnGameUpdate()
@@ -21,6 +25,12 @@ public class HoldNote : Note
         {
             HeldDuration = Game.Time - HoldingStartTime;
             HoldProgress = (Game.Time - Model.start_time) / Model.Duration;
+            
+            if (!playedHitSoundAtBegin && Context.LocalPlayer.HoldHitSoundTiming.Let(it => it == (int) HoldHitSoundTiming.Begin || it == (int) HoldHitSoundTiming.Both))
+            {
+                playedHitSoundAtBegin = true;
+                PlayHitSound();
+            }
 
             // Already completed?
             if (Game.Time >= Model.end_time)

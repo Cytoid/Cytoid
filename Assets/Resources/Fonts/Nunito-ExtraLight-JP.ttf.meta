@@ -1,0 +1,25 @@
+fileFormatVersion: 2
+guid: 36ca29d3d00ca994f91976f58f9d4d36
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: Nunito ExtraLight
+  fontNames:
+  - Nunito ExtraLight
+  - Rounded Mplus 1c
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: d5e1fc43f0edd4200b3a5bf2319ccbc9, type: 3}
+  - {fileID: 12800000, guid: f30b05fea7c6e45e6a82b44023ece78f, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

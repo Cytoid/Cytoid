@@ -2,6 +2,8 @@
 {
     protected override NoteRenderer CreateRenderer()
     {
-        return new LongHoldNoteClassicRenderer(this);
+        return Game.Config.UseClassicStyle
+            ? (NoteRenderer) new LongHoldClassicNoteRenderer(this)
+            : new LongHoldClassicNoteRenderer(this);
     }
 }

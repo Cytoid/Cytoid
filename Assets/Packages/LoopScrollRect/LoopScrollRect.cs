@@ -38,12 +38,15 @@ namespace UnityEngine.UI
         public bool reverseDirection = false;
         [Tooltip("Rubber scale for outside")]
         public float rubberScale = 1;
-
-        protected int itemTypeStart = 0;
-        protected int itemTypeEnd = 0;
-
+        
+        // EDIT: Cytoid
         public int StartItemIndex => itemTypeStart;
         public int EndItemIndex => itemTypeEnd;
+        public float thresholdMultiplier = 1.5f;
+        // End of EDIT
+        
+        protected int itemTypeStart = 0;
+        protected int itemTypeEnd = 0;
 
         protected abstract float GetSize(RectTransform item);
         protected abstract float GetDimension(Vector2 vector);
@@ -103,7 +106,7 @@ namespace UnityEngine.UI
                 return m_ContentConstraintCount;
             }
         }
-        
+
         // the first line
         int StartLine
         {
@@ -336,6 +339,18 @@ namespace UnityEngine.UI
             StopAllCoroutines();
             StartCoroutine(ScrollToCellCoroutine(index, speed));
         }
+        
+        // EDIT: Cytoid
+        protected virtual float GetTopPadding()
+        {
+            return 0;
+        }
+
+        protected virtual float GetBottomPadding()
+        {
+            return 0;
+        }
+        // End of EDIT
 
         IEnumerator ScrollToCellCoroutine(int index, float speed)
         {
@@ -360,7 +375,7 @@ namespace UnityEngine.UI
                         var m_ItemBounds = GetBounds4Item(index);
                         var offset = 0.0f;
                         if (directionSign == -1)
-                            offset = reverseDirection ? (m_ViewBounds.min.y - m_ItemBounds.min.y) : (m_ViewBounds.max.y - m_ItemBounds.max.y);
+                            offset = reverseDirection ? (m_ViewBounds.min.y - m_ItemBounds.min.y) + GetBottomPadding() : (m_ViewBounds.max.y - m_ItemBounds.max.y) - GetTopPadding(); // EDIT: Cytoid
                         else if (directionSign == 1)
                             offset = reverseDirection ? (m_ItemBounds.max.x - m_ViewBounds.max.x) : (m_ItemBounds.min.x - m_ViewBounds.min.x);
                         // check if we cannot move on
@@ -474,7 +489,7 @@ namespace UnityEngine.UI
             m_Content.anchoredPosition = pos;
         }
 
-        public void RefillCells(int offset = 0)
+        public void RefillCells(int offset = 0, bool fillViewRect = false)
         {
             if (!Application.isPlaying || prefabSource == null)
                 return;
@@ -498,12 +513,23 @@ namespace UnityEngine.UI
                 sizeToFill = viewRect.rect.size.y;
             else
                 sizeToFill = viewRect.rect.size.x;
-            
-            while(sizeToFill > sizeFilled)
+
+            float itemSize = 0;
+
+            while (sizeToFill > sizeFilled)
             {
                 float size = reverseDirection ? NewItemAtStart() : NewItemAtEnd();
                 if(size <= 0) break;
+                else itemSize = size;
                 sizeFilled += size;
+            }
+
+            if (fillViewRect && itemSize > 0 && sizeFilled < sizeToFill)
+            {
+                int itemsToAddCount = (int)((sizeToFill - sizeFilled) / itemSize);        //calculate how many items can be added above the offset, so it still is visible in the view
+                int newOffset = offset - itemsToAddCount;
+                if (newOffset < 0) newOffset = 0;
+                if (newOffset != offset) RefillCells(newOffset);                 //refill again, with the new offset value, and now with fillViewRect disabled.
             }
 
             Vector2 pos = m_Content.anchoredPosition;
@@ -528,7 +554,7 @@ namespace UnityEngine.UI
                 newItem.SetAsFirstSibling();
                 size = Mathf.Max(GetSize(newItem), size);
             }
-            threshold = Mathf.Max(threshold, size * 1.5f);
+            threshold = Mathf.Max(threshold, size * thresholdMultiplier); // EDIT: Cytoid
 
             if (!reverseDirection)
             {
@@ -595,7 +621,7 @@ namespace UnityEngine.UI
                     break;
                 }
             }
-            threshold = Mathf.Max(threshold, size * 1.5f);
+            threshold = Mathf.Max(threshold, size * thresholdMultiplier); // EDIT: Cytoid
 
             if (reverseDirection)
             {
@@ -643,7 +669,7 @@ namespace UnityEngine.UI
         private RectTransform InstantiateNextItem(int itemIdx)
         {            
             RectTransform nextItem = prefabSource.GetObject().transform as RectTransform;
-			nextItem.transform.SetParent(content, false);
+            nextItem.transform.SetParent(content, false);
             nextItem.gameObject.SetActive(true);
             dataSource.ProvideData(nextItem, itemIdx);
             return nextItem;
@@ -1304,6 +1330,15 @@ namespace UnityEngine.UI
             Vector2 offset = Vector2.zero;
             if (m_MovementType == MovementType.Unrestricted)
                 return offset;
+            if (m_MovementType == MovementType.Clamped)
+            {
+                if (totalCount < 0)
+                    return offset;
+                if (GetDimension(delta) < 0 && itemTypeStart > 0)
+                    return offset;
+                if (GetDimension(delta) > 0 && itemTypeEnd < totalCount)
+                    return offset;
+            }
 
             Vector2 min = m_ContentBounds.min;
             Vector2 max = m_ContentBounds.max;

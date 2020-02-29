@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Threading;
 using Proyecto26;
 using UniRx.Async;
@@ -19,19 +20,20 @@ public class SpriteCache
         {"Avatar", 100}
     };
 
-    private readonly Dictionary<string, List<Entry>> taggedCache = new Dictionary<string, List<Entry>>();
-    private readonly Dictionary<string, Entry> cache = new Dictionary<string, Entry>();
+    private readonly Dictionary<string, List<Entry>> taggedMemoryCache = new Dictionary<string, List<Entry>>();
+    private readonly Dictionary<string, Entry> memoryCache = new Dictionary<string, Entry>();
+    private readonly HashSet<string> isLoading = new HashSet<string>();
 
-    public Sprite GetCachedSprite(string path)
+    public Sprite GetCachedSpriteFromMemory(string path)
     {
-        if (cache.ContainsKey(path))
+        if (memoryCache.ContainsKey(path))
         {
-            var entry = cache[path];
+            var entry = memoryCache[path];
             if (entry.Sprite != null)
             {
                 // Update priority
-                taggedCache[entry.Tag].Remove(entry);
-                taggedCache[entry.Tag].Add(entry);
+                taggedMemoryCache[entry.Tag].Remove(entry);
+                taggedMemoryCache[entry.Tag].Add(entry);
                 return entry.Sprite;
             }
         }
@@ -39,44 +41,81 @@ public class SpriteCache
         return null;
     }
 
-    public bool HasCachedSprite(string path) => GetCachedSprite(path) != null;
+    public bool HasCachedSpriteInMemory(string path) => GetCachedSpriteFromMemory(path) != null;
+    private const bool debug = false;
 
-    public async UniTask<Sprite> CacheSprite(string path, string tag, CancellationToken cancellationToken = default,
-        int[] fitCropSize = default)
+    public async UniTask<Sprite> CacheSpriteInMemory(string path, string tag, CancellationToken cancellationToken = default,
+        int[] fitCropSize = default, bool useFileCache = false)
     {
-        if (!taggedCache.ContainsKey(tag)) taggedCache[tag] = new List<Entry>();
+        if (!taggedMemoryCache.ContainsKey(tag)) taggedMemoryCache[tag] = new List<Entry>();
 
-        bool isLoading;
-        var cachedSprite = GetCachedSprite(path);
+        var cachedSprite = GetCachedSpriteFromMemory(path);
         if (cachedSprite != null) return cachedSprite;
-        isLoading = cache.ContainsKey(path);
 
         // Currently loading
-        if (isLoading)
+        if (isLoading.Contains(path))
         {
-            await UniTask.WaitUntil(() => GetCachedSprite(path) != null, cancellationToken: cancellationToken);
-            return GetCachedSprite(path);
+            if (debug) Debug.Log($"SpriteCache: Already loading {path}. Waiting...");
+            await UniTask.WaitUntil(() => !isLoading.Contains(path), cancellationToken: cancellationToken);
+            if (debug) Debug.Log($"SpriteCache: Wait {path} complete.");
+            return await CacheSpriteInMemory(path, tag, cancellationToken, fitCropSize, useFileCache);
         }
-
-        if (cache.ContainsKey(path))
-        {
-            Dispose(cache[path].Sprite);
-            taggedCache[tag].Remove(cache[path]);
-            cache.Remove(path);
-        }
-        else
+        
+        if (!memoryCache.ContainsKey(path))
         {
             CheckIfExceedTagLimit(tag);
         }
 
+        if (debug) Debug.Log($"SpriteCache: Started loading {path}.");
+        isLoading.Add(path);
+
         var time = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
         Sprite sprite;
-        using (var request = UnityWebRequestTexture.GetTexture(path))
+        var hasFileCache = false;
+        string fileCachePath = null;
+        if (useFileCache)
+        {
+            fileCachePath = GetCacheFilePath(path);
+            hasFileCache = File.Exists(fileCachePath);
+
+            if (!hasFileCache)
+            {
+                using (var request = UnityWebRequest.Get(path))
+                {
+                    request.downloadHandler =
+                        new DownloadHandlerFile(fileCachePath).Also(it => it.removeFileOnAbort = true);
+                    await request.SendWebRequest();
+                    if (cancellationToken != default && cancellationToken.IsCancellationRequested)
+                    {
+                        isLoading.Remove(path);
+                        return null;
+                    }
+
+                    if (request.isNetworkError || request.isHttpError)
+                    {
+                        // TODO: Neo, fix your image CDN :)
+                        if (request.responseCode != 422)
+                        {
+                            Debug.LogError($"SpriteCache: Failed to download {path}");
+                            Debug.LogError(request.error);
+                            isLoading.Remove(path);
+                            return null;
+                        }
+                    }
+                    if (debug) Debug.Log($"SpriteCache: Saved {path} to {fileCachePath}");
+                }
+
+                hasFileCache = true;
+            }
+        }
+        
+        using (var request = UnityWebRequestTexture.GetTexture(hasFileCache ? ("file://" + fileCachePath) : path))
         {
             await request.SendWebRequest();
             if (cancellationToken != default && cancellationToken.IsCancellationRequested)
             {
+                isLoading.Remove(path);
                 return null;
             }
 
@@ -85,14 +124,19 @@ public class SpriteCache
                 // TODO: Neo, fix your image CDN :)
                 if (request.responseCode != 422)
                 {
-                    Debug.LogError($"SpriteCache: Failed to load {path}");
+                    Debug.LogError($"SpriteCache: Failed to load {(hasFileCache ? fileCachePath : path)}");
                     Debug.LogError(request.error);
+                    isLoading.Remove(path);
                     return null;
                 }
             }
 
             var coverTexture = DownloadHandlerTexture.GetContent(request);
-            if (coverTexture == null) return null;
+            if (coverTexture == null)
+            {
+                isLoading.Remove(path);
+                return null;
+            }
 
             // Fit crop
             // TODO: For some reasons, the texture read would be black unless I do stupid I/O like this...
@@ -127,53 +171,56 @@ public class SpriteCache
                     if (cancellationToken != default && cancellationToken.IsCancellationRequested)
                     {
                         File.Delete(innerPath);
+                        isLoading.Remove(path);
                         return null;
                     }
                 }
                 if (cancellationToken != default && cancellationToken.IsCancellationRequested)
                 {
                     File.Delete(innerPath);
+                    isLoading.Remove(path);
                     return null;
                 }
                 File.Delete(innerPath);
             }
 
             sprite = coverTexture.CreateSprite();
-            cache[path] = new Entry {Key = path, Sprite = sprite, Tag = tag};
-            taggedCache[tag].Add(cache[path]);
+            memoryCache[path] = new Entry {Key = path, Sprite = sprite, Tag = tag};
+            taggedMemoryCache[tag].Add(memoryCache[path]);
         }
 
         time = DateTimeOffset.Now.ToUnixTimeMilliseconds() - time;
-        // Debug.Log($"SpriteCache: Loaded {path} in {time}ms");
+        if (debug) Debug.Log($"SpriteCache: Loaded {path} in {time}ms");
 
+        isLoading.Remove(path);
         return sprite;
     }
 
-    public void PutSprite(string path, string tag, Sprite sprite)
+    public void PutSpriteInMemory(string path, string tag, Sprite sprite)
     {
-        if (!taggedCache.ContainsKey(tag)) taggedCache[tag] = new List<Entry>();
+        if (!taggedMemoryCache.ContainsKey(tag)) taggedMemoryCache[tag] = new List<Entry>();
 
-        if (cache.ContainsKey(path))
+        if (memoryCache.ContainsKey(path))
         {
-            Dispose(cache[path].Sprite);
-            taggedCache[tag].Remove(cache[path]);
-            cache.Remove(path);
+            Dispose(memoryCache[path].Sprite);
+            taggedMemoryCache[tag].Remove(memoryCache[path]);
+            memoryCache.Remove(path);
         }
         else
         {
             CheckIfExceedTagLimit(tag);
         }
 
-        cache[path] = new Entry {Key = path, Sprite = sprite, Tag = tag};
-        taggedCache[tag].Add(cache[path]);
+        memoryCache[path] = new Entry {Key = path, Sprite = sprite, Tag = tag};
+        taggedMemoryCache[tag].Add(memoryCache[path]);
     }
 
-    public void DisposeTagged(string tag)
+    public void DisposeTaggedSpritesInMemory(string tag)
     {
-        if (!taggedCache.ContainsKey(tag)) taggedCache[tag] = new List<Entry>();
+        if (!taggedMemoryCache.ContainsKey(tag)) taggedMemoryCache[tag] = new List<Entry>();
 
         var removals = new List<string>();
-        foreach (var pair in cache)
+        foreach (var pair in memoryCache)
         {
             if (pair.Value.Tag == tag)
             {
@@ -182,41 +229,63 @@ public class SpriteCache
             }
         }
 
-        removals.ForEach(it => cache.Remove(it));
-        taggedCache[tag] = new List<Entry>();
+        removals.ForEach(it => memoryCache.Remove(it));
+        taggedMemoryCache[tag] = new List<Entry>();
     }
 
-    public void DisposeAll()
+    public void DisposeAllInMemory()
     {
-        foreach (var pair in cache)
+        foreach (var pair in memoryCache)
         {
             Dispose(pair.Value.Sprite);
         }
 
-        cache.Clear();
-        taggedCache.Clear();
+        memoryCache.Clear();
+        taggedMemoryCache.Clear();
     }
 
     private void CheckIfExceedTagLimit(string tag)
     {
-        if (tagLimits.ContainsKey(tag) && taggedCache[tag].Count > tagLimits[tag])
+        if (tagLimits.ContainsKey(tag) && taggedMemoryCache[tag].Count > tagLimits[tag])
         {
-            var exceeded = taggedCache[tag].Count - tagLimits[tag];
+            var exceeded = taggedMemoryCache[tag].Count - tagLimits[tag];
             for (var i = 0; i < exceeded; i++)
             {
-                var entry = taggedCache[tag][i];
+                var entry = taggedMemoryCache[tag][i];
                 Dispose(entry.Sprite);
-                cache.Remove(entry.Key);
+                memoryCache.Remove(entry.Key);
             }
 
-            taggedCache[tag].RemoveRange(0, exceeded);
+            taggedMemoryCache[tag].RemoveRange(0, exceeded);
         }
     }
 
     private void Dispose(Sprite sprite)
     {
-        Object.Destroy(sprite.texture);
-        Object.Destroy(sprite);
+        // May fail because multiple cache may refer to the same sprite
+        try
+        {
+            Object.Destroy(sprite.texture);
+            Object.Destroy(sprite);
+        }
+        catch (Exception ignore)
+        {
+            // ignored
+        }
+    }
+
+    private string GetCacheFilePath(string uri)
+    {
+        uri = uri
+            .Replace("https://", "")
+            .Replace("http://", "")
+            .Replace("?", "~")
+            .Replace("&", ".")
+            .Replace("%", ".");
+        var path = Path.Combine(Application.temporaryCachePath, uri);
+        var dirPath = Path.GetDirectoryName(path);
+        Directory.CreateDirectory(dirPath);
+        return path;
     }
 
     public class Entry

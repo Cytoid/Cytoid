@@ -84,17 +84,54 @@ public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveLi
         UseChildrenListeners();
     }
 
-    public void UseChildrenListeners()
+    public void RegisterEvents(object obj)
     {
-        UseChildrenListener<ScreenInitializedListener>(onScreenInitialized, it => it.OnScreenInitialized);
-        UseChildrenListener<ScreenBecameActiveListener>(onScreenBecameActive, it => it.OnScreenBecameActive);
-        UseChildrenListener<ScreenPostActiveListener>(onScreenPostActive, it => it.OnScreenPostActive);
-        UseChildrenListener<ScreenUpdateListener>(onScreenUpdate, it => it.OnScreenUpdate);
-        UseChildrenListener<ScreenBecameInactiveListener>(onScreenBecameInactive, it => it.OnScreenBecameInactive);
-        UseChildrenListener<ScreenDestroyedListener>(onScreenDestroyed, it => it.OnScreenDestroyed);
+        AddListener<ScreenInitializedListener>(obj, onScreenInitialized, it => it.OnScreenInitialized);
+        AddListener<ScreenBecameActiveListener>(obj, onScreenBecameActive, it => it.OnScreenBecameActive);
+        AddListener<ScreenPostActiveListener>(obj, onScreenPostActive, it => it.OnScreenPostActive);
+        AddListener<ScreenUpdateListener>(obj, onScreenUpdate, it => it.OnScreenUpdate);
+        AddListener<ScreenBecameInactiveListener>(obj, onScreenBecameInactive, it => it.OnScreenBecameInactive);
+        AddListener<ScreenDestroyedListener>(obj, onScreenDestroyed, it => it.OnScreenDestroyed);
     }
 
-    private void UseChildrenListener<T>(UnityEvent unityEvent, Func<T, UnityAction> use)
+    public void UnregisterEvents(object obj)
+    {
+        RemoveListener<ScreenInitializedListener>(obj, onScreenInitialized, it => it.OnScreenInitialized);
+        RemoveListener<ScreenBecameActiveListener>(obj, onScreenBecameActive, it => it.OnScreenBecameActive);
+        RemoveListener<ScreenPostActiveListener>(obj, onScreenPostActive, it => it.OnScreenPostActive);
+        RemoveListener<ScreenUpdateListener>(obj, onScreenUpdate, it => it.OnScreenUpdate);
+        RemoveListener<ScreenBecameInactiveListener>(obj, onScreenBecameInactive, it => it.OnScreenBecameInactive);
+        RemoveListener<ScreenDestroyedListener>(obj, onScreenDestroyed, it => it.OnScreenDestroyed);
+    }
+
+    public void UseChildrenListeners()
+    {
+        AddChildrenListener<ScreenInitializedListener>(onScreenInitialized, it => it.OnScreenInitialized);
+        AddChildrenListener<ScreenBecameActiveListener>(onScreenBecameActive, it => it.OnScreenBecameActive);
+        AddChildrenListener<ScreenPostActiveListener>(onScreenPostActive, it => it.OnScreenPostActive);
+        AddChildrenListener<ScreenUpdateListener>(onScreenUpdate, it => it.OnScreenUpdate);
+        AddChildrenListener<ScreenBecameInactiveListener>(onScreenBecameInactive, it => it.OnScreenBecameInactive);
+        AddChildrenListener<ScreenDestroyedListener>(onScreenDestroyed, it => it.OnScreenDestroyed);
+    }
+    
+    private void AddListener<T>(object obj, UnityEvent unityEvent, Func<T, UnityAction> use)
+    {
+        if (obj is T it)
+        {
+            unityEvent.RemoveListener(use(it));
+            unityEvent.AddListener(use(it));
+        }
+    }
+    
+    private void RemoveListener<T>(object obj, UnityEvent unityEvent, Func<T, UnityAction> use)
+    {
+        if (obj is T it)
+        {
+            unityEvent.RemoveListener(use(it));
+        }
+    }
+
+    private void AddChildrenListener<T>(UnityEvent unityEvent, Func<T, UnityAction> use)
     {
         GetComponentsInChildren<T>(true).Where(it => (object) it != (object) this).ToList().ForEach(it =>
         {

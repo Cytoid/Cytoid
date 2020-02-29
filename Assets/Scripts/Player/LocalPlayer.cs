@@ -63,7 +63,7 @@ public class LocalPlayer
     public int HoldHitSoundTiming
     {
         get => PlayerPrefs.GetInt("HoldHitSoundTiming", (int) global::HoldHitSoundTiming.Both);
-        set => PlayerPrefs.GetInt("HoldHitSoundTiming", value);
+        set => PlayerPrefs.SetInt("HoldHitSoundTiming", value);
     }
     
     // Bounded by -0.5~0.5.

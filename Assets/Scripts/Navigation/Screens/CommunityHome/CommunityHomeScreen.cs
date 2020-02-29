@@ -97,7 +97,7 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
     
     public override void OnScreenBecameInactive()
     {
-        base.OnScreenBecameActive();
+        base.OnScreenBecameInactive();
         savedScrollPosition = scrollRect.verticalNormalizedPosition;
     }
 
@@ -192,7 +192,7 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
         if (from == this && to.GetId() == MainMenuScreen.Id)
         {
             // Clear community cache
-            Context.SpriteCache.DisposeTagged("RemoteLevelCoverThumbnail");
+            Context.SpriteCache.DisposeTaggedSpritesInMemory("RemoteLevelCoverThumbnail");
             
             searchInputField.SetTextWithoutNotify("");
             savedContent = null;

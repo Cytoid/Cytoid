@@ -31,7 +31,7 @@ public class InitializationScreen : Screen
         Context.LevelManager.OnLevelInstallProgress.RemoveListener(OnLevelInstallProgress);
         
         Context.LevelManager.OnLevelLoadProgress.AddListener(OnLevelLoadProgress);
-        await Context.LevelManager.LoadAllFromDataPath();
+        await Context.LevelManager.LoadAllInDirectory();
         Context.LevelManager.OnLevelLoadProgress.RemoveListener(OnLevelLoadProgress);
 
         spinnerElement.gameObject.SetActive(false);

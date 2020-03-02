@@ -22,7 +22,7 @@ public class TierStageCard : InteractableMonoBehavior
     private CancellationTokenSource actionToken;
     private Vector2 pressPosition;
 
-    public void SetModel(Level level)
+    public void SetModel(Level level, ColorGradient gradient)
     {
         this.level = level;
         
@@ -31,40 +31,28 @@ public class TierStageCard : InteractableMonoBehavior
         titleLocalized.text = level.Meta.title_localized;
         titleLocalized.gameObject.SetActive(!string.IsNullOrEmpty(level.Meta.title_localized));
 
-        //difficultyball
+        difficultyBall.SetModel(Difficulty.Parse(level.Meta.charts[0].type), level.Meta.charts[0].difficulty);
+        overlayGradient.SetGradient(gradient);
 
         LayoutFixer.Fix(transform);
 
         LoadCover();
     }
 
-    private CancellationTokenSource cancelToken = new CancellationTokenSource();
+    private CancellationTokenSource coverToken = new CancellationTokenSource();
 
     public async void LoadCover()
     {
         loadedCover = false;
         cover.DOKill();
         cover.SetAlpha(0);
-        if (cancelToken != null)
+        if (coverToken != null
+            && !coverToken.IsCancellationRequested)
         {
-            if (!cancelToken.IsCancellationRequested) cancelToken.Cancel();
+            coverToken.Cancel();
         }
-        if (!((RectTransform) transform).IsVisible())
-        {
-            cancelToken = new CancellationTokenSource();
-            try
-            {
-                await UniTask.WaitUntil(() => ((RectTransform) transform).IsVisible(),
-                    cancellationToken: cancelToken.Token);
-                await UniTask.DelayFrame(0);
-            }
-            catch
-            {
-                return;
-            }
-        }
-        
-        cancelToken = new CancellationTokenSource();
+
+        coverToken = new CancellationTokenSource();
         Sprite sprite = null;
         try
         {
@@ -72,14 +60,14 @@ public class TierStageCard : InteractableMonoBehavior
             {
                 var path = "file://" + level.Path + LevelManager.CoverThumbnailFilename;
                 sprite = await Context.SpriteCache.CacheSpriteInMemory(path, "LocalLevelCoverThumbnail",
-                    cancelToken.Token);
+                    coverToken.Token);
             }
             else
             {
                 var path = level.Meta.background.path.WithImageCdn().WithSizeParam(
                     Context.ThumbnailWidth, Context.ThumbnailHeight);
                 sprite = await Context.SpriteCache.CacheSpriteInMemory(path, "RemoteLevelCoverThumbnail",
-                    cancelToken.Token, new []{ Context.ThumbnailWidth, Context.ThumbnailHeight }, useFileCache: true);
+                    coverToken.Token, new []{ Context.ThumbnailWidth, Context.ThumbnailHeight }, useFileCache: true);
             }
         }
         catch

@@ -30,6 +30,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static readonly UnityEvent OnLanguageChanged = new UnityEvent();
     
     public static string DataPath;
+    public static string TierDataPath;
     public static string iOSTemporaryInboxPath;
     public static int InitialWidth;
     public static int InitialHeight;
@@ -37,7 +38,8 @@ public class Context : SingletonMonoBehavior<Context>
     
     public static AudioManager AudioManager;
     public static ScreenManager ScreenManager;
-    
+
+    public static Library Library = new Library();
     public static FontManager FontManager = new FontManager();
     public static LevelManager LevelManager = new LevelManager();
     public static SpriteCache SpriteCache = new SpriteCache();
@@ -54,6 +56,14 @@ public class Context : SingletonMonoBehavior<Context>
     public static Difficulty SelectedDifficulty = Difficulty.Easy;
     public static Difficulty PreferredDifficulty = Difficulty.Easy;
     public static HashSet<Mod> SelectedMods = new HashSet<Mod>();
+    public static UserTier SelectedTier
+    {
+        get => selectedTier;
+        set
+        {
+            selectedTier = value;
+        }
+    } 
     public static bool WillCalibrate;
 
     public static GameResult LastGameResult;
@@ -62,6 +72,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static OnlinePlayer OnlinePlayer = new OnlinePlayer();
 
     private static Level selectedLevel;
+    private static UserTier selectedTier;
     private static GraphyManager graphyManager;
     private static Stack<string> navigationScreenHistory = new Stack<string>();
 
@@ -134,6 +145,9 @@ public class Context : SingletonMonoBehavior<Context>
 #if UNITY_EDITOR
         Application.runInBackground = true;
 #endif
+
+        TierDataPath = Path.Combine(Application.persistentDataPath, ".tiers");
+        Directory.CreateDirectory(TierDataPath);
 
         SelectedMods = new HashSet<Mod>(LocalPlayer.EnabledMods);
 

@@ -416,6 +416,7 @@ GameObject:
   - component: {fileID: 9134242188748902600}
   - component: {fileID: 9134242188748902645}
   - component: {fileID: 2494530172309988151}
+  - component: {fileID: 8061377030352461999}
   m_Layer: 5
   m_Name: Dialog
   m_TagString: Untagged
@@ -544,6 +545,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a9ed4aa929642d5aca0992a28e2ed9e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  canvas: {fileID: 8061377030352461999}
   canvasGroup: {fileID: 9134242188748902601}
   messageText: {fileID: 9134242190260404018}
   progressHolder: {fileID: 9134242189166512999}
@@ -564,6 +566,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 31f6a0ba801343f3a4a9d3fb3a8022d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!223 &8061377030352461999
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9134242188748902607}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 0
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 98
+  m_TargetDisplay: 0
 --- !u!1 &9134242188891055896
 GameObject:
   m_ObjectHideFlags: 0

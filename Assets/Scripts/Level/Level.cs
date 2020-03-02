@@ -3,6 +3,8 @@ using System;
 public class Level
 {
     public bool IsLocal;
+    public bool IsLibrary;
+    public bool IsTier;
     public LevelMeta Meta;
     public string Id => Meta.id;
 
@@ -22,9 +24,10 @@ public class Level
 
     private DateTime playedDate;
     
-    public Level(string path, LevelMeta meta, DateTime addedDate, DateTime playedDate)
+    public Level(string path, bool isLibrary, LevelMeta meta, DateTime addedDate, DateTime playedDate)
     {
         IsLocal = true;
+        IsLibrary = isLibrary;
         PackagePath = $"{Context.ApiBaseUrl}/levels/{meta.id}/resources";
         Path = path;
         Meta = meta;
@@ -35,6 +38,7 @@ public class Level
     public Level(string packagePath, LevelMeta meta)
     {
         IsLocal = false;
+        IsLibrary = false;
         PackagePath = packagePath;
         Meta = meta;
     }

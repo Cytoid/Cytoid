@@ -11,6 +11,7 @@ public class Dialog : MonoBehaviour
 {
     public DialogUpdateEvent onUpdate = new DialogUpdateEvent();
 
+    [GetComponent] public Canvas canvas;
     [GetComponent] public CanvasGroup canvasGroup;
     public Text messageText;
     public Transform progressHolder;
@@ -89,6 +90,8 @@ public class Dialog : MonoBehaviour
 
     protected virtual void Awake()
     {
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = 98;
         canvasGroup.alpha = 1;
         canvasGroup.interactable = true;
         canvasGroup.blocksRaycasts = true;

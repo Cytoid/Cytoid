@@ -362,27 +362,27 @@ GAME_RESUME		Resume		Continuar			Retomar		Возобновить									再開	
 TIER_TIERS	WORK IN PROGRESS, DON'T TRANSLATE BELOW ENTRIES YET!	Tiers							Ранги										段位														
 TIER_INFO_TITLE		What are <b>Tiers</b>?							Что такое <b>Ранги<b>?																								
 TIER_INFO_CONTENT		[To be written]							[Waiting for info]																								
-TIER_1		Tier 1							Ранг 1																								
-TIER_2		Tier 2							Ранг 2																								
-TIER_3		Tier 3							Ранг 3																								
-TIER_4		Tier 4							Ранг 4																								
-TIER_5		Tier 5							Ранг 5																								
-TIER_6		Tier 6							Ранг 6																								
-TIER_7		Tier 7							Ранг 7																								
-TIER_8		Tier 8							Ранг 8																								
-TIER_9		Tier 9							Ранг 9																								
-TIER_10		Tier 10							Ранг 10																								
-TIER_11		Chūden							Ранг 11																								
-TIER_12		Kaiden							Ранг 12																								
-TIER_COMPLETION_PERCENTAGE		{0}% of players have completed this tier							{0}% игроков прошли этот ранг																								
+TIER_LOCKED		Locked							Ранг 1																								
+TIER_NOT_DOWNLOADED		Not Downloaded							Ранг 2																								
+									Ранг 3																								
+									Ранг 4																								
+									Ранг 5																								
+									Ранг 6																								
+									Ранг 7																								
+									Ранг 8																								
+									Ранг 9																								
+									Ранг 10																								
+									Ранг 11																								
+TIER_REWARD_CHARACTER		REWARD CHARACTER							Ранг 12																								
+TIER_COMPLETION_PERCENTAGE		{0}% of players completed this tier							{0}% игроков прошли этот ранг																								
 TIER_OBJECTIVES		OBJECTIVES							ЦЕЛИ																								
-TIER_OBJECTIVE_FC		Full Combo							Полное комбо																								
-TIER_OBJECTIVE_MISS_X		Number of misses ≤ {0}							Количество промахов ≤ {0}																								
-TIER_OBJECTIVE_MAX_COMBO_X		Max combo ≥ {0}							Макс. комбо ≥ {0}																								
-TIER_OBJECTIVE_ACC_X		Accuracy ≥ {0}%							Точность {0}%																								
-TIER_OBJECTIVE_SCORE_X		Score ≥ {0}							Счёт ≥ {0}																								
+TIER_COMPLETION_RATE		COMPLETION RATE							Полное комбо																								
+									Количество промахов ≤ {0}																								
+									Макс. комбо ≥ {0}																								
+									Точность {0}%																								
+									Счёт ≥ {0}																								
 TIER_START		Start!							Начать!																								
-																																	
+TIER_DOWNLOAD		Download!																															
 																																	
 																																	
 																																	

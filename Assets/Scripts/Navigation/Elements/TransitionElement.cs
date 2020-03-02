@@ -40,6 +40,7 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
 
     public bool IsShown { get; protected set; }
     public bool IsInTransition { get; protected set; }
+    public bool IsEntering { get; protected set; }
 
     private Vector3 defaultAnchoredPosition;
     private Vector3 defaultScale;
@@ -72,14 +73,12 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
 
     public void Enter(bool waitForTransition = true, bool immediate = false)
     {
-        onEnterStarted.Invoke();
         StartTransition(true, enterFrom, enterMultiplier, enterDuration, enterDelay, enterEase, waitForTransition,
             immediate, () => onEnterCompleted.Invoke());
     }
 
     public void Leave(bool waitForTransition = true, bool immediate = false)
     {
-        onLeaveStarted.Invoke();
         StartTransition(false, leaveTo, leaveMultiplier, leaveDuration, leaveDelay, leaveEase, waitForTransition,
             immediate, () => onLeaveCompleted.Invoke());
     }
@@ -123,6 +122,7 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
 
         if (IsInTransition)
         {
+            if (toShow == IsEntering) return; // Cancel same operation
             if (waitForTransition)
             {
                 try
@@ -146,6 +146,7 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
         transitioning.Add(cancellationTokenSource);
 
         IsInTransition = true;
+        IsEntering = toShow;
 
         if (delay > 0)
         {
@@ -170,6 +171,7 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
 
         if (toShow)
         {
+            onEnterStarted.Invoke();
             switch (transition)
             {
                 case Transition.Top:
@@ -206,6 +208,7 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
         }
         else
         {
+            onLeaveStarted.Invoke();
             switch (transition)
             {
                 case Transition.Top:

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using DG.Tweening;
 using ICSharpCode.SharpZipLib.Zip;
 using Newtonsoft.Json;
 using Proyecto26;
@@ -257,7 +258,7 @@ public class LevelManager
         return true;
     }
 
-    public async UniTask LoadAllFromDataPath(bool clearExisting = true)
+    public async UniTask<List<Level>> LoadAllInDirectory(string directory = default, bool clearExisting = true)
     {
         if (clearExisting)
         {
@@ -266,10 +267,13 @@ public class LevelManager
             Context.SpriteCache.DisposeTaggedSpritesInMemory("LocalLevelCoverThumbnail");
         }
 
-        var jsonPaths = Directory.GetFiles(Context.DataPath, "level.json", SearchOption.AllDirectories).ToList();
+        if (directory == default) directory = Context.DataPath;
+        var jsonPaths = Directory.EnumerateDirectories(directory)
+            .SelectMany(it => Directory.EnumerateFiles(it, "level.json"))
+            .ToList();
         Debug.Log($"Found {jsonPaths.Count} levels");
 
-        await LoadFromMetadataFiles(jsonPaths);
+        return await LoadFromMetadataFiles(jsonPaths);
     }
 
     public async UniTask<List<Level>> LoadFromMetadataFiles(List<string> jsonPaths, bool forceReload = false)
@@ -328,14 +332,29 @@ public class LevelManager
                     continue;
                 }
 
-                var addedDate = Context.LocalPlayer.GetAddedDate(meta.id);
-                if (addedDate == default)
-                {
-                    addedDate = info.LastWriteTimeUtc;
-                    Context.LocalPlayer.SetAddedDate(meta.id, addedDate);
-                }
 
-                var level = new Level(path, meta, addedDate, Context.LocalPlayer.GetLastPlayedDate(meta.id));
+                var isLibrary = Context.Library.Levels.ContainsKey(meta.id);
+                DateTime addedDate;
+                if (isLibrary)
+                {
+                    addedDate = Context.Library.Levels[meta.id].addedDate;
+                }
+                else
+                {
+                    addedDate = Context.LocalPlayer.GetAddedDate(meta.id);
+                    if (addedDate == default)
+                    {
+                        addedDate = info.LastWriteTimeUtc;
+                        Context.LocalPlayer.SetAddedDate(meta.id, addedDate);
+                    }
+                }
+                
+                var level = new Level(path, 
+                    isLibrary,
+                    meta,
+                    addedDate,
+                    Context.LocalPlayer.GetLastPlayedDate(meta.id)
+                );
 
                 LoadedLocalLevels[meta.id] = level;
                 loadedPaths.Add(jsonPath);
@@ -390,7 +409,7 @@ public class LevelManager
                     }
                 }
 
-                Debug.Log($"Loaded {index + 1}/{jsonPaths.Count}: ({meta.id})");
+                Debug.Log($"Loaded {index + 1}/{jsonPaths.Count}: {meta.id}");
             }
             catch (Exception e)
             {
@@ -486,6 +505,194 @@ public class LevelManager
 
         return updated;
     }
+
+    public void DownloadAndUnpackLevelDialog(
+        Level level,
+        string directory = default,
+        bool allowAbort = true,
+        Action onDownloadSucceeded = default,
+        Action onDownloadAborted = default,
+        Action onDownloadFailed = default,
+        Action<Level> onUnpackSucceeded = default,
+        Action onUnpackFailed = default
+    )
+    {
+        if (!Context.OnlinePlayer.IsAuthenticated)
+        {
+            Toast.Next(Toast.Status.Failure, "TOAST_SIGN_IN_REQUIRED".Get());
+            return;
+        }
+        if (directory == default) directory = Context.DataPath;
+        if (onDownloadSucceeded == default) onDownloadSucceeded = () => { };
+        if (onDownloadAborted == default) onDownloadAborted = () => { };
+        if (onDownloadFailed == default) onDownloadFailed = () => { };
+        if (onUnpackSucceeded == default) onUnpackSucceeded = _ => { };
+        if (onUnpackFailed == default) onUnpackFailed = () => { };
+
+        var dialog = Dialog.Instantiate();
+        dialog.Message = "DIALOG_DOWNLOADING".Get();
+        dialog.UseProgress = true;
+        dialog.UsePositiveButton = false;
+        dialog.UseNegativeButton = allowAbort;
+
+        ulong downloadedSize;
+        var totalSize = 0UL;
+        var downloading = false;
+        var aborted = false;
+        var targetFile = $"{Application.temporaryCachePath}/Downloads/{level.Id}.cytoidlevel";
+        var destFolder = $"{directory}/{level.Id}";
+
+        if (level.IsLocal)
+        {
+            // Write to the local folder instead
+            destFolder = level.Path;
+        }
+
+        // Download detail first, then package
+        RequestHelper req;
+        var downloadHandler = new DownloadHandlerFile(targetFile)
+        {
+            removeFileOnAbort = true
+        };
+        RestClient.Get<OnlineLevel>(req = new RequestHelper
+        {
+            Uri = $"{Context.ApiBaseUrl}/levels/{level.Id}"
+        }).Then(it =>
+        {
+            if (aborted)
+            {
+                throw new OperationCanceledException();
+            }
+
+            totalSize = (ulong) it.size;
+            downloading = true;
+            Debug.Log("Package path: " + level.PackagePath);
+            // Get resources
+            return RestClient.Get<OnlineLevelResources>(req = new RequestHelper
+            {
+                Uri = level.PackagePath,
+                Headers = Context.OnlinePlayer.GetJwtAuthorizationHeaders()
+            });
+        }).Then(res =>
+        {
+            if (aborted)
+            {
+                throw new OperationCanceledException();
+            }
+
+            Debug.Log("Asset path: " + res.package);
+            // Start download
+            return RestClient.Get(req = new RequestHelper
+            {
+                Uri = res.package,
+                DownloadHandler = downloadHandler,
+                WillParseBody = false
+            });
+        }).Then(async res =>
+        {
+            downloading = false;
+
+            try
+            {
+                onDownloadSucceeded();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+            }
+
+            dialog.OnNegativeButtonClicked = it => { };
+            dialog.UseNegativeButton = false;
+            dialog.Progress = 0;
+            dialog.Message = "DIALOG_UNPACKING".Get();
+            DOTween.To(() => dialog.Progress, value => dialog.Progress = value, 1f, 1f).SetEase(Ease.OutCubic);
+
+            var success = await Context.LevelManager.UnpackLevelPackage(targetFile, destFolder);
+            if (success)
+            {
+                try
+                {
+                    level =
+                        (await Context.LevelManager.LoadFromMetadataFiles(new List<string> {destFolder + "/level.json"}))
+                        .First();
+                    onUnpackSucceeded(level);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(e);
+                    onUnpackFailed();
+                }
+            }
+            else
+            {
+                try
+                {
+                    onUnpackFailed();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(e);
+                }
+            }
+
+            dialog.Close();
+            File.Delete(targetFile);
+        }).Catch(error =>
+        {
+            if (aborted || error is OperationCanceledException || (req != null && req.IsAborted))
+            {
+                try
+                {
+                    onDownloadAborted();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(e);
+                }
+            }
+            else
+            {
+                Debug.LogError(error);
+                try
+                {
+                    onDownloadFailed();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(e);
+                }
+            }
+
+            dialog.Close();
+        });
+
+        dialog.onUpdate.AddListener(it =>
+        {
+            if (!downloading) return;
+            if (totalSize > 0)
+            {
+                downloadedSize = req.DownloadedBytes;
+                it.Progress = downloadedSize * 1.0f / totalSize;
+                it.Message = "DIALOG_DOWNLOADING_X_Y".Get(downloadedSize.ToHumanReadableFileSize(),
+                    totalSize.ToHumanReadableFileSize());
+            }
+            else
+            {
+                it.Message = "DIALOG_DOWNLOADING".Get();
+            }
+        });
+        if (allowAbort)
+        {
+            dialog.OnNegativeButtonClicked = it =>
+            {
+                aborted = true;
+                req?.Abort();
+            };
+        }
+
+        dialog.Open();
+    }
+    
 }
 
 public class LevelEvent : UnityEvent<Level>

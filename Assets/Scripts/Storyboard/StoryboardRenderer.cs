@@ -47,7 +47,7 @@ namespace Cytoid.Storyboard
             UiSprites.Clear();
 
             // Clear sprite cache
-            Context.SpriteCache.DisposeTaggedSpritesInMemory("Storyboard");
+            Context.SpriteCache.DisposeTaggedSpritesInMemory(SpriteTag.Storyboard);
 
             // Initialize easers
             TextEaser = new TextEaser();
@@ -315,7 +315,7 @@ namespace Cytoid.Storyboard
             }
 
             var path = "file://" + Game.Level.Path + spritePath;
-            ui.sprite = await Context.SpriteCache.CacheSpriteInMemory(path, "Storyboard");
+            ui.sprite = await Context.SpriteCache.CacheSpriteInMemory(path, SpriteTag.Storyboard);
         }
 
         public void RecalculateTime<T>(Object<T> obj) where T : ObjectState

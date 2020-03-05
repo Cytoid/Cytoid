@@ -27,7 +27,7 @@ public class Avatar : InteractableMonoBehavior
         avatarSpinner.IsSpinning = true;
         var sprite = await Context.SpriteCache.CacheSpriteInMemory(
             user.avatarURL.WithSizeParam(128, 128), 
-            "Avatar",
+            SpriteTag.Avatar,
             useFileCache: true
         );
         avatarSpinner.IsSpinning = false;

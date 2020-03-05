@@ -6,13 +6,13 @@ public static class MockData
     public static Season Season = new Season
     {
         title = "2019.1",
-        tiers = new List<UserTier>
+        tiers = new List<Tier>
         {
-            new UserTier()
+            new Tier()
             {
                 completion = 2,
                 locked = false,
-                tier = new OnlineTier
+                data = new OnlineTier
                 {
                     name = "Dan 1",
                     completionPercentage = 0.923f,
@@ -58,11 +58,11 @@ public static class MockData
                     }
                 }
             },
-            new UserTier
+            new Tier
             {
                 completion = 1.877f,
                 locked = false,
-                tier = new OnlineTier
+                data = new OnlineTier
                 {
                     name = "Dan 2",
                     completionPercentage = 0.923f,
@@ -100,11 +100,11 @@ public static class MockData
                     },
                 }
             },
-            new UserTier
+            new Tier
             {
                 completion = 0,
                 locked = true,
-                tier = new OnlineTier
+                data = new OnlineTier
                 {
                     name = "Dan 3",
                     completionPercentage = 0.77f,

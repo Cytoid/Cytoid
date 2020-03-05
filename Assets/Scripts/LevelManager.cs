@@ -264,7 +264,7 @@ public class LevelManager
         {
             LoadedLocalLevels.Clear();
             loadedPaths.Clear();
-            Context.SpriteCache.DisposeTaggedSpritesInMemory("LocalLevelCoverThumbnail");
+            Context.SpriteCache.DisposeTaggedSpritesInMemory(SpriteTag.LocalCoverThumbnail);
         }
 
         if (directory == default) directory = Context.DataPath;
@@ -613,7 +613,7 @@ public class LevelManager
                 try
                 {
                     level =
-                        (await Context.LevelManager.LoadFromMetadataFiles(new List<string> {destFolder + "/level.json"}))
+                        (await Context.LevelManager.LoadFromMetadataFiles(new List<string> {destFolder + "/level.json"}, true))
                         .First();
                     onUnpackSucceeded(level);
                 }

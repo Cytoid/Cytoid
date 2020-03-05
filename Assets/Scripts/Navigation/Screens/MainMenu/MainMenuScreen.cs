@@ -41,7 +41,7 @@ public class MainMenuScreen : Screen
         freePlayText.transform.RebuildLayout();
         ProfileWidget.Instance.Enter();
 
-        Context.SpriteCache.DisposeTaggedSpritesInMemory("CharacterPreview");
+        Context.SpriteCache.DisposeTaggedSpritesInMemory(SpriteTag.CharacterThumbnail);
     }
 
 }

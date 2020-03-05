@@ -41,6 +41,8 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
     public bool IsShown { get; protected set; }
     public bool IsInTransition { get; protected set; }
     public bool IsEntering { get; protected set; }
+    
+    public bool BlocksRaycasts { get; set; }
 
     private Vector3 defaultAnchoredPosition;
     private Vector3 defaultScale;
@@ -51,9 +53,10 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
 
     private CancellationTokenSource waitingForTransition;
     private List<CancellationTokenSource> transitioning = new List<CancellationTokenSource>();
-
+    
     protected void Awake()
     {
+        BlocksRaycasts = canvasGroup.blocksRaycasts;
         if (hiddenOnStart)
         {
             canvasGroup.alpha = 0;
@@ -166,7 +169,7 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
         RevertToDefault();
 
         canvasGroup.alpha = toShow ? 0 : 1;
-        canvasGroup.blocksRaycasts = toShow;
+        canvasGroup.blocksRaycasts = toShow && BlocksRaycasts;
         canvasGroup.DOFade(toShow ? 1 : 0, duration);
 
         if (toShow)

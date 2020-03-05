@@ -3,8 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class GameState
+public sealed class GameState
 {
+    
+    public Level Level { get; protected set; }
+    
+    public Difficulty Difficulty { get; protected set; }
     
     public bool IsStarted { get; set; }
     
@@ -20,6 +24,9 @@ public class GameState
     public int NoteCount { get; }
 
     public Dictionary<int, NoteJudgement> Judgements { get; private set; } = new Dictionary<int, NoteJudgement>();
+
+    public Dictionary<NoteGrade, int> GradeCounts = new Dictionary<NoteGrade, int>();
+    
     public int ClearCount { get; private set; }
     public bool ShouldFail { get; private set; }
     
@@ -57,6 +64,8 @@ public class GameState
 
     public GameState(Game game, bool isRanked, IEnumerable<Mod> mods, double maxHealth)
     {
+        Level = game.Level;
+        Difficulty = game.Difficulty;
         IsRanked = isRanked;
         Mods = new HashSet<Mod>(mods);
         MaxHealth = maxHealth;
@@ -212,6 +221,18 @@ public class GameState
     public bool IsJudged(int noteId) => Judgements[noteId].IsJudged;
 
     public NoteJudgement GetJudgement(int noteId) => Judgements[noteId];
+
+    public void UpdateGradeCounts()
+    {
+        GradeCounts = new Dictionary<NoteGrade, int>
+        {
+            {NoteGrade.Perfect, Judgements.Count(it => it.Value.Grade == NoteGrade.Perfect)},
+            {NoteGrade.Great, Judgements.Count(it => it.Value.Grade == NoteGrade.Great)},
+            {NoteGrade.Good, Judgements.Count(it => it.Value.Grade == NoteGrade.Good)},
+            {NoteGrade.Bad, Judgements.Count(it => it.Value.Grade == NoteGrade.Bad)},
+            {NoteGrade.Miss, Judgements.Count(it => it.Value.Grade == NoteGrade.Miss)}
+        };
+    }
 
     #region Health Mods
 

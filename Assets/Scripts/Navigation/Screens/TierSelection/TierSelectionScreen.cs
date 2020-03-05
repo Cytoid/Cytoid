@@ -1,9 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using Newtonsoft.Json;
 using Proyecto26;
 using RSG;
 using UniRx;
@@ -18,16 +16,15 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
     public static Content SavedContent = new Content {season = MockData.Season};
 
     public LoopVerticalScrollRect scrollRect;
-    public RectTransform scrollRectAnchor;
     public TransitionElement lowerLeftColumn;
     public Text rewardCharacterName;
     public TransitionElement lowerRightColumn;
     public Text completionRateText;
     public GradientMeshEffect completionRateGradient;
-    public StartButton startButton;
+    public CircleButton startButton;
     
     public Vector2 ScreenCenter { get; private set; }
-    public UserTier SelectedTier { get; private set; }
+    public Tier SelectedTier { get; private set; }
 
     private TierCard selectedTierCard;
     
@@ -65,7 +62,7 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
     {
         base.OnScreenBecameActive();
         ProfileWidget.Instance.Enter();
-        ScreenCenter = scrollRectAnchor.GetScreenSpaceCenter();
+        ScreenCenter = new Vector2(UnityEngine.Screen.width / 2f, UnityEngine.Screen.height / 2f);
 
         SpinnerOverlay.Show();
         await Context.LevelManager.LoadAllInDirectory(Context.TierDataPath);
@@ -80,11 +77,9 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
             var list = it.ToList();
             foreach (var userTier in SavedContent.season.tiers)
             {
-                userTier.tier.stages = list;
+                userTier.data.stages = list;
             }
 
-            print(JsonConvert.SerializeObject(list));
-            print(JsonConvert.SerializeObject(SavedContent.season));
             OnContentLoaded(SavedContent);
             SpinnerOverlay.Hide();
         }).Catch(error => Debug.LogError(error.Response));
@@ -104,7 +99,7 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         scrollRect.ClearCells();
         
         scrollRect.totalCount = content.season.tiers.Count + 1;
-        var tiers = new List<UserTier>(content.season.tiers) {new UserTier {isScrollRectFix = true}};
+        var tiers = new List<Tier>(content.season.tiers) {new Tier {isScrollRectFix = true}};
         for (var i = 0; i < tiers.Count - 1; i++)
         {
             var tier = tiers[i];
@@ -112,9 +107,9 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
             var allUpToDate = true;
             for (var stage = 0; stage < 3; stage++)
             {
-                var level = tier.tier.stages[stage].ToLevel();
-                allUpToDate = allUpToDate && level.IsLocal && level.Meta.version == tier.tier.stages[stage].version;
-                tier.tier.localStages.Add(level);
+                var level = tier.data.stages[stage].ToLevel();
+                allUpToDate = allUpToDate && level.IsLocal && level.Meta.version == tier.data.stages[stage].version;
+                tier.data.localStages.Add(level);
             }
         }
 
@@ -166,21 +161,21 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         snapCoroutine = null;
     }
 
-    public void OnTierSelected(UserTier tier)
+    public void OnTierSelected(Tier tier)
     {
         SelectedTier = tier;
-        print("Selected tier " + (tier.tier.name));
+        print("Selected tier " + (tier.data.name));
 
-        if (tier.tier.character != null)
+        if (tier.data.character != null)
         {
             lowerLeftColumn.Enter();
-            rewardCharacterName.text = tier.tier.character.name;
+            rewardCharacterName.text = tier.data.character.name;
         }
 
         if (!tier.locked)
         {
             lowerRightColumn.Enter();
-            startButton.SetState(tier.StagesDownloaded ? StartButton.State.Start : StartButton.State.Download);
+            startButton.State = tier.StagesDownloaded ? CircleButtonState.Start : CircleButtonState.Download;
         }
     }
     
@@ -217,10 +212,10 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
 
     public async void DownloadAndUnpackStages()
     {
-        var newLocalStages = new List<Level>(SelectedTier.tier.localStages);
-        for (var index = 0; index < SelectedTier.tier.localStages.Count; index++)
+        var newLocalStages = new List<Level>(SelectedTier.data.localStages);
+        for (var index = 0; index < SelectedTier.data.localStages.Count; index++)
         {
-            var level = SelectedTier.tier.localStages[index];
+            var level = SelectedTier.data.localStages[index];
             if (level.IsLocal) continue;
             bool? error = null;
             Context.LevelManager.DownloadAndUnpackLevelDialog(
@@ -249,7 +244,7 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         {
             Toast.Next(Toast.Status.Success, "TOAST_SUCCESSFULLY_DOWNLOADED_TIER_DATA".Get());
         }
-        SelectedTier.tier.localStages = newLocalStages;
+        SelectedTier.data.localStages = newLocalStages;
 
         selectedTierCard.ScrollCellContent(SelectedTier);
         OnTierSelected(SelectedTier);

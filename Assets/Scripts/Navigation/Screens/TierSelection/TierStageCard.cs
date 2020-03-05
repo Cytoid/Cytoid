@@ -59,14 +59,14 @@ public class TierStageCard : InteractableMonoBehavior
             if (level.IsLocal)
             {
                 var path = "file://" + level.Path + LevelManager.CoverThumbnailFilename;
-                sprite = await Context.SpriteCache.CacheSpriteInMemory(path, "LocalLevelCoverThumbnail",
+                sprite = await Context.SpriteCache.CacheSpriteInMemory(path, SpriteTag.LocalCoverThumbnail,
                     coverToken.Token);
             }
             else
             {
                 var path = level.Meta.background.path.WithImageCdn().WithSizeParam(
                     Context.ThumbnailWidth, Context.ThumbnailHeight);
-                sprite = await Context.SpriteCache.CacheSpriteInMemory(path, "RemoteLevelCoverThumbnail",
+                sprite = await Context.SpriteCache.CacheSpriteInMemory(path, SpriteTag.OnlineCoverThumbnail,
                     coverToken.Token, new []{ Context.ThumbnailWidth, Context.ThumbnailHeight }, useFileCache: true);
             }
         }

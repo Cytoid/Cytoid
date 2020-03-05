@@ -56,23 +56,24 @@ public class Context : SingletonMonoBehavior<Context>
     public static Difficulty SelectedDifficulty = Difficulty.Easy;
     public static Difficulty PreferredDifficulty = Difficulty.Easy;
     public static HashSet<Mod> SelectedMods = new HashSet<Mod>();
-    public static UserTier SelectedTier
+    public static Tier SelectedTier
     {
         get => selectedTier;
         set
         {
             selectedTier = value;
         }
-    } 
+    }
     public static bool WillCalibrate;
 
-    public static GameResult LastGameResult;
+    public static GameState GameState;
+    public static TierState TierState;
 
     public static LocalPlayer LocalPlayer = new LocalPlayer();
     public static OnlinePlayer OnlinePlayer = new OnlinePlayer();
 
     private static Level selectedLevel;
-    private static UserTier selectedTier;
+    private static Tier selectedTier;
     private static GraphyManager graphyManager;
     private static Stack<string> navigationScreenHistory = new Stack<string>();
 
@@ -171,7 +172,7 @@ public class Context : SingletonMonoBehavior<Context>
                 ScreenManager.ChangeScreen(InitializationScreen.Id, ScreenTransition.None);
             }
             
-            if (true)
+            if (false)
             {
                 ScreenManager.ChangeScreen(TierSelectionScreen.Id, ScreenTransition.None);
             }
@@ -185,7 +186,7 @@ public class Context : SingletonMonoBehavior<Context>
                 ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.None);
             }
 
-            if (false)
+            if (true)
             {
                 // Load result
                 await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/suconh_typex.alice/level.json" });
@@ -224,17 +225,36 @@ public class Context : SingletonMonoBehavior<Context>
             WillCalibrate = false;
             // Restore history
             ScreenManager.History = new Stack<string>(navigationScreenHistory);
-            if (LastGameResult != null)
+
+            if (TierState != null)
             {
-                // Show result screen
-                ScreenManager.ChangeScreen(ResultScreen.Id, ScreenTransition.None, addToHistory: false);
-            }
-            else
+                if (TierState.Stages.Last().IsCompleted)
+                {
+                    // Show tier result screen
+                    ScreenManager.ChangeScreen(TierBreakScreen.Id, ScreenTransition.None, addToHistory: false);
+                }
+                else
+                {
+                    // Show game preparation screen
+                    ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.None);
+                    await UniTask.DelayFrame(5);
+                    LoopAudioPlayer.Instance.PlayMainLoopAudio();
+                }
+            } 
+            else if (GameState != null)
             {
-                // Show game preparation screen
-                ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.None);
-                await UniTask.DelayFrame(5);
-                LoopAudioPlayer.Instance.PlayMainLoopAudio();
+                if (GameState.IsCompleted)
+                {
+                    // Show result screen
+                    ScreenManager.ChangeScreen(ResultScreen.Id, ScreenTransition.None, addToHistory: false);
+                }
+                else
+                {
+                    // Show game preparation screen
+                    ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.None);
+                    await UniTask.DelayFrame(5);
+                    LoopAudioPlayer.Instance.PlayMainLoopAudio();
+                }
             }
         }
 
@@ -320,6 +340,18 @@ public class Context : SingletonMonoBehavior<Context>
                 UnityEngine.Screen.SetResolution((int) (InitialWidth * 0.5f),
                     (int) (InitialHeight * 0.5f), true);
                 break;
+        }
+    }
+
+    public static void SetMajorCanvasBlockRaycasts(bool blocksRaycasts)
+    {
+        if (ScreenManager.ActiveScreenId != null)
+        {
+            ScreenManager.ActiveScreen.CanvasGroup.blocksRaycasts = blocksRaycasts;
+        }
+        if (ProfileWidget.Instance != null)
+        {
+            ProfileWidget.Instance.canvasGroup.blocksRaycasts = blocksRaycasts;
         }
     }
 }

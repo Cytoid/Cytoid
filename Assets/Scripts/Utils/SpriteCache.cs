@@ -13,14 +13,14 @@ using Object = UnityEngine.Object;
 
 public class SpriteCache
 {
-    private static Dictionary<string, int> tagLimits = new Dictionary<string, int>
+    private static readonly Dictionary<SpriteTag, int> TagLimits = new Dictionary<SpriteTag, int>
     {
-        {"LocalLevelCoverThumbnail", 96},
-        {"RemoteLevelCoverThumbnail", 96},
-        {"Avatar", 100}
+        {SpriteTag.LocalCoverThumbnail, 96},
+        {SpriteTag.OnlineCoverThumbnail, 96},
+        {SpriteTag.Avatar, 100}
     };
 
-    private readonly Dictionary<string, List<Entry>> taggedMemoryCache = new Dictionary<string, List<Entry>>();
+    private readonly Dictionary<SpriteTag, List<Entry>> taggedMemoryCache = new Dictionary<SpriteTag, List<Entry>>();
     private readonly Dictionary<string, Entry> memoryCache = new Dictionary<string, Entry>();
     private readonly HashSet<string> isLoading = new HashSet<string>();
 
@@ -44,7 +44,7 @@ public class SpriteCache
     public bool HasCachedSpriteInMemory(string path) => GetCachedSpriteFromMemory(path) != null;
     private const bool debug = false;
 
-    public async UniTask<Sprite> CacheSpriteInMemory(string path, string tag, CancellationToken cancellationToken = default,
+    public async UniTask<Sprite> CacheSpriteInMemory(string path, SpriteTag tag, CancellationToken cancellationToken = default,
         int[] fitCropSize = default, bool useFileCache = false)
     {
         if (!taggedMemoryCache.ContainsKey(tag)) taggedMemoryCache[tag] = new List<Entry>();
@@ -196,7 +196,7 @@ public class SpriteCache
         return sprite;
     }
 
-    public void PutSpriteInMemory(string path, string tag, Sprite sprite)
+    public void PutSpriteInMemory(string path, SpriteTag tag, Sprite sprite)
     {
         if (!taggedMemoryCache.ContainsKey(tag)) taggedMemoryCache[tag] = new List<Entry>();
 
@@ -215,7 +215,7 @@ public class SpriteCache
         taggedMemoryCache[tag].Add(memoryCache[path]);
     }
 
-    public void DisposeTaggedSpritesInMemory(string tag)
+    public void DisposeTaggedSpritesInMemory(SpriteTag tag)
     {
         if (!taggedMemoryCache.ContainsKey(tag)) taggedMemoryCache[tag] = new List<Entry>();
 
@@ -244,11 +244,11 @@ public class SpriteCache
         taggedMemoryCache.Clear();
     }
 
-    private void CheckIfExceedTagLimit(string tag)
+    private void CheckIfExceedTagLimit(SpriteTag tag)
     {
-        if (tagLimits.ContainsKey(tag) && taggedMemoryCache[tag].Count > tagLimits[tag])
+        if (TagLimits.ContainsKey(tag) && taggedMemoryCache[tag].Count > TagLimits[tag])
         {
-            var exceeded = taggedMemoryCache[tag].Count - tagLimits[tag];
+            var exceeded = taggedMemoryCache[tag].Count - TagLimits[tag];
             for (var i = 0; i < exceeded; i++)
             {
                 var entry = taggedMemoryCache[tag][i];
@@ -291,7 +291,11 @@ public class SpriteCache
     public class Entry
     {
         public string Key;
-        public string Tag;
+        public SpriteTag Tag;
         public Sprite Sprite;
     }
+}
+
+public enum SpriteTag {
+    Avatar, PlayerAvatar, LocalCoverThumbnail, OnlineCoverThumbnail, GameCover, CharacterThumbnail, Storyboard
 }

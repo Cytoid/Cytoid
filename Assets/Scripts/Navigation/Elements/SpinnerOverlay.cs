@@ -28,7 +28,7 @@ public class SpinnerOverlay : SingletonMonoBehavior<SpinnerOverlay>
             it.canvasGroup.interactable = true;
             it.canvasGroup.DOKill();
             it.canvasGroup.DOFade(1, 0.2f).SetEase(Ease.OutCubic);
-            Context.ScreenManager.ActiveScreen.CanvasGroup.blocksRaycasts = false;
+            Context.SetMajorCanvasBlockRaycasts(false);
         });
         if (onFullyShown != null)
         {
@@ -45,7 +45,7 @@ public class SpinnerOverlay : SingletonMonoBehavior<SpinnerOverlay>
             it.canvasGroup.interactable = false;
             it.canvasGroup.DOKill();
             it.canvasGroup.DOFade(0, 0.2f).SetEase(Ease.OutCubic);
-            Context.ScreenManager.ActiveScreen.CanvasGroup.blocksRaycasts = true;
+            Context.SetMajorCanvasBlockRaycasts(true);
         });
         if (onFullyHidden != null)
         {

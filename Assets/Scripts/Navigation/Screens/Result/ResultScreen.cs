@@ -33,18 +33,19 @@ public class ResultScreen : Screen, ScreenChangeListener
     public RatingTab ratingTab;
 
     public InteractableMonoBehavior shareButton;
+    public CircleButton nextButton;
+    public CircleButton retryButton;
     
-    private GameResult result;
     private bool uploadRecordSuccess;
+    private GameState gameState;
 
     public override string GetId() => Id;
 
     public override async void OnScreenInitialized()
     {
         base.OnScreenInitialized();
-        result = Context.LastGameResult;
-        Context.LastGameResult = null;
-        if (result == null)
+        gameState = Context.GameState;
+        if (gameState == null)
         {
             // Test mode
             Debug.Log("Result not set, entering test mode...");
@@ -53,7 +54,7 @@ public class ResultScreen : Screen, ScreenChangeListener
             Context.SelectedLevel = Context.LevelManager.LoadedLocalLevels.Values.First();
             Context.SelectedDifficulty = Difficulty.Parse(Context.LevelManager.LoadedLocalLevels.Values.First().Meta.charts[0].type);
             Context.LocalPlayer.PlayRanked = false;
-            result = new GameResult
+            /*result = new GameResult
             {
                 Score = 123,
                 Accuracy = 1.942353,
@@ -80,8 +81,22 @@ public class ResultScreen : Screen, ScreenChangeListener
                 rankingsTab.UpdateRankings(result.LevelId, result.ChartType.Id);
                 ratingTab.UpdateLevelRating(result.LevelId);
                 UploadRecord();
-            });
+            });*/
         }
+        Context.GameState = null;
+        
+        nextButton.State = CircleButtonState.Start;
+        nextButton.interactableMonoBehavior.onPointerClick.AddListener(_ =>
+        {
+            nextButton.StopPulsing();
+            Done();
+        });
+        retryButton.State = CircleButtonState.Retry;
+        retryButton.interactableMonoBehavior.onPointerClick.AddListener(_ =>
+        {
+            retryButton.StopPulsing();
+            RetryGame();
+        });
 
         // Load translucent cover
         var image = TranslucentCover.Instance.image;
@@ -109,19 +124,19 @@ public class ResultScreen : Screen, ScreenChangeListener
         image.DOColor(Color.white.WithAlpha(0), 0.4f);
 
         // Update performance info
-        scoreText.text = Mathf.FloorToInt((float) result.Score).ToString("D6");
-        accuracyText.text = "RESULT_X_ACCURACY".Get((Math.Floor(result.Accuracy * 100) / 100).ToString("0.00"));
-        if (Math.Abs(result.Accuracy - 100.0) < 0.000001)
+        scoreText.text = Mathf.FloorToInt((float) gameState.Score).ToString("D6");
+        accuracyText.text = "RESULT_X_ACCURACY".Get((Math.Floor(gameState.Accuracy * 100) / 100).ToString("0.00"));
+        if (Mathf.Approximately((float) gameState.Accuracy, 100.0f))
         {
             accuracyText.text = "RESULT_FULL_ACCURACY".Get();
         }
-        maxComboText.text = "RESULT_X_COMBO".Get(result.MaxCombo);
-        if (result.GradeCounts[NoteGrade.Bad] == 0 && result.GradeCounts[NoteGrade.Miss] == 0)
+        maxComboText.text = "RESULT_X_COMBO".Get(gameState.MaxCombo);
+        if (gameState.GradeCounts[NoteGrade.Bad] == 0 && gameState.GradeCounts[NoteGrade.Miss] == 0)
         {
             maxComboText.text = "RESULT_FULL_COMBO".Get();
         }
 
-        var scoreGrade = ScoreGrades.From(result.Score);
+        var scoreGrade = ScoreGrades.From(gameState.Score);
         gradeText.text = scoreGrade.ToString();
         gradeText.GetComponent<GradientMeshEffect>().SetGradient(scoreGrade.GetGradient());
         if (scoreGrade == ScoreGrade.MAX || scoreGrade == ScoreGrade.SSS)
@@ -133,50 +148,50 @@ public class ResultScreen : Screen, ScreenChangeListener
             scoreText.GetComponent<GradientMeshEffect>().enabled = false;
         }
 
-        standardMetricText.text = $"<b>Perfect</b> {result.GradeCounts[NoteGrade.Perfect]}    " +
-                                  $"<b>Great</b> {result.GradeCounts[NoteGrade.Great]}    " +
-                                  $"<b>Good</b> {result.GradeCounts[NoteGrade.Good]}    " +
-                                  $"<b>Bad</b> {result.GradeCounts[NoteGrade.Bad]}    " +
-                                  $"<b>Miss</b> {result.GradeCounts[NoteGrade.Miss]}";
-        advancedMetricText.text = $"<b>Early</b> {result.EarlyCount}    " +
-                                  $"<b>Late</b> {result.LateCount}    " +
-                                  $"<b>{"RESULT_AVG_TIMING_ERR".Get()}</b> {result.AverageTimingError:0.000}s    " +
-                                  $"<b>{"RESULT_STD_TIMING_ERR".Get()}</b> {result.StandardTimingError:0.000}s";
+        standardMetricText.text = $"<b>Perfect</b> {gameState.GradeCounts[NoteGrade.Perfect]}    " +
+                                  $"<b>Great</b> {gameState.GradeCounts[NoteGrade.Great]}    " +
+                                  $"<b>Good</b> {gameState.GradeCounts[NoteGrade.Good]}    " +
+                                  $"<b>Bad</b> {gameState.GradeCounts[NoteGrade.Bad]}    " +
+                                  $"<b>Miss</b> {gameState.GradeCounts[NoteGrade.Miss]}";
+        advancedMetricText.text = $"<b>Early</b> {gameState.EarlyCount}    " +
+                                  $"<b>Late</b> {gameState.LateCount}    " +
+                                  $"<b>{"RESULT_AVG_TIMING_ERR".Get()}</b> {gameState.AverageTimingError:0.000}s    " +
+                                  $"<b>{"RESULT_STD_TIMING_ERR".Get()}</b> {gameState.StandardTimingError:0.000}s";
         if (!Context.LocalPlayer.DisplayEarlyLateIndicators) advancedMetricText.text = "";
 
         // Increment local play count
-        Context.LocalPlayer.SetPlayCount(result.LevelId, result.ChartType.Id,
-            Context.LocalPlayer.GetPlayCount(result.LevelId, result.ChartType.Id) + 1);
+        Context.LocalPlayer.SetPlayCount(gameState.Level.Id, gameState.Difficulty.Id,
+            Context.LocalPlayer.GetPlayCount(gameState.Level.Id, gameState.Difficulty.Id) + 1);
 
         // Save performance to local
         var clearType = string.Empty;
-        if (result.Mods.Contains(Mod.AP)) clearType = "AP";
-        if (result.Mods.Contains(Mod.FC)) clearType = "FC";
-        if (result.Mods.Contains(Mod.Hard)) clearType = "Hard";
-        if (result.Mods.Contains(Mod.ExHard)) clearType = "ExHard";
+        if (gameState.Mods.Contains(Mod.AP)) clearType = "AP";
+        if (gameState.Mods.Contains(Mod.FC)) clearType = "FC";
+        if (gameState.Mods.Contains(Mod.Hard)) clearType = "Hard";
+        if (gameState.Mods.Contains(Mod.ExHard)) clearType = "ExHard";
 
-        if (!Context.LocalPlayer.HasPerformance(result.LevelId, result.ChartType.Id, Context.LocalPlayer.PlayRanked))
+        if (!Context.LocalPlayer.HasPerformance(gameState.Level.Id, gameState.Difficulty.Id, Context.LocalPlayer.PlayRanked))
         {
             newBestText.text = "RESULT_NEW".Get();
-            Context.LocalPlayer.SetBestPerformance(result.LevelId, result.ChartType.Id,
+            Context.LocalPlayer.SetBestPerformance(gameState.Level.Id, gameState.Difficulty.Id,
                 Context.LocalPlayer.PlayRanked,
                 new LocalPlayer.Performance
                 {
-                    Score = (int) result.Score, Accuracy = (float) result.Accuracy, ClearType = clearType
+                    Score = (int) gameState.Score, Accuracy = (float) gameState.Accuracy, ClearType = clearType
                 });
         }
         else
         {
-            var historicBest = Context.LocalPlayer.GetBestPerformance(result.LevelId,
-                result.ChartType.Id, Context.LocalPlayer.PlayRanked);
+            var historicBest = Context.LocalPlayer.GetBestPerformance(gameState.Level.Id,
+                gameState.Difficulty.Id, Context.LocalPlayer.PlayRanked);
             var newBest = new LocalPlayer.Performance
             {
                 Score = historicBest.Score, Accuracy = historicBest.Accuracy, ClearType = historicBest.ClearType
             };
-            if (result.Score > historicBest.Score)
+            if (gameState.Score > historicBest.Score)
             {
-                newBestText.text = $"+{Mathf.FloorToInt((float) (result.Score - historicBest.Score))}";
-                newBest.Score = (int) result.Score;
+                newBestText.text = $"+{Mathf.FloorToInt((float) (gameState.Score - historicBest.Score))}";
+                newBest.Score = (int) gameState.Score;
                 newBest.ClearType = clearType;
             }
             else
@@ -184,12 +199,12 @@ public class ResultScreen : Screen, ScreenChangeListener
                 newBestText.text = "";
             }
 
-            if (result.Accuracy > historicBest.Accuracy)
+            if (gameState.Accuracy > historicBest.Accuracy)
             {
-                newBest.Accuracy = (float) result.Accuracy;
+                newBest.Accuracy = (float) gameState.Accuracy;
             }
 
-            Context.LocalPlayer.SetBestPerformance(result.LevelId, result.ChartType.Id,
+            Context.LocalPlayer.SetBestPerformance(gameState.Level.Id, gameState.Difficulty.Id,
                 Context.LocalPlayer.PlayRanked, newBest);
         }
         
@@ -206,11 +221,11 @@ public class ResultScreen : Screen, ScreenChangeListener
         ProfileWidget.Instance.Enter();
         upperRightColumn.Enter();
 
-        ratingTab.UpdateLevelRating(result.LevelId)
+        ratingTab.UpdateLevelRating(gameState.Level.Id)
             .Then(it =>
             {
                 if (it == null) return;
-                if (Context.OnlinePlayer.IsAuthenticated && it.rating <= 0 && ScoreGrades.From(result.Score) >= ScoreGrade.A)
+                if (Context.OnlinePlayer.IsAuthenticated && it.rating <= 0 && ScoreGrades.From(gameState.Score) >= ScoreGrade.A)
                 {
                     // Invoke the rate dialog
                     ratingTab.rateLevelElement.rateButton.onPointerClick.Invoke(null);
@@ -228,7 +243,7 @@ public class ResultScreen : Screen, ScreenChangeListener
 
         if (Context.LocalPlayer.PlayRanked && !Context.OnlinePlayer.IsAuthenticated)
         {
-            rankingsTab.UpdateRankings(result.LevelId, result.ChartType.Id);
+            rankingsTab.UpdateRankings(gameState.Level.Id, gameState.Difficulty.Id);
         }
 
         LoopAudioPlayer.Instance.PlayResultLoopAudio();
@@ -288,25 +303,25 @@ public class ResultScreen : Screen, ScreenChangeListener
     public void UploadRecord()
     {
         rankingsTab.spinner.IsSpinning = true;
-        var uri = $"{Context.ApiBaseUrl}/levels/{result.LevelId}/charts/{result.ChartType.Id}/records";
+        var uri = $"{Context.ApiBaseUrl}/levels/{gameState.Level.Id}/charts/{gameState.Difficulty.Id}/records";
         Debug.Log("Posting to " + uri);
         RestClient.Post<UploadRecordResult>(new RequestHelper
         {
             Uri = uri,
             BodyString = JObject.FromObject(new UploadRecord
             {
-                score = (int) result.Score,
-                accuracy = double.Parse((result.Accuracy / 100.0).ToString("0.00000000")),
+                score = (int) gameState.Score,
+                accuracy = double.Parse((gameState.Accuracy / 100.0).ToString("0.00000000")),
                 details = new UploadRecord.Details
                 {
-                    perfect = result.GradeCounts[NoteGrade.Perfect],
-                    great = result.GradeCounts[NoteGrade.Great],
-                    good = result.GradeCounts[NoteGrade.Good],
-                    bad = result.GradeCounts[NoteGrade.Bad],
-                    miss = result.GradeCounts[NoteGrade.Miss],
-                    maxCombo = result.MaxCombo
+                    perfect = gameState.GradeCounts[NoteGrade.Perfect],
+                    great = gameState.GradeCounts[NoteGrade.Great],
+                    good = gameState.GradeCounts[NoteGrade.Good],
+                    bad = gameState.GradeCounts[NoteGrade.Bad],
+                    miss = gameState.GradeCounts[NoteGrade.Miss],
+                    maxCombo = gameState.MaxCombo
                 },
-                mods = result.Mods.Select(it => Enum.GetName(typeof(Mod), it)).ToList(),
+                mods = gameState.Mods.Select(it => Enum.GetName(typeof(Mod), it)).ToList(),
                 ranked = Context.LocalPlayer.PlayRanked,
             }).ToString(),
             Headers = Context.OnlinePlayer.GetJwtAuthorizationHeaders(),
@@ -316,7 +331,7 @@ public class ResultScreen : Screen, ScreenChangeListener
                 uploadRecordSuccess = true;
                 Toast.Next(Toast.Status.Success, "TOAST_PERFORMANCE_SYNCHRONIZED".Get());
                 EnterControls();
-                rankingsTab.UpdateRankings(result.LevelId, result.ChartType.Id);
+                rankingsTab.UpdateRankings(gameState.Level.Id, gameState.Difficulty.Id);
                 Context.OnlinePlayer.FetchProfile();
             }
         ).Catch(error =>
@@ -345,7 +360,7 @@ public class ResultScreen : Screen, ScreenChangeListener
             {
                 dialog.Close();
                 EnterControls();
-                rankingsTab.UpdateRankings(result.LevelId, result.ChartType.Id);
+                rankingsTab.UpdateRankings(gameState.Level.Id, gameState.Difficulty.Id);
                 Context.OnlinePlayer.FetchProfile();
             };
             dialog.Open();
@@ -392,7 +407,7 @@ public class ResultScreen : Screen, ScreenChangeListener
         if (from == this)
         {
             // Dispose game cover
-            Context.SpriteCache.DisposeTaggedSpritesInMemory("GameCover");
+            Context.SpriteCache.DisposeTaggedSpritesInMemory(SpriteTag.GameCover);
         }
     }
 }

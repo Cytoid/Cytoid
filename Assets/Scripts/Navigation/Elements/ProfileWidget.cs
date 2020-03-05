@@ -110,7 +110,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
             spinner.IsSpinning = true;
             var sprite = await Context.SpriteCache.CacheSpriteInMemory(
                 profile.user.avatarURL.WithSizeParam(512, 512), 
-                "UserAvatar",
+                SpriteTag.PlayerAvatar,
                 useFileCache: true
             );
             spinner.IsSpinning = false;

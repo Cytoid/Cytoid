@@ -22,19 +22,19 @@ public class OnlineTier
 }
 
 [Serializable]
-public class UserTier
+public class Tier
 {
     [JsonIgnore] public bool isScrollRectFix;
     [JsonIgnore] public int index;
-    public bool StagesDownloaded => tier.localStages.Count > 0 && tier.localStages.TrueForAll(it => it.IsLocal);
+    public bool StagesDownloaded => data.localStages.Count > 0 && data.localStages.TrueForAll(it => it.IsLocal);
     public bool locked;
     public float completion;
-    public OnlineTier tier;
+    [JsonProperty("tier")] public OnlineTier data;
 }
 
 [Serializable]
 public class Season
 {
     public string title;
-    public List<UserTier> tiers;
+    public List<Tier> tiers;
 }

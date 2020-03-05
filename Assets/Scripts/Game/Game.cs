@@ -170,6 +170,8 @@ public class Game : MonoBehaviour
         var maxHealth = chartMeta.difficulty * 75;
         if (maxHealth < 0) maxHealth = 1000;
         State = new GameState(this, isRanked, mods, maxHealth);
+        Context.GameState = State;
+        
         Config = new GameConfig(this) {IsCalibration = Context.WillCalibrate};
 
         // Touch handlers
@@ -443,7 +445,7 @@ public class Game : MonoBehaviour
         
         // Unload resources
         Context.AudioManager.Unload("Level");
-        Context.SpriteCache.DisposeTaggedSpritesInMemory("GameCover");
+        Context.SpriteCache.DisposeTaggedSpritesInMemory(SpriteTag.GameCover);
         
         onGameAborted.Invoke(this);
 
@@ -488,6 +490,7 @@ public class Game : MonoBehaviour
         print("Game completed");
 
         State.IsCompleted = true;
+        State.UpdateGradeCounts();
         inputController.DisableInput();
 
         onGameCompleted.Invoke(this);
@@ -523,31 +526,9 @@ public class Game : MonoBehaviour
         }
         else
         {
-            Context.LastGameResult = new GameResult
-            {
-                Score = State.Score,
-                Accuracy = State.Accuracy,
-                MaxCombo = State.MaxCombo,
-                Mods = new List<Mod>(State.Mods),
-                GradeCounts = new Dictionary<NoteGrade, int>
-                {
-                    {NoteGrade.Perfect, State.Judgements.Count(it => it.Value.Grade == NoteGrade.Perfect)},
-                    {NoteGrade.Great, State.Judgements.Count(it => it.Value.Grade == NoteGrade.Great)},
-                    {NoteGrade.Good, State.Judgements.Count(it => it.Value.Grade == NoteGrade.Good)},
-                    {NoteGrade.Bad, State.Judgements.Count(it => it.Value.Grade == NoteGrade.Bad)},
-                    {NoteGrade.Miss, State.Judgements.Count(it => it.Value.Grade == NoteGrade.Miss)}
-                },
-                EarlyCount = State.EarlyCount,
-                LateCount = State.LateCount,
-                AverageTimingError = State.AverageTimingError,
-                StandardTimingError = State.StandardTimingError,
-                LevelId = Level.Id,
-                LevelVersion = Level.Meta.version,
-                ChartType = Context.SelectedDifficulty
-            };
+            // TODO: Same as above
         }
         
-        Context.SpriteCache.DisposeTaggedSpritesInMemory("Game");
         sceneLoader.Activate();
     }
 

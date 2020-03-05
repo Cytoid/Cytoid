@@ -11,9 +11,7 @@ public class TierCard : MonoBehaviour
     [GetComponent] public Canvas canvas;
 
     public CharacterBackdrop characterBackdrop;
-    public Text titleText;
-    public Text completionPercentageText;
-    public GradientMeshEffect backgroundGradient;
+    public TierGradientPane gradientPane;
     public TierStageCard[] stageCards;
     public GameObject lockedOverlayRoot;
     public Image lockedOverlayIcon;
@@ -26,7 +24,7 @@ public class TierCard : MonoBehaviour
     public Image characterImage;
     public Image cardOverlayImage;
     
-    public UserTier Tier { get; private set; }
+    public Tier Tier { get; private set; }
     public int Index { get; private set; }
     public bool IsScrollRectFix { get; set; }
     
@@ -41,11 +39,12 @@ public class TierCard : MonoBehaviour
         characterImage.SetAlpha(0);
     }
 
-    public void ScrollCellContent(object obj)
+    public void ScrollCellContent(object obj) => SetModel((Tier) obj);
+
+    public void SetModel(Tier tier)
     {
-        var data = (UserTier) obj;
-        Tier = data;
-        IsScrollRectFix = data.isScrollRectFix;
+        Tier = tier;
+        IsScrollRectFix = tier.isScrollRectFix;
         if (IsScrollRectFix)
         {
             foreach (Transform child in transform)
@@ -55,7 +54,7 @@ public class TierCard : MonoBehaviour
         }
         else
         {
-            Index = data.index;
+            Index = tier.index;
             canvasGroup.alpha = 1f;
             foreach (Transform child in transform)
             {
@@ -65,41 +64,38 @@ public class TierCard : MonoBehaviour
             active = true;
             screenCenter = this.GetScreenParent<TierSelectionScreen>().ScreenCenter;
 
-            characterBackdrop.gameObject.SetActive(data.tier.character != null);
-            if (data.tier.character != null)
+            characterBackdrop.gameObject.SetActive(tier.data.character != null);
+            if (tier.data.character != null)
             {
-                LoadCharacterPreview(data.locked
-                    ? data.tier.character.silhouetteURL
-                    : data.tier.character.thumbnailURL);
+                LoadCharacterPreview(tier.locked
+                    ? tier.data.character.silhouetteURL
+                    : tier.data.character.thumbnailURL);
             }
 
-            titleText.text = data.tier.name;
-            completionPercentageText.text = "TIER_COMPLETION_PERCENTAGE"
-                .Get($"{(Mathf.FloorToInt(data.tier.completionPercentage * 100 * 100) / 100f):0.00}");
-            backgroundGradient.SetGradient(new ColorGradient(data.tier.colorPalette.background, -45));
+            gradientPane.SetModel(tier);
 
             for (var stage = 0; stage < 3; stage++)
             {
                 stageCards[stage].SetModel(
-                    data.tier.localStages[stage], 
-                    new ColorGradient(data.tier.colorPalette.stages[stage], 90f)
+                    tier.data.localStages[stage], 
+                    new ColorGradient(tier.data.colorPalette.stages[stage], 90f)
                 );
             }
             
-            lockedOverlayRoot.SetActive(data.locked || !data.StagesDownloaded);
-            if (data.locked)
+            lockedOverlayRoot.SetActive(tier.locked || !tier.StagesDownloaded);
+            if (tier.locked)
             {
                 lockedOverlayIcon.sprite = lockedIcon;
                 lockedOverlayText.text = "Locked";
             } 
-            else if (!data.StagesDownloaded)
+            else if (!tier.StagesDownloaded)
             {
                 lockedOverlayIcon.sprite = unlockedIcon;
                 lockedOverlayText.text = "Not downloaded";
             }
 
             foreach (Transform child in criteriaHolder.transform) Destroy(child.gameObject);
-            foreach (var criterion in data.tier.criteria)
+            foreach (var criterion in tier.data.criteria)
             {
                 var criterionEntry = Instantiate(criterionEntryPrefab, criteriaHolder.transform);
                 criterionEntry.text.text = criterion;
@@ -123,7 +119,7 @@ public class TierCard : MonoBehaviour
         {
             sprite = await Context.SpriteCache.CacheSpriteInMemory(
                 uri,
-                "CharacterPreview",
+                SpriteTag.CharacterThumbnail,
                 characterPreviewToken.Token,
                 useFileCache: true);
         }

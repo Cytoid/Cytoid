@@ -25,7 +25,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
     public Text bestPerformanceDescriptionText;
     public PerformanceWidget bestPerformanceWidget;
 
-    public StartButton startButton;
+    public CircleButton startButton;
 
     public ActionTabs actionTabs;
     public RankingsTab rankingsTab;
@@ -147,11 +147,11 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
     {
         if (Level.IsLocal)
         {
-            startButton.SetState(Context.LocalPlayer.PlayRanked ? StartButton.State.Start : StartButton.State.Practice);
+            startButton.State = Context.LocalPlayer.PlayRanked ? CircleButtonState.Start : CircleButtonState.Practice;
         }
         else
         {
-            startButton.SetState(StartButton.State.Download);
+            startButton.State = CircleButtonState.Download;
         }
     }
 
@@ -375,7 +375,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
                 await UniTask.WaitUntil(() => coverSprite != null);
             }
 
-            Context.SpriteCache.PutSpriteInMemory("game://cover", "GameCover", coverSprite);
+            Context.SpriteCache.PutSpriteInMemory("game://cover", SpriteTag.GameCover, coverSprite);
             coverSprite = null; // Prevent sprite being unloaded by UnloadCoverSprite()
 
             Context.SelectedMods = Context.LocalPlayer.EnabledMods;

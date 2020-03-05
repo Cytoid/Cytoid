@@ -61,8 +61,8 @@ TOAST_ENTER_PASSWORD		Please enter your password.		Por favor, ingrese su contras
 TOAST_INCORRECT_ID_OR_PASSWORD		Incorrect Cytoid ID or password.		Cytoid ID o contraseña incorrecta.			Senha ou Cytoid ID incorretos.		Неверный Cytoid ID или пароль.									Cytoid ID か パスワード が間違ってます。	Cytoid ID 或者密码错误。	Cytoid ID 或者密碼錯誤。										ID Cytoid hoặc mật khẩu không đúng.	Mali ang iyong Cytoid ID o Password	Cytoid ID atau password yang salah telah dimasukkan.	你号的骨灰扬了
 TOAST_STATUS_CODE		Status code: {0}		Código de estado: {0}			Código de status: {0}		Статус-код: {0}									ステータスコード: {0}	状态代码：{0}	伺服器狀態代碼：{0}										Mã trạng thái: {0}	Status code: {0}	Kode status: {0}	{0}啊wee！
 TOAST_ID_NOT_FOUND		This Cytoid ID does not exist.		Este Cytoid ID no existe			Esse Cytoid ID não existe.		Этот Cytoid ID не существует.									この Cytoid ID は存在しません。	此 Cytoid ID 不存在。	該 Cytoid ID 不存在！										ID Cytoid này không tồn tại.	Wala ang iyong inilagay na Cytoid ID		啊wee改哈鞥嫦娥我刚不疤痕处哈维楚王嗡阿格王朔！！！！！！！！！！！！
-																																	
-																																	
+TOAST_COULD_NOT_DOWNLOAD_TIER_DATA		Could not download tier data.		No se pudo descargar los datos de nivel.																													
+TOAST_SUCCESSFULLY_DOWNLOADED_TIER_DATA		Successfully downloaded tier data.		Descargado los datos del nivel con éxito																													
 																																	
 																																	
 DIALOG_RATE_THIS_LEVEL		Rate this level!		Califique este nivel!			Avalie esse nível!		Оцените этот уровень!									このレベルを評価しよう！	给关卡打个分吧！	評分一下吧！										Hãy đánh giá level!	Markahan ang lebel	Beri nilai level ini!	打分啊111111
@@ -99,11 +99,11 @@ PROFILE_WIDGET_EXP		Exp		Exp			Exp		Опыт									EXP	经验	經驗值	경험
 PROFILE_PROFILE		Profile		Perfil			Perfil		Профиль									プロフィール	资料	個人檔案	프로필									Cá nhân	Profile	Profil	群名片
 PROFILE_LEADERBOARD		Leaderboard		Tabla de lideres			Placar		Таблица лидеров									ランキング	排行榜	排行榜	랭킹 리더보드									BXH	Mga posisyon	Peringkat	群成员
 PROFILE_SIGN_OUT		Sign Out		Cerrar Sesión			Sair		Выйти									サインアウト	退出账号	登出										Đăng xuất	Mag-sisign out	Keluar	退群
-PROFILE_TOTAL_RANKED_PLAYS	Not necessarily required to translate "ranked"	TOTAL RANKED PLAYS		TOTAL DE PARTIDAS CLASIFICATORIAS			TOTAL DE PARTIDAS RANQUEADAS		ВСЕГО СЫГРАНО РАНГОВЫХ ИГР									ランクモードプレイ数	总游玩次数	總遊玩次數										Lượt chơi xếp hạng tổng cộng	Kabuuan ng laro na ranked	Total level ranked yang dimainkan	总铲车数
-PROFILE_TOTAL_CLEARED_NOTES		TOTAL CLEARED NOTES		TOTAL DE NOTAS COMPLETADAS			TOTAL DE NOTAS COMPLETAS		ВСЕГО ЗАЧТЕНО НОТ									タップしたノーツ数の合計	总 Note 数	總清除拍點數										Số nốt đã được clear tổng cộng	Kabuuan na nota na napindot	Total note yang berhasil disentuh.	总踢数
+PROFILE_TOTAL_RANKED_PLAYS	Not necessarily required to translate "ranked"	TOTAL RANKED PLAYS		TOTAL PARTIDAS IGUALADAS			TOTAL DE PARTIDAS RANQUEADAS		ВСЕГО СЫГРАНО РАНГОВЫХ ИГР									ランクモードプレイ数	总游玩次数	總遊玩次數										Lượt chơi xếp hạng tổng cộng	Kabuuan ng laro na ranked	Total level ranked yang dimainkan	总铲车数
+PROFILE_TOTAL_CLEARED_NOTES		TOTAL CLEARED NOTES		TOTAL NOTAS COMPLETADAS			TOTAL DE NOTAS COMPLETAS		ВСЕГО ЗАЧТЕНО НОТ									タップしたノーツ数の合計	总 Note 数	總清除拍點數										Số nốt đã được clear tổng cộng	Kabuuan na nota na napindot	Total note yang berhasil disentuh.	总踢数
 PROFILE_HIGHEST_MAX_COMBO		HIGHEST MAX COMBO		MAYOR COMBO MÁXIMO			MAIOR COMBO MÁXIMO		ВЫСШИЙ СЧЁТ КОМБО									最高コンボ数	最高连击数	最高 COMBO 數										Combo cao nhất	Pinakamataas na combo	Max combo tertinggi.	最高连踢数
-PROFILE_AVG_RANKED_ACCURACY	Not necessarily required to translate "ranked"	AVG RANKED ACCURACY		PRECISIÓN PROMEDIO EN CLASIFICATORIAS			PRECISÃO RANQUEADA MÉDIA		СР РАНГОВАЯ ТОЧНОСТЬ									平均レート上昇率	平均精准度	平均準確度										Độ chính xác TB trong xếp hạng	Average na ranked accuracy	Akurasi ranked rata - rata.	平均踢中
-PROFILE_TOTAL_RANKED_SCORE	Not necessarily required to translate "ranked"	TOTAL RANKED SCORE		PUNTUACIÓN CLASIFICATORIA TOTAL			PONTUAÇÃO RANQUEADA TOTAL		ОБЩИЙ СЧЁТ									合計ランクモードスコア	总分数	總分數										Điểm xếp hạng tổng cộng	Kabuuan ng ranked score	Total nilai ranked.	踢分
+PROFILE_AVG_RANKED_ACCURACY	Not necessarily required to translate "ranked"	AVG RANKED ACCURACY		PRECISIÓN PROMEDIO IGUALADA			PRECISÃO RANQUEADA MÉDIA		СР РАНГОВАЯ ТОЧНОСТЬ									平均Rate上昇率	平均精准度	平均準確度										Độ chính xác TB trong xếp hạng	Average na ranked accuracy	Akurasi ranked rata - rata.	平均踢中
+PROFILE_TOTAL_RANKED_SCORE	Not necessarily required to translate "ranked"	TOTAL RANKED SCORE		PUNTUACIÓN IGUALADA TOTAL			PONTUAÇÃO RANQUEADA TOTAL		ОБЩИЙ СЧЁТ									合計ランクモードスコア	总分数	總分數										Điểm xếp hạng tổng cộng	Kabuuan ng ranked score	Total nilai ranked.	踢分
 PROFILE_TOTAL_PLAY_TIME		TOTAL PLAY TIME		TIEMPO TOTAL JUGADO			TEMPO JOGADO TOTAL		ОБЩЕЕ ВРЕМЯ В ИГРЕ									合計プレイ時間	总游玩时间	總遊玩時間										Tổng thời gian chơi	Kabuuan na oras ng paglaro	Total waktu bermain.	啊wee改时间
 LEADERBOARD_TOP		Top		Top			Top		Топ									トップ	榜首排行	世界										Đầu bảng	Top	Top	椰叶
 LEADERBOARD_ME		Me		Yo			Eu		Я									自分	我的排名	我的										Tôi	Ako	Me	dd
@@ -150,7 +150,7 @@ SETTINGS_NOTE_SIZE_DESC		Display size of notes (hitboxes unaffected)		Tamaño de
 SETTINGS_CLEAR_FX_SIZE		Clear FX size		Tamaño de efecto de completación			Tamanho da Clear FX		Размер эффекта зачёта									タップFXサイズ	判定效果大小	拍點清除特效大小										Kích cỡ hiệu ứng clear nốt	Laki ng clear FX	Ukuran hit effect	
 SETTINGS_CLEAR_FX_SIZE_DESC		Display size of note clear effects		Tamaño de visualización de efecto de compleatición de notas			Define o tamanho dos efeitos de acerto das notas		Отображает размер эффекта зачёта									タップ時のエフェクト(水玉効果)の大きさを設定します	调整 Note 判定效果的大小	調整拍點清除時的特效大小										Kích cỡ hiển thị của hiệu ứng clear nốt	Ipapakita ang laki ng note clear effects	Mengubah ukuran effect saat note disentuh	
 SETTINGS_SHOW_BOUNDARIES		Play area boundaries		Límite de área de juego			Limites da área jogável		Рамки игрового поля									プレイ範囲表示	游玩区域边界	遊玩區域上下邊界線										Giới hạn khu vực chơi	Hangganan ng play area	Pembatas area bermain	
-SETTINGS_SHOW_BOUNDARIES_DESC		Display play area boundaries					Define os limites da área jogável		Отображает рамки игрового поля									上下にタップ可能範囲を表示します	是否显示游玩区域的边界	開啟後上下側會顯示邊界線\n可當作打擊時間的判定輔助										Hiển thị giới hạn khu vực chơi	Ipakita ang hangganan ng play area	Menanampilkan garis batas area main	
+SETTINGS_SHOW_BOUNDARIES_DESC		Display play area boundaries		Muestra los limites del área de juego			Define os limites da área jogável		Отображает рамки игрового поля									上下にタップ可能範囲を表示します	是否显示游玩区域的边界	開啟後上下側會顯示邊界線\n可當作打擊時間的判定輔助										Hiển thị giới hạn khu vực chơi	Ipakita ang hangganan ng play area	Menanampilkan garis batas area main	
 SETTINGS_BACKGROUND_OPACITY		Background opacity		Opacidad del fondo de pantalla			Opacidade do plano de fundo		Непрозрачность заднего фона									背景の明るさ	背景不透明度	背景遮罩不透明度										Độ sáng của nền	Kalinawan ng background 	Opasitas latar belakang	
 SETTINGS_BACKGROUND_OPACITY_DESC		Adjust the background brightness		Ajuste el brillo al fondo de pantalla			Ajusta o brilho do plano de fundo		Настроить яркость заднего фона									プレイ中の背景の明るさを設定します	调整游玩背景的亮度	可調整從全黑（0%）到無遮罩（100%）										Điều chỉnh độ sáng của nền	Ayusin ang kalinawan ng background	Mengatur kecerahan latar belakang	
 SETTINGS_RING_COLOR		Ring color		Color del aro			Cor do anel		Цвет кольца									ノーツの色	外圈颜色	拍點外圈顏色										Màu vòng nốt	Kulay ng ring	Warna cincin	
@@ -173,7 +173,7 @@ SETTINGS_FILL_COLOR_FLICK_DESC		Change the flick note fill color		Cambia el colo
 SETTINGS_DSP_BUFFER_SIZE		DSP buffer size		Tamaño de buffer DSP			Tamanho do buffer DSP		Размер буфера DSP									DSPバッファサイズ	DSP 缓冲区大小	DSP 緩衝區大小										Kích cỡ bộ nhớ tạm thời	Laki ng DSP buffer	Ukuran buffer DSP	
 SETTINGS_DSP_BUFFER_SIZE_DESC		Adjust only if music is not playing properly		Ajuste solo si la música no se reproduce apropiadamente			Ajuste somente se a música não estiver tocando normalmente		Менять только если музыка не играет корректно									音楽が正常に再生されないときに調整してください	在音频无法正常播放时调整	僅於音樂無法正常播放時調整										Chỉ điều chỉnh khi nhạc không phát 	Pagbabago kapag ang musika ay di' tumutugtog ng tama	Ubahlah jika lagu tidak berputar dengan seharusnya	
 SETTINGS_DISPLAY_PROFILER		Profiler		Profiler			Profiler		Профайлер									デバッガーの表示	分析器	除錯工具										Bảng kiểm soát		Profiler	
-SETTINGS_DISPLAY_PROFILER_DESC		Display frame rates and RAM usage		Visualiza la velocidad de cuadros y el uso de RAM			Exibe os frame rates e o uso de RAM		Показывает FPS и использование оперативной памяти									FPSとRAMの使用状況を表示します	显示帧数和内存使用信息	可顯示幀數與記憶體存取資訊										Hiển thị FPS và lượng RAM đang dùng	Ipakita ang frame rates at ang paggamit ng RAM	Menampilkan FPS, penggunaan RAM, and ID pada note	
+SETTINGS_DISPLAY_PROFILER_DESC		Display frame rates and RAM usage		Visualiza los cuadros por segundo y el uso de RAM			Exibe os frame rates e o uso de RAM		Показывает FPS и использование оперативной памяти									FPSとRAMの使用状況を表示します	显示帧数和内存使用信息	可顯示幀數與記憶體存取資訊										Hiển thị FPS và lượng RAM đang dùng	Ipakita ang frame rates at ang paggamit ng RAM	Menampilkan FPS, penggunaan RAM, and ID pada note	
 SETTINGS_DISPLAY_NOTE_IDS		Note IDs		ID de nota			ID das notas		ID нот									IDの表示	Note ID	拍點編號顯示										ID nốt	ID ng nota	ID note	
 SETTINGS_DISPLAY_NOTE_IDS_DESC		For level debugging purposes		Para usos de depuración de niveles			Para fins de debug do nível		Для дебаг целей на уровне									ノーツIDを表示します(デバッグ用機能)	用作关卡制作调试	在進行譜面除錯或調試時使用										Cho mục đích sửa lỗi level		For level debugging purposes	
 SETTINGS_NONE	Space is limited for these values. Try to keep your translation compact!	None		Nulo			Nenhum		Ничего									なし	无	不使用										Không có	Wala	None	妹有
@@ -205,7 +205,7 @@ LEVEL_SELECT_CATEGORY_OFFICIAL		Official		Oficial			Oficial		Официальн�
 LEVEL_SELECT_CATEGORY_COMMUNITY		Community		Comunidad			Comunidade		Пользовательские									コミュニティー	社区	非官方										Cộng đồng	Komunidad	Komunitas	
 LEVEL_SELECT_SORT_BY		SORT BY		ORDENAR POR			CLASSIFICAR POR		СОРТИРОВАТЬ ПО									ソート条件	排序	排序依據										Sắp xếp theo	Pag-uuri ng	URUT DARI	
 LEVEL_SELECT_SORT_BY_ADDED_DATE		Added date		Fecha agregada			Data de adição		Дате добавления									追加日	添加日期	添加日期										Thời gian được thêm	Petsa na inilagay	Tanggal ditambahkan	
-LEVEL_SELECT_SORT_BY_PLAYED_DATE		Played date		Fecha jugada			Data em que foi jogado		Дате последней игры									クリア順	上次游玩日期	遊玩日期										Thời gian chơi	Petsa na inilaro	Tanggal dimainkan	
+LEVEL_SELECT_SORT_BY_PLAYED_DATE		Played date		Fecha jugada			Data em que foi jogado		Дате последней игры									プレイ順	上次游玩日期	遊玩日期										Thời gian chơi	Petsa na inilaro	Tanggal dimainkan	
 LEVEL_SELECT_SORT_BY_DIFFICULTY		Difficulty		Dificultad			Dificuldade		Сложности									難易度順	难度	難度										Độ khó	Ang kahirapan	Tingkat Kesulitan	
 LEVEL_SELECT_SORT_BY_TITLE		Title		Titulo			Título		Заголовкам									曲名	歌名	樂曲名稱										Tên	Pamagat	Judul	
 LEVEL_SELECT_SORT_ORDER		SORT ORDER		ORDEN DE CLASIFICACIÓN			ORDEM DE CLASSIFICAÇÂO		ПОРЯДОК СОРТИРОВКИ									ソート…	顺序	排序模式										Trình tự sắp xếp	Pagkakasunud-sunod	URUTAN SORT	
@@ -221,53 +221,53 @@ LEVEL_SELECT_SEARCH_QUERY_HINT		Title / artist / charter...		Título / Artista /
 																																	
 																																	
 GAME_PREP_START		Start!		Comenzar!			Começar!		Начать!									Start!	开始！	開始！										Bắt đầu!	Magsimula!	Mulai!	铲车！
-GAME_PREP_PRACTICE		Practice!		Práctica!			Praticar!		Практика!									Practice!	开始练习！	練習！										Tập luyện!	Pagsasanay!	Latihan!	给我打R判啊！
+GAME_PREP_PRACTICE		Practice!		Practíca!			Praticar!		Практика!									Practice!	开始练习！	練習！										Tập luyện!	Pagsasanay!	Latihan!	给我打R判啊！
 GAME_PREP_DOWNLOAD		Download!		Descargar!			Baixar!		Скачать!									Download!	下载！	下載！										Tải về!	I-Download!	Unduh!	jaja
 GAME_PREP_RANKINGS_VIEW_MORE		View more		Ver mas			Ver mais		Развернуть									詳細	查看更多	查看全部										Xem thêm	Tignan pa	Lihat lebih banyak	全来
 GAME_PREP_RANKINGS_DOWNLOADING		Downloading level rankings...		Descargando las clasificaciones del nivel...			Baixando ranking do nível.		Скачивание ранков на уровне									ランキングをロード中…	下载关卡排行中...	關卡排行下載中……										Đang tải thứ hạng level...	Nagdodownload ng level rankings...	Mengunduh ranking pada level...	
 GAME_PREP_RANKINGS_COULD_NOT_DOWNLOAD		Could not download level rankings.		No se pudieron descargar las clasificaciones del nivel.			Não foi possível baixar o ranking do nível.		Не удалось скачать ранки на уровне									ランキング情報を取得できませんでした…	无法下载关卡排行。	無法下載關卡排行。										Không thể tải thứ hạng level.	Di' kaya makapagdownload ng level rankings.	Tidak dapat mengunduh rangking pada level.	没网了111111
 GAME_PREP_RANKINGS_BE_THE_FIRST		No performances yet. Be the first!		Nadie ha jugado el nivel. ¡Sea el primero!			Ninguém jogou este nível ainda. Seja o primeiro!		Нет результатов! Будьте первыми!									ランキングがありません…一番乗りしよう！	暂无排行。成为第一个人吧！	尚無排行紀錄，搶個頭香吧！										Chưa có thành tích nào. Hãy là người đầu tiên!	Wala pang iskor. Maging una kang maglaro!	Beluh ada performa dari pemain lain.	没人玩111111
-GAME_PREP_RATINGS_AVG_RATING		AVERAGE RATING		CALIFICACION PROMEDIO			AVALIAÇÃO MÉDIA		СРЕДНИЙ РЕЙТИНГ									平均レート	平均评分	平均評分										Mức đánh giá trung bình		RATING RATA - RATA	
+GAME_PREP_RATINGS_AVG_RATING		AVERAGE RATING		CALIFICACION PROMEDIO			AVALIAÇÃO MÉDIA		СРЕДНИЙ РЕЙТИНГ									平均評価	平均评分	平均評分										Mức đánh giá trung bình		RATING RATA - RATA	
 GAME_PREP_RATINGS_UNIT_RATING		rating		clasificación			avaliação		рейтинг									人の評価	个评分	個評分										Rating	Marka	rating	个人骂上了
 GAME_PREP_RATINGS_UNIT_RATINGS		ratings		clasificaciones			avaliações		рейтинги									人の評価	个评分	個評分										Lượt đánh giá	Mga marka	ratings	个人骂上了
-GAME_PREP_RATINGS_YOU_RATED_X		You rated {0}/5.		Usted puntuó {0}/5.			Você avaliou {0}/5.		Вы оценили на {0}/5.									{0}/5 の評価をしました！	你打了 {0}/5 分。	已評了 {0}/5 分。										Bạn đã đánh giá {0}/5.	Nagmarka ka nang {0}/5	Anda mengerate {0}/5.	你问候了 {0}/5 次谱师。
+GAME_PREP_RATINGS_YOU_RATED_X		You rated {0}/5.		Usted puntuó {0}/5.			Você avaliou {0}/5.		Вы оценили на {0}/5.									{0}/5 の評価をしました！	你打了 {0}/5 分。	已評了 {0}/5 分！										Bạn đã đánh giá {0}/5.	Nagmarka ka nang {0}/5	Anda mengerate {0}/5.	你问候了 {0}/5 次谱师。
 GAME_PREP_RATINGS_YOU_HAVENT_RATED		You haven't rated yet.		No ha puntuado todavía.			Você ainda não avaliou esse nível		Вы не оценили ещё.									まだこの譜面を評価していません。	你还没有评分。	尚未評分。										Bạn chưa đánh giá.	Di' kapa naka marka	Anda belum mengerate level ini.	你还没骂上。
 GAME_PREP_RATINGS_BE_THE_FIRST		Be the first!		Sea el primero!			Seja o primeiro!		Будьте первыми!									一番乗りしよう！	做第一个评分的人吧！	搶個頭香吧！										Hãy là người đầu tiên!	Mauna ka magmarka!	Jadi yang pertama!	来骂谱吧！
 GAME_PREP_RATINGS_RATE		Rate		Puntue			Avaliar		Оценить									評価	打分	評分										Đánh giá	Rate	Rate	骂
 GAME_PREP_GAMEPLAY_PRACTICE_MODE	Space very limited. Keep translation compact!	Practice Mode		Modo de Practica			Modo prática		Режим Практики									練習モード	练习模式	練習模式										Chế độ Luyện tập	Pagsasanay	Mode Latihan	dd模式
 GAME_PREP_GAMEPLAY_PRACTICE_MODE_DESC		Relaxed note timing judgements, but your performance will not be shown on the leaderboard.		Juicio de sincronización de notas relajado, pero su rendimiento no será mostrado en la tabla de clasificaciones.			Timing mais relaxado, porém seu score não será exibido no placar ranqueado.		Упрощённая оценка вашей игре, но это не будет отображаться в таблице лидеров.									判定は緩やかですが、このモードでプレイしたスコアはランキングに残りません。	更为宽松的 Note 时间判定，\n但你的纪录将不会显示在排行榜上。	拍點判定時間較為寬鬆，\n遊玩紀錄也不會上傳至排行榜。										Mức độ đánh giá thời gian bấm nốy được thả lỏng, nhưng thành tích của bạn sẽ không xuất hiện trên bảng xếp hạng.	Nakarelax ang timing ng nota, pero ang iyong laro ay hindi ipapakita sa leaderboard.	Ruang timing lebih luas, tetapi skor anda tidak akan dikirim ke leaderboard.	不开R判的都是dd。（迫真）
-GAME_PREP_GAMEPLAY_PRACTICE_MODE_HINT		RECOMMENDED FOR UNDER LEVEL 20		RECOMENDADO PARA MENORES QUE NIVEL 20			RECOMENDADO PARA JOGADORES ABAIXO DO NÍVEL 20		РЕКОМЕНДУЕТСЯ ДЛЯ ТЕХ КТО НИЖЕ 20 УРОВНЯ									レベル <b>20以下</b> 推薦	推荐等级 20 以下使用	如等級在 20 以下建議開啟										Đề nghị cho những người dưới Level 20	Inirerekumenda para sa mga Level 20 at pababa.	DISARANKAN UNTUK PEMAIN DIBAWAH LEVEL 20	汉堡汉堡王王汉堡王王
+GAME_PREP_GAMEPLAY_PRACTICE_MODE_HINT		RECOMMENDED FOR UNDER LEVEL 20		RECOMENDADO PARA MENORES DE NIVEL 20			RECOMENDADO PARA JOGADORES ABAIXO DO NÍVEL 20		РЕКОМЕНДУЕТСЯ ДЛЯ ТЕХ КТО НИЖЕ 20 УРОВНЯ									レベル <b>20以下</b> 推薦	推荐等级 20 以下使用	如等級在 20 以下建議開啟										Đề nghị cho những người dưới Level 20	Inirerekumenda para sa mga Level 20 at pababa.	DISARANKAN UNTUK PEMAIN DIBAWAH LEVEL 20	汉堡汉堡王王汉堡王王
 GAME_PREP_GAMEPLAY_MODS		MODS		MODS			MODS		МОДЫ									追加モード	Mods	遊玩模組										Điều chỉnh độ khó			马组
 MODS_HYPER	Try to keep mod names concise.	HYPER		HYPER			HYPER		HYPER									HYPER	HYPER	HYPER										HYPER			wee
-MODS_HYPER_DESC		Adds a health bar to the game.		Agrega una barra de salud al juego.			Adiciona uma barra de saúde à partida.		Добавляет полоску жизни.									フレイ中にHPが追加されます	血条模式。	遊玩時最上方會出現血條，失誤過多就會強制中止遊戲。										Thêm 1 thanh HP vào game.	Lalagyan ng health bar sa iyong laro	Menambah health bar pada game.	整个wee111
+MODS_HYPER_DESC		Adds a health bar to the game.		Agrega una barra de salud al juego.			Adiciona uma barra de saúde à partida.		Добавляет полоску жизни.									フレイ中にHPが追加されます	血条模式。	失誤過多就會強制中止遊戲										Thêm 1 thanh HP vào game.	Lalagyan ng health bar sa iyong laro	Menambah health bar pada game.	整个wee111
 MODS_ANOTHER		ANOTHER		ANOTHER			ANOTHER		ANOTHER									ANOTHER	ANOTHER	ANOTHER										ANOTHER			啊wee
-MODS_ANOTHER_DESC		Same as HYPER, but more difficult.		Igual que HYPER, pero más dificil			Igual à HYPER porém mais difícil.		То же самое что и HYPER, но сложнее.									”HYPER”より難しいモードです	比 HYPER 更加困难的血条模式。	與 HYPER 類似但過關難度提升。										Giống HYPER, nhưng khó hơn.	Parehas lang ng HYPER, pero mas mahirap.	Sama dengan HYPER, letapi lebih sulit.	整个啊wee111111
+MODS_ANOTHER_DESC		Same as HYPER, but more difficult.		Igual que HYPER, pero más dificil			Igual à HYPER porém mais difícil.		То же самое что и HYPER, но сложнее.									”HYPER”より難しいモードです	比 HYPER 更加困难的血条模式。	與 HYPER 類似但過關難度提升										Giống HYPER, nhưng khó hơn.	Parehas lang ng HYPER, pero mas mahirap.	Sama dengan HYPER, letapi lebih sulit.	整个啊wee111111
 MODS_FC		Full Combo		Full Combo			Full Combo		Full Combo									Full Combo	Full Combo	Full Combo										Full Combo			牛逼力
-MODS_FC_DESC		Game over if missed a note.		Fin del juego si falla una nota.			O jogo se encerra se você erra uma nota.		Вы проиграете если промахнетесь									ミスをするとゲームオーバーになります	任意 Bad / Miss 判定都会致使游戏失败。	只要 Combo 一斷就會強制中止遊戲。										Thua nếu trượt 1 nốt.	Tapos na ang laro kapag may naiwanan na nota	Lagu akan berakhir jika ada note yang terlewatkan.	则不呢就美丽了
+MODS_FC_DESC		Game over if missed a note.		Termina el juego si falla una nota.			O jogo se encerra se você erra uma nota.		Вы проиграете если промахнетесь									ミスをするとゲームオーバーになります	任意 Bad / Miss 判定都会致使游戏失败。	只要 Combo 一斷就會強制中止遊戲										Thua nếu trượt 1 nốt.	Tapos na ang laro kapag may naiwanan na nota	Lagu akan berakhir jika ada note yang terlewatkan.	则不呢就美丽了
 MODS_AP		All Perfect		All Perfect			All Perfect		All Perfect									All Perfect	All Perfect	All Perfect										All Perfect			他妈牛逼力
-MODS_AP_DESC		Game over if the note cleared is not perfect.		Fin del juego si la nota completada no es perfecta.			Fim de jogo se a nota acertada não é perfeita.		Вы проиграете, если нота будет не на Perfect									Perfect以下を取ってしまうとゲームオーバーになります。	任意非 Perfect 判定都会致使游戏失败。	打出任一非 Perfect 判定就會強制中止遊戲。										Thua nếu nốt clear không phải Perfect	Tapos na ang laro kapag hindi perpekto ang nota	Semua note harus perfect.	则不呢就美丽了
+MODS_AP_DESC		Game over if the note cleared is not perfect.		Termina el juego si la nota completada no es perfecta.			Fim de jogo se a nota acertada não é perfeita.		Вы проиграете, если нота будет не на Perfect									Perfect以下を取ってしまうとゲームオーバーになります。	任意非 Perfect 判定都会致使游戏失败。	打出任一非 Perfect 判定就會強制中止遊戲										Thua nếu nốt clear không phải Perfect	Tapos na ang laro kapag hindi perpekto ang nota	Semua note harus perfect.	则不呢就美丽了
 MODS_FLIP_X		Flip X		Flip X			Flip X		Flip X									Flip X	Flip X	Flip X										Flip X			换行
-MODS_FLIP_X_DESC		Flip the level on the x-axis.		Voltea el nivel en el eje X.			Virar o nível no eixo X.		Повернуть поле по оси Х									譜面が左右反転します	水平翻转谱面。	讓譜面左右翻轉。										Lật level theo trục X.	Ibabaliktad ang lebel sa axis na x	Memutar level pada axis-x.	大括号不换行的跟换行的打
+MODS_FLIP_X_DESC		Flip the level on the x-axis.		Voltea el nivel en el eje X.			Virar o nível no eixo X.		Повернуть поле по оси Х									譜面が左右反転します	水平翻转谱面。	讓譜面左右翻轉										Lật level theo trục X.	Ibabaliktad ang lebel sa axis na x	Memutar level pada axis-x.	大括号不换行的跟换行的打
 MODS_FLIP_Y		Flip Y		Flip Y			Flip Y		Flip Y									Flip Y	Flip Y	Flip Y										Flip Y			大写
-MODS_FLIP_Y_DESC		Flip the level on the y-axis.		Voltea el nivel en el eje Y.			Virar o nível no eixo Y.		Повернуть поле по оси Y									譜面が上下に反転します	垂直翻转谱面。	讓譜面上下翻轉。										Lật level theo trục Y.	Ibabaliktad ang lebel sa axis na y	Memutar level dalam axis-y.	变量名首字母大写的跟不大写的打
+MODS_FLIP_Y_DESC		Flip the level on the y-axis.		Voltea el nivel en el eje Y.			Virar o nível no eixo Y.		Повернуть поле по оси Y									譜面が上下に反転します	垂直翻转谱面。	讓譜面上下翻轉										Lật level theo trục Y.	Ibabaliktad ang lebel sa axis na y	Memutar level dalam axis-y.	变量名首字母大写的跟不大写的打
 MODS_FLIP_ALL		Flip All		Flip All			Flip All		Flip All									Flip All	Flip All	Rotate										Flip All			下划线
-MODS_FLIP_ALL_DESC		Flip the level on both axes, i.e. rotate by 180°.		Voltear el nivel en ambos ejes. p.e. rotandolo por 180			Virar o nível em ambos os eixos, ou seja, rotaciona o nível em 180°.		Повернуть поле по обоим осям, т.е. на 180°									譜面が左右、上下に反転します(１８０°回転)	旋转谱面 180 度。	讓譜面旋轉 180 度。										Lật level trên cả 2 trục, xoay 180°.	Ibabaliktad sa parehas na axis ang lebel	Memutar level 180 derajat.	私有域前面加下划线的跟不加下划线的打
+MODS_FLIP_ALL_DESC		Flip the level on both axes, i.e. rotate by 180°.		Voltear el nivel en ambos ejes. p.e. rotandolo por 180			Virar o nível em ambos os eixos, ou seja, rotaciona o nível em 180°.		Повернуть поле по обоим осям, т.е. на 180°									譜面が左右、上下に反転します(１８０°回転)	旋转谱面 180 度。	讓譜面旋轉 180 度										Lật level trên cả 2 trục, xoay 180°.	Ibabaliktad sa parehas na axis ang lebel	Memutar level 180 derajat.	私有域前面加下划线的跟不加下划线的打
 MODS_FAST		Fast		Rapido			Rápido		Быстро									Fast	Fast	Fast										Nhanh	Mabilis		速回
-MODS_FAST_DESC		Notes fade in later.		Las notas desaparecen más tarde.			As notas somem depois.		Ноты появляются позднее									ノーツの出現が遅くなります	Note 淡入时间变短。	拍點漸入時間縮短。										Nốt xuất hiện chậm hơn.	Nag nota ay mawawala ng huli	Note akan muncul lebih lambat.	明天吧速回
+MODS_FAST_DESC		Notes fade in later.		Las notas desaparecen más tarde.			As notas somem depois.		Ноты появляются позднее									ノーツの出現が遅くなります	Note 淡入时间变短。	拍點漸入時間縮短										Nốt xuất hiện chậm hơn.	Nag nota ay mawawala ng huli	Note akan muncul lebih lambat.	明天吧速回
 MODS_SLOW		Slow		Lento			Lento		Медленно									Slow	Slow	Slow										Chậm	Mabagal		慢
-MODS_SLOW_DESC		Notes fade in earlier.		Las notas desaparecen antes.			As notas somem antes.		Ноты появляются раньше									ノーツの出現が早くなります	Note 淡入时间变长。	拍點漸入時間延長。										Nốt xuất hiện sớm hơn.	Nag nota ay mawawala ng maaga	Note akan muncul lebih cepat.	陈赫好慢啊
+MODS_SLOW_DESC		Notes fade in earlier.		Las notas desaparecen antes.			As notas somem antes.		Ноты появляются раньше									ノーツの出現が早くなります	Note 淡入时间变长。	拍點漸入時間延長										Nốt xuất hiện sớm hơn.	Nag nota ay mawawala ng maaga	Note akan muncul lebih cepat.	陈赫好慢啊
 MODS_NO_SCANNER		No Scanner		No Scanner			No Scanner		Нет Линии									No Scanner	No Scanner	No Scanline										No Scanner			影梭
-MODS_NO_SCANNER_DESC		The scanner is hidden.		La línea de juego está oculta			A linha de julgamento está oculta.		Линия спрятана									判定線が非表示になります	隐藏扫描线。	不顯示判定線。										Thanh quét bị ẩn đi.	Nakatago ang scanner	Garis pembantu akan dihilangkan.	剃毛刀
+MODS_NO_SCANNER_DESC		The scanner is hidden.		La línea de juego está oculta			A linha de julgamento está oculta.		Линия спрятана									判定線が非表示になります	隐藏扫描线。	不顯示判定線										Thanh quét bị ẩn đi.	Nakatago ang scanner	Garis pembantu akan dihilangkan.	剃毛刀
 MODS_INVISIBLE		Invisible		Invisible			Invisível		Невидимость									Invisible	Invisible	Invisible										Invisible			时空阁
-MODS_INVISIBLE_DESC		All notes are hidden.		Todas las notas estan escondidas			Todas as notas estão ocultas.		Все ноты скрыты									全てのノーツが非表示になります	隐藏所有的 Note。	不顯示任何拍點。										Tất cả nốt bị ẩn đi.	Nakatago ang lahat ng nota	Semua not tidak dapat terlihat.	这冒号时空阁吧。。
+MODS_INVISIBLE_DESC		All notes are hidden.		Todas las notas estan escondidas			Todas as notas estão ocultas.		Все ноты скрыты									全てのノーツが非表示になります	隐藏所有的 Note。	不顯示任何拍點										Tất cả nốt bị ẩn đi.	Nakatago ang lahat ng nota	Semua not tidak dapat terlihat.	这冒号时空阁吧。。
 MODS_AUTO		Auto		Auto			Auto		Авто									Auto	Auto	Auto										Auto			娘比起重机
-MODS_AUTO_DESC		Autoplay the level.		El nivel se juega solo.			O nível é executado automaticamente.		Автоплей уровня									自動プレイモードです	自动游玩关卡。	自動演示譜面。										Tự động chơi level.	I-autoplay ang lebel	Memainkan level secara otomatis.	2分钟最速手术室传说
+MODS_AUTO_DESC		Autoplay the level.		El nivel se juega solo.			O nível é executado automaticamente.		Автоплей уровня									自動プレイモードです	自动游玩关卡。	自動演示譜面										Tự động chơi level.	I-autoplay ang lebel	Memainkan level secara otomatis.	2分钟最速手术室传说
 MODS_AUTO_DRAG		Auto Drag		Auto Drag			Auto Drag		Авто Драг									Auto Drag	Auto Drag	Auto (Drag)										Auto Drag			宗龙娘比起重机
-MODS_AUTO_DRAG_DESC		Autoplay the drag notes.		Las notas arrastrar se reproducen solas.			As notas de arrastar são completadas automaticamente.		Автоплей драг-нот									スライドノーツのみ自動で取ってくれます	自动游玩关卡（仅限 Drag）。	僅自動演示 Drag 拍點。										Tự động chơi những nốt kéo.	I-autoplay ang drag note	Memainkan note drag secara otomatis.	宗龙图个！？
+MODS_AUTO_DRAG_DESC		Autoplay the drag notes.		Las notas arrastrar se reproducen solas.			As notas de arrastar são completadas automaticamente.		Автоплей драг-нот									スライドノーツのみ自動で取ってくれます	自动游玩关卡（仅限 Drag）。	僅自動演示 Drag 拍點										Tự động chơi những nốt kéo.	I-autoplay ang drag note	Memainkan note drag secara otomatis.	宗龙图个！？
 MODS_AUTO_FLICK		Auto Flick		Auto Flick			Auto Flick		Авто Флик									Auto Flic	Auto Flick	Auto (Flick)										Auto Flick			施工科娘比起重机
-MODS_AUTO_FLICK_DESC		Autoplay the flick notes.		Las notas flick se reproducirán solas			As notas flick são completadas automaticamente.		Автоплей флик-нот									フリックのみ自動で取ってくれます	自动游玩关卡（仅限 Flick）。	僅自動演示 Flick 拍點。										Tự động chơi những nốt gạt.	I-autoplay ang flick note 	Memainkan note flick secara otomatis.	那里我偷懒写了个四训韩
+MODS_AUTO_FLICK_DESC		Autoplay the flick notes.		Las notas flick se reproducirán solas			As notas flick são completadas automaticamente.		Автоплей флик-нот									フリックのみ自動で取ってくれます	自动游玩关卡（仅限 Flick）。	僅自動演示 Flick 拍點										Tự động chơi những nốt gạt.	I-autoplay ang flick note 	Memainkan note flick secara otomatis.	那里我偷懒写了个四训韩
 MODS_AUTO_HOLD		Auto Hold		Auto Hold			Auto Hold		Авто Холд									Auto Hold	Auto Hold	Auto (Hold)										Auto Hold			疯怒娘比起重机
-MODS_AUTO_HOLD_DESC		Autoplay the hold notes.		Las notas sostener se reproducirán solas			Todas as notas de segurar são completadas automaticamente.		Автоплей холд-нот									ホールドのみ自動で取ってくれます	自动游玩关卡（仅限 Hold）。	僅自動演示 Hold 與 Long Hold 拍點。										Tự động chơi những nốt giữ.	I-autoplay ang hold note	Memainkan note hold secara otomatis.	我疯怒傻了？？？？？、
+MODS_AUTO_HOLD_DESC		Autoplay the hold notes.		Las notas sostener se reproducirán solas			Todas as notas de segurar são completadas automaticamente.		Автоплей холд-нот									ホールドのみ自動で取ってくれます	自动游玩关卡（仅限 Hold）。	僅自動演示 Hold 與 Long Hold 拍點										Tự động chơi những nốt giữ.	I-autoplay ang hold note	Memainkan note hold secara otomatis.	我疯怒傻了？？？？？、
 GAME_PREP_SETTINGS_GENERAL		GENERAL SETTINGS		AJUSTES GENERALES			CONFIGURAÇÕES GERAIS		ОСНОВНЫЕ НАСТРОЙКИ									基本設定	通用设置	基本設定										Cài đặt chung	Pangkalahatang Setting	SETELAN UMUM	
 GAME_PREP_SETTINGS_GAMEPLAY		GAMEPLAY SETTINGS		AJUSTES DE JUGABILIDAD			CONFIGURAÇÕES DE GAMEPLAY		НАСТРОЙКИ ГЕЙМПЛЕЯ									プレイ設定	游玩设置	遊玩設定										Cài đặt trò chơi		SETELAN PERMAINAN	
 GAME_PREP_SETTINGS_VISUAL		VISUAL SETTINGS		AJUSTES VISUALES			CONFIGURAÇÕES VISUAIS		НАСТРОЙКИ ВИЗУАЛА									表示設定	视觉设置	視覺設定										Cài đặt cấu hình	Biswal Setting	SETELAN VISUAL	
@@ -278,7 +278,7 @@ GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET		Level note offset		Equilibrio de las notas
 GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET_DESC		Notes not syncing well with music? \nPress "Calibrate" or manually enter a desired note offset.		Las notas no se sincronizan bien con la música? \n Presione "Calibrar" o ingrese el equilibrio de notas manualmente.			As notas parecem não estarem sincronizadas com a música? \nPressione "Calibrar" ou manualmente entre com o deslocamento desejado.		Ноты не синхронизированы с музыкой?/nНажмите "Откалибровать" или сами введите нужную задержку.									この譜面にノーツとのタイミングずれが生じる場合 \n”調整”を押すか、ノーツオフセットを手動で入力してください。	觉得 Note 和音乐不同步？\n请按下「校准」按钮，或者手动输入谱面偏移值。	若發現譜面與音樂不同步，可直接點擊「判定校正」按鈕進入校正模式（可以邊遊玩邊調整），或是直接輸入數值也可以。\n該數值會疊加至通用（+耳機）校正上。										Nốt không trùng với nhạc? \n Nhấn "Điều chỉnh" để thêm vào thời gian bù mong muốn.	Nota hindi nakakatugma sa musika? Pindutin ang "Calibrate" o manual ang paglagay ng offset.	Note tidak tersinkron pada musik? Tekan "Kalibrasi" atau dengan manual mengisi dengan angka yang dimaui.	
 GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET_CALIBRATE		Calibrate		Calibrar			Calibrar		Откалибровать									調整	校准	判定校正										Điều chỉnh		Kalibrasi	
 GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET_OR		or		o			ou		или									or	或	或是										hoặc	o	atau	
-GAME_PREP_INFO_COVER_ARTIST		COVER ARTIST		Artista de caratula			ARTISTA DA CAPA		СОЗДАТЕЛЬ ОБЛОЖКИ									イラスト	曲绘	繪圖創作者										Người vẽ			
+GAME_PREP_INFO_COVER_ARTIST		COVER ARTIST		ARTISTA DE CARATULA			ARTISTA DA CAPA		СОЗДАТЕЛЬ ОБЛОЖКИ									イラスト	曲绘	繪圖創作者										Người vẽ			
 GAME_PREP_INFO_CHARTER		CHARTER		CHARTER			CHARTER		ЧАРТЕР									譜面製作者	谱师	譜面設計師										Người làm level			
 GAME_PREP_INFO_STORYBOARDER		STORYBOARDER		STORYBOARDER			STORYBOARDER		РАСКАДРОВКА									ストーリーボード	故事板制作	Storyboard 製作者										Người làm Storyboard			
 GAME_PREP_INFO_ID		ID		ID			ID		ID									ID	ID	ID										ID			
@@ -308,7 +308,7 @@ COMMUNITY_SELECT_SORT_BY_MODIFIED_DATE		Modified date		Fecha modificada			Data d
 COMMUNITY_SELECT_SORT_BY_RATING		Rating		Calificacion			Avaliação		Рейтингу									評価	评分	評分										Đánh giá		Rating	
 COMMUNITY_SELECT_SORT_BY_DOWNLOADS		Downloads		Descargas			Downloads		Загрузкам									ダウンロード数	下载数	下載次數										Lượt tải		Unduhan	
 COMMUNITY_SELECT_SORT_BY_DIFFICULTY		Difficulty		Dificultad			Dificuldade		Сложности									難易度	难度	難度										Độ khó		Tingkat kesulitan	
-COMMUNITY_SELECT_SORT_BY_DURATION		Duration					Duração		Длительности									経過時間	时长	樂曲時長										Thời gian		Durasi	
+COMMUNITY_SELECT_SORT_BY_DURATION		Duration		Duración			Duração		Длительности									経過時間	时长	樂曲時長										Thời gian		Durasi	
 COMMUNITY_SELECT_SORT_ORDER		SORT ORDER		ORDEN DE CLASIFICACION			ORDEM DE CLASSIFICAÇÃO		ПОРЯДОК СОРТИРОВКИ									表示順	顺序	排序模式										Trình tự sắp xếp		URUTAN SORT	
 COMMUNITY_SELECT_SORT_ORDER_ASC		Ascending		Ascendiente			Crescente		Возрастние									昇順	升序	升冪										Từ dưới lên		Keatas	
 COMMUNITY_SELECT_SORT_ORDER_DESC		Descending		Descendiente			Decrescente		Убывание									降順	降序	降冪										Từ trên xuống		Kebawah	
@@ -324,7 +324,7 @@ COMMUNITY_SELECT_TIME_PAST_YEAR		Past year		Ultimo año			Ano passado		Прош�
 																																	
 RESULT_MODE_PRACTICE		Practice		Practica			Prática		Практика									練習モード	练习模式	練習模式										Luyện tập		Latihan	dd模式
 RESULT_SHARE		Share		Compartir			Compartilhar		Поделиться									共有	分享	分享										Chia sẻ		Bagikan	发群炫耀
-RESULT_X_ACCURACY		{0}% accuracy		{0}% de presición			{0}% de precisão		{0}% точность									精度 {0}% 	{0} 精准度	<b>準確度</b> {0}%										{0}% độ chính xác			
+RESULT_X_ACCURACY		{0}% accuracy		{0}% de presición			{0}% de precisão		{0}% точность									{0}% Accuracy	{0} 精准度	<b>準確度</b> {0}%										{0}% độ chính xác			
 RESULT_FULL_ACCURACY		Full accuracy		Precisión total			Full accuracy		Абсолютная точность									Full accuracy	完美精准度	<b>準確度</b> 100.00%										Độ chính xác hoàn hảo	Lahat Perpekto!		
 RESULT_X_COMBO		{0} max combo		{0} combo máximo			Combo máximo de {0}		{0} макс. комбо									{0} max combo	{0} 最大连击	<b>Max Combo</b> {0}										{0} Combo tối đa			
 RESULT_FULL_COMBO		Full combo		Full Combo			Full combo		Полное комбо									Full combo	全连击	<b>Full Combo</b>										Combo hoàn hảo	All Combo		
@@ -336,15 +336,15 @@ RESULT_NEW	This is only shown after the initial play	New!		Nuevo!			Novo recorde
 																																	
 GAME_PRACTICE_MODE		PRACTICE MODE		MODO DE PRACTICA			MODO PRÁTICA		РЕЖИМ ПРАКТИКИ									練習モード	练习模式	練習模式										Chế độ Luyện tập	Pagsasanay	MODE LATIHAN	dd模式
 GAME_CALIBRATION_MODE		CALIBRATION MODE		MODO DE CALIBRACION			MODO CALIBRAÇÃO		РЕЖИМ КАЛИБРОВКИ									調整モード	校准模式	校正模式										Chế độ Điều chỉnh		MODE KALIBRASI	面包海
-GAME_SPEED_UP	Only latin characters are supported!	SPEED UP		ACELERA			ACELERANDO		УСКОРЕНИЕ									SPEED UP	SPEED UP	SPEED UP										TĂNG TỐC ĐỘ!	BIBILIS NA!	TAMBAH KECEPATAN	MUDAMUDAMUDAMUDAMUDA
-GAME_SLOW_DOWN	Only latin characters are supported!	SLOW DOWN		DESACELERA			DESACELERANDO		ТОРМОЖЕНИЕ									SPEED DOWN	SLOW DOWN	SPEED DOWN										GIẢM TỐC ĐỘ!	MABAGAL NA...	KURANG KECEPATAN	zenzenzense
-GAME_RESUME_IN_X	Only latin characters are supported!	RESUMING IN {0}S		Continuando en {0}S			RETOMANDO EM {0} SEG		ПРОДОЛЖАЕМ ЧЕРЕЗ {0}С									RESUMING IN {0}S	RESUMING IN {0}S	RESUMING IN {0}s...										BẮT ĐẦU TRONG {0} GIÂY	Itutuloy na sa {0} segundo	MELANJUTKAN DALAM {0} DETIK	{0} cont'
+GAME_SPEED_UP	Only latin characters are supported!	SPEED UP					ACELERANDO		УСКОРЕНИЕ									SPEED UP	SPEED UP	SPEED UP										TĂNG TỐC ĐỘ!	BIBILIS NA!	TAMBAH KECEPATAN	MUDAMUDAMUDAMUDAMUDA
+GAME_SLOW_DOWN	Only latin characters are supported!	SLOW DOWN		DESACELERANDO			DESACELERANDO		ТОРМОЖЕНИЕ									SPEED DOWN	SLOW DOWN	SPEED DOWN										GIẢM TỐC ĐỘ!	MABAGAL NA...	KURANG KECEPATAN	zenzenzense
+GAME_RESUME_IN_X	Only latin characters are supported!	RESUMING IN {0}S		CONTINUANDO {0}S			RETOMANDO EM {0} SEG		ПРОДОЛЖАЕМ ЧЕРЕЗ {0}С									RESUMING IN {0}S	RESUMING IN {0}S	RESUMING IN {0}s...										BẮT ĐẦU TRONG {0} GIÂY	Itutuloy na sa {0} segundo	MELANJUTKAN DALAM {0} DETIK	{0} cont'
 GAME_CALIBRATION_AUTOPLAY		AUTOPLAY		AUTOPLAY			AUTOPLAY		АВТОПЛЕЙ									AUTOPLAY	自动播放	自動演示										TỰ ĐỘNG CHƠI			
 GAME_CALIBRATION_HIT_SOUND		HIT SOUND		SONIDO DE ACIERTO			SOM DE ACERTO		ХИТ-САУНД									タップ音	打击音	打擊音效										TIẾNG BẤM			
 GAME_CALIBRATION_NOTE_OFFSET		NOTE OFFSET		EQUILIBRIO DE NOTA			DESLOCAMENTO DE NOTA		ЗАДЕРЖКА НОТЫ									ノーツ調整	谱面偏移	譜面校正										CÂN CHỈNH THỜI GIAN NỐT	Offset ng nota	OFFSET PADA NOTE	
 GAME_CALIBRATION_NOTE_OFFSET_DESC		If you feel the notes are <b>ahead</b> of the music, <b>increase</b> the offset. Vice versa.		Si usted siente que las notas están <b>más adelante</b> que la música, <b>aumente</b> el equilibrio. Vice versa.			Se você sente que as notas estão <b>à frente</b> da música, <b>aumente</b> o deslocamento ou vice-versa.		Если ноты <b>несовместимы<b> с музыкой, <повысьте> задержку. Или наоборот.									ノーツとのタイミングが <b>遅い</b> 場合、数値を <b>増やして</b> 下さい。また、逆も同様です。	如果你觉得 Note 比音乐要<b>早</b>，请<b>增加</b>偏移；\n否则，请减少偏移。	音樂<b>太慢</b>就<b>增加</b>數值；音樂<b>太快</b>則<b>減少</b>數值。\n以 0.01 秒（方框）／0.05 秒（圓框）為單位\n左右增減來進行調整。										Nếu bạn cảm thấy nốt đang <b> trước</b> nhạc thì <b> tăng </b> mức bù thời gian và ngược lại.	Kung sa tingin mo ang nota ay maaga sa musika, itaas ang offset. Baliktarin kapag baliktad ang resulta	Jika nada terasa lebih cepat dari musik, tambahkan offset. Sama dengan jika note terasa lebih lambat, kurangi offset.	
 GAME_PAUSED_DESC		Take a break...		Tome un descanso...			Dê uma pausa...		Передохните...									ちょっと休憩…	休息一下...	休息一下吧。										Nghỉ 1 chút đi...	Pahinga ka muna...	Istirahat...	贵阳一下...
-GAME_TRY_AGAIN		Try again?		Intentar de nuevo?			Tentar outra vez?		Ещё раз?									リスタート？	重新来过吧？	再加把勁吧。										Thử lại?	Isa pa?	Cobal lagi?	你美丽jajajaja
+GAME_TRY_AGAIN		Try again?		Intentar de nuevo?			Tentar outra vez?		Ещё раз?									リスタート？	重新来过吧？	還要再來嗎？										Thử lại?	Isa pa?	Cobal lagi?	你美丽jajajaja
 GAME_GO_BACK		Go back		Volver atras			Voltar		Вернуться?									曲選択へ	返回	返回										Quay về	Bumalik na	Kembali	贵阳
 GAME_RETRY		Retry		Reintentar			Tentar de novo		Повторить									リトライ	重试	重新開始										Thử lại	Ulitin	Ulangi	重新铲车
 GAME_RESUME		Resume		Continuar			Retomar		Возобновить									再開	继续	繼續										Tiếp tục	Ituloy	Lajutkan	铲车
@@ -364,7 +364,7 @@ TIER_INFO_TITLE		What are <b>Tiers</b>?							Что такое <b>Ранги<b>
 TIER_INFO_CONTENT		[To be written]							[Waiting for info]																								
 TIER_LOCKED		Locked							Ранг 1																								
 TIER_NOT_DOWNLOADED		Not Downloaded							Ранг 2																								
-									Ранг 3																								
+TIER_BREAK_TIERS		Tiers							Ранг 3																								
 									Ранг 4																								
 									Ранг 5																								
 									Ранг 6																								
@@ -377,337 +377,9 @@ TIER_REWARD_CHARACTER		REWARD CHARACTER							Ранг 12
 TIER_COMPLETION_PERCENTAGE		{0}% of players completed this tier							{0}% игроков прошли этот ранг																								
 TIER_OBJECTIVES		OBJECTIVES							ЦЕЛИ																								
 TIER_COMPLETION_RATE		COMPLETION RATE							Полное комбо																								
-									Количество промахов ≤ {0}																								
+TIER_RESULT_SUMMARY		Summary							Количество промахов ≤ {0}																								
 									Макс. комбо ≥ {0}																								
 									Точность {0}%																								
 									Счёт ≥ {0}																								
 TIER_START		Start!							Начать!																								
 TIER_DOWNLOAD		Download!																															
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																															Translator: HPTuse		

@@ -192,7 +192,7 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
         if (from == this && to.GetId() == MainMenuScreen.Id)
         {
             // Clear community cache
-            Context.SpriteCache.DisposeTaggedSpritesInMemory("RemoteLevelCoverThumbnail");
+            Context.SpriteCache.DisposeTaggedSpritesInMemory(SpriteTag.OnlineCoverThumbnail);
             
             searchInputField.SetTextWithoutNotify("");
             savedContent = null;

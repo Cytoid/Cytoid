@@ -111,6 +111,7 @@ public class Dialog : MonoBehaviour
     {
         IsOpened = true;
         canvasGroup.blocksRaycasts = true;
+        Context.SetMajorCanvasBlockRaycasts(false);
         GetComponentsInChildren<TransitionElement>().ForEach(it => it.UseCurrentStateAsDefault());
         GetComponentsInChildren<TransitionElement>().ForEach(it => it.Enter());
     }
@@ -119,6 +120,7 @@ public class Dialog : MonoBehaviour
     {
         IsOpened = false;
         canvasGroup.blocksRaycasts = false;
+        Context.SetMajorCanvasBlockRaycasts(true);
         GetComponentsInChildren<TransitionElement>().ForEach(it => it.Leave());
         if (willDestroy) GetComponent<TransitionElement>().onLeaveCompleted.AddListener(() => { Destroy(gameObject); });
     }

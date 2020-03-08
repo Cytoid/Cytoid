@@ -490,7 +490,7 @@ public class Game : MonoBehaviour
         print("Game completed");
 
         State.IsCompleted = true;
-        State.UpdateGradeCounts();
+        State.OnComplete();
         inputController.DisableInput();
 
         onGameCompleted.Invoke(this);

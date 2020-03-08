@@ -25,8 +25,6 @@ public sealed class GameState
 
     public Dictionary<int, NoteJudgement> Judgements { get; private set; } = new Dictionary<int, NoteJudgement>();
 
-    public Dictionary<NoteGrade, int> GradeCounts = new Dictionary<NoteGrade, int>();
-    
     public int ClearCount { get; private set; }
     public bool ShouldFail { get; private set; }
     
@@ -40,18 +38,29 @@ public sealed class GameState
     
     public double NoteScoreMultiplier { get; private set; } = 1.0;
 
-    public int EarlyCount =>
-        Judgements.Values.Count(it => it.Grade != NoteGrade.Perfect && it.Grade != NoteGrade.Miss && it.Error < 0);
+    [AvailableOnComplete] public Dictionary<NoteGrade, int> GradeCounts => OnCompleteGuard(gradeCounts);
 
-    public int LateCount =>
-        Judgements.Values.Count(it => it.Grade != NoteGrade.Perfect && it.Grade != NoteGrade.Miss && it.Error > 0);
+    [AvailableOnComplete]
+    public int EarlyCount => OnCompleteGuard(
+        Judgements.Values.Count(it => it.Grade != NoteGrade.Perfect && it.Grade != NoteGrade.Miss && it.Error < 0)
+    );
 
-    public double AverageTimingError => Judgements.Values.Sum(it => it.Error) / Judgements.Count;
+    [AvailableOnComplete]
+    public int LateCount => OnCompleteGuard(
+        Judgements.Values.Count(it => it.Grade != NoteGrade.Perfect && it.Grade != NoteGrade.Miss && it.Error > 0)
+    );
 
+    [AvailableOnComplete]
+    public double AverageTimingError => OnCompleteGuard(
+        Judgements.Values.Sum(it => it.Error) / Judgements.Count
+    );
+
+    [AvailableOnComplete]
     public double StandardTimingError
     {
         get
         {
+            OnCompleteGuard();
             var difference = 0.0;
             Judgements.Values.ForEach(it => difference += Math.Pow(AverageTimingError - it.Error, 2));
             return Math.Sqrt(difference / Judgements.Count);
@@ -59,6 +68,7 @@ public sealed class GameState
     }
 
     private bool isFullScorePossible = true;
+    private Dictionary<NoteGrade, int> gradeCounts = new Dictionary<NoteGrade, int>();
     private double accumulatedAccuracy;
     private double noteScoreMultiplierFactor;
 
@@ -222,16 +232,23 @@ public sealed class GameState
 
     public NoteJudgement GetJudgement(int noteId) => Judgements[noteId];
 
-    public void UpdateGradeCounts()
+    public void OnComplete()
     {
-        GradeCounts = new Dictionary<NoteGrade, int>
+        foreach (NoteGrade grade in Enum.GetValues(typeof(NoteGrade)))
         {
-            {NoteGrade.Perfect, Judgements.Count(it => it.Value.Grade == NoteGrade.Perfect)},
-            {NoteGrade.Great, Judgements.Count(it => it.Value.Grade == NoteGrade.Great)},
-            {NoteGrade.Good, Judgements.Count(it => it.Value.Grade == NoteGrade.Good)},
-            {NoteGrade.Bad, Judgements.Count(it => it.Value.Grade == NoteGrade.Bad)},
-            {NoteGrade.Miss, Judgements.Count(it => it.Value.Grade == NoteGrade.Miss)}
-        };
+            gradeCounts[grade] = Judgements.Count(it => it.Value.Grade == grade);
+        }
+    }
+
+    private void OnCompleteGuard()
+    {
+        if (!IsCompleted) throw new InvalidOperationException();
+    }
+    
+    private T OnCompleteGuard<T>(T target)
+    {
+        if (!IsCompleted) throw new InvalidOperationException();
+        return target;
     }
 
     #region Health Mods
@@ -442,4 +459,9 @@ public enum HpModType
     Absolute,
     Percentage,
     DivideByNoteCount
+}
+
+[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]  
+public class AvailableOnComplete : Attribute
+{
 }

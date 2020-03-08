@@ -11164,10 +11164,7 @@ MonoBehaviour:
   lowerRightColumn: {fileID: 1530594605}
   upperRightColumn: {fileID: 774740311}
   gradientPane: {fileID: 956598385}
-  stageResults:
-  - {fileID: 300597698}
-  - {fileID: 1278647373}
-  - {fileID: 1726305182}
+  stageResultWidgets: []
   scoreText: {fileID: 1149351947}
   newBestText: {fileID: 611748581}
   gradeText: {fileID: 2072481337}
@@ -12260,18 +12257,6 @@ RectTransform:
     type: 3}
   m_PrefabInstance: {fileID: 300597696}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &300597698 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4133508192871955047, guid: 935540cc637de47c1b06a10bbf1d0a68,
-    type: 3}
-  m_PrefabInstance: {fileID: 300597696}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 851926bb12904cdbbdeded42a64b650e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &302570363
 GameObject:
   m_ObjectHideFlags: 0
@@ -50167,18 +50152,6 @@ RectTransform:
     type: 3}
   m_PrefabInstance: {fileID: 1278647371}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1278647373 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4133508192871955047, guid: 935540cc637de47c1b06a10bbf1d0a68,
-    type: 3}
-  m_PrefabInstance: {fileID: 1278647371}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 851926bb12904cdbbdeded42a64b650e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1279440735
 GameObject:
   m_ObjectHideFlags: 0
@@ -52624,8 +52597,6 @@ GameObject:
   - component: {fileID: 1334842318}
   - component: {fileID: 1334842317}
   - component: {fileID: 1334842316}
-  - component: {fileID: 1334842315}
-  - component: {fileID: 1334842314}
   - component: {fileID: 1334842313}
   m_Layer: 5
   m_Name: blur
@@ -52667,62 +52638,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_AspectMode: 4
   m_AspectRatio: 1.6
---- !u!114 &1334842314
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1334842311}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 963efdc69b0d4bc490ce82b4c3ec05db, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  onEnterStarted:
-    m_PersistentCalls:
-      m_Calls: []
-  onEnterCompleted:
-    m_PersistentCalls:
-      m_Calls: []
-  onLeaveStarted:
-    m_PersistentCalls:
-      m_Calls: []
-  onLeaveCompleted:
-    m_PersistentCalls:
-      m_Calls: []
-  rectTransform: {fileID: 1334842312}
-  canvasGroup: {fileID: 1334842316}
-  enterFrom: 6
-  enterMultiplier: 1
-  enterDuration: 0.2
-  enterEase: 9
-  enterDelay: 0
-  leaveTo: 6
-  leaveMultiplier: 1
-  leaveDuration: 0.2
-  leaveEase: 9
-  leaveDelay: 0
-  hiddenOnStart: 1
-  enterOnScreenBecomeActive: 1
-  enterOnScreenBecomeActiveDelay: 0
-  leaveOnScreenBecomeInactive: 1
-  leaveOnScreenBecomeInactiveDelay: 0
---- !u!114 &1334842315
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1334842311}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a655e4cb3f8d46f69131f78c55d11020, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  image: {fileID: 1334842317}
-  text: {fileID: 0}
-  transitionElement: {fileID: 1334842314}
 --- !u!225 &1334842316
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -59640,8 +59555,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 362, y: 0}
-  m_SizeDelta: {x: -1196, y: 516}
+  m_AnchoredPosition: {x: 480, y: 0}
+  m_SizeDelta: {x: -960, y: 516}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1472119721
 MonoBehaviour:
@@ -59710,8 +59625,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   startColor: {r: 0.11764706, g: 0.12941177, b: 0.16078432, a: 0.69803923}
   endColor: {r: 0.11764706, g: 0.12941177, b: 0.16078432, a: 0}
-  angle: -90
-  ignoreRatio: 0
+  angle: -25
+  ignoreRatio: 1
 --- !u!114 &1472119724
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -70754,18 +70669,6 @@ RectTransform:
     type: 3}
   m_PrefabInstance: {fileID: 1726305180}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1726305182 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4133508192871955047, guid: 935540cc637de47c1b06a10bbf1d0a68,
-    type: 3}
-  m_PrefabInstance: {fileID: 1726305180}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 851926bb12904cdbbdeded42a64b650e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1001 &1727726611
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -72667,9 +72570,9 @@ GameObject:
   m_Component:
   - component: {fileID: 1755087235}
   - component: {fileID: 1755087239}
-  - component: {fileID: 1755087238}
   - component: {fileID: 1755087237}
   - component: {fileID: 1755087236}
+  - component: {fileID: 1755087238}
   m_Layer: 5
   m_Name: TierBreakScreen
   m_TagString: Untagged
@@ -72755,7 +72658,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1755087234}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 64fa5e3ec47049c8a756a74eab63a53e, type: 3}
+  m_Script: {fileID: 11500000, guid: 5fade4d02e44469db6c2ef00f702d436, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   onScreenInitialized:
@@ -72776,22 +72679,13 @@ MonoBehaviour:
   onScreenDestroyed:
     m_PersistentCalls:
       m_Calls: []
-  lowerLeftColumn: {fileID: 0}
-  lowerRightColumn: {fileID: 2008268314}
-  upperRightColumn: {fileID: 0}
   infoContainer: {fileID: 497648672}
   scoreText: {fileID: 356259750}
-  newBestText: {fileID: 0}
   gradeText: {fileID: 2008357966}
   accuracyText: {fileID: 371273312}
   maxComboText: {fileID: 1793389652}
   standardMetricText: {fileID: 1914017182}
   advancedMetricText: {fileID: 1351518767}
-  rankingsTab: {fileID: 0}
-  ratingTab: {fileID: 0}
-  shareButton: {fileID: 0}
-  nextButton: {fileID: 0}
-  retryButton: {fileID: 0}
 --- !u!225 &1755087239
 CanvasGroup:
   m_ObjectHideFlags: 0

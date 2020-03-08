@@ -50,12 +50,24 @@ Logs/
 # Secured files
 Assets/Scripts/Secure/
 Assets/Scripts/Secure.meta
+
+# Cytoid-copyrighted assets
 Assets/Resources/Sprites/Kreutz/
 Assets/Resources/Sprites/Kreutz.meta
 Assets/Resources/Sprites/Palescreen/
 Assets/Resources/Sprites/Palescreen.meta
 Assets/Resources/Sprites/Background.png
 Assets/Resources/Sprites/Background.png.meta
+Assets/Plugins/Android/res/mipmap*/
+Assets/Plugins/Android/res/mipmap*.meta
+Assets/Resources/Prefabs/Characters/
+Assets/Resources/Prefabs/Characters.meta
+Assets/Resources/Sprites/Game/Default/
+Assets/Resources/Sprites/Game/Default.meta
+Assets/Resources/Sprites/MgO
+Assets/Resources/Sprites/MgO.meta
+Assets/Resources/Sprites/Tmp
+Assets/Resources/Sprites/Tmp.meta
 
 # Paid assets
 Assets/Packages/FlatFX
@@ -74,5 +86,8 @@ Assets/Packages/Introloop
 Assets/Packages/Introloop.meta
 Assets/Packages/Camera Filter Pack
 Assets/Packages/Camera Filter Pack.meta
+Assets/Packages/NiceVibrations
+Assets/Packages/NiceVibrations.meta
 Resources/Introloop
 Resources/Introloop.meta
+

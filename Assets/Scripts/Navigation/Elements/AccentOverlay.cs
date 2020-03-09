@@ -15,18 +15,16 @@ public class AccentOverlay : MonoBehaviour, ScreenBecameActiveListener
 
     public void OnScreenBecameActive()
     {
-        print(this.GetScreenParent().GetId());
         switch (this.GetScreenParent().GetId())
         {
             case ResultScreen.Id:
+                // TODO: Big refactors needed lol
                 if (!Context.LocalPlayer.PlayRanked)
                 {
                     image.color = "#F953C6".ToColor().WithAlpha(0.7f);
                     text.text = "RESULT_MODE_PRACTICE".Get();
                     transitionElement.Enter();
                 }
-                break; 
-            default:
                 break;
         }
     }

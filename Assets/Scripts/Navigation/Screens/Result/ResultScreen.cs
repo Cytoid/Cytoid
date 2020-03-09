@@ -44,6 +44,8 @@ public class ResultScreen : Screen, ScreenChangeListener
     public override async void OnScreenInitialized()
     {
         base.OnScreenInitialized();
+        Context.ScreenManager.AddHandler(this);
+        
         gameState = Context.GameState;
         if (gameState == null)
         {
@@ -54,34 +56,13 @@ public class ResultScreen : Screen, ScreenChangeListener
             Context.SelectedLevel = Context.LevelManager.LoadedLocalLevels.Values.First();
             Context.SelectedDifficulty = Difficulty.Parse(Context.LevelManager.LoadedLocalLevels.Values.First().Meta.charts[0].type);
             Context.LocalPlayer.PlayRanked = false;
-            /*result = new GameResult
-            {
-                Score = 123,
-                Accuracy = 1.942353,
-                MaxCombo = 568,
-                Mods = new List<Mod> {Mod.Fast},
-                GradeCounts = new Dictionary<NoteGrade, int>
-                {
-                    {NoteGrade.Perfect, 563},
-                    {NoteGrade.Great, 5},
-                    {NoteGrade.Good, 0},
-                    {NoteGrade.Bad, 0},
-                    {NoteGrade.Miss, 0}
-                },
-                EarlyCount = 3,
-                LateCount = 2,
-                AverageTimingError = 0.0032,
-                StandardTimingError = 0.0030,
-                LevelId = "suconh_typex.alice",
-                LevelVersion = 1,
-                ChartType = Difficulty.Extreme
-            };
+            gameState = new GameState(Context.SelectedLevel, Context.SelectedDifficulty);
             Context.OnlinePlayer.OnAuthenticated.AddListener(() =>
             {
-                rankingsTab.UpdateRankings(result.LevelId, result.ChartType.Id);
-                ratingTab.UpdateLevelRating(result.LevelId);
+                rankingsTab.UpdateRankings(Context.SelectedLevel.Id, Context.SelectedDifficulty.Id);
+                ratingTab.UpdateLevelRating(Context.SelectedLevel.Id);
                 UploadRecord();
-            });*/
+            });
         }
         Context.GameState = null;
         
@@ -100,7 +81,7 @@ public class ResultScreen : Screen, ScreenChangeListener
 
         // Load translucent cover
         var image = TranslucentCover.Instance.image;
-        image.color = Color.black;
+        image.color = Color.white.WithAlpha(0);
         var sprite = Context.SpriteCache.GetCachedSpriteFromMemory("game://cover");
         if (sprite == null)
         {
@@ -121,12 +102,11 @@ public class ResultScreen : Screen, ScreenChangeListener
 
         image.sprite = sprite;
         image.FitSpriteAspectRatio();
-        image.DOColor(Color.white.WithAlpha(0), 0.4f);
 
         // Update performance info
         scoreText.text = Mathf.FloorToInt((float) gameState.Score).ToString("D6");
-        accuracyText.text = "RESULT_X_ACCURACY".Get((Math.Floor(gameState.Accuracy * 100) / 100).ToString("0.00"));
-        if (Mathf.Approximately((float) gameState.Accuracy, 100.0f))
+        accuracyText.text = "RESULT_X_ACCURACY".Get((Math.Floor(gameState.Accuracy * 100 * 100) / 100).ToString("0.00"));
+        if (Mathf.Approximately((float) gameState.Accuracy, 1))
         {
             accuracyText.text = "RESULT_FULL_ACCURACY".Get();
         }
@@ -177,7 +157,7 @@ public class ResultScreen : Screen, ScreenChangeListener
                 Context.LocalPlayer.PlayRanked,
                 new LocalPlayer.Performance
                 {
-                    Score = (int) gameState.Score, Accuracy = (float) gameState.Accuracy, ClearType = clearType
+                    Score = (int) gameState.Score, Accuracy = (float) (gameState.Accuracy * 100), ClearType = clearType
                 });
         }
         else
@@ -199,9 +179,10 @@ public class ResultScreen : Screen, ScreenChangeListener
                 newBestText.text = "";
             }
 
-            if (gameState.Accuracy > historicBest.Accuracy)
+            var multipliedAccuracy = gameState.Accuracy * 100;
+            if (multipliedAccuracy > historicBest.Accuracy)
             {
-                newBest.Accuracy = (float) gameState.Accuracy;
+                newBest.Accuracy = (float) multipliedAccuracy;
             }
 
             Context.LocalPlayer.SetBestPerformance(gameState.Level.Id, gameState.Difficulty.Id,
@@ -211,6 +192,12 @@ public class ResultScreen : Screen, ScreenChangeListener
         shareButton.onPointerClick.AddListener(_ => StartCoroutine(Share()));
 
         await Resources.UnloadUnusedAssets();
+    }
+
+    public override void OnScreenDestroyed()
+    {
+        base.OnScreenDestroyed();
+        Context.ScreenManager.RemoveHandler(this);
     }
 
     public override void OnScreenBecameActive()
@@ -311,7 +298,7 @@ public class ResultScreen : Screen, ScreenChangeListener
             BodyString = JObject.FromObject(new UploadRecord
             {
                 score = (int) gameState.Score,
-                accuracy = double.Parse((gameState.Accuracy / 100.0).ToString("0.00000000")),
+                accuracy = double.Parse(gameState.Accuracy.ToString("0.00000000")),
                 details = new UploadRecord.Details
                 {
                     perfect = gameState.GradeCounts[NoteGrade.Perfect],

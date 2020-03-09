@@ -50,7 +50,7 @@ public class FlickNote : Note
         var grade = NoteGrade.None;
         var timeUntil = TimeUntilStart;
 
-        if (Game.State.IsRanked)
+        if (Game.State.Mode == GameMode.Practice)
         {
             if (timeUntil >= 0)
             {

@@ -11,25 +11,36 @@ public class ComboText : MonoBehaviour
     public float fadeDuration = 0.1f;
     public Ease ease = Ease.OutSine;
 
+    private TierState tierState;
     private int lastCombo;
     private Sequence lastSequence;
+    private bool exited;
     
     protected void Awake()
     {
         text.text = "";
         text.color = text.color.WithAlpha(0);
+        game.onGameLoaded.AddListener(_ => OnGameLoaded());
         game.onGameReadyToExit.AddListener(_ => OnGameReadyToExit());
+    }
+
+    protected void OnGameLoaded()
+    {
+        if (game.State.Mode == GameMode.Tier)
+        {
+            tierState = Context.TierState;
+        }
     }
 
     protected void LateUpdate()
     {
-        if (game.IsLoaded && game.State.IsStarted)
+        if (!exited && game.IsLoaded && game.State.IsStarted)
         {
-            if (game.Config.IsCalibration) return;
-            
-            if (game.State.Combo != lastCombo)
+            if (game.State.Mode == GameMode.Calibration) return;
+            var combo = tierState?.Combo ?? game.State.Combo;
+            if (combo != lastCombo)
             {
-                if (game.State.Combo > 0)
+                if (combo > 0)
                 {
                     lastSequence?.Kill();
                     transform.localScale = new Vector3((punchScale + 1) / 2f, punchScale, 1);
@@ -42,13 +53,14 @@ public class ComboText : MonoBehaviour
                     text.DOFade(0, fadeDuration).SetEase(ease);
                 }
             }
-            lastCombo = game.State.Combo;
+            lastCombo = combo;
             text.text = lastCombo + "x";
         }
     }
 
     public void OnGameReadyToExit()
     {
+        exited = true;
         text.DOFade(0, fadeDuration).SetEase(ease);
     }
 }

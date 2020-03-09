@@ -53,6 +53,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
     public override string GetId() => Id;
 
     private bool willStart;
+    private bool willCalibrate;
 
     public override void OnScreenInitialized()
     {
@@ -362,6 +363,10 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         if (Level.IsLocal)
         {
             willStart = true;
+            Context.SelectedGameMode = 
+                willCalibrate ? GameMode.Calibration : 
+                    Context.LocalPlayer.PlayRanked ? GameMode.Classic : GameMode.Practice;
+            
             State = ScreenState.Inactive;
             startButton.StopPulsing();
 
@@ -447,7 +452,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         calibratePreferenceElement.SetContent("GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET".Get(), "GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET_DESC".Get());
         calibratePreferenceElement.calibrateButton.onPointerClick.AddListener(_ =>
         {
-            Context.WillCalibrate = true;
+            willCalibrate = true;
             OnStartButton();
         });
 

@@ -151,7 +151,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
     }
 
     private static List<string> hiddenScreenIds = new List<string> {SignInScreen.Id, ProfileScreen.Id, SettingsScreen.Id};
-    private static List<string> staticScreenIds = new List<string> {ResultScreen.Id};
+    private static List<string> staticScreenIds = new List<string> {ResultScreen.Id, TierBreakScreen.Id, TierResultScreen.Id};
 
     public void OnScreenChangeStarted(Screen from, Screen to)
     {

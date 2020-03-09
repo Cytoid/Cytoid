@@ -33,12 +33,12 @@ public class MainTranslucentImage : SingletonMonoBehavior<MainTranslucentImage>,
 
     public void OnScreenChangeStarted(Screen from, Screen to)
     {
-        if (from is GamePreparationScreen) {
+        if (from is GamePreparationScreen || from is TierSelectionScreen) {
             TranslucentImageSource.Disabled = false;
             uiCamera.gameObject.SetActive(true);
             parallaxElement.gameObject.SetActive(true);
         }
-        if (to is ResultScreen)
+        if (to is ResultScreen || to is TierBreakScreen || to is TierResultScreen)
         {
             TranslucentImageSource.Disabled = false;
             parallaxElement.gameObject.SetActive(false);
@@ -72,7 +72,7 @@ public class MainTranslucentImage : SingletonMonoBehavior<MainTranslucentImage>,
 
     public void OnScreenChangeFinished(Screen from, Screen to)
     {
-        if (to is GamePreparationScreen)
+        if (to is GamePreparationScreen || to is TierSelectionScreen)
         {
             TranslucentImageSource.Disabled = true;
             uiCamera.gameObject.SetActive(false);

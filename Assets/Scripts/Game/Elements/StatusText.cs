@@ -16,12 +16,12 @@ public class StatusText : MonoBehaviour
 
     public void Load()
     {
-        if (game.Config.IsCalibration)
+        if (game.State.Mode == GameMode.Calibration)
         {
             text.text = "GAME_CALIBRATION_MODE".Get();
             text.color = "#728CE4".ToColor().WithAlpha(0.7f);
         }
-        else if (!game.State.IsRanked)
+        else if (game.State.Mode == GameMode.Practice)
         {
             text.text = "GAME_PRACTICE_MODE".Get();
             text.color = "#F953C6".ToColor().WithAlpha(0.7f);

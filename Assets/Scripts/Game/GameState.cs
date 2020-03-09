@@ -5,10 +5,13 @@ using UnityEngine;
 
 public sealed class GameState
 {
+    public GameMode Mode { get; }
     
-    public Level Level { get; protected set; }
+    public Level Level { get; }
     
-    public Difficulty Difficulty { get; protected set; }
+    public Difficulty Difficulty { get;}
+    
+    public int DifficultyLevel { get; }
     
     public bool IsStarted { get; set; }
     
@@ -17,8 +20,6 @@ public sealed class GameState
     public bool IsCompleted { get; set; }
     
     public bool IsFailed { get; set; }
-    
-    public bool IsRanked { get; }
     public HashSet<Mod> Mods { get; }
     public double MaxHealth { get; }
     public int NoteCount { get; }
@@ -33,6 +34,8 @@ public sealed class GameState
     public int Combo { get; private set; }
     public int MaxCombo { get; private set; }
     public double Health { get; private set; }
+
+    public double HealthPercentage => Health / MaxHealth;
     
     public bool UseHealthSystem { get; private set; }
     
@@ -68,22 +71,67 @@ public sealed class GameState
     }
 
     private bool isFullScorePossible = true;
-    private Dictionary<NoteGrade, int> gradeCounts = new Dictionary<NoteGrade, int>();
+    private readonly Dictionary<NoteGrade, int> gradeCounts = new Dictionary<NoteGrade, int>();
+    private readonly double noteScoreMultiplierFactor;
     private double accumulatedAccuracy;
-    private double noteScoreMultiplierFactor;
 
-    public GameState(Game game, bool isRanked, IEnumerable<Mod> mods, double maxHealth)
+    private static readonly HashSet<Mod> AllowedTierMods = new HashSet<Mod>
+    {
+        Mod.Fast, Mod.Slow, Mod.HideScanline, Mod.HideNotes
+    };
+    
+    public GameState(Game game, GameMode mode, IEnumerable<Mod> mods)
     {
         Level = game.Level;
         Difficulty = game.Difficulty;
-        IsRanked = isRanked;
+        DifficultyLevel = Level.Meta.GetDifficultyLevel(Difficulty.Id);
+        Mode = mode;
         Mods = new HashSet<Mod>(mods);
-        MaxHealth = maxHealth;
-        Health = MaxHealth;
+        
         NoteCount = game.Chart.Model.note_list.Count;
         game.Chart.Model.note_list.ForEach(it => Judgements[it.id] = new NoteJudgement());
         noteScoreMultiplierFactor = Math.Sqrt(NoteCount) / 3.0;
-        UseHealthSystem = Mods.Contains(Mod.Hard) || Mods.Contains(Mod.ExHard);
+        
+        UseHealthSystem = Mods.Contains(Mod.Hard) || Mods.Contains(Mod.ExHard) || mode == GameMode.Tier;
+        MaxHealth = DifficultyLevel * 75;
+        if (MaxHealth < 0) MaxHealth = 1000;
+        Health = MaxHealth;
+        
+        if (mode == GameMode.Tier)
+        {
+            Context.TierState.Stages[Context.TierState.CurrentStageIndex] = this;
+            // Keep allowed mods only
+            Mods.IntersectWith(AllowedTierMods);
+            if (Application.isEditor && game.EditorForceAutoMod) Mods.Add(Mod.Auto);
+            // Use max health from meta
+            MaxHealth = Context.TierState.Tier.Meta.maxHealth;
+            Health = MaxHealth;
+        }
+    }
+
+    public GameState()
+    {
+        IsCompleted = true;
+        Mods = new HashSet<Mod>();
+        Score = 1000000;
+        Accuracy = 1.000000;
+        MaxCombo = 1;
+        gradeCounts = new Dictionary<NoteGrade, int>
+        {
+            {NoteGrade.Perfect, 1},
+            {NoteGrade.Great, 0},
+            {NoteGrade.Good, 0},
+            {NoteGrade.Bad, 0},
+            {NoteGrade.Miss, 0}
+        };
+        Level = MockData.Level;
+        Difficulty = Difficulty.Parse(Level.Meta.charts[0].type);
+    }
+    
+    public GameState(Level level, Difficulty difficulty) : this()
+    {
+        Level = level;
+        Difficulty = difficulty;
     }
 
     public void Judge(Note note, NoteGrade grade, double error, double greatGradeWeight)
@@ -101,7 +149,7 @@ public sealed class GameState
             it.Error = error;
         });
 
-        if (!IsRanked)
+        if (Mode == GameMode.Practice)
         {
             if (grade != NoteGrade.Perfect && grade != NoteGrade.Great) isFullScorePossible = false;
         }
@@ -111,12 +159,19 @@ public sealed class GameState
         }
 
         // Combo
-        if (grade == NoteGrade.Bad || grade == NoteGrade.Miss) Combo = 0;
-        else Combo++;
+        var miss = grade == NoteGrade.Bad || grade == NoteGrade.Miss;
+        
+        if (miss) Combo = 0; else Combo++;
         if (Combo > MaxCombo) MaxCombo = Combo;
 
+        if (Mode == GameMode.Tier)
+        {
+            if (miss) Context.TierState.Combo = 0; else Context.TierState.Combo++;
+            if (Context.TierState.Combo > Context.TierState.MaxCombo) Context.TierState.MaxCombo = Context.TierState.Combo;
+        }
+
         // Score multiplier
-        if (IsRanked)
+        if (Mode != GameMode.Practice)
         {
             switch (grade)
             {
@@ -142,7 +197,7 @@ public sealed class GameState
         }
 
         // Score
-        if (!IsRanked)
+        if (Mode == GameMode.Practice)
         {
             Score += 900000.0 / NoteCount * grade.GetScoreWeight(false) +
                      100000.0 / (NoteCount * (NoteCount + 1) / 2.0) * Combo;
@@ -178,13 +233,13 @@ public sealed class GameState
         if (Score == 1000000 && !isFullScorePossible) Score = 999999; // In case of double inaccuracy
 
         // Accuracy
-        if (!IsRanked || grade != NoteGrade.Great)
+        if (Mode == GameMode.Practice || grade != NoteGrade.Great)
         {
-            accumulatedAccuracy += 100.0 * grade.GetAccuracyWeight();
+            accumulatedAccuracy += 1.0 * grade.GetAccuracyWeight();
         }
         else
         {
-            accumulatedAccuracy += 100.0 * (NoteGrade.Great.GetAccuracyWeight() +
+            accumulatedAccuracy += 1.0 * (NoteGrade.Great.GetAccuracyWeight() +
                                            (NoteGrade.Perfect.GetAccuracyWeight() -
                                             NoteGrade.Great.GetAccuracyWeight()) *
                                            greatGradeWeight);
@@ -194,28 +249,44 @@ public sealed class GameState
         // Health mods
         if (UseHealthSystem)
         {
-            // TODO: Other health mods
             var mods = Mods.Contains(Mod.ExHard) ? exHardHpMods : hardHpMods;
+            if (Mode == GameMode.Tier) mods = tierHpMods;
 
             var mod = mods
                 .Select[note.Type]
-                .Select[IsRanked ? rankedGradingIndex[grade] : unrankedGradingIndex[grade]];
+                .Select[Mode == GameMode.Practice ? unrankedGradingIndex[grade] : rankedGradingIndex[grade]];
 
+            double change = 0;
+            
             switch (mod.Type)
             {
                 case HpModType.Absolute:
-                    Health += mod.Value;
+                    change = mod.Value;
                     break;
                 case HpModType.Percentage:
-                    Health += mod.Value / 100f * MaxHealth;
+                    change = mod.Value / 100f * MaxHealth;
                     break;
                 case HpModType.DivideByNoteCount:
-                    Health += mod.Value / NoteCount / 100f * MaxHealth;
+                    change = mod.Value / NoteCount / 100f * MaxHealth;
                     break;
             }
 
+            if (change < 0 && mod.UseHealthBuffer)
+            {
+                double a;
+                if (HealthPercentage > 0.3) a = 1;
+                else a = 0.25 + 2.5 * HealthPercentage;
+                change *= a;
+            }
+
+            Health += change;
             Health = Math.Min(Math.Max(Health, 0), MaxHealth);
             if (Health <= 0) ShouldFail = true;
+
+            if (Mode == GameMode.Tier)
+            {
+                Context.TierState.Health = Health;
+            }
         }
 
         if (
@@ -236,7 +307,16 @@ public sealed class GameState
     {
         foreach (NoteGrade grade in Enum.GetValues(typeof(NoteGrade)))
         {
+            if (grade == NoteGrade.None) continue;
             gradeCounts[grade] = Judgements.Count(it => it.Value.Grade == grade);
+        }
+    }
+
+    public void OnFail()
+    {
+        if (Mode == GameMode.Tier)
+        {
+            Context.TierState.IsFailed = true;
         }
     }
 
@@ -410,6 +490,76 @@ public sealed class GameState
             })
         }
     });
+    
+    private static ModeHpMod tierHpMods = new ModeHpMod(new Dictionary<NoteType, NoteHpMod>
+    {
+        {
+            NoteType.Click, new NoteHpMod(new List<HpMod>
+            {
+                new HpMod(1, HpModType.Absolute),
+                new HpMod(0.25, HpModType.Absolute),
+                new HpMod(-2, HpModType.Percentage, true),
+                new HpMod(-4, HpModType.Percentage, true),
+                new HpMod(-7, HpModType.Percentage, true),
+                new HpMod(-10, HpModType.Percentage, true)
+            })
+        },
+        {
+            NoteType.Hold, new NoteHpMod(new List<HpMod>
+            {
+                new HpMod(0.5, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(-6, HpModType.Percentage),
+                new HpMod(-12, HpModType.Percentage),
+                new HpMod(-20, HpModType.Percentage),
+                new HpMod(-25, HpModType.Percentage)
+            })
+        },
+        {
+            NoteType.LongHold, new NoteHpMod(new List<HpMod>
+            {
+                new HpMod(0.5, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(-6, HpModType.Percentage),
+                new HpMod(-12, HpModType.Percentage),
+                new HpMod(-20, HpModType.Percentage),
+                new HpMod(-25, HpModType.Percentage)
+            })
+        },
+        {
+            NoteType.DragHead, new NoteHpMod(new List<HpMod>
+            {
+                new HpMod(0.2, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(-20, HpModType.Percentage)
+            })
+        },
+        {
+            NoteType.DragChild, new NoteHpMod(new List<HpMod>
+            {
+                new HpMod(0.1, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(-6, HpModType.Percentage)
+            })
+        },
+        {
+            NoteType.Flick, new NoteHpMod(new List<HpMod>
+            {
+                new HpMod(1, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(-3, HpModType.Percentage),
+                new HpMod(-6, HpModType.Percentage),
+                new HpMod(-12, HpModType.Percentage),
+                new HpMod(-15, HpModType.Percentage)
+            })
+        }
+    });
 
     #endregion
     
@@ -446,11 +596,13 @@ public class HpMod
 {
     public double Value;
     public HpModType Type;
-
-    public HpMod(double value, HpModType type)
+    public bool UseHealthBuffer;
+    
+    public HpMod(double value, HpModType type, bool useHealthBuffer = false)
     {
         Value = value;
         Type = type;
+        UseHealthBuffer = useHealthBuffer;
     }
 }
 
@@ -459,6 +611,15 @@ public enum HpModType
     Absolute,
     Percentage,
     DivideByNoteCount
+}
+
+public enum GameMode
+{
+    Unspecified = 0,
+    Classic = 1,
+    Practice = 2,
+    Calibration = 3,
+    Tier = 4,
 }
 
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]  

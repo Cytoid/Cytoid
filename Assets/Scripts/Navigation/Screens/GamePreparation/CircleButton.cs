@@ -46,7 +46,7 @@ public class CircleButton : MonoBehaviour, ScreenInitializedListener
                     text.text = "GAME_PREP_DOWNLOAD".Get();
                     break;
                 case CircleButtonState.Retry:
-                    gradient.SetGradient(new ColorGradient("#476ADC".ToColor(), "#9CAFEC".ToColor(), -45));
+                    gradient.SetGradient(new ColorGradient("#DD5E89".ToColor(), "#F7BB97".ToColor(), -45));
                     text.text = "RESULT_RETRY".Get();
                     break;
                 case CircleButtonState.Next:
@@ -57,6 +57,10 @@ public class CircleButton : MonoBehaviour, ScreenInitializedListener
                     gradient.SetGradient(new ColorGradient("#12D8FA".ToColor(), "#A6FFCB".ToColor(), -45));
                     text.text = "TIER_NEXT_STAGE".Get();
                     break;
+                case CircleButtonState.Finish:
+                    gradient.SetGradient(new ColorGradient("#12D8FA".ToColor(), "#A6FFCB".ToColor(), -45));
+                    text.text = "TIER_FINISH".Get();
+                    break;
             }
         }
     }
@@ -65,6 +69,6 @@ public class CircleButton : MonoBehaviour, ScreenInitializedListener
 
 public enum CircleButtonState
 {
-    Start, Practice, Download, Retry, Next, NextStage
+    Start, Practice, Download, Retry, Next, NextStage, Finish
 }
 

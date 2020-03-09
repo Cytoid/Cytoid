@@ -32,7 +32,7 @@ public class Level
         Path = path;
         Meta = meta;
         AddedDate = addedDate;
-        PlayedDate = playedDate;
+        this.playedDate = playedDate;
     }
 
     public Level(string packagePath, LevelMeta meta)

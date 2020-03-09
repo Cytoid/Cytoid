@@ -92,6 +92,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   text: {fileID: 1702079604062915845}
+  icon: {fileID: 1702079604782423334}
+  undeterminedIcon: {fileID: 21300000, guid: 87ed0810f972e427e9c8b9495b5b1fa4, type: 3}
+  passedIcon: {fileID: 21300000, guid: 2d4725ecb71da4d1c973c38bfca101c4, type: 3}
+  failedIcon: {fileID: 21300000, guid: 1f640890cbcdd714692ec6924c8d62a9, type: 3}
 --- !u!1 &1702079604062915840
 GameObject:
   m_ObjectHideFlags: 0

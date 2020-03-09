@@ -9,9 +9,9 @@ public class TierGradientPane : MonoBehaviour
 
     public void SetModel(Tier tier)
     {
-        titleText.text = tier.data.name;
+        titleText.text = tier.Meta.name;
         completionPercentageText.text = "TIER_COMPLETION_PERCENTAGE"
-            .Get($"{(Mathf.FloorToInt(tier.data.completionPercentage * 100 * 100) / 100f):0.00}");
-        backgroundGradient.SetGradient(new ColorGradient(tier.data.colorPalette.background, -45));
+            .Get($"{(Mathf.FloorToInt(tier.Meta.completionPercentage * 100 * 100) / 100f):0.00}");
+        backgroundGradient.SetGradient(new ColorGradient(tier.Meta.colorPalette.background, -45));
     }
 }

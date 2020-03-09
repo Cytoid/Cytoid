@@ -16,6 +16,24 @@ public enum ScoreGrade
 
 public static class ScoreGrades
 {
+    public static ScoreGrade FromTierCompletion(double score)
+    {
+        var grade = ScoreGrade.F;
+        if (score == 2)
+        {
+            grade = ScoreGrade.MAX;
+        }
+        else if (score >= 1.9)
+        {
+            grade = ScoreGrade.SSS;
+        }
+        else if (score >= 1)
+        {
+            grade = ScoreGrade.AA;
+        }
+
+        return grade;
+    }
     public static ScoreGrade From(double score)
     {
         var grade = ScoreGrade.F;

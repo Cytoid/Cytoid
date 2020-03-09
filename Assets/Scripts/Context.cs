@@ -26,7 +26,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static int ThumbnailWidth = 576;
     public static int ThumbnailHeight = 360;
 
-    public static readonly LevelEvent OnSelectedLevelChanged = new LevelEvent();
+    public static readonly LevelEvent OnSelectedLevelChanged = new LevelEvent(); // TODO: This feels definitely unnecessary. Integrate with screen?
     public static readonly UnityEvent OnLanguageChanged = new UnityEvent();
     
     public static string DataPath;
@@ -56,15 +56,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static Difficulty SelectedDifficulty = Difficulty.Easy;
     public static Difficulty PreferredDifficulty = Difficulty.Easy;
     public static HashSet<Mod> SelectedMods = new HashSet<Mod>();
-    public static Tier SelectedTier
-    {
-        get => selectedTier;
-        set
-        {
-            selectedTier = value;
-        }
-    }
-    public static bool WillCalibrate;
+    public static GameMode SelectedGameMode;
 
     public static GameState GameState;
     public static TierState TierState;
@@ -73,7 +65,6 @@ public class Context : SingletonMonoBehavior<Context>
     public static OnlinePlayer OnlinePlayer = new OnlinePlayer();
 
     private static Level selectedLevel;
-    private static Tier selectedTier;
     private static GraphyManager graphyManager;
     private static Stack<string> navigationScreenHistory = new Stack<string>();
 
@@ -172,7 +163,7 @@ public class Context : SingletonMonoBehavior<Context>
                 ScreenManager.ChangeScreen(InitializationScreen.Id, ScreenTransition.None);
             }
             
-            if (false)
+            if (true)
             {
                 ScreenManager.ChangeScreen(TierSelectionScreen.Id, ScreenTransition.None);
             }
@@ -186,13 +177,19 @@ public class Context : SingletonMonoBehavior<Context>
                 ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.None);
             }
 
-            if (true)
+            if (false)
             {
                 // Load result
                 await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/suconh_typex.alice/level.json" });
                 SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
                 SelectedDifficulty = Difficulty.Hard;
                 ScreenManager.ChangeScreen("Result", ScreenTransition.None);
+            }
+            
+            if (false)
+            {
+                // Load result
+                ScreenManager.ChangeScreen(TierResultScreen.Id, ScreenTransition.None);
             }
         }
         await UniTask.DelayFrame(0);
@@ -222,21 +219,21 @@ public class Context : SingletonMonoBehavior<Context>
         if (prev == "Game" && next == "Navigation")
         {
             Input.gyro.enabled = true;
-            WillCalibrate = false;
             // Restore history
             ScreenManager.History = new Stack<string>(navigationScreenHistory);
 
             if (TierState != null)
             {
-                if (TierState.Stages.Last().IsCompleted)
+                if (TierState.CurrentStage.IsCompleted)
                 {
                     // Show tier result screen
                     ScreenManager.ChangeScreen(TierBreakScreen.Id, ScreenTransition.None, addToHistory: false);
                 }
                 else
                 {
-                    // Show game preparation screen
-                    ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.None);
+                    TierState = null;
+                    // Show tier selection screen
+                    ScreenManager.ChangeScreen(TierSelectionScreen.Id, ScreenTransition.None);
                     await UniTask.DelayFrame(5);
                     LoopAudioPlayer.Instance.PlayMainLoopAudio();
                 }

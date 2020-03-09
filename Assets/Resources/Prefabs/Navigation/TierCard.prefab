@@ -290,7 +290,7 @@ MonoBehaviour:
   canvasGroup: {fileID: 7762560140107389231}
   canvas: {fileID: 8854702304494366199}
   characterBackdrop: {fileID: 994724804111393091}
-  gradientPane: {fileID: 0}
+  gradientPane: {fileID: 7115842666513886362}
   stageCards:
   - {fileID: 1280365008775644085}
   - {fileID: 1280365009090506017}
@@ -1746,6 +1746,7 @@ GameObject:
   - component: {fileID: 4442072511052956514}
   - component: {fileID: 4442072511052956512}
   - component: {fileID: 4442072511052956513}
+  - component: {fileID: 7115842666513886362}
   m_Layer: 5
   m_Name: Card
   m_TagString: Untagged
@@ -1839,6 +1840,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &7115842666513886362
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4442072511052956543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f095f80f0e5e4321996d85104f77617b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  titleText: {fileID: 4442072511385518758}
+  completionPercentageText: {fileID: 4442072509928431896}
+  backgroundGradient: {fileID: 4442072511052956514}
 --- !u!1 &4442072511385518754
 GameObject:
   m_ObjectHideFlags: 0
@@ -3520,18 +3536,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 71c504c6899ff9a4bb433d839cfd9732, type: 3}
---- !u!224 &6845120573040850243 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 7159502456058686286, guid: 71c504c6899ff9a4bb433d839cfd9732,
-    type: 3}
-  m_PrefabInstance: {fileID: 4442072511411871245}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &998329663920237924 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3494704129191195497, guid: 71c504c6899ff9a4bb433d839cfd9732,
-    type: 3}
-  m_PrefabInstance: {fileID: 4442072511411871245}
-  m_PrefabAsset: {fileID: 0}
 --- !u!114 &1280365010142720318 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3198026706805731123, guid: 71c504c6899ff9a4bb433d839cfd9732,
@@ -3544,3 +3548,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4916cd81095b46d88d17f5685adeb35c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!224 &6845120573040850243 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 7159502456058686286, guid: 71c504c6899ff9a4bb433d839cfd9732,
+    type: 3}
+  m_PrefabInstance: {fileID: 4442072511411871245}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &998329663920237924 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3494704129191195497, guid: 71c504c6899ff9a4bb433d839cfd9732,
+    type: 3}
+  m_PrefabInstance: {fileID: 4442072511411871245}
+  m_PrefabAsset: {fileID: 0}

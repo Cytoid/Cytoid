@@ -22,7 +22,7 @@ public class ScoreText : MonoBehaviour
     {
         if (game.IsLoaded)
         {
-            if (game.Config.IsCalibration)
+            if (game.State.Mode == GameMode.Calibration)
             {
                 text.text = "";
                 return;

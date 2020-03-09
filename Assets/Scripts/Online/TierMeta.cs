@@ -4,15 +4,24 @@ using System.Linq;
 using Newtonsoft.Json;
 
 [Serializable]
-public class OnlineTier
+public class TierMeta
 {
     public string name;
     public float completionPercentage;
     public ColorPalette colorPalette;
     public List<string> criteria;
+    [JsonIgnore] public List<Criterion> Criteria => new List<Criterion>
+    {
+        new AverageAccuracyCriterion(0.975),
+        new StageFullComboCriterion(0),
+        new HealthPercentageCriterion(0.9f)
+    };
+    
     public List<OnlineLevel> stages;
     [JsonIgnore] public List<Level> localStages = new List<Level>();
     public OnlineCharacter character;
+    public double thresholdAccuracy;
+    public double maxHealth;
 
     public class ColorPalette
     {
@@ -26,15 +35,15 @@ public class Tier
 {
     [JsonIgnore] public bool isScrollRectFix;
     [JsonIgnore] public int index;
-    public bool StagesDownloaded => data.localStages.Count > 0 && data.localStages.TrueForAll(it => it.IsLocal);
+    public bool StagesDownloaded => Meta.localStages.Count > 0 && Meta.localStages.TrueForAll(it => it.IsLocal);
+
     public bool locked;
-    public float completion;
-    [JsonProperty("tier")] public OnlineTier data;
+    public double completion;
+    [JsonProperty("tier")] public TierMeta Meta;
 }
 
 [Serializable]
 public class Season
 {
-    public string title;
     public List<Tier> tiers;
 }

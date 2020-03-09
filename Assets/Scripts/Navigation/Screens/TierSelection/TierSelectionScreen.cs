@@ -45,7 +45,7 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
             else if (SelectedTier.completion >= 1.9f) gradient = ScoreGrade.SSS.GetGradient();
             else gradient = ColorGradient.None;
             completionRateGradient.SetGradient(gradient);
-            completionRateText.text = $"{(Mathf.FloorToInt(SelectedTier.completion * 100 * 100) / 100f):0.00}%";
+            completionRateText.text = $"{(Mathf.FloorToInt((float) (SelectedTier.completion * 100 * 100)) / 100f):0.00}%";
         });
         
         startButton.interactableMonoBehavior.onPointerClick.AddListener(_ => OnStartButton());
@@ -69,15 +69,15 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         
         //TEST CODE
         Promise<OnlineLevel>.All(
-            RestClient.Get<OnlineLevel>($"{Context.ApiBaseUrl}/levels/tiermode.jericho"),
-            RestClient.Get<OnlineLevel>($"{Context.ApiBaseUrl}/levels/tiermode.reflection"),
-            RestClient.Get<OnlineLevel>($"{Context.ApiBaseUrl}/levels/tiermode.cryout")
+            RestClient.Get<OnlineLevel>($"{Context.ApiBaseUrl}/levels/f"),
+            RestClient.Get<OnlineLevel>($"{Context.ApiBaseUrl}/levels/gfsd.jojoksm"),
+            RestClient.Get<OnlineLevel>($"{Context.ApiBaseUrl}/levels/prettyfish.weidong_meng.xinwen_lianbo_opening_theme")
         ).Then(it =>
         {
             var list = it.ToList();
             foreach (var userTier in SavedContent.season.tiers)
             {
-                userTier.data.stages = list;
+                userTier.Meta.stages = list;
             }
 
             OnContentLoaded(SavedContent);
@@ -94,7 +94,7 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         }*/
     }
 
-    public void OnContentLoaded(Content content)
+    public async void OnContentLoaded(Content content)
     {
         scrollRect.ClearCells();
         
@@ -104,12 +104,13 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         {
             var tier = tiers[i];
             tier.index = i;
+            tier.Meta.localStages = new List<Level>();
             var allUpToDate = true;
-            for (var stage = 0; stage < 3; stage++)
+            for (var stage = 0; stage < Math.Min(tier.Meta.stages.Count, 3); stage++)
             {
-                var level = tier.data.stages[stage].ToLevel();
-                allUpToDate = allUpToDate && level.IsLocal && level.Meta.version == tier.data.stages[stage].version;
-                tier.data.localStages.Add(level);
+                var level = tier.Meta.stages[stage].ToLevel();
+                allUpToDate = allUpToDate && level.IsLocal && level.Meta.version == tier.Meta.stages[stage].version;
+                tier.Meta.localStages.Add(level);
             }
         }
 
@@ -152,24 +153,36 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
             snapCoroutine = null;
             yield break;
         }
-        var toTierCard = tierCards
-            .FindAll(it => !it.Tier.isScrollRectFix)
-            .MinBy(it => Math.Abs(it.rectTransform.GetScreenSpaceCenter().y - ScreenCenter.y));
-        scrollRect.SrollToCell(toTierCard.Index, 1024);
-        selectedTierCard = toTierCard;
-        OnTierSelected(toTierCard.Tier);
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(scrollRect.content);
+        try
+        {
+            var toTierCard = tierCards
+                .FindAll(it => !it.Tier.isScrollRectFix)
+                .MinBy(it => Math.Abs(it.rectTransform.GetScreenSpaceCenter().y - ScreenCenter.y));
+            scrollRect.SrollToCell(toTierCard.Index, 1024);
+            selectedTierCard = toTierCard;
+            OnTierSelected(toTierCard.Tier);
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning(e);
+            print(tierCards.Count);
+            tierCards.FindAll(it => !it.Tier.isScrollRectFix).ForEach(it => print(Math.Abs(it.rectTransform.GetScreenSpaceCenter().y - ScreenCenter.y)));
+        }
+
         snapCoroutine = null;
     }
 
     public void OnTierSelected(Tier tier)
     {
         SelectedTier = tier;
-        print("Selected tier " + (tier.data.name));
+        print("Selected tier " + (tier.Meta.name));
 
-        if (tier.data.character != null)
+        if (tier.Meta.character != null)
         {
             lowerLeftColumn.Enter();
-            rewardCharacterName.text = tier.data.character.name;
+            rewardCharacterName.text = tier.Meta.character.name;
         }
 
         if (!tier.locked)
@@ -184,14 +197,15 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         if (SelectedTier.StagesDownloaded)
         {
             State = ScreenState.Inactive;
+            Context.SelectedGameMode = GameMode.Tier;
+            Context.TierState = new TierState(SelectedTier);
 
             scrollRect.GetComponentsInChildren<TierCard>().ForEach(it => it.OnTierStart());
             ProfileWidget.Instance.FadeOut();
 
             Context.AudioManager.Get("LevelStart").Play();
 
-            Context.SelectedTier = SelectedTier;
-            Context.SelectedMods = Context.LocalPlayer.EnabledMods;
+            Context.SelectedMods = Context.LocalPlayer.EnabledMods; // This will be filtered
             
             await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
 
@@ -212,10 +226,10 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
 
     public async void DownloadAndUnpackStages()
     {
-        var newLocalStages = new List<Level>(SelectedTier.data.localStages);
-        for (var index = 0; index < SelectedTier.data.localStages.Count; index++)
+        var newLocalStages = new List<Level>(SelectedTier.Meta.localStages);
+        for (var index = 0; index < SelectedTier.Meta.localStages.Count; index++)
         {
-            var level = SelectedTier.data.localStages[index];
+            var level = SelectedTier.Meta.localStages[index];
             if (level.IsLocal) continue;
             bool? error = null;
             Context.LevelManager.DownloadAndUnpackLevelDialog(
@@ -244,7 +258,7 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         {
             Toast.Next(Toast.Status.Success, "TOAST_SUCCESSFULLY_DOWNLOADED_TIER_DATA".Get());
         }
-        SelectedTier.data.localStages = newLocalStages;
+        SelectedTier.Meta.localStages = newLocalStages;
 
         selectedTierCard.ScrollCellContent(SelectedTier);
         OnTierSelected(SelectedTier);

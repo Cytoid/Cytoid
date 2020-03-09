@@ -2,7 +2,7 @@ using System.Linq;
 
 public class TotalComboCriterion : Criterion
 {
-    public override string Description => "TIER_CRITERIA_TOTAL_COMBO".Get();
+    public override string Description => "TIER_CRITERIA_TOTAL_COMBO".Get(RequiredTotalCombo);
 
     public double RequiredTotalCombo { get; }
 

@@ -93,7 +93,7 @@ public class HoldNote : Note
         else if (HeldDuration > Model.Duration * 0.5f) grade = NoteGrade.Good;
         else if (HeldDuration > Model.Duration * 0.3f) grade = NoteGrade.Bad;
 
-        if (Game.State.IsRanked)
+        if (Game.State.Mode != GameMode.Practice)
         {
             if (HoldingStartTime > Model.start_time)
             {
@@ -112,7 +112,7 @@ public class HoldNote : Note
             }
         }
 
-        if (Game.State.IsRanked && rankedGrade < grade)
+        if (Game.State.Mode != GameMode.Practice && rankedGrade < grade)
             return rankedGrade; // Return the "worse" ranking (Note miss < bad < good < great < perfect)
         return grade;
     }

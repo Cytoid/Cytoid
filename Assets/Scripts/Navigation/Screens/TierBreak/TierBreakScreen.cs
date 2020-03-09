@@ -16,14 +16,21 @@ public class TierBreakScreen : Screen, ScreenChangeListener
 {
     public const string Id = "TierBreak";
 
-    public GameObject infoContainer;
+    public Text modeText;
+    
+    public DifficultyBall difficultyBall;
+    public Text stageTitleText;
+    
     public Text scoreText;
     public Text gradeText;
     public Text accuracyText;
     public Text maxComboText;
     public Text standardMetricText;
     public Text advancedMetricText;
-
+    public GameObject criterionEntryHolder;
+    public CircleButton nextStageButton;
+    
+    public GameObject criterionEntryPrefab;
     private GameState gameState;
 
     public override string GetId() => Id;
@@ -31,6 +38,7 @@ public class TierBreakScreen : Screen, ScreenChangeListener
     public override async void OnScreenInitialized()
     {
         base.OnScreenInitialized();
+        Context.ScreenManager.AddHandler(this);
         // TODO: Most code here is the same as the one in ResultScreen.cs. Refactor?
 
         gameState = Context.GameState;
@@ -38,16 +46,32 @@ public class TierBreakScreen : Screen, ScreenChangeListener
 
         // Load translucent cover
         var image = TranslucentCover.Instance.image;
-        image.color = Color.black;
+        image.color = Color.white.WithAlpha(0);
         var sprite = Context.SpriteCache.GetCachedSpriteFromMemory("game://cover");
+        if (sprite == null)
+        {
+            var level = gameState.Level;
+            var path = "file://" + level.Path + level.Meta.background.path;
+            using (var request = UnityWebRequestTexture.GetTexture(path))
+            {
+                await request.SendWebRequest();
+                if (request.isNetworkError || request.isHttpError)
+                {
+                    Debug.LogError($"Failed to download cover from {path}");
+                    Debug.LogError(request.error);
+                    return;
+                }
+
+                sprite = DownloadHandlerTexture.GetContent(request).CreateSprite();
+            }
+        }
         image.sprite = sprite;
         image.FitSpriteAspectRatio();
-        image.DOColor(Color.white.WithAlpha(0), 0.4f);
 
         // Update performance info
         scoreText.text = Mathf.FloorToInt((float) gameState.Score).ToString("D6");
-        accuracyText.text = "RESULT_X_ACCURACY".Get((Math.Floor(gameState.Accuracy * 100) / 100).ToString("0.00"));
-        if (Math.Abs(gameState.Accuracy - 100.0) < 0.000001)
+        accuracyText.text = "RESULT_X_ACCURACY".Get((Math.Floor(gameState.Accuracy * 100 * 100) / 100).ToString("0.00"));
+        if (Mathf.Approximately((float) gameState.Accuracy, 1))
         {
             accuracyText.text = "RESULT_FULL_ACCURACY".Get();
         }
@@ -79,8 +103,43 @@ public class TierBreakScreen : Screen, ScreenChangeListener
                                   $"<b>{"RESULT_AVG_TIMING_ERR".Get()}</b> {gameState.AverageTimingError:0.000}s    " +
                                   $"<b>{"RESULT_STD_TIMING_ERR".Get()}</b> {gameState.StandardTimingError:0.000}s";
         if (!Context.LocalPlayer.DisplayEarlyLateIndicators) advancedMetricText.text = "";
+        
+        // TIER START
+
+        var tierState = Context.TierState;
+        modeText.text = tierState.Tier.Meta.name;
+
+        var stage = tierState.CurrentStage;
+        difficultyBall.SetModel(stage.Difficulty, stage.DifficultyLevel);
+        stageTitleText.text = stage.Level.Meta.title;
+        
+        nextStageButton.State = tierState.IsCompleted ? CircleButtonState.Finish : CircleButtonState.NextStage;
+        nextStageButton.interactableMonoBehavior.onPointerClick.AddListener(_ =>
+        {
+            nextStageButton.StopPulsing();
+            if (tierState.IsCompleted) Finish();
+            else NextStage();
+        });
+        
+        // Update criterion entries
+        foreach (Transform child in criterionEntryHolder.transform) Destroy(child.gameObject);
+        
+        foreach (var criterion in Context.TierState.Criteria)
+        {
+            var entry = Instantiate(criterionEntryPrefab, criterionEntryHolder.transform)
+                .GetComponent<CriterionEntry>();
+            entry.SetModel(criterion.Description, criterion.Judge(Context.TierState));
+        }
+        
+        criterionEntryHolder.transform.RebuildLayout();
 
         await Resources.UnloadUnusedAssets();
+    }
+    
+    public override void OnScreenDestroyed()
+    {
+        base.OnScreenDestroyed();
+        Context.ScreenManager.RemoveHandler(this);
     }
 
     public override void OnScreenBecameActive()
@@ -92,19 +151,6 @@ public class TierBreakScreen : Screen, ScreenChangeListener
       
         LoopAudioPlayer.Instance.PlayResultLoopAudio();
         LoopAudioPlayer.Instance.FadeInLoopPlayer(0);
-    }
-
-    public override void OnScreenPostActive()
-    {
-        base.OnScreenPostActive();
-        LayoutRebuilder.ForceRebuildLayoutImmediate(infoContainer.transform as RectTransform);
-        infoContainer.GetComponentsInChildren<TransitionElement>().ForEach(it => it.UseCurrentStateAsDefault());
-    }
-
-    public override void OnScreenBecameInactive()
-    {
-        base.OnScreenBecameInactive();
-        Run.After(0.4f, () => TranslucentCover.Instance.image.color = Color.white.WithAlpha(0));
     }
 
     public async void NextStage()
@@ -122,6 +168,8 @@ public class TierBreakScreen : Screen, ScreenChangeListener
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
         TranslucentCover.Instance.image.DOFade(0, 0.8f);
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
+        Context.SpriteCache.DisposeTaggedSpritesInMemory(SpriteTag.GameCover);
+        
         sceneLoader.Activate();
     }
     
@@ -137,6 +185,7 @@ public class TierBreakScreen : Screen, ScreenChangeListener
     {
         if (from == this && !(to is TierResultScreen))
         {
+            print("Disposed...");
             // Dispose game cover
             Context.SpriteCache.DisposeTaggedSpritesInMemory(SpriteTag.GameCover);
         }

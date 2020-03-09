@@ -1,6 +1,6 @@
 public class StageScoreCriterion : Criterion
 {
-    public override string Description => "TIER_CRITERIA_STAGE_SCORE".Get();
+    public override string Description => "TIER_CRITERIA_STAGE_SCORE".Get(RequiredScore, StageName(StageIndex));
 
     public int StageIndex { get; }
     public double RequiredScore { get; }

@@ -56,7 +56,7 @@ public class NoteOffsetWidget : MonoBehaviour
         increaseMoreButton.onPointerClick.AddListener(it => ChangeGameNoteOffset(+0.05f));
         game.onGameLoaded.AddListener(it =>
         {
-            if (!it.Config.IsCalibration)
+            if (game.State.Mode != GameMode.Calibration)
             {
                 Destroy(gameObject);
             }

@@ -226,31 +226,29 @@ public class LevelManager
                 if (entry.Name.Contains("__MACOSX")) continue; // Fucking macOS...
                 Debug.Log("Extracting " + entry.Name + "...");
 
-                FileStream outputFile;
                 try
                 {
-                    outputFile = File.Create(targetFile);
+                    var outputFile = File.Create(targetFile);
+                    using (outputFile)
+                    {
+                        if (entry.Size <= 0) continue;
+                        var zippedStream = zipFile.GetInputStream(entry);
+                        var dataBuffer = new byte[bufferSize];
+
+                        int readBytes;
+                        while ((readBytes = zippedStream.Read(dataBuffer, 0, bufferSize)) > 0)
+                        {
+                            outputFile.Write(dataBuffer, 0, readBytes);
+                            outputFile.Flush();
+                            await UniTask.Yield(); // Prevent blocking main thread
+                        }
+                    }
                 }
                 catch (Exception e)
                 {
                     Debug.LogError($"Cannot extract {entry.Name} from {fileName}. Is it a valid .zip archive file?");
                     Debug.LogError(e.Message);
                     return false;
-                }
-
-                using (outputFile)
-                {
-                    if (entry.Size <= 0) continue;
-                    var zippedStream = zipFile.GetInputStream(entry);
-                    var dataBuffer = new byte[bufferSize];
-
-                    int readBytes;
-                    while ((readBytes = zippedStream.Read(dataBuffer, 0, bufferSize)) > 0)
-                    {
-                        outputFile.Write(dataBuffer, 0, readBytes);
-                        outputFile.Flush();
-                        await UniTask.Yield(); // Prevent blocking main thread
-                    }
                 }
             }
         }

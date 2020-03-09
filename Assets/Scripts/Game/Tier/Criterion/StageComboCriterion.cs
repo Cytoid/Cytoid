@@ -1,6 +1,6 @@
 public class StageComboCriterion : Criterion
 {
-    public override string Description => "TIER_CRITERIA_STAGE_COMBO".Get();
+    public override string Description => "TIER_CRITERIA_STAGE_COMBO".Get(RequiredCombo, StageName(StageIndex));
 
     public int StageIndex { get; }
     public double RequiredCombo { get; }

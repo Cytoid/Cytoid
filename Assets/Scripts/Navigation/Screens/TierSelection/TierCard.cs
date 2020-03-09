@@ -64,21 +64,21 @@ public class TierCard : MonoBehaviour
             active = true;
             screenCenter = this.GetScreenParent<TierSelectionScreen>().ScreenCenter;
 
-            characterBackdrop.gameObject.SetActive(tier.data.character != null);
-            if (tier.data.character != null)
+            characterBackdrop.gameObject.SetActive(tier.Meta.character != null);
+            if (tier.Meta.character != null)
             {
                 LoadCharacterPreview(tier.locked
-                    ? tier.data.character.silhouetteURL
-                    : tier.data.character.thumbnailURL);
+                    ? tier.Meta.character.silhouetteURL
+                    : tier.Meta.character.thumbnailURL);
             }
 
             gradientPane.SetModel(tier);
 
-            for (var stage = 0; stage < 3; stage++)
+            for (var stage = 0; stage < Math.Min(3, tier.Meta.stages.Count); stage++)
             {
                 stageCards[stage].SetModel(
-                    tier.data.localStages[stage], 
-                    new ColorGradient(tier.data.colorPalette.stages[stage], 90f)
+                    tier.Meta.localStages[stage], 
+                    new ColorGradient(tier.Meta.colorPalette.stages[stage], 90f)
                 );
             }
             
@@ -95,10 +95,10 @@ public class TierCard : MonoBehaviour
             }
 
             foreach (Transform child in criteriaHolder.transform) Destroy(child.gameObject);
-            foreach (var criterion in tier.data.criteria)
+            foreach (var criterion in tier.Meta.Criteria)
             {
                 var criterionEntry = Instantiate(criterionEntryPrefab, criteriaHolder.transform);
-                criterionEntry.text.text = criterion;
+                criterionEntry.SetModel(criterion.Description, CriterionState.Passed);
             }
             LayoutFixer.Fix(criteriaHolder.transform);
         }

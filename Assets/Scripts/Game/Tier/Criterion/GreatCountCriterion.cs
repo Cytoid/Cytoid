@@ -1,6 +1,6 @@
 public class GreatCountCriterion : Criterion
 {
-    public override string Description => "TIER_CRITERIA_GREAT_COUNT".Get();
+    public override string Description => "TIER_CRITERIA_GREAT_COUNT".Get(MaxCount);
 
     public int MaxCount { get; }
 

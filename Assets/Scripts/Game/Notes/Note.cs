@@ -157,7 +157,25 @@ public abstract class Note : MonoBehaviour
         var grade = NoteGrade.None;
         var timeUntil = TimeUntilStart;
 
-        if (Game.State.IsRanked)
+        if (Game.State.Mode == GameMode.Practice)
+        {
+            if (timeUntil >= 0)
+            {
+                if (timeUntil < 0.800f) grade = NoteGrade.Bad;
+                if (timeUntil < 0.400f) grade = NoteGrade.Good;
+                if (timeUntil < 0.200f) grade = NoteGrade.Great;
+                if (timeUntil < 0.070f) grade = NoteGrade.Perfect;
+            }
+            else
+            {
+                var timePassed = -timeUntil;
+                if (timePassed < 0.300f) grade = NoteGrade.Bad;
+                if (timePassed < 0.200f) grade = NoteGrade.Good;
+                if (timePassed < 0.150f) grade = NoteGrade.Great;
+                if (timePassed < 0.070f) grade = NoteGrade.Perfect;
+            }
+        }
+        else
         {
             if (timeUntil >= 0)
             {
@@ -175,24 +193,6 @@ public abstract class Note : MonoBehaviour
                 if (timePassed < 0.070f) grade = NoteGrade.Great;
                 if (timePassed <= 0.040f) grade = NoteGrade.Perfect;
                 if (grade == NoteGrade.Great) GreatGradeWeight = 1.0f - (timePassed - 0.040f) / (0.070f - 0.040f);
-            }
-        }
-        else
-        {
-            if (timeUntil >= 0)
-            {
-                if (timeUntil < 0.800f) grade = NoteGrade.Bad;
-                if (timeUntil < 0.400f) grade = NoteGrade.Good;
-                if (timeUntil < 0.200f) grade = NoteGrade.Great;
-                if (timeUntil < 0.070f) grade = NoteGrade.Perfect;
-            }
-            else
-            {
-                var timePassed = -timeUntil;
-                if (timePassed < 0.300f) grade = NoteGrade.Bad;
-                if (timePassed < 0.200f) grade = NoteGrade.Good;
-                if (timePassed < 0.150f) grade = NoteGrade.Great;
-                if (timePassed < 0.070f) grade = NoteGrade.Perfect;
             }
         }
 

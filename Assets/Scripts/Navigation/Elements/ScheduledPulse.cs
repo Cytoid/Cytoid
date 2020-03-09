@@ -5,7 +5,8 @@ using UnityEngine;
 public class ScheduledPulse : MonoBehaviour, ScreenBecameActiveListener, ScreenBecameInactiveListener, ScreenUpdateListener
 {
     [GetComponent] public PulseElement pulseElement;
-    public float delay;
+
+    public float initialDelay = 0.4f;
     public float interval = 2f;
     public bool isPulsing;
 
@@ -14,7 +15,7 @@ public class ScheduledPulse : MonoBehaviour, ScreenBecameActiveListener, ScreenB
     public void OnScreenBecameActive()
     {
         isPulsing = true;
-        NextPulseTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + (int) (delay * 1000);
+        NextPulseTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + (int) (initialDelay * 1000);
     }
 
     public void OnScreenBecameInactive()

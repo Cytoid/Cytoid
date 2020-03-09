@@ -1,6 +1,8 @@
+using UnityEngine;
+
 public class AverageAccuracyCriterion : Criterion
 {
-    public override string Description => "TIER_CRITERIA_AVG_ACCURACY".Get();
+    public override string Description => "TIER_CRITERIA_AVG_ACCURACY".Get((Mathf.Floor((float) (RequiredAverageAccuracy * 100 * 100)) / 100).ToString("0.00"));
 
     public double RequiredAverageAccuracy { get; }
 

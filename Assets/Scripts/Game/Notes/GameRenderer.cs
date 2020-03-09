@@ -70,6 +70,7 @@ public class GameRenderer
                 }
                 sprite = DownloadHandlerTexture.GetContent(request).CreateSprite();
             }
+            Context.SpriteCache.PutSpriteInMemory("game://cover", SpriteTag.GameCover, sprite);
         }
         cover.sprite = sprite;
         cover.FitSpriteAspectRatio();

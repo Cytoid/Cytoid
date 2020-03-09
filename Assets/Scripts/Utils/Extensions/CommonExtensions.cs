@@ -21,7 +21,8 @@ public static class CommonExtensions
         this IEnumerable<TSource> source,
         Func<TSource, TMin> selector)
     {
-        return source.Select(it => (selector(it), it)).Min().Item2;
+        return Enumerable.Range(0, int.MaxValue)
+            .Zip(source, (index, it) => (selector(it), index, it)).Min().Item3;
     }
 
     public static void SetLayerRecursively(this GameObject go, int layerNumber)

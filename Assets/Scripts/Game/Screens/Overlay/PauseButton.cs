@@ -21,33 +21,44 @@ public class PauseButton : InteractableMonoBehavior
     {
         canvasGroup.alpha = normalOpacity;
         canvasGroup.interactable = false;
-        game.onGameLoaded.AddListener(_ => canvasGroup.interactable = true);
-        game.onGameCompleted.AddListener(_ =>
+        game.onGameLoaded.AddListener(game =>
         {
-            transitionElement.leaveTo = Transition.Default;
-            transitionElement.Leave();
-        });
-        game.onGamePaused.AddListener(_ =>
-        {
-            transitionElement.leaveTo = Transition.Default;
-            transitionElement.Leave();
-        });
-        game.onGameUnpaused.AddListener(_ =>
-        {
-            canvasGroup.alpha = normalOpacity;
-            transitionElement.enterFrom = Transition.Default;
-            transitionElement.Enter();
-        });
-        interactableMonoBehavior.onPointerClick.AddListener(_ =>
-        {
-            if (!highlighted)
+            if (game.State.Mode != GameMode.Tier)
             {
-                Highlight();
+                canvasGroup.interactable = true;
+                game.onGameCompleted.AddListener(_ =>
+                {
+                    transitionElement.leaveTo = Transition.Default;
+                    transitionElement.Leave();
+                });
+                game.onGamePaused.AddListener(_ =>
+                {
+                    transitionElement.leaveTo = Transition.Default;
+                    transitionElement.Leave();
+                });
+                game.onGameUnpaused.AddListener(_ =>
+                {
+                    canvasGroup.alpha = normalOpacity;
+                    transitionElement.enterFrom = Transition.Default;
+                    transitionElement.Enter();
+                });
+                interactableMonoBehavior.onPointerClick.AddListener(_ =>
+                {
+                    if (!highlighted)
+                    {
+                        Highlight();
+                    }
+                    else
+                    {
+                        Unhighlight();
+                        game.Pause();
+                    }
+                });
             }
             else
             {
-                Unhighlight();
-                game.Pause();
+                canvasGroup.alpha = 0;
+                canvasGroup.interactable = false;
             }
         });
     }

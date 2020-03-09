@@ -16,7 +16,7 @@ public class AccuracyText : MonoBehaviour
     {
         if (game.IsLoaded)
         {
-            if (game.Config.IsCalibration)
+            if (game.State.Mode == GameMode.Calibration)
             {
                 text.text = "";
             }
@@ -24,7 +24,7 @@ public class AccuracyText : MonoBehaviour
             {
                 if (game.State.IsStarted && game.State.ClearCount > 0)
                 {
-                    text.text = (Math.Floor(game.State.Accuracy * 100) / 100).ToString("0.00") + "%";
+                    text.text = (Math.Floor(game.State.Accuracy * 100 * 100) / 100).ToString("0.00") + "%";
                 }
                 else
                 {

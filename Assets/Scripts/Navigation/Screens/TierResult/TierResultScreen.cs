@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using DG.Tweening;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Proyecto26;
 using UniRx.Async;
@@ -44,14 +45,52 @@ public class TierResultScreen : Screen, ScreenChangeListener
     public override async void OnScreenInitialized()
     {
         base.OnScreenInitialized();
+        ScreenManager.Instance.AddHandler(this);
+        
         tierState = Context.TierState;
         if (tierState == null)
         {
-            // sth
+            tierState = new TierState(MockData.Season.tiers[0])
+            {
+                Combo = 1,
+                CurrentStageIndex = 0,
+                Health = 1000.0,
+                IsFailed = false,
+                MaxCombo = 1,
+                Stages = new[]
+                {
+                    new GameState()
+                }
+            };
+            tierState.OnComplete();
         }
         Context.TierState = null;
+        
+        // Load translucent cover
+        var image = TranslucentCover.Instance.image;
+        image.color = Color.white.WithAlpha(0);
+        var sprite = Context.SpriteCache.GetCachedSpriteFromMemory("game://cover");
+        if (sprite == null)
+        {
+            var level = tierState.CurrentStage.Level;
+            var path = "file://" + level.Path + level.Meta.background.path;
+            using (var request = UnityWebRequestTexture.GetTexture(path))
+            {
+                await request.SendWebRequest();
+                if (request.isNetworkError || request.isHttpError)
+                {
+                    Debug.LogError($"Failed to download cover from {path}");
+                    Debug.LogError(request.error);
+                    return;
+                }
 
-        nextButton.State = CircleButtonState.Start;
+                sprite = DownloadHandlerTexture.GetContent(request).CreateSprite();
+            }
+        }
+        image.sprite = sprite;
+        image.FitSpriteAspectRatio();
+
+        nextButton.State = CircleButtonState.Next;
         nextButton.interactableMonoBehavior.onPointerClick.AddListener(_ =>
         {
             nextButton.StopPulsing();
@@ -65,16 +104,16 @@ public class TierResultScreen : Screen, ScreenChangeListener
         });
 
         // Update performance info
-        if (tierState.Completion < 100)
+        if (tierState.Completion < 1)
         {
             scoreText.text = "TIER_FAILED".Get();
         }
         else
         {
-            scoreText.text = Mathf.FloorToInt((float) tierState.Completion).ToString("D6");
+            scoreText.text = (Mathf.FloorToInt((float) (tierState.Completion) * 100 * 100) / 100).ToString("0.00") + "%";
         }
-        accuracyText.text = "RESULT_X_ACCURACY".Get((Math.Floor(tierState.AverageAccuracy * 100) / 100).ToString("0.00"));
-        if (Mathf.Approximately((float) tierState.AverageAccuracy, 100.0f))
+        accuracyText.text = "RESULT_X_ACCURACY".Get((Math.Floor(tierState.AverageAccuracy * 100 * 100) / 100).ToString("0.00"));
+        if (Mathf.Approximately((float) tierState.AverageAccuracy, 1))
         {
             accuracyText.text = "RESULT_FULL_ACCURACY".Get();
         }
@@ -84,7 +123,7 @@ public class TierResultScreen : Screen, ScreenChangeListener
             maxComboText.text = "RESULT_FULL_COMBO".Get();
         }
 
-        var scoreGrade = ScoreGrades.From(tierState.Completion);
+        var scoreGrade = ScoreGrades.FromTierCompletion(tierState.Completion);
         gradeText.text = scoreGrade.ToString();
         gradeText.GetComponent<GradientMeshEffect>().SetGradient(scoreGrade.GetGradient());
         if (scoreGrade == ScoreGrade.MAX || scoreGrade == ScoreGrade.SSS)
@@ -106,22 +145,24 @@ public class TierResultScreen : Screen, ScreenChangeListener
                                   $"<b>{"RESULT_AVG_TIMING_ERR".Get()}</b> {tierState.AverageTimingError:0.000}s    " +
                                   $"<b>{"RESULT_STD_TIMING_ERR".Get()}</b> {tierState.StandardTimingError:0.000}s";
         if (!Context.LocalPlayer.DisplayEarlyLateIndicators) advancedMetricText.text = "";
-        
-        if (tierState.Tier.completion == 0)
+
+        newBestText.text = "";
+        if (tierState.Completion >= 1)
         {
-            newBestText.text = "RESULT_NEW".Get();
-        }
-        else
-        {
-            var historicBest = tierState.Tier.completion;
-            var newBest = tierState.Completion;
-            if (newBest > historicBest)
+            if (tierState.Tier.completion < 1)
             {
-                newBestText.text = $"+{((float) (newBest - historicBest)):0.00}%";
+                newBestText.text = "TIER_CLEARED".Get();
             }
             else
             {
-                newBestText.text = "";
+                var historicBest = tierState.Tier.completion;
+                var newBest = tierState.Completion;
+                if (newBest > historicBest)
+                {
+                    tierState.Tier.completion = tierState.Completion; // Update cached tier json
+                    newBestText.text =
+                        $"+{(Mathf.FloorToInt((float) (newBest - historicBest) * 100 * 100) / 100f):0.00}%";
+                }
             }
         }
 
@@ -129,39 +170,42 @@ public class TierResultScreen : Screen, ScreenChangeListener
 
         await Resources.UnloadUnusedAssets();
     }
+    
+    public override void OnScreenDestroyed()
+    {
+        base.OnScreenDestroyed();
+        Context.ScreenManager.RemoveHandler(this);
+    }
 
-    public override void OnScreenBecameActive()
+    public override async void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
+
+        TranslucentCover.Instance.image.DOFade(0.9f, 0.8f);
         
         gradientPane.SetModel(tierState.Tier);
-        for (var index = 0; index < 3; index++)
+        for (var index = 0; index < Math.Min(tierState.Tier.Meta.localStages.Count, 3); index++)
         {
             var widget = stageResultWidgets[index];
-            var level = tierState.Tier.data.stages[index];
+            var level = tierState.Tier.Meta.localStages[index];
             var stageResult = tierState.Stages[index];
-            widget.difficultyBall.SetModel(Difficulty.Parse(level.charts[0].type), level.charts[0].difficulty);
-            widget.titleText.text = level.title;
+            widget.difficultyBall.SetModel(Difficulty.Parse(level.Meta.charts[0].type), level.Meta.charts[0].difficulty);
+            widget.titleText.text = level.Meta.title;
             widget.performanceWidget.SetModel(new LocalPlayer.Performance
             {
-                Score = (int) stageResult.Score, Accuracy = (float) stageResult.Accuracy
+                Score = (int) stageResult.Score, Accuracy = (float) (stageResult.Accuracy * 100)
             });
         }
         
+        ProfileWidget.Instance.Enter();
         upperRightColumn.Enter();
 
-        if (!Context.OnlinePlayer.IsAuthenticated)
+        /*if (!Context.OnlinePlayer.IsAuthenticated)
         {
-            throw new Exception("You shouldn't be here");
-        }
+            await UniTask.WaitUntil(() => Context.OnlinePlayer.IsAuthenticated);
+        }*/
 
         UploadRecord();
-    }
-
-    public override void OnScreenBecameInactive()
-    {
-        base.OnScreenBecameInactive();
-        Run.After(0.4f, () => TranslucentCover.Instance.image.color = Color.white.WithAlpha(0));
     }
 
     private bool isSharing;
@@ -182,7 +226,7 @@ public class TierResultScreen : Screen, ScreenChangeListener
         Destroy(screenshot);
         
         // TODO
-        var shareText = $"#cytoid [{tierState.Tier.data.name}]";
+        var shareText = $"#cytoid [{tierState.Tier.Meta.name}]";
 
         new NativeShare()
             .AddFile(tmpPath)
@@ -196,7 +240,7 @@ public class TierResultScreen : Screen, ScreenChangeListener
     {
         LoopAudioPlayer.Instance.FadeOutLoopPlayer(0.4f);
         LoopAudioPlayer.Instance.PlayMainLoopAudio();
-        Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.Out, willDestroy: true,
+        Context.ScreenManager.ChangeScreen(TierSelectionScreen.Id, ScreenTransition.Out, willDestroy: true,
             onFinished: screen => Resources.UnloadUnusedAssets());
         Context.AudioManager.Get("LevelStart").Play();
     }
@@ -238,6 +282,7 @@ public class TierResultScreen : Screen, ScreenChangeListener
     {
         if (from == this)
         {
+            TranslucentCover.Instance.image.color = Color.white.WithAlpha(0);
             // Dispose game cover
             Context.SpriteCache.DisposeTaggedSpritesInMemory(SpriteTag.GameCover);
         }

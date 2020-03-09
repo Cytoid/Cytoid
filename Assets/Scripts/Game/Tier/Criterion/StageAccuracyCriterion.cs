@@ -1,6 +1,8 @@
+using UnityEngine;
+
 public class StageAccuracyCriterion : Criterion
 {
-    public override string Description => "TIER_CRITERIA_STAGE_ACCURACY".Get();
+    public override string Description => "TIER_CRITERIA_STAGE_ACCURACY".Get((Mathf.Floor((float) (RequiredAccuracy * 100 * 100)) / 100).ToString("0.00"), StageName(StageIndex));
 
     public int StageIndex { get; }
     public double RequiredAccuracy { get; }

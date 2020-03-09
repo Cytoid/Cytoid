@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class GameConfig
 {
-    public bool IsCalibration;
-
     public float ChartOffset;
     public bool UseScannerSmoothing;
 

@@ -38,6 +38,9 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
     public bool leaveOnScreenBecomeInactive = true;
     public float leaveOnScreenBecomeInactiveDelay;
 
+    public bool actOnOtherGameObjects = false;
+    public bool printDebugInfo = false;
+
     public bool IsShown { get; protected set; }
     public bool IsInTransition { get; protected set; }
     public bool IsEntering { get; protected set; }
@@ -56,6 +59,10 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
     
     protected void Awake()
     {
+        if (!actOnOtherGameObjects && (rectTransform.gameObject != gameObject || canvasGroup.gameObject != gameObject))
+        {
+            Debug.LogError($"WARNING! TransitionElement {name} rectTransform and canvasGroup not set to self.");
+        }
         BlocksRaycasts = canvasGroup.blocksRaycasts;
         if (hiddenOnStart)
         {
@@ -106,6 +113,12 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
         Action onComplete = null
     )
     {
+        if (printDebugInfo)
+        {
+            print(gameObject.name + $" StartTransition(toShow: {toShow}, transition: {transition}, multiplier: {multiplier}, duration: {duration}, delay: {delay}, ease: {ease}," +
+                  $"waitForTransition: {waitForTransition}, immediate: {immediate})");
+            print(StackTraceUtility.ExtractStackTrace());
+        }
         if (toShow == IsShown)
         {
             return;
@@ -264,6 +277,13 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
 
     public void RevertToDefault(bool killTween = true)
     {
+#if UNITY_EDITOR
+        if (rectTransform == null)
+        {
+            Selection.activeGameObject = gameObject;
+            throw new Exception($"{gameObject.name}: rectTransform not assigned");
+        }
+#endif
         if (killTween)
         {
             rectTransform.DOKill();

@@ -2,7 +2,7 @@ using System.Linq;
 
 public class TotalScoreCriterion : Criterion
 {
-    public override string Description => "TIER_CRITERIA_TOTAL_SCORE".Get();
+    public override string Description => "TIER_CRITERIA_TOTAL_SCORE".Get(RequiredTotalScore);
 
     public double RequiredTotalScore { get; }
 

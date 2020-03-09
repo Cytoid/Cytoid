@@ -3,20 +3,51 @@ using System.Collections.Generic;
 
 public static class MockData
 {
-    public static Season Season = new Season
+    public static Level Level => new Level(Context.TierDataPath + "/f/", false, new LevelMeta
     {
-        title = "2019.1",
+        version = 1,
+        schema_version = 2,
+        id = "f",
+        title = "(^^)",
+        artist = "Yamajet",
+        illustrator = "BOF2007",
+        charter = "JJLin Vanquisher",
+        music = new LevelMeta.MusicSection
+        {
+            path = "Music.wav",
+        },
+        music_preview = new LevelMeta.MusicSection
+        {
+            path = "Music.wav",
+        },
+        background = new LevelMeta.BackgroundSection
+        {
+            path = "bg_gamever.png"
+        },
+        charts = new List<LevelMeta.ChartSection>
+        {
+            new LevelMeta.ChartSection
+            {
+                type = "extreme",
+                difficulty = 4,
+                path = "output.cyt"
+            }
+        }
+    }, DateTime.UtcNow, DateTime.UtcNow);
+
+    public static Season Season => new Season
+    {
         tiers = new List<Tier>
         {
             new Tier()
             {
                 completion = 2,
                 locked = false,
-                data = new OnlineTier
+                Meta = new TierMeta
                 {
                     name = "Dan 1",
                     completionPercentage = 0.923f,
-                    colorPalette = new OnlineTier.ColorPalette
+                    colorPalette = new TierMeta.ColorPalette
                     {
                         background = "#11998E,#728CE4",
                         stages = new[]
@@ -31,24 +62,27 @@ public static class MockData
                         "<b>Full combo</b> every stage",
                         "<b>≥ 99.5% accuracy</b> in the 3rd",
                     },
+                    thresholdAccuracy = 0.95,
+                    maxHealth = 1000,
                     stages = new List<OnlineLevel>
                     {
                         new OnlineLevel
                         {
-                            uid = "tiermode.jericho",
+                            uid = "f",
                             version = 1,
                         },
                         new OnlineLevel
                         {
-                            uid = "tiermode.reflection",
+                            uid = "gfsd.jojoksm",
                             version = 1,
                         },
                         new OnlineLevel
                         {
-                            uid = "tiermode.cryout",
-                            version = 1
+                            uid = "prettyfish.weidong_meng.xinwen_lianbo_opening_theme",
+                            version = 1,
                         }
                     },
+                    localStages = new List<Level> { Level },
                     character = new OnlineCharacter
                     {
                         name = "Kaede",
@@ -62,11 +96,11 @@ public static class MockData
             {
                 completion = 1.877f,
                 locked = false,
-                data = new OnlineTier
+                Meta = new TierMeta
                 {
                     name = "Dan 2",
                     completionPercentage = 0.923f,
-                    colorPalette = new OnlineTier.ColorPalette
+                    colorPalette = new TierMeta.ColorPalette
                     {
                         background = "#C04848,#480048",
                         stages = new[]
@@ -80,6 +114,8 @@ public static class MockData
                     {
                         "Test",
                     },
+                    thresholdAccuracy = 0.96,
+                    maxHealth = 1000,
                     stages = new List<OnlineLevel>
                     {
                         new OnlineLevel
@@ -104,11 +140,11 @@ public static class MockData
             {
                 completion = 0,
                 locked = true,
-                data = new OnlineTier
+                Meta = new TierMeta
                 {
                     name = "Dan 3",
                     completionPercentage = 0.77f,
-                    colorPalette = new OnlineTier.ColorPalette
+                    colorPalette = new TierMeta.ColorPalette
                     {
                         background = "#C04848,#480048",
                         stages = new[]
@@ -122,6 +158,8 @@ public static class MockData
                     {
                         "Test",
                     },
+                    thresholdAccuracy = 0.96,
+                    maxHealth = 1000,
                     stages = new List<OnlineLevel>
                     {
                         new OnlineLevel

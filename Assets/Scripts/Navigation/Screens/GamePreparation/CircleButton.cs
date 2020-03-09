@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class CircleButton : MonoBehaviour, ScreenInitializedListener
+public class CircleButton : MonoBehaviour, ScreenInitializedListener, ScreenBecameInactiveListener
 {
     [GetComponentInChildren] public GradientMeshEffect gradient;
     [GetComponentInChildren] public Text text;
@@ -17,12 +17,14 @@ public class CircleButton : MonoBehaviour, ScreenInitializedListener
         {
             pulseElement.Pulse();
         });
+        StopPulsing();
     }
 
     public void StopPulsing()
     {
         if (scheduledPulse != null)
         {
+            scheduledPulse.startPulsingOnScreenBecameActive = false;
             scheduledPulse.NextPulseTime = long.MaxValue;
         }
     }
@@ -62,9 +64,20 @@ public class CircleButton : MonoBehaviour, ScreenInitializedListener
                     text.text = "TIER_FINISH".Get();
                     break;
             }
+
+            StartPulsing();
         }
     }
-    
+
+    private void StartPulsing()
+    {
+        scheduledPulse.NextPulseTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+    }
+
+    public void OnScreenBecameInactive()
+    {
+        scheduledPulse.NextPulseTime = long.MaxValue;
+    }
 }
 
 public enum CircleButtonState

@@ -45,11 +45,11 @@ public static class MockData
                 locked = false,
                 Meta = new TierMeta
                 {
-                    name = "Dan 1",
+                    name = "Mafumafu",
                     completionPercentage = 0.923f,
                     colorPalette = new TierMeta.ColorPalette
                     {
-                        background = "#11998E,#728CE4",
+                        background = "#232526,#414345",
                         stages = new[]
                         {
                             "#1D546A,#0000004C",
@@ -68,26 +68,26 @@ public static class MockData
                     {
                         new OnlineLevel
                         {
-                            uid = "f",
+                            uid = "wz.loser",
                             version = 1,
                         },
                         new OnlineLevel
                         {
-                            uid = "gfsd.jojoksm",
+                            uid = "wz.suigetsu",
                             version = 1,
                         },
                         new OnlineLevel
                         {
-                            uid = "prettyfish.weidong_meng.xinwen_lianbo_opening_theme",
+                            uid = "wz.hblimfmf",
                             version = 1,
                         }
                     },
                     localStages = new List<Level> { Level },
                     character = new OnlineCharacter
                     {
-                        name = "Kaede",
+                        name = "まふまふ",
                         description = "",
-                        thumbnailURL = "https://assets.cytoid.io/static/characters/kaede/thumbnail.png",
+                        thumbnailURL = "https://assets.cytoid.io/static/characters/mafu/thumbnail.png",
                         silhouetteURL = "https://assets.cytoid.io/static/characters/kaede/silhouette.png"
                     }
                 }

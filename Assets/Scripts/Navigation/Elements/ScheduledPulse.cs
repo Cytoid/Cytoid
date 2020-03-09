@@ -9,13 +9,19 @@ public class ScheduledPulse : MonoBehaviour, ScreenBecameActiveListener, ScreenB
     public float initialDelay = 0.4f;
     public float interval = 2f;
     public bool isPulsing;
+    public bool startPulsingOnScreenBecameActive = true;
 
-    public long NextPulseTime { get; set; }
+    public long NextPulseTime { get; set; } = long.MaxValue;
     
     public void OnScreenBecameActive()
     {
         isPulsing = true;
-        NextPulseTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + (int) (initialDelay * 1000);
+        if (startPulsingOnScreenBecameActive)
+        {
+            var start = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var delay = (int) (initialDelay * 1000);
+            NextPulseTime = start + delay;
+        }
     }
 
     public void OnScreenBecameInactive()

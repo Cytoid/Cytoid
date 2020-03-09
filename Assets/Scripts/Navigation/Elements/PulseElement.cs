@@ -21,7 +21,7 @@ public class PulseElement : MonoBehaviour
 
     public List<Type> typesToDestroyAfterClone = new List<Type>
     {
-        typeof(TransitionElement)
+        typeof(TransitionElement), typeof(InteractableMonoBehavior)
     };
 
     private bool isCloned;
@@ -84,11 +84,13 @@ public class PulseElement : MonoBehaviour
 
     public void Pulse()
     {
+        print("pulsed");
+        print(StackTraceUtility.ExtractStackTrace());
         if (holder == null)
         {
             throw new InvalidOperationException("Pulse element not initialized yet");
         }
-        
+
         // Create clone
         cloning = true;
         var clone = Instantiate(gameObject, holder.transform);

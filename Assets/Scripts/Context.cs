@@ -158,12 +158,12 @@ public class Context : SingletonMonoBehavior<Context>
         else
         {
             await UniTask.WaitUntil(() => ScreenManager != null);
-            if (false)
+            if (true)
             {
                 ScreenManager.ChangeScreen(InitializationScreen.Id, ScreenTransition.None);
             }
             
-            if (true)
+            if (false)
             {
                 ScreenManager.ChangeScreen(TierSelectionScreen.Id, ScreenTransition.None);
             }

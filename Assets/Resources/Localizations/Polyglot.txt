@@ -61,8 +61,8 @@ TOAST_ENTER_PASSWORD		Please enter your password.		Por favor, ingrese su contras
 TOAST_INCORRECT_ID_OR_PASSWORD		Incorrect Cytoid ID or password.		Cytoid ID o contraseña incorrecta.			Senha ou Cytoid ID incorretos.		Неверный Cytoid ID или пароль.									Cytoid ID か パスワード が間違ってます。	Cytoid ID 或者密码错误。	Cytoid ID 或者密碼錯誤。	잘못된 Cytoid 아이디 또는 비밀번호 입니다.									ID Cytoid hoặc mật khẩu không đúng.	Mali ang iyong Cytoid ID o Password	Cytoid ID atau password yang salah telah dimasukkan.	你号的骨灰扬了
 TOAST_STATUS_CODE		Status code: {0}		Código de estado: {0}			Código de status: {0}		Статус-код: {0}									ステータスコード: {0}	状态代码：{0}	伺服器狀態代碼：{0}	상황 코드: {0}									Mã trạng thái: {0}	Status code: {0}	Kode status: {0}	{0}啊wee！
 TOAST_ID_NOT_FOUND		This Cytoid ID does not exist.		Este Cytoid ID no existe			Esse Cytoid ID não existe.		Этот Cytoid ID не существует.									この Cytoid ID は存在しません。	此 Cytoid ID 不存在。	該 Cytoid ID 不存在！	가입하지 않은 아이디 입니다.									ID Cytoid này không tồn tại.	Wala ang iyong inilagay na Cytoid ID		啊wee改哈鞥嫦娥我刚不疤痕处哈维楚王嗡阿格王朔！！！！！！！！！！！！
-TOAST_COULD_NOT_DOWNLOAD_TIER_DATA		Could not download tier data.		No se pudo descargar los datos de nivel.																	티어 정보 다운로드 실패												
-TOAST_SUCCESSFULLY_DOWNLOADED_TIER_DATA		Successfully downloaded tier data.		Descargado los datos del nivel con éxito																	티어 정보 다운로드 성공												
+TOAST_COULD_NOT_DOWNLOAD_TIER_DATA		Could not download tier data.		No se pudo descargar los datos de nivel.																	티어 정보 다운로드 실패										Di' makapagdownload ng Tier Data		
+TOAST_SUCCESSFULLY_DOWNLOADED_TIER_DATA		Successfully downloaded tier data.		Descargado los datos del nivel con éxito																	티어 정보 다운로드 성공										Nadownload na ang Tier Data		
 TOAST_AUTOMATICALLY_PROCEEDING_TO_NEXT_STAGE_X		Automatically proceeding to next stage in {0} seconds.		Procediendo automáticamente al siguiente nivel en {0} segundos.																	자동으로 {0} 초후에 다음 스테이지가 시작됩니다.												
 																																	
 DIALOG_RATE_THIS_LEVEL		Rate this level!		Califique este nivel!			Avalie esse nível!		Оцените этот уровень!									このレベルを評価しよう！	给关卡打个分吧！	評分一下吧！	이 채보를 평가해주세요!									Hãy đánh giá level!	Markahan ang lebel	Beri nilai level ini!	打分啊111111
@@ -125,7 +125,7 @@ SETTINGS_HOLD_HIT_SOUND_TIMING		Hold hit sound timing		Sincronización de sonido
 SETTINGS_HOLD_HIT_SOUND_TIMING_DESC		When to play hit sounds for hold notes		Cuando reproducir el sonido al presionar para notas sostener			Quando tocar os sons de acerto para as notas de segurar		Когда проигрывать хит-саунд для холд ноты									どのタイミングで音を発生するかを設定します	Hold 打击音在何时播放	可單獨調整 Hold 打擊音效的播放時間\n（一般狀況下為僅清除時）										Khi nào phát âm thanh cho nốt hold	Sound kapagnapindot ang hold na nota	Kapan diputarnya hit sound pada note Hold	
 SETTINGS_HOLD_HIT_SOUNDS_TIMING_BEGIN		Begin		Inicio			Começo		Начало									開始時	开始时	僅按住時										Bắt đầu (Begin)	Simula	Awal	
 SETTINGS_HOLD_HIT_SOUNDS_TIMING_END		End		Fin			Fim		Конец									終了時	结束时	僅清除時										Kết thúc (End)	Wakas	Akhir	
-SETTINGS_HOLD_HIT_SOUNDS_TIMING_BOTH		Begin & End		Inicio y Fin			Começo e fim		Начало и Конец									開始と終了時	开始和结束时	按住與清除時										Begin / End	Simula at wakas	Awal & akhir	
+SETTINGS_HOLD_HIT_SOUNDS_TIMING_BOTH		Begin & End		Inicio y Fin			Começo e fim		Начало и Конец									開始と終了時	开始和结束时	按住與清除時										Begin / End	Simula't wakas	Awal & akhir	
 SETTINGS_GRAPHICS_QUALITY		Graphics quality		Calidad de gráficos			Qualidade gráfica		Качество графики									画面解像度	画面质量	畫質調整										Chất lượng hình ảnh	Kalidad ng graphics	Kualitas grafik	
 SETTINGS_GRAPHICS_QUALITY_DESC		Lower quality saves battery and results in higher frame rates		Menor calidad ahorra batería y resulta en mayores cuadros por segundo			Baixas qualidades economizam bateria e resultam em altos frame rates		Низкое качество сохраняет заряд батареи и повышает FPS									低解像度に設定すると、バッテリーの消費を抑え、高FPSを維持できます	调低画质可省电并提高帧数	畫質越低耗電量越少也能同時提升幀數										Chất lượng hình ảnh thấp hơn sẽ giảm tiêu thụ pin và làm FPS cao hơn	Ibaba ang kalidad para makatipid ng baterya at mataas ang frame rates	Kualitas yang rendah melambatkan kecepatan baterai untuk habis	
 SETTINGS_STORYBOARD_EFFECTS		Storyboard effects		Efectos de Storyboard			Efeitos de storyboard		Эффект раскадровки									ストーリーボード効果	故事板效果	Storyboard 效果顯示										Hiệu ứng Storyboard	Storyboard effects	Efek storyboard	
@@ -343,7 +343,7 @@ GAME_CALIBRATION_AUTOPLAY		AUTOPLAY		AUTOPLAY			AUTOPLAY		АВТОПЛЕЙ						
 GAME_CALIBRATION_HIT_SOUND		HIT SOUND		SONIDO DE ACIERTO			SOM DE ACERTO		ХИТ-САУНД									タップ音	打击音	打擊音效										TIẾNG BẤM			
 GAME_CALIBRATION_NOTE_OFFSET		NOTE OFFSET		EQUILIBRIO DE NOTA			DESLOCAMENTO DE NOTA		ЗАДЕРЖКА НОТЫ									ノーツ調整	谱面偏移	譜面校正										CÂN CHỈNH THỜI GIAN NỐT	Offset ng nota	OFFSET PADA NOTE	
 GAME_CALIBRATION_NOTE_OFFSET_DESC		If you feel the notes are <b>ahead</b> of the music, <b>increase</b> the offset. Vice versa.		Si usted siente que las notas están <b>más adelante</b> que la música, <b>aumente</b> el equilibrio. Vice versa.			Se você sente que as notas estão <b>à frente</b> da música, <b>aumente</b> o deslocamento ou vice-versa.		Если ноты <b>несовместимы<b> с музыкой, <повысьте> задержку. Или наоборот.									ノーツとのタイミングが <b>遅い</b> 場合、数値を <b>増やして</b> 下さい。また、逆も同様です。	如果你觉得 Note 比音乐要<b>早</b>，请<b>增加</b>偏移；\n否则，请减少偏移。	音樂<b>太慢</b>就<b>增加</b>數值；音樂<b>太快</b>則<b>減少</b>數值。\n以 0.01 秒（方框）／0.05 秒（圓框）為單位\n左右增減來進行調整。										Nếu bạn cảm thấy nốt đang <b> trước</b> nhạc thì <b> tăng </b> mức bù thời gian và ngược lại.	Kung sa tingin mo ang nota ay maaga sa musika, itaas ang offset. Baliktarin kapag baliktad ang resulta	Jika nada terasa lebih cepat dari musik, tambahkan offset. Sama dengan jika note terasa lebih lambat, kurangi offset.	
-GAME_PAUSED_DESC		Take a break...		Tome un descanso...			Dê uma pausa...		Передохните...									ちょっと休憩…	休息一下...	稍歇一會吧。										Nghỉ 1 chút đi...	Pahinga ka muna...	Istirahat...	贵阳一下...
+GAME_PAUSED_DESC		Take a break...		Tome un descanso...			Dê uma pausa...		Передохните...									ちょっと休憩…	休息一下...	休息一下吧。										Nghỉ 1 chút đi...	Pahinga ka muna...	Istirahat...	贵阳一下...
 GAME_TRY_AGAIN		Try again?		Intentar de nuevo?			Tentar outra vez?		Ещё раз?									リスタート？	重新来过吧？	還想再試嗎？										Thử lại?	Isa pa?	Cobal lagi?	你美丽jajajaja
 GAME_GO_BACK		Go back		Volver atras			Voltar		Вернуться?									曲選択へ	返回	返回										Quay về	Bumalik na	Kembali	贵阳
 GAME_RETRY		Retry		Reintentar			Tentar de novo		Повторить									リトライ	重试	重新開始										Thử lại	Ulitin	Ulangi	重新铲车
@@ -358,7 +358,7 @@ GAME_RESUME		Resume		Continuar			Retomar		Возобновить									再開	
 																																	
 																																	
 																																	
-																																	
+																															Note: Following texts below cannot be translated.		
 TIER_TIERS	WORK IN PROGRESS, DON'T TRANSLATE BELOW ENTRIES YET!	Tiers							Ранги										段位														
 TIER_INFO_TITLE		What are <b>Tiers</b>?							Что такое <b>Ранги<b>?																								
 TIER_INFO_CONTENT		[To be written]							[Waiting for info]																								

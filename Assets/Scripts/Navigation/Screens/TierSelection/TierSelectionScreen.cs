@@ -69,9 +69,9 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         
         //TEST CODE
         Promise<OnlineLevel>.All(
-            RestClient.Get<OnlineLevel>($"{Context.ApiBaseUrl}/levels/f"),
-            RestClient.Get<OnlineLevel>($"{Context.ApiBaseUrl}/levels/gfsd.jojoksm"),
-            RestClient.Get<OnlineLevel>($"{Context.ApiBaseUrl}/levels/prettyfish.weidong_meng.xinwen_lianbo_opening_theme")
+            RestClient.Get<OnlineLevel>($"{Context.ApiBaseUrl}/levels/wz.loser"),
+            RestClient.Get<OnlineLevel>($"{Context.ApiBaseUrl}/levels/wz.suigetsu"),
+            RestClient.Get<OnlineLevel>($"{Context.ApiBaseUrl}/levels/wz.hblimfmf")
         ).Then(it =>
         {
             var list = it.ToList();
@@ -270,6 +270,10 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
 
     public void OnScreenChangeFinished(Screen from, Screen to)
     {
+        if (from == this)
+        {
+            scrollRect.ClearCells();
+        }
     }
 
     public class Content

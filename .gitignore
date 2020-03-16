@@ -68,6 +68,11 @@ Assets/Resources/Sprites/MgO
 Assets/Resources/Sprites/MgO.meta
 Assets/Resources/Sprites/Tmp
 Assets/Resources/Sprites/Tmp.meta
+Assets/AddressableAssetsData
+Assets/AddressableAssetsData.meta
+Assets/Remote
+Assets/Remote.meta
+ServerData
 
 # Paid assets
 Assets/Packages/FlatFX

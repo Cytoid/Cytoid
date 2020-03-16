@@ -11,6 +11,7 @@ using UnityEngine.UI;
 [RequireComponent(typeof(CanvasGroup))]
 public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeListener
 {
+    [GetComponent] public RectTransform rectTransform;
     public HorizontalLayoutGroup layoutGroup;
     public CanvasGroup canvasGroup;
     public Image background;
@@ -20,8 +21,8 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
     public LayoutGroup infoLayoutGroup;
     public Text rating;
     public Text level;
-
-    private Vector2 startLocalPosition;
+    
+    private Vector2 startAnchoredPosition;
     private Profile lastProfile;
 
     protected override void Awake()
@@ -34,7 +35,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
 
     private async void Start()
     {
-        startLocalPosition = transform.localPosition;
+        startAnchoredPosition = rectTransform.anchoredPosition;
         Context.ScreenManager.AddHandler(this);
         Context.OnlinePlayer.OnProfileChanged.AddListener(profile =>
         {
@@ -56,13 +57,12 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
     public void Enter()
     {
         FadeIn();
-        SetSignedOut();
         if (Context.OnlinePlayer.IsAuthenticated)
         {
             SetSignedIn(Context.OnlinePlayer.LastProfile);
         }
         else if (!Context.OnlinePlayer.IsAuthenticated && !Context.OnlinePlayer.IsAuthenticating &&
-                 !string.IsNullOrEmpty(Context.OnlinePlayer.GetJwtToken()))
+                 !string.IsNullOrEmpty(Context.OnlinePlayer.JwtToken))
         {
             SetSigningIn();
             Context.OnlinePlayer.AuthenticateWithJwtToken()
@@ -74,17 +74,21 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
                 .Catch(error => SetSignedOut())
                 .HandleRequestErrors(error => SetSignedOut());
         }
+        else
+        {
+            SetSignedOut();
+        }
     }
 
     public void Enlarge()
     {
-        transform.DOLocalMove(startLocalPosition, 0.4f);
+        rectTransform.DOAnchorPos(startAnchoredPosition, 0.4f);
         transform.DOScale(1f, 0.4f);
     }
 
     public void Shrink()
     {
-        transform.DOLocalMove(startLocalPosition + new Vector2(12, 20), 0.4f);
+        rectTransform.DOAnchorPos(startAnchoredPosition + new Vector2(12, 20), 0.4f);
         transform.DOScale(0.9f, 0.4f);
     }
 
@@ -108,9 +112,9 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
         if (avatarImage.sprite == null)
         {
             spinner.IsSpinning = true;
-            var sprite = await Context.SpriteCache.CacheSpriteInMemory(
-                profile.user.avatarURL.WithSizeParam(512, 512), 
-                SpriteTag.PlayerAvatar,
+            var sprite = await Context.AssetMemory.LoadAsset<Sprite>(
+                profile.user.avatarURL.WithSizeParam(256, 256), 
+                AssetTag.PlayerAvatar,
                 useFileCache: true
             );
             spinner.IsSpinning = false;
@@ -150,12 +154,12 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
         avatarImage.color = Color.clear;
     }
 
-    private static List<string> hiddenScreenIds = new List<string> {SignInScreen.Id, ProfileScreen.Id, SettingsScreen.Id};
-    private static List<string> staticScreenIds = new List<string> {ResultScreen.Id, TierBreakScreen.Id, TierResultScreen.Id};
+    public static readonly HashSet<string> HiddenScreenIds = new HashSet<string> {SignInScreen.Id, ProfileScreen.Id, SettingsScreen.Id, CharacterSelectionScreen.Id};
+    public static readonly HashSet<string> StaticScreenIds = new HashSet<string> {ResultScreen.Id, TierBreakScreen.Id, TierResultScreen.Id};
 
     public void OnScreenChangeStarted(Screen from, Screen to)
     {
-        if (from != null && from.GetId() == MainMenuScreen.Id && !hiddenScreenIds.Contains(to.GetId()))
+        if (from != null && from.GetId() == MainMenuScreen.Id && !HiddenScreenIds.Contains(to.GetId()))
         {
             Shrink();
         }
@@ -164,12 +168,12 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
             Enlarge();
         }
 
-        if (hiddenScreenIds.Contains(to.GetId()))
+        if (HiddenScreenIds.Contains(to.GetId()))
         {
             FadeOut();
         }
 
-        if (staticScreenIds.Contains(to.GetId()))
+        if (StaticScreenIds.Contains(to.GetId()))
         {
             canvasGroup.blocksRaycasts = canvasGroup.interactable = false;
         }
@@ -177,12 +181,12 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
 
     public void OnScreenChangeFinished(Screen from, Screen to)
     {
-        if (from != null && hiddenScreenIds.Contains(from.GetId()))
+        if (from != null && HiddenScreenIds.Contains(from.GetId()) && !HiddenScreenIds.Contains(to.GetId()))
         {
             FadeIn();
         }
 
-        if (staticScreenIds.Contains(to.GetId()))
+        if (StaticScreenIds.Contains(to.GetId()))
         {
             canvasGroup.blocksRaycasts = canvasGroup.interactable = false;
         }
@@ -197,7 +201,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
     {
         canvasGroup.DOFade(1, 0.2f).SetEase(Ease.OutCubic);
         canvasGroup.blocksRaycasts = canvasGroup.interactable =
-            !staticScreenIds.Contains(Context.ScreenManager.ActiveScreen.GetId());
+            !StaticScreenIds.Contains(Context.ScreenManager.ActiveScreen.GetId());
     }
 
     public void FadeOut()

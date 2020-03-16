@@ -28,6 +28,7 @@ public class Chart
         bool isVerticallyInverted,
         bool useScannerSmoothing,
         float approachRateMultiplier,
+        float cameraOrthographicSize,
         float horizontalRatio,
         float verticalRatio,
         float verticalOffset)
@@ -48,7 +49,7 @@ public class Chart
             Model = FromLegacyChart(text);
         }
 
-        baseSize = Camera.main.orthographicSize;
+        baseSize = cameraOrthographicSize;
         // verticalOffset = -baseSize * 0.04f;
         this.verticalRatio = verticalRatio;
         this.verticalOffset = verticalOffset;

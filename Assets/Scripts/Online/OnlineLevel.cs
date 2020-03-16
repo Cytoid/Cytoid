@@ -73,6 +73,12 @@ public class OnlineLevel
         public int difficulty;
         public int notesCount;
     }
+    
+    // TODO: NEO!!!!
+    
+    public string music;
+    public string music_preview;
+    public OnlineImageAsset cover;
 
     public Level ToLevel(bool resolveLocalLevel = true)
     {
@@ -82,7 +88,8 @@ public class OnlineLevel
             return Context.LevelManager.LoadedLocalLevels[uid];
         }
 
-        return new Level($"{Context.ApiBaseUrl}/levels/{uid}/resources", GenerateLevelMeta());
+        return new Level($"{Context.ApiUrl}/levels/{uid}/resources", GenerateLevelMeta())
+            .Also(it => it.OnlineLevel = this);
     }
 
     public LevelMeta GenerateLevelMeta()
@@ -103,10 +110,19 @@ public class OnlineLevel
         {
             type = onlineChart.type, name = onlineChart.name, difficulty = onlineChart.difficulty
         }).ToList();
-        meta.background = new LevelMeta.BackgroundSection {path = bundle.background};
-        meta.music = new LevelMeta.MusicSection {path = bundle.music};
-        meta.music_preview = new LevelMeta.MusicSection {path = bundle.music_preview};
+        meta.background = new LevelMeta.BackgroundSection {path = bundle?.background ?? cover.cover};
+        meta.music = new LevelMeta.MusicSection {path = bundle?.music ?? music};
+        meta.music_preview = new LevelMeta.MusicSection {path = bundle?.music_preview ?? music_preview};
         meta.SortCharts();
         return meta;
     }
+}
+
+[Serializable]
+public class OnlineImageAsset
+{
+    public string original;
+    public string thumbnail;
+    public string cover;
+    public string stripe;
 }

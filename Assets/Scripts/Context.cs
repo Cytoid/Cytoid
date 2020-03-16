@@ -15,16 +15,17 @@ using UnityEngine.UI;
 
 public class Context : SingletonMonoBehavior<Context>
 {
-    public const string Version = "2.0 Alpha 4";
+    public const string Version = "2.0 Alpha 5";
     
-    public const string ApiBaseUrl = "https://api.cytoid.io";
+    public const string ApiUrl = "https://api.cytoid.io";
+    public const string ServicesUrl = "http://192.168.3.13:4000";
     public const string WebsiteUrl = "https://cytoid.io";
     
     public const int ReferenceWidth = 1920;
     public const int ReferenceHeight = 1080;
-    
-    public static int ThumbnailWidth = 576;
-    public static int ThumbnailHeight = 360;
+
+    public const int ThumbnailWidth = 576;
+    public const int ThumbnailHeight = 360;
 
     public static readonly LevelEvent OnSelectedLevelChanged = new LevelEvent(); // TODO: This feels definitely unnecessary. Integrate with screen?
     public static readonly UnityEvent OnLanguageChanged = new UnityEvent();
@@ -39,10 +40,11 @@ public class Context : SingletonMonoBehavior<Context>
     public static AudioManager AudioManager;
     public static ScreenManager ScreenManager;
 
-    public static Library Library = new Library();
-    public static FontManager FontManager = new FontManager();
-    public static LevelManager LevelManager = new LevelManager();
-    public static SpriteCache SpriteCache = new SpriteCache();
+    public static readonly Library Library = new Library();
+    public static readonly FontManager FontManager = new FontManager();
+    public static readonly LevelManager LevelManager = new LevelManager();
+    public static readonly RemoteResourceManager RemoteResourceManager = new RemoteResourceManager();
+    public static readonly AssetMemory AssetMemory = new AssetMemory();
 
     public static Level SelectedLevel
     {
@@ -61,8 +63,8 @@ public class Context : SingletonMonoBehavior<Context>
     public static GameState GameState;
     public static TierState TierState;
 
-    public static LocalPlayer LocalPlayer = new LocalPlayer();
-    public static OnlinePlayer OnlinePlayer = new OnlinePlayer();
+    public static readonly LocalPlayer LocalPlayer = new LocalPlayer();
+    public static readonly OnlinePlayer OnlinePlayer = new OnlinePlayer();
 
     private static Level selectedLevel;
     private static GraphyManager graphyManager;
@@ -83,8 +85,15 @@ public class Context : SingletonMonoBehavior<Context>
         InitializeApplication();
     }
 
+    private static void OnLowMemory()
+    {
+        Resources.UnloadUnusedAssets();
+    }
+    
     private async void InitializeApplication()
     {
+        Application.lowMemory += OnLowMemory;
+        
         FontManager.LoadFonts();
         
         var audioConfig = AudioSettings.GetConfiguration();
@@ -147,17 +156,16 @@ public class Context : SingletonMonoBehavior<Context>
         Localization.Instance.SelectLanguage((Language) LocalPlayer.Language);
         OnLanguageChanged.Invoke();
 
-        if (SceneManager.GetActiveScene().name == "Game")
-        {
-            // Load test level
-            await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/tar1412.iwannabeit/level.json" });
-            SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
-            SelectedDifficulty = Difficulty.Extreme;
-            SelectedMods.Remove(Mod.Auto);
-        }
-        else
+        await RemoteResourceManager.UpdateCatalog(); // TODO TODO
+
+        if (SceneManager.GetActiveScene().name == "Navigation")
         {
             await UniTask.WaitUntil(() => ScreenManager != null);
+            if (false)
+            {
+                ScreenManager.ChangeScreen(CharacterSelectionScreen.Id, ScreenTransition.None);
+            }
+            
             if (true)
             {
                 ScreenManager.ChangeScreen(InitializationScreen.Id, ScreenTransition.None);
@@ -328,14 +336,17 @@ public class Context : SingletonMonoBehavior<Context>
         {
             case "high":
                 UnityEngine.Screen.SetResolution(InitialWidth, InitialHeight, true);
+                QualitySettings.masterTextureLimit = 0;
                 break;
             case "medium":
                 UnityEngine.Screen.SetResolution((int) (InitialWidth * 0.7f),
                     (int) (InitialHeight * 0.7f), true);
+                QualitySettings.masterTextureLimit = 0;
                 break;
             case "low":
                 UnityEngine.Screen.SetResolution((int) (InitialWidth * 0.5f),
                     (int) (InitialHeight * 0.5f), true);
+                QualitySettings.masterTextureLimit = 1;
                 break;
         }
     }
@@ -344,11 +355,50 @@ public class Context : SingletonMonoBehavior<Context>
     {
         if (ScreenManager.ActiveScreenId != null)
         {
-            ScreenManager.ActiveScreen.CanvasGroup.blocksRaycasts = blocksRaycasts;
+            ScreenManager.ActiveScreen.CanvasGroup.interactable = ScreenManager.ActiveScreen.CanvasGroup.blocksRaycasts = blocksRaycasts;
         }
         if (ProfileWidget.Instance != null)
         {
-            ProfileWidget.Instance.canvasGroup.blocksRaycasts = blocksRaycasts;
+            var currentScreenId = ScreenManager.ActiveScreenId;
+            ProfileWidget.Instance.canvasGroup.interactable = ProfileWidget.Instance.canvasGroup.blocksRaycasts = 
+                blocksRaycasts 
+                && !ProfileWidget.HiddenScreenIds.Contains(currentScreenId) 
+                && !ProfileWidget.StaticScreenIds.Contains(currentScreenId);
         }
     }
 }
+
+#if UNITY_EDITOR
+
+[CustomEditor(typeof(Context))]
+public class ContextEditor : Editor
+{
+    public override void OnInspectorGUI()
+    {
+        DrawDefaultInspector();
+
+        if (Application.isPlaying)
+        {
+            if (Context.AssetMemory != null)
+            {
+                GUILayout.Label($"Asset memory usage:");
+                foreach (AssetTag tag in Enum.GetValues(typeof(AssetTag)))
+                {
+                    GUILayout.Label(
+                        $"{tag}: {Context.AssetMemory.CountTagUsage(tag)}/{(Context.AssetMemory.GetTagLimit(tag) > 0 ? Context.AssetMemory.GetTagLimit(tag).ToString() : "∞")}");
+                }
+            }
+
+            if (GUILayout.Button("Unload unused assets"))
+            {
+                Resources.UnloadUnusedAssets();
+            }
+            if (GUILayout.Button("Upload test"))
+            {
+                Test.UploadTest();
+            }
+            EditorUtility.SetDirty(target);
+        }
+    }
+}
+#endif

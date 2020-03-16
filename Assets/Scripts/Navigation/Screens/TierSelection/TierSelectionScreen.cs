@@ -2,8 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using DG.Tweening;
+using Newtonsoft.Json;
 using Proyecto26;
-using RSG;
 using UniRx;
 using UniRx.Async;
 using UniRx.Triggers;
@@ -13,15 +14,17 @@ using UnityEngine.UI;
 public class TierSelectionScreen : Screen, ScreenChangeListener
 {
     public const string Id = "TierSelection";
-    public static Content SavedContent = new Content {season = MockData.Season};
+    public static Content SavedContent;
 
     public LoopVerticalScrollRect scrollRect;
+    public VerticalLayoutGroup scrollRectContentLayoutGroup;
     public TransitionElement lowerLeftColumn;
     public Text rewardCharacterName;
     public TransitionElement lowerRightColumn;
     public Text completionRateText;
     public GradientMeshEffect completionRateGradient;
     public CircleButton startButton;
+    public DepthCover cover;
     
     public Vector2 ScreenCenter { get; private set; }
     public Tier SelectedTier { get; private set; }
@@ -63,26 +66,29 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         base.OnScreenBecameActive();
         ProfileWidget.Instance.Enter();
         ScreenCenter = new Vector2(UnityEngine.Screen.width / 2f, UnityEngine.Screen.height / 2f);
-
-        SpinnerOverlay.Show();
-        await Context.LevelManager.LoadAllInDirectory(Context.TierDataPath);
+        var height = RectTransform.rect.height;
+        print("Rect height: " + height);
+        var padding = scrollRectContentLayoutGroup.padding;
+        padding.top = padding.bottom = (int) ((height - 576) / 2f); // TODO: Un-hardcode tier card height but I'm lazy lol
+        scrollRectContentLayoutGroup.padding = padding;
         
-        //TEST CODE
-        Promise<OnlineLevel>.All(
-            RestClient.Get<OnlineLevel>($"{Context.ApiBaseUrl}/levels/wz.loser"),
-            RestClient.Get<OnlineLevel>($"{Context.ApiBaseUrl}/levels/wz.suigetsu"),
-            RestClient.Get<OnlineLevel>($"{Context.ApiBaseUrl}/levels/wz.hblimfmf")
-        ).Then(it =>
-        {
-            var list = it.ToList();
-            foreach (var userTier in SavedContent.season.tiers)
-            {
-                userTier.Meta.stages = list;
-            }
+        SpinnerOverlay.Show();
+        await Context.LevelManager.LoadAllInDirectory(Context.TierDataPath, false);
 
+        RestClient.Get(new RequestHelper
+        {
+            Uri = $"{Context.ServicesUrl}/seasons/alpha",
+            Headers = Context.OnlinePlayer.GetAuthorizationHeaders()
+        }).Then(res =>
+        {
+            print(res.Text);
+            var season = JsonConvert.DeserializeObject<Season>(res.Text);
+            SavedContent = new Content {season = season};
             OnContentLoaded(SavedContent);
-            SpinnerOverlay.Hide();
-        }).Catch(error => Debug.LogError(error.Response));
+        }).Catch(error =>
+        {
+            Debug.LogError(error);
+        }).Finally(() => SpinnerOverlay.Hide());
 
         /*if (SavedContent != null)
         {
@@ -104,13 +110,14 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         {
             var tier = tiers[i];
             tier.index = i;
-            tier.Meta.localStages = new List<Level>();
+            tier.Meta.parsedCriteria = tier.Meta.criteria.Select(Criterion.Parse).ToList();
+            tier.Meta.parsedStages = new List<Level>();
             var allUpToDate = true;
             for (var stage = 0; stage < Math.Min(tier.Meta.stages.Count, 3); stage++)
             {
                 var level = tier.Meta.stages[stage].ToLevel();
                 allUpToDate = allUpToDate && level.IsLocal && level.Meta.version == tier.Meta.stages[stage].version;
-                tier.Meta.localStages.Add(level);
+                tier.Meta.parsedStages.Add(level);
             }
         }
 
@@ -132,6 +139,8 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         isDragging = true;
         lowerLeftColumn.Leave();
         lowerRightColumn.Leave();
+
+        cover.OnCoverUnloaded();
     }
 
     public void OnEndDrag()
@@ -174,7 +183,9 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         snapCoroutine = null;
     }
 
-    public void OnTierSelected(Tier tier)
+    private DateTime asyncCoverToken;
+
+    public async void OnTierSelected(Tier tier)
     {
         SelectedTier = tier;
         print("Selected tier " + (tier.Meta.name));
@@ -189,6 +200,32 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         {
             lowerRightColumn.Enter();
             startButton.State = tier.StagesDownloaded ? CircleButtonState.Start : CircleButtonState.Download;
+        }
+        
+        asyncCoverToken = DateTime.Now;
+
+        var token = asyncCoverToken;
+
+        Sprite sprite;
+        var lastStage = tier.Meta.parsedStages.Last();
+        if (lastStage.IsLocal)
+        {
+            sprite = await Context.AssetMemory.LoadAsset<Sprite>(lastStage.Path + lastStage.Meta.background.path, AssetTag.TierCover);
+        }
+        else
+        {
+            sprite = await Context.AssetMemory.LoadAsset<Sprite>(lastStage.OnlineLevel.cover.cover,
+                AssetTag.TierCover, useFileCache: true);
+        }
+
+        if (token != asyncCoverToken)
+        {
+            return;
+        }
+
+        if (sprite != null)
+        {
+            cover.OnCoverLoaded(sprite);
         }
     }
     
@@ -226,10 +263,10 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
 
     public async void DownloadAndUnpackStages()
     {
-        var newLocalStages = new List<Level>(SelectedTier.Meta.localStages);
-        for (var index = 0; index < SelectedTier.Meta.localStages.Count; index++)
+        var newLocalStages = new List<Level>(SelectedTier.Meta.parsedStages);
+        for (var index = 0; index < SelectedTier.Meta.parsedStages.Count; index++)
         {
-            var level = SelectedTier.Meta.localStages[index];
+            var level = SelectedTier.Meta.parsedStages[index];
             if (level.IsLocal) continue;
             bool? error = null;
             Context.LevelManager.DownloadAndUnpackLevelDialog(
@@ -258,7 +295,7 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         {
             Toast.Next(Toast.Status.Success, "TOAST_SUCCESSFULLY_DOWNLOADED_TIER_DATA".Get());
         }
-        SelectedTier.Meta.localStages = newLocalStages;
+        SelectedTier.Meta.parsedStages = newLocalStages;
 
         selectedTierCard.ScrollCellContent(SelectedTier);
         OnTierSelected(SelectedTier);
@@ -270,9 +307,13 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
 
     public void OnScreenChangeFinished(Screen from, Screen to)
     {
-        if (from == this)
+        if (from == this && to != null && !(to is ProfileScreen))
         {
             scrollRect.ClearCells();
+            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalCoverThumbnail);
+            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.OnlineCoverThumbnail);
+            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.CharacterThumbnail);
+            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.TierCover);
         }
     }
 

@@ -71,12 +71,18 @@ public class CircleButton : MonoBehaviour, ScreenInitializedListener, ScreenBeca
 
     private void StartPulsing()
     {
-        scheduledPulse.NextPulseTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        if (scheduledPulse != null)
+        {
+            scheduledPulse.NextPulseTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        }
     }
 
     public void OnScreenBecameInactive()
     {
-        scheduledPulse.NextPulseTime = long.MaxValue;
+        if (scheduledPulse != null)
+        {
+            scheduledPulse.NextPulseTime = long.MaxValue;
+        }
     }
 }
 

@@ -45,7 +45,7 @@ public class DifficultyPill : InteractableMonoBehavior, ScreenBecameActiveListen
         Difficulty = Difficulty.Parse(section.type);
 
         gradientMesh.SetGradient(Difficulty.Gradient);
-        name.text = !string.IsNullOrEmpty(section.name) ? section.name : Difficulty.Name;
+        name.text = !section.name.IsNullOrEmptyTrimmed() ? section.name : Difficulty.Name;
         level.text = "LV." + Difficulty.ConvertToDisplayLevel(section.difficulty);
 
         LayoutFixer.Fix(transform);

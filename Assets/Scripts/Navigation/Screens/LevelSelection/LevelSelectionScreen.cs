@@ -133,7 +133,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
     {
         var levels = new List<Level>(Context.LevelManager.LoadedLocalLevels.Values);
 
-        if (!string.IsNullOrEmpty(query))
+        if (!query.IsNullOrEmptyTrimmed())
         {
             query = query.Trim();
             var keywords = query.Split(' ');
@@ -223,7 +223,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
     {
         if (from == this)
         {
-            Context.SpriteCache.DisposeTaggedSpritesInMemory(SpriteTag.LocalCoverThumbnail);
+            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalCoverThumbnail);
             scrollRect.ClearCells();
             if (to is MainMenuScreen)
             {

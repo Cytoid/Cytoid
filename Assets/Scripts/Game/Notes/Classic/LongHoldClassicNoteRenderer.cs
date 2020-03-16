@@ -6,12 +6,13 @@ public class LongHoldClassicNoteRenderer : HoldClassicNoteRenderer
     public SpriteRenderer Line2;
     public SpriteRenderer CompletedLine2;
 
-    private readonly float orthographicSize = Camera.main.orthographicSize;
+    private float orthographicSize;
 
     public LongHoldClassicNoteRenderer(LongHoldNote holdNote) : base(holdNote) => Expression.Empty();
 
     protected override void InitializeHoldComponents()
     {
+        orthographicSize = Game.camera.orthographicSize;
         // Override base renderer
         var provider = LongHoldNoteClassicRendererProvider.Instance;
         Line = Object.Instantiate(provider.linePrefab, Note.transform, false).GetComponent<SpriteRenderer>();

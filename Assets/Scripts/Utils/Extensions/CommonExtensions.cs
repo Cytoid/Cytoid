@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Security.Cryptography;
 using DG.Tweening;
 using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
@@ -16,6 +18,62 @@ using Object = System.Object;
 
 public static class CommonExtensions
 {
+
+    public static string ToHexString(this byte[] bytes)
+    {
+        return BitConverter.ToString(bytes).Replace("-", "");
+    }
+    
+    public static void Update(this HMAC hmac, byte[] bytes)
+    {
+        hmac.TransformBlock(bytes, 0, bytes.Length, null, 0);
+    }
+    
+    public static void Update(this HMAC hmac, string str)
+    {
+        Update(hmac, str.ToByteArray());
+    }
+    
+    public static void Finalize(this HMAC hmac)
+    {
+        hmac.TransformFinalBlock(new byte[]{}, 0, 0);
+    }
+
+    /*
+     * Credits: https://stackoverflow.com/a/8235530/2706176
+     */
+    public static byte[] HexToByteArray(this string hex)
+    {
+        if (hex.Length % 2 != 0)
+        {
+            throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, "The binary key cannot have an odd number of digits: {0}", hex));
+        }
+
+        var data = new byte[hex.Length / 2];
+        for (var index = 0; index < data.Length; index++)
+        {
+            var byteValue = hex.Substring(index * 2, 2);
+            data[index] = byte.Parse(byteValue, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+        }
+
+        return data;
+    }
+
+    public static byte[] ToByteArray(this string str)
+    {
+        return str.ToCharArray().Select(it => (byte) it).ToArray();
+    }
+
+    public static Dictionary<T1, T2> With<T1, T2>(this Dictionary<T1, T2> dictionary, T1 key, T2 value)
+    {
+        dictionary.Add(key, value);
+        return dictionary;
+    }
+    
+    public static bool IsNullOrEmptyTrimmed(this string str)
+    {
+        return str == null || string.IsNullOrEmpty(str.Trim());
+    }
 
     public static TSource MinBy<TSource, TMin>(
         this IEnumerable<TSource> source,
@@ -301,6 +359,13 @@ public static class CommonExtensions
         SetSize(rectTransform, new Vector2(rectTransform.rect.size.x, newSize));
     }
 
+    public static Texture2D ToTexture2D(this byte[] bytes)
+    {
+        var texture = new Texture2D(2, 2); // Texture size does not matter
+        texture.LoadImage(bytes);
+        return texture;
+    }
+
     public static Sprite CreateSprite(this Texture2D texture)
     {
         return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
@@ -314,7 +379,17 @@ public static class CommonExtensions
 
     public static IPromise Catch(this IPromise promise, Action<RequestException> onRejected)
     {
-        return promise.Catch(exception => onRejected(exception as RequestException));
+        return promise.Catch(exception =>
+        {
+            if (exception is RequestException requestException)
+            {
+                onRejected(requestException);
+            }
+            else
+            {
+                throw exception;
+            }
+        });
     }
 
     public static IPromise HandleRequestErrors(this IPromise promise, Action<Exception> onRejected = null)

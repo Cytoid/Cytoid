@@ -69,8 +69,8 @@ public class RateLevelDialog : Dialog
             OnPositiveButtonClicked = _ => { };
             RestClient.Post<LevelRating>(request = new RequestHelper
                 {
-                    Uri = $"{Context.ApiBaseUrl}/levels/{levelId}/ratings",
-                    Headers = Context.OnlinePlayer.GetJwtAuthorizationHeaders(),
+                    Uri = $"{Context.ApiUrl}/levels/{levelId}/ratings",
+                    Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
                     Body = new LevelRating
                     {
                         rating = rating

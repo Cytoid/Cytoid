@@ -1,20 +1,24 @@
+using System;
 using DG.Tweening;
 using Proyecto26;
+using UniRx.Async;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 
 public class Avatar : InteractableMonoBehavior
 {
-    
     public Image avatarBackground;
     public SpinnerElement avatarSpinner;
     public Image avatarImage;
     
+    private RectTransform rectTransform;
     private string profileUrl;
+    private DateTime asyncRequestToken;
     
     protected void Awake()
     {
+        rectTransform = GetComponent<RectTransform>();
         avatarSpinner.bypassOnClickHitboxCheck = false;
         avatarSpinner.onPointerClick.AddListener(_ =>
         {
@@ -25,11 +29,22 @@ public class Avatar : InteractableMonoBehavior
     public async void SetModel(OnlineUser user)
     {
         avatarSpinner.IsSpinning = true;
-        var sprite = await Context.SpriteCache.CacheSpriteInMemory(
-            user.avatarURL.WithSizeParam(128, 128), 
-            SpriteTag.Avatar,
+        
+        asyncRequestToken = DateTime.Now;
+
+        var token = asyncRequestToken;
+
+        var sprite = await Context.AssetMemory.LoadAsset<Sprite>(
+            user.avatarURL.WithSizeParam(64, 64), 
+            AssetTag.Avatar,
             useFileCache: true
         );
+
+        if (token != asyncRequestToken)
+        {
+            return;
+        }
+        
         avatarSpinner.IsSpinning = false;
         if (sprite != null)
         {
@@ -40,6 +55,7 @@ public class Avatar : InteractableMonoBehavior
     
     public void SetAvatarSprite(Sprite sprite)
     {
+        if (gameObject == null) return;
         avatarSpinner.IsSpinning = false;
         avatarImage.sprite = sprite;
         avatarImage.DOColor(Color.white, 0.4f).OnComplete(() =>

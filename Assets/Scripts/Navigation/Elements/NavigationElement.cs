@@ -16,7 +16,8 @@ public class NavigationElement : InteractableMonoBehavior, ScreenBecameActiveLis
     public float newScreenDelay;
     public Vector2 transitionFocus;
     public string soundName = "Navigate1";
-
+    public bool addToHistory = true;
+    
     private bool navigated;
 
     public override async void OnPointerClick(PointerEventData eventData)
@@ -35,7 +36,7 @@ public class NavigationElement : InteractableMonoBehavior, ScreenBecameActiveLis
         navigated = true;
         Context.ScreenManager.ChangeScreen(
             navigateToLastScreen ? Context.ScreenManager.PopAndPeekHistory() : targetScreenId, transition,
-            duration, currentScreenDelay, newScreenDelay, transitionFocus, OnScreenChanged, addToHistory: !navigateToLastScreen);
+            duration, currentScreenDelay, newScreenDelay, transitionFocus, OnScreenChanged, addToHistory: addToHistory && !navigateToLastScreen);
     }
 
     protected virtual void OnScreenChanged(Screen screen) => Expression.Empty();

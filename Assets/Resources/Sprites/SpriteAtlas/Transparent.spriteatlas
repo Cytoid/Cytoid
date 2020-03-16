@@ -30,31 +30,25 @@ SpriteAtlas:
       enableTightPacking: 0
     variantMultiplier: 1
     packables:
-    - {fileID: 2800000, guid: 0b04dfc16fd71411e9fcb9588638d5a2, type: 3}
-    - {fileID: 2800000, guid: 88158d888c0914063a049bcc37f60316, type: 3}
-    - {fileID: 2800000, guid: c71fe7cad789a4d6987e3d5acef4b4c8, type: 3}
-    - {fileID: 2800000, guid: 4c83e8f712ac94b71bc968dcb91311d8, type: 3}
     - {fileID: 2800000, guid: 14cd2c7a9994d438ba53faccb1e9ddf1, type: 3}
     - {fileID: 2800000, guid: 1bbc1babcfa564293bf000c7060b948d, type: 3}
     - {fileID: 2800000, guid: 683f5042846aa4ceab4606cbe1db98c2, type: 3}
-    totalSpriteSurfaceArea: 23588864
+    - {fileID: 2800000, guid: 321193551d28c2c469f68aa4a84fac5a, type: 3}
+    - {fileID: 2800000, guid: c6506a18dd5704d89a2eb3f23f2cf965, type: 3}
+    totalSpriteSurfaceArea: 11534336
     bindAsDefault: 1
   m_MasterAtlas: {fileID: 0}
   m_PackedSprites:
-  - {fileID: 21300000, guid: 0b04dfc16fd71411e9fcb9588638d5a2, type: 3}
   - {fileID: 21300000, guid: 683f5042846aa4ceab4606cbe1db98c2, type: 3}
-  - {fileID: 21300000, guid: 4c83e8f712ac94b71bc968dcb91311d8, type: 3}
-  - {fileID: 21300000, guid: 88158d888c0914063a049bcc37f60316, type: 3}
+  - {fileID: 21300000, guid: 321193551d28c2c469f68aa4a84fac5a, type: 3}
+  - {fileID: 21300000, guid: c6506a18dd5704d89a2eb3f23f2cf965, type: 3}
   - {fileID: 21300000, guid: 14cd2c7a9994d438ba53faccb1e9ddf1, type: 3}
-  - {fileID: 21300000, guid: c71fe7cad789a4d6987e3d5acef4b4c8, type: 3}
   - {fileID: 21300000, guid: 1bbc1babcfa564293bf000c7060b948d, type: 3}
   m_PackedSpriteNamesToIndex:
-  - GradientOverlayBottom
   - VerticalContainerMask
-  - GradientOverlayTop
-  - GradientOverlayLeft
+  - LightBackdrop
+  - AccentOverlay
   - DialogOverlay
-  - GradientOverlayRight
   - RoundedCardMask
   m_Tag: Transparent
   m_IsVariant: 0

@@ -21,6 +21,8 @@ public class Scanner : SingletonMonoBehavior<Scanner>
     private float colorNextSpeed;
     private Coroutine animationCoroutine;
 
+    private bool exited;
+
     private void Awake()
     {
         game.onGameLoaded.AddListener(_ => {
@@ -52,10 +54,10 @@ public class Scanner : SingletonMonoBehavior<Scanner>
         yield return null;
         lineRenderer.positionCount = 2;
         lineRenderer.SetPosition(0,
-            new Vector3(-Camera.main.orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height * 1000f, 0,
+            new Vector3(-game.camera.orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height * 1000f, 0,
                 0));
         lineRenderer.SetPosition(1,
-            new Vector3(Camera.main.orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height * 1000f, 0,
+            new Vector3(game.camera.orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height * 1000f, 0,
                 0));
         lineRenderer.useWorldSpace = false;
         lineRenderer.endWidth = 0.05f;
@@ -124,7 +126,7 @@ public class Scanner : SingletonMonoBehavior<Scanner>
             var randomRange = 0; // progress / 10;
             for (var i = 0; i < 100; i++)
             {
-                var orthographicSize = Camera.main.orthographicSize;
+                var orthographicSize = game.camera.orthographicSize;
                 lineRenderer.SetPosition(i,
                     new Vector3(
                         (-orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height + 2f *
@@ -139,6 +141,7 @@ public class Scanner : SingletonMonoBehavior<Scanner>
         }
 
         lineRenderer.positionCount = 0;
+        exited = true;
     }
 
     IEnumerator PlayEnterAnimation()
@@ -152,7 +155,7 @@ public class Scanner : SingletonMonoBehavior<Scanner>
             var randomRange = 0; // (1 - progress) / 10;
             for (var i = 0; i < 100; i++)
             {
-                var orthographicSize = Camera.main.orthographicSize;
+                var orthographicSize = game.camera.orthographicSize;
                 lineRenderer.SetPosition(i,
                     new Vector3(
                         (-orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height + 2f *
@@ -187,7 +190,7 @@ public class Scanner : SingletonMonoBehavior<Scanner>
             color = colorOverride;
         }
 
-        color = color.WithAlpha(opacity);
+        color = color.WithAlpha(exited ? 0 : opacity);
         gameObject.GetComponent<LineRenderer>().startColor = color;
         gameObject.GetComponent<LineRenderer>().endColor = color;
 

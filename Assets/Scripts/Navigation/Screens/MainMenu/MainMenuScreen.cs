@@ -1,5 +1,6 @@
 using LeTai.Asset.TranslucentImage;
 using Polyglot;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class MainMenuScreen : Screen
@@ -7,6 +8,7 @@ public class MainMenuScreen : Screen
     private static bool startedMainLoop;
     public const string Id = "MainMenu";
 
+    public RectTransform layout;
     public Text freePlayText;
     public InteractableMonoBehavior aboutButton;
     
@@ -40,8 +42,6 @@ public class MainMenuScreen : Screen
         freePlayText.text = "MAIN_LEVELS_LOADED".Get(Context.LevelManager.LoadedLocalLevels.Count);
         freePlayText.transform.RebuildLayout();
         ProfileWidget.Instance.Enter();
-
-        Context.SpriteCache.DisposeTaggedSpritesInMemory(SpriteTag.CharacterThumbnail);
     }
 
 }

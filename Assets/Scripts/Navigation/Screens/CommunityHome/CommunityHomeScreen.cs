@@ -112,6 +112,7 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
             promises.Add( RestClient.GetArray<OnlineLevel>(new RequestHelper
             {
                 Uri = section.Query.BuildUri(section.PreviewSize),
+                Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
                 EnableDebug = true
             }));
         }
@@ -168,6 +169,8 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
 
     public void SearchLevels(string query)
     {
+        if (query.IsNullOrEmptyTrimmed()) return;
+        
         CommunityLevelSelectionScreen.SavedContent = new CommunityLevelSelectionScreen.Content
         {
             Query = new OnlineLevelQuery
@@ -191,8 +194,8 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
     {
         if (from == this && to.GetId() == MainMenuScreen.Id)
         {
-            // Clear community cache
-            Context.SpriteCache.DisposeTaggedSpritesInMemory(SpriteTag.OnlineCoverThumbnail);
+            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalCoverThumbnail);
+            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.OnlineCoverThumbnail);
             
             searchInputField.SetTextWithoutNotify("");
             savedContent = null;

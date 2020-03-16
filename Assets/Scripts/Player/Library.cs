@@ -48,7 +48,8 @@ public class Library
         {
             RestClient.Get<OnlineLevel>(new RequestHelper
             {
-                Uri = $"{Context.ApiBaseUrl}/levels/io.cytoid.interference2"
+                Uri = $"{Context.ApiUrl}/levels/io.cytoid.interference2",
+                Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
             }).Then(it =>
             {
                 OnLevelsLoaded(new List<LibraryLevel> {new LibraryLevel {addedDate = DateTime.UtcNow, level = it}});

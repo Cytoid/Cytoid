@@ -10,6 +10,7 @@ public class DepthCover : MonoBehaviour, ScreenListener
     [GetComponentInChildrenName] public Image mask;
     [GetComponentInChildrenName] public Image image;
     [GetComponent] public PulseElement pulseElement;
+    public Color maxColor = Color.white;
 
     private TweenerCore<Color, Color, ColorOptions> colorTweener;
     
@@ -27,22 +28,24 @@ public class DepthCover : MonoBehaviour, ScreenListener
         mask.DOKill();
         if (sprite != null)
         {
-            if (image.sprite != null)
-            {
-                Destroy(image.sprite);
-                image.sprite = null;
-            }
-
             image.sprite = sprite;
             image.FitSpriteAspectRatio();
         }
-        image.color = Color.white;
-        mask.color = Color.black;
+        image.color = maxColor;
         mask.DOFade(0, 0.2f).SetEase(Ease.OutCubic);
         transform.localScale = Vector3.one;
         transform.DOScale(1.05f, 3f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutFlash);
-        colorTweener = DOTween.To(() => image.color, color => image.color = color, Color.white, 3)
+        colorTweener = DOTween.To(() => image.color, color => image.color = color, maxColor, 3)
             .SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutFlash);
+    }
+
+    public void OnCoverUnloaded()
+    {
+        mask.DOKill();
+        mask.DOFade(1, 0.4f).SetEase(Ease.OutCubic);
+        transform.DOKill();
+        transform.DOScale(1f, 0.4f).SetEase(Ease.InOutFlash);
+        colorTweener?.Kill();
     }
 
     public void OnScreenUpdate() => Expression.Empty();
@@ -50,12 +53,12 @@ public class DepthCover : MonoBehaviour, ScreenListener
     public void OnScreenBecameInactive()
     {
         mask.DOKill();
-        mask.DOFade(0, 0.4f).SetEase(Ease.OutCubic);
+        mask.DOFade(1, 0.4f).SetEase(Ease.OutCubic);
         transform.DOKill();
         transform.DOScale(1f, 0.4f).SetEase(Ease.InOutFlash);
         colorTweener?.Kill();
         DOTween.To(() => image.color, color => image.color = color,
-            Color.white, 0.4f).SetEase(Ease.InOutFlash);
+            maxColor, 0.4f).SetEase(Ease.InOutFlash);
     }
 
     public void OnScreenDestroyed()

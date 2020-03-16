@@ -83,9 +83,9 @@ public class InputController : MonoBehaviour
 
     protected virtual void OnFingerDown(LeanFinger finger)
     {
-        var pressedPosition = Camera.main.orthographic
-            ? Camera.main.ScreenToWorldPoint(finger.ScreenPosition)
-            : Camera.main.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
+        var pressedPosition = game.camera.orthographic
+            ? game.camera.ScreenToWorldPoint(finger.ScreenPosition)
+            : game.camera.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
 
         var collidedDrag = false;
         // Query drag notes first
@@ -120,9 +120,9 @@ public class InputController : MonoBehaviour
 
     protected virtual void OnFingerSet(LeanFinger finger)
     {
-        var pos = Camera.main.orthographic
-            ? Camera.main.ScreenToWorldPoint(finger.ScreenPosition)
-            : Camera.main.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
+        var pos = game.camera.orthographic
+            ? game.camera.ScreenToWorldPoint(finger.ScreenPosition)
+            : game.camera.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
 
         // Query flick note
         if (FlickingNotes.ContainsKey(finger.Index))

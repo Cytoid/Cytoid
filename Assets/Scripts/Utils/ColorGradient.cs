@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using UnityEngine;
 
@@ -16,9 +17,17 @@ public class ColorGradient
     
     public ColorGradient(string gradient, float angle)
     {
-        var colors = gradient.Split(',').Select(it => it.ToColor()).ToArray();
-        startColor = colors[0];
-        endColor = colors[1];
-        this.angle = angle;
+        var args = gradient.Split(',');
+        startColor = args[0].ToColor();
+        endColor = args[1].ToColor();
+        this.angle = args.Length > 2 ? float.Parse(args[2]) : 0;
     }
+}
+
+[Serializable]
+public class SerializedGradient
+{
+    public string start;
+    public string end;
+    public float angle;
 }

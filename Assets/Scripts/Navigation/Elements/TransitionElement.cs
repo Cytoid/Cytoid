@@ -38,14 +38,13 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
     public bool leaveOnScreenBecomeInactive = true;
     public float leaveOnScreenBecomeInactiveDelay;
 
+    public bool disableRaycasts = false;
     public bool actOnOtherGameObjects = false;
     public bool printDebugInfo = false;
 
     public bool IsShown { get; protected set; }
     public bool IsInTransition { get; protected set; }
     public bool IsEntering { get; protected set; }
-    
-    public bool BlocksRaycasts { get; set; }
 
     private Vector3 defaultAnchoredPosition;
     private Vector3 defaultScale;
@@ -63,7 +62,6 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
         {
             Debug.LogError($"WARNING! TransitionElement {name} rectTransform and canvasGroup not set to self.");
         }
-        BlocksRaycasts = canvasGroup.blocksRaycasts;
         if (hiddenOnStart)
         {
             canvasGroup.alpha = 0;
@@ -84,13 +82,13 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
     public void Enter(bool waitForTransition = true, bool immediate = false)
     {
         StartTransition(true, enterFrom, enterMultiplier, enterDuration, enterDelay, enterEase, waitForTransition,
-            immediate, () => onEnterCompleted.Invoke());
+            immediate);
     }
 
     public void Leave(bool waitForTransition = true, bool immediate = false)
     {
         StartTransition(false, leaveTo, leaveMultiplier, leaveDuration, leaveDelay, leaveEase, waitForTransition,
-            immediate, () => onLeaveCompleted.Invoke());
+            immediate);
     }
 
     protected void OnDestroy()
@@ -182,7 +180,7 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
         RevertToDefault();
 
         canvasGroup.alpha = toShow ? 0 : 1;
-        canvasGroup.blocksRaycasts = toShow && BlocksRaycasts;
+        canvasGroup.blocksRaycasts = toShow && !disableRaycasts;
         canvasGroup.DOFade(toShow ? 1 : 0, duration);
 
         if (toShow)
@@ -273,6 +271,8 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
 
         IsInTransition = false;
         onComplete?.Invoke();
+        if (toShow) onEnterCompleted.Invoke();
+        else onLeaveCompleted.Invoke();
     }
 
     public void RevertToDefault(bool killTween = true)

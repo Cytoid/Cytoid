@@ -7,7 +7,7 @@ public sealed class TierState
 {
     public Tier Tier { get; }
 
-    public List<Criterion> Criteria => Tier.Meta.Criteria;
+    public List<Criterion> Criteria => Tier.Meta.parsedCriteria;
 
     public int CurrentStageIndex { get; set; } = -1;
 

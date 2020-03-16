@@ -35,7 +35,7 @@ public class FlickNote : Note
         if (!Game.State.IsPlaying) return false;
         if (IsCleared) return true;
         var swipeVector = screenPos - FlickingStartPosition;
-        if (Math.Abs(swipeVector.x) > Camera.main.orthographicSize * 0.01f)
+        if (Math.Abs(swipeVector.x) > Game.camera.orthographicSize * 0.01f)
         {
             TryClear();
             return true;

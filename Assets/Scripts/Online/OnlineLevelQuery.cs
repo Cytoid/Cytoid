@@ -11,7 +11,7 @@ public class OnlineLevelQuery
 
     public string BuildUri(int limit = -1, int page = 0)
     {
-        var uri = $"{Context.ApiBaseUrl}/levels?" +
+        var uri = $"{Context.ApiUrl}/levels?" +
                   $"sort={sort}&order={order}&search={search}" +
                   $"&date_start={ConvertTimeSpanToDateStart(time)}&page={page}";
         if (category == "featured")

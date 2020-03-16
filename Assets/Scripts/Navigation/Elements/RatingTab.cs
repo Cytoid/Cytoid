@@ -47,7 +47,8 @@ public class RatingTab : MonoBehaviour
         spinner.IsSpinning = true;
         return RestClient.Get<LevelRating>(new RequestHelper
             {
-                Uri = $"{Context.ApiBaseUrl}/levels/{id}/ratings",
+                Uri = $"{Context.ApiUrl}/levels/{id}/ratings",
+                Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
                 EnableDebug = true
             })
             .Then(it =>

@@ -77,7 +77,7 @@ public class TierCard : MonoBehaviour
             for (var stage = 0; stage < Math.Min(3, tier.Meta.stages.Count); stage++)
             {
                 stageCards[stage].SetModel(
-                    tier.Meta.localStages[stage], 
+                    tier.Meta.parsedStages[stage], 
                     new ColorGradient(tier.Meta.colorPalette.stages[stage], 90f)
                 );
             }
@@ -95,7 +95,7 @@ public class TierCard : MonoBehaviour
             }
 
             foreach (Transform child in criteriaHolder.transform) Destroy(child.gameObject);
-            foreach (var criterion in tier.Meta.Criteria)
+            foreach (var criterion in tier.Meta.parsedCriteria)
             {
                 var criterionEntry = Instantiate(criterionEntryPrefab, criteriaHolder.transform);
                 criterionEntry.SetModel(criterion.Description, CriterionState.Passed);
@@ -117,11 +117,11 @@ public class TierCard : MonoBehaviour
         Sprite sprite;
         try
         {
-            sprite = await Context.SpriteCache.CacheSpriteInMemory(
+            sprite = await Context.AssetMemory.LoadAsset<Sprite>(
                 uri,
-                SpriteTag.CharacterThumbnail,
+                AssetTag.CharacterThumbnail,
                 characterPreviewToken.Token,
-                useFileCache: true);
+                true);
         }
         catch
         {
@@ -162,11 +162,12 @@ public class TierCard : MonoBehaviour
         if (t < 0.5f)
         {
             canvas.overrideSorting = true;
-            canvas.sortingOrder = 3;
+            canvas.sortingOrder = -1;
         }
         else
         {
-            canvas.overrideSorting = false;
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = -2;
         }
     }
 

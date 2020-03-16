@@ -56,7 +56,7 @@ public class GameConfig
 
         NoteSizeMultiplier = (float) chart.Model.size * (1 + 0.133333f + lp.NoteSize);
 
-        NoteSizes[NoteType.Click] = (Camera.main.orthographicSize * 2.0f) * (7.0f / 9.0f) / 5.0f * 1.2675f;
+        NoteSizes[NoteType.Click] = (game.camera.orthographicSize * 2.0f) * (7.0f / 9.0f) / 5.0f * 1.2675f;
         NoteSizes[NoteType.DragHead] = NoteSizes[NoteType.Click] * 0.8f;
         NoteSizes[NoteType.DragChild] = NoteSizes[NoteType.Click] * 0.65f;
         NoteSizes[NoteType.Hold] = NoteSizes[NoteType.Click];
@@ -125,9 +125,7 @@ public class GameConfig
 
     public Color GetFillColorOverride(ChartModel.Note note)
     {
-        var alt = note.direction > 0;
-        if (note.is_forward) alt = !alt;
-        return alt
+        return note.UseAlternativeColor()
             ? GlobalFillColorsOverride[(NoteType) note.type][0]
             : GlobalFillColorsOverride[(NoteType) note.type][1];
     }

@@ -9,7 +9,6 @@ using Newtonsoft.Json.Linq;
 using Proyecto26;
 using UniRx.Async;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.UI;
 
 public class ResultScreen : Screen, ScreenChangeListener
@@ -19,7 +18,7 @@ public class ResultScreen : Screen, ScreenChangeListener
     public TransitionElement lowerLeftColumn;
     public TransitionElement lowerRightColumn;
     public TransitionElement upperRightColumn;
-    
+
     public GameObject infoContainer;
     public Text scoreText;
     public Text newBestText;
@@ -35,7 +34,7 @@ public class ResultScreen : Screen, ScreenChangeListener
     public InteractableMonoBehavior shareButton;
     public CircleButton nextButton;
     public CircleButton retryButton;
-    
+
     private bool uploadRecordSuccess;
     private GameState gameState;
 
@@ -45,7 +44,7 @@ public class ResultScreen : Screen, ScreenChangeListener
     {
         base.OnScreenInitialized();
         Context.ScreenManager.AddHandler(this);
-        
+
         gameState = Context.GameState;
         if (gameState == null)
         {
@@ -54,7 +53,8 @@ public class ResultScreen : Screen, ScreenChangeListener
             await Context.LevelManager.LoadFromMetadataFiles(new List<string>
                 {Context.DataPath + "/suconh_typex.alice/level.json"});
             Context.SelectedLevel = Context.LevelManager.LoadedLocalLevels.Values.First();
-            Context.SelectedDifficulty = Difficulty.Parse(Context.LevelManager.LoadedLocalLevels.Values.First().Meta.charts[0].type);
+            Context.SelectedDifficulty =
+                Difficulty.Parse(Context.LevelManager.LoadedLocalLevels.Values.First().Meta.charts[0].type);
             Context.LocalPlayer.PlayRanked = false;
             gameState = new GameState(Context.SelectedLevel, Context.SelectedDifficulty);
             Context.OnlinePlayer.OnAuthenticated.AddListener(() =>
@@ -64,8 +64,9 @@ public class ResultScreen : Screen, ScreenChangeListener
                 UploadRecord();
             });
         }
+
         Context.GameState = null;
-        
+
         nextButton.State = CircleButtonState.Start;
         nextButton.interactableMonoBehavior.onPointerClick.AddListener(_ =>
         {
@@ -82,34 +83,19 @@ public class ResultScreen : Screen, ScreenChangeListener
         // Load translucent cover
         var image = TranslucentCover.Instance.image;
         image.color = Color.white.WithAlpha(0);
-        var sprite = Context.SpriteCache.GetCachedSpriteFromMemory("game://cover");
-        if (sprite == null)
-        {
-            var path = "file://" + Context.SelectedLevel.Path + Context.SelectedLevel.Meta.background.path;
-            using (var request = UnityWebRequestTexture.GetTexture(path))
-            {
-                await request.SendWebRequest();
-                if (request.isNetworkError || request.isHttpError)
-                {
-                    Debug.LogError($"Failed to download cover from {path}");
-                    Debug.LogError(request.error);
-                    return;
-                }
-
-                sprite = DownloadHandlerTexture.GetContent(request).CreateSprite();
-            }
-        }
-
-        image.sprite = sprite;
+        var path = "file://" + Context.SelectedLevel.Path + Context.SelectedLevel.Meta.background.path;
+        image.sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.GameCover);
         image.FitSpriteAspectRatio();
 
         // Update performance info
         scoreText.text = Mathf.FloorToInt((float) gameState.Score).ToString("D6");
-        accuracyText.text = "RESULT_X_ACCURACY".Get((Math.Floor(gameState.Accuracy * 100 * 100) / 100).ToString("0.00"));
+        accuracyText.text =
+            "RESULT_X_ACCURACY".Get((Math.Floor(gameState.Accuracy * 100 * 100) / 100).ToString("0.00"));
         if (Mathf.Approximately((float) gameState.Accuracy, 1))
         {
             accuracyText.text = "RESULT_FULL_ACCURACY".Get();
         }
+
         maxComboText.text = "RESULT_X_COMBO".Get(gameState.MaxCombo);
         if (gameState.GradeCounts[NoteGrade.Bad] == 0 && gameState.GradeCounts[NoteGrade.Miss] == 0)
         {
@@ -150,7 +136,8 @@ public class ResultScreen : Screen, ScreenChangeListener
         if (gameState.Mods.Contains(Mod.Hard)) clearType = "Hard";
         if (gameState.Mods.Contains(Mod.ExHard)) clearType = "ExHard";
 
-        if (!Context.LocalPlayer.HasPerformance(gameState.Level.Id, gameState.Difficulty.Id, Context.LocalPlayer.PlayRanked))
+        if (!Context.LocalPlayer.HasPerformance(gameState.Level.Id, gameState.Difficulty.Id,
+            Context.LocalPlayer.PlayRanked))
         {
             newBestText.text = "RESULT_NEW".Get();
             Context.LocalPlayer.SetBestPerformance(gameState.Level.Id, gameState.Difficulty.Id,
@@ -188,7 +175,7 @@ public class ResultScreen : Screen, ScreenChangeListener
             Context.LocalPlayer.SetBestPerformance(gameState.Level.Id, gameState.Difficulty.Id,
                 Context.LocalPlayer.PlayRanked, newBest);
         }
-        
+
         shareButton.onPointerClick.AddListener(_ => StartCoroutine(Share()));
 
         await Resources.UnloadUnusedAssets();
@@ -212,7 +199,8 @@ public class ResultScreen : Screen, ScreenChangeListener
             .Then(it =>
             {
                 if (it == null) return;
-                if (Context.OnlinePlayer.IsAuthenticated && it.rating <= 0 && ScoreGrades.From(gameState.Score) >= ScoreGrade.A)
+                if (Context.OnlinePlayer.IsAuthenticated && it.rating <= 0 &&
+                    ScoreGrades.From(gameState.Score) >= ScoreGrade.A)
                 {
                     // Invoke the rate dialog
                     ratingTab.rateLevelElement.rateButton.onPointerClick.Invoke(null);
@@ -255,19 +243,20 @@ public class ResultScreen : Screen, ScreenChangeListener
     public IEnumerator Share()
     {
         if (isSharing) yield break;
-        
+
         isSharing = true;
         Context.AudioManager.Get("Navigate1").Play(ignoreDsp: true);
-        
+
         var levelMeta = Context.SelectedLevel.Meta;
 
         yield return new WaitForEndOfFrame();
-        
+
         var screenshot = new Texture2D(UnityEngine.Screen.width, UnityEngine.Screen.height, TextureFormat.RGB24, false);
         screenshot.ReadPixels(new Rect(0, 0, UnityEngine.Screen.width, UnityEngine.Screen.height), 0, 0);
         screenshot.Apply();
 
-        var tmpPath = Path.Combine(Application.temporaryCachePath, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + ".png");
+        var tmpPath = Path.Combine(Application.temporaryCachePath,
+            DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + ".png");
         File.WriteAllBytes(tmpPath, screenshot.EncodeToPNG());
 
         Destroy(screenshot);
@@ -290,68 +279,78 @@ public class ResultScreen : Screen, ScreenChangeListener
     public void UploadRecord()
     {
         rankingsTab.spinner.IsSpinning = true;
-        var uri = $"{Context.ApiBaseUrl}/levels/{gameState.Level.Id}/charts/{gameState.Difficulty.Id}/records";
-        Debug.Log("Posting to " + uri);
-        RestClient.Post<UploadRecordResult>(new RequestHelper
-        {
-            Uri = uri,
-            BodyString = JObject.FromObject(new UploadRecord
-            {
-                score = (int) gameState.Score,
-                accuracy = double.Parse(gameState.Accuracy.ToString("0.00000000")),
-                details = new UploadRecord.Details
-                {
-                    perfect = gameState.GradeCounts[NoteGrade.Perfect],
-                    great = gameState.GradeCounts[NoteGrade.Great],
-                    good = gameState.GradeCounts[NoteGrade.Good],
-                    bad = gameState.GradeCounts[NoteGrade.Bad],
-                    miss = gameState.GradeCounts[NoteGrade.Miss],
-                    maxCombo = gameState.MaxCombo
-                },
-                mods = gameState.Mods.Select(it => Enum.GetName(typeof(Mod), it)).ToList(),
-                ranked = Context.LocalPlayer.PlayRanked,
-            }).ToString(),
-            Headers = Context.OnlinePlayer.GetJwtAuthorizationHeaders(),
-            EnableDebug = true
-        }).Then(_ =>
-            {
-                uploadRecordSuccess = true;
-                Toast.Next(Toast.Status.Success, "TOAST_PERFORMANCE_SYNCHRONIZED".Get());
-                EnterControls();
-                rankingsTab.UpdateRankings(gameState.Level.Id, gameState.Difficulty.Id);
-                Context.OnlinePlayer.FetchProfile();
-            }
-        ).Catch(error =>
-        {
-            Debug.Log(error.Response);
-            if (error.IsNetworkError)
-            {
-                Toast.Next(Toast.Status.Failure, "TOAST_CHECK_NETWORK_CONNECTION".Get());
-            }
-            else if (error.IsHttpError)
-            {
-                Toast.Next(Toast.Status.Failure, "TOAST_LEVEL_NOT_RANKED".Get());
-            }
 
-            var dialog = Dialog.Instantiate();
-            dialog.Message = "DIALOG_RETRY_SYNCHRONIZE_PERFORMANCE".Get();
-            dialog.UseProgress = false;
-            dialog.UsePositiveButton = true;
-            dialog.UseNegativeButton = true;
-            dialog.OnPositiveButtonClicked = _ =>
+        var uploadRecord = new UploadRecord
+        {
+            score = (int) gameState.Score,
+            accuracy = double.Parse(gameState.Accuracy.ToString("0.00000000")),
+            details = new UploadRecord.Details
             {
-                dialog.Close();
-                UploadRecord();
-            };
-            dialog.OnNegativeButtonClicked = _ =>
+                perfect = gameState.GradeCounts[NoteGrade.Perfect],
+                great = gameState.GradeCounts[NoteGrade.Great],
+                good = gameState.GradeCounts[NoteGrade.Good],
+                bad = gameState.GradeCounts[NoteGrade.Bad],
+                miss = gameState.GradeCounts[NoteGrade.Miss],
+                maxCombo = gameState.MaxCombo
+            },
+            mods = gameState.Mods.Select(it => Enum.GetName(typeof(Mod), it)).ToList(),
+            ranked = Context.LocalPlayer.PlayRanked,
+        };
+        SecuredOperations.UploadRecord(gameState.Level, gameState.Difficulty, uploadRecord)
+            .Then(_ =>
+                {
+                    uploadRecordSuccess = true;
+                    Toast.Next(Toast.Status.Success, "TOAST_PERFORMANCE_SYNCHRONIZED".Get());
+                    EnterControls();
+                    rankingsTab.UpdateRankings(gameState.Level.Id, gameState.Difficulty.Id);
+                    Context.OnlinePlayer.FetchProfile();
+                }
+            ).Catch(error =>
             {
-                dialog.Close();
-                EnterControls();
-                rankingsTab.UpdateRankings(gameState.Level.Id, gameState.Difficulty.Id);
-                Context.OnlinePlayer.FetchProfile();
-            };
-            dialog.Open();
-        });
+                Debug.Log(error.Response);
+                if (error.IsNetworkError)
+                {
+                    Toast.Next(Toast.Status.Failure, "TOAST_CHECK_NETWORK_CONNECTION".Get());
+                }
+                else if (error.IsHttpError)
+                {
+                    if (error.StatusCode == 404)
+                    {
+                        Toast.Next(Toast.Status.Failure, "TOAST_LEVEL_NOT_RANKED".Get());
+                    }
+                    else if (error.StatusCode == 400)
+                    {
+                        Toast.Next(Toast.Status.Failure, "TOAST_LEVEL_VERIFICATION_FAILED".Get());   
+                    }
+                    else if (error.StatusCode == 500)
+                    {
+                        Toast.Next(Toast.Status.Failure, "TOAST_SERVER_INTERNAL_ERROR".Get());
+                    }
+                    else
+                    {
+                        Toast.Next(Toast.Status.Failure, $"Status code: {error.StatusCode}".Get());
+                    }
+                }
+
+                var dialog = Dialog.Instantiate();
+                dialog.Message = "DIALOG_RETRY_SYNCHRONIZE_PERFORMANCE".Get();
+                dialog.UseProgress = false;
+                dialog.UsePositiveButton = true;
+                dialog.UseNegativeButton = true;
+                dialog.OnPositiveButtonClicked = _ =>
+                {
+                    dialog.Close();
+                    UploadRecord();
+                };
+                dialog.OnNegativeButtonClicked = _ =>
+                {
+                    dialog.Close();
+                    EnterControls();
+                    rankingsTab.UpdateRankings(gameState.Level.Id, gameState.Difficulty.Id);
+                    Context.OnlinePlayer.FetchProfile();
+                };
+                dialog.Open();
+            });
     }
 
     public void Done()
@@ -389,12 +388,5 @@ public class ResultScreen : Screen, ScreenChangeListener
 
     public void OnScreenChangeStarted(Screen from, Screen to) => Expression.Empty();
 
-    public void OnScreenChangeFinished(Screen from, Screen to)
-    {
-        if (from == this)
-        {
-            // Dispose game cover
-            Context.SpriteCache.DisposeTaggedSpritesInMemory(SpriteTag.GameCover);
-        }
-    }
+    public void OnScreenChangeFinished(Screen from, Screen to) => Expression.Empty();
 }

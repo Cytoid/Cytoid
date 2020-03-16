@@ -142,7 +142,8 @@ public class LevelManager
         {
             RestClient.Get<OnlineLevel>(new RequestHelper
             {
-                Uri = $"{Context.ApiBaseUrl}/levels/{levelId}"
+                Uri = $"{Context.ApiUrl}/levels/{levelId}",
+                Headers = Context.OnlinePlayer.GetAuthorizationHeaders()
             }).Then(it =>
             {
                 var remoteMeta = it.GenerateLevelMeta();
@@ -262,7 +263,7 @@ public class LevelManager
         {
             LoadedLocalLevels.Clear();
             loadedPaths.Clear();
-            Context.SpriteCache.DisposeTaggedSpritesInMemory(SpriteTag.LocalCoverThumbnail);
+            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalCoverThumbnail);
         }
 
         if (directory == default) directory = Context.DataPath;
@@ -362,7 +363,7 @@ public class LevelManager
                 {
                     var thumbnailPath = "file://" + level.Path + level.Meta.background.path;
 
-                    using (var request = UnityWebRequestTexture.GetTexture(thumbnailPath))
+                    using (var request = UnityWebRequest.Get(thumbnailPath))
                     {
                         await request.SendWebRequest();
                         if (request.isNetworkError || request.isHttpError)
@@ -373,8 +374,7 @@ public class LevelManager
                             continue;
                         }
 
-                        var coverTexture = DownloadHandlerTexture.GetContent(request);
-
+                        var coverTexture = request.downloadHandler.data.ToTexture2D();
                         if (coverTexture == null)
                         {
                             Debug.LogWarning(request.error);
@@ -554,7 +554,8 @@ public class LevelManager
         };
         RestClient.Get<OnlineLevel>(req = new RequestHelper
         {
-            Uri = $"{Context.ApiBaseUrl}/levels/{level.Id}"
+            Uri = $"{Context.ApiUrl}/levels/{level.Id}",
+            Headers = Context.OnlinePlayer.GetAuthorizationHeaders()
         }).Then(it =>
         {
             if (aborted)
@@ -569,7 +570,7 @@ public class LevelManager
             return RestClient.Get<OnlineLevelResources>(req = new RequestHelper
             {
                 Uri = level.PackagePath,
-                Headers = Context.OnlinePlayer.GetJwtAuthorizationHeaders()
+                Headers = Context.OnlinePlayer.GetAuthorizationHeaders()
             });
         }).Then(res =>
         {

@@ -54,27 +54,10 @@ public class GameRenderer
         
         // Cover
         cover = GameObjectProvider.Instance.cover;
-        // Is cover specified in cache?
-        var sprite = Context.SpriteCache.GetCachedSpriteFromMemory("game://cover");
-        if (sprite == null)
-        {
-            var path = "file://" + Game.Level.Path + Game.Level.Meta.background.path;
-            using (var request = UnityWebRequestTexture.GetTexture(path))
-            {
-                await request.SendWebRequest();
-                if (request.isNetworkError || request.isHttpError)
-                {
-                    Debug.LogError($"Failed to download cover from {path}");
-                    Debug.LogError(request.error);
-                    return;
-                }
-                sprite = DownloadHandlerTexture.GetContent(request).CreateSprite();
-            }
-            Context.SpriteCache.PutSpriteInMemory("game://cover", SpriteTag.GameCover, sprite);
-        }
-        cover.sprite = sprite;
-        cover.FitSpriteAspectRatio();
         cover.color = Color.white.WithAlpha(0);
+        var path = "file://" + Game.Level.Path + Game.Level.Meta.background.path;
+        cover.sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.GameCover);
+        cover.FitSpriteAspectRatio();
         cover.DOFade(Context.LocalPlayer.CoverOpacity, 0.8f);
     }
 

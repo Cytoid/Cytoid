@@ -10,14 +10,13 @@ public class ProfileScreen : Screen, ScreenChangeListener
     public const string Id = "Profile";
 
     public override string GetId() => Id;
-    
+
     public UpperOverlay upperOverlay;
     public ContentTabs contentTabs;
     public InteractableMonoBehavior playerAvatar;
-    public TransitionElement character;
+    public TransitionElement characterTransitionElement;
     public LeaderboardContainer leaderboard;
     public RadioGroup leaderboardModeSelect;
-    public RectTransform leaderboardContent;
     public ScrollRect leaderboardScrollRect;
     public InteractableMonoBehavior signOutButton;
 
@@ -34,15 +33,16 @@ public class ProfileScreen : Screen, ScreenChangeListener
     public Text totalRankedScoreText;
     public Text totalPlayTimeText;
 
-    protected override void Awake()
+    public override void OnScreenInitialized()
     {
-        base.Awake();
+        base.OnScreenInitialized();
         playerAvatar.onPointerClick.AddListener(_ =>
             Application.OpenURL(Context.WebsiteUrl + "/profile/" + Context.OnlinePlayer.LastProfile.user.uid));
         signOutButton.onPointerClick.AddListener(_ =>
         {
             Context.OnlinePlayer.Deauthenticate();
-            Context.ScreenManager.ChangeScreen(Context.ScreenManager.PopAndPeekHistory(), ScreenTransition.In, addToHistory: false);
+            Context.ScreenManager.ChangeScreen(Context.ScreenManager.PopAndPeekHistory(), ScreenTransition.In,
+                addToHistory: false);
             Toast.Next(Toast.Status.Success, "TOAST_SUCCESSFULLY_SIGNED_OUT".Get());
             ProfileWidget.Instance.SetSignedOut();
             Context.ScreenManager.GetScreen<SignInScreen>().passwordInput.text = "";
@@ -54,11 +54,11 @@ public class ProfileScreen : Screen, ScreenChangeListener
 
             if (index == 0)
             {
-                character.Enter();
+                characterTransitionElement.Enter();
             }
             else
             {
-                character.Leave(false);
+                characterTransitionElement.Leave(false);
             }
 
             if (index == 1)
@@ -72,11 +72,16 @@ public class ProfileScreen : Screen, ScreenChangeListener
 
     public override void OnScreenBecameActive()
     {
-        character.enterDuration = 1.2f;
-        character.enterDelay = 0.4f;
+        characterTransitionElement.enterDuration = 1.2f;
+        characterTransitionElement.enterDelay = 0.4f;
         base.OnScreenBecameActive();
-        character.enterDuration = 0.4f;
-        character.enterDelay = 0;
+        
+        characterTransitionElement.onEnterStarted.RemoveAllListeners();
+        characterTransitionElement.onEnterStarted.AddListener(() =>
+        {
+            characterTransitionElement.enterDuration = 0.4f;
+            characterTransitionElement.enterDelay = 0;
+        });
 
         var profile = Context.OnlinePlayer.LastProfile;
         avatarImage.sprite = ProfileWidget.Instance.avatarImage.sprite;
@@ -91,32 +96,43 @@ public class ProfileScreen : Screen, ScreenChangeListener
         highestMaxComboText.text = profile.activities.max_combo.ToString("N0");
         avgRankedAccuracyText.text = (profile.activities.average_ranked_accuracy * 100).ToString("0.00") + "%";
         totalRankedScoreText.text = profile.activities.total_ranked_score.ToString("N0");
-        totalPlayTimeText.text = TimeSpan.FromSeconds(profile.activities.total_play_time).ToString(@"h\h\ m\m\ s\s");
+        totalPlayTimeText.text = TimeSpan.FromSeconds(profile.activities.total_play_time)
+            .Let(it => it.ToString(it.Days > 0 ? @"d\d\ h\h\ m\m\ s\s" : @"h\h\ m\m\ s\s"));
         LayoutFixer.Fix(ratingText.transform.parent.transform);
+    }
+
+    public void ClearLeaderboard()
+    {
+        leaderboardScrollRect.normalizedPosition = new Vector2(0, 1);
+        leaderboard.Clear();
     }
 
     public void UpdateLeaderboard(string mode)
     {
-        leaderboardScrollRect.normalizedPosition = new Vector2(0, 1);
-        leaderboard.Clear();
-        var uri = Context.ApiBaseUrl + "/leaderboard?limit=50";
-        if (mode == "me") uri += "&user=" + Context.OnlinePlayer.GetUid();
+        ClearLeaderboard();
+
+        SpinnerOverlay.Show();
+        
+        var uri = Context.ApiUrl + "/leaderboard?limit=50";
+        if (mode == "me") uri += "&user=" + Context.OnlinePlayer.Uid;
         RestClient.GetArray<Leaderboard.Entry>(new RequestHelper
         {
-            Uri = uri
-        }).Then(async data => 
+            Uri = uri,
+            Headers = Context.OnlinePlayer.GetAuthorizationHeaders()
+        }).Then(async data =>
         {
             leaderboard.SetData(data);
             if (mode == "me")
             {
-                var meEntry = leaderboard.Entries.Find(it => it.Model.owner.uid == Context.OnlinePlayer.GetUid());
+                var meEntry = leaderboard.Entries.Find(it => it.Model.owner.uid == Context.OnlinePlayer.Uid);
                 if (meEntry != null)
                 {
                     await UniTask.DelayFrame(0);
-                    leaderboardScrollRect.GetComponent<ScrollRectFocusHelper>().CenterOnItem(meEntry.transform as RectTransform);
+                    leaderboardScrollRect.GetComponent<ScrollRectFocusHelper>()
+                        .CenterOnItem(meEntry.transform as RectTransform);
                 }
             }
-        }).Catch(Debug.Log);
+        }).Catch(Debug.Log).Finally(() => SpinnerOverlay.Hide());
     }
 
     public void OnScreenChangeStarted(Screen from, Screen to) => Expression.Empty();
@@ -125,7 +141,7 @@ public class ProfileScreen : Screen, ScreenChangeListener
     {
         if (from == this)
         {
-            leaderboard.Clear();
+            ClearLeaderboard();
         }
     }
 }

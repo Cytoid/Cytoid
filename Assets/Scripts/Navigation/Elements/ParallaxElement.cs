@@ -1,29 +1,32 @@
 using System;
 using System.Collections.Generic;
 using DG.Tweening;
+using UniRx.Async;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ParallaxElement : MonoBehaviour, ScreenChangeListener
 {
     public static bool UseGyroscope = true;
     public static float GyroscopeMultiplier = 24f;
+    public const float MenuSpeed = 100;
 
     public bool Enabled { get; set; } = true;
 
     public int width = 1920;
     public int height = 1080;
 
-    public RectTransform menuTransform;
-    public float menuSpeed;
-    
-    public float[] speeds = {200, 120, 180, 200, 75, 50};
-    public float multiplier = -8f;
+    public List<float> speeds = new List<float> {200, 120, 180, 200, 75, 50};
+    public float multiplier = -540f;
 
-    private List<Layer> layers = new List<Layer>();
+    private readonly List<Layer> layers = new List<Layer>();
+    private Layer menuLayer;
     private float extraMultiplier = 1f;
-
-    private void Awake()
+    
+    private async void Awake()
     {
+        await UniTask.WaitUntil(() => Context.ScreenManager != null);
+        
         if (Application.platform == RuntimePlatform.Android) GyroscopeMultiplier = 24 * 1.8f;
         var index = 0;
         foreach (Transform child in transform)
@@ -32,11 +35,6 @@ public class ParallaxElement : MonoBehaviour, ScreenChangeListener
             layer.OriginalPos = layer.RectTransform.anchoredPosition;
             layers.Add(layer);
         }
-        var menuLayer = new Layer {RectTransform = menuTransform, Index = index++};
-        menuLayer.OriginalPos = menuLayer.RectTransform.anchoredPosition;
-        layers.Add(menuLayer);
-        Array.Resize(ref speeds, speeds.Length + 1);
-        speeds[speeds.Length - 1] = menuSpeed;
         
 #if UNITY_EDITOR
         UseGyroscope = false;        
@@ -74,12 +72,27 @@ public class ParallaxElement : MonoBehaviour, ScreenChangeListener
             pos *= extraMultiplier;
         }
 
-        foreach (var layer in layers)
+        void HandleLayer(Layer layer, float speed)
         {
-            var xPercentage = pos.x / speeds[layer.Index] / multiplier;
-            var yPercentage = pos.y / speeds[layer.Index] / multiplier;
+            if (speed == 0) return;
+            var xPercentage = pos.x / speed / multiplier;
+            var yPercentage = pos.y / speed / multiplier;
             layer.RectTransform.DOAnchorPos(new Vector2(layer.OriginalPos.x + xPercentage * width,
                 layer.OriginalPos.y + yPercentage * height), 0.4f);
+        }
+        
+        foreach (var layer in layers)
+        {
+            HandleLayer(layer, speeds[layer.Index]);
+        }
+        if (Context.ScreenManager.ActiveScreen is MainMenuScreen screen)
+        {
+            if (menuLayer == null)
+            { 
+                menuLayer = new Layer {RectTransform = screen.layout};
+                menuLayer.OriginalPos = menuLayer.RectTransform.anchoredPosition;
+            }
+            HandleLayer(menuLayer, MenuSpeed);
         }
     }
 
@@ -130,5 +143,13 @@ public class ParallaxElement : MonoBehaviour, ScreenChangeListener
         public RectTransform RectTransform;
         public Vector2 OriginalPos;
         public int Index;
+    }
+
+    public void Dispose()
+    {
+        GetComponentsInChildren<Image>().ForEach(it =>
+        {
+            it.sprite = null;
+        });
     }
 }

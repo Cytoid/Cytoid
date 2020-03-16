@@ -29,7 +29,7 @@ public class TierStageCard : InteractableMonoBehavior
         artist.text = level.Meta.artist;
         title.text = level.Meta.title;
         titleLocalized.text = level.Meta.title_localized;
-        titleLocalized.gameObject.SetActive(!string.IsNullOrEmpty(level.Meta.title_localized));
+        titleLocalized.gameObject.SetActive(!level.Meta.title_localized.IsNullOrEmptyTrimmed());
 
         difficultyBall.SetModel(Difficulty.Parse(level.Meta.charts[0].type), level.Meta.charts[0].difficulty);
         overlayGradient.SetGradient(gradient);
@@ -59,15 +59,14 @@ public class TierStageCard : InteractableMonoBehavior
             if (level.IsLocal)
             {
                 var path = "file://" + level.Path + LevelManager.CoverThumbnailFilename;
-                sprite = await Context.SpriteCache.CacheSpriteInMemory(path, SpriteTag.LocalCoverThumbnail,
+                sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.LocalCoverThumbnail,
                     coverToken.Token);
             }
             else
             {
-                var path = level.Meta.background.path.WithImageCdn().WithSizeParam(
-                    Context.ThumbnailWidth, Context.ThumbnailHeight);
-                sprite = await Context.SpriteCache.CacheSpriteInMemory(path, SpriteTag.OnlineCoverThumbnail,
-                    coverToken.Token, new []{ Context.ThumbnailWidth, Context.ThumbnailHeight }, useFileCache: true);
+                var path = level.OnlineLevel.cover.stripe;
+                sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.OnlineCoverThumbnail,
+                    coverToken.Token, true, new SpriteAssetOptions(new []{ Context.ThumbnailWidth, Context.ThumbnailHeight }));
             }
         }
         catch

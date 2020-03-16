@@ -28,6 +28,7 @@ namespace Cytoid.Storyboard
         
         protected UnityEngine.Color EaseColor(Color i, Color j)
         {
+            if (!i.IsSet()) return UnityEngine.Color.clear;
             if (!j.IsSet()) return i.ToUnityColor();
             return UnityEngine.Color.Lerp(i.ToUnityColor(), j.ToUnityColor(), EaseFloat(0, 1));
         }
@@ -53,7 +54,7 @@ namespace Cytoid.Storyboard
         protected float EaseOrthographicX(float i, float j)
         {
             if (!j.IsSet()) return i;
-            var orthographicSize = Camera.main.orthographicSize;
+            var orthographicSize = Game.camera.orthographicSize;
             return EaseFloat(
                 i * orthographicSize / UnityEngine.Screen.height * UnityEngine.Screen.width,
                 j * orthographicSize / UnityEngine.Screen.height * UnityEngine.Screen.width
@@ -63,7 +64,7 @@ namespace Cytoid.Storyboard
         protected float EaseOrthographicY(float i, float j)
         {
             if (!j.IsSet()) return i;
-            var orthographicSize = Camera.main.orthographicSize;
+            var orthographicSize = Game.camera.orthographicSize;
             return EaseFloat(i * orthographicSize, j * orthographicSize);
         }
     }

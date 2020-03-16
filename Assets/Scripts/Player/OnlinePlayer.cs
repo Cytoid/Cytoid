@@ -12,33 +12,35 @@ public class OnlinePlayer
 {
     public readonly UnityEvent OnAuthenticated = new UnityEvent();
     public readonly ProfileChangedEvent OnProfileChanged = new ProfileChangedEvent();
-    public readonly LevelBestPerformanceUpdatedEvent OnLevelBestPerformanceUpdated = new LevelBestPerformanceUpdatedEvent();
-    
+
+    public readonly LevelBestPerformanceUpdatedEvent OnLevelBestPerformanceUpdated =
+        new LevelBestPerformanceUpdatedEvent();
+
     public Profile LastProfile { get; private set; }
 
     public bool IsAuthenticated { get; private set; }
-    
+
     public bool IsAuthenticating { get; set; }
 
     public Promise<Profile> Authenticate(string password)
     {
         IsAuthenticating = true;
-        
+
         return new Promise<Profile>((resolve, reject) =>
         {
             RestClient.Post<Session>(new RequestHelper
             {
-                Uri = Context.ApiBaseUrl + "/session",
+                Uri = Context.ApiUrl + "/session",
                 BodyString = JObject.FromObject(new
                 {
-                    username = GetUid(),
-                    password,
-                    token = SecuredConstants.AuthenticationVerificationToken
+                    username = Uid,
+                    password
                 }).ToString()
             }).Then(session =>
                 {
-                    SetJwtToken(session.token);
+                    JwtToken = session.token;
                     Debug.Log(session.token);
+                    Id = session.user.id;
                     return FetchProfile();
                 }
             ).Then(profile =>
@@ -49,7 +51,7 @@ public class OnlinePlayer
             }).Catch(result =>
             {
                 Debug.LogError(result);
-                SetJwtToken(null);
+                JwtToken = null;
                 reject(result);
             }).Finally(() => IsAuthenticating = false);
         });
@@ -59,28 +61,28 @@ public class OnlinePlayer
     {
         IsAuthenticating = true;
 
-        var jwtToken = GetJwtToken();
+        var jwtToken = JwtToken;
         if (jwtToken == null) throw new ArgumentException();
+
+        Debug.Log($"JWT token: {jwtToken}");
 
         return new Promise<Profile>((resolve, reject) =>
         {
             RestClient.Post<Session>(new RequestHelper
             {
-                Uri = Context.ApiBaseUrl + "/session",
-                BodyString = JObject.FromObject(new
-                {
-                    token = SecuredConstants.AuthenticationVerificationToken
-                }).ToString(),
+                Uri = Context.ApiUrl + "/session",
+                BodyString = JObject.FromObject(new { }).ToString(),
                 Headers = new Dictionary<string, string>
                 {
                     {"Authorization", "JWT " + jwtToken}
                 }
             }).Then(session =>
-            {
-                SetJwtToken(session.token);
-                Debug.Log(session.token);
-                return FetchProfile();
-            }
+                {
+                    JwtToken = session.token;
+                    Debug.Log(session.token);
+                    Id = session.user.id;
+                    return FetchProfile();
+                }
             ).Then(profile =>
             {
                 IsAuthenticated = true;
@@ -89,7 +91,7 @@ public class OnlinePlayer
             }).Catch(result =>
             {
                 Debug.LogError(result);
-                SetJwtToken(null);
+                JwtToken = null;
                 reject(result);
             }).Finally(() => IsAuthenticating = false);
         });
@@ -97,46 +99,49 @@ public class OnlinePlayer
 
     public void Deauthenticate()
     {
-        SetJwtToken(null);
+        JwtToken = null;
         LastProfile = null;
         IsAuthenticating = false;
         IsAuthenticated = false;
     }
-    
-    public string GetUid()
+
+    public string Id
     {
-        return PlayerPrefs.GetString("last_username");
+        get => PlayerPrefs.GetString("Id");
+        set => PlayerPrefs.SetString("Id", value);
     }
 
-    public void SetUid(string uid)
+    public string Uid
     {
-        PlayerPrefs.SetString("last_username", uid);
+        get => PlayerPrefs.GetString("Uid");
+        set => PlayerPrefs.SetString("Uid", value);
     }
 
-    public string GetJwtToken()
+    public string JwtToken
     {
-        return SecuredPlayerPrefs.GetString("JwtToken", null);
+        get => SecuredPlayerPrefs.GetString("JwtToken", null);
+        set => SecuredPlayerPrefs.SetString("JwtToken", value);
     }
 
-    public void SetJwtToken(string token)
+    public Dictionary<string, string> GetAuthorizationHeaders()
     {
-        SecuredPlayerPrefs.SetString("JwtToken", token);
-    }
-
-    public Dictionary<string, string> GetJwtAuthorizationHeaders()
-    {
+        if (JwtToken == null)
+        {
+            return new Dictionary<string, string>();
+        }
         return new Dictionary<string, string>
         {
-            {"Authorization", "JWT " + GetJwtToken()}
+            {"Authorization", "JWT " + JwtToken}
         };
     }
 
     public IPromise<Profile> FetchProfile(string uid = null)
     {
-        if (uid == null) uid = GetUid();
+        if (uid == null) uid = Uid;
         return RestClient.Get<Profile>(new RequestHelper
         {
-            Uri = $"{Context.ApiBaseUrl}/profile/{uid}/full",
+            Uri = $"{Context.ApiUrl}/profile/{uid}/full",
+            Headers = GetAuthorizationHeaders(),
             EnableDebug = true
         }).Then(profile =>
         {
@@ -154,7 +159,8 @@ public class OnlinePlayer
         {
             return RestClient.GetArray<RankingEntry>(new RequestHelper
                 {
-                    Uri = $"{Context.ApiBaseUrl}/levels/{levelId}/charts/{chartType}/ranking",
+                    Uri = $"{Context.ApiUrl}/levels/{levelId}/charts/{chartType}/ranking",
+                    Headers = GetAuthorizationHeaders(),
                     EnableDebug = true
                 })
                 .Then(data =>
@@ -166,7 +172,8 @@ public class OnlinePlayer
                     return RestClient.GetArray<RankingEntry>(new RequestHelper
                     {
                         Uri =
-                            $"{Context.ApiBaseUrl}/levels/{levelId}/charts/{chartType}/ranking?user={Context.OnlinePlayer.GetUid()}&userLimit=6"
+                            $"{Context.ApiUrl}/levels/{levelId}/charts/{chartType}/ranking?user={Context.OnlinePlayer.Uid}&userLimit=6",
+                        Headers = GetAuthorizationHeaders(),
                     });
                 })
                 .Then(data =>
@@ -179,7 +186,7 @@ public class OnlinePlayer
                     for (var index = 0; index < data.Length; index++)
                     {
                         var entry = data[index];
-                        if (entry.owner.uid == Context.OnlinePlayer.GetUid())
+                        if (entry.owner.uid == Context.OnlinePlayer.Uid)
                         {
                             userRank = entry.rank;
                             userEntry = entry;
@@ -212,7 +219,7 @@ public class OnlinePlayer
                             {
                                 Score = userEntry.score, Accuracy = userEntry.accuracy * 100f, ClearType = string.Empty
                             }); // TODO: ClearType
-                            
+
                             OnLevelBestPerformanceUpdated.Invoke(levelId);
                         }
                     }
@@ -223,7 +230,8 @@ public class OnlinePlayer
 
         return RestClient.GetArray<RankingEntry>(new RequestHelper
         {
-            Uri = $"{Context.ApiBaseUrl}/levels/{levelId}/charts/{chartType}/ranking"
+            Uri = $"{Context.ApiUrl}/levels/{levelId}/charts/{chartType}/ranking",
+            Headers = Context.OnlinePlayer.GetAuthorizationHeaders()
         }).Then(array => new System.Tuple<int, List<RankingEntry>>(-1, array.ToList()));
     }
 }

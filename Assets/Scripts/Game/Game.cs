@@ -13,6 +13,7 @@ using UnityEngine.Networking;
 
 public class Game : MonoBehaviour
 {
+    public Camera camera;
     public GameObject contentParent;
     public EffectController effectController;
     public InputController inputController;
@@ -94,7 +95,6 @@ public class Game : MonoBehaviour
                 throw new Exception("Game mode not specified");
             }
         }
-        Context.SelectedGameMode = GameMode.Unspecified;
 
         if (mode == GameMode.Tier)
         {
@@ -116,12 +116,14 @@ public class Game : MonoBehaviour
             tierState.CurrentStageIndex++;
             
             Level = tierState.Tier.Meta.stages[Context.TierState.CurrentStageIndex].ToLevel();
-            Difficulty = Difficulty.Parse(Level.Meta.charts[0].type);
+            Difficulty = Difficulty.Parse(Level.Meta.charts.Last().type);
         }
         else
         {
-            Level = Context.SelectedLevel;
-            Difficulty = Context.SelectedDifficulty;
+            // Load test level
+            await Context.LevelManager.LoadFromMetadataFiles(new List<string> { Context.DataPath + "/tar1412.iwannabeit/level.json" });
+            Level = Context.SelectedLevel = Context.LevelManager.LoadedLocalLevels.Values.First();
+            Difficulty = Context.SelectedDifficulty = Difficulty.Extreme;
         }
 
         onGameReadyToLoad.Invoke(this);
@@ -152,7 +154,7 @@ public class Game : MonoBehaviour
         }
         
         var ratio = UnityEngine.Screen.width * 1.0f / UnityEngine.Screen.height;
-        var height = Camera.main.orthographicSize * 2.0f;
+        var height = camera.orthographicSize * 2.0f;
         var width = height * ratio;
         var topRatio = 0.0966666f;
         var bottomRatio = 0.07f;
@@ -164,6 +166,7 @@ public class Game : MonoBehaviour
             mods.Contains(Mod.FlipY) || mods.Contains(Mod.FlipAll),
             true,
             mods.Contains(Mod.Fast) ? 1.5f : (mods.Contains(Mod.Slow) ? 0.75f : 1),
+            camera.orthographicSize,
             0.8f + (5 - Context.LocalPlayer.HorizontalMargin - 1) * 0.02f,
             verticalRatio,
             verticalOffset
@@ -176,8 +179,8 @@ public class Game : MonoBehaviour
         
         if (Context.AudioManager == null) await UniTask.WaitUntil(() => Context.AudioManager != null);
         var audioPath = "file://" + Level.Path + Level.Meta.GetMusicPath(Difficulty.Id);
-        var loader = new AssetLoader(audioPath);
-        await loader.LoadAudioClip();
+        var loader = new AudioClipLoader(audioPath);
+        await loader.Load();
         if (loader.Error != null)
         {
             Debug.LogError(loader.Error);
@@ -495,7 +498,6 @@ public class Game : MonoBehaviour
         
         // Unload resources
         Context.AudioManager.Unload("Level");
-        Context.SpriteCache.DisposeTaggedSpritesInMemory(SpriteTag.GameCover);
         
         onGameAborted.Invoke(this);
 
@@ -584,7 +586,7 @@ public class Game : MonoBehaviour
         {
             // TODO: Same as above
         }
-        
+
         sceneLoader.Activate();
     }
 

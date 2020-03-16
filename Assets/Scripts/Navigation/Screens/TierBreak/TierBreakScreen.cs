@@ -47,25 +47,8 @@ public class TierBreakScreen : Screen, ScreenChangeListener
         // Load translucent cover
         var image = TranslucentCover.Instance.image;
         image.color = Color.white.WithAlpha(0);
-        var sprite = Context.SpriteCache.GetCachedSpriteFromMemory("game://cover");
-        if (sprite == null)
-        {
-            var level = gameState.Level;
-            var path = "file://" + level.Path + level.Meta.background.path;
-            using (var request = UnityWebRequestTexture.GetTexture(path))
-            {
-                await request.SendWebRequest();
-                if (request.isNetworkError || request.isHttpError)
-                {
-                    Debug.LogError($"Failed to download cover from {path}");
-                    Debug.LogError(request.error);
-                    return;
-                }
-
-                sprite = DownloadHandlerTexture.GetContent(request).CreateSprite();
-            }
-        }
-        image.sprite = sprite;
+        var path = "file://" + gameState.Level.Path + gameState.Level.Meta.background.path;
+        image.sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.GameCover);
         image.FitSpriteAspectRatio();
 
         // Update performance info
@@ -168,14 +151,15 @@ public class TierBreakScreen : Screen, ScreenChangeListener
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
         TranslucentCover.Instance.image.DOFade(0, 0.8f);
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
-        Context.SpriteCache.DisposeTaggedSpritesInMemory(SpriteTag.GameCover);
+        
+        Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.GameCover);
         
         sceneLoader.Activate();
     }
     
     public void Finish()
     {
-        Context.ScreenManager.ChangeScreen(TierResultScreen.Id, ScreenTransition.Out, willDestroy: true);
+        Context.ScreenManager.ChangeScreen(TierResultScreen.Id, ScreenTransition.Out, willDestroy: true, addToHistory: false);
         Context.AudioManager.Get("LevelStart").Play();
     }
 
@@ -183,11 +167,10 @@ public class TierBreakScreen : Screen, ScreenChangeListener
 
     public void OnScreenChangeFinished(Screen from, Screen to)
     {
-        if (from == this && !(to is TierResultScreen))
+        if (from == this && to is TierSelectionScreen)
         {
-            print("Disposed...");
-            // Dispose game cover
-            Context.SpriteCache.DisposeTaggedSpritesInMemory(SpriteTag.GameCover);
+            // Go back to tier selection, so clear game cover
+            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.GameCover);
         }
     }
 }

@@ -5,6 +5,7 @@ using System.Threading;
 using DG.Tweening;
 using LeTai.Asset.TranslucentImage;
 using UniRx.Async;
+using UnityEditor;
 using UnityEngine;
 
 public class ScreenManager : SingletonMonoBehavior<ScreenManager>
@@ -28,6 +29,22 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
     {
         base.Awake();
         Context.ScreenManager = this;
+
+#if UNITY_EDITOR
+        if (false)
+        {
+            foreach (var screen in createdScreens)
+            {
+                var localPath = "Assets/Resources/Prefabs/Screens/" + screen.GetId() + ".prefab";
+                var prefab = PrefabUtility.SaveAsPrefabAssetAndConnect(screen.gameObject, localPath,
+                    InteractionMode.AutomatedAction);
+                screenPrefabs.Add(prefab.GetComponent<Screen>());
+                Destroy(screen.gameObject);
+            }
+
+            createdScreens.Clear();
+        }
+#endif
     }
 
     private void Start()

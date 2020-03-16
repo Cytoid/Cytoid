@@ -5,14 +5,15 @@ public class FlickClassicNoteRenderer : ClassicNoteRenderer
     private SpriteRenderer leftArrow;
     private SpriteRenderer rightArrow;
 
-    private static float MaxArrowOffset = Camera.main.orthographicSize * 0.3f;
+    private float maxArrowOffset;
 
     public FlickClassicNoteRenderer(FlickNote flickNote) : base(flickNote)
     {
+        maxArrowOffset = Game.camera.orthographicSize * 0.3f;
         leftArrow = Note.transform.Find("LeftArrow").GetComponent<SpriteRenderer>();
         rightArrow = Note.transform.Find("RightArrow").GetComponent<SpriteRenderer>();
-        leftArrow.transform.SetLocalX(-MaxArrowOffset);
-        rightArrow.transform.SetLocalX(MaxArrowOffset);
+        leftArrow.transform.SetLocalX(-maxArrowOffset);
+        rightArrow.transform.SetLocalX(maxArrowOffset);
         leftArrow.color = leftArrow.color.WithAlpha(0);
         rightArrow.color = rightArrow.color.WithAlpha(0);
     }
@@ -53,13 +54,13 @@ public class FlickClassicNoteRenderer : ClassicNoteRenderer
     protected virtual void UpdateArrows()
     {
         leftArrow.transform.localPosition = Vector3.Lerp(
-            new Vector3(-MaxArrowOffset, 0, 0),
+            new Vector3(-maxArrowOffset, 0, 0),
             new Vector3(0, 0, 0),
             Mathf.Clamp((Game.Time - Note.Model.intro_time) / (Note.Model.start_time - Note.Model.intro_time - 0.25f),
                 0, 1)
         );
         rightArrow.transform.localPosition = Vector3.Lerp(
-            new Vector3(MaxArrowOffset, 0, 0),
+            new Vector3(maxArrowOffset, 0, 0),
             new Vector3(0, 0, 0),
             Mathf.Clamp((Game.Time - Note.Model.intro_time) / (Note.Model.start_time - Note.Model.intro_time - 0.25f),
                 0, 1)

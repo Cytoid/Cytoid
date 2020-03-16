@@ -16,7 +16,7 @@ public class SignInScreen : Screen
     public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
-        uidInput.text = Context.OnlinePlayer.GetUid();
+        uidInput.text = Context.OnlinePlayer.Uid;
     }
 
     public async UniTask SignIn()
@@ -36,7 +36,7 @@ public class SignInScreen : Screen
 
         var completed = false;
 
-        Context.OnlinePlayer.SetUid(uidInput.text.Trim());
+        Context.OnlinePlayer.Uid = uidInput.text.Trim();
         Context.OnlinePlayer.Authenticate(passwordInput.text)
             .Then(profile =>
             {

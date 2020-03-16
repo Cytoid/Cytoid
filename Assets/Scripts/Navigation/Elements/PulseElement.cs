@@ -84,8 +84,6 @@ public class PulseElement : MonoBehaviour
 
     public void Pulse()
     {
-        print("pulsed");
-        print(StackTraceUtility.ExtractStackTrace());
         if (holder == null)
         {
             throw new InvalidOperationException("Pulse element not initialized yet");
@@ -104,12 +102,12 @@ public class PulseElement : MonoBehaviour
         {
             if (componentsToDestroyAfterClone.Any(it => it.GetType() == component.GetType()))
             {
-                print("Destroyed " + component.GetType());
+                //print("Destroyed " + component.GetType());
                 Destroy(component);
             }
             else if (typesToDestroyAfterClone.Any(it => it == component.GetType()))
             {
-                print("Destroyed " + component.GetType());
+                //print("Destroyed " + component.GetType());
                 Destroy(component);
             }
         }

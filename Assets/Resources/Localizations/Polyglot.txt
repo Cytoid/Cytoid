@@ -100,7 +100,7 @@ PROFILE_PROFILE		Profile		Perfil			Perfil		Профиль									プロフィ�
 PROFILE_LEADERBOARD		Leaderboard		Tabla de lideres			Placar		Таблица лидеров									ランキング	排行榜	排行榜	랭킹 리더보드									BXH	Mga posisyon	Peringkat	群成员
 PROFILE_SIGN_OUT		Sign Out		Cerrar Sesión			Sair		Выйти									サインアウト	退出账号	登出										Đăng xuất	Mag-sisign out	Keluar	退群
 PROFILE_TOTAL_RANKED_PLAYS	Not necessarily required to translate "ranked"	TOTAL RANKED PLAYS		TOTAL PARTIDAS IGUALADAS			TOTAL DE PARTIDAS RANQUEADAS		ВСЕГО СЫГРАНО РАНГОВЫХ ИГР									ランクモードプレイ数	总游玩次数	總遊玩次數	총 랭크 플레이									Lượt chơi xếp hạng tổng cộng	Kabuuan ng laro na ranked	Total level ranked yang dimainkan	总铲车数
-PROFILE_TOTAL_CLEARED_NOTES		TOTAL CLEARED NOTES		TOTAL NOTAS COMPLETADAS			TOTAL DE NOTAS COMPLETAS		ВСЕГО ЗАЧТЕНО НОТ									タップしたノーツ数の合計	总 Note 数	總清除拍點數	청 클레이된 노트 수									Số nốt đã được clear tổng cộng	Kabuuan na nota na napindot	Total note yang berhasil disentuh.	总踢数
+PROFILE_TOTAL_CLEARED_NOTES		TOTAL CLEARED NOTES		TOTAL NOTAS COMPLETADAS			TOTAL DE NOTAS COMPLETAS		ВСЕГО ЗАЧТЕНО НОТ									タップしたノーツ数の合計	总 Note 数	總清除拍點數	청 클레이된 노트 수									Số nốt đã được clear tổng cộng	Kabuuan na nota na naclear	Total note yang berhasil disentuh.	总踢数
 PROFILE_HIGHEST_MAX_COMBO		HIGHEST MAX COMBO		MAYOR COMBO MÁXIMO			MAIOR COMBO MÁXIMO		ВЫСШИЙ СЧЁТ КОМБО									最高コンボ数	最高连击数	最高 COMBO 數	최기록 콤보									Combo cao nhất	Pinakamataas na combo	Max combo tertinggi.	最高连踢数
 PROFILE_AVG_RANKED_ACCURACY	Not necessarily required to translate "ranked"	AVG RANKED ACCURACY		PRECISIÓN PROMEDIO IGUALADA			PRECISÃO RANQUEADA MÉDIA		СР РАНГОВАЯ ТОЧНОСТЬ									平均Rate上昇率	平均精准度	平均準確度	평균 정확도									Độ chính xác TB trong xếp hạng	Average na ranked accuracy	Akurasi ranked rata - rata.	平均踢中
 PROFILE_TOTAL_RANKED_SCORE	Not necessarily required to translate "ranked"	TOTAL RANKED SCORE		PUNTUACIÓN IGUALADA TOTAL			PONTUAÇÃO RANQUEADA TOTAL		ОБЩИЙ СЧЁТ									合計ランクモードスコア	总分数	總分數	총 랭크 스코어									Điểm xếp hạng tổng cộng	Kabuuan ng ranked score	Total nilai ranked.	踢分
@@ -221,7 +221,7 @@ LEVEL_SELECT_SEARCH_QUERY_HINT		Title / artist / charter...		Título / Artista /
 																																	
 																																	
 GAME_PREP_START		Start!		Comenzar!			Começar!		Начать!									Start!	开始！	開始！										Bắt đầu!	Magsimula!	Mulai!	铲车！
-GAME_PREP_PRACTICE		Practice!		Practíca!			Praticar!		Практика!									Practice!	开始练习！	練習！										Tập luyện!	Pagsasanay!	Latihan!	给我打R判啊！
+GAME_PREP_PRACTICE		Practice!		Practíca!			Praticar!		Практика!									Practice!	开始练习！	練習！										Tập luyện!	Magsanay!	Latihan!	给我打R判啊！
 GAME_PREP_DOWNLOAD		Download!		Descargar!			Baixar!		Скачать!									Download!	下载！	下載！										Tải về!	i-Download!	Unduh!	jaja
 GAME_PREP_RANKINGS_VIEW_MORE		View more		Ver mas			Ver mais		Развернуть									詳細	查看更多	查看全部										Xem thêm	Tignan pa	Lihat lebih banyak	全来
 GAME_PREP_RANKINGS_DOWNLOADING		Downloading level rankings...		Descargando las clasificaciones del nivel...			Baixando ranking do nível.		Скачивание ранков на уровне									ランキングをロード中…	下载关卡排行中...	關卡排行下載中……										Đang tải thứ hạng level...	Nagdodownload ng level rankings...	Mengunduh ranking pada level...	
@@ -234,7 +234,7 @@ GAME_PREP_RATINGS_YOU_RATED_X		You rated {0}/5.		Usted puntuó {0}/5.			Você av
 GAME_PREP_RATINGS_YOU_HAVENT_RATED		You haven't rated yet.		No ha puntuado todavía.			Você ainda não avaliou esse nível		Вы не оценили ещё.									まだこの譜面を評価していません。	你还没有评分。	尚未評分。										Bạn chưa đánh giá.	Di' kapa naka marka	Anda belum mengerate level ini.	你还没骂上。
 GAME_PREP_RATINGS_BE_THE_FIRST		Be the first!		Sea el primero!			Seja o primeiro!		Будьте первыми!									一番乗りしよう！	做第一个评分的人吧！	搶個頭香吧！										Hãy là người đầu tiên!	Mauna ka magmarka!	Jadi yang pertama!	来骂谱吧！
 GAME_PREP_RATINGS_RATE		Rate		Puntue			Avaliar		Оценить									評価	打分	評分										Đánh giá	Rate	Rate	骂
-GAME_PREP_GAMEPLAY_PRACTICE_MODE	Space very limited. Keep translation compact!	Practice Mode		Modo de Practica			Modo prática		Режим Практики									練習モード	练习模式	練習模式										Chế độ Luyện tập	Practice	Mode Latihan	dd模式
+GAME_PREP_GAMEPLAY_PRACTICE_MODE	Space very limited. Keep translation compact!	Practice Mode		Modo de Practica			Modo prática		Режим Практики									練習モード	练习模式	練習模式										Chế độ Luyện tập	Practice Mode	Mode Latihan	dd模式
 GAME_PREP_GAMEPLAY_PRACTICE_MODE_DESC		Relaxed note timing judgements, but your performance will not be shown on the leaderboard.		Juicio de sincronización de notas relajado, pero su rendimiento no será mostrado en la tabla de clasificaciones.			Timing mais relaxado, porém seu score não será exibido no placar ranqueado.		Упрощённая оценка вашей игре, но это не будет отображаться в таблице лидеров.									判定は緩やかですが、このモードでプレイしたスコアはランキングに残りません。	更为宽松的 Note 时间判定，\n但你的纪录将不会显示在排行榜上。	拍點判定時間較為寬鬆，\n遊玩紀錄也不會上傳至排行榜。										Mức độ đánh giá thời gian bấm nốy được thả lỏng, nhưng thành tích của bạn sẽ không xuất hiện trên bảng xếp hạng.	Nakarelax ang timing ng nota, pero ang iyong laro ay hindi ipapakita sa leaderboard.	Ruang timing lebih luas, tetapi skor anda tidak akan dikirim ke leaderboard.	不开R判的都是dd。（迫真）
 GAME_PREP_GAMEPLAY_PRACTICE_MODE_HINT		RECOMMENDED FOR UNDER LEVEL 20		RECOMENDADO PARA MENORES DE NIVEL 20			RECOMENDADO PARA JOGADORES ABAIXO DO NÍVEL 20		РЕКОМЕНДУЕТСЯ ДЛЯ ТЕХ КТО НИЖЕ 20 УРОВНЯ									レベル <b>20以下</b> 推薦	推荐等级 20 以下使用	如等級在 20 以下建議開啟										Đề nghị cho những người dưới Level 20	Inirerekumenda para sa mga Level 20 at pababa.	DISARANKAN UNTUK PEMAIN DIBAWAH LEVEL 20	汉堡汉堡王王汉堡王王
 GAME_PREP_GAMEPLAY_MODS		MODS		MODS			MODS		МОДЫ									追加モード	Mods	遊玩模組										Điều chỉnh độ khó			马组
@@ -278,6 +278,7 @@ GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET		Level note offset		Equilibrio de las notas
 GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET_DESC		Notes not syncing well with music? \nPress "Calibrate" or manually enter a desired note offset.		Las notas no se sincronizan bien con la música? \n Presione "Calibrar" o ingrese el equilibrio de notas manualmente.			As notas parecem não estarem sincronizadas com a música? \nPressione "Calibrar" ou manualmente entre com o deslocamento desejado.		Ноты не синхронизированы с музыкой?/nНажмите "Откалибровать" или сами введите нужную задержку.									この譜面にノーツとのタイミングずれが生じる場合 \n”調整”を押すか、ノーツオフセットを手動で入力してください。	觉得 Note 和音乐不同步？\n请按下「校准」按钮，或者手动输入谱面偏移值。	若發現譜面與音樂不同步，可直接點擊「判定校正」按鈕進入校正模式（可以邊遊玩邊調整），或是直接輸入數值也可以。\n該數值會疊加至通用（+耳機）校正上。										Nốt không trùng với nhạc? \n Nhấn "Điều chỉnh" để thêm vào thời gian bù mong muốn.	Nota hindi nakakatugma sa musika? Pindutin ang "Calibrate" o manual ang paglagay ng offset.	Note tidak tersinkron pada musik? Tekan "Kalibrasi" atau dengan manual mengisi dengan angka yang dimaui.	
 GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET_CALIBRATE		Calibrate		Calibrar			Calibrar		Откалибровать									調整	校准	判定校正										Điều chỉnh		Kalibrasi	
 GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET_OR		or		o			ou		или									or	或	或是										hoặc	o	atau	
+GAME_PREP_INFO_ARTIST		ARTIST																															
 GAME_PREP_INFO_COVER_ARTIST		COVER ARTIST		ARTISTA DE CARATULA			ARTISTA DA CAPA		СОЗДАТЕЛЬ ОБЛОЖКИ									イラスト	曲绘	繪圖創作者										Người vẽ			
 GAME_PREP_INFO_CHARTER		CHARTER		CHARTER			CHARTER		ЧАРТЕР									譜面製作者	谱师	譜面設計師										Người làm level			
 GAME_PREP_INFO_STORYBOARDER		STORYBOARDER		STORYBOARDER			STORYBOARDER		РАСКАДРОВКА									ストーリーボード	故事板制作	Storyboard 製作者										Người làm Storyboard			
@@ -285,7 +286,7 @@ GAME_PREP_INFO_ID		ID		ID			ID		ID									ID	ID	ID										ID
 GAME_PREP_INFO_VERSION		VERSION		VERSION			VERSÃO		ВЕРСИЯ									バージョン	版本	版本										Phiên bản	Bersyon	VERSI	
 GAME_PREP_BEST_PERFORMANCE		BEST PERFORMANCE		MEJOR RENDIMIENTO			MELHOR PERFORMANCE		ЛУЧШИЙ СЧЁТ									HIGH SCORE	最佳纪录	最高紀錄										Thành tích tốt nhất	Pinakamahusay na laro	PERFORMA TERBAIK	最佳纪录
 GAME_PREP_BEST_PERFORMANCE_PRACTICE		BEST PERFORMANCE (PRACTICE)		MEJOR RENDIMIENTO (PRACTICA)			MELHOR PERFORMANCE (PRÁTICA)		ЛУЧШИЙ СЧЁТ (ПРАКТИКА)									HIGH SCORE (練習モード)	最佳纪录（练习模式）	最高紀錄（練習）										Thành tích tốt nhất (Tập luyện)	Pinakamahusay na laro (naka-practice)	PERFORMA TERBAIK (LATIHAN)	最佳纪录（dd模式）
-																																	
+GAME_PREP_VIEW_ON_CYTOIDIO		View on CytoidIO																															
 																																	
 																																	
 																																	
@@ -322,12 +323,12 @@ COMMUNITY_SELECT_TIME_PAST_MONTH		Past month		Ultimo mes			Mês passado		Про�
 COMMUNITY_SELECT_TIME_PAST_6_MONTHS		Past 6 months		Ultimos 6 meses			Semestre passado		Прошлые 6 месяцев									半年以内	最近六个月	半年內										6 tháng qua		6 bulan yang lalu	
 COMMUNITY_SELECT_TIME_PAST_YEAR		Past year		Ultimo año			Ano passado		Прошлый год									1年以上	最近一年	一年內										Năm ngoái		Tahun lalu	
 																																	
-RESULT_MODE_PRACTICE		Practice		Practica			Prática		Практика									練習モード	练习模式	練習模式										Luyện tập		Latihan	dd模式
+RESULT_MODE_PRACTICE		Practice		Practica			Prática		Практика									練習モード	练习模式	練習模式										Luyện tập	Pagsasanay	Latihan	dd模式
 RESULT_SHARE		Share		Compartir			Compartilhar		Поделиться									共有	分享	分享										Chia sẻ		Bagikan	发群炫耀
 RESULT_X_ACCURACY		{0}% accuracy		{0}% de presición			{0}% de precisão		{0}% точность									{0}% Accuracy	{0} 精准度	<b>準確度</b> {0}%										{0}% độ chính xác			
 RESULT_FULL_ACCURACY		Full accuracy		Precisión total			Full accuracy		Абсолютная точность									Full accuracy	完美精准度	<b>準確度</b> 100.00%										Độ chính xác hoàn hảo	Lahat Perpekto		
 RESULT_X_COMBO		{0} max combo		{0} combo máximo			Combo máximo de {0}		{0} макс. комбо									{0} max combo	{0} 最大连击	<b>Max Combo</b> {0}										{0} Combo tối đa			
-RESULT_FULL_COMBO		Full combo		Full Combo			Full combo		Полное комбо									Full combo	全连击	<b>Full Combo</b>										Combo hoàn hảo	All Combo		
+RESULT_FULL_COMBO		Full combo		Full Combo			Full combo		Полное комбо									Full combo	全连击	<b>Full Combo</b>										Combo hoàn hảo	Full Combo		
 RESULT_AVG_TIMING_ERR		ATE		ATE			ATE		АТЕ									ATE	平均判定误差	平均差										S/số t/gian TB			
 RESULT_STD_TIMING_ERR		STE		STE			STE		STE									STE	标准判定误差	標準差										S/số t/gian chuẩn			
 RESULT_RETRY		Retry		Reintentar			Tentar\noutra\nvez		Повторить									Retry	重试	重新開始										Thử lại	Ulitin	Ulangi	铲车！
@@ -343,7 +344,7 @@ GAME_CALIBRATION_AUTOPLAY		AUTOPLAY		AUTOPLAY			AUTOPLAY		АВТОПЛЕЙ						
 GAME_CALIBRATION_HIT_SOUND		HIT SOUND		SONIDO DE ACIERTO			SOM DE ACERTO		ХИТ-САУНД									タップ音	打击音	打擊音效										TIẾNG BẤM			
 GAME_CALIBRATION_NOTE_OFFSET		NOTE OFFSET		EQUILIBRIO DE NOTA			DESLOCAMENTO DE NOTA		ЗАДЕРЖКА НОТЫ									ノーツ調整	谱面偏移	譜面校正										CÂN CHỈNH THỜI GIAN NỐT	Offset ng nota	OFFSET PADA NOTE	
 GAME_CALIBRATION_NOTE_OFFSET_DESC		If you feel the notes are <b>ahead</b> of the music, <b>increase</b> the offset. Vice versa.		Si usted siente que las notas están <b>más adelante</b> que la música, <b>aumente</b> el equilibrio. Vice versa.			Se você sente que as notas estão <b>à frente</b> da música, <b>aumente</b> o deslocamento ou vice-versa.		Если ноты <b>несовместимы<b> с музыкой, <повысьте> задержку. Или наоборот.									ノーツとのタイミングが <b>遅い</b> 場合、数値を <b>増やして</b> 下さい。また、逆も同様です。	如果你觉得 Note 比音乐要<b>早</b>，请<b>增加</b>偏移；\n否则，请减少偏移。	音樂<b>太慢</b>就<b>增加</b>數值；音樂<b>太快</b>則<b>減少</b>數值。\n以 0.01 秒（方框）／0.05 秒（圓框）為單位\n左右增減來進行調整。										Nếu bạn cảm thấy nốt đang <b> trước</b> nhạc thì <b> tăng </b> mức bù thời gian và ngược lại.	Kung sa tingin mo ang nota ay maaga sa musika, itaas ang offset. Baliktarin kapag baliktad ang resulta	Jika nada terasa lebih cepat dari musik, tambahkan offset. Sama dengan jika note terasa lebih lambat, kurangi offset.	
-GAME_PAUSED_DESC		Take a break...		Tome un descanso...			Dê uma pausa...		Передохните...									ちょっと休憩…	休息一下...	休息一下吧。										Nghỉ 1 chút đi...	Pahinga ka muna...	Istirahat...	贵阳一下...
+GAME_PAUSED_DESC		Take a break...		Tome un descanso...			Dê uma pausa...		Передохните...									ちょっと休憩…	休息一下...	休息一下吧。										Nghỉ 1 chút đi...	Pahinga muna...	Istirahat...	贵阳一下...
 GAME_TRY_AGAIN		Try again?		Intentar de nuevo?			Tentar outra vez?		Ещё раз?									リスタート？	重新来过吧？	還想再試嗎？										Thử lại?	Isa pa?	Cobal lagi?	你美丽jajajaja
 GAME_GO_BACK		Go back		Volver atras			Voltar		Вернуться?									曲選択へ	返回	返回										Quay về	Bumalik na	Kembali	贵阳
 GAME_RETRY		Retry		Reintentar			Tentar de novo		Повторить									リトライ	重试	重新開始										Thử lại	Ulitin	Ulangi	重新铲车
@@ -358,7 +359,7 @@ GAME_RESUME		Resume		Continuar			Retomar		Возобновить									再開	
 																																	
 																																	
 																																	
-																															Note: Following texts below cannot be translated.		
+																															Note: The following texts below cannot be translated.		
 TIER_TIERS	WORK IN PROGRESS, DON'T TRANSLATE BELOW ENTRIES YET!	Tiers							Ранги										段位														
 TIER_INFO_TITLE		What are <b>Tiers</b>?							Что такое <b>Ранги<b>?																								
 TIER_INFO_CONTENT		[To be written]							[Waiting for info]																								
@@ -402,3 +403,12 @@ TIER_STAGE_1ST		1st
 TIER_STAGE_2ND		2nd																															
 TIER_STAGE_3RD		3rd																															
 TIER_CLEARED		Cleared!																															
+																																	
+																																	
+																																	
+																																	
+																																	
+CHARACTER_FAILED_TO_DOWNLOAD		Failed to download character data.																															
+CHARACTER_CHANGE_CHARACTER		CHANGE																															
+CHARACTER_ILLUSTRATOR		ILLUSTRATOR																															
+CHARACTER_CHARACTER_DESIGNER		CHARACTER DESIGNER																															

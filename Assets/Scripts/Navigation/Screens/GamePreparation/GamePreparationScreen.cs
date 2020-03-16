@@ -44,8 +44,6 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
     public Transform advancedSettingsHolder;
     
     private DateTime asyncRequestsToken;
-    private Sprite coverSprite;
-    private AssetLoader previewAudioClip;
     private bool initializedSettingsTab;
     
     public Level Level { get; set; }
@@ -174,34 +172,21 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
             }
             else
             {
-                path = Level.Meta.background.path.WithImageCdn().WithSizeParam(1920, 1080);
+                path = Level.Meta.background.path.WithImageCdn().WithSizeParam(1280, 800);
             }
 
             var token = asyncRequestsToken;
-            Sprite sprite;
-            using (var request = UnityWebRequestTexture.GetTexture(path))
-            {
-                await request.SendWebRequest();
-                if (request.isNetworkError || request.isHttpError)
-                {
-                    Debug.LogError($"Failed to download cover from {path}");
-                    Debug.LogError(request.error);
-                    return;
-                }
 
-                sprite = DownloadHandlerTexture.GetContent(request).CreateSprite();
-            }
+            var sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.GameCover, useFileCache: true);
 
             if (asyncRequestsToken != token)
             {
-                Destroy(sprite);
                 return;
             }
 
             if (State == ScreenState.Active)
             {
                 cover.OnCoverLoaded(sprite);
-                coverSprite = sprite;
             }
         }
         else
@@ -223,36 +208,20 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
             {
                 path = Level.Meta.music_preview.path;
             }
-            
-            // Unload the current
-            if (previewAudioClip != null)
-            {
-                previewAudioSource.clip = null;
-                previewAudioClip.UnloadAudioClip();
-                previewAudioClip = null;
-            }
 
             // Load
             var token = asyncRequestsToken;
-            var loader = new AssetLoader(path);
-            await loader.LoadAudioClip();
-            if (loader.Error != null)
-            {
-                Debug.LogError($"Failed to download preview from {path}");
-                Debug.LogError(loader.Error);
-                return;
-            }
+            
+            var audioClip = await Context.AssetMemory.LoadAsset<AudioClip>(path, AssetTag.PreviewMusic, useFileCache: true);
 
             if (asyncRequestsToken != token)
             {
-                Destroy(loader.AudioClip);
                 return;
             }
 
             if (State == ScreenState.Active)
             {
-                previewAudioSource.clip = loader.AudioClip;
-                previewAudioClip = loader;
+                previewAudioSource.clip = audioClip;
             }
         }
 
@@ -321,7 +290,11 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         Context.OnlinePlayer.OnLevelBestPerformanceUpdated.RemoveListener(OnLevelBestPerformanceUpdated);
 
         asyncRequestsToken = DateTime.Now;
-        previewAudioSource.DOFade(0, 1f).SetEase(Ease.Linear).onComplete = () => { previewAudioSource.Stop(); };
+        previewAudioSource.DOFade(0, 1f).SetEase(Ease.Linear).onComplete = () =>
+        {
+            previewAudioSource.Stop();
+            
+        };
         if (!willStart) LoopAudioPlayer.Instance.FadeInLoopPlayer();
     }
 
@@ -329,32 +302,11 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
 
     public void OnScreenChangeFinished(Screen from, Screen to)
     {
-        if (from.GetId() == Id)
+        if (from == this && to != null && !(to is ProfileScreen))
         {
             // Unload resources
-            UnloadPreviewAudioClip();
-            UnloadCoverSprite();
-        }
-    }
-
-    private void UnloadPreviewAudioClip()
-    {
-        if (previewAudioClip != null)
-        {
-            print("Unloaded preview");
-            previewAudioClip.UnloadAudioClip();
-            previewAudioClip = null;
-        }
-    }
-
-    private void UnloadCoverSprite()
-    {
-        if (coverSprite != null)
-        {
-            print("Unloaded cover");
-            Destroy(coverSprite.texture);
-            Destroy(coverSprite);
-            coverSprite = null;
+            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.GameCover);
+            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.PreviewMusic);
         }
     }
 
@@ -374,15 +326,6 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
             ProfileWidget.Instance.FadeOut();
 
             Context.AudioManager.Get("LevelStart").Play();
-
-            if (coverSprite == null)
-            {
-                await UniTask.WaitUntil(() => coverSprite != null);
-            }
-
-            Context.SpriteCache.PutSpriteInMemory("game://cover", SpriteTag.GameCover, coverSprite);
-            coverSprite = null; // Prevent sprite being unloaded by UnloadCoverSprite()
-
             Context.SelectedMods = Context.LocalPlayer.EnabledMods;
 
             var sceneLoader = new SceneLoader("Game");
@@ -412,11 +355,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
                 if (Level.IsLocal)
                 {
                     // Unload the current preview
-                    if (previewAudioClip != null)
-                    {
-                        previewAudioSource.clip = null;
-                        previewAudioClip.UnloadAudioClip();
-                    }
+                    Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.PreviewMusic);
                 }
             },
             onDownloadAborted: () =>

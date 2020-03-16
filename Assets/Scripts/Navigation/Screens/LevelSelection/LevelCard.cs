@@ -54,7 +54,7 @@ public class LevelCard : InteractableMonoBehavior
         artist.text = level.Meta.artist;
         title.text = level.Meta.title;
         titleLocalized.text = level.Meta.title_localized;
-        titleLocalized.gameObject.SetActive(!string.IsNullOrEmpty(level.Meta.title_localized));
+        titleLocalized.gameObject.SetActive(!level.Meta.title_localized.IsNullOrEmptyTrimmed());
 
         for (var index = 0; index < 3; index++)
         {
@@ -84,7 +84,6 @@ public class LevelCard : InteractableMonoBehavior
         cover.SetAlpha(0);
         if (coverToken != null)
         {
-            print("Cancelling previous token!!");
             if (!coverToken.IsCancellationRequested) coverToken.Cancel();
             coverToken = null;
         }
@@ -111,22 +110,24 @@ public class LevelCard : InteractableMonoBehavior
             if (level.IsLocal)
             {
                 var path = "file://" + level.Path + LevelManager.CoverThumbnailFilename;
-                sprite = await Context.SpriteCache.CacheSpriteInMemory(path, SpriteTag.LocalCoverThumbnail,
+                sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.LocalCoverThumbnail,
                     coverToken.Token);
             }
             else
             {
                 var path = level.Meta.background.path.WithImageCdn().WithSizeParam(
                     Context.ThumbnailWidth, Context.ThumbnailHeight);
-                sprite = await Context.SpriteCache.CacheSpriteInMemory(path, SpriteTag.OnlineCoverThumbnail,
-                    coverToken.Token, new []{ Context.ThumbnailWidth, Context.ThumbnailHeight }, true);
+                sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.OnlineCoverThumbnail,
+                    coverToken.Token, true, new SpriteAssetOptions(new []{ Context.ThumbnailWidth, Context.ThumbnailHeight }));
             }
         }
-        catch
+        catch (Exception e)
         {
+            Debug.LogWarning(e);
             if (sprite != null)
             {
                 // Should be impossible
+                Destroy(sprite.texture);
                 Destroy(sprite); 
             }
             return;

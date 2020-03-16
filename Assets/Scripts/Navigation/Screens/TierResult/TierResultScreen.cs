@@ -65,30 +65,6 @@ public class TierResultScreen : Screen, ScreenChangeListener
             tierState.OnComplete();
         }
         Context.TierState = null;
-        
-        // Load translucent cover
-        var image = TranslucentCover.Instance.image;
-        image.color = Color.white.WithAlpha(0);
-        var sprite = Context.SpriteCache.GetCachedSpriteFromMemory("game://cover");
-        if (sprite == null)
-        {
-            var level = tierState.CurrentStage.Level;
-            var path = "file://" + level.Path + level.Meta.background.path;
-            using (var request = UnityWebRequestTexture.GetTexture(path))
-            {
-                await request.SendWebRequest();
-                if (request.isNetworkError || request.isHttpError)
-                {
-                    Debug.LogError($"Failed to download cover from {path}");
-                    Debug.LogError(request.error);
-                    return;
-                }
-
-                sprite = DownloadHandlerTexture.GetContent(request).CreateSprite();
-            }
-        }
-        image.sprite = sprite;
-        image.FitSpriteAspectRatio();
 
         nextButton.State = CircleButtonState.Next;
         nextButton.interactableMonoBehavior.onPointerClick.AddListener(_ =>
@@ -184,10 +160,10 @@ public class TierResultScreen : Screen, ScreenChangeListener
         TranslucentCover.Instance.image.DOFade(0.9f, 0.8f);
         
         gradientPane.SetModel(tierState.Tier);
-        for (var index = 0; index < Math.Min(tierState.Tier.Meta.localStages.Count, 3); index++)
+        for (var index = 0; index < Math.Min(tierState.Tier.Meta.parsedStages.Count, 3); index++)
         {
             var widget = stageResultWidgets[index];
-            var level = tierState.Tier.Meta.localStages[index];
+            var level = tierState.Tier.Meta.parsedStages[index];
             var stageResult = tierState.Stages[index];
             widget.difficultyBall.SetModel(Difficulty.Parse(level.Meta.charts[0].type), level.Meta.charts[0].difficulty);
             widget.titleText.text = level.Meta.title;
@@ -284,7 +260,7 @@ public class TierResultScreen : Screen, ScreenChangeListener
         {
             TranslucentCover.Instance.image.color = Color.white.WithAlpha(0);
             // Dispose game cover
-            Context.SpriteCache.DisposeTaggedSpritesInMemory(SpriteTag.GameCover);
+            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.GameCover);
         }
     }
 }

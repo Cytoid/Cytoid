@@ -11,6 +11,11 @@ public class GradientMeshEffect : BaseMeshEffect
     [Range(-180f, 180f)] public float angle;
     public bool ignoreRatio;
 
+    public ColorGradient GetGradient()
+    {
+        return new ColorGradient(startColor, endColor, angle);
+    }
+
     public void SetGradient(ColorGradient gradient)
     {
         startColor = gradient.startColor;
@@ -28,7 +33,7 @@ public class GradientMeshEffect : BaseMeshEffect
 
         if (!ignoreRatio)
             dir = CompensateAspectRatio(rect, dir);
-
+        
         var localPositionMatrix = LocalPositionMatrix(rect, dir);
 
         var vertex = default(UIVertex);

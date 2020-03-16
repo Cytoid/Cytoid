@@ -7,6 +7,7 @@ public class UploadRecord
     public Details details;
     public List<string> mods;
     public bool ranked;
+    public string hash;
 
     public class Details
     {

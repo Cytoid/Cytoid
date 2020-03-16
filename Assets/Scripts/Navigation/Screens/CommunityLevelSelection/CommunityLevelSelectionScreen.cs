@@ -181,6 +181,7 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
         RestClient.GetArray<OnlineLevel>(new RequestHelper
         {
             Uri = uri,
+            Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
             EnableDebug = true
         }).Then(entries =>
         {

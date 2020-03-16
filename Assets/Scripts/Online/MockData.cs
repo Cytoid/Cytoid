@@ -49,18 +49,13 @@ public static class MockData
                     completionPercentage = 0.923f,
                     colorPalette = new TierMeta.ColorPalette
                     {
-                        background = "#232526,#414345",
+                        background = "#232526,#414345,-45",
                         stages = new[]
                         {
-                            "#1D546A,#0000004C",
-                            "#1D546A,#0000004C",
-                            "#1D546A,#0000004C"
+                            "#1D546A,#0000004C,-45",
+                            "#1D546A,#0000004C,-45",
+                            "#1D546A,#0000004C,-45"
                         }
-                    },
-                    criteria = new List<string>
-                    {
-                        "<b>Full combo</b> every stage",
-                        "<b>≥ 99.5% accuracy</b> in the 3rd",
                     },
                     thresholdAccuracy = 0.95,
                     maxHealth = 1000,
@@ -68,25 +63,24 @@ public static class MockData
                     {
                         new OnlineLevel
                         {
-                            uid = "wz.loser",
+                            uid = "f",
                             version = 1,
                         },
                         new OnlineLevel
                         {
-                            uid = "wz.suigetsu",
+                            uid = "f",
                             version = 1,
                         },
                         new OnlineLevel
                         {
-                            uid = "wz.hblimfmf",
+                            uid = "f",
                             version = 1,
                         }
                     },
-                    localStages = new List<Level> { Level },
+                    parsedStages = new List<Level> { Level },
                     character = new OnlineCharacter
                     {
                         name = "まふまふ",
-                        description = "",
                         thumbnailURL = "https://assets.cytoid.io/static/characters/mafu/thumbnail.png",
                         silhouetteURL = "https://assets.cytoid.io/static/characters/kaede/silhouette.png"
                     }
@@ -109,10 +103,6 @@ public static class MockData
                             "#1D546A,#0000004C",
                             "#1D546A,#0000004C"
                         }
-                    },
-                    criteria = new List<string>
-                    {
-                        "Test",
                     },
                     thresholdAccuracy = 0.96,
                     maxHealth = 1000,
@@ -153,10 +143,6 @@ public static class MockData
                             "#1D546A,#0000004C",
                             "#1D546A,#0000004C"
                         }
-                    },
-                    criteria = new List<string>
-                    {
-                        "Test",
                     },
                     thresholdAccuracy = 0.96,
                     maxHealth = 1000,

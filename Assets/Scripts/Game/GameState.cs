@@ -79,8 +79,12 @@ public sealed class GameState
     {
         Mod.Fast, Mod.Slow, Mod.HideScanline, Mod.HideNotes
     };
+    private static readonly HashSet<Mod> DisallowedCalibrationMods = new HashSet<Mod>
+    {
+        Mod.Auto, Mod.AutoDrag, Mod.AutoFlick, Mod.AutoHold
+    };
     
-    public GameState(Game game, GameMode mode, IEnumerable<Mod> mods)
+    public GameState(Game game, GameMode mode, HashSet<Mod> mods)
     {
         Level = game.Level;
         Difficulty = game.Difficulty;
@@ -97,15 +101,24 @@ public sealed class GameState
         if (MaxHealth < 0) MaxHealth = 1000;
         Health = MaxHealth;
         
-        if (mode == GameMode.Tier)
+        switch (mode)
         {
-            Context.TierState.Stages[Context.TierState.CurrentStageIndex] = this;
-            // Keep allowed mods only
-            Mods.IntersectWith(AllowedTierMods);
-            if (Application.isEditor && game.EditorForceAutoMod) Mods.Add(Mod.Auto);
-            // Use max health from meta
-            MaxHealth = Context.TierState.Tier.Meta.maxHealth;
-            Health = MaxHealth;
+            case GameMode.Tier:
+            {
+                Context.TierState.Stages[Context.TierState.CurrentStageIndex] = this;
+                // Keep allowed mods only
+                Mods.IntersectWith(AllowedTierMods);
+                if (Application.isEditor && game.EditorForceAutoMod) Mods.Add(Mod.Auto);
+                // Use max health from meta
+                MaxHealth = Context.TierState.Tier.Meta.maxHealth;
+                Health = MaxHealth;
+                break;
+            }
+            case GameMode.Calibration:
+                // Remove auto mods
+                Mods.ExceptWith(DisallowedCalibrationMods);
+                if (Application.isEditor && game.EditorForceAutoMod) Mods.Add(Mod.Auto);
+                break;
         }
     }
 

@@ -4,7 +4,7 @@ LANGUAGE_EN	[LanguageName] in english	English	French	Spanish	German	Italian 	Por
 LANGUAGE_DIRECTION	ltr or rtl (text direction used by game code)	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	rtl	rtl	ltr	ltr	ltr	itr	ltr
 																																	
 Polyglot	100																																
-TRANSLATORS	Enter your Cytoid ID here!	tigerhix		beasten			bearusu_myo		sinednikral									miso-oden	tigerhix / teages_0v0 / 2394425147 / water_lift	lumixanth										lunaflina / exogram	howtopassthisuse	speedymlg7	2394425147 / tigerhix
+TRANSLATORS	Enter your Cytoid ID here!	tigerhix		beasten			bearusu_myo		sinednikral									miso-oden	tigerhix / teages_0v0 / 2394425147 / water_lift	lumixanth										lunaflina / exogram	howtopassthisuse	speedymlg7	2394425147 / tigerhix / HPTuse?
 INIT_TOUCH_TO_START		Touch to start		Toque para comenzar			Toque para começar		Нажмите чтобы продолжить									画面をタップしてください	轻触以开始	—　點　擊　開　始　—	터치하세요									Nhấn để bắt đầu	Pindutin para magsimula	Sentuh layar untuk memulai	啊wee改哈鞥嫦娥我剛不疤痕處哈維楚王嗡阿格王朔！
 INIT_VERSION		VERSION {0}		Versión {0}			Versão {0}		Версия {0}									バージョン {0}	版本 {0}	{0} 版本	버전 {0}									Phiên bản {0}	Bersyon {0}	Versi {0}	贵阳市政厅 {0}
 INIT_UNPACKING_X		Unpacking {0}		Extrayendo {0}			Extraindo {0}		Распаковка {0}									展開中… {0}	解压 {0}	解壓「{0}」中……	추출중... {0}									Đang giải nén {0}			
@@ -64,6 +64,13 @@ TOAST_ID_NOT_FOUND		This Cytoid ID does not exist.		Este Cytoid ID no existe			E
 TOAST_COULD_NOT_DOWNLOAD_TIER_DATA		Could not download tier data.		No se pudo descargar los datos de nivel.																	티어 정보 다운로드 실패										Di' makapagdownload ng Tier Data		
 TOAST_SUCCESSFULLY_DOWNLOADED_TIER_DATA		Successfully downloaded tier data.		Descargado los datos del nivel con éxito																	티어 정보 다운로드 성공										Nadownload na ang Tier Data		
 TOAST_AUTOMATICALLY_PROCEEDING_TO_NEXT_STAGE_X		Automatically proceeding to next stage in {0} seconds.		Procediendo automáticamente al siguiente nivel en {0} segundos.																	자동으로 {0} 초후에 다음 스테이지가 시작됩니다.												
+TOAST_LEVEL_VERIFICATION_FAILED		Level verification failed.																															
+TOAST_SERVER_INTERNAL_ERROR		Server internal error.																															
+TOAST_TIER_CLEARED		Tier cleared.																															
+TOAST_TIER_NOT_FOUND		Tier not found.																															
+TOAST_TIER_VERIFICATION_FAILED		Tier verification failed.																															
+																																	
+																																	
 																																	
 DIALOG_RATE_THIS_LEVEL		Rate this level!		Califique este nivel!			Avalie esse nível!		Оцените этот уровень!									このレベルを評価しよう！	给关卡打个分吧！	評分一下吧！	이 채보를 평가해주세요!									Hãy đánh giá level!	Markahan ang lebel	Beri nilai level ini!	打分啊111111
 DIALOG_LEVEL_OUTDATED		This level is outdated.\nWould you like to update now?		Este nivel está desactualizado. \n¿Desea actualizarlo ahora?			Esse nível está desatualizado.\nGostaria de atualizá-lo agora?		Уровень устарел. \nЖелаете обновить его?									最新版のレベルがあります。\nアップデートしますか？	侦测到当前关卡不是最新版本。\n是否立即更新？	裝置內的關卡並非最新版本。\n要立即更新嗎？	본 채보는 새로운 버전이 있습니다. /n다운로드를 진행할까요?									Level này đã cũ. \nBạn có muốn cập nhật level bây giờ không?	Ang lebel na ito ay outdated. Gusto mo bang i-update ito?	Level ini outdated. Apakah anda ingin mengupdatenya?	关卡过期了。\n更新吗bbb
@@ -73,7 +80,7 @@ DIALOG_CONFIRM_DELETE		Delete "{0}"?\nYour best performance will not be deleted.
 DIALOG_COMING_SOON		Coming soon!		Muy pronto!			Em breve!		Скоро!									お楽しみに！	即将上线，敬请期待！	賣力施工中，敬請期待！	출시 예정									Sẽ có trong thời gian ngắn!	Malapit na!	Coming soon!	贵阳贵阳咕咕咕
 DIALOG_RETRY_SYNCHRONIZE_PERFORMANCE		Could not synchronize performance. Retry?		No se pudo sincronizar su rendimiento. ¿Desea Intentar otra vez?			Não foi possível sincronizar sua performance. Tentar outra vez?		Не удалось синхронизировать счёт. Повторить?									同期に失敗しました。再試行しますか？	成绩同步失败。\n是否重试？	成績同步失敗。\n要重試嗎？	플레이를 업로드 못하였습니다. 다시 시도할까요?									Không thể tải thành tích lên. Thử lại?	Di' makasynchronize ang iyong performance. Ulitin?	Tidak dapat menyinkron performa. Coba lagi?	无法贵阳。是否贵阳？
 DIALOG_UNPACKING		Unpacking...		Extrayendo...			Extraindo...		Распаковка...									展開中…	解包中...	解壓中……	추출중...									Đang giải nén...	Tatangalin sa folder...	Memuat...	欢迎新魔王中...
-																																	
+DIALOG_RETRY_SYNCHRONIZE_TIER_PERFORMANCE		Could not synchronize tier performance. Retry?																															
 																																	
 																																	
 																																	
@@ -98,7 +105,7 @@ PROFILE_WIDGET_EXP		Exp		Exp			Exp		Опыт									EXP	经验	經驗值	경험
 																																	
 PROFILE_PROFILE		Profile		Perfil			Perfil		Профиль									プロフィール	资料	個人檔案	프로필									Cá nhân	Profile	Profil	群名片
 PROFILE_LEADERBOARD		Leaderboard		Tabla de lideres			Placar		Таблица лидеров									ランキング	排行榜	排行榜	랭킹 리더보드									BXH	Mga posisyon	Peringkat	群成员
-PROFILE_SIGN_OUT		Sign Out		Cerrar Sesión			Sair		Выйти									サインアウト	退出账号	登出										Đăng xuất	Mag-sisign out	Keluar	退群
+PROFILE_SIGN_OUT		Sign out		Cerrar sesión			Sair		Выйти									サインアウト	退出账号	登出										Đăng xuất	Mag-sisign out	Keluar	退群
 PROFILE_TOTAL_RANKED_PLAYS	Not necessarily required to translate "ranked"	TOTAL RANKED PLAYS		TOTAL PARTIDAS IGUALADAS			TOTAL DE PARTIDAS RANQUEADAS		ВСЕГО СЫГРАНО РАНГОВЫХ ИГР									ランクモードプレイ数	总游玩次数	總遊玩次數	총 랭크 플레이									Lượt chơi xếp hạng tổng cộng	Kabuuan ng laro na ranked	Total level ranked yang dimainkan	总铲车数
 PROFILE_TOTAL_CLEARED_NOTES		TOTAL CLEARED NOTES		TOTAL NOTAS COMPLETADAS			TOTAL DE NOTAS COMPLETAS		ВСЕГО ЗАЧТЕНО НОТ									タップしたノーツ数の合計	总 Note 数	總清除拍點數	청 클레이된 노트 수									Số nốt đã được clear tổng cộng	Kabuuan na nota na naclear	Total note yang berhasil disentuh.	总踢数
 PROFILE_HIGHEST_MAX_COMBO		HIGHEST MAX COMBO		MAYOR COMBO MÁXIMO			MAIOR COMBO MÁXIMO		ВЫСШИЙ СЧЁТ КОМБО									最高コンボ数	最高连击数	最高 COMBO 數	최기록 콤보									Combo cao nhất	Pinakamataas na combo	Max combo tertinggi.	最高连踢数
@@ -189,9 +196,9 @@ SETTINGS_HIT_SOUND_CLAP		Clap		Aplauso			Palmas		Хлопанье									拍手
 SETTINGS_HIT_SOUND_DONK		Donk		Donk			Donk		Донк									太鼓	咚	Donk										Donk		Donk	guy
 SETTINGS_HIT_SOUND_8_BIT		8-bit		8-bit			8-bit		8 бит									8-bit	老式游戏机	8-bit										8-bit		8-bit	uploads
 SETTINGS_HIT_SOUND_QUACK		Quack		Quack			Quack		Кряканье									アヒル	呱	Quack										Quạc quạc		Quack	everyday
-SETTINGS_OFF		Off		Apagado			Desligado		Выкл									オフ	关	關閉										Tắt		Mati	
+SETTINGS_OFF		Off		Apagado			Desligado		Выкл									オフ	关	關閉										Tắt		Mati	no
 SETTINGS_ON		On		Encendido			Ligado		Вкл									オン	开	開啟										Bật		Nyala	yeaj 
-SETTINGS_QUALITY_LOW		Low		Bajo			Baixa		Низко									低	低	低										Thấp		Rendah	
+SETTINGS_QUALITY_LOW		Low		Bajo			Baixa		Низко									低	低	低										Thấp		Rendah	hptuse was here lmaoa
 SETTINGS_QUALITY_MEDIUM		Medium		Medio			Média		Средне									中	中	中										Trung bình		Sedang	
 SETTINGS_QUALITY_HIGH		High		Alto			Alta		Высоко									高	高	高										Cao		Tinggi	
 SETTINGS_UNIT_SECONDS		Seconds		Segundos			Segundos		Секунды									秒	秒	秒										Giây		Detik	
@@ -224,7 +231,7 @@ GAME_PREP_START		Start!		Comenzar!			Começar!		Начать!									Start!	开
 GAME_PREP_PRACTICE		Practice!		Practíca!			Praticar!		Практика!									Practice!	开始练习！	練習！										Tập luyện!	Magsanay!	Latihan!	给我打R判啊！
 GAME_PREP_DOWNLOAD		Download!		Descargar!			Baixar!		Скачать!									Download!	下载！	下載！										Tải về!	i-Download!	Unduh!	jaja
 GAME_PREP_RANKINGS_VIEW_MORE		View more		Ver mas			Ver mais		Развернуть									詳細	查看更多	查看全部										Xem thêm	Tignan pa	Lihat lebih banyak	全来
-GAME_PREP_RANKINGS_DOWNLOADING		Downloading level rankings...		Descargando las clasificaciones del nivel...			Baixando ranking do nível.		Скачивание ранков на уровне									ランキングをロード中…	下载关卡排行中...	關卡排行下載中……										Đang tải thứ hạng level...	Nagdodownload ng level rankings...	Mengunduh ranking pada level...	
+GAME_PREP_RANKINGS_DOWNLOADING		Downloading level rankings...		Descargando las clasificaciones del nivel...			Baixando ranking do nível.		Скачивание ранков на уровне									ランキングをロード中…	下载关卡排行中...	關卡排行下載中……										Đang tải thứ hạng level...	Nagdodownload ng level rankings...	Mengunduh ranking pada level...	没有?
 GAME_PREP_RANKINGS_COULD_NOT_DOWNLOAD		Could not download level rankings.		No se pudieron descargar las clasificaciones del nivel.			Não foi possível baixar o ranking do nível.		Не удалось скачать ранки на уровне									ランキング情報を取得できませんでした…	无法下载关卡排行。	無法下載關卡排行。										Không thể tải thứ hạng level.	Di' kaya makapagdownload ng level rankings.	Tidak dapat mengunduh rangking pada level.	没网了111111
 GAME_PREP_RANKINGS_BE_THE_FIRST		No performances yet. Be the first!		Nadie ha jugado el nivel. ¡Sea el primero!			Ninguém jogou este nível ainda. Seja o primeiro!		Нет результатов! Будьте первыми!									ランキングがありません…一番乗りしよう！	暂无排行。成为第一个人吧！	尚無排行紀錄，搶個頭香吧！										Chưa có thành tích nào. Hãy là người đầu tiên!	Wala pang iskor. Maging una kang maglaro!	Beluh ada performa dari pemain lain.	没人玩111111
 GAME_PREP_RATINGS_AVG_RATING		AVERAGE RATING		CALIFICACION PROMEDIO			AVALIAÇÃO MÉDIA		СРЕДНИЙ РЕЙТИНГ									平均評価	平均评分	平均評分										Mức đánh giá trung bình		RATING RATA - RATA	
@@ -343,10 +350,10 @@ GAME_RESUME_IN_X	Only latin characters are supported!	RESUMING IN {0}S		CONTINUA
 GAME_CALIBRATION_AUTOPLAY		AUTOPLAY		AUTOPLAY			AUTOPLAY		АВТОПЛЕЙ									AUTOPLAY	自动播放	自動演示										TỰ ĐỘNG CHƠI			
 GAME_CALIBRATION_HIT_SOUND		HIT SOUND		SONIDO DE ACIERTO			SOM DE ACERTO		ХИТ-САУНД									タップ音	打击音	打擊音效										TIẾNG BẤM			
 GAME_CALIBRATION_NOTE_OFFSET		NOTE OFFSET		EQUILIBRIO DE NOTA			DESLOCAMENTO DE NOTA		ЗАДЕРЖКА НОТЫ									ノーツ調整	谱面偏移	譜面校正										CÂN CHỈNH THỜI GIAN NỐT	Offset ng nota	OFFSET PADA NOTE	
-GAME_CALIBRATION_NOTE_OFFSET_DESC		If you feel the notes are <b>ahead</b> of the music, <b>increase</b> the offset. Vice versa.		Si usted siente que las notas están <b>más adelante</b> que la música, <b>aumente</b> el equilibrio. Vice versa.			Se você sente que as notas estão <b>à frente</b> da música, <b>aumente</b> o deslocamento ou vice-versa.		Если ноты <b>несовместимы<b> с музыкой, <повысьте> задержку. Или наоборот.									ノーツとのタイミングが <b>遅い</b> 場合、数値を <b>増やして</b> 下さい。また、逆も同様です。	如果你觉得 Note 比音乐要<b>早</b>，请<b>增加</b>偏移；\n否则，请减少偏移。	音樂<b>太慢</b>就<b>增加</b>數值；音樂<b>太快</b>則<b>減少</b>數值。\n以 0.01 秒（方框）／0.05 秒（圓框）為單位\n左右增減來進行調整。										Nếu bạn cảm thấy nốt đang <b> trước</b> nhạc thì <b> tăng </b> mức bù thời gian và ngược lại.	Kung sa tingin mo ang nota ay maaga sa musika, itaas ang offset. Baliktarin kapag baliktad ang resulta	Jika nada terasa lebih cepat dari musik, tambahkan offset. Sama dengan jika note terasa lebih lambat, kurangi offset.	
+GAME_CALIBRATION_NOTE_OFFSET_DESC		If you feel the notes are <b>ahead</b> of the music, <b>increase</b> the offset. Vice versa.		Si usted siente que las notas están <b>más adelante</b> que la música, <b>aumente</b> el equilibrio. Vice versa.			Se você sente que as notas estão <b>à frente</b> da música, <b>aumente</b> o deslocamento ou vice-versa.		Если ноты <b>несовместимы<b> с музыкой, <повысьте> задержку. Или наоборот.									ノーツとのタイミングが <b>遅い</b> 場合、数値を <b>増やして</b> 下さい。また、逆も同様です。	如果你觉得 Note 比音乐要<b>早</b>，请<b>增加</b>偏移；\n否则，请减少偏移。	音樂<b>太慢</b>就<b>增加</b>數值；音樂<b>太快</b>則<b>減少</b>數值。\n以 0.01 秒（方框）／0.05 秒（圓框）為單位\n左右增減來進行調整。										Nếu bạn cảm thấy nốt đang <b> trước</b> nhạc thì <b> tăng </b> mức bù thời gian và ngược lại.	Kung sa tingin mo ang nota ay <b>maaga</b> sa musika, <b>itaas</b> ang offset. Baliktarin kapag baliktad ang resulta	Jika nada terasa lebih cepat dari musik, tambahkan offset. Sama dengan jika note terasa lebih lambat, kurangi offset.	
 GAME_PAUSED_DESC		Take a break...		Tome un descanso...			Dê uma pausa...		Передохните...									ちょっと休憩…	休息一下...	休息一下吧。										Nghỉ 1 chút đi...	Pahinga muna...	Istirahat...	贵阳一下...
 GAME_TRY_AGAIN		Try again?		Intentar de nuevo?			Tentar outra vez?		Ещё раз?									リスタート？	重新来过吧？	還想再試嗎？										Thử lại?	Isa pa?	Cobal lagi?	你美丽jajajaja
-GAME_GO_BACK		Go back		Volver atras			Voltar		Вернуться?									曲選択へ	返回	返回										Quay về	Bumalik na	Kembali	贵阳
+GAME_GO_BACK		Go back		Volver atras			Voltar		Вернуться?									曲選択へ	返回	返回										Quay về	Bumalik	Kembali	贵阳
 GAME_RETRY		Retry		Reintentar			Tentar de novo		Повторить									リトライ	重试	重新開始										Thử lại	Ulitin	Ulangi	重新铲车
 GAME_RESUME		Resume		Continuar			Retomar		Возобновить									再開	继续	繼續										Tiếp tục	Ituloy	Lajutkan	铲车
 																																	
@@ -382,6 +389,7 @@ TIER_RESULT_SUMMARY		Summary							Количество промахов ≤ {0}
 TIER_NEXT_STAGE		Next!							Макс. комбо ≥ {0}																								
 TIER_FINISH		Next!							Точность {0}%																								
 TIER_SUMMARY		Summary							Счёт ≥ {0}																								
+TIER_GO_BACK		Go back																															
 TIER_START		Start!							Начать!																								
 TIER_DOWNLOAD		Download!																															
 TIER_CRITERIA_AVG_ACCURACY		Average accuracy ≥ {0}%																															
@@ -403,9 +411,9 @@ TIER_STAGE_1ST		1st
 TIER_STAGE_2ND		2nd																															
 TIER_STAGE_3RD		3rd																															
 TIER_CLEARED		Cleared!																															
-																																	
-																																	
-																																	
+TIER_RANKINGS_DOWNLOADING		Downloading tier rankings...																															
+TIER_RANKINGS_COULD_NOT_DOWNLOAD		Could not download tier rankings.																															
+TIER_RANKINGS_BE_THE_FIRST		Nobody has cleared this tier yet. Be the first!																															
 																																	
 																																	
 CHARACTER_FAILED_TO_DOWNLOAD		Failed to download character data.																															

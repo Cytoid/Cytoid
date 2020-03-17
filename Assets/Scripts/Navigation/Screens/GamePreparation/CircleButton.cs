@@ -19,6 +19,14 @@ public class CircleButton : MonoBehaviour, ScreenInitializedListener, ScreenBeca
         });
         StopPulsing();
     }
+    
+    public void StartPulsing()
+    {
+        if (scheduledPulse != null)
+        {
+            scheduledPulse.NextPulseTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + (long) (scheduledPulse.initialDelay * 1000L);
+        }
+    }
 
     public void StopPulsing()
     {
@@ -63,17 +71,11 @@ public class CircleButton : MonoBehaviour, ScreenInitializedListener, ScreenBeca
                     gradient.SetGradient(new ColorGradient("#12D8FA".ToColor(), "#A6FFCB".ToColor(), -45));
                     text.text = "TIER_FINISH".Get();
                     break;
+                case CircleButtonState.GoBack:
+                    gradient.SetGradient(new ColorGradient("#12D8FA".ToColor(), "#A6FFCB".ToColor(), -45));
+                    text.text = "TIER_GO_BACK".Get();
+                    break;
             }
-
-            StartPulsing();
-        }
-    }
-
-    private void StartPulsing()
-    {
-        if (scheduledPulse != null)
-        {
-            scheduledPulse.NextPulseTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
     }
 
@@ -88,6 +90,6 @@ public class CircleButton : MonoBehaviour, ScreenInitializedListener, ScreenBeca
 
 public enum CircleButtonState
 {
-    Start, Practice, Download, Retry, Next, NextStage, Finish
+    Start, Practice, Download, Retry, Next, NextStage, Finish, GoBack
 }
 

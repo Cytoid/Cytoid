@@ -22,16 +22,16 @@ public class InputController : MonoBehaviour
 
     public void EnableInput()
     {
-        LeanTouch.OnFingerDown += OnFingerDown;
-        LeanTouch.OnFingerSet += OnFingerSet;
-        LeanTouch.OnFingerUp += OnFingerUp;
+        LeanTouch.OnFingerDown = OnFingerDown;
+        LeanTouch.OnFingerSet = OnFingerSet;
+        LeanTouch.OnFingerUp = OnFingerUp;
     }
 
     public void DisableInput()
     {
-        LeanTouch.OnFingerDown -= OnFingerDown;
-        LeanTouch.OnFingerSet -= OnFingerSet;
-        LeanTouch.OnFingerUp -= OnFingerUp;
+        LeanTouch.OnFingerDown = _ => { };
+        LeanTouch.OnFingerSet = _ => { };
+        LeanTouch.OnFingerUp = _ => { };
     }
 
     public void OnGamePaused(Game game)

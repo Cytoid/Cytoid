@@ -48,7 +48,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
             searchInputField.onEndEdit.AddListener(value =>
             {
                 actionTabs.Close();
-                RefillLevels();
+                if (!value.IsNullOrEmptyTrimmed()) RefillLevels();
             });
         }
         
@@ -131,7 +131,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
 
     public void RefillLevels(LevelSort sort, bool asc, string query = "", List<Func<Level, bool>> filters = null)
     {
-        var levels = new List<Level>(Context.LevelManager.LoadedLocalLevels.Values);
+        var levels = new List<Level>(Context.LevelManager.LoadedLocalLevels.Values.Where(it => it.Type == LevelType.Community));
 
         if (!query.IsNullOrEmptyTrimmed())
         {

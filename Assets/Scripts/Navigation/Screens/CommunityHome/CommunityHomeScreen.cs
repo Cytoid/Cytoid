@@ -148,7 +148,7 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
             {
                 var levelCardGameObject = Instantiate(levelCardPrefab, sectionBehavior.levelCardHolder.transform);
                 var levelCard = levelCardGameObject.GetComponent<LevelCard>();
-                levelCard.SetModel(onlineLevel.ToLevel());
+                levelCard.SetModel(onlineLevel.ToLevel(LevelType.Community));
             }
             sectionBehavior.viewMoreButton.onPointerClick.AddListener(_ =>
             {

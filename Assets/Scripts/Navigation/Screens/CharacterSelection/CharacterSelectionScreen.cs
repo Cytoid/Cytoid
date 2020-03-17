@@ -70,11 +70,8 @@ public class CharacterSelectionScreen : Screen
             {
                 foreach (var meta in characters)
                 {
-                    var failed = false;
-                    await Context.RemoteResourceManager.DownloadResourceDialog(meta.asset,
-                        onDownloadAborted: () => failed = true,
-                        onDownloadFailed: () => failed = true);
-                    if (failed)
+                    var success = await Context.CharacterManager.DownloadCharacterAssetDialog(meta.asset);
+                    if (!success)
                     {
                         Toast.Next(Toast.Status.Failure, "CHARACTER_FAILED_TO_DOWNLOAD".Get());
                     }
@@ -86,6 +83,10 @@ public class CharacterSelectionScreen : Screen
 
                 SpinnerOverlay.Hide();
 
+                selectedIndex =
+                    availableCharacters.FindIndex(it => it.asset == Context.CharacterManager.SelectedCharacterAssetId);
+
+                if (selectedIndex < 0) selectedIndex = 0; // Reset to default
                 LoadCharacter(availableCharacters[selectedIndex]);
             })
             .Catch(error =>
@@ -97,32 +98,30 @@ public class CharacterSelectionScreen : Screen
 
     public async void LoadCharacter(CharacterMeta meta)
     {
-        var reloadParallax = false;
-        if (meta.asset != Context.RemoteResourceManager.SelectedCharacterAssetId)
+        ParallaxHolder.WillDelaySet = true;
+        
+        var isNewCharacter = Context.CharacterManager.ActiveCharacterAssetId != meta.asset;
+        var character = await Context.CharacterManager.SetActiveCharacter(meta.asset);
+        if (character == null)
         {
-            reloadParallax = true;
-            var characterGameObject = await Context.RemoteResourceManager.LoadResource(meta.asset);
-            if (characterGameObject == null) return;
-            if (Context.RemoteResourceManager.SelectedCharacterGameObject != null)
-            {
-                Context.RemoteResourceManager.Release(Context.RemoteResourceManager.SelectedCharacterGameObject);
-            }
-
-            Context.RemoteResourceManager.SelectedCharacterGameObject = characterGameObject;
-            Context.RemoteResourceManager.SelectedCharacterAssetId = meta.id;
+            throw new Exception("Character not downloaded or corrupted");
         }
 
-        var character = Context.RemoteResourceManager.SelectedCharacterGameObject.GetComponent<CharacterAsset>();
-        
-        SpinnerOverlay.Show();
-        infoCard.Leave(false);
-        characterTransitionElement.Leave(false);
+        if (isNewCharacter)
+        {
+            SpinnerOverlay.Show();
+            TranslucentCover.DarkMode();
+            TranslucentCover.Show(1, 0.4f);
 
-        await UniTask.Delay(TimeSpan.FromSeconds(0.4f));
+            infoCard.Leave(false);
+            characterTransitionElement.Leave(false);
 
-        //TODO: not downloaded?
-        await Context.LevelManager.LoadFromMetadataFiles(
-            new List<string> {Context.DataPath + "/" + meta.level.uid + "/level.json"});
+            await UniTask.Delay(TimeSpan.FromSeconds(0.4f));
+        }
+
+        // TODO: what if not downloaded?
+        await Context.LevelManager.LoadFromMetadataFiles(LevelType.Official,
+            new List<string> {Context.UserDataPath + "/" + meta.level.uid + "/level.json"});
 
         nameText.text = meta.name;
         nameGradient.SetGradient(character.nameGradient.GetGradient());
@@ -143,11 +142,6 @@ public class CharacterSelectionScreen : Screen
             characterDesignerHolder.gameObject.SetActive(false);
         }
 
-        if (reloadParallax)
-        {
-            ParallaxHolder.Instance.Load(character.parallaxPrefab);
-        }
-
         infoCard.transform.RebuildLayout();
         characterHolder.Load();
         
@@ -160,6 +154,9 @@ public class CharacterSelectionScreen : Screen
             it.enterDuration = 0.8f;
         });
         SpinnerOverlay.Hide();
+        TranslucentCover.Hide();
+        
+        ParallaxHolder.WillDelaySet = false;
     }
 
     private void NextCharacter()

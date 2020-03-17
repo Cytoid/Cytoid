@@ -3,7 +3,39 @@ using System.Collections.Generic;
 
 public static class MockData
 {
-    public static Level Level => new Level(Context.TierDataPath + "/f/", false, new LevelMeta
+    public static Level CommunityLevel => new Level(Context.UserDataPath + "/f/", LevelType.Community, new LevelMeta
+    {
+        version = 1,
+        schema_version = 2,
+        id = "f",
+        title = "(^^)",
+        artist = "Yamajet",
+        illustrator = "BOF2007",
+        charter = "JJLin Vanquisher",
+        music = new LevelMeta.MusicSection
+        {
+            path = "Music.wav",
+        },
+        music_preview = new LevelMeta.MusicSection
+        {
+            path = "Music.wav",
+        },
+        background = new LevelMeta.BackgroundSection
+        {
+            path = "bg_gamever.png"
+        },
+        charts = new List<LevelMeta.ChartSection>
+        {
+            new LevelMeta.ChartSection
+            {
+                type = "extreme",
+                difficulty = 4,
+                path = "output.cyt"
+            }
+        }
+    }, DateTime.UtcNow, DateTime.UtcNow);
+    
+    public static Level TierLevel => new Level(Context.UserDataPath + "/f.tier/", LevelType.Tier, new LevelMeta
     {
         version = 1,
         schema_version = 2,
@@ -77,12 +109,15 @@ public static class MockData
                             version = 1,
                         }
                     },
-                    parsedStages = new List<Level> { Level },
-                    character = new OnlineCharacter
+                    parsedStages = new List<Level> {TierLevel},
+                    character = new CharacterMeta
                     {
                         name = "まふまふ",
-                        thumbnailURL = "https://assets.cytoid.io/static/characters/mafu/thumbnail.png",
-                        silhouetteURL = "https://assets.cytoid.io/static/characters/kaede/silhouette.png"
+                        thumbnail = new OnlineImageAsset
+                        {
+                            original =
+                                "https://assets.cytoid.io/static/characters/mafu/thumbnail.png"
+                        }
                     }
                 }
             },

@@ -113,7 +113,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
         {
             spinner.IsSpinning = true;
             var sprite = await Context.AssetMemory.LoadAsset<Sprite>(
-                profile.user.avatarURL.WithSizeParam(256, 256), 
+                profile.user.avatarURL?.WithSizeParam(256, 256) ?? profile.user.avatar.large, 
                 AssetTag.PlayerAvatar,
                 useFileCache: true
             );
@@ -159,7 +159,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
 
     public void OnScreenChangeStarted(Screen from, Screen to)
     {
-        if (from != null && from.GetId() == MainMenuScreen.Id && !HiddenScreenIds.Contains(to.GetId()))
+        if (from != null && from.GetId() == MainMenuScreen.Id)
         {
             Shrink();
         }

@@ -151,7 +151,7 @@ public class OnlinePlayer
         });
     }
 
-    public IPromise<System.Tuple<int, List<RankingEntry>>> GetLevelRankings(string levelId, string chartType)
+    public IPromise<(int, List<RankingEntry>)> GetLevelRankings(string levelId, string chartType)
     {
         var entries = new List<RankingEntry>();
         var top10 = new List<RankingEntry>();
@@ -224,7 +224,7 @@ public class OnlinePlayer
                         }
                     }
 
-                    return new System.Tuple<int, List<RankingEntry>>(userRank, entries);
+                    return (userRank, entries);
                 });
         }
 
@@ -232,7 +232,17 @@ public class OnlinePlayer
         {
             Uri = $"{Context.ApiUrl}/levels/{levelId}/charts/{chartType}/ranking",
             Headers = Context.OnlinePlayer.GetAuthorizationHeaders()
-        }).Then(array => new System.Tuple<int, List<RankingEntry>>(-1, array.ToList()));
+        }).Then(array => (-1, array.ToList()));
+    }
+    
+    public IPromise<(int, List<TierRankingEntry>)> GetTierRankings(string tierId)
+    {
+        // TODO: Personal rank
+        return RestClient.GetArray<TierRankingEntry>(new RequestHelper
+        {
+            Uri = $"{Context.ServicesUrl}/seasons/alpha/tiers/{tierId}/records",
+            Headers = Context.OnlinePlayer.GetAuthorizationHeaders()
+        }).Then(array => (-1, array.ToList()));
     }
 }
 

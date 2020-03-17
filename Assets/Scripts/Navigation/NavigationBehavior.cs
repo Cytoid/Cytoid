@@ -18,7 +18,7 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
             Context.LevelManager.OnLevelInstallProgress.RemoveListener(OnLevelInstallProgress);
             
             Context.LevelManager.OnLevelLoadProgress.AddListener(OnLevelLoadProgress);
-            var loadedLevels = await Context.LevelManager.LoadFromMetadataFiles(loadedLevelJsonFiles, true);
+            var loadedLevels = await Context.LevelManager.LoadFromMetadataFiles(LevelType.Community, loadedLevelJsonFiles, true);
             Context.LevelManager.OnLevelLoadProgress.RemoveListener(OnLevelLoadProgress);
 
             SpinnerOverlay.Hide();

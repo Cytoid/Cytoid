@@ -58,14 +58,18 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
     
     protected void Awake()
     {
-        if (!actOnOtherGameObjects && (rectTransform.gameObject != gameObject || canvasGroup.gameObject != gameObject))
-        {
-            Debug.LogError($"WARNING! TransitionElement {name} rectTransform and canvasGroup not set to self.");
-        }
         if (hiddenOnStart)
         {
             canvasGroup.alpha = 0;
             canvasGroup.blocksRaycasts = false;
+        }
+    }
+
+    protected void Start()
+    {
+        if (!actOnOtherGameObjects && (rectTransform.gameObject != gameObject || canvasGroup.gameObject != gameObject))
+        {
+            Debug.LogError($"WARNING! TransitionElement {name} rectTransform and canvasGroup not set to self. (rectTransform: {rectTransform.gameObject.name}, canvasGroup: {canvasGroup.gameObject.name})");
         }
     }
 

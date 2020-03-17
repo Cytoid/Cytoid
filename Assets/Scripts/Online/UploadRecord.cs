@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 
+[Serializable]
 public class UploadRecord
 {
     public int score;
@@ -9,6 +11,7 @@ public class UploadRecord
     public bool ranked;
     public string hash;
 
+    [Serializable]
     public class Details
     {
         public int perfect;

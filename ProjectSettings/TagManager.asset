@@ -10,6 +10,7 @@ TagManager:
   - Late
   - Note
   - FontManager
+  - LoopAudioPlayer
   layers:
   - Default
   - TransparentFX

@@ -22,17 +22,24 @@ public class DifficultyPill : InteractableMonoBehavior, ScreenBecameActiveListen
     private LevelMeta.ChartSection section;
     public Difficulty Difficulty { get; private set; }
 
-    public void OnScreenBecameActive()
+    protected void Awake()
     {
+        gradientMesh.SetGradient(new ColorGradient(Color.clear, Color.clear, 0));
+        name.text = "";
+        level.text = "";
         if (gameToAttach != null)
         {
             isStatic = true;
-            gameToAttach.onGameReadyToLoad.AddListener(_ =>
+            gameToAttach.onGameLoaded.AddListener(_ =>
             {
                 SetModel(gameToAttach.Level.Meta.GetChartSection(gameToAttach.Difficulty.Id));
             });
         }
-        else if (attachToContext)
+    }
+
+    public void OnScreenBecameActive()
+    {
+        if (attachToContext)
         {
             isStatic = true;
             SetModel(Context.SelectedLevel.Meta.GetChartSection(Context.SelectedDifficulty.Id));

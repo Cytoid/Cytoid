@@ -10,8 +10,6 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
-using UnityEngine.SocialPlatforms;
-using UnityEngine.UI;
 
 public class Context : SingletonMonoBehavior<Context>
 {
@@ -27,11 +25,12 @@ public class Context : SingletonMonoBehavior<Context>
     public const int ThumbnailWidth = 576;
     public const int ThumbnailHeight = 360;
 
+    public static readonly PreSceneChangedEvent PreSceneChangedEvent = new PreSceneChangedEvent();
+    public static readonly PostSceneChangedEvent PostSceneChangedEvent = new PostSceneChangedEvent();
     public static readonly LevelEvent OnSelectedLevelChanged = new LevelEvent(); // TODO: This feels definitely unnecessary. Integrate with screen?
     public static readonly UnityEvent OnLanguageChanged = new UnityEvent();
     
-    public static string DataPath;
-    public static string TierDataPath;
+    public static string UserDataPath;
     public static string iOSTemporaryInboxPath;
     public static int InitialWidth;
     public static int InitialHeight;
@@ -43,6 +42,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static readonly Library Library = new Library();
     public static readonly FontManager FontManager = new FontManager();
     public static readonly LevelManager LevelManager = new LevelManager();
+    public static readonly CharacterManager CharacterManager = new CharacterManager();
     public static readonly RemoteResourceManager RemoteResourceManager = new RemoteResourceManager();
     public static readonly AssetMemory AssetMemory = new AssetMemory();
 
@@ -119,8 +119,8 @@ public class Context : SingletonMonoBehavior<Context>
         Application.targetFrameRate = 120;
         Input.gyro.enabled = true;
         
-        DataPath = Application.persistentDataPath;
-        print("Data path: " + DataPath);
+        UserDataPath = Application.persistentDataPath;
+        print("User data path: " + UserDataPath);
 
 		if (Application.platform == RuntimePlatform.Android)
 		{
@@ -130,15 +130,15 @@ public class Context : SingletonMonoBehavior<Context>
 				Application.Quit();
 				return;
 			}
-			DataPath = dir + "/Cytoid";
+            UserDataPath = dir + "/Cytoid";
 			// Create an empty folder if it doesn't already exist
-			Directory.CreateDirectory(DataPath);
-            File.Create(DataPath + "/.nomedia").Dispose();
+			Directory.CreateDirectory(UserDataPath);
+            File.Create(UserDataPath + "/.nomedia").Dispose();
 		} 
         else if (Application.platform == RuntimePlatform.IPhonePlayer)
         {
             // iOS 13 fix
-            iOSTemporaryInboxPath = DataPath
+            iOSTemporaryInboxPath = UserDataPath
                                    .Replace("Documents/", "")
                                    .Replace("Documents", "") + "/tmp/me.tigerhix.cytoid-Inbox/";
         }
@@ -147,16 +147,22 @@ public class Context : SingletonMonoBehavior<Context>
         Application.runInBackground = true;
 #endif
 
-        TierDataPath = Path.Combine(Application.persistentDataPath, ".tiers");
-        Directory.CreateDirectory(TierDataPath);
-
         SelectedMods = new HashSet<Mod>(LocalPlayer.EnabledMods);
+
+        PreSceneChangedEvent.AddListener(PreSceneChanged);
+        PostSceneChangedEvent.AddListener(PostSceneChanged);
 
         OnLanguageChanged.AddListener(FontManager.UpdateSceneTexts);
         Localization.Instance.SelectLanguage((Language) LocalPlayer.Language);
         OnLanguageChanged.Invoke();
 
         await RemoteResourceManager.UpdateCatalog(); // TODO TODO
+        if (!await CharacterManager.SetActiveCharacter(CharacterManager.SelectedCharacterAssetId))
+        {
+            // Reset to default
+            CharacterManager.SelectedCharacterAssetId = null;
+            await CharacterManager.SetActiveCharacter(CharacterManager.SelectedCharacterAssetId);
+        }
 
         if (SceneManager.GetActiveScene().name == "Navigation")
         {
@@ -179,7 +185,7 @@ public class Context : SingletonMonoBehavior<Context>
             if (false)
             {
                 // Load f.fff
-                await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/f.fff/level.json" });
+                await LevelManager.LoadFromMetadataFiles(LevelType.Community, new List<string> { UserDataPath + "/f.fff/level.json" });
                 SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
                 SelectedDifficulty = Difficulty.Parse(SelectedLevel.Meta.charts[0].type);
                 ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.None);
@@ -188,7 +194,7 @@ public class Context : SingletonMonoBehavior<Context>
             if (false)
             {
                 // Load result
-                await LevelManager.LoadFromMetadataFiles(new List<string> { DataPath + "/suconh_typex.alice/level.json" });
+                await LevelManager.LoadFromMetadataFiles(LevelType.Community, new List<string> { UserDataPath + "/suconh_typex.alice/level.json" });
                 SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
                 SelectedDifficulty = Difficulty.Hard;
                 ScreenManager.ChangeScreen("Result", ScreenTransition.None);
@@ -200,6 +206,7 @@ public class Context : SingletonMonoBehavior<Context>
                 ScreenManager.ChangeScreen(TierResultScreen.Id, ScreenTransition.None);
             }
         }
+
         await UniTask.DelayFrame(0);
 
         graphyManager = GraphyManager.Instance;
@@ -211,22 +218,25 @@ public class Context : SingletonMonoBehavior<Context>
         if (prev == "Navigation" && next == "Game")
         {
             Input.gyro.enabled = false;
-            LoopAudioPlayer.Instance.StopMainLoopAudio();
-            LoopAudioPlayer.Instance.FadeOutLoopPlayer(0);
             // Save history
             navigationScreenHistory = new Stack<string>(ScreenManager.History);
         }
     }
 
-    public static async void OnSceneChanged(string prev, string next)
+    public static async void PostSceneChanged(string prev, string next)
     {
         if (prev == "Navigation" && next == "Game")
         {
             OnlinePlayer.IsAuthenticating = false;
+            CharacterManager.UnloadActiveCharacter();
         }
         if (prev == "Game" && next == "Navigation")
         {
             Input.gyro.enabled = true;
+
+            // Wait until character is loaded
+            await CharacterManager.SetSelectedCharacterActive();
+            
             // Restore history
             ScreenManager.History = new Stack<string>(navigationScreenHistory);
 
@@ -242,8 +252,6 @@ public class Context : SingletonMonoBehavior<Context>
                     TierState = null;
                     // Show tier selection screen
                     ScreenManager.ChangeScreen(TierSelectionScreen.Id, ScreenTransition.None);
-                    await UniTask.DelayFrame(5);
-                    LoopAudioPlayer.Instance.PlayMainLoopAudio();
                 }
             } 
             else if (GameState != null)
@@ -257,8 +265,6 @@ public class Context : SingletonMonoBehavior<Context>
                 {
                     // Show game preparation screen
                     ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.None);
-                    await UniTask.DelayFrame(5);
-                    LoopAudioPlayer.Instance.PlayMainLoopAudio();
                 }
             }
         }

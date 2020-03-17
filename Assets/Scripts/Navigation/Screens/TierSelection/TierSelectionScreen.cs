@@ -25,6 +25,8 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
     public GradientMeshEffect completionRateGradient;
     public CircleButton startButton;
     public DepthCover cover;
+
+    public RankingsTab rankingsTab;
     
     public Vector2 ScreenCenter { get; private set; }
     public Tier SelectedTier { get; private set; }
@@ -73,7 +75,7 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         scrollRectContentLayoutGroup.padding = padding;
         
         SpinnerOverlay.Show();
-        await Context.LevelManager.LoadAllInDirectory(Context.TierDataPath, false);
+        await Context.LevelManager.LoadLevelsOfType(LevelType.Tier, false);
 
         RestClient.Get(new RequestHelper
         {
@@ -100,7 +102,7 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         }*/
     }
 
-    public async void OnContentLoaded(Content content)
+    public void OnContentLoaded(Content content)
     {
         scrollRect.ClearCells();
         
@@ -112,12 +114,12 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
             tier.index = i;
             tier.Meta.parsedCriteria = tier.Meta.criteria.Select(Criterion.Parse).ToList();
             tier.Meta.parsedStages = new List<Level>();
-            var allUpToDate = true;
             for (var stage = 0; stage < Math.Min(tier.Meta.stages.Count, 3); stage++)
             {
-                var level = tier.Meta.stages[stage].ToLevel();
-                allUpToDate = allUpToDate && level.IsLocal && level.Meta.version == tier.Meta.stages[stage].version;
+                var level = tier.Meta.stages[stage].ToLevel(LevelType.Tier);
                 tier.Meta.parsedStages.Add(level);
+                tier.Meta.validStages.Add(level.IsLocal && level.Type == LevelType.Tier &&
+                                          level.Meta.version == tier.Meta.stages[stage].version);
             }
         }
 
@@ -199,7 +201,7 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         if (!tier.locked)
         {
             lowerRightColumn.Enter();
-            startButton.State = tier.StagesDownloaded ? CircleButtonState.Start : CircleButtonState.Download;
+            startButton.State = tier.StagesValid ? CircleButtonState.Start : CircleButtonState.Download;
         }
         
         asyncCoverToken = DateTime.Now;
@@ -227,11 +229,13 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         {
             cover.OnCoverLoaded(sprite);
         }
+
+        rankingsTab.UpdateTierRankings(tier.Id);
     }
     
     public async void OnStartButton()
     {
-        if (SelectedTier.StagesDownloaded)
+        if (SelectedTier.StagesValid)
         {
             State = ScreenState.Inactive;
             Context.SelectedGameMode = GameMode.Tier;
@@ -239,7 +243,8 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
 
             scrollRect.GetComponentsInChildren<TierCard>().ForEach(it => it.OnTierStart());
             ProfileWidget.Instance.FadeOut();
-
+            LoopAudioPlayer.Instance.StopAudio(0.4f);
+            
             Context.AudioManager.Get("LevelStart").Play();
 
             Context.SelectedMods = Context.LocalPlayer.EnabledMods; // This will be filtered
@@ -267,17 +272,17 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         for (var index = 0; index < SelectedTier.Meta.parsedStages.Count; index++)
         {
             var level = SelectedTier.Meta.parsedStages[index];
-            if (level.IsLocal) continue;
+            if (SelectedTier.Meta.validStages[index]) continue;
             bool? error = null;
             Context.LevelManager.DownloadAndUnpackLevelDialog(
                 level,
-                Context.TierDataPath,
                 false,
                 onDownloadAborted: () => { error = true; },
                 onDownloadFailed: () => { error = true; },
                 onUnpackSucceeded: downloadedLevel =>
                 {
                     newLocalStages[index] = downloadedLevel;
+                    SelectedTier.Meta.validStages[index] = true;
                     error = false;
                 },
                 onUnpackFailed: () => { error = true; }

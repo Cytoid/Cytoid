@@ -580,6 +580,7 @@ MonoBehaviour:
   enterOnScreenBecomeActiveDelay: 0
   leaveOnScreenBecomeInactive: 0
   leaveOnScreenBecomeInactiveDelay: 0
+  disableRaycasts: 0
   actOnOtherGameObjects: 0
   printDebugInfo: 0
 --- !u!114 &9134242188748902645
@@ -850,6 +851,7 @@ MonoBehaviour:
   enterOnScreenBecomeActiveDelay: 0
   leaveOnScreenBecomeInactive: 0
   leaveOnScreenBecomeInactiveDelay: 0
+  disableRaycasts: 0
   actOnOtherGameObjects: 0
   printDebugInfo: 0
 --- !u!1 &9134242189082904576
@@ -1511,7 +1513,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 300, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 600, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &9134242190260404029
@@ -1832,5 +1834,6 @@ MonoBehaviour:
   enterOnScreenBecomeActiveDelay: 0
   leaveOnScreenBecomeInactive: 0
   leaveOnScreenBecomeInactiveDelay: 0
+  disableRaycasts: 0
   actOnOtherGameObjects: 0
   printDebugInfo: 0

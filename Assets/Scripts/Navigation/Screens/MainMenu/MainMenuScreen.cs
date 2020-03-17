@@ -5,7 +5,6 @@ using UnityEngine.UI;
 
 public class MainMenuScreen : Screen
 {
-    private static bool startedMainLoop;
     public const string Id = "MainMenu";
 
     public RectTransform layout;
@@ -31,17 +30,26 @@ public class MainMenuScreen : Screen
     public override void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
-        if (!startedMainLoop)
-        {
-            startedMainLoop = true;
-            LoopAudioPlayer.Instance.PlayMainLoopAudio();
-            LoopAudioPlayer.Instance.FadeInLoopPlayer();
-        }
         TranslucentImageSource.Disabled = Context.LocalPlayer.GraphicsQuality == "low";
 
         freePlayText.text = "MAIN_LEVELS_LOADED".Get(Context.LevelManager.LoadedLocalLevels.Count);
         freePlayText.transform.RebuildLayout();
         ProfileWidget.Instance.Enter();
+
+        if (Context.CharacterManager.GetActiveCharacterAsset().mirrorLayout)
+        {
+            layout.anchorMin = new Vector2(0, 0.5f);
+            layout.anchorMax = new Vector2(0, 0.5f);
+            layout.pivot = new Vector2(0, 0.5f);
+            layout.anchoredPosition = new Vector2(96, -90);
+        }
+        else
+        {
+            layout.anchorMin = new Vector2(1, 0.5f);
+            layout.anchorMax = new Vector2(1, 0.5f);
+            layout.pivot = new Vector2(1, 0.5f);
+            layout.anchoredPosition = new Vector2(-96, -90);
+        }
     }
 
 }

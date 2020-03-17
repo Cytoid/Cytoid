@@ -20,9 +20,8 @@ public class InitializationScreen : Screen
     {
         versionText.text = "INIT_VERSION".Get(Context.Version.ToUpper());
         
-        var image = TranslucentCover.Instance.image;
-        image.color = Color.black;
-        image.DOFade(0.5f, 2f);
+        TranslucentCover.DarkMode();
+        TranslucentCover.Show(0.5f, 2f);
         spinnerElement.IsSpinning = true;
         statusText.text = "";
         
@@ -31,7 +30,7 @@ public class InitializationScreen : Screen
         Context.LevelManager.OnLevelInstallProgress.RemoveListener(OnLevelInstallProgress);
         
         Context.LevelManager.OnLevelLoadProgress.AddListener(OnLevelLoadProgress);
-        await Context.LevelManager.LoadAllInDirectory();
+        await Context.LevelManager.LoadLevelsOfType(LevelType.Community);
         Context.LevelManager.OnLevelLoadProgress.RemoveListener(OnLevelLoadProgress);
 
         spinnerElement.gameObject.SetActive(false);
@@ -39,8 +38,7 @@ public class InitializationScreen : Screen
         statusText.DOFade(0, 1.4f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutFlash);
         detectionArea.onPointerDown.AddListener(_ =>
         {
-            image.DOKill();
-            image.DOFade(0f, 0.2f);
+            TranslucentCover.Hide(0.2f);
             Context.AudioManager.Get("LevelStart").Play();
             Context.ScreenManager.ChangeScreen(MainMenuScreen.Id, ScreenTransition.In);
         });

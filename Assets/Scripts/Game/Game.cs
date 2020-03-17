@@ -13,7 +13,7 @@ using UnityEngine.Networking;
 
 public class Game : MonoBehaviour
 {
-    public Camera camera;
+    public new Camera camera;
     public GameObject contentParent;
     public EffectController effectController;
     public InputController inputController;
@@ -67,12 +67,19 @@ public class Game : MonoBehaviour
     public NoteEvent onNoteClear = new NoteEvent();
     public GameEvent onGameSpeedUp = new GameEvent();
     public GameEvent onGameSpeedDown = new GameEvent();
+    public GameEvent onGameDisposed = new GameEvent();
     public GameEvent onTopBoundaryBounded = new GameEvent();
     public GameEvent onBottomBoundaryBounded = new GameEvent();
 
     protected void Awake()
     {
         Renderer = new GameRenderer(this);
+        
+#if !UNITY_EDITOR
+        EditorMusicInitialPosition = 0;
+        EditorGameMode = GameMode.Unspecified;
+        EditorForceAutoMod = false;
+#endif
     }
 
     protected async void Start()
@@ -101,7 +108,7 @@ public class Game : MonoBehaviour
             var tierState = Context.TierState;
             if (tierState == null)
             {
-                await Context.LevelManager.LoadAllInDirectory(Context.TierDataPath);
+                await Context.LevelManager.LoadLevelsOfType(LevelType.Tier);
                 tierState = new TierState(MockData.Season.tiers[0]);
                 Context.TierState = tierState;
             }
@@ -115,15 +122,20 @@ public class Game : MonoBehaviour
 
             tierState.CurrentStageIndex++;
             
-            Level = tierState.Tier.Meta.stages[Context.TierState.CurrentStageIndex].ToLevel();
+            Level = tierState.Tier.Meta.stages[Context.TierState.CurrentStageIndex].ToLevel(LevelType.Tier);
             Difficulty = Difficulty.Parse(Level.Meta.charts.Last().type);
         }
         else
         {
-            // Load test level
-            await Context.LevelManager.LoadFromMetadataFiles(new List<string> { Context.DataPath + "/tar1412.iwannabeit/level.json" });
-            Level = Context.SelectedLevel = Context.LevelManager.LoadedLocalLevels.Values.First();
-            Difficulty = Context.SelectedDifficulty = Difficulty.Extreme;
+            if (Context.SelectedLevel == null && Application.isEditor)
+            {
+                // Load test level
+                await Context.LevelManager.LoadFromMetadataFiles(LevelType.Community, new List<string> { Context.UserDataPath + "/tar1412.iwannabeit/level.json" });
+                Context.SelectedLevel = Context.LevelManager.LoadedLocalLevels.Values.First();
+                Context.SelectedDifficulty = Difficulty.Extreme;
+            }
+            Level = Context.SelectedLevel;
+            Difficulty = Context.SelectedDifficulty;
         }
 
         onGameReadyToLoad.Invoke(this);
@@ -500,6 +512,8 @@ public class Game : MonoBehaviour
         Context.AudioManager.Unload("Level");
         
         onGameAborted.Invoke(this);
+        
+        Dispose();
 
         var sceneLoader = new SceneLoader("Navigation");
         sceneLoader.Load();
@@ -515,6 +529,8 @@ public class Game : MonoBehaviour
         Context.AudioManager.Unload("Level");
         
         onGameRetried.Invoke(this);
+        
+        Dispose();
         
         var sceneLoader = new SceneLoader("Game");
         sceneLoader.Load();
@@ -548,7 +564,6 @@ public class Game : MonoBehaviour
         {
             Context.TierState.OnStageComplete();
         }
-        
         inputController.DisableInput();
 
         onGameCompleted.Invoke(this);
@@ -572,6 +587,8 @@ public class Game : MonoBehaviour
 
         onGameReadyToExit.Invoke(this);
         
+        Dispose();
+        
         var sceneLoader = new SceneLoader("Navigation");
         sceneLoader.Load();
 
@@ -588,6 +605,13 @@ public class Game : MonoBehaviour
         }
 
         sceneLoader.Activate();
+    }
+
+    public void Dispose()
+    {
+        inputController.DisableInput();
+
+        onGameDisposed.Invoke(this);
     }
 
 }

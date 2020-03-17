@@ -67,6 +67,7 @@ public class TierResultScreen : Screen, ScreenChangeListener
         Context.TierState = null;
 
         nextButton.State = CircleButtonState.Next;
+        nextButton.StartPulsing();
         nextButton.interactableMonoBehavior.onPointerClick.AddListener(_ =>
         {
             nextButton.StopPulsing();
@@ -76,7 +77,7 @@ public class TierResultScreen : Screen, ScreenChangeListener
         retryButton.interactableMonoBehavior.onPointerClick.AddListener(_ =>
         {
             retryButton.StopPulsing();
-            RetryTier();
+            Retry();
         });
 
         // Update performance info
@@ -153,11 +154,9 @@ public class TierResultScreen : Screen, ScreenChangeListener
         Context.ScreenManager.RemoveHandler(this);
     }
 
-    public override async void OnScreenBecameActive()
+    public override void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
-
-        TranslucentCover.Instance.image.DOFade(0.9f, 0.8f);
         
         gradientPane.SetModel(tierState.Tier);
         for (var index = 0; index < Math.Min(tierState.Tier.Meta.parsedStages.Count, 3); index++)
@@ -175,11 +174,6 @@ public class TierResultScreen : Screen, ScreenChangeListener
         
         ProfileWidget.Instance.Enter();
         upperRightColumn.Enter();
-
-        /*if (!Context.OnlinePlayer.IsAuthenticated)
-        {
-            await UniTask.WaitUntil(() => Context.OnlinePlayer.IsAuthenticated);
-        }*/
 
         UploadRecord();
     }
@@ -214,27 +208,28 @@ public class TierResultScreen : Screen, ScreenChangeListener
 
     public void Done()
     {
-        LoopAudioPlayer.Instance.FadeOutLoopPlayer(0.4f);
-        LoopAudioPlayer.Instance.PlayMainLoopAudio();
+        TranslucentCover.Hide();
+        
         Context.ScreenManager.ChangeScreen(TierSelectionScreen.Id, ScreenTransition.Out, willDestroy: true,
             onFinished: screen => Resources.UnloadUnusedAssets());
         Context.AudioManager.Get("LevelStart").Play();
     }
 
-    public async void RetryTier()
+    public async void Retry()
     {
-        LoopAudioPlayer.Instance.FadeOutLoopPlayer(0.4f);
-
         State = ScreenState.Inactive;
 
         ProfileWidget.Instance.FadeOut();
+        LoopAudioPlayer.Instance.StopAudio(0.4f);
 
         Context.AudioManager.Get("LevelStart").Play();
+        Context.SelectedGameMode = GameMode.Tier;
+        Context.TierState = new TierState(tierState.Tier);
 
         var sceneLoader = new SceneLoader("Game");
         sceneLoader.Load();
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
-        TranslucentCover.Instance.image.DOFade(0, 0.8f);
+        TranslucentCover.Hide();
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
         sceneLoader.Activate();
     }
@@ -247,9 +242,64 @@ public class TierResultScreen : Screen, ScreenChangeListener
 
     public void UploadRecord()
     {
-        // TODO
-        Toast.Next(Toast.Status.Success, "TOAST_PERFORMANCE_SYNCHRONIZED".Get());
-        EnterControls();
+        rankingsTab.spinner.IsSpinning = true;
+
+        var uploadTierRecord = SecuredOperations.MakeTierRecord(tierState);
+        SecuredOperations.UploadTierRecord(tierState, uploadTierRecord)
+            .Then(_ =>
+                {
+                    Toast.Next(Toast.Status.Success, "TOAST_TIER_CLEARED".Get());
+                    EnterControls();
+                    rankingsTab.UpdateTierRankings(tierState.Tier.Id);
+                    Context.OnlinePlayer.FetchProfile();
+                }
+            ).Catch(error =>
+            {
+                Debug.LogWarning(error.Response);
+                if (error.IsNetworkError)
+                {
+                    Toast.Next(Toast.Status.Failure, "TOAST_CHECK_NETWORK_CONNECTION".Get());
+                }
+                else if (error.IsHttpError)
+                {
+                    if (error.StatusCode == 404)
+                    {
+                        Toast.Next(Toast.Status.Failure, "TOAST_TIER_NOT_FOUND".Get());
+                    }
+                    else if (error.StatusCode == 400)
+                    {
+                        Toast.Next(Toast.Status.Failure, "TOAST_TIER_VERIFICATION_FAILED".Get());
+                    }
+                    else if (error.StatusCode == 500)
+                    {
+                        Toast.Next(Toast.Status.Failure, "TOAST_SERVER_INTERNAL_ERROR".Get());
+                    }
+                    else
+                    {
+                        Toast.Next(Toast.Status.Failure, $"Status code: {error.StatusCode}".Get());
+                    }
+                }
+
+                var dialog = Dialog.Instantiate();
+                dialog.Message = "DIALOG_RETRY_SYNCHRONIZE_TIER_PERFORMANCE".Get();
+                dialog.UseProgress = false;
+                dialog.UsePositiveButton = true;
+                dialog.UseNegativeButton = true;
+                dialog.OnPositiveButtonClicked = _ =>
+                {
+                    dialog.Close();
+                    UploadRecord();
+                };
+                dialog.OnNegativeButtonClicked = _ =>
+                {
+                    dialog.Close();
+                    EnterControls();
+                    // TODO:
+                    //rankingsTab.UpdateRankings(gameState.Level.Id, gameState.Difficulty.Id);
+                    Context.OnlinePlayer.FetchProfile();
+                };
+                dialog.Open();
+            });
     }
     
     public void OnScreenChangeStarted(Screen from, Screen to) => Expression.Empty();
@@ -258,7 +308,6 @@ public class TierResultScreen : Screen, ScreenChangeListener
     {
         if (from == this)
         {
-            TranslucentCover.Instance.image.color = Color.white.WithAlpha(0);
             // Dispose game cover
             Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.GameCover);
         }

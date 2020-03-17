@@ -164,11 +164,12 @@ public class AssetMemory
                     {
                         if (PrintDebugMessages) Debug.Log("AssetMemory: Start cropping");
 
-                        Directory.CreateDirectory(Context.DataPath + "/.cache");
+                        var tmpPath = Path.Combine(Application.temporaryCachePath, "Tmp");
+                        Directory.CreateDirectory(tmpPath);
                         var filename = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds();
 
                         bytes = texture.EncodeToJPG();
-                        var innerPath = $"{Context.DataPath}/.cache/{filename}";
+                        var innerPath = Path.Combine(tmpPath, $"{filename}");
                         File.WriteAllBytes(innerPath, bytes);
                         Object.Destroy(texture);
 

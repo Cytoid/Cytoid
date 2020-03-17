@@ -30,6 +30,8 @@ public sealed class TierState
     
     public double Health { get; set; }
 
+    public HashSet<Mod> Mods => Stages.First().Mods;
+
     [AvailableOnComplete]
     public Dictionary<NoteGrade, int> GradeCounts => OnCompleteGuard(gradeCounts);
 

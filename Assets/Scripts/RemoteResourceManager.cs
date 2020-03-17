@@ -6,8 +6,7 @@ using UnityEngine.AddressableAssets;
 public class RemoteResourceManager
 {
 
-    public string SelectedCharacterAssetId = "Mafu";
-    public GameObject SelectedCharacterGameObject;
+    
     
     public async UniTask UpdateCatalog()
     {
@@ -122,6 +121,7 @@ public class RemoteResourceManager
 
     public void Release(GameObject gameObject)
     {
+        if (gameObject == null) return;
         if (!Addressables.ReleaseInstance(gameObject))
         {
             Debug.LogError("GameObject not instantiated by Addressable!");

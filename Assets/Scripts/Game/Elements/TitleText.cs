@@ -9,9 +9,10 @@ public class TitleText : MonoBehaviour, ScreenBecameActiveListener
     
     protected void Awake()
     {
+        text.text = "";
         if (game != null)
         {
-            game.onGameReadyToLoad.AddListener(_ =>
+            game.onGameLoaded.AddListener(_ =>
             {
                 text.text = game.Level.Meta.title;
             });

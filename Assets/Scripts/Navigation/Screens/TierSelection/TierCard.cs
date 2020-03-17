@@ -67,9 +67,7 @@ public class TierCard : MonoBehaviour
             characterBackdrop.gameObject.SetActive(tier.Meta.character != null);
             if (tier.Meta.character != null)
             {
-                LoadCharacterPreview(tier.locked
-                    ? tier.Meta.character.silhouetteURL
-                    : tier.Meta.character.thumbnailURL);
+                LoadCharacterPreview(tier.Meta.character.thumbnail.original);
             }
 
             gradientPane.SetModel(tier);
@@ -82,13 +80,13 @@ public class TierCard : MonoBehaviour
                 );
             }
             
-            lockedOverlayRoot.SetActive(tier.locked || !tier.StagesDownloaded);
+            lockedOverlayRoot.SetActive(tier.locked || !tier.StagesValid);
             if (tier.locked)
             {
                 lockedOverlayIcon.sprite = lockedIcon;
                 lockedOverlayText.text = "Locked";
             } 
-            else if (!tier.StagesDownloaded)
+            else if (!tier.StagesValid)
             {
                 lockedOverlayIcon.sprite = unlockedIcon;
                 lockedOverlayText.text = "Not downloaded";

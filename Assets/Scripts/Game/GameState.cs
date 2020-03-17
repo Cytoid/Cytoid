@@ -137,7 +137,7 @@ public sealed class GameState
             {NoteGrade.Bad, 0},
             {NoteGrade.Miss, 0}
         };
-        Level = MockData.Level;
+        Level = MockData.CommunityLevel;
         Difficulty = Difficulty.Parse(Level.Meta.charts[0].type);
     }
     

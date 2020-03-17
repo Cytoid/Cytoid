@@ -50,8 +50,8 @@ public class ResultScreen : Screen, ScreenChangeListener
         {
             // Test mode
             Debug.Log("Result not set, entering test mode...");
-            await Context.LevelManager.LoadFromMetadataFiles(new List<string>
-                {Context.DataPath + "/suconh_typex.alice/level.json"});
+            await Context.LevelManager.LoadFromMetadataFiles(LevelType.Community, new List<string>
+                {Context.UserDataPath + "/suconh_typex.alice/level.json"});
             Context.SelectedLevel = Context.LevelManager.LoadedLocalLevels.Values.First();
             Context.SelectedDifficulty =
                 Difficulty.Parse(Context.LevelManager.LoadedLocalLevels.Values.First().Meta.charts[0].type);
@@ -67,7 +67,8 @@ public class ResultScreen : Screen, ScreenChangeListener
 
         Context.GameState = null;
 
-        nextButton.State = CircleButtonState.Start;
+        nextButton.State = CircleButtonState.Next;
+        nextButton.StartPulsing();
         nextButton.interactableMonoBehavior.onPointerClick.AddListener(_ =>
         {
             nextButton.StopPulsing();
@@ -77,15 +78,13 @@ public class ResultScreen : Screen, ScreenChangeListener
         retryButton.interactableMonoBehavior.onPointerClick.AddListener(_ =>
         {
             retryButton.StopPulsing();
-            RetryGame();
+            Retry();
         });
 
         // Load translucent cover
-        var image = TranslucentCover.Instance.image;
-        image.color = Color.white.WithAlpha(0);
+        TranslucentCover.LightMode();
         var path = "file://" + Context.SelectedLevel.Path + Context.SelectedLevel.Meta.background.path;
-        image.sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.GameCover);
-        image.FitSpriteAspectRatio();
+        TranslucentCover.SetSprite(await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.GameCover));
 
         // Update performance info
         scoreText.text = Mathf.FloorToInt((float) gameState.Score).ToString("D6");
@@ -191,7 +190,7 @@ public class ResultScreen : Screen, ScreenChangeListener
     {
         base.OnScreenBecameActive();
 
-        TranslucentCover.Instance.image.DOFade(0.9f, 0.8f);
+        TranslucentCover.Show(0.9f);
         ProfileWidget.Instance.Enter();
         upperRightColumn.Enter();
 
@@ -220,9 +219,6 @@ public class ResultScreen : Screen, ScreenChangeListener
         {
             rankingsTab.UpdateRankings(gameState.Level.Id, gameState.Difficulty.Id);
         }
-
-        LoopAudioPlayer.Instance.PlayResultLoopAudio();
-        LoopAudioPlayer.Instance.FadeInLoopPlayer(0);
     }
 
     public override void OnScreenPostActive()
@@ -230,12 +226,6 @@ public class ResultScreen : Screen, ScreenChangeListener
         base.OnScreenPostActive();
         LayoutRebuilder.ForceRebuildLayoutImmediate(infoContainer.transform as RectTransform);
         infoContainer.GetComponentsInChildren<TransitionElement>().ForEach(it => it.UseCurrentStateAsDefault());
-    }
-
-    public override void OnScreenBecameInactive()
-    {
-        base.OnScreenBecameInactive();
-        Run.After(0.4f, () => TranslucentCover.Instance.image.color = Color.white.WithAlpha(0));
     }
 
     private bool isSharing;
@@ -280,23 +270,8 @@ public class ResultScreen : Screen, ScreenChangeListener
     {
         rankingsTab.spinner.IsSpinning = true;
 
-        var uploadRecord = new UploadRecord
-        {
-            score = (int) gameState.Score,
-            accuracy = double.Parse(gameState.Accuracy.ToString("0.00000000")),
-            details = new UploadRecord.Details
-            {
-                perfect = gameState.GradeCounts[NoteGrade.Perfect],
-                great = gameState.GradeCounts[NoteGrade.Great],
-                good = gameState.GradeCounts[NoteGrade.Good],
-                bad = gameState.GradeCounts[NoteGrade.Bad],
-                miss = gameState.GradeCounts[NoteGrade.Miss],
-                maxCombo = gameState.MaxCombo
-            },
-            mods = gameState.Mods.Select(it => Enum.GetName(typeof(Mod), it)).ToList(),
-            ranked = Context.LocalPlayer.PlayRanked,
-        };
-        SecuredOperations.UploadRecord(gameState.Level, gameState.Difficulty, uploadRecord)
+        var uploadRecord = SecuredOperations.MakeRecord(gameState);
+        SecuredOperations.UploadRecord(gameState, uploadRecord)
             .Then(_ =>
                 {
                     uploadRecordSuccess = true;
@@ -307,7 +282,7 @@ public class ResultScreen : Screen, ScreenChangeListener
                 }
             ).Catch(error =>
             {
-                Debug.Log(error.Response);
+                Debug.LogWarning(error.Response);
                 if (error.IsNetworkError)
                 {
                     Toast.Next(Toast.Status.Failure, "TOAST_CHECK_NETWORK_CONNECTION".Get());
@@ -355,27 +330,25 @@ public class ResultScreen : Screen, ScreenChangeListener
 
     public void Done()
     {
-        LoopAudioPlayer.Instance.FadeOutLoopPlayer(0.4f);
-        LoopAudioPlayer.Instance.PlayMainLoopAudio();
+        TranslucentCover.Hide();
         Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.Out, willDestroy: true,
             onFinished: screen => Resources.UnloadUnusedAssets());
         Context.AudioManager.Get("LevelStart").Play();
     }
 
-    public async void RetryGame()
+    public async void Retry()
     {
-        LoopAudioPlayer.Instance.FadeOutLoopPlayer(0.4f);
-
         State = ScreenState.Inactive;
 
         ProfileWidget.Instance.FadeOut();
-
+        LoopAudioPlayer.Instance.StopAudio(0.4f);
+        
         Context.AudioManager.Get("LevelStart").Play();
 
         var sceneLoader = new SceneLoader("Game");
         sceneLoader.Load();
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
-        TranslucentCover.Instance.image.DOFade(0, 0.8f);
+        TranslucentCover.Hide();
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
         sceneLoader.Activate();
     }

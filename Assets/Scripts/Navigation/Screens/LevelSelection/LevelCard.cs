@@ -199,6 +199,17 @@ public class LevelCard : InteractableMonoBehavior
         {
             Context.SelectedLevel = level;
             Context.AudioManager.Get("Navigate2").Play();
+
+            if (Context.ScreenManager.ActiveScreen is CharacterSelectionScreen)
+            {
+                while (Context.ScreenManager.PeekHistory() != MainMenuScreen.Id)
+                {
+                    Context.ScreenManager.PopAndPeekHistory();
+                }
+                
+                Context.ScreenManager.History.Push(LevelSelectionScreen.Id);
+                // TODO: Switch to official category
+            }
             Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.In, 0.4f,
                 transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter());
         }

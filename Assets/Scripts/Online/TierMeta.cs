@@ -7,6 +7,7 @@ using Newtonsoft.Json.Linq;
 [Serializable]
 public class TierMeta
 {
+    public string id;
     public string name;
     public float completionPercentage;
     public ColorPalette colorPalette;
@@ -15,7 +16,9 @@ public class TierMeta
     
     public List<OnlineLevel> stages;
     [JsonIgnore] public List<Level> parsedStages = new List<Level>();
-    public OnlineCharacter character;
+    [JsonIgnore] public List<bool> validStages = new List<bool>();
+    
+    public CharacterMeta character;
     public double thresholdAccuracy;
     public double maxHealth;
 
@@ -39,7 +42,9 @@ public class Tier
 {
     [JsonIgnore] public bool isScrollRectFix;
     [JsonIgnore] public int index;
-    public bool StagesDownloaded => Meta.parsedStages.Count > 0 && Meta.parsedStages.TrueForAll(it => it.IsLocal);
+    public string Id => Meta.id;
+
+    public bool StagesValid => Meta.validStages.All(it => it);
 
     public bool locked;
     public double completion;

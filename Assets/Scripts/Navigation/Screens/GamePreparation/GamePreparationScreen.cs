@@ -1,18 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Globalization;
-using System.IO;
-using System.Linq;
 using System.Linq.Expressions;
 using DG.Tweening;
-using Newtonsoft.Json.Linq;
-using Proyecto26;
-using RSG;
 using UniRx.Async;
 using UnityEngine;
-using UnityEngine.Events;
-using UnityEngine.Networking;
 using UnityEngine.UI;
 
 public class GamePreparationScreen : Screen, ScreenChangeListener
@@ -96,7 +86,6 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
             return;
         }
 
-        LoopAudioPlayer.Instance.FadeOutLoopPlayer();
         ProfileWidget.Instance.Enter();
 
         var needReload = Level != Context.SelectedLevel;
@@ -227,7 +216,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
 
         previewAudioSource.volume = 0;
         previewAudioSource.DOKill();
-        previewAudioSource.DOFade(1, 1f).SetEase(Ease.Linear);
+        previewAudioSource.DOFade(Context.LocalPlayer.MusicVolume, 1f).SetEase(Ease.Linear);
         previewAudioSource.loop = true;
         previewAudioSource.Play();
     }
@@ -293,9 +282,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         previewAudioSource.DOFade(0, 1f).SetEase(Ease.Linear).onComplete = () =>
         {
             previewAudioSource.Stop();
-            
         };
-        if (!willStart) LoopAudioPlayer.Instance.FadeInLoopPlayer();
     }
 
     public void OnScreenChangeStarted(Screen @from, Screen to) => Expression.Empty();
@@ -324,6 +311,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
 
             cover.pulseElement.Pulse();
             ProfileWidget.Instance.FadeOut();
+            LoopAudioPlayer.Instance.StopAudio(0.4f);
 
             Context.AudioManager.Get("LevelStart").Play();
             Context.SelectedMods = Context.LocalPlayer.EnabledMods;

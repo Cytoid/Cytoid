@@ -69,7 +69,7 @@ public static class SettingsFactory
                 });
             element.caretSelect.onSelect.AddListener((_, value) =>
             {
-                LoopAudioPlayer.Instance.UpdateVolume();
+                LoopAudioPlayer.Instance.UpdateMaxVolume();
                 Context.AudioManager.UpdateVolumes();
             });
         });

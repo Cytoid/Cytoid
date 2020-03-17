@@ -2130,8 +2130,8 @@ MonoBehaviour:
   onLeaveCompleted:
     m_PersistentCalls:
       m_Calls: []
-  rectTransform: {fileID: 1935833588358555383}
-  canvasGroup: {fileID: 1935833588358555376}
+  rectTransform: {fileID: 1935833586925046813}
+  canvasGroup: {fileID: 1935833586925046815}
   enterFrom: 6
   enterMultiplier: 1
   enterDuration: 0.2
@@ -2147,6 +2147,9 @@ MonoBehaviour:
   enterOnScreenBecomeActiveDelay: 0
   leaveOnScreenBecomeInactive: 0
   leaveOnScreenBecomeInactiveDelay: 0
+  disableRaycasts: 0
+  actOnOtherGameObjects: 0
+  printDebugInfo: 0
 --- !u!1 &1935833587023805788
 GameObject:
   m_ObjectHideFlags: 0
@@ -2865,6 +2868,9 @@ MonoBehaviour:
   enterOnScreenBecomeActiveDelay: 0
   leaveOnScreenBecomeInactive: 0
   leaveOnScreenBecomeInactiveDelay: 0
+  disableRaycasts: 0
+  actOnOtherGameObjects: 0
+  printDebugInfo: 0
 --- !u!1 &1935833588245106977
 GameObject:
   m_ObjectHideFlags: 0
@@ -3042,6 +3048,8 @@ GameObject:
   - component: {fileID: 1935833588358555377}
   - component: {fileID: 542037652033015156}
   - component: {fileID: 3274173698322198099}
+  - component: {fileID: 477377768300772807}
+  - component: {fileID: 2034892910335162946}
   m_Layer: 5
   m_Name: RateLevelDialog
   m_TagString: Untagged
@@ -3158,6 +3166,9 @@ MonoBehaviour:
   enterOnScreenBecomeActiveDelay: 0
   leaveOnScreenBecomeInactive: 0
   leaveOnScreenBecomeInactiveDelay: 0
+  disableRaycasts: 0
+  actOnOtherGameObjects: 0
+  printDebugInfo: 0
 --- !u!114 &542037652033015156
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3170,6 +3181,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f30d72693278450b866fd792b372770c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  canvas: {fileID: 477377768300772807}
   canvasGroup: {fileID: 1935833588358555376}
   messageText: {fileID: 1935833586850138379}
   progressHolder: {fileID: 1935833587966967134}
@@ -3195,6 +3207,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 31f6a0ba801343f3a4a9d3fb3a8022d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!223 &477377768300772807
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1935833588358555382}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_AdditionalShaderChannelsFlag: 7
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_TargetDisplay: 0
+--- !u!114 &2034892910335162946
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1935833588358555382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &1935833588454788081
 GameObject:
   m_ObjectHideFlags: 0

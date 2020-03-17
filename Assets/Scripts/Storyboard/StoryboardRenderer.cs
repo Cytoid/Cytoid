@@ -121,9 +121,7 @@ namespace Cytoid.Storyboard
             await UniTask.WhenAll(spawnSpriteTasks);
             
             // Clear on abort/retry/complete
-            Game.onGameAborted.AddListener(_ => Clear());
-            Game.onGameRetried.AddListener(_ => Clear());
-            Game.onGameCompleted.AddListener(_ => Clear());
+            Game.onGameDisposed.AddListener(_ => Clear());
             Game.onGamePaused.AddListener(_ =>
             {
                 // TODO: Pause SB

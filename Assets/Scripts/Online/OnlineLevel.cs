@@ -80,15 +80,19 @@ public class OnlineLevel
     public string music_preview;
     public OnlineImageAsset cover;
 
-    public Level ToLevel(bool resolveLocalLevel = true)
+    public Level ToLevel(LevelType type, bool resolveLocalLevel = true)
     {
         if (resolveLocalLevel && Context.LevelManager.LoadedLocalLevels.ContainsKey(uid))
         {
-            Debug.Log($"Online level {uid} resolved locally");
-            return Context.LevelManager.LoadedLocalLevels[uid];
+            var localLevel = Context.LevelManager.LoadedLocalLevels[uid];
+            if (localLevel.Type == type)
+            {
+                Debug.Log($"Online level {uid} resolved locally");
+                return localLevel;
+            }
         }
 
-        return new Level($"{Context.ApiUrl}/levels/{uid}/resources", GenerateLevelMeta())
+        return new Level($"{Context.ApiUrl}/levels/{uid}/resources", type, GenerateLevelMeta())
             .Also(it => it.OnlineLevel = this);
     }
 

@@ -1,15 +1,7 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Linq.Expressions;
-using DG.Tweening;
-using Newtonsoft.Json.Linq;
-using Proyecto26;
 using UniRx.Async;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.UI;
 
 public class TierBreakScreen : Screen, ScreenChangeListener
@@ -29,8 +21,10 @@ public class TierBreakScreen : Screen, ScreenChangeListener
     public Text advancedMetricText;
     public GameObject criterionEntryHolder;
     public CircleButton nextStageButton;
+    public CircleButton retryButton;
     
     public GameObject criterionEntryPrefab;
+    private TierState tierState;
     private GameState gameState;
 
     public override string GetId() => Id;
@@ -45,12 +39,10 @@ public class TierBreakScreen : Screen, ScreenChangeListener
         Context.GameState = null;
 
         // Load translucent cover
-        var image = TranslucentCover.Instance.image;
-        image.color = Color.white.WithAlpha(0);
+        TranslucentCover.LightMode();
         var path = "file://" + gameState.Level.Path + gameState.Level.Meta.background.path;
-        image.sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.GameCover);
-        image.FitSpriteAspectRatio();
-
+        TranslucentCover.SetSprite(await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.GameCover));
+     
         // Update performance info
         scoreText.text = Mathf.FloorToInt((float) gameState.Score).ToString("D6");
         accuracyText.text = "RESULT_X_ACCURACY".Get((Math.Floor(gameState.Accuracy * 100 * 100) / 100).ToString("0.00"));
@@ -87,21 +79,50 @@ public class TierBreakScreen : Screen, ScreenChangeListener
                                   $"<b>{"RESULT_STD_TIMING_ERR".Get()}</b> {gameState.StandardTimingError:0.000}s";
         if (!Context.LocalPlayer.DisplayEarlyLateIndicators) advancedMetricText.text = "";
         
-        // TIER START
-
-        var tierState = Context.TierState;
+        // TIER START!!!
+        // =====================
+        
+        tierState = Context.TierState;
         modeText.text = tierState.Tier.Meta.name;
 
         var stage = tierState.CurrentStage;
         difficultyBall.SetModel(stage.Difficulty, stage.DifficultyLevel);
         stageTitleText.text = stage.Level.Meta.title;
+
+        print("ss: " +nextStageButton.scheduledPulse.startPulsingOnScreenBecameActive);
+        print(nextStageButton.scheduledPulse.NextPulseTime);
+        if (tierState.IsFailed)
+        {
+            print("Failed");
+            retryButton.StartPulsing();
+            print(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + "/" + retryButton.scheduledPulse.NextPulseTime);
+        }
+        else
+        {
+            print("Not failed");
+            nextStageButton.StartPulsing();
+            print(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + "/" + retryButton.scheduledPulse.NextPulseTime);
+        }
         
-        nextStageButton.State = tierState.IsCompleted ? CircleButtonState.Finish : CircleButtonState.NextStage;
+        nextStageButton.State = tierState.IsFailed ? CircleButtonState.GoBack : (tierState.IsCompleted ? CircleButtonState.Finish : CircleButtonState.NextStage);
         nextStageButton.interactableMonoBehavior.onPointerClick.AddListener(_ =>
         {
             nextStageButton.StopPulsing();
-            if (tierState.IsCompleted) Finish();
-            else NextStage();
+            if (tierState.IsFailed)
+            {
+                GoBack();
+            }
+            else
+            {
+                if (tierState.IsCompleted) Finish();
+                else NextStage();
+            }
+        });
+        retryButton.State = CircleButtonState.Retry;
+        retryButton.interactableMonoBehavior.onPointerClick.AddListener(_ =>
+        {
+            retryButton.StopPulsing();
+            Retry();
         });
         
         // Update criterion entries
@@ -129,32 +150,57 @@ public class TierBreakScreen : Screen, ScreenChangeListener
     {
         base.OnScreenBecameActive();
 
-        TranslucentCover.Instance.image.DOFade(0.9f, 0.8f);
+        TranslucentCover.Show(0.9f);
         ProfileWidget.Instance.Enter();
-      
-        LoopAudioPlayer.Instance.PlayResultLoopAudio();
-        LoopAudioPlayer.Instance.FadeInLoopPlayer(0);
+    }
+    
+    public async void Retry()
+    {
+        // TODO: Refactor with TierResult?
+        State = ScreenState.Inactive;
+
+        ProfileWidget.Instance.FadeOut();
+        LoopAudioPlayer.Instance.StopAudio(0.4f);
+
+        Context.AudioManager.Get("LevelStart").Play();
+        Context.SelectedGameMode = GameMode.Tier;
+        Context.TierState = new TierState(tierState.Tier);
+
+        var sceneLoader = new SceneLoader("Game");
+        sceneLoader.Load();
+        await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
+        TranslucentCover.Hide();
+        await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
+        sceneLoader.Activate();
     }
 
     public async void NextStage()
     {
-        LoopAudioPlayer.Instance.FadeOutLoopPlayer(0.4f);
-
         State = ScreenState.Inactive;
 
         ProfileWidget.Instance.FadeOut();
+        LoopAudioPlayer.Instance.StopAudio(0.4f);
 
         Context.AudioManager.Get("LevelStart").Play();
 
         var sceneLoader = new SceneLoader("Game");
         sceneLoader.Load();
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
-        TranslucentCover.Instance.image.DOFade(0, 0.8f);
+        TranslucentCover.Hide();
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
         
         Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.GameCover);
         
         sceneLoader.Activate();
+    }
+    
+    public void GoBack()
+    {
+        TranslucentCover.Hide();
+        
+        Context.ScreenManager.ChangeScreen(TierSelectionScreen.Id, ScreenTransition.Out, willDestroy: true,
+            onFinished: screen => Resources.UnloadUnusedAssets());
+        Context.AudioManager.Get("LevelStart").Play();
     }
     
     public void Finish()

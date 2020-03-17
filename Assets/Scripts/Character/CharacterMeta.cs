@@ -3,7 +3,6 @@ using System;
 [Serializable]
 public class CharacterMeta
 {
-    public string id;
     public string name;
     public string description;
     public Illustrator illustrator;

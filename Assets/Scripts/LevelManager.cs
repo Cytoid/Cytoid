@@ -31,7 +31,7 @@ public class LevelManager
         if (Application.platform == RuntimePlatform.IPhonePlayer)
         {
             var files = new List<string>();
-            var inboxPath = Context.DataPath + "/Inbox/"; 
+            var inboxPath = Context.UserDataPath + "/Inbox/"; 
             if (Directory.Exists(inboxPath))
             {
                 files.AddRange(Directory.GetFiles(inboxPath, "*.cytoidlevel"));
@@ -47,7 +47,7 @@ public class LevelManager
             {
                 if (file == null) continue;
                 
-                var toPath = Context.DataPath + "/" + Path.GetFileName(file);
+                var toPath = Context.UserDataPath + "/" + Path.GetFileName(file);
                 try
                 {
                     if (File.Exists(toPath))
@@ -77,8 +77,8 @@ public class LevelManager
         var levelFiles = new List<string>();
         try
         {
-            levelFiles.AddRange(Directory.GetFiles(Context.DataPath, "*.cytoidlevel"));
-            levelFiles.AddRange(Directory.GetFiles(Context.DataPath, "*.cytoidlevel.zip"));
+            levelFiles.AddRange(Directory.GetFiles(Context.UserDataPath, "*.cytoidlevel"));
+            levelFiles.AddRange(Directory.GetFiles(Context.UserDataPath, "*.cytoidlevel.zip"));
         }
         catch (Exception e)
         {
@@ -94,7 +94,7 @@ public class LevelManager
             var fileName = Path.GetFileNameWithoutExtension(levelFile);
             OnLevelInstallProgress.Invoke(fileName, index, levelFiles.Count);
 
-            var destFolder = $"{Context.DataPath}/{fileName}";
+            var destFolder = $"{Context.UserDataPath}/{fileName}";
             if (await UnpackLevelPackage(levelFile, destFolder))
             {
                 loadedLevelJsonFiles.Add(destFolder + "/level.json");
@@ -257,7 +257,7 @@ public class LevelManager
         return true;
     }
 
-    public async UniTask<List<Level>> LoadAllInDirectory(string directory = default, bool clearExisting = true)
+    public async UniTask<List<Level>> LoadLevelsOfType(LevelType type, bool clearExisting = true)
     {
         if (clearExisting)
         {
@@ -265,17 +265,27 @@ public class LevelManager
             loadedPaths.Clear();
             Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalCoverThumbnail);
         }
+        
+        try
+        {
+            Directory.CreateDirectory(type.GetDataPath());
+        }
+        catch (Exception error)
+        {
+            Debug.LogError("Failed to create data folder.");
+            Debug.LogError(error);
+            return new List<Level>();
+        }
 
-        if (directory == default) directory = Context.DataPath;
-        var jsonPaths = Directory.EnumerateDirectories(directory)
+        var jsonPaths = Directory.EnumerateDirectories(type.GetDataPath())
             .SelectMany(it => Directory.EnumerateFiles(it, "level.json"))
             .ToList();
-        Debug.Log($"Found {jsonPaths.Count} levels");
+        Debug.Log($"Found {jsonPaths.Count} levels with type {type}");
 
-        return await LoadFromMetadataFiles(jsonPaths);
+        return await LoadFromMetadataFiles(type, jsonPaths);
     }
 
-    public async UniTask<List<Level>> LoadFromMetadataFiles(List<string> jsonPaths, bool forceReload = false)
+    public async UniTask<List<Level>> LoadFromMetadataFiles(LevelType type, List<string> jsonPaths, bool forceReload = false)
     {
         var results = new List<Level>();
         int index;
@@ -318,6 +328,16 @@ public class LevelManager
                     continue;
                 }
                 
+                if (LoadedLocalLevels.ContainsKey(meta.id))
+                {
+                    if (LoadedLocalLevels[meta.id].Type != LevelType.Community && type == LevelType.Community)
+                    {
+                        Debug.LogWarning($"Community level cannot override non-community level");
+                        Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {path}");
+                        continue;
+                    }
+                }
+                
                 OnLevelLoadProgress.Invoke(meta.id, index + 1, jsonPaths.Count);
 
                 // Sort charts
@@ -330,7 +350,6 @@ public class LevelManager
                     Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {path}");
                     continue;
                 }
-
 
                 var isLibrary = Context.Library.Levels.ContainsKey(meta.id);
                 DateTime addedDate;
@@ -349,12 +368,12 @@ public class LevelManager
                 }
                 
                 var level = new Level(path, 
-                    isLibrary,
+                    type,
                     meta,
                     addedDate,
                     Context.LocalPlayer.GetLastPlayedDate(meta.id)
                 );
-
+                
                 LoadedLocalLevels[meta.id] = level;
                 loadedPaths.Add(jsonPath);
                 results.Add(level);
@@ -506,7 +525,6 @@ public class LevelManager
 
     public void DownloadAndUnpackLevelDialog(
         Level level,
-        string directory = default,
         bool allowAbort = true,
         Action onDownloadSucceeded = default,
         Action onDownloadAborted = default,
@@ -520,7 +538,6 @@ public class LevelManager
             Toast.Next(Toast.Status.Failure, "TOAST_SIGN_IN_REQUIRED".Get());
             return;
         }
-        if (directory == default) directory = Context.DataPath;
         if (onDownloadSucceeded == default) onDownloadSucceeded = () => { };
         if (onDownloadAborted == default) onDownloadAborted = () => { };
         if (onDownloadFailed == default) onDownloadFailed = () => { };
@@ -538,7 +555,19 @@ public class LevelManager
         var downloading = false;
         var aborted = false;
         var targetFile = $"{Application.temporaryCachePath}/Downloads/{level.Id}.cytoidlevel";
-        var destFolder = $"{directory}/{level.Id}";
+        var destFolder = $"{level.Type.GetDataPath()}/{level.Id}";
+        
+        try
+        {
+            Directory.CreateDirectory(destFolder);
+        }
+        catch (Exception error)
+        {
+            Debug.LogError("Failed to create level folder.");
+            Debug.LogError(error);
+            onDownloadFailed();
+            return;
+        }
 
         if (level.IsLocal)
         {
@@ -612,7 +641,7 @@ public class LevelManager
                 try
                 {
                     level =
-                        (await Context.LevelManager.LoadFromMetadataFiles(new List<string> {destFolder + "/level.json"}, true))
+                        (await Context.LevelManager.LoadFromMetadataFiles(level.Type, new List<string> {destFolder + "/level.json"}, true))
                         .First();
                     onUnpackSucceeded(level);
                 }

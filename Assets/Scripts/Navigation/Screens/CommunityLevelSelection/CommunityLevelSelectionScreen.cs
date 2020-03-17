@@ -220,7 +220,7 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
     {
         if (!append) scrollRect.ClearCells();
         scrollRect.totalCount = content.OnlineLevels.Count;
-        scrollRect.objectsToFill = content.OnlineLevels.Select(it => it.ToLevel()).Cast<object>().ToArray();
+        scrollRect.objectsToFill = content.OnlineLevels.Select(it => it.ToLevel(LevelType.Community)).Cast<object>().ToArray();
         if (append) scrollRect.RefreshCells();
         else scrollRect.RefillCells();
         if (content.OnlineLevels.Count <= 9 && content.PageLoaded == 0)

@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using DG.Tweening;
 using Newtonsoft.Json;
 using Proyecto26;
 using UniRx;
@@ -11,7 +10,7 @@ using UniRx.Triggers;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class TierSelectionScreen : Screen, ScreenChangeListener
+public class TierSelectionScreen : Screen
 {
     public const string Id = "TierSelection";
     public static Content SavedContent;
@@ -39,7 +38,6 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
     {
         base.OnScreenInitialized();
         
-        Context.ScreenManager.AddHandler(this);
         scrollRect.OnBeginDragAsObservable().Subscribe(_ => { OnBeginDrag(); });
         scrollRect.OnEndDragAsObservable().Subscribe(_ => { OnEndDrag(); });
         
@@ -56,13 +54,6 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         startButton.interactableMonoBehavior.onPointerClick.AddListener(_ => OnStartButton());
     }
 
-    public override void OnScreenDestroyed()
-    {
-        base.OnScreenDestroyed();
-
-        Context.ScreenManager.RemoveHandler(this);
-    }
-
     public override async void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
@@ -75,7 +66,7 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         scrollRectContentLayoutGroup.padding = padding;
         
         SpinnerOverlay.Show();
-        await Context.LevelManager.LoadLevelsOfType(LevelType.Tier, false);
+        await Context.LevelManager.LoadLevelsOfType(LevelType.Tier);
 
         RestClient.Get(new RequestHelper
         {
@@ -83,7 +74,7 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
             Headers = Context.OnlinePlayer.GetAuthorizationHeaders()
         }).Then(res =>
         {
-            print(res.Text);
+            print("TierSelection: " + res.Text);
             var season = JsonConvert.DeserializeObject<Season>(res.Text);
             SavedContent = new Content {season = season};
             OnContentLoaded(SavedContent);
@@ -170,7 +161,7 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         {
             var toTierCard = tierCards
                 .FindAll(it => !it.Tier.isScrollRectFix)
-                .MinBy(it => Math.Abs(it.rectTransform.GetScreenSpaceCenter().y - ScreenCenter.y));
+                .MinBy(it => Math.Abs(it.rectTransform.GetScreenSpaceCenter(it.canvas).y - ScreenCenter.y));
             scrollRect.SrollToCell(toTierCard.Index, 1024);
             selectedTierCard = toTierCard;
             OnTierSelected(toTierCard.Tier);
@@ -179,7 +170,7 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         {
             Debug.LogWarning(e);
             print(tierCards.Count);
-            tierCards.FindAll(it => !it.Tier.isScrollRectFix).ForEach(it => print(Math.Abs(it.rectTransform.GetScreenSpaceCenter().y - ScreenCenter.y)));
+            tierCards.FindAll(it => !it.Tier.isScrollRectFix).ForEach(it => print(Math.Abs(it.rectTransform.GetScreenSpaceCenter(it.canvas).y - ScreenCenter.y)));
         }
 
         snapCoroutine = null;
@@ -306,15 +297,13 @@ public class TierSelectionScreen : Screen, ScreenChangeListener
         OnTierSelected(SelectedTier);
     }
 
-    public void OnScreenChangeStarted(Screen from, Screen to)
+    public override void OnScreenChangeFinished(Screen from, Screen to)
     {
-    }
-
-    public void OnScreenChangeFinished(Screen from, Screen to)
-    {
+        base.OnScreenChangeFinished(from, to);
         if (from == this && to != null && !(to is ProfileScreen))
         {
             scrollRect.ClearCells();
+            Context.LevelManager.UnloadLevelsOfType(LevelType.Tier);
             Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalCoverThumbnail);
             Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.OnlineCoverThumbnail);
             Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.CharacterThumbnail);

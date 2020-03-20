@@ -60,8 +60,6 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
             if (State != ScreenState.Active) return;
             RefillLevels(true);
         });
-        
-        Context.ScreenManager.AddHandler(this);
     }
 
     public override async void OnScreenBecameActive()
@@ -70,7 +68,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         RefillLevels();
         if (savedScrollPosition > 0)
         {
-            scrollRect.verticalNormalizedPosition = savedScrollPosition;
+            scrollRect.SetVerticalNormalizedPositionFix(savedScrollPosition);
         }
 
         if (SavedContent != null)
@@ -90,8 +88,6 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         base.OnScreenDestroyed();
 
         Destroy(scrollRect);
-
-        Context.ScreenManager.RemoveHandler(this);
     }
 
     public void RefillLevels(bool saveScrollPosition = false)
@@ -125,7 +121,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
 
         if (saveScrollPosition)
         {
-            scrollRect.verticalNormalizedPosition = savedScrollPosition;
+            scrollRect.SetVerticalNormalizedPositionFix(savedScrollPosition);
         }
     }
 
@@ -201,8 +197,9 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         scrollRect.RefillCells();
     }
 
-    public void OnScreenChangeStarted(Screen from, Screen to)
+    public override void OnScreenChangeStarted(Screen from, Screen to)
     {
+        base.OnScreenChangeStarted(from, to);
         if (from is MainMenuScreen && to == this)
         {
             // Clear search query
@@ -219,8 +216,9 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         }
     }
 
-    public void OnScreenChangeFinished(Screen from, Screen to)
+    public override void OnScreenChangeFinished(Screen from, Screen to)
     {
+        base.OnScreenChangeFinished(from, to);
         if (from == this)
         {
             Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalCoverThumbnail);

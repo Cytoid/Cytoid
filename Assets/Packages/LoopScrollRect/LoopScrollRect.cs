@@ -3,6 +3,7 @@ using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using System;
 using System.Collections;
+using UnityEngine.Serialization;
 
 namespace UnityEngine.UI
 {
@@ -42,7 +43,7 @@ namespace UnityEngine.UI
         // EDIT: Cytoid
         public int StartItemIndex => itemTypeStart;
         public int EndItemIndex => itemTypeEnd;
-        public float thresholdMultiplier = 1.5f;
+        [FormerlySerializedAs("newItemThresholdMultiplier")] public float thresholdMultiplier = 1.5f;
         // End of EDIT
         
         protected int itemTypeStart = 0;
@@ -341,12 +342,12 @@ namespace UnityEngine.UI
         }
         
         // EDIT: Cytoid
-        protected virtual float GetTopPadding()
+        public virtual float GetTopPadding()
         {
             return 0;
         }
 
-        protected virtual float GetBottomPadding()
+        public virtual float GetBottomPadding()
         {
             return 0;
         }
@@ -1025,7 +1026,7 @@ namespace UnityEngine.UI
                 //==========LoopScrollRect==========
                 if(totalCount > 0 && itemTypeEnd > itemTypeStart)
                 {
-                    //TODO: consider contentSpacinge
+                    //TODO: consider contentSpacing
                     float elementSize = m_ContentBounds.size.y / CurrentLines;
                     float totalSize = elementSize * TotalLines;
                     float offset = m_ContentBounds.max.y + elementSize * StartLine;
@@ -1043,7 +1044,23 @@ namespace UnityEngine.UI
                 SetNormalizedPosition(value, 1);
             }
         }
-        
+
+        // EDIT: Cytoid
+        public void SetVerticalNormalizedPositionFix(float value)
+        {
+            verticalNormalizedPosition = value;
+            const int maxRetries = 100;
+            var retries = 0;
+            while (retries < maxRetries && Mathf.Abs(verticalNormalizedPosition - value) >= 0.001f)
+            {
+                retries++;
+                var dy = verticalNormalizedPosition - value;
+                verticalNormalizedPosition -= dy;
+            }
+                
+        }
+        // EDIT: Cytoid
+
         private void SetHorizontalNormalizedPosition(float value) { SetNormalizedPosition(value, 0); }
         private void SetVerticalNormalizedPosition(float value) { SetNormalizedPosition(value, 1); }
 

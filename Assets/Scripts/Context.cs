@@ -156,7 +156,7 @@ public class Context : SingletonMonoBehavior<Context>
         Localization.Instance.SelectLanguage((Language) LocalPlayer.Language);
         OnLanguageChanged.Invoke();
 
-        await RemoteResourceManager.UpdateCatalog(); // TODO TODO
+        await RemoteResourceManager.UpdateCatalog(); // TODO TODO TODO!!!
         if (!await CharacterManager.SetActiveCharacter(CharacterManager.SelectedCharacterAssetId))
         {
             // Reset to default
@@ -167,10 +167,6 @@ public class Context : SingletonMonoBehavior<Context>
         if (SceneManager.GetActiveScene().name == "Navigation")
         {
             await UniTask.WaitUntil(() => ScreenManager != null);
-            if (false)
-            {
-                ScreenManager.ChangeScreen(CharacterSelectionScreen.Id, ScreenTransition.None);
-            }
             
             if (true)
             {
@@ -179,9 +175,9 @@ public class Context : SingletonMonoBehavior<Context>
             
             if (false)
             {
-                ScreenManager.ChangeScreen(TierSelectionScreen.Id, ScreenTransition.None);
+                ScreenManager.ChangeScreen(TrainingSelectionScreen.Id, ScreenTransition.None);
             }
-            
+
             if (false)
             {
                 // Load f.fff

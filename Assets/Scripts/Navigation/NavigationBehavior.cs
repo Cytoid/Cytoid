@@ -28,7 +28,7 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
                 var lastLoadedLevel = loadedLevels.Last();
                 
                 // Switch to that level
-                while (Context.ScreenManager.PeekHistory() != MainMenuScreen.Id)
+                while (Context.ScreenManager.PeekHistory().Let(it => it != null && it != MainMenuScreen.Id))
                 {
                     Context.ScreenManager.PopAndPeekHistory();
                 }

@@ -302,10 +302,9 @@ public class TierResultScreen : Screen, ScreenChangeListener
             });
     }
     
-    public void OnScreenChangeStarted(Screen from, Screen to) => Expression.Empty();
-
-    public void OnScreenChangeFinished(Screen from, Screen to)
+    public override void OnScreenChangeFinished(Screen from, Screen to)
     {
+        base.OnScreenChangeFinished(from, to);
         if (from == this)
         {
             // Dispose game cover

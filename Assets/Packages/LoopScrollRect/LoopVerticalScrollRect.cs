@@ -1,6 +1,8 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using UnityEditor;
 
 namespace UnityEngine.UI
 {
@@ -8,7 +10,9 @@ namespace UnityEngine.UI
     [DisallowMultipleComponent]
     public class LoopVerticalScrollRect : LoopScrollRect
     {
-        private VerticalLayoutGroup contentVerticalLayoutGroup; // EDIT: Cytoid
+        public LayoutGroup contentLayoutGroup; // EDIT: Cytoid
+        public Bounds viewBounds;
+        public Bounds contentBounds;
 
         protected override float GetSize(RectTransform item)
         {
@@ -46,19 +50,19 @@ namespace UnityEngine.UI
             }
             
             // EDIT: Cytoid
-            contentVerticalLayoutGroup = content.GetComponent<VerticalLayoutGroup>();
+            contentLayoutGroup = content.GetComponent<LayoutGroup>();
             // End of EDIT
         }
         
         // EDIT: Cytoid
-        protected override float GetTopPadding()
+        public override float GetTopPadding()
         {
-            return contentVerticalLayoutGroup?.padding.top ?? 0;
+            return contentLayoutGroup?.padding.top ?? 0;
         }
 
-        protected override float GetBottomPadding()
+        public override float GetBottomPadding()
         {
-            return contentVerticalLayoutGroup?.padding.bottom ?? 0;
+            return contentLayoutGroup?.padding.bottom ?? 0;
         }
         // End of EDIT
 
@@ -67,13 +71,15 @@ namespace UnityEngine.UI
             bool changed = false;
 
             // EDIT: Cytoid
+            this.viewBounds = viewBounds;
+            this.contentBounds = contentBounds;
             float dBottom = GetBottomPadding(), dTop = GetTopPadding();
             // End of EDIT
 
-            if (viewBounds.min.y < contentBounds.min.y + dBottom) // EDIT: Cytoid
+            if (viewBounds.min.y < contentBounds.min.y + dBottom * thresholdMultiplier) // EDIT: Cytoid
             {
                 float size = NewItemAtEnd(), totalSize = size;
-                while (size > 0 && viewBounds.min.y < contentBounds.min.y - totalSize)
+                while (size > 0 && viewBounds.min.y < contentBounds.min.y + dBottom * thresholdMultiplier - totalSize)
                 {
                     size = NewItemAtEnd();
                     totalSize += size;
@@ -82,10 +88,10 @@ namespace UnityEngine.UI
                     changed = true;
             }
 
-            if (viewBounds.max.y > contentBounds.max.y - dTop) // EDIT: Cytoid
+            if (viewBounds.max.y > contentBounds.max.y - dTop * thresholdMultiplier) // EDIT: Cytoid
             {
                 float size = NewItemAtStart(), totalSize = size;
-                while (size > 0 && viewBounds.max.y > contentBounds.max.y + totalSize)
+                while (size > 0 && viewBounds.max.y > contentBounds.max.y - dTop * thresholdMultiplier + totalSize)
                 {
                     size = NewItemAtStart();
                     totalSize += size;
@@ -94,10 +100,10 @@ namespace UnityEngine.UI
                     changed = true;
             }
 
-            if (viewBounds.min.y > contentBounds.min.y + threshold)
+            if (viewBounds.min.y > contentBounds.min.y + dBottom * thresholdMultiplier + threshold)
             {
                 float size = DeleteItemAtEnd(), totalSize = size;
-                while (size > 0 && viewBounds.min.y > contentBounds.min.y + threshold + totalSize)
+                while (size > 0 && viewBounds.min.y > contentBounds.min.y + dBottom + threshold + totalSize)
                 {
                     size = DeleteItemAtEnd();
                     totalSize += size;
@@ -106,10 +112,10 @@ namespace UnityEngine.UI
                     changed = true;
             }
 
-            if (viewBounds.max.y < contentBounds.max.y - threshold)
+            if (viewBounds.max.y < contentBounds.max.y - dTop * thresholdMultiplier - threshold)
             {
                 float size = DeleteItemAtStart(), totalSize = size;
-                while (size > 0 && viewBounds.max.y < contentBounds.max.y - threshold - totalSize)
+                while (size > 0 && viewBounds.max.y < contentBounds.max.y - dTop - threshold - totalSize)
                 {
                     size = DeleteItemAtStart();
                     totalSize += size;
@@ -121,4 +127,32 @@ namespace UnityEngine.UI
             return changed;
         }
     }
+    
+    /* Cytoid: start */
+#if UNITY_EDITOR
+    [CustomEditor(typeof(LoopVerticalScrollRect))]
+    public class LoopVerticalScrollRectEditor : Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            DrawDefaultInspector();
+
+            if (Application.isPlaying)
+            {
+                var t = (LoopVerticalScrollRect) target;
+                GUILayout.Label($"ViewBounds: ({t.viewBounds.min.y}, {t.viewBounds.max.y})");
+                GUILayout.Label($"ContentBounds: ({t.contentBounds.min.y}, {t.contentBounds.max.y})");
+                GUILayout.Label($"Top/Bottom padding: ({t.GetTopPadding()}, {t.GetBottomPadding()})");
+                GUILayout.Label($"contentBounds.max.y - dTop * thresholdMultiplier: {(t.contentBounds.max.y - t.GetTopPadding() * t.thresholdMultiplier)}");
+                GUILayout.Label("VerticalNormalizedPosition: " + t.verticalNormalizedPosition);
+                if (GUILayout.Button("Test"))
+                {
+                    t.verticalNormalizedPosition = t.verticalNormalizedPosition;
+                }
+                EditorUtility.SetDirty(target);
+            }
+        }
+    }
+#endif
+    /* Cytoid: end */
 }

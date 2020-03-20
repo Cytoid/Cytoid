@@ -24,6 +24,6 @@ public class CharacterMeta
 
     public OnlineLevel level;
     public string asset;
-    public OnlineImageAsset thumbnail;
+    public string tachieAsset;
     
 }

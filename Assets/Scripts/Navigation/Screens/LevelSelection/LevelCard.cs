@@ -141,7 +141,7 @@ public class LevelCard : InteractableMonoBehavior
                 {
                     if (cover == null) return;
                     cover.sprite = sprite;
-                    cover.DOFade(0.5f, 0.2f);
+                    cover.DOFade(0.7f, 0.2f);
                     cover.FitSpriteAspectRatio();
                     loadedCover = true;
                 }
@@ -188,7 +188,7 @@ public class LevelCard : InteractableMonoBehavior
         }
         actionToken?.Cancel();
         base.OnPointerUp(eventData);
-        if (loadedCover) cover.DOFade(0.5f, 0.2f).SetEase(Ease.OutCubic);
+        if (loadedCover) cover.DOFade(0.7f, 0.2f).SetEase(Ease.OutCubic);
         // cover.rectTransform.DOScale(1.0f, 0.2f).SetEase(Ease.OutCubic);
     }
 
@@ -202,7 +202,7 @@ public class LevelCard : InteractableMonoBehavior
 
             if (Context.ScreenManager.ActiveScreen is CharacterSelectionScreen)
             {
-                while (Context.ScreenManager.PeekHistory() != MainMenuScreen.Id)
+                while (Context.ScreenManager.PeekHistory().Let(it => it != null && it != MainMenuScreen.Id))
                 {
                     Context.ScreenManager.PopAndPeekHistory();
                 }

@@ -280,8 +280,7 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
             }
 
             onFinished?.Invoke(newScreen);
-            if (lastScreen != null)
-                foreach (var listener in screenChangeListeners)
+            foreach (var listener in screenChangeListeners)
                     listener.OnScreenChangeFinished(lastScreen, newScreen);
         }
 

@@ -40,13 +40,11 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
 
     public override string GetId() => Id;
 
-    private bool willStart;
     private bool willCalibrate;
 
     public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
-        Context.ScreenManager.AddHandler(this);
         actionTabs.OnTabChanged.AddListener(async (prev, next) => 
         {
             if (!initializedSettingsTab && next.index == 3)
@@ -268,7 +266,6 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
     {
         base.OnScreenDestroyed();
         cover.image.color = Color.black;
-        Context.ScreenManager.RemoveHandler(this);
     }
 
     public override void OnScreenBecameInactive()
@@ -285,10 +282,9 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         };
     }
 
-    public void OnScreenChangeStarted(Screen @from, Screen to) => Expression.Empty();
-
-    public void OnScreenChangeFinished(Screen from, Screen to)
+    public override void OnScreenChangeFinished(Screen from, Screen to)
     {
+        base.OnScreenChangeFinished(from, to);
         if (from == this && to != null && !(to is ProfileScreen))
         {
             // Unload resources
@@ -301,7 +297,6 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
     {
         if (Level.IsLocal)
         {
-            willStart = true;
             Context.SelectedGameMode = 
                 willCalibrate ? GameMode.Calibration : 
                     Context.LocalPlayer.PlayRanked ? GameMode.Classic : GameMode.Practice;

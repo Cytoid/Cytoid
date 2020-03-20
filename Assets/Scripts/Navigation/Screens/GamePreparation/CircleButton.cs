@@ -32,7 +32,6 @@ public class CircleButton : MonoBehaviour, ScreenInitializedListener, ScreenBeca
     {
         if (scheduledPulse != null)
         {
-            scheduledPulse.startPulsingOnScreenBecameActive = false;
             scheduledPulse.NextPulseTime = long.MaxValue;
         }
     }

@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 using Proyecto26;
 using RSG;
 using UniRx;
+using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Events;
@@ -18,25 +19,66 @@ using Object = System.Object;
 
 public static class CommonExtensions
 {
+    public static float Clamp(this float f, float min, float max)
+    {
+        return Mathf.Max(min, Math.Min(max, f));
+    }
+    
+    public static float Clamp01(this float f)
+    {
+        return Clamp(f, 0, 1);
+    }
+    
+    public static HashSet<TSource> ToHashSet<TSource>(this IEnumerable<TSource> source)
+    {
+        return new HashSet<TSource>(source);
+    }
+    
+    public static List<(TK, TV)> RemoveAll<TK, TV>(this IDictionary<TK, TV> dictionary, Func<TV, bool> valuePredicate)
+    {
+        var removals = new List<(TK, TV)>();
+        foreach (var kv in dictionary.Where(kv => valuePredicate(kv.Value)).ToList())
+        {
+            removals.Add(kv.ToPair());
+            dictionary.Remove(kv.Key);
+        }
+        return removals;
+    }
+    
+    public static List<(TK, TV)> RemoveAll<TK, TV>(this IDictionary<TK, TV> dictionary, Func<TK, bool> valuePredicate)
+    {
+        var removals = new List<(TK, TV)>();
+        foreach (var kv in dictionary.Where(kv => valuePredicate(kv.Key)).ToList())
+        {
+            removals.Add(kv.ToPair());
+            dictionary.Remove(kv.Key);
+        }
+        return removals;
+    }
+
+    public static (TK, TV) ToPair<TK, TV>(this KeyValuePair<TK, TV> kv)
+    {
+        return (kv.Key, kv.Value);
+    }
 
     public static string ToHexString(this byte[] bytes)
     {
         return BitConverter.ToString(bytes).Replace("-", "");
     }
-    
+
     public static void Update(this HMAC hmac, byte[] bytes)
     {
         hmac.TransformBlock(bytes, 0, bytes.Length, null, 0);
     }
-    
+
     public static void Update(this HMAC hmac, string str)
     {
         Update(hmac, str.ToByteArray());
     }
-    
+
     public static void Finalize(this HMAC hmac)
     {
-        hmac.TransformFinalBlock(new byte[]{}, 0, 0);
+        hmac.TransformFinalBlock(new byte[] { }, 0, 0);
     }
 
     /*
@@ -46,7 +88,8 @@ public static class CommonExtensions
     {
         if (hex.Length % 2 != 0)
         {
-            throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, "The binary key cannot have an odd number of digits: {0}", hex));
+            throw new ArgumentException(string.Format(CultureInfo.InvariantCulture,
+                "The binary key cannot have an odd number of digits: {0}", hex));
         }
 
         var data = new byte[hex.Length / 2];
@@ -69,7 +112,7 @@ public static class CommonExtensions
         dictionary.Add(key, value);
         return dictionary;
     }
-    
+
     public static bool IsNullOrEmptyTrimmed(this string str)
     {
         return str == null || string.IsNullOrEmpty(str.Trim());
@@ -90,7 +133,7 @@ public static class CommonExtensions
             trans.gameObject.layer = layerNumber;
         }
     }
-    
+
     // Credits: https://forum.unity.com/threads/test-if-ui-element-is-visible-on-screen.276549/#post-5075102
     /// <summary>
     /// Counts the bounding box corners of the given RectTransform that are visible in screen space.
@@ -100,30 +143,35 @@ public static class CommonExtensions
     /// <param name="camera">Camera. Leave it null for Overlay Canvasses.</param>
     private static int CountCornersVisibleFrom(this RectTransform rectTransform, Camera camera = null)
     {
-        var screenBounds = new Rect(0f, 0f, UnityEngine.Screen.width, UnityEngine.Screen.height); // Screen space bounds (assumes camera renders across the entire screen)
+        var screenBounds =
+            new Rect(0f, 0f, UnityEngine.Screen.width,
+                UnityEngine.Screen.height); // Screen space bounds (assumes camera renders across the entire screen)
         var objectCorners = new Vector3[4];
         rectTransform.GetWorldCorners(objectCorners);
- 
+
         var visibleCorners = 0;
         foreach (var t in objectCorners)
         {
             Vector3 tempScreenSpaceCorner; // Cached
             if (camera != null)
-                tempScreenSpaceCorner = camera.WorldToScreenPoint(t); // Transform world space position of corner to screen space
+                tempScreenSpaceCorner =
+                    camera.WorldToScreenPoint(t); // Transform world space position of corner to screen space
             else
             {
                 // Debug.Log(rectTransform.gameObject.name+" :: "+objectCorners[i].ToString("F2"));
-                tempScreenSpaceCorner = t; // If no camera is provided we assume the canvas is Overlay and world space == screen space
+                tempScreenSpaceCorner =
+                    t; // If no camera is provided we assume the canvas is Overlay and world space == screen space
             }
- 
+
             if (screenBounds.Contains(tempScreenSpaceCorner)) // If the corner is inside the screen
             {
                 visibleCorners++;
             }
         }
+
         return visibleCorners;
     }
- 
+
     /// <summary>
     /// Determines if this RectTransform is fully visible.
     /// Works by checking if each bounding box corner of this RectTransform is inside the screen space view frustrum.
@@ -135,10 +183,10 @@ public static class CommonExtensions
     {
         if (!rectTransform.gameObject.activeInHierarchy)
             return false;
- 
+
         return CountCornersVisibleFrom(rectTransform, camera) == 4; // True if all 4 corners are visible
     }
- 
+
     /// <summary>
     /// Determines if this RectTransform is at least partially visible.
     /// Works by checking if any bounding box corner of this RectTransform is inside the screen space view frustrum.
@@ -150,10 +198,10 @@ public static class CommonExtensions
     {
         if (!rectTransform.gameObject.activeInHierarchy)
             return false;
- 
+
         return CountCornersVisibleFrom(rectTransform, camera) > 0; // True if any corners are visible
     }
-    
+
     // Credits: https://stackoverflow.com/a/11124118/2706176
     // Returns the human-readable file size for an arbitrary, 64-bit file size 
     // The default format is "0.### XB", e.g. "4.2 KB" or "1.434 GB"
@@ -196,12 +244,13 @@ public static class CommonExtensions
         {
             return bytes.ToString("0 B"); // Byte
         }
+
         // Divide by 1024 to get fractional value
         readable = readable / 1024;
         // Return formatted number with suffix
         return readable.ToString("0.## ") + suffix;
     }
-    
+
     public static string BoolToString(this bool b)
     {
         return b ? "true" : "false";
@@ -211,13 +260,13 @@ public static class CommonExtensions
     {
         return "#" + ColorUtility.ToHtmlStringRGB(color);
     }
-    
+
     public static int Mod(this int x, int m)
     {
         var r = x % m;
         return r < 0 ? r + m : r;
     }
-    
+
     public static Vector3 SetX(this Vector3 vector3, float x)
     {
         return new Vector3(x, vector3.y, vector3.z);
@@ -314,9 +363,10 @@ public static class CommonExtensions
         rectTransform.localPosition -= deltaPosition;
     }
 
-    public static Rect GetScreenSpaceRect(this RectTransform rectTransform)
+    /* Provide canvas to save GetComponent lookup. */
+    public static Rect GetScreenSpaceRect(this RectTransform rectTransform, Canvas canvas = default)
     {
-        var canvas = rectTransform.GetComponent<Canvas>();
+        if (canvas == default) canvas = rectTransform.GetComponent<Canvas>();
         if (canvas == null) canvas = rectTransform.GetComponentInParent<Canvas>();
         var camera = canvas.worldCamera;
         var corners = new Vector3[4];
@@ -334,12 +384,21 @@ public static class CommonExtensions
         return screenRect;
     }
 
-    public static Vector2 GetScreenSpaceCenter(this RectTransform rectTransform)
+    public static Vector2 GetScreenSpaceCenter(this RectTransform rectTransform, Canvas canvas = default)
     {
-        var rect = rectTransform.GetScreenSpaceRect();
+        var rect = rectTransform.GetScreenSpaceRect(canvas);
         return new Vector2((rect.xMin + rect.xMax) / 2f, (rect.yMin + rect.yMax) / 2f);
     }
 
+    public static Bounds GetScreenSpaceBounds(this RectTransform rectTransform, Canvas canvas = default)
+    {
+        var rect = rectTransform.GetScreenSpaceRect(canvas);
+        return new Bounds(
+            new Vector3((rect.xMin + rect.xMax) / 2f, (rect.yMin + rect.yMax) / 2f, 0),
+            new Vector3(rect.xMax - rect.xMin, rect.yMax - rect.yMin, 0)
+        );
+    }
+    
     public static void SetSize(this RectTransform rectTransform, Vector2 newSize)
     {
         var oldSize = rectTransform.rect.size;
@@ -454,6 +513,7 @@ public static class CommonExtensions
         {
             return s[0] - ('A' - 'a') + s.Substring(1);
         }
+
         return s;
     }
 
@@ -480,7 +540,7 @@ public static class CommonExtensions
     {
         return WithParam(url, new[] {("w", width.ToString()), ("h", height.ToString()), ("rt", "fill")});
     }
-    
+
     public static string WithImageCdn(this string url)
     {
         return url.Replace("assets.cytoid.io", "images.cytoid.io");
@@ -527,7 +587,7 @@ public static class CommonExtensions
         position = new Vector3(position.x, position.y, z);
         transform.position = position;
     }
-    
+
     public static void SetLocalScale(this Transform transform, float xyz)
     {
         transform.localScale = new Vector3(xyz, xyz, xyz);
@@ -563,6 +623,13 @@ public static class CommonExtensions
         var localPosition = transform.localPosition;
         localPosition = new Vector3(localPosition.x, y, localPosition.z);
         transform.localPosition = localPosition;
+    }
+    
+    public static void SetLocalEulerAnglesZ(this Transform transform, float z)
+    {
+        var eulerAngles = transform.localEulerAngles;
+        eulerAngles = new Vector3(eulerAngles.x, eulerAngles.y, z);
+        transform.localEulerAngles = eulerAngles;
     }
 
     public static HslColor ToHslColor(this Color color)

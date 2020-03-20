@@ -17,6 +17,12 @@ public class MainTranslucentImage : SingletonMonoBehavior<MainTranslucentImage>,
         if (hiddenOnStart) translucentImage.SetAlpha(0);
     }
 
+    protected override void OnDestroy()
+    {
+        base.OnDestroy();
+        Context.ScreenManager.RemoveHandler(this);
+    }
+
     private static readonly List<string> OverlayScreenIds = new List<string> {SignInScreen.Id, ProfileScreen.Id};
 
     public void Initialize()

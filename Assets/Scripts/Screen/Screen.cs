@@ -8,9 +8,10 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-[RequireComponent(typeof(RectTransform), typeof(CanvasGroup))]
-public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveListener
+[RequireComponent(typeof(RectTransform), typeof(Canvas), typeof(CanvasGroup))]
+public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveListener, ScreenChangeListener, ScreenEnterCompletedListener, ScreenLeaveCompletedListener
 {
+    public Canvas Canvas { get; set; }
     public RectTransform RectTransform { get; set; }
     public CanvasGroup CanvasGroup { get; set; }
     
@@ -68,15 +69,25 @@ public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveLi
     [HideInInspector] public UnityEvent onScreenInitialized = new UnityEvent();
     [HideInInspector] public UnityEvent onScreenBecameActive = new UnityEvent();
     [HideInInspector] public UnityEvent onScreenPostActive = new UnityEvent();
+    [HideInInspector] public UnityEvent onScreenEnterCompleted = new UnityEvent();
     [HideInInspector] public UnityEvent onScreenUpdate = new UnityEvent();
     [HideInInspector] public UnityEvent onScreenBecameInactive = new UnityEvent();
+    [HideInInspector] public UnityEvent onScreenLeaveCompleted = new UnityEvent();
     [HideInInspector] public UnityEvent onScreenDestroyed = new UnityEvent();
 
-    protected virtual void Awake()
+    protected virtual async void Awake()
     {
+        Canvas = GetComponent<Canvas>();
         CanvasGroup = GetComponent<CanvasGroup>();
         RectTransform = GetComponent<RectTransform>();
         Context.OnLanguageChanged.AddListener(() => rebuiltLayoutGroups = false);
+        if (Context.ScreenManager == null) await UniTask.WaitUntil(() => Context.ScreenManager != null);
+        Context.ScreenManager.AddHandler(this);
+    }
+
+    private void OnDestroy()
+    {
+        Context.ScreenManager.RemoveHandler(this);
     }
 
     protected void OnEnable()
@@ -89,8 +100,10 @@ public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveLi
         AddListener<ScreenInitializedListener>(obj, onScreenInitialized, it => it.OnScreenInitialized);
         AddListener<ScreenBecameActiveListener>(obj, onScreenBecameActive, it => it.OnScreenBecameActive);
         AddListener<ScreenPostActiveListener>(obj, onScreenPostActive, it => it.OnScreenPostActive);
+        AddListener<ScreenEnterCompletedListener>(obj, onScreenEnterCompleted, it => it.OnScreenEnterCompleted);
         AddListener<ScreenUpdateListener>(obj, onScreenUpdate, it => it.OnScreenUpdate);
         AddListener<ScreenBecameInactiveListener>(obj, onScreenBecameInactive, it => it.OnScreenBecameInactive);
+        AddListener<ScreenLeaveCompletedListener>(obj, onScreenLeaveCompleted, it => it.OnScreenLeaveCompleted);
         AddListener<ScreenDestroyedListener>(obj, onScreenDestroyed, it => it.OnScreenDestroyed);
     }
 
@@ -99,8 +112,10 @@ public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveLi
         RemoveListener<ScreenInitializedListener>(obj, onScreenInitialized, it => it.OnScreenInitialized);
         RemoveListener<ScreenBecameActiveListener>(obj, onScreenBecameActive, it => it.OnScreenBecameActive);
         RemoveListener<ScreenPostActiveListener>(obj, onScreenPostActive, it => it.OnScreenPostActive);
+        RemoveListener<ScreenEnterCompletedListener>(obj, onScreenEnterCompleted, it => it.OnScreenEnterCompleted);
         RemoveListener<ScreenUpdateListener>(obj, onScreenUpdate, it => it.OnScreenUpdate);
         RemoveListener<ScreenBecameInactiveListener>(obj, onScreenBecameInactive, it => it.OnScreenBecameInactive);
+        RemoveListener<ScreenLeaveCompletedListener>(obj, onScreenLeaveCompleted, it => it.OnScreenLeaveCompleted);
         RemoveListener<ScreenDestroyedListener>(obj, onScreenDestroyed, it => it.OnScreenDestroyed);
     }
 
@@ -109,8 +124,10 @@ public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveLi
         AddChildrenListener<ScreenInitializedListener>(onScreenInitialized, it => it.OnScreenInitialized);
         AddChildrenListener<ScreenBecameActiveListener>(onScreenBecameActive, it => it.OnScreenBecameActive);
         AddChildrenListener<ScreenPostActiveListener>(onScreenPostActive, it => it.OnScreenPostActive);
+        AddChildrenListener<ScreenEnterCompletedListener>(onScreenEnterCompleted, it => it.OnScreenEnterCompleted);
         AddChildrenListener<ScreenUpdateListener>(onScreenUpdate, it => it.OnScreenUpdate);
         AddChildrenListener<ScreenBecameInactiveListener>(onScreenBecameInactive, it => it.OnScreenBecameInactive);
+        AddChildrenListener<ScreenLeaveCompletedListener>(onScreenLeaveCompleted, it => it.OnScreenLeaveCompleted);
         AddChildrenListener<ScreenDestroyedListener>(onScreenDestroyed, it => it.OnScreenDestroyed);
     }
     
@@ -194,6 +211,32 @@ public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveLi
             rebuiltLayoutGroups = true;
             GetComponentsInChildren<LayoutGroup>().ForEach(it => LayoutFixer.Fix(it.transform));
         }
+    }
+
+    public virtual void OnScreenChangeStarted(Screen from, Screen to)
+    {
+    }
+
+    public virtual void OnScreenChangeFinished(Screen from, Screen to)
+    {
+        if (from == this)
+        {
+            OnScreenLeaveCompleted();
+        } 
+        else if (to == this)
+        {
+            OnScreenEnterCompleted();
+        }
+    }
+
+    public virtual void OnScreenEnterCompleted()
+    {
+        onScreenEnterCompleted.Invoke();
+    }
+
+    public virtual void OnScreenLeaveCompleted()
+    {
+        onScreenLeaveCompleted.Invoke();
     }
 }
 

@@ -65,6 +65,7 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
 
     public void PlayAudio(IntroloopAudio audio, float fadeInDuration = 0.8f, float crossfadeDuration = 0.8f)
     {
+        if (playingAudio == audio) return;
         var duration = playingAudio != null ? crossfadeDuration : fadeInDuration;
         if (PrintDebugMessages) print("LoopAudioPlayer: Played audio " + audio.name);
         playingAudio = audio;

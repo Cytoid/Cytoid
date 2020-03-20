@@ -90,10 +90,9 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
             {
                 savedScrollPosition = scrollRect.verticalNormalizedPosition;
                 OnContentLoaded(SavedContent);
-                scrollRect.verticalNormalizedPosition = savedScrollPosition;
+                scrollRect.SetVerticalNormalizedPositionFix(savedScrollPosition);
             }
         });
-        Context.ScreenManager.AddHandler(this);
     }
 
     public override void OnScreenBecameActive()
@@ -112,7 +111,7 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
                 OnContentLoaded(SavedContent);
                 if (savedScrollPosition > 0)
                 {
-                    scrollRect.verticalNormalizedPosition = savedScrollPosition;
+                    scrollRect.SetVerticalNormalizedPositionFix(savedScrollPosition);
                 }
             }
             else
@@ -138,7 +137,6 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
         base.OnScreenDestroyed();
 
         Destroy(scrollRect);
-        Context.ScreenManager.RemoveHandler(this);
     }
 
     public void LoadContent()
@@ -246,12 +244,9 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
         }
     }
 
-    public void OnScreenChangeStarted(Screen from, Screen to)
+    public override void OnScreenChangeFinished(Screen from, Screen to)
     {
-    }
-
-    public void OnScreenChangeFinished(Screen from, Screen to)
-    {
+        base.OnScreenChangeFinished(from, to);
         if (from == this)
         {
             scrollRect.ClearCells();

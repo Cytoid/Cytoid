@@ -23,7 +23,6 @@ public class SettingsScreen : Screen, ScreenChangeListener
     public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
-        Context.ScreenManager.AddHandler(this);
         
         contentTabs.onTabSelect.AddListener((index, _) =>
         {
@@ -105,16 +104,10 @@ public class SettingsScreen : Screen, ScreenChangeListener
         foreach (Transform child in advancedTab) Destroy(child.gameObject);
     }
 
-    public void OnScreenChangeStarted(Screen from, Screen to) => Expression.Empty();
-
-    public void OnScreenChangeFinished(Screen from, Screen to)
+    public override void OnScreenChangeFinished(Screen from, Screen to)
     {
+        base.OnScreenChangeFinished(from, to);
         if (from == this) DestroySettings();
     }
 
-    public override void OnScreenDestroyed()
-    {
-        base.OnScreenDestroyed();
-        Context.ScreenManager.RemoveHandler(this);
-    }
 }

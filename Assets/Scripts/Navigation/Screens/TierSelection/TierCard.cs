@@ -1,5 +1,4 @@
 using System;
-using System.Threading;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,7 +9,8 @@ public class TierCard : MonoBehaviour
     [GetComponent] public CanvasGroup canvasGroup;
     [GetComponent] public Canvas canvas;
 
-    public CharacterBackdrop characterBackdrop;
+    public GameObject characterRoot;
+    public CharacterDisplay characterDisplay;
     public TierGradientPane gradientPane;
     public TierStageCard[] stageCards;
     public GameObject lockedOverlayRoot;
@@ -21,22 +21,24 @@ public class TierCard : MonoBehaviour
     public GameObject criteriaHolder;
     public CriterionEntry criterionEntryPrefab;
     
-    public Image characterImage;
     public Image cardOverlayImage;
     
     public Tier Tier { get; private set; }
     public int Index { get; private set; }
     public bool IsScrollRectFix { get; set; }
-    
+
     private Vector2 screenCenter;
     private bool active;
     private bool fadedOut;
-    private CancellationTokenSource characterPreviewToken;
 
     private void Awake()
     {
         canvasGroup.alpha = 0;
-        characterImage.SetAlpha(0);
+    }
+
+    private void OnDestroy()
+    {
+        characterDisplay.Unload();
     }
 
     public void ScrollCellContent(object obj) => SetModel((Tier) obj);
@@ -64,10 +66,10 @@ public class TierCard : MonoBehaviour
             active = true;
             screenCenter = this.GetScreenParent<TierSelectionScreen>().ScreenCenter;
 
-            characterBackdrop.gameObject.SetActive(tier.Meta.character != null);
+            characterRoot.gameObject.SetActive(tier.Meta.character != null);
             if (tier.Meta.character != null)
             {
-                LoadCharacterPreview(tier.Meta.character.thumbnail.original);
+                characterDisplay.Load(tier.Meta.character.asset + "Tachie");
             }
 
             gradientPane.SetModel(tier);
@@ -102,59 +104,21 @@ public class TierCard : MonoBehaviour
         }
     }
 
-    public async void LoadCharacterPreview(string uri)
-    {
-        if (characterPreviewToken != null
-            && !characterPreviewToken.IsCancellationRequested)
-        {
-            characterPreviewToken.Cancel();
-            characterPreviewToken = null;
-        }
-        
-        characterPreviewToken = new CancellationTokenSource();
-        Sprite sprite;
-        try
-        {
-            sprite = await Context.AssetMemory.LoadAsset<Sprite>(
-                uri,
-                AssetTag.CharacterThumbnail,
-                characterPreviewToken.Token,
-                true);
-        }
-        catch
-        {
-            characterImage.sprite = null;
-            characterImage.SetAlpha(0);
-            return;
-        }
-
-        if (sprite != null)
-        {
-            characterImage.sprite = sprite;
-            characterImage.SetAlpha(1);
-        }
-    }
-
     public void ScrollCellReturn()
     {
         active = false;
-        if (characterPreviewToken != null
-            && !characterPreviewToken.IsCancellationRequested)
-        {
-            characterPreviewToken.Cancel();
-            characterPreviewToken = null;
-        }
+        characterDisplay.Unload();
     }
 
     public void Update()
     {
         if (!active || fadedOut) return;
-        var t = Mathf.Clamp01(Math.Abs(rectTransform.GetScreenSpaceCenter().y - screenCenter.y) / 540);
+        var t = Mathf.Clamp01(Math.Abs(rectTransform.GetScreenSpaceCenter(canvas).y - screenCenter.y) / 540);
         var a = 0.4f + Mathf.Lerp(0.8f, 0, t);
         cardOverlayImage.SetAlpha(1 - a);
-        if (characterImage.sprite != null)
+        if (characterDisplay.IsLoaded)
         {
-            characterImage.color = Color.Lerp(Color.white, Color.black, 1 - a);
+            characterDisplay.canvasGroup.alpha = 1 - a;
         }
         rectTransform.localScale = Vector3.one * (0.9f + Mathf.Lerp(0.1f, 0, t));
         if (t < 0.5f)
@@ -172,7 +136,7 @@ public class TierCard : MonoBehaviour
     public void OnTierStart()
     {
         fadedOut = true;
-        var t = Mathf.Clamp01(Math.Abs(rectTransform.GetScreenSpaceCenter().y - screenCenter.y) / 540);
+        var t = Mathf.Clamp01(Math.Abs(rectTransform.GetScreenSpaceCenter(canvas).y - screenCenter.y) / 540);
         if (t < 0.5f)
         {
             DOTween.Sequence()
@@ -182,9 +146,9 @@ public class TierCard : MonoBehaviour
         else
         {
             cardOverlayImage.DOFade(1, 0.4f);
-            if (characterImage.sprite != null)
+            if (characterDisplay.IsLoaded)
             {
-                characterImage.DOColor(Color.black, 0.4f);
+                characterDisplay.canvasGroup.DOFade(0, 0.4f);
             }
         }
     }

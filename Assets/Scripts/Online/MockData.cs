@@ -113,11 +113,8 @@ public static class MockData
                     character = new CharacterMeta
                     {
                         name = "まふまふ",
-                        thumbnail = new OnlineImageAsset
-                        {
-                            original =
-                                "https://assets.cytoid.io/static/characters/mafu/thumbnail.png"
-                        }
+                        asset = "Mafu",
+                        tachieAsset = "MafuTachie"
                     }
                 }
             },

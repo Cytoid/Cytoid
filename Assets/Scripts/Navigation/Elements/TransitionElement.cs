@@ -17,8 +17,8 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
     [HideInInspector] public UnityEvent onLeaveStarted = new UnityEvent();
     [HideInInspector] public UnityEvent onLeaveCompleted = new UnityEvent();
 
-    public RectTransform rectTransform;
-    public CanvasGroup canvasGroup;
+    [GetComponent] public RectTransform rectTransform;
+    [GetComponent] public CanvasGroup canvasGroup;
 
     public Transition enterFrom = Transition.Default;
     public float enterMultiplier = 1;
@@ -185,7 +185,14 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
 
         canvasGroup.alpha = toShow ? 0 : 1;
         canvasGroup.blocksRaycasts = toShow && !disableRaycasts;
-        canvasGroup.DOFade(toShow ? 1 : 0, duration);
+        if (duration > 0)
+        {
+            canvasGroup.DOFade(toShow ? 1 : 0, duration);
+        }
+        else
+        {
+            canvasGroup.alpha = toShow ? 1 : 0;
+        }
 
         if (toShow)
         {
@@ -308,8 +315,10 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
         UseCurrentStateAsDefault();
     }
 
-    public void OnScreenBecameActive() =>
-        Expression.Empty(); // Do nothing. Others are changing the layout groups at this time.
+    public void OnScreenBecameActive()
+    {
+        // Do not manipulate any layout. Others are changing the layout groups at this time.
+    }
 
     public async void OnScreenPostActive()
     {
@@ -339,6 +348,8 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
             Leave(false);
         }
     }
+    
+    
 
     public void OnScreenDestroyed() => Expression.Empty();
 }
@@ -351,21 +362,23 @@ public class TransitionElementEditor : Editor
     public override void OnInspectorGUI()
     {
         DrawDefaultInspector();
-        var component = (TransitionElement) target;
-
-        if (GUILayout.Button("Enter"))
+        if (Application.isPlaying)
         {
-            component.Enter();
-        }
+            var component = (TransitionElement) target;
+            if (GUILayout.Button("Enter"))
+            {
+                component.Enter();
+            }
 
-        if (GUILayout.Button("Leave"))
-        {
-            component.Leave();
-        }
+            if (GUILayout.Button("Leave"))
+            {
+                component.Leave();
+            }
 
-        if (GUILayout.Button("Use Current State As Default"))
-        {
-            component.UseCurrentStateAsDefault();
+            if (GUILayout.Button("Use Current State As Default"))
+            {
+                component.UseCurrentStateAsDefault();
+            }
         }
     }
 }

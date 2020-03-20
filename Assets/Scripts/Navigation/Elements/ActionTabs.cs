@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using DG.Tweening;
@@ -89,6 +90,11 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
     private void Start()
     {
         Context.ScreenManager.AddHandler(this);
+    }
+
+    private void OnDestroy()
+    {
+        Context.ScreenManager.RemoveHandler(this);
     }
 
     public void Close()

@@ -12,8 +12,8 @@ public class AssetMemory
 {
     private static readonly Dictionary<AssetTag, int> TagLimits = new Dictionary<AssetTag, int>
     {
-        {AssetTag.LocalCoverThumbnail, 18},
-        {AssetTag.OnlineCoverThumbnail, 18},
+        {AssetTag.LocalCoverThumbnail, 21},
+        {AssetTag.OnlineCoverThumbnail, 21},
         {AssetTag.PlayerAvatar, 1},
         {AssetTag.Avatar, 100},
         {AssetTag.GameCover, 1},
@@ -46,7 +46,7 @@ public class AssetMemory
 
     public bool HasCachedAsset<T>(string path) => GetCachedAsset<T>(path) != null;
 
-    public static bool PrintDebugMessages = true;
+    public static bool PrintDebugMessages = false;
 
     public async UniTask<T> LoadAsset<T>(string path, AssetTag tag, CancellationToken cancellationToken = default,
         bool useFileCache = false, AssetOptions options = default) where T : Object

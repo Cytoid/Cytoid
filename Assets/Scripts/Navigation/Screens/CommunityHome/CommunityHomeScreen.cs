@@ -68,15 +68,6 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
         base.OnScreenInitialized();
         
         searchInputField.onEndEdit.AddListener(SearchLevels);
-        
-        Context.ScreenManager.AddHandler(this);
-    }
-
-    public override void OnScreenDestroyed()
-    {
-        base.OnScreenDestroyed();
-
-        Context.ScreenManager.RemoveHandler(this);
     }
 
     public override void OnScreenBecameActive()
@@ -186,13 +177,10 @@ public class CommunityHomeScreen : Screen, ScreenChangeListener
         Context.ScreenManager.ChangeScreen(CommunityLevelSelectionScreen.Id, ScreenTransition.In);
     }
 
-    public void OnScreenChangeStarted(Screen from, Screen to)
+    public override void OnScreenChangeFinished(Screen from, Screen to)
     {
-    }
-
-    public void OnScreenChangeFinished(Screen from, Screen to)
-    {
-        if (from == this && to.GetId() == MainMenuScreen.Id)
+        base.OnScreenChangeFinished(from, to);
+        if (from == this && to is MainMenuScreen)
         {
             Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalCoverThumbnail);
             Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.OnlineCoverThumbnail);

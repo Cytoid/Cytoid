@@ -12,6 +12,11 @@ public interface ScreenBecameActiveListener
     void OnScreenBecameActive();
 }
 
+public interface ScreenEnterCompletedListener
+{
+    void OnScreenEnterCompleted();
+}
+
 public interface ScreenPostActiveListener
 {
     void OnScreenPostActive();
@@ -25,6 +30,11 @@ public interface ScreenUpdateListener
 public interface ScreenBecameInactiveListener
 {
     void OnScreenBecameInactive();
+}
+
+public interface ScreenLeaveCompletedListener
+{
+    void OnScreenLeaveCompleted();
 }
 
 public interface ScreenDestroyedListener

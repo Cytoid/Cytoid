@@ -20,7 +20,7 @@ public class CharacterSelectionScreen : Screen
     public Transform characterDesignerHolder;
     public Text characterDesignerText;
     public TransitionElement characterTransitionElement;
-    public CharacterHolder characterHolder;
+    public CharacterDisplay characterDisplay;
 
     public InteractableMonoBehavior helpButton;
     public InteractableMonoBehavior previousButton;
@@ -34,7 +34,7 @@ public class CharacterSelectionScreen : Screen
     public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
-        characterHolder.loadOnScreenBecameActive = false;
+        characterDisplay.loadOnScreenBecameActive = false;
         infoCard.enterOnScreenBecomeActive = characterTransitionElement.enterOnScreenBecomeActive = false;
         
         helpButton.onPointerClick.AddListener(_ =>
@@ -143,7 +143,7 @@ public class CharacterSelectionScreen : Screen
         }
 
         infoCard.transform.RebuildLayout();
-        characterHolder.Load();
+        characterDisplay.Load(CharacterAsset.GetTachieAssetId(meta.asset));
         
         infoCard.Enter();
         characterTransitionElement.Enter();

@@ -23,7 +23,7 @@ public class CharacterManager
         if (assetId == null) throw new ArgumentNullException();
         if (ActiveCharacterAssetId == assetId) return activeCharacterGameObject.GetComponent<CharacterAsset>();
 
-        var characterGameObject = await Context.RemoteResourceManager.LoadResource(assetId);
+        var characterGameObject = await Context.RemoteResourceManager.LoadLocalResource(assetId);
         if (characterGameObject == null) return null;
 
         if (activeCharacterGameObject != null)

@@ -257,15 +257,8 @@ public class LevelManager
         return true;
     }
 
-    public async UniTask<List<Level>> LoadLevelsOfType(LevelType type, bool clearExisting = true)
+    public async UniTask<List<Level>> LoadLevelsOfType(LevelType type)
     {
-        if (clearExisting)
-        {
-            LoadedLocalLevels.Clear();
-            loadedPaths.Clear();
-            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalCoverThumbnail);
-        }
-        
         try
         {
             Directory.CreateDirectory(type.GetDataPath());
@@ -283,6 +276,20 @@ public class LevelManager
         Debug.Log($"Found {jsonPaths.Count} levels with type {type}");
 
         return await LoadFromMetadataFiles(type, jsonPaths);
+    }
+
+    public void UnloadLevelsOfType(LevelType type)
+    {
+        var removals = LoadedLocalLevels.RemoveAll(level => level.Type == type);
+        var removedPaths = removals.Select(it => it.Item2.Path).ToHashSet();
+        loadedPaths.RemoveWhere(it => removedPaths.Contains(it));
+    }
+
+    public void UnloadAllLevels()
+    {
+        LoadedLocalLevels.Clear();
+        loadedPaths.Clear();
+        Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalCoverThumbnail);
     }
 
     public async UniTask<List<Level>> LoadFromMetadataFiles(LevelType type, List<string> jsonPaths, bool forceReload = false)

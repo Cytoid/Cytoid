@@ -135,10 +135,9 @@ public class ProfileScreen : Screen, ScreenChangeListener
         }).Catch(Debug.Log).Finally(() => SpinnerOverlay.Hide());
     }
 
-    public void OnScreenChangeStarted(Screen from, Screen to) => Expression.Empty();
-
-    public void OnScreenChangeFinished(Screen from, Screen to)
+    public override void OnScreenChangeFinished(Screen from, Screen to)
     {
+        base.OnScreenChangeFinished(from, to);
         if (from == this)
         {
             ClearLeaderboard();

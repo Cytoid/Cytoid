@@ -43,7 +43,6 @@ public class ResultScreen : Screen, ScreenChangeListener
     public override async void OnScreenInitialized()
     {
         base.OnScreenInitialized();
-        Context.ScreenManager.AddHandler(this);
 
         gameState = Context.GameState;
         if (gameState == null)
@@ -178,12 +177,6 @@ public class ResultScreen : Screen, ScreenChangeListener
         shareButton.onPointerClick.AddListener(_ => StartCoroutine(Share()));
 
         await Resources.UnloadUnusedAssets();
-    }
-
-    public override void OnScreenDestroyed()
-    {
-        base.OnScreenDestroyed();
-        Context.ScreenManager.RemoveHandler(this);
     }
 
     public override void OnScreenBecameActive()
@@ -359,7 +352,4 @@ public class ResultScreen : Screen, ScreenChangeListener
         lowerRightColumn.Enter();
     }
 
-    public void OnScreenChangeStarted(Screen from, Screen to) => Expression.Empty();
-
-    public void OnScreenChangeFinished(Screen from, Screen to) => Expression.Empty();
 }

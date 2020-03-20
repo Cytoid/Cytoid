@@ -8,4 +8,14 @@ public class CharacterAsset : MonoBehaviour
     public IntroloopAudio musicAudio;
     public ParallaxElement parallaxPrefab;
     public bool mirrorLayout;
+
+    public static string GetTachieAssetId(string characterAssetId)
+    {
+        return characterAssetId + "Tachie";
+    }
+}
+
+public interface AnimatedCharacter
+{
+    void OnEnter();
 }

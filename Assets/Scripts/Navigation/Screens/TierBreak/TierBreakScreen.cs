@@ -32,7 +32,6 @@ public class TierBreakScreen : Screen, ScreenChangeListener
     public override async void OnScreenInitialized()
     {
         base.OnScreenInitialized();
-        Context.ScreenManager.AddHandler(this);
         // TODO: Most code here is the same as the one in ResultScreen.cs. Refactor?
 
         gameState = Context.GameState;
@@ -139,12 +138,6 @@ public class TierBreakScreen : Screen, ScreenChangeListener
 
         await Resources.UnloadUnusedAssets();
     }
-    
-    public override void OnScreenDestroyed()
-    {
-        base.OnScreenDestroyed();
-        Context.ScreenManager.RemoveHandler(this);
-    }
 
     public override void OnScreenBecameActive()
     {
@@ -209,10 +202,9 @@ public class TierBreakScreen : Screen, ScreenChangeListener
         Context.AudioManager.Get("LevelStart").Play();
     }
 
-    public void OnScreenChangeStarted(Screen from, Screen to) => Expression.Empty();
-
-    public void OnScreenChangeFinished(Screen from, Screen to)
+    public override void OnScreenChangeFinished(Screen from, Screen to)
     {
+        base.OnScreenChangeFinished(from, to);
         if (from == this && to is TierSelectionScreen)
         {
             // Go back to tier selection, so clear game cover

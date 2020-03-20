@@ -56,7 +56,6 @@ public class TrainingSelectionScreen : Screen
     {
         base.OnScreenBecameInactive();
         savedScrollPosition = scrollRect.verticalNormalizedPosition;
-        print(savedScrollPosition);
     }
 
     public override void OnScreenDestroyed()

@@ -87106,7 +87106,7 @@ MonoBehaviour:
   enterMultiplier: 0.2
   enterDuration: 0.4
   enterEase: 9
-  enterDelay: 0.4
+  enterDelay: 0.2
   leaveTo: 5
   leaveMultiplier: 0.2
   leaveDuration: 0.4

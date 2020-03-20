@@ -215,7 +215,8 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
 
         ActiveScreenId = newScreen.GetId();
         newScreen.State = ScreenState.Active;
-        newScreen.CanvasGroup.blocksRaycasts = false; // Special handling
+        var blocksRaycasts = newScreen.CanvasGroup.blocksRaycasts;
+        newScreen.CanvasGroup.blocksRaycasts = blocksRaycasts; // Special handling
 
         if (newScreenTransitionDelay > 0)
         {
@@ -231,7 +232,7 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
             }
         }
 
-        newScreen.CanvasGroup.blocksRaycasts = true; // Special handling
+        newScreen.CanvasGroup.blocksRaycasts = blocksRaycasts; // Special handling
         newScreen.CanvasGroup.alpha = 0f;
         newScreen.CanvasGroup.DOFade(1f, duration);
         newScreen.RectTransform.DOLocalMove(Vector3.zero, duration);

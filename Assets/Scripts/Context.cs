@@ -357,15 +357,17 @@ public class Context : SingletonMonoBehavior<Context>
     {
         if (ScreenManager.ActiveScreenId != null)
         {
-            ScreenManager.ActiveScreen.CanvasGroup.interactable = ScreenManager.ActiveScreen.CanvasGroup.blocksRaycasts = blocksRaycasts;
+            ScreenManager.ActiveScreen.CanvasGroup.blocksRaycasts = blocksRaycasts;
+            ScreenManager.ActiveScreen.CanvasGroup.interactable = blocksRaycasts;
         }
         if (ProfileWidget.Instance != null)
         {
             var currentScreenId = ScreenManager.ActiveScreenId;
-            ProfileWidget.Instance.canvasGroup.interactable = ProfileWidget.Instance.canvasGroup.blocksRaycasts = 
-                blocksRaycasts 
-                && !ProfileWidget.HiddenScreenIds.Contains(currentScreenId) 
-                && !ProfileWidget.StaticScreenIds.Contains(currentScreenId);
+            blocksRaycasts = blocksRaycasts 
+                             && !ProfileWidget.HiddenScreenIds.Contains(currentScreenId) 
+                             && !ProfileWidget.StaticScreenIds.Contains(currentScreenId);
+            ProfileWidget.Instance.canvasGroup.blocksRaycasts = blocksRaycasts;
+            ProfileWidget.Instance.canvasGroup.interactable = blocksRaycasts;
         }
     }
 }

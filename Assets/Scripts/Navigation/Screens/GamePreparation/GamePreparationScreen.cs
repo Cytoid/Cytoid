@@ -1,6 +1,7 @@
 using System;
 using System.Linq.Expressions;
 using DG.Tweening;
+using Newtonsoft.Json;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,6 +9,7 @@ using UnityEngine.UI;
 public class GamePreparationScreen : Screen
 {
     public const string Id = "GamePreparation";
+    public const bool PrintDebugMessages = true;
 
     [GetComponent] public AudioSource previewAudioSource;
 
@@ -93,6 +95,17 @@ public class GamePreparationScreen : Screen
 
         var needReload = Level != Context.SelectedLevel;
         Level = Context.SelectedLevel;
+
+        if (PrintDebugMessages)
+        {
+            Debug.Log($"Id: {Level.Id}, Type: {Level.Type}");
+            Debug.Log($"IsLocal: {Level.IsLocal}, Path: {Level.Path}");
+            if (Level.OnlineLevel != null)
+            {
+                Debug.Log("OnlineLevel:");
+                Debug.Log(JsonConvert.SerializeObject(Level.OnlineLevel));
+            }
+        }
 
         if (Context.IsOnline())
         {

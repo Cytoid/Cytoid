@@ -9,6 +9,7 @@ public class CharacterDisplay : MonoBehaviour, ScreenBecameActiveListener, Scree
     public TransitionElement transitionElement;
     public bool loadOnScreenBecameActive = true;
     public bool loadActiveCharacter = true;
+    public bool enterTransitionElementOnEnter = true;
 
     public bool IsLoaded { get; private set; }
 
@@ -30,7 +31,7 @@ public class CharacterDisplay : MonoBehaviour, ScreenBecameActiveListener, Scree
 
     public void Enter()
     {
-        if (transitionElement != null)
+        if (transitionElement != null && enterTransitionElementOnEnter)
         {
             transitionElement.Leave(false, true);
             transitionElement.Enter();
@@ -57,7 +58,7 @@ public class CharacterDisplay : MonoBehaviour, ScreenBecameActiveListener, Scree
 
     private void Awake()
     {
-        if (transitionElement != null) transitionElement.enterOnScreenBecomeActive = false;
+        if (transitionElement != null && enterTransitionElementOnEnter) transitionElement.enterOnScreenBecomeActive = false;
     }
 
     public void OnScreenBecameActive()

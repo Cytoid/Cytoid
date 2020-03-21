@@ -170,6 +170,7 @@ public class CharacterSelectionScreen : Screen
         characterDisplay.Load(CharacterAsset.GetTachieAssetId(meta.AssetId));
 
         infoCard.Enter();
+        characterTransitionElement.Leave(false, true);
         characterTransitionElement.Enter();
         characterTransitionElement.Apply(it =>
         {

@@ -69,7 +69,7 @@ TOAST_SERVER_INTERNAL_ERROR		Server internal error.
 TOAST_TIER_CLEARED		Tier cleared.																															
 TOAST_TIER_NOT_FOUND		Tier not found.																															
 TOAST_TIER_VERIFICATION_FAILED		Tier verification failed.																															
-																																	
+TOAST_SWITCHED_TO_OFFLINE_MODE		Switched to offline mode.																															
 																																	
 																																	
 DIALOG_RATE_THIS_LEVEL		Rate this level!		Califique este nivel!			Avalie esse nível!		Оцените этот уровень!									このレベルを評価しよう！	给关卡打个分吧！	評分一下吧！	이 채보를 평가해주세요!									Hãy đánh giá level!	Markahan ang lebel	Beri nilai level ini!	打分啊111111

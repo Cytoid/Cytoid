@@ -3,7 +3,7 @@ using System;
 [Serializable]
 public class LevelRating
 {
-    public double average;
+    public double? average;
     public int total;
-    public int rating = -1;
+    public int? rating;
 }

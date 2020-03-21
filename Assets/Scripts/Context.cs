@@ -5,7 +5,6 @@ using System.Linq;
 using DG.Tweening;
 using LiteDB;
 using Polyglot;
-using RSG;
 using Tayx.Graphy;
 using UniRx.Async;
 using UnityEditor;
@@ -52,10 +51,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static readonly RemoteResourceManager RemoteResourceManager = new RemoteResourceManager();
     public static readonly AssetMemory AssetMemory = new AssetMemory();
 
-    public static LiteDatabase Database => new LiteDatabase(
-        $"Filename=\"{Path.Combine(Application.persistentDataPath, "Cytoid.db")}\";"
-        //+ $" Password={SecuredConstants.DbSecret}"
-    );
+    public static LiteDatabase Database;
 
     public static Level SelectedLevel
     {
@@ -106,6 +102,12 @@ public class Context : SingletonMonoBehavior<Context>
     private async void InitializeApplication()
     {
         Application.lowMemory += OnLowMemory;
+        Database = new LiteDatabase(
+            $"Filename=\"{Path.Combine(Application.persistentDataPath, "Cytoid.db")}\";"
+            //+ $" Password={SecuredConstants.DbSecret}"
+        );
+        Database.GetCollection<Profile>();
+        Database.GetCollection<CharacterMeta>();
 
         FontManager.LoadFonts();
 

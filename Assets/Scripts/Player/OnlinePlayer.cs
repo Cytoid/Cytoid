@@ -117,10 +117,7 @@ public class OnlinePlayer
         IsAuthenticated = false;
         
         // Drop user information in DB
-        using (var db = Context.Database)
-        {
-            db.DropCollection("characters");
-        }
+        Context.Database.DropCollection("characters");
     }
 
     public string Id
@@ -167,24 +164,24 @@ public class OnlinePlayer
             }).Then(profile =>
             {
                 LastProfile = profile;
-                using (var db = Context.Database)
+                Context.Database.Let(it =>
                 {
-                    db.DropCollection("profile");
-                    var col = db.GetCollection<Profile>("profile");
+                    it.DropCollection("profile");
+                    var col = it.GetCollection<Profile>("profile");
                     col.Insert(profile);
-                }
+                });
                 OnProfileChanged.Invoke(profile);
                 return profile;
             });
         }
         
         // Offline: Load from DB
-        using (var db = Context.Database)
+        return Context.Database.Let(it =>
         {
-            var col = db.GetCollection<Profile>("profile");
-            var result = col.FindOne(it => true);
+            var col = it.GetCollection<Profile>("profile");
+            var result = col.FindOne(x => true);
             return Promise<Profile>.Resolved(result);
-        }
+        });
     }
 
     public IPromise<(int, List<RankingEntry>)> GetLevelRankings(string levelId, string chartType)

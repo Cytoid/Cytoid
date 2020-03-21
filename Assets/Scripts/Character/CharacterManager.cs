@@ -78,25 +78,24 @@ public class CharacterManager
             {
                 Debug.Log(characters[0]);
                 // Save to DB
-                using (var db = Context.Database)
+                Context.Database.Let(it =>
                 {
-                    db.DropCollection("characters");
-                    var col = db.GetCollection<CharacterMeta>("characters");
+                    it.DropCollection("characters");
+                    var col = it.GetCollection<CharacterMeta>("characters");
                     col.Insert(characters);
-                }
-
+                });
+                
                 return characters.ToList();
             });
         }
 
         // Offline
-        using (var db = Context.Database)
+        return Context.Database.Let(it =>
         {
-            var col = db.GetCollection<CharacterMeta>("characters");
+            var col = it.GetCollection<CharacterMeta>("characters");
             var result = col.FindAll().ToList();
-            
             return Promise<List<CharacterMeta>>.Resolved(result);
-        }
+        });
     }
     
 }

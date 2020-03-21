@@ -10,6 +10,9 @@ public class MainMenuScreen : Screen
     public RectTransform layout;
     public Text freePlayText;
     public InteractableMonoBehavior aboutButton;
+
+    public Image upperLeftOverlayImage;
+    public Image rightOverlayImage;
     
     public override string GetId() => Id;
 
@@ -30,6 +33,10 @@ public class MainMenuScreen : Screen
     public override void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
+        
+        upperLeftOverlayImage.SetAlpha(Context.CharacterManager.GetActiveCharacterAsset().mainMenuUpperLeftOverlayAlpha);
+        rightOverlayImage.SetAlpha(Context.CharacterManager.GetActiveCharacterAsset().mainMenuRightOverlayAlpha);
+        
         TranslucentImageSource.Disabled = Context.LocalPlayer.GraphicsQuality == "low";
 
         freePlayText.text = "MAIN_LEVELS_LOADED".Get(Context.LevelManager.LoadedLocalLevels.Count);

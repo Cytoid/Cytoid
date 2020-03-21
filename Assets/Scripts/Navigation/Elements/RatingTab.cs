@@ -24,7 +24,7 @@ public class RatingTab : MonoBehaviour
         if (levelId != id) return;
         if (data.total > 0)
         {
-            ratingText.text = (data.average / 2.0).ToString("0.00");
+            ratingText.text = ((data.average ?? 0) / 2.0).ToString("0.00");
         }
         else
         {
@@ -35,7 +35,7 @@ public class RatingTab : MonoBehaviour
         rateLevelElement.rateButton.onPointerClick.RemoveAllListeners();
         rateLevelElement.rateButton.onPointerClick.AddListener(_ =>
         {
-            var dialog = RateLevelDialog.Instantiate(id, data.rating);
+            var dialog = RateLevelDialog.Instantiate(id, data.rating ?? -1);
             dialog.onLevelRated.AddListener(rating => OnLevelRatingUpdated(id, rating));
             dialog.Open();
         });

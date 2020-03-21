@@ -4,12 +4,15 @@ using UnityEngine;
 
 public class LayoutFixer : MonoBehaviour, ScreenPostActiveListener
 {
+
+    public bool updateTransitionElementDefaultState;
+    
     public void OnScreenPostActive()
     {
-        Fix(transform);
+        Fix(transform, updateTransitionElementDefaultState);
     }
 
-    public static async void Fix(Transform transform)
+    public static async void Fix(Transform transform, bool updateTransitionElementDefaultState = false)
     {
         var children = transform.GetComponentsInChildren<LayoutFixer>().ToList();
         for (var i = 1; i < 5; i++)
@@ -23,7 +26,7 @@ public class LayoutFixer : MonoBehaviour, ScreenPostActiveListener
             }
             await UniTask.DelayFrame(0);
         }
-        transform.GetComponent<TransitionElement>()?.UseCurrentStateAsDefault();
+        if (updateTransitionElementDefaultState) transform.GetComponent<TransitionElement>()?.UseCurrentStateAsDefault();
     }
 
 }

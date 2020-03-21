@@ -566,6 +566,11 @@ public static class CommonExtensions
     {
         action(on);
     }
+    
+    public static void Let<T>(this T on, Action<T> action)
+    {
+        action(on);
+    }
 
     public static TR Let<T, TR>(this T on, Func<T, TR> action)
     {

@@ -111,6 +111,7 @@ public class ProfileScreen : Screen, ScreenChangeListener
         if (Context.IsOnline())
         {
             Context.SetOffline(true);
+            Toast.Enqueue(Toast.Status.Success, "TOAST_SWITCHED_TO_OFFLINE_MODE".Get());
         }
         else
         {

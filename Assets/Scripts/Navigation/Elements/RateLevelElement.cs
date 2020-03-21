@@ -22,7 +22,7 @@ public class RateLevelElement : MonoBehaviour
     {
         if (data.total > 0)
         {
-            averageRatingText.text = (data.average / 2.0).ToString("0.00");
+            averageRatingText.text = ((data.average ?? 0) / 2.0).ToString("0.00");
             numRatingsText.text = $"{data.total} " + (data.total > 1 ? "GAME_PREP_RATINGS_UNIT_RATINGS" : "GAME_PREP_RATINGS_UNIT_RATING").Get();
         }
         else

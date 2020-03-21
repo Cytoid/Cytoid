@@ -34,7 +34,9 @@ public class TierStageCard : InteractableMonoBehavior
         difficultyBall.SetModel(Difficulty.Parse(level.Meta.charts[0].type), level.Meta.charts[0].difficulty);
         overlayGradient.SetGradient(gradient);
 
-        LayoutFixer.Fix(transform);
+        transform.RebuildLayout();
+        difficultyBall.gameObject.SetActive(false);
+        difficultyBall.gameObject.SetActive(true);
 
         LoadCover();
     }
@@ -64,7 +66,7 @@ public class TierStageCard : InteractableMonoBehavior
             }
             else
             {
-                var path = level.OnlineLevel.cover.stripe;
+                var path = level.OnlineLevel.Cover.StripeUrl;
                 sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.OnlineCoverThumbnail,
                     coverToken.Token, true, new SpriteAssetOptions(new []{ Context.ThumbnailWidth, Context.ThumbnailHeight }));
             }

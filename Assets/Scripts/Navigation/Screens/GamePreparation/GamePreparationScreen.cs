@@ -5,7 +5,7 @@ using UniRx.Async;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class GamePreparationScreen : Screen, ScreenChangeListener
+public class GamePreparationScreen : Screen
 {
     public const string Id = "GamePreparation";
 
@@ -23,6 +23,8 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
 
     public GameObject gameplayIcon;
     public GameObject settingsIcon;
+    public GameObject rankingsIcon;
+    public GameObject ratingIcon;
 
     public RadioGroup practiceModeToggle;
     
@@ -45,7 +47,7 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
     public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
-        actionTabs.OnTabChanged.AddListener(async (prev, next) => 
+        actionTabs.onTabChanged.AddListener(async (prev, next) => 
         {
             if (!initializedSettingsTab && next.index == 3)
             {
@@ -70,6 +72,9 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
 
         startButton.interactableMonoBehavior.onPointerClick.AddListener(_ => OnStartButton());
         
+        Context.LevelManager.OnLevelMetaUpdated.AddListener(OnLevelMetaUpdated);
+        Context.OnlinePlayer.OnLevelBestPerformanceUpdated.AddListener(OnLevelBestPerformanceUpdated);
+        
         Context.OnLanguageChanged.AddListener(() => initializedSettingsTab = false);
     }
 
@@ -89,30 +94,31 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
         var needReload = Level != Context.SelectedLevel;
         Level = Context.SelectedLevel;
 
-        rankingsTab.UpdateRankings(Level.Id, Context.SelectedDifficulty.Id);
-        ratingTab.UpdateLevelRating(Level.Id);
-        Context.LevelManager.OnLevelMetaUpdated.AddListener(OnLevelMetaUpdated);
-        Context.OnlinePlayer.OnLevelBestPerformanceUpdated.AddListener(OnLevelBestPerformanceUpdated);
-
-        var localVersion = Level.Meta.version;
-        Context.LevelManager.FetchLevelMeta(Level.Id, true).Then(it =>
+        if (Context.IsOnline())
         {
-            print($"Remote version: {it.version}, local version: {localVersion}");
-            if (it.version > Level.Meta.version)
+            rankingsTab.UpdateRankings(Level.Id, Context.SelectedDifficulty.Id);
+            ratingTab.UpdateLevelRating(Level.Id);
+            
+            var localVersion = Level.Meta.version;
+            Context.LevelManager.FetchLevelMeta(Level.Id, true).Then(it =>
             {
-                // Ask the user to update
-                var dialog = Dialog.Instantiate();
-                dialog.Message = "DIALOG_LEVEL_OUTDATED".Get();
-                dialog.UsePositiveButton = true;
-                dialog.UseNegativeButton = true;
-                dialog.OnPositiveButtonClicked = _ =>
+                print($"Remote version: {it.version}, local version: {localVersion}");
+                if (it.version > Level.Meta.version)
                 {
-                    DownloadAndUnpackLevel();
-                    dialog.Close();
-                };
-                dialog.Open();
-            }
-        });
+                    // Ask the user to update
+                    var dialog = Dialog.Instantiate();
+                    dialog.Message = "DIALOG_LEVEL_OUTDATED".Get();
+                    dialog.UsePositiveButton = true;
+                    dialog.UseNegativeButton = true;
+                    dialog.OnPositiveButtonClicked = _ =>
+                    {
+                        DownloadAndUnpackLevel();
+                        dialog.Close();
+                    };
+                    dialog.Open();
+                }
+            });
+        }
 
         LoadLevelPerformance();
         LoadLevelSettings();
@@ -127,6 +133,16 @@ public class GamePreparationScreen : Screen, ScreenChangeListener
     {
         gameplayIcon.SetActive(Level.IsLocal);
         settingsIcon.SetActive(Level.IsLocal);
+        if (Context.IsOnline())
+        {
+            rankingsIcon.SetActive(true);
+            ratingIcon.SetActive(true);
+        }
+        else
+        {
+            rankingsIcon.SetActive(false);
+            ratingIcon.SetActive(false);
+        }
     }
 
     private void UpdateStartButton()

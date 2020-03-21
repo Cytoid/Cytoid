@@ -65,7 +65,7 @@ public class Library
 
     private void OnLevelsLoaded(List<LibraryLevel> list)
     {
-        list.ForEach(it => Levels[it.level.uid] = it);
+        list.ForEach(it => Levels[it.level.Uid] = it);
     }
 
 }

@@ -30,6 +30,8 @@ public class ResultScreen : Screen, ScreenChangeListener
 
     public RankingsTab rankingsTab;
     public RatingTab ratingTab;
+    public GameObject rankingsIcon;
+    public GameObject ratingIcon;
 
     public InteractableMonoBehavior shareButton;
     public CircleButton nextButton;
@@ -186,20 +188,8 @@ public class ResultScreen : Screen, ScreenChangeListener
         TranslucentCover.Show(0.9f);
         ProfileWidget.Instance.Enter();
         upperRightColumn.Enter();
-
-        ratingTab.UpdateLevelRating(gameState.Level.Id)
-            .Then(it =>
-            {
-                if (it == null) return;
-                if (Context.OnlinePlayer.IsAuthenticated && it.rating <= 0 &&
-                    ScoreGrades.From(gameState.Score) >= ScoreGrade.A)
-                {
-                    // Invoke the rate dialog
-                    ratingTab.rateLevelElement.rateButton.onPointerClick.Invoke(null);
-                }
-            });
-
-        if (Context.OnlinePlayer.IsAuthenticated)
+        
+        if (Context.IsOnline() && Context.OnlinePlayer.IsAuthenticated)
         {
             UploadRecord();
         }
@@ -208,9 +198,30 @@ public class ResultScreen : Screen, ScreenChangeListener
             EnterControls();
         }
 
-        if (Context.LocalPlayer.PlayRanked && !Context.OnlinePlayer.IsAuthenticated)
+        if (Context.IsOnline())
         {
-            rankingsTab.UpdateRankings(gameState.Level.Id, gameState.Difficulty.Id);
+            rankingsIcon.SetActive(true);
+            ratingIcon.SetActive(true);
+            if (Context.LocalPlayer.PlayRanked && !Context.OnlinePlayer.IsAuthenticated)
+            {
+                rankingsTab.UpdateRankings(gameState.Level.Id, gameState.Difficulty.Id);
+            }
+            ratingTab.UpdateLevelRating(gameState.Level.Id)
+                .Then(it =>
+                {
+                    if (it == null) return;
+                    if (Context.OnlinePlayer.IsAuthenticated && it.rating <= 0 &&
+                        ScoreGrades.From(gameState.Score) >= ScoreGrade.A)
+                    {
+                        // Invoke the rate dialog
+                        ratingTab.rateLevelElement.rateButton.onPointerClick.Invoke(null);
+                    }
+                });
+        }
+        else
+        {
+            rankingsIcon.SetActive(false);
+            ratingIcon.SetActive(false);
         }
     }
 
@@ -273,7 +284,7 @@ public class ResultScreen : Screen, ScreenChangeListener
                     rankingsTab.UpdateRankings(gameState.Level.Id, gameState.Difficulty.Id);
                     Context.OnlinePlayer.FetchProfile();
                 }
-            ).Catch(error =>
+            ).CatchRequestError(error =>
             {
                 Debug.LogWarning(error.Response);
                 if (error.IsNetworkError)

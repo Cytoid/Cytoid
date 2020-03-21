@@ -16,9 +16,9 @@ public class OnlinePlayer
     public readonly LevelBestPerformanceUpdatedEvent OnLevelBestPerformanceUpdated =
         new LevelBestPerformanceUpdatedEvent();
 
-    public Profile LastProfile { get; private set; }
+    public Profile LastProfile { get; set; }
 
-    public bool IsAuthenticated { get; private set; }
+    public bool IsAuthenticated { get; set; }
 
     public bool IsAuthenticating { get; set; }
 
@@ -40,7 +40,7 @@ public class OnlinePlayer
                 {
                     JwtToken = session.token;
                     Debug.Log(session.token);
-                    Id = session.user.id;
+                    Id = session.user.Id;
                     return FetchProfile();
                 }
             ).Then(profile =>
@@ -51,7 +51,13 @@ public class OnlinePlayer
             }).Catch(result =>
             {
                 Debug.LogError(result);
-                JwtToken = null;
+                if (result is RequestException requestException)
+                {
+                    if (requestException.IsHttpError)
+                    {
+                        JwtToken = null;
+                    }
+                }
                 reject(result);
             }).Finally(() => IsAuthenticating = false);
         });
@@ -80,7 +86,7 @@ public class OnlinePlayer
                 {
                     JwtToken = session.token;
                     Debug.Log(session.token);
-                    Id = session.user.id;
+                    Id = session.user.Id;
                     return FetchProfile();
                 }
             ).Then(profile =>
@@ -91,7 +97,13 @@ public class OnlinePlayer
             }).Catch(result =>
             {
                 Debug.LogError(result);
-                JwtToken = null;
+                if (result is RequestException requestException)
+                {
+                    if (requestException.IsHttpError)
+                    {
+                        JwtToken = null;
+                    }
+                }
                 reject(result);
             }).Finally(() => IsAuthenticating = false);
         });
@@ -103,6 +115,12 @@ public class OnlinePlayer
         LastProfile = null;
         IsAuthenticating = false;
         IsAuthenticated = false;
+        
+        // Drop user information in DB
+        using (var db = Context.Database)
+        {
+            db.DropCollection("characters");
+        }
     }
 
     public string Id
@@ -137,18 +155,36 @@ public class OnlinePlayer
 
     public IPromise<Profile> FetchProfile(string uid = null)
     {
-        if (uid == null) uid = Uid;
-        return RestClient.Get<Profile>(new RequestHelper
+        if (Context.IsOnline())
         {
-            Uri = $"{Context.ApiUrl}/profile/{uid}/full",
-            Headers = GetAuthorizationHeaders(),
-            EnableDebug = true
-        }).Then(profile =>
+            // Online
+            if (uid == null) uid = Uid;
+            return RestClient.Get<Profile>(new RequestHelper
+            {
+                Uri = $"{Context.ApiUrl}/profile/{uid}/full",
+                Headers = GetAuthorizationHeaders(),
+                EnableDebug = true
+            }).Then(profile =>
+            {
+                LastProfile = profile;
+                using (var db = Context.Database)
+                {
+                    db.DropCollection("profile");
+                    var col = db.GetCollection<Profile>("profile");
+                    col.Insert(profile);
+                }
+                OnProfileChanged.Invoke(profile);
+                return profile;
+            });
+        }
+        
+        // Offline: Load from DB
+        using (var db = Context.Database)
         {
-            LastProfile = profile;
-            OnProfileChanged.Invoke(profile);
-            return profile;
-        });
+            var col = db.GetCollection<Profile>("profile");
+            var result = col.FindOne(it => true);
+            return Promise<Profile>.Resolved(result);
+        }
     }
 
     public IPromise<(int, List<RankingEntry>)> GetLevelRankings(string levelId, string chartType)
@@ -186,7 +222,7 @@ public class OnlinePlayer
                     for (var index = 0; index < data.Length; index++)
                     {
                         var entry = data[index];
-                        if (entry.owner.uid == Context.OnlinePlayer.Uid)
+                        if (entry.owner.Uid == Context.OnlinePlayer.Uid)
                         {
                             userRank = entry.rank;
                             userEntry = entry;

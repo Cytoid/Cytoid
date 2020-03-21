@@ -134,6 +134,7 @@ public class PulseElement : MonoBehaviour
         var equal = false;
         while (!equal)
         {
+            if (clone == null) return;
             clone.transform.RebuildLayout();
             equal = cloneRectTransform.rect == rectTransform.rect;
             await UniTask.Yield();

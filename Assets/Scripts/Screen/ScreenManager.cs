@@ -122,7 +122,7 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         Vector2? transitionFocus = null,
         Action<Screen> onFinished = null,
         bool willDestroy = false,
-        bool addToHistory = true
+        bool addTargetScreenToHistory = true
     )
     {
         if (ChangingToScreenId != null)
@@ -288,7 +288,7 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         if (duration > 0) Run.After(duration, Action);
         else Action();
         
-        if (addToHistory && (History.Count == 0 || History.Peek() != newScreen.GetId()))
+        if (addTargetScreenToHistory && (History.Count == 0 || History.Peek() != newScreen.GetId()))
         {
             print($"Adding {newScreen.GetId()} to history");
             History.Push(newScreen.GetId());

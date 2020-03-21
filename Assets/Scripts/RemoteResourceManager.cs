@@ -77,6 +77,7 @@ public class RemoteResourceManager
         Action onDownloadFailed = default
     )
     {
+        if (key == null) throw new ArgumentNullException(nameof(key));
         Debug.Log($"Requested remote resource {key}");
         
         // TODO: 1) Asset not found? 2) Network exception?

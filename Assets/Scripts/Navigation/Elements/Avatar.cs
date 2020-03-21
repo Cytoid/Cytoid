@@ -35,7 +35,7 @@ public class Avatar : InteractableMonoBehavior
         var token = asyncRequestToken;
 
         var sprite = await Context.AssetMemory.LoadAsset<Sprite>(
-            user.avatarURL?.WithSizeParam(64, 64) ?? user.avatar.small, 
+            user.AvatarUrl?.WithSizeParam(64, 64) ?? user.Avatar.SmallUrl, 
             AssetTag.Avatar,
             useFileCache: true
         );
@@ -50,7 +50,7 @@ public class Avatar : InteractableMonoBehavior
         {
             SetAvatarSprite(sprite);
         }
-        profileUrl = Context.WebsiteUrl + "/profile/" + user.uid;
+        profileUrl = Context.WebsiteUrl + "/profile/" + user.Uid;
     }
     
     public void SetAvatarSprite(Sprite sprite)

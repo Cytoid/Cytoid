@@ -253,7 +253,7 @@ public class TierResultScreen : Screen, ScreenChangeListener
                     rankingsTab.UpdateTierRankings(tierState.Tier.Id);
                     Context.OnlinePlayer.FetchProfile();
                 }
-            ).Catch(error =>
+            ).CatchRequestError(error =>
             {
                 Debug.LogWarning(error.Response);
                 if (error.IsNetworkError)

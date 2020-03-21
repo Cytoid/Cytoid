@@ -2117,6 +2117,7 @@ GameObject:
   - component: {fileID: 1057510475164258673}
   - component: {fileID: 2562624756453803359}
   - component: {fileID: 7679230901338082080}
+  - component: {fileID: 3454220134894276993}
   m_Layer: 5
   m_Name: CharacterDisplay
   m_TagString: Untagged
@@ -2214,9 +2215,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 11edecea1f414080b2df7a55205139b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  canvasGroup: {fileID: 3454220134894276993}
   transitionElement: {fileID: 0}
   loadOnScreenBecameActive: 0
   loadActiveCharacter: 0
+--- !u!225 &3454220134894276993
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7910043497302074707}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &8737716232672211554
 GameObject:
   m_ObjectHideFlags: 0

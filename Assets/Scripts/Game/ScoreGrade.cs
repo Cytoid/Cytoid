@@ -27,7 +27,7 @@ public static class ScoreGrades
         {
             grade = ScoreGrade.SSS;
         }
-        else if (score >= 1)
+        else if (score >= 1.5)
         {
             grade = ScoreGrade.AA;
         }

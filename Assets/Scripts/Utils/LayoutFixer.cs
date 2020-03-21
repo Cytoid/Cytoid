@@ -1,8 +1,6 @@
-using System;
 using System.Linq;
 using UniRx.Async;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class LayoutFixer : MonoBehaviour, ScreenPostActiveListener
 {
@@ -25,6 +23,7 @@ public class LayoutFixer : MonoBehaviour, ScreenPostActiveListener
             }
             await UniTask.DelayFrame(0);
         }
+        transform.GetComponent<TransitionElement>()?.UseCurrentStateAsDefault();
     }
 
 }

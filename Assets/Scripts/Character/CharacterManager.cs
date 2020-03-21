@@ -1,4 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using Proyecto26;
+using RSG;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.Events;
@@ -60,6 +64,41 @@ public class CharacterManager
             onDownloadFailed: () => success = false);
         return success;
     }
+
+    public RSG.IPromise<List<CharacterMeta>> GetAvailableCharactersMeta()
+    {
+        if (Context.IsOnline())
+        {
+            // Online
+            return RestClient.GetArray<CharacterMeta>(new RequestHelper
+            {
+                Uri = $"{Context.ServicesUrl}/characters",
+                Headers = Context.OnlinePlayer.GetAuthorizationHeaders()
+            }).Then(characters =>
+            {
+                Debug.Log(characters[0]);
+                // Save to DB
+                using (var db = Context.Database)
+                {
+                    db.DropCollection("characters");
+                    var col = db.GetCollection<CharacterMeta>("characters");
+                    col.Insert(characters);
+                }
+
+                return characters.ToList();
+            });
+        }
+
+        // Offline
+        using (var db = Context.Database)
+        {
+            var col = db.GetCollection<CharacterMeta>("characters");
+            var result = col.FindAll().ToList();
+            
+            return Promise<List<CharacterMeta>>.Resolved(result);
+        }
+    }
+    
 }
 
 public class ActiveCharacterSetEvent : UnityEvent<CharacterAsset>

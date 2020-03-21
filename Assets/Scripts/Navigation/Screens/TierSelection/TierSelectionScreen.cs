@@ -25,6 +25,7 @@ public class TierSelectionScreen : Screen
     public CircleButton startButton;
     public DepthCover cover;
 
+    public ActionTabs actionTabs;
     public RankingsTab rankingsTab;
     
     public Vector2 ScreenCenter { get; private set; }
@@ -52,6 +53,13 @@ public class TierSelectionScreen : Screen
         });
         
         startButton.interactableMonoBehavior.onPointerClick.AddListener(_ => OnStartButton());
+        Context.OnOfflineModeToggled.AddListener(offline =>
+        {
+            if (offline)
+            {
+                UnloadResources();
+            }
+        });
     }
 
     public override async void OnScreenBecameActive()
@@ -83,6 +91,13 @@ public class TierSelectionScreen : Screen
             Debug.LogError(error);
         }).Finally(() => SpinnerOverlay.Hide());
 
+        actionTabs.onTabChanged.AddListener((prev, next) =>
+        {
+            if (next.index == 0)
+            {
+                OnRankingsTab();
+            }   
+        });
         /*if (SavedContent != null)
         {
             OnContentLoaded(SavedContent);
@@ -110,12 +125,17 @@ public class TierSelectionScreen : Screen
                 var level = tier.Meta.stages[stage].ToLevel(LevelType.Tier);
                 tier.Meta.parsedStages.Add(level);
                 tier.Meta.validStages.Add(level.IsLocal && level.Type == LevelType.Tier &&
-                                          level.Meta.version == tier.Meta.stages[stage].version);
+                                          level.Meta.version == tier.Meta.stages[stage].Version);
             }
         }
 
         scrollRect.objectsToFill = tiers.Cast<object>().ToArray();
         scrollRect.RefillCells();
+        scrollRect.GetComponent<TransitionElement>().Apply(it =>
+        {
+            it.Leave(false, true);
+            it.Enter();
+        });
 
         StartCoroutine(SnapCoroutine());
     }
@@ -186,14 +206,17 @@ public class TierSelectionScreen : Screen
         if (tier.Meta.character != null)
         {
             lowerLeftColumn.Enter();
-            rewardCharacterName.text = tier.Meta.character.name;
+            rewardCharacterName.text = tier.Meta.character.Name;
         }
 
         if (!tier.locked)
         {
             lowerRightColumn.Enter();
             startButton.State = tier.StagesValid ? CircleButtonState.Start : CircleButtonState.Download;
+            startButton.StartPulsing();
         }
+        
+        rankingsTab.SetRanking(SelectedTier.rank ?? -1);
         
         asyncCoverToken = DateTime.Now;
 
@@ -207,7 +230,7 @@ public class TierSelectionScreen : Screen
         }
         else
         {
-            sprite = await Context.AssetMemory.LoadAsset<Sprite>(lastStage.OnlineLevel.cover.cover,
+            sprite = await Context.AssetMemory.LoadAsset<Sprite>(lastStage.OnlineLevel.Cover.CoverUrl,
                 AssetTag.TierCover, useFileCache: true);
         }
 
@@ -220,8 +243,11 @@ public class TierSelectionScreen : Screen
         {
             cover.OnCoverLoaded(sprite);
         }
+    }
 
-        rankingsTab.UpdateTierRankings(tier.Id);
+    private void OnRankingsTab()
+    {
+        rankingsTab.UpdateTierRankings(SelectedTier.Id);
     }
     
     public async void OnStartButton()
@@ -302,15 +328,20 @@ public class TierSelectionScreen : Screen
         base.OnScreenChangeFinished(from, to);
         if (from == this && to != null && !(to is ProfileScreen))
         {
-            scrollRect.ClearCells();
-            Context.LevelManager.UnloadLevelsOfType(LevelType.Tier);
-            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalCoverThumbnail);
-            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.OnlineCoverThumbnail);
-            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.CharacterThumbnail);
-            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.TierCover);
+            UnloadResources();
         }
     }
 
+    private void UnloadResources()
+    {
+        scrollRect.ClearCells();
+        Context.LevelManager.UnloadLevelsOfType(LevelType.Tier);
+        Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalCoverThumbnail);
+        Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.OnlineCoverThumbnail);
+        Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.CharacterThumbnail);
+        Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.TierCover);
+    }
+    
     public class Content
     {
         public Season season;

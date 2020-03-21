@@ -198,7 +198,7 @@ public class TierBreakScreen : Screen, ScreenChangeListener
     
     public void Finish()
     {
-        Context.ScreenManager.ChangeScreen(TierResultScreen.Id, ScreenTransition.Out, willDestroy: true, addToHistory: false);
+        Context.ScreenManager.ChangeScreen(TierResultScreen.Id, ScreenTransition.Out, willDestroy: true, addTargetScreenToHistory: false);
         Context.AudioManager.Get("LevelStart").Play();
     }
 

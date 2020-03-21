@@ -106,6 +106,7 @@ GameObject:
   - component: {fileID: 7854026637960816184}
   - component: {fileID: 7854026637960816191}
   - component: {fileID: 7854026637960816190}
+  - component: {fileID: 4162383574241039782}
   m_Layer: 5
   m_Name: Tp
   m_TagString: Untagged
@@ -186,6 +187,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_HorizontalFit: 2
   m_VerticalFit: 2
+--- !u!114 &4162383574241039782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7854026637960816188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97bc2ebab6563400c95b036136d26ea6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Inverse: 0
+  m_MaskInteraction: 85
+  m_UseStencil: 0
 --- !u!1 &7854026638035837301
 GameObject:
   m_ObjectHideFlags: 0
@@ -199,6 +215,7 @@ GameObject:
   - component: {fileID: 7854026638035837297}
   - component: {fileID: 7854026638035837296}
   - component: {fileID: 7854026638035837303}
+  - component: {fileID: 8221590701636123432}
   m_Layer: 5
   m_Name: Completion
   m_TagString: Untagged
@@ -295,3 +312,18 @@ MonoBehaviour:
   endColor: {r: 0.9254902, g: 0, b: 0.77741146, a: 1}
   angle: 135
   ignoreRatio: 0
+--- !u!114 &8221590701636123432
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7854026638035837301}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97bc2ebab6563400c95b036136d26ea6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Inverse: 0
+  m_MaskInteraction: 85
+  m_UseStencil: 0

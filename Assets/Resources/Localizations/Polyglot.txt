@@ -81,10 +81,10 @@ DIALOG_COMING_SOON		Coming soon!		Muy pronto!			Em breve!		Скоро!									�
 DIALOG_RETRY_SYNCHRONIZE_PERFORMANCE		Could not synchronize performance. Retry?		No se pudo sincronizar su rendimiento. ¿Desea Intentar otra vez?			Não foi possível sincronizar sua performance. Tentar outra vez?		Не удалось синхронизировать счёт. Повторить?									同期に失敗しました。再試行しますか？	成绩同步失败。\n是否重试？	成績同步失敗。\n要重試嗎？	플레이를 업로드 못하였습니다. 다시 시도할까요?									Không thể tải thành tích lên. Thử lại?	Di' makasynchronize ang iyong performance. Ulitin?	Tidak dapat menyinkron performa. Coba lagi?	无法贵阳。是否贵阳？
 DIALOG_UNPACKING		Unpacking...		Extrayendo...			Extraindo...		Распаковка...									展開中…	解包中...	解壓中……	추출중...									Đang giải nén...	Tatangalin sa folder...	Memuat...	欢迎新魔王中...
 DIALOG_RETRY_SYNCHRONIZE_TIER_PERFORMANCE		Could not synchronize tier performance. Retry?																															
-																																	
-																																	
-																																	
-																																	
+DIALOG_OFFLINE_FEATURE_NOT_AVAILABLE		<b>You are offline.</b>\nTo use this feature, you must go online first.																															
+DIALOG_OFFLINE_LEVEL_NOT_AVAILABLE		<b>You are offline.</b>\nThis level has not been downloaded. To play this level, you must go online first.																															
+DIALOG_COULD_NOT_CONNECT_TO_SERVER		Could not connect to server.																															
+DIALOG_USE_OFFLINE_MODE		Could not connect to server.\nDo you want to play in offline mode?																															
 																																	
 																																	
 																																	
@@ -94,7 +94,7 @@ DIALOG_RETRY_SYNCHRONIZE_TIER_PERFORMANCE		Could not synchronize tier performanc
 																																	
 PROFILE_WIDGET_NOT_SIGNED_IN		Not signed in		No ha iniciado sesión			Não está logado		Вход не выполнен									サインインしていません	未登录	尚未登入	로그인 안됨									Chưa đăng nhập	Di' pa signed-in	Belum Masuk	未阿格王朔
 PROFILE_WIDGET_SIGNING_IN		Signing in...		Ingresando...			Logando...		Вход...									サインイン中…		登入中……										Đang đăng nhập...			阿格王朔中...
-PROFILE_WIDGET_RATING	Cytoid-specific term	Rating		Rating			Rating		Рейтинг									Rating	Rating	Rating	평가									Hạng	Rating	Rating	PPT
+PROFILE_WIDGET_RATING	Cytoid-specific term	Rating		Rating			Rating		Рейтинг									Rating	Rating	Rating	랭킹									Hạng	Rating	Rating	PPT
 PROFILE_WIDGET_LEVEL		Level		Nivel			Nível		Уровень									レベル	等级	等級	레벨									Level	Level	Level	群地位
 PROFILE_WIDGET_TIER		Tier		Tier			Tier		Ранг									段位	段位	段位	등급									Cấp	Tier	Tier	簖位
 PROFILE_WIDGET_EXP		Exp		Exp			Exp		Опыт									EXP	经验	經驗值	경험치									Exp	Exp	Exp	fjb
@@ -104,13 +104,13 @@ PROFILE_WIDGET_EXP		Exp		Exp			Exp		Опыт									EXP	经验	經驗值	경험
 																																	
 																																	
 PROFILE_PROFILE		Profile		Perfil			Perfil		Профиль									プロフィール	资料	個人檔案	프로필									Cá nhân	Profile	Profil	群名片
-PROFILE_LEADERBOARD		Leaderboard		Tabla de lideres			Placar		Таблица лидеров									ランキング	排行榜	排行榜	랭킹 리더보드									BXH	Mga posisyon	Peringkat	群成员
-PROFILE_SIGN_OUT		Sign out		Cerrar sesión			Sair		Выйти									サインアウト	退出账号	登出										Đăng xuất	Mag-sisign out	Keluar	退群
-PROFILE_TOTAL_RANKED_PLAYS	Not necessarily required to translate "ranked"	TOTAL RANKED PLAYS		TOTAL PARTIDAS IGUALADAS			TOTAL DE PARTIDAS RANQUEADAS		ВСЕГО СЫГРАНО РАНГОВЫХ ИГР									ランクモードプレイ数	总游玩次数	總遊玩次數	총 랭크 플레이									Lượt chơi xếp hạng tổng cộng	Kabuuan ng laro na ranked	Total level ranked yang dimainkan	总铲车数
-PROFILE_TOTAL_CLEARED_NOTES		TOTAL CLEARED NOTES		TOTAL NOTAS COMPLETADAS			TOTAL DE NOTAS COMPLETAS		ВСЕГО ЗАЧТЕНО НОТ									タップしたノーツ数の合計	总 Note 数	總清除拍點數	청 클레이된 노트 수									Số nốt đã được clear tổng cộng	Kabuuan na nota na naclear	Total note yang berhasil disentuh.	总踢数
-PROFILE_HIGHEST_MAX_COMBO		HIGHEST MAX COMBO		MAYOR COMBO MÁXIMO			MAIOR COMBO MÁXIMO		ВЫСШИЙ СЧЁТ КОМБО									最高コンボ数	最高连击数	最高 COMBO 數	최기록 콤보									Combo cao nhất	Pinakamataas na combo	Max combo tertinggi.	最高连踢数
+PROFILE_LEADERBOARD		Leaderboard		Tabla de lideres			Placar		Таблица лидеров									ランキング	排行榜	排行榜	리더보드									BXH	Mga posisyon	Peringkat	群成员
+PROFILE_SIGN_OUT		Sign out		Cerrar sesión			Sair		Выйти									サインアウト	退出账号	登出	로그아웃									Đăng xuất	Mag-sisign out	Keluar	退群
+PROFILE_TOTAL_RANKED_PLAYS	Not necessarily required to translate "ranked"	TOTAL RANKED PLAYS		TOTAL PARTIDAS IGUALADAS			TOTAL DE PARTIDAS RANQUEADAS		ВСЕГО СЫГРАНО РАНГОВЫХ ИГР									ランクモードプレイ数	总游玩次数	總遊玩次數	총 플레이 수									Lượt chơi xếp hạng tổng cộng	Kabuuan ng laro na ranked	Total level ranked yang dimainkan	总铲车数
+PROFILE_TOTAL_CLEARED_NOTES		TOTAL CLEARED NOTES		TOTAL NOTAS COMPLETADAS			TOTAL DE NOTAS COMPLETAS		ВСЕГО ЗАЧТЕНО НОТ									タップしたノーツ数の合計	总 Note 数	總清除拍點數	총 클리어한 노트 수									Số nốt đã được clear tổng cộng	Kabuuan na nota na naclear	Total note yang disentuh.	总踢数
+PROFILE_HIGHEST_MAX_COMBO		HIGHEST MAX COMBO		MAYOR COMBO MÁXIMO			MAIOR COMBO MÁXIMO		ВЫСШИЙ СЧЁТ КОМБО									最高コンボ数	最高连击数	最高 COMBO 數	최고 기록 콤보									Combo cao nhất	Pinakamataas na combo	Max combo tertinggi.	最高连踢数
 PROFILE_AVG_RANKED_ACCURACY	Not necessarily required to translate "ranked"	AVG RANKED ACCURACY		PRECISIÓN PROMEDIO IGUALADA			PRECISÃO RANQUEADA MÉDIA		СР РАНГОВАЯ ТОЧНОСТЬ									平均Rate上昇率	平均精准度	平均準確度	평균 정확도									Độ chính xác TB trong xếp hạng	Average na ranked accuracy	Akurasi ranked rata - rata.	平均踢中
-PROFILE_TOTAL_RANKED_SCORE	Not necessarily required to translate "ranked"	TOTAL RANKED SCORE		PUNTUACIÓN IGUALADA TOTAL			PONTUAÇÃO RANQUEADA TOTAL		ОБЩИЙ СЧЁТ									合計ランクモードスコア	总分数	總分數	총 랭크 스코어									Điểm xếp hạng tổng cộng	Kabuuan ng ranked score	Total nilai ranked.	踢分
+PROFILE_TOTAL_RANKED_SCORE	Not necessarily required to translate "ranked"	TOTAL RANKED SCORE		PUNTUACIÓN IGUALADA TOTAL			PONTUAÇÃO RANQUEADA TOTAL		ОБЩИЙ СЧЁТ									合計ランクモードスコア	总分数	總分數	총 점수									Điểm xếp hạng tổng cộng	Kabuuan ng ranked score	Total nilai ranked.	踢分
 PROFILE_TOTAL_PLAY_TIME		TOTAL PLAY TIME		TIEMPO TOTAL JUGADO			TEMPO JOGADO TOTAL		ОБЩЕЕ ВРЕМЯ В ИГРЕ									合計プレイ時間	总游玩时间	總遊玩時間	총 플레이 시간									Tổng thời gian chơi	Kabuuan na oras ng paglaro	Total waktu bermain.	啊wee改时间
 LEADERBOARD_TOP		Top		Top			Top		Топ									トップ	榜首排行	世界	최기록									Đầu bảng	Top	Top	椰叶
 LEADERBOARD_ME		Me		Yo			Eu		Я									自分	我的排名	我的	본인									Tôi	Ako	Me	dd
@@ -119,11 +119,11 @@ LEADERBOARD_ME		Me		Yo			Eu		Я									自分	我的排名	我的	본인							
 																																	
 																																	
 																																	
-SETTINGS_GENERAL		General		General			Geral		Основные									基本設定	通用	基本設定										Chung	Pangkalahatan	Umum	阿
-SETTINGS_GAMEPLAY		Gameplay		Jugabilidad			Gameplay		Геймплей									プレイ設定	游玩	遊玩設定										Trò chơi	Gameplay	Permainan	格
-SETTINGS_VISUAL		Visual		Visual			Visual		Визуал									表示設定	视觉	視覺設定										Cấu hình	Biswal	Visual	王
-SETTINGS_ADVANCED		Advanced		Avanzado			Avançado		Расширенные									上級設定	进阶	進階設定										Nâng cao	Advance	Advanced	朔
-SETTINGS_LANGUAGE		Language		Idioma			Idioma		Язык									表示言語	语言	語言變更										Ngôn ngữ	Wika	Bahasa	符语更换
+SETTINGS_GENERAL		General		General			Geral		Основные									基本設定	通用	基本設定	일반									Chung	Pangkalahatan	Umum	阿
+SETTINGS_GAMEPLAY		Gameplay		Jugabilidad			Gameplay		Геймплей									プレイ設定	游玩	遊玩設定	게임 플레이									Trò chơi	Gameplay	Permainan	格
+SETTINGS_VISUAL		Visual		Visual			Visual		Визуал									表示設定	视觉	視覺設定	그래픽									Cấu hình	Biswal	Visual	王
+SETTINGS_ADVANCED		Advanced		Avanzado			Avançado		Расширенные									上級設定	进阶	進階設定	추가 설정									Nâng cao	Advance	Advanced	朔
+SETTINGS_LANGUAGE		Language		Idioma			Idioma		Язык									表示言語	语言	語言變更	언어									Ngôn ngữ	Wika	Bahasa	符语更换
 SETTINGS_MUSIC_VOLUME		Music volume		Volumen de música			Volume da música		Громкость музыки									音量	音乐音量	音樂音量										Âm lượng nhạc	Ingay ng musika	Volume musik	
 SETTINGS_SOUND_EFFECT_VOLUME		Sound effect volume		Volumen de efectos de sonido			Volume dos efeitos sonoros		Громкость звуковых эффектов									SE音量	音效音量	音效音量										Âm lượng FX	Sound effect volume	Volume suara efek	
 SETTINGS_HIT_SOUND		Hit sound		Sonido al presionar			Som de acerto		Хит-саунд									タップ音	打击音	打擊音效										Âm của nốt	Ingay ng pagpindot	Hit sound	
@@ -185,39 +185,39 @@ SETTINGS_DISPLAY_NOTE_IDS		Note IDs		ID de nota			ID das notas		ID нот							
 SETTINGS_DISPLAY_NOTE_IDS_DESC		For level debugging purposes		Para usos de depuración de niveles			Para fins de debug do nível		Для дебаг целей на уровне									ノーツIDを表示します(デバッグ用機能)	用作关卡制作调试	在進行譜面除錯或調試時使用										Cho mục đích sửa lỗi level		For level debugging purposes	
 SETTINGS_NONE	Space is limited for these values. Try to keep your translation compact!	None		Nulo			Nenhum		Ничего									なし	无	不使用										Không có	Wala	None	妹有
 SETTINGS_DEFAULT		Default		Por defecto			Padrão		По умолчанию									デフォルト	默认	預設										Mặc định		Default	buyao
-SETTINGS_HIT_SOUND_CLICK_1	Not necessary to translate those	Click 1		Click 1			Clique 1		Клик 1									クリック1	敲击声1	Click 1										Click 1		Click 1	who
-SETTINGS_HIT_SOUND_CLICK_2		Click 2		Click 2			Clique 2		Клик 2									クリック2	敲击声2	Click 2										Click 2		Click 2	the
-SETTINGS_HIT_SOUND_CLICK_3		Click 3		Click 3			Clique 3		Клик 3									クリック3	敲击声3	Click 3										Click 3		Click 3	hell
-SETTINGS_HIT_SOUND_SHAKER		Shaker		Sacudidor			Chocalho		Шейкер									マラカス	沙筒	Shaker										Đồ lắc		Shaker	is
-SETTINGS_HIT_SOUND_TAMBOURINE		Tambourine		Pandereta			Tamborim		Бубен									タンバリン	手鼓声	Tambourine										Lục lạc		Tambourine	[he]
-SETTINGS_HIT_SOUND_RIM		Rim		Tambor			Pandeiro		Обод									リム	鼓边	Rim										Viền trống		Rim	I
-SETTINGS_HIT_SOUND_HAT		Hat		Hi-hat			Pratos		Цилиндр									ハット	镲	Hat										Hat		Hat	swear
-SETTINGS_HIT_SOUND_CLAP		Clap		Aplauso			Palmas		Хлопанье									拍手	拍掌	Clap										Vỗ tay		Clap	that
-SETTINGS_HIT_SOUND_DONK		Donk		Donk			Donk		Донк									太鼓	咚	Donk										Donk		Donk	guy
-SETTINGS_HIT_SOUND_8_BIT		8-bit		8-bit			8-bit		8 бит									8-bit	老式游戏机	8-bit										8-bit		8-bit	uploads
-SETTINGS_HIT_SOUND_QUACK		Quack		Quack			Quack		Кряканье									アヒル	呱	Quack										Quạc quạc		Quack	everyday
-SETTINGS_OFF		Off		Apagado			Desligado		Выкл									オフ	关	關閉										Tắt		Mati	no
-SETTINGS_ON		On		Encendido			Ligado		Вкл									オン	开	開啟										Bật		Nyala	yeaj 
-SETTINGS_QUALITY_LOW		Low		Bajo			Baixa		Низко									低	低	低										Thấp		Rendah	hptuse was here lmaoa
-SETTINGS_QUALITY_MEDIUM		Medium		Medio			Média		Средне									中	中	中										Trung bình		Sedang	
-SETTINGS_QUALITY_HIGH		High		Alto			Alta		Высоко									高	高	高										Cao		Tinggi	
-SETTINGS_UNIT_SECONDS		Seconds		Segundos			Segundos		Секунды									秒	秒	秒										Giây		Detik	
-SETTINGS_SIZE_SMALL		Small		Pequeño			Pequeno		Маленькие									小	小	小										Nhỏ		Kecil	
-SETTINGS_SIZE_MEDIUM		Medium		Mediano			Médio		Средние									中	中	中										T/bình		Sedang	
-SETTINGS_SIZE_LARGE		Large		Grande			Grande		Большие									大	大	大										Lớn		Besar	
+SETTINGS_HIT_SOUND_CLICK_1	Not necessary to translate those	Click 1		Click 1			Clique 1		Клик 1									クリック1	敲击声1	Click 1	클릭 1									Click 1		Click 1	who
+SETTINGS_HIT_SOUND_CLICK_2		Click 2		Click 2			Clique 2		Клик 2									クリック2	敲击声2	Click 2	클릭 2									Click 2		Click 2	the
+SETTINGS_HIT_SOUND_CLICK_3		Click 3		Click 3			Clique 3		Клик 3									クリック3	敲击声3	Click 3	클릭 3									Click 3		Click 3	hell
+SETTINGS_HIT_SOUND_SHAKER		Shaker		Sacudidor			Chocalho		Шейкер									マラカス	沙筒	Shaker	마라카스									Đồ lắc		Shaker	is
+SETTINGS_HIT_SOUND_TAMBOURINE		Tambourine		Pandereta			Tamborim		Бубен									タンバリン	手鼓声	Tambourine	탬버린									Lục lạc		Tambourine	[he]
+SETTINGS_HIT_SOUND_RIM		Rim		Tambor			Pandeiro		Обод									リム	鼓边	Rim	림									Viền trống		Rim	I
+SETTINGS_HIT_SOUND_HAT		Hat		Hi-hat			Pratos		Цилиндр									ハット	镲	Hat	하이햇									Hat		Hat	swear
+SETTINGS_HIT_SOUND_CLAP		Clap		Aplauso			Palmas		Хлопанье									拍手	拍掌	Clap	박수									Vỗ tay		Clap	that
+SETTINGS_HIT_SOUND_DONK		Donk		Donk			Donk		Донк									太鼓	咚	Donk	Donk									Donk		Donk	guy
+SETTINGS_HIT_SOUND_8_BIT		8-bit		8-bit			8-bit		8 бит									8-bit	老式游戏机	8-bit	8-bit									8-bit		8-bit	uploads
+SETTINGS_HIT_SOUND_QUACK		Quack		Quack			Quack		Кряканье									アヒル	呱	Quack	꽥									Quạc quạc		Quack	everyday
+SETTINGS_OFF		Off		Apagado			Desligado		Выкл									オフ	关	關閉	끄기									Tắt		Mati	no
+SETTINGS_ON		On		Encendido			Ligado		Вкл									オン	开	開啟	켜기									Bật		Nyala	yeaj 
+SETTINGS_QUALITY_LOW		Low		Bajo			Baixa		Низко									低	低	低	하									Thấp		Rendah	hptuse was here lmaoa
+SETTINGS_QUALITY_MEDIUM		Medium		Medio			Média		Средне									中	中	中	중									Trung bình		Sedang	
+SETTINGS_QUALITY_HIGH		High		Alto			Alta		Высоко									高	高	高	상									Cao		Tinggi	
+SETTINGS_UNIT_SECONDS		Seconds		Segundos			Segundos		Секунды									秒	秒	秒	초									Giây		Detik	
+SETTINGS_SIZE_SMALL		Small		Pequeño			Pequeno		Маленькие									小	小	小	소									Nhỏ		Kecil	
+SETTINGS_SIZE_MEDIUM		Medium		Mediano			Médio		Средние									中	中	中	중									T/bình		Sedang	
+SETTINGS_SIZE_LARGE		Large		Grande			Grande		Большие									大	大	大	대									Lớn		Besar	
 																																	
 																																	
-LEVEL_SELECT_CATEGORY_ALL		All		Todos			Todos		Все									すべて	全部	全部										Tất cả	Lahat	Semua	
-LEVEL_SELECT_CATEGORY_OFFICIAL		Official		Oficial			Oficial		Официальные									公式	官方	官方										Chính thức	Opisyal	Official	TD
-LEVEL_SELECT_CATEGORY_COMMUNITY		Community		Comunidad			Comunidade		Пользовательские									コミュニティー	社区	非官方										Cộng đồng	Komunidad	Komunitas	
-LEVEL_SELECT_SORT_BY		SORT BY		ORDENAR POR			CLASSIFICAR POR		СОРТИРОВАТЬ ПО									ソート条件	排序	排序依據										Sắp xếp theo	Pag-uuri ng	URUT DARI	
-LEVEL_SELECT_SORT_BY_ADDED_DATE		Added date		Fecha agregada			Data de adição		Дате добавления									追加日	添加日期	添加日期										Thời gian được thêm	Petsa na inilagay	Tanggal ditambahkan	
-LEVEL_SELECT_SORT_BY_PLAYED_DATE		Played date		Fecha jugada			Data em que foi jogado		Дате последней игры									プレイ順	上次游玩日期	遊玩日期										Thời gian chơi	Petsa na inilaro	Tanggal dimainkan	
-LEVEL_SELECT_SORT_BY_DIFFICULTY		Difficulty		Dificultad			Dificuldade		Сложности									難易度順	难度	難度										Độ khó	Ang kahirapan	Tingkat Kesulitan	
-LEVEL_SELECT_SORT_BY_TITLE		Title		Titulo			Título		Заголовкам									曲名	歌名	樂曲名稱										Tên	Pamagat	Judul	
-LEVEL_SELECT_SORT_ORDER		SORT ORDER		ORDEN DE CLASIFICACIÓN			ORDEM DE CLASSIFICAÇÂO		ПОРЯДОК СОРТИРОВКИ									ソート…	顺序	排序模式										Trình tự sắp xếp	Pagkakasunud-sunod	URUTAN SORT	
-LEVEL_SELECT_SORT_ORDER_ASC		Ascending		Ascendiente			Crescente		По возрастанию									昇順	升序	升冪										Từ dưới lên	Pataas	Naik	
-LEVEL_SELECT_SORT_ORDER_DESC		Descending		Descendiente			Decrescente		По убыванию									降順	降序	降冪										Từ trên xuống	Pababa	Turun	
+LEVEL_SELECT_CATEGORY_ALL		All		Todos			Todos		Все									すべて	全部	全部	모두									Tất cả	Lahat	Semua	
+LEVEL_SELECT_CATEGORY_OFFICIAL		Official		Oficial			Oficial		Официальные									公式	官方	官方	공식 채보									Chính thức	Opisyal	Official	TD
+LEVEL_SELECT_CATEGORY_COMMUNITY		Community		Comunidad			Comunidade		Пользовательские									コミュニティー	社区	非官方	커뮤니티 채보									Cộng đồng	Komunidad	Komunitas	
+LEVEL_SELECT_SORT_BY		SORT BY		ORDENAR POR			CLASSIFICAR POR		СОРТИРОВАТЬ ПО									ソート条件	排序	排序依據	정렬 기준									Sắp xếp theo	Pag-uuri ng	URUT DARI	
+LEVEL_SELECT_SORT_BY_ADDED_DATE		Added date		Fecha agregada			Data de adição		Дате добавления									追加日	添加日期	添加日期	추가된 날짜									Thời gian được thêm	Petsa na inilagay	Tanggal ditambahkan	
+LEVEL_SELECT_SORT_BY_PLAYED_DATE		Played date		Fecha jugada			Data em que foi jogado		Дате последней игры									プレイ順	上次游玩日期	遊玩日期	최근 플레이									Thời gian chơi	Petsa na inilaro	Tanggal dimainkan	
+LEVEL_SELECT_SORT_BY_DIFFICULTY		Difficulty		Dificultad			Dificuldade		Сложности									難易度順	难度	難度	난이도									Độ khó	Ang kahirapan	Tingkat Kesulitan	
+LEVEL_SELECT_SORT_BY_TITLE		Title		Titulo			Título		Заголовкам									曲名	歌名	樂曲名稱	이름									Tên	Pamagat	Judul	
+LEVEL_SELECT_SORT_ORDER		SORT ORDER		ORDEN DE CLASIFICACIÓN			ORDEM DE CLASSIFICAÇÂO		ПОРЯДОК СОРТИРОВКИ									ソート…	顺序	排序模式	정리 순서									Trình tự sắp xếp	Pagkakasunud-sunod	URUTAN SORT	
+LEVEL_SELECT_SORT_ORDER_ASC		Ascending		Ascendiente			Crescente		По возрастанию									昇順	升序	升冪	오름									Từ dưới lên	Pataas	Naik	
+LEVEL_SELECT_SORT_ORDER_DESC		Descending		Descendiente			Decrescente		По убыванию									降順	降序	降冪	내림									Từ trên xuống	Pababa	Turun	
 LEVEL_SELECT_SEARCH_QUERY		SEARCH QUERY		CONSULTA DE BUSQUEDA			PESQUISAR		ПОИСК									検索	搜索	內部搜尋										Thanh tìm kiếm	Hanapin	PENCARIAN	
 LEVEL_SELECT_SEARCH_QUERY_HINT		Title / artist / charter...		Título / Artista / Charter...			Título / artista / charter...		Заголовок / композитор / чартер									曲名 / 作曲者 / 譜面製作者…	曲名 / 曲师 / 谱师...	樂曲名稱／樂曲創作者／譜面設計師……										Tên / họa sĩ / người làm level...	Pamagat / artista / charter...	Judul / artist / charter...	
 																																	
@@ -227,12 +227,12 @@ LEVEL_SELECT_SEARCH_QUERY_HINT		Title / artist / charter...		Título / Artista /
 																																	
 																																	
 																																	
-GAME_PREP_START		Start!		Comenzar!			Começar!		Начать!									Start!	开始！	開始！										Bắt đầu!	Magsimula!	Mulai!	铲车！
-GAME_PREP_PRACTICE		Practice!		Practíca!			Praticar!		Практика!									Practice!	开始练习！	練習！										Tập luyện!	Magsanay!	Latihan!	给我打R判啊！
-GAME_PREP_DOWNLOAD		Download!		Descargar!			Baixar!		Скачать!									Download!	下载！	下載！										Tải về!	i-Download!	Unduh!	jaja
-GAME_PREP_RANKINGS_VIEW_MORE		View more		Ver mas			Ver mais		Развернуть									詳細	查看更多	查看全部										Xem thêm	Tignan pa	Lihat lebih banyak	全来
-GAME_PREP_RANKINGS_DOWNLOADING		Downloading level rankings...		Descargando las clasificaciones del nivel...			Baixando ranking do nível.		Скачивание ранков на уровне									ランキングをロード中…	下载关卡排行中...	關卡排行下載中……										Đang tải thứ hạng level...	Nagdodownload ng level rankings...	Mengunduh ranking pada level...	没有?
-GAME_PREP_RANKINGS_COULD_NOT_DOWNLOAD		Could not download level rankings.		No se pudieron descargar las clasificaciones del nivel.			Não foi possível baixar o ranking do nível.		Не удалось скачать ранки на уровне									ランキング情報を取得できませんでした…	无法下载关卡排行。	無法下載關卡排行。										Không thể tải thứ hạng level.	Di' kaya makapagdownload ng level rankings.	Tidak dapat mengunduh rangking pada level.	没网了111111
+GAME_PREP_START		Start!		Comenzar!			Começar!		Начать!									Start!	开始！	開始！	시작 !									Bắt đầu!	Magsimula!	Mulai!	铲车！
+GAME_PREP_PRACTICE		Practice!		Practíca!			Praticar!		Практика!									Practice!	开始练习！	練習！	연습 !									Tập luyện!	Magsanay!	Latihan!	给我打R判啊！
+GAME_PREP_DOWNLOAD		Download!		Descargar!			Baixar!		Скачать!									Download!	下载！	下載！	다운로드 !									Tải về!	i-Download!	Unduh!	jaja
+GAME_PREP_RANKINGS_VIEW_MORE		View more		Ver mas			Ver mais		Развернуть									詳細	查看更多	查看全部	더 보기									Xem thêm	Tignan pa	Lihat lebih banyak	全来
+GAME_PREP_RANKINGS_DOWNLOADING		Downloading level rankings...		Descargando las clasificaciones del nivel...			Baixando ranking do nível.		Скачивание ранков на уровне									ランキングをロード中…	下载关卡排行中...	關卡排行下載中……	레벨 랭킹 다운로드 중...									Đang tải thứ hạng level...	Nagdodownload ng level rankings...	Mengunduh ranking pada level...	没有?
+GAME_PREP_RANKINGS_COULD_NOT_DOWNLOAD		Could not download level rankings.		No se pudieron descargar las clasificaciones del nivel.			Não foi possível baixar o ranking do nível.		Не удалось скачать ранки на уровне									ランキング情報を取得できませんでした…	无法下载关卡排行。	無法下載關卡排行。	레벨 랭킹을 다운로드하지 못하였습니다.									Không thể tải thứ hạng level.	Di' kaya makapagdownload ng level rankings.	Tidak dapat mengunduh rangking pada level.	没网了111111
 GAME_PREP_RANKINGS_BE_THE_FIRST		No performances yet. Be the first!		Nadie ha jugado el nivel. ¡Sea el primero!			Ninguém jogou este nível ainda. Seja o primeiro!		Нет результатов! Будьте первыми!									ランキングがありません…一番乗りしよう！	暂无排行。成为第一个人吧！	尚無排行紀錄，搶個頭香吧！										Chưa có thành tích nào. Hãy là người đầu tiên!	Wala pang iskor. Maging una kang maglaro!	Beluh ada performa dari pemain lain.	没人玩111111
 GAME_PREP_RATINGS_AVG_RATING		AVERAGE RATING		CALIFICACION PROMEDIO			AVALIAÇÃO MÉDIA		СРЕДНИЙ РЕЙТИНГ									平均評価	平均评分	平均評分										Mức đánh giá trung bình		RATING RATA - RATA	
 GAME_PREP_RATINGS_UNIT_RATING		rating		clasificación			avaliação		рейтинг									人の評価	个评分	個評分										Rating	Marka	rating	个人骂上了
@@ -420,3 +420,14 @@ CHARACTER_FAILED_TO_DOWNLOAD		Failed to download character data.
 CHARACTER_CHANGE_CHARACTER		CHANGE																															
 CHARACTER_ILLUSTRATOR		ILLUSTRATOR																															
 CHARACTER_CHARACTER_DESIGNER		CHARACTER DESIGNER																															
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+OFFLINE		Offline																															
+OFFLINE_FEATURE_NOT_AVAILABLE		You are offline.																															
+OFFLINE_GO_OFFLINE		Go offline																															
+OFFLINE_GO_ONLINE		Go online																															

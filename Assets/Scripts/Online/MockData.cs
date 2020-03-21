@@ -95,26 +95,26 @@ public static class MockData
                     {
                         new OnlineLevel
                         {
-                            uid = "f",
-                            version = 1,
+                            Uid = "f",
+                            Version = 1,
                         },
                         new OnlineLevel
                         {
-                            uid = "f",
-                            version = 1,
+                            Uid = "f",
+                            Version = 1,
                         },
                         new OnlineLevel
                         {
-                            uid = "f",
-                            version = 1,
+                            Uid = "f",
+                            Version = 1,
                         }
                     },
                     parsedStages = new List<Level> {TierLevel},
                     character = new CharacterMeta
                     {
-                        name = "まふまふ",
-                        asset = "Mafu",
-                        tachieAsset = "MafuTachie"
+                        Name = "まふまふ",
+                        AssetId = "Mafu",
+                        TachieAssetId = "MafuTachie"
                     }
                 }
             },
@@ -142,18 +142,18 @@ public static class MockData
                     {
                         new OnlineLevel
                         {
-                            uid = "tiermode.jericho",
-                            version = 1,
+                            Uid = "tiermode.jericho",
+                            Version = 1,
                         },
                         new OnlineLevel
                         {
-                            uid = "tiermode.reflection",
-                            version = 1,
+                            Uid = "tiermode.reflection",
+                            Version = 1,
                         },
                         new OnlineLevel
                         {
-                            uid = "tiermode.cryout",
-                            version = 1
+                            Uid = "tiermode.cryout",
+                            Version = 1
                         }
                     },
                 }
@@ -182,18 +182,18 @@ public static class MockData
                     {
                         new OnlineLevel
                         {
-                            uid = "tiermode.jericho",
-                            version = 1,
+                            Uid = "tiermode.jericho",
+                            Version = 1,
                         },
                         new OnlineLevel
                         {
-                            uid = "tiermode.reflection",
-                            version = 1,
+                            Uid = "tiermode.reflection",
+                            Version = 1,
                         },
                         new OnlineLevel
                         {
-                            uid = "tiermode.cryout",
-                            version = 1
+                            Uid = "tiermode.cryout",
+                            Version = 1
                         }
                     },
                 }

@@ -7,10 +7,13 @@ using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+/**
+ * TODO: Refactor this crap
+ */
 public class ActionTabs : MonoBehaviour, ScreenChangeListener
 {
     
-    [HideInInspector] public TabChangeEvent OnTabChanged = new TabChangeEvent();
+    [HideInInspector] public TabChangeEvent onTabChanged = new TabChangeEvent();
     
     private float animationDuration = 0.4f;
     
@@ -174,7 +177,7 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
             tabBackground.canvasGroup.blocksRaycasts = true;
         }
         currentActionIndex = action.index;
-        OnTabChanged.Invoke(prev, action);
+        onTabChanged.Invoke(prev, action);
     }
     
     public class Action : InteractableMonoBehavior

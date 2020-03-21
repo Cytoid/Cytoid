@@ -34,6 +34,7 @@ public class LevelCard : InteractableMonoBehavior
             coverToken.Cancel();
             coverToken = null;
         }
+
         cover.sprite = null;
         cover.DOKill();
         cover.SetAlpha(0);
@@ -50,7 +51,7 @@ public class LevelCard : InteractableMonoBehavior
     public void SetModel(Level level)
     {
         this.level = level;
-        
+
         artist.text = level.Meta.artist;
         title.text = level.Meta.title;
         titleLocalized.text = level.Meta.title_localized;
@@ -87,7 +88,7 @@ public class LevelCard : InteractableMonoBehavior
             if (!coverToken.IsCancellationRequested) coverToken.Cancel();
             coverToken = null;
         }
-        
+
         if (!((RectTransform) transform).IsVisible())
         {
             coverToken = new CancellationTokenSource();
@@ -102,7 +103,7 @@ public class LevelCard : InteractableMonoBehavior
                 return;
             }
         }
-        
+
         coverToken = new CancellationTokenSource();
         Sprite sprite = null;
         try
@@ -118,7 +119,8 @@ public class LevelCard : InteractableMonoBehavior
                 var path = level.Meta.background.path.WithImageCdn().WithSizeParam(
                     Context.ThumbnailWidth, Context.ThumbnailHeight);
                 sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.OnlineCoverThumbnail,
-                    coverToken.Token, true, new SpriteAssetOptions(new []{ Context.ThumbnailWidth, Context.ThumbnailHeight }));
+                    coverToken.Token, true,
+                    new SpriteAssetOptions(new[] {Context.ThumbnailWidth, Context.ThumbnailHeight}));
             }
         }
         catch (Exception e)
@@ -128,8 +130,9 @@ public class LevelCard : InteractableMonoBehavior
             {
                 // Should be impossible
                 Destroy(sprite.texture);
-                Destroy(sprite); 
+                Destroy(sprite);
             }
+
             return;
         }
 
@@ -152,7 +155,7 @@ public class LevelCard : InteractableMonoBehavior
     }
 
     private bool ignoreNextPointerUp;
-    
+
     public override async void OnPointerDown(PointerEventData eventData)
     {
         base.OnPointerDown(eventData);
@@ -170,6 +173,7 @@ public class LevelCard : InteractableMonoBehavior
             // ignored
             return;
         }
+
         if (transform == null) return; // Transform destroyed?
         ignoreNextPointerUp = true;
         OnPointerUp(eventData);
@@ -177,7 +181,7 @@ public class LevelCard : InteractableMonoBehavior
         Context.Vibrate();
         actionToken = null;
     }
-    
+
     public override void OnPointerUp(PointerEventData eventData)
     {
         var d = Vector2.Distance(pressPosition, eventData.position);
@@ -186,6 +190,7 @@ public class LevelCard : InteractableMonoBehavior
             ignoreNextPointerUp = false;
             IsPointerDown = false;
         }
+
         actionToken?.Cancel();
         base.OnPointerUp(eventData);
         if (loadedCover) cover.DOFade(0.7f, 0.2f).SetEase(Ease.OutCubic);
@@ -197,6 +202,14 @@ public class LevelCard : InteractableMonoBehavior
         base.OnPointerClick(eventData);
         if (level != null)
         {
+            if (Context.IsOffline() && !level.IsLocal)
+            {
+                var dialog = Dialog.Instantiate();
+                dialog.Message = "DIALOG_OFFLINE_LEVEL_NOT_AVAILABLE".Get();
+                dialog.Open();
+                return;
+            }
+
             Context.SelectedLevel = level;
             Context.AudioManager.Get("Navigate2").Play();
 
@@ -206,10 +219,11 @@ public class LevelCard : InteractableMonoBehavior
                 {
                     Context.ScreenManager.PopAndPeekHistory();
                 }
-                
+
                 Context.ScreenManager.History.Push(LevelSelectionScreen.Id);
                 // TODO: Switch to official category
             }
+
             Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.In, 0.4f,
                 transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter());
         }
@@ -218,9 +232,9 @@ public class LevelCard : InteractableMonoBehavior
     public void OnAction()
     {
         if (!level.IsLocal) return;
-        if (Context.ScreenManager.ActiveScreenId != LevelSelectionScreen.Id &&
-            Context.ScreenManager.ActiveScreenId != CommunityLevelSelectionScreen.Id) return;
-        
+        /*if (Context.ScreenManager.ActiveScreenId != LevelSelectionScreen.Id &&
+            Context.ScreenManager.ActiveScreenId != CommunityLevelSelectionScreen.Id) return;*/
+
         var dialog = Dialog.Instantiate();
         dialog.Message = "DIALOG_CONFIRM_DELETE".Get(level.Meta.title);
         dialog.UsePositiveButton = true;
@@ -233,5 +247,4 @@ public class LevelCard : InteractableMonoBehavior
         };
         dialog.Open();
     }
-
 }

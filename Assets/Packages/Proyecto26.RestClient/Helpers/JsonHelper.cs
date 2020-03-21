@@ -1,4 +1,5 @@
 ﻿using System;
+using Newtonsoft.Json;
 using UnityEngine;
 
 namespace Proyecto26
@@ -14,7 +15,7 @@ namespace Proyecto26
         public static T[] ArrayFromJson<T>(string json)
         {
             string newJson = "{ \"Items\": " + json + "}";
-            var wrapper = JsonUtility.FromJson<Wrapper<T>>(newJson);
+            var wrapper = JsonConvert.DeserializeObject<Wrapper<T>>(newJson); // EDIT: Cytoid
             return wrapper.Items;
         }
 

@@ -5,9 +5,30 @@ using UnityEngine.EventSystems;
 public class MainMenuCardButton : NavigationElement
 {
     public RectTransform parent;
+    public bool requireOnline;
+    public bool requireAuthentication;
 
     public override void OnPointerClick(PointerEventData eventData)
     {
+        if (requireOnline && Context.IsOffline())
+        {
+            var dialog = Dialog.Instantiate();
+            dialog.Message = "DIALOG_OFFLINE_FEATURE_NOT_AVAILABLE".Get();
+            dialog.Open();
+            return;
+        }
+
+        if (requireAuthentication && !Context.OnlinePlayer.IsAuthenticated)
+        {
+            Toast.Next(Toast.Status.Failure, "TOAST_SIGN_IN_REQUIRED".Get());
+
+            if (!Context.OnlinePlayer.IsAuthenticating)
+            {
+                Context.ScreenManager.ChangeScreen(SignInScreen.Id, ScreenTransition.Out);
+            }
+            return;
+        }
+        
         if (Context.ScreenManager.IsScreenCreated(targetScreenId))
         {
             transitionFocus = parent.GetScreenSpaceCenter();

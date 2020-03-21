@@ -158,7 +158,7 @@ public class LevelManager
                 }
 
                 resolve(remoteMeta);
-            }).Catch(error =>
+            }).CatchRequestError(error =>
             {
                 if (!error.IsNetworkError && (error.StatusCode == 404 || error.StatusCode == 403))
                 {
@@ -301,13 +301,6 @@ public class LevelManager
             var jsonPath = jsonPaths[index];
             try
             {
-                if (!forceReload && loadedPaths.Contains(jsonPath))
-                {
-                    Debug.LogWarning($"{jsonPath} is already loaded");
-                    Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {jsonPath}");
-                    continue;
-                }
-
                 FileInfo info;
                 try
                 {
@@ -324,6 +317,14 @@ public class LevelManager
                 if (info.Directory == null) continue;
 
                 var path = info.Directory.FullName + Path.DirectorySeparatorChar;
+             
+                if (!forceReload && loadedPaths.Contains(path))
+                {
+                    Debug.LogWarning($"Level from {path} is already loaded");
+                    Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {path}");
+                    continue;
+                }
+                
                 Debug.Log($"Loading {index + 1}/{jsonPaths.Count} from {path}");
 
                 var meta = JsonConvert.DeserializeObject<LevelMeta>(File.ReadAllText(jsonPath));
@@ -382,7 +383,7 @@ public class LevelManager
                 );
                 
                 LoadedLocalLevels[meta.id] = level;
-                loadedPaths.Add(jsonPath);
+                loadedPaths.Add(path);
                 results.Add(level);
 
                 if (!File.Exists(level.Path + CoverThumbnailFilename))
@@ -599,7 +600,7 @@ public class LevelManager
                 throw new OperationCanceledException();
             }
 
-            totalSize = (ulong) it.size;
+            totalSize = (ulong) it.Size;
             downloading = true;
             Debug.Log("Package path: " + level.PackagePath);
             // Get resources

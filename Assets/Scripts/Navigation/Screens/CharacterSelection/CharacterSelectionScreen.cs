@@ -8,7 +8,7 @@ using UnityEngine.UI;
 public class CharacterSelectionScreen : Screen
 {
     public const string Id = "CharacterSelection";
-    
+
     public override string GetId() => Id;
 
     public TransitionElement infoCard;
@@ -30,13 +30,13 @@ public class CharacterSelectionScreen : Screen
 
     private List<CharacterMeta> availableCharacters = new List<CharacterMeta>();
     private int selectedIndex;
-    
+
     public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
         characterDisplay.loadOnScreenBecameActive = false;
         infoCard.enterOnScreenBecomeActive = characterTransitionElement.enterOnScreenBecomeActive = false;
-        
+
         helpButton.onPointerClick.AddListener(_ =>
         {
             var dialog = Dialog.Instantiate();
@@ -62,46 +62,73 @@ public class CharacterSelectionScreen : Screen
 
         SpinnerOverlay.Show();
 
-        RestClient.GetArray<CharacterMeta>(new RequestHelper
+        Context.CharacterManager.GetAvailableCharactersMeta()
+            .Then(characters =>
             {
-                Uri = $"{Context.ServicesUrl}/characters",
-                Headers = Context.OnlinePlayer.GetAuthorizationHeaders()
-            }).Then(async characters =>
-            {
-                foreach (var meta in characters)
+                if (characters.Count == 0)
                 {
-                    var success = await Context.CharacterManager.DownloadCharacterAssetDialog(meta.asset);
-                    if (!success)
+                    var dialog = Dialog.Instantiate();
+                    dialog.Message = "DIALOG_OFFLINE_FEATURE_NOT_AVAILABLE";
+                    dialog.OnPositiveButtonClicked = it =>
                     {
-                        Toast.Next(Toast.Status.Failure, "CHARACTER_FAILED_TO_DOWNLOAD".Get());
-                    }
-                    else
-                    {
-                        availableCharacters.Add(meta);
-                    }
+                        Context.ScreenManager.ChangeScreen(Context.ScreenManager.PopAndPeekHistory(), ScreenTransition.Out,
+                            addTargetScreenToHistory: false);
+                        it.Close();
+                    };
+                    dialog.Open();
+                    return;
+                }
+                DownloadAvailableCharacters(characters);
+            })
+            .CatchRequestError(error =>
+            {
+                if (!error.IsNetworkError)
+                {
+                    throw error;
                 }
 
-                SpinnerOverlay.Hide();
-
-                selectedIndex =
-                    availableCharacters.FindIndex(it => it.asset == Context.CharacterManager.SelectedCharacterAssetId);
-
-                if (selectedIndex < 0) selectedIndex = 0; // Reset to default
-                LoadCharacter(availableCharacters[selectedIndex]);
+                var dialog = Dialog.Instantiate();
+                dialog.Message = "DIALOG_COULD_NOT_CONNECT_TO_SERVER";
+                dialog.OnPositiveButtonClicked = it =>
+                {
+                    Context.ScreenManager.ChangeScreen(Context.ScreenManager.PopAndPeekHistory(), ScreenTransition.Out,
+                        addTargetScreenToHistory: false);
+                    it.Close();
+                };
+                dialog.Open();
             })
-            .Catch(error =>
+            .Finally(() => SpinnerOverlay.Hide());
+    }
+
+    public async void DownloadAvailableCharacters(List<CharacterMeta> characters)
+    {
+        foreach (var meta in characters)
+        {
+            var success = await Context.CharacterManager.DownloadCharacterAssetDialog(meta.AssetId);
+            if (!success)
             {
-                Debug.LogError(error);
-                // TODO: Retry? Offline cache?
-            }).Finally(() => SpinnerOverlay.Hide());
+                Toast.Next(Toast.Status.Failure, "CHARACTER_FAILED_TO_DOWNLOAD".Get());
+            }
+            else
+            {
+                availableCharacters.Add(meta);
+            }
+        }
+
+        selectedIndex =
+            availableCharacters.FindIndex(it =>
+                it.AssetId == Context.CharacterManager.SelectedCharacterAssetId);
+
+        if (selectedIndex < 0) selectedIndex = 0; // Reset to default
+        LoadCharacter(availableCharacters[selectedIndex]);
     }
 
     public async void LoadCharacter(CharacterMeta meta)
     {
         ParallaxHolder.WillDelaySet = true;
-        
-        var isNewCharacter = Context.CharacterManager.ActiveCharacterAssetId != meta.asset;
-        var character = await Context.CharacterManager.SetActiveCharacter(meta.asset);
+
+        var isNewCharacter = Context.CharacterManager.ActiveCharacterAssetId != meta.AssetId;
+        var character = await Context.CharacterManager.SetActiveCharacter(meta.AssetId);
         if (character == null)
         {
             throw new Exception("Character not downloaded or corrupted");
@@ -119,23 +146,20 @@ public class CharacterSelectionScreen : Screen
             await UniTask.Delay(TimeSpan.FromSeconds(0.4f));
         }
 
-        // TODO: what if not downloaded?
-        await Context.LevelManager.LoadFromMetadataFiles(LevelType.Official,
-            new List<string> {Context.UserDataPath + "/" + meta.level.uid + "/level.json"});
-
-        nameText.text = meta.name;
+        nameText.text = meta.Name;
         nameGradient.SetGradient(character.nameGradient.GetGradient());
-        descriptionText.text = meta.description;
-        levelCard.SetModel(Context.LevelManager.LoadedLocalLevels[meta.level.uid]);
-        illustratorText.text = meta.illustrator.name;
+        descriptionText.text = meta.Description;
+        levelCard.SetModel(meta.Level.ToLevel(LevelType.Official));
+        illustratorText.text = meta.Illustrator.Name;
         illustratorProfileButton.onPointerClick.RemoveAllListeners();
-        illustratorProfileButton.onPointerClick.AddListener(_ => Application.OpenURL(meta.illustrator.url));
-        if (!meta.characterDesigner.name.IsNullOrEmptyTrimmed())
+        illustratorProfileButton.onPointerClick.AddListener(_ => Application.OpenURL(meta.Illustrator.Url));
+        if (meta.CharacterDesigner != null && !meta.CharacterDesigner.Name.IsNullOrEmptyTrimmed())
         {
             characterDesignerHolder.gameObject.SetActive(true);
-            characterDesignerText.text = meta.characterDesigner.name;
+            characterDesignerText.text = meta.CharacterDesigner.Name;
             characterDesignerProfileButton.onPointerClick.RemoveAllListeners();
-            characterDesignerProfileButton.onPointerClick.AddListener(_ => Application.OpenURL(meta.characterDesigner.url));
+            characterDesignerProfileButton.onPointerClick.AddListener(_ =>
+                Application.OpenURL(meta.CharacterDesigner.Url));
         }
         else
         {
@@ -143,8 +167,8 @@ public class CharacterSelectionScreen : Screen
         }
 
         infoCard.transform.RebuildLayout();
-        characterDisplay.Load(CharacterAsset.GetTachieAssetId(meta.asset));
-        
+        characterDisplay.Load(CharacterAsset.GetTachieAssetId(meta.AssetId));
+
         infoCard.Enter();
         characterTransitionElement.Enter();
         characterTransitionElement.Apply(it =>
@@ -155,7 +179,7 @@ public class CharacterSelectionScreen : Screen
         });
         SpinnerOverlay.Hide();
         TranslucentCover.Hide();
-        
+
         ParallaxHolder.WillDelaySet = false;
     }
 
@@ -170,5 +194,4 @@ public class CharacterSelectionScreen : Screen
         selectedIndex = (selectedIndex - 1).Mod(availableCharacters.Count);
         LoadCharacter(availableCharacters[selectedIndex]);
     }
-
 }

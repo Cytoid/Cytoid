@@ -19,6 +19,7 @@ public class ProfileScreen : Screen, ScreenChangeListener
     public RadioGroup leaderboardModeSelect;
     public ScrollRect leaderboardScrollRect;
     public InteractableMonoBehavior signOutButton;
+    public InteractableMonoBehavior toggleOfflineButton;
 
     public Image avatarImage;
     public Image levelProgressImage;
@@ -37,20 +38,19 @@ public class ProfileScreen : Screen, ScreenChangeListener
     {
         base.OnScreenInitialized();
         playerAvatar.onPointerClick.AddListener(_ =>
-            Application.OpenURL(Context.WebsiteUrl + "/profile/" + Context.OnlinePlayer.LastProfile.user.uid));
+            Application.OpenURL(Context.WebsiteUrl + "/profile/" + Context.OnlinePlayer.LastProfile.User.Uid));
         signOutButton.onPointerClick.AddListener(_ =>
         {
             Context.OnlinePlayer.Deauthenticate();
-            Context.ScreenManager.ChangeScreen(Context.ScreenManager.PopAndPeekHistory(), ScreenTransition.In,
-                addToHistory: false);
+            Context.ScreenManager.History.Clear();
+            Context.ScreenManager.ChangeScreen(MainMenuScreen.Id, ScreenTransition.In);
             Toast.Next(Toast.Status.Success, "TOAST_SUCCESSFULLY_SIGNED_OUT".Get());
             ProfileWidget.Instance.SetSignedOut();
             Context.ScreenManager.GetScreen<SignInScreen>().passwordInput.text = "";
         });
         contentTabs.onTabSelect.AddListener((index, tab) =>
         {
-            var contentRect = tab.transform.Find("Viewport/Content").transform as RectTransform;
-            upperOverlay.contentRect = contentRect;
+            upperOverlay.contentRect = contentTabs.viewportContents[index];
 
             if (index == 0)
             {
@@ -68,6 +68,7 @@ public class ProfileScreen : Screen, ScreenChangeListener
         });
         leaderboardModeSelect.onSelect.AddListener(UpdateLeaderboard);
         leaderboardScrollRect.gameObject.AddComponent<ScrollRectFocusHelper>();
+        toggleOfflineButton.onPointerClick.AddListener(_ => ToggleOffline());
     }
 
     public override void OnScreenBecameActive()
@@ -85,20 +86,36 @@ public class ProfileScreen : Screen, ScreenChangeListener
 
         var profile = Context.OnlinePlayer.LastProfile;
         avatarImage.sprite = ProfileWidget.Instance.avatarImage.sprite;
-        levelProgressImage.fillAmount = (profile.exp.totalExp - profile.exp.currentLevelExp)
-                                        / (profile.exp.nextLevelExp - profile.exp.currentLevelExp);
-        uidText.text = profile.user.uid;
-        ratingText.text = $"{"PROFILE_WIDGET_RATING".Get()} {profile.rating:0.00}";
-        levelText.text = $"{"PROFILE_WIDGET_LEVEL".Get()} {profile.exp.currentLevel}";
-        expText.text = $"{"PROFILE_WIDGET_EXP".Get()} {profile.exp.totalExp}/{profile.exp.nextLevelExp}";
-        totalRankedPlaysText.text = profile.activities.total_ranked_plays.ToString("N0");
-        totalClearedNotesText.text = profile.activities.cleared_notes.ToString("N0");
-        highestMaxComboText.text = profile.activities.max_combo.ToString("N0");
-        avgRankedAccuracyText.text = (profile.activities.average_ranked_accuracy * 100).ToString("0.00") + "%";
-        totalRankedScoreText.text = profile.activities.total_ranked_score.ToString("N0");
-        totalPlayTimeText.text = TimeSpan.FromSeconds(profile.activities.total_play_time)
+        levelProgressImage.fillAmount = (profile.Exp.TotalExp - profile.Exp.CurrentLevelExp)
+                                        / (profile.Exp.NextLevelExp - profile.Exp.CurrentLevelExp);
+        uidText.text = profile.User.Uid;
+        ratingText.text = $"{"PROFILE_WIDGET_RATING".Get()} {profile.Rating:0.00}";
+        levelText.text = $"{"PROFILE_WIDGET_LEVEL".Get()} {profile.Exp.CurrentLevel}";
+        expText.text = $"{"PROFILE_WIDGET_EXP".Get()} {profile.Exp.TotalExp}/{profile.Exp.NextLevelExp}";
+        totalRankedPlaysText.text = profile.Activities.TotalRankedPlays.ToString("N0");
+        totalClearedNotesText.text = profile.Activities.ClearedNotes.ToString("N0");
+        highestMaxComboText.text = profile.Activities.MaxCombo.ToString("N0");
+        avgRankedAccuracyText.text = (profile.Activities.AverageRankedAccuracy * 100).ToString("0.00") + "%";
+        totalRankedScoreText.text = profile.Activities.TotalRankedScore.ToString("N0");
+        totalPlayTimeText.text = TimeSpan.FromSeconds(profile.Activities.TotalPlayTime)
             .Let(it => it.ToString(it.Days > 0 ? @"d\d\ h\h\ m\m\ s\s" : @"h\h\ m\m\ s\s"));
         LayoutFixer.Fix(ratingText.transform.parent.transform);
+        
+        toggleOfflineButton.GetComponentInChildren<Text>().text = Context.IsOnline() ? "OFFLINE_GO_OFFLINE".Get() : "OFFLINE_GO_ONLINE".Get();
+    }
+
+    public void ToggleOffline()
+    {
+        Context.ScreenManager.History.Clear();
+        Context.ScreenManager.ChangeScreen(MainMenuScreen.Id, ScreenTransition.Out);
+        if (Context.IsOnline())
+        {
+            Context.SetOffline(true);
+        }
+        else
+        {
+            ProfileWidget.Instance.SetSigningIn();
+        }
     }
 
     public void ClearLeaderboard()
@@ -124,7 +141,7 @@ public class ProfileScreen : Screen, ScreenChangeListener
             leaderboard.SetData(data);
             if (mode == "me")
             {
-                var meEntry = leaderboard.Entries.Find(it => it.Model.owner.uid == Context.OnlinePlayer.Uid);
+                var meEntry = leaderboard.Entries.Find(it => it.Model.owner.Uid == Context.OnlinePlayer.Uid);
                 if (meEntry != null)
                 {
                     await UniTask.DelayFrame(0);

@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using DG.Tweening;
+using LiteDB;
 using Polyglot;
+using RSG;
 using Tayx.Graphy;
 using UniRx.Async;
 using UnityEditor;
@@ -14,11 +16,11 @@ using UnityEngine.SceneManagement;
 public class Context : SingletonMonoBehavior<Context>
 {
     public const string Version = "2.0 Alpha 5";
-    
-    public const string ApiUrl = "https://api.cytoid.io";
+
+    public static string ApiUrl = "https://api.cytoid.io";
     public const string ServicesUrl = "http://192.168.3.13:4000";
     public const string WebsiteUrl = "https://cytoid.io";
-    
+
     public const int ReferenceWidth = 1920;
     public const int ReferenceHeight = 1080;
 
@@ -27,15 +29,19 @@ public class Context : SingletonMonoBehavior<Context>
 
     public static readonly PreSceneChangedEvent PreSceneChangedEvent = new PreSceneChangedEvent();
     public static readonly PostSceneChangedEvent PostSceneChangedEvent = new PostSceneChangedEvent();
-    public static readonly LevelEvent OnSelectedLevelChanged = new LevelEvent(); // TODO: This feels definitely unnecessary. Integrate with screen?
+
+    public static readonly LevelEvent
+        OnSelectedLevelChanged = new LevelEvent(); // TODO: This feels definitely unnecessary. Integrate with screen?
+
     public static readonly UnityEvent OnLanguageChanged = new UnityEvent();
-    
+    public static readonly OfflineModeToggleEvent OnOfflineModeToggled = new OfflineModeToggleEvent();
+
     public static string UserDataPath;
     public static string iOSTemporaryInboxPath;
     public static int InitialWidth;
     public static int InitialHeight;
     public static int DefaultDspBufferSize { get; private set; }
-    
+
     public static AudioManager AudioManager;
     public static ScreenManager ScreenManager;
 
@@ -46,6 +52,11 @@ public class Context : SingletonMonoBehavior<Context>
     public static readonly RemoteResourceManager RemoteResourceManager = new RemoteResourceManager();
     public static readonly AssetMemory AssetMemory = new AssetMemory();
 
+    public static LiteDatabase Database => new LiteDatabase(
+        $"Filename=\"{Path.Combine(Application.persistentDataPath, "Cytoid.db")}\";"
+        //+ $" Password={SecuredConstants.DbSecret}"
+    );
+
     public static Level SelectedLevel
     {
         get => selectedLevel;
@@ -55,6 +66,7 @@ public class Context : SingletonMonoBehavior<Context>
             OnSelectedLevelChanged.Invoke(value);
         }
     }
+
     public static Difficulty SelectedDifficulty = Difficulty.Easy;
     public static Difficulty PreferredDifficulty = Difficulty.Easy;
     public static HashSet<Mod> SelectedMods = new HashSet<Mod>();
@@ -66,6 +78,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static readonly LocalPlayer LocalPlayer = new LocalPlayer();
     public static readonly OnlinePlayer OnlinePlayer = new OnlinePlayer();
 
+    private static bool offline;
     private static Level selectedLevel;
     private static GraphyManager graphyManager;
     private static Stack<string> navigationScreenHistory = new Stack<string>();
@@ -89,16 +102,16 @@ public class Context : SingletonMonoBehavior<Context>
     {
         Resources.UnloadUnusedAssets();
     }
-    
+
     private async void InitializeApplication()
     {
         Application.lowMemory += OnLowMemory;
-        
+
         FontManager.LoadFonts();
-        
+
         var audioConfig = AudioSettings.GetConfiguration();
         DefaultDspBufferSize = audioConfig.dspBufferSize;
-        
+
         if (Application.platform == RuntimePlatform.Android && LocalPlayer.DspBufferSize > 0)
         {
             audioConfig.dspBufferSize = LocalPlayer.DspBufferSize;
@@ -118,29 +131,38 @@ public class Context : SingletonMonoBehavior<Context>
         UnityEngine.Screen.sleepTimeout = SleepTimeout.NeverSleep;
         Application.targetFrameRate = 120;
         Input.gyro.enabled = true;
-        
+
         UserDataPath = Application.persistentDataPath;
         print("User data path: " + UserDataPath);
 
-		if (Application.platform == RuntimePlatform.Android)
-		{
-			var dir = GetAndroidStoragePath();
-			if (dir == null)
-			{
-				Application.Quit();
-				return;
-			}
+        if (Application.platform == RuntimePlatform.Android)
+        {
+            var dir = GetAndroidStoragePath();
+            if (dir == null)
+            {
+                Application.Quit();
+                return;
+            }
+
             UserDataPath = dir + "/Cytoid";
-			// Create an empty folder if it doesn't already exist
-			Directory.CreateDirectory(UserDataPath);
-            File.Create(UserDataPath + "/.nomedia").Dispose();
-		} 
+            // Create an empty folder if it doesn't already exist
+            Directory.CreateDirectory(UserDataPath);
+            try
+            {
+                File.Create(UserDataPath + "/.nomedia").Dispose();
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("Cannot create or overwrite .nomedia file. Is it read-only?");
+                Debug.LogWarning(e);
+            }
+        }
         else if (Application.platform == RuntimePlatform.IPhonePlayer)
         {
             // iOS 13 fix
             iOSTemporaryInboxPath = UserDataPath
-                                   .Replace("Documents/", "")
-                                   .Replace("Documents", "") + "/tmp/me.tigerhix.cytoid-Inbox/";
+                .Replace("Documents/", "")
+                .Replace("Documents", "") + "/tmp/me.tigerhix.cytoid-Inbox/";
         }
 
 #if UNITY_EDITOR
@@ -167,12 +189,12 @@ public class Context : SingletonMonoBehavior<Context>
         if (SceneManager.GetActiveScene().name == "Navigation")
         {
             await UniTask.WaitUntil(() => ScreenManager != null);
-            
+
             if (true)
             {
                 ScreenManager.ChangeScreen(InitializationScreen.Id, ScreenTransition.None);
             }
-            
+
             if (false)
             {
                 ScreenManager.ChangeScreen(TrainingSelectionScreen.Id, ScreenTransition.None);
@@ -181,7 +203,8 @@ public class Context : SingletonMonoBehavior<Context>
             if (false)
             {
                 // Load f.fff
-                await LevelManager.LoadFromMetadataFiles(LevelType.Community, new List<string> { UserDataPath + "/f.fff/level.json" });
+                await LevelManager.LoadFromMetadataFiles(LevelType.Community,
+                    new List<string> {UserDataPath + "/f.fff/level.json"});
                 SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
                 SelectedDifficulty = Difficulty.Parse(SelectedLevel.Meta.charts[0].type);
                 ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.None);
@@ -190,12 +213,13 @@ public class Context : SingletonMonoBehavior<Context>
             if (false)
             {
                 // Load result
-                await LevelManager.LoadFromMetadataFiles(LevelType.Community, new List<string> { UserDataPath + "/suconh_typex.alice/level.json" });
+                await LevelManager.LoadFromMetadataFiles(LevelType.Community,
+                    new List<string> {UserDataPath + "/suconh_typex.alice/level.json"});
                 SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
                 SelectedDifficulty = Difficulty.Hard;
                 ScreenManager.ChangeScreen("Result", ScreenTransition.None);
             }
-            
+
             if (false)
             {
                 // Load result
@@ -226,13 +250,14 @@ public class Context : SingletonMonoBehavior<Context>
             OnlinePlayer.IsAuthenticating = false;
             CharacterManager.UnloadActiveCharacter();
         }
+
         if (prev == "Game" && next == "Navigation")
         {
             Input.gyro.enabled = true;
 
             // Wait until character is loaded
             await CharacterManager.SetSelectedCharacterActive();
-            
+
             // Restore history
             ScreenManager.History = new Stack<string>(navigationScreenHistory);
 
@@ -241,7 +266,8 @@ public class Context : SingletonMonoBehavior<Context>
                 if (TierState.CurrentStage.IsCompleted)
                 {
                     // Show tier result screen
-                    ScreenManager.ChangeScreen(TierBreakScreen.Id, ScreenTransition.None, addToHistory: false);
+                    ScreenManager.ChangeScreen(TierBreakScreen.Id, ScreenTransition.None,
+                        addTargetScreenToHistory: false);
                 }
                 else
                 {
@@ -249,13 +275,13 @@ public class Context : SingletonMonoBehavior<Context>
                     // Show tier selection screen
                     ScreenManager.ChangeScreen(TierSelectionScreen.Id, ScreenTransition.None);
                 }
-            } 
+            }
             else if (GameState != null)
             {
                 if (GameState.IsCompleted)
                 {
                     // Show result screen
-                    ScreenManager.ChangeScreen(ResultScreen.Id, ScreenTransition.None, addToHistory: false);
+                    ScreenManager.ChangeScreen(ResultScreen.Id, ScreenTransition.None, addTargetScreenToHistory: false);
                 }
                 else
                 {
@@ -360,16 +386,31 @@ public class Context : SingletonMonoBehavior<Context>
             ScreenManager.ActiveScreen.CanvasGroup.blocksRaycasts = blocksRaycasts;
             ScreenManager.ActiveScreen.CanvasGroup.interactable = blocksRaycasts;
         }
+
         if (ProfileWidget.Instance != null)
         {
             var currentScreenId = ScreenManager.ActiveScreenId;
-            blocksRaycasts = blocksRaycasts 
-                             && !ProfileWidget.HiddenScreenIds.Contains(currentScreenId) 
+            blocksRaycasts = blocksRaycasts
+                             && !ProfileWidget.HiddenScreenIds.Contains(currentScreenId)
                              && !ProfileWidget.StaticScreenIds.Contains(currentScreenId);
             ProfileWidget.Instance.canvasGroup.blocksRaycasts = blocksRaycasts;
             ProfileWidget.Instance.canvasGroup.interactable = blocksRaycasts;
         }
     }
+
+    public static bool IsOffline() => offline;
+
+    public static bool IsOnline() => !IsOffline();
+
+    public static void SetOffline(bool offline)
+    {
+        Context.offline = offline;
+        OnOfflineModeToggled.Invoke(offline);
+    }
+}
+
+public class OfflineModeToggleEvent : UnityEvent<bool>
+{
 }
 
 #if UNITY_EDITOR
@@ -397,10 +438,29 @@ public class ContextEditor : Editor
             {
                 Resources.UnloadUnusedAssets();
             }
+
             if (GUILayout.Button("Upload test"))
             {
                 Test.UploadTest();
             }
+
+            if (GUILayout.Button("Toggle offline mode"))
+            {
+                Context.SetOffline(!Context.IsOffline());
+            }
+
+            if (GUILayout.Button("Make API work/not work"))
+            {
+                if (Context.ApiUrl == "https://api.cytoid.io")
+                {
+                    Context.ApiUrl = "https://apissss.cytoid.io";
+                }
+                else
+                {
+                    Context.ApiUrl = "https://api.cytoid.io";
+                }
+            }
+
             EditorUtility.SetDirty(target);
         }
     }

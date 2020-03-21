@@ -36,7 +36,7 @@ public class NavigationElement : InteractableMonoBehavior, ScreenBecameActiveLis
         navigated = true;
         Context.ScreenManager.ChangeScreen(
             navigateToLastScreen ? Context.ScreenManager.PopAndPeekHistory() : targetScreenId, transition,
-            duration, currentScreenDelay, newScreenDelay, transitionFocus, OnScreenChanged, addToHistory: addToHistory && !navigateToLastScreen);
+            duration, currentScreenDelay, newScreenDelay, transitionFocus, OnScreenChanged, addTargetScreenToHistory: addToHistory && !navigateToLastScreen);
     }
 
     protected virtual void OnScreenChanged(Screen screen) => Expression.Empty();

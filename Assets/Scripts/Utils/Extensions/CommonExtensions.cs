@@ -436,7 +436,21 @@ public static class CommonExtensions
         Debug.Log(JsonConvert.SerializeObject(obj));
     }
 
-    public static IPromise Catch(this IPromise promise, Action<RequestException> onRejected)
+    public static IPromise<T> CatchRequestError<T>(this IPromise<T> promise, Func<RequestException, T> onRejected)
+    {
+        return promise.Catch(exception =>
+        {
+            if (exception is RequestException requestException)
+            {
+                return onRejected(requestException);
+            }
+            Debug.LogError($"Exception thrown by promise");
+            Debug.LogError(exception);
+            throw exception;
+        });
+    }
+    
+    public static IPromise CatchRequestError<T>(this IPromise<T> promise, Action<RequestException> onRejected)
     {
         return promise.Catch(exception =>
         {
@@ -446,36 +460,27 @@ public static class CommonExtensions
             }
             else
             {
+                Debug.LogError($"Exception thrown by promise");
+                Debug.LogError(exception);
                 throw exception;
             }
         });
     }
-
-    public static IPromise HandleRequestErrors(this IPromise promise, Action<Exception> onRejected = null)
+    
+    public static IPromise CatchRequestError(this IPromise promise, Action<RequestException> onRejected)
     {
-        return promise.Catch(error =>
+        return promise.Catch(exception =>
         {
-            if (error.IsNetworkError)
+            if (exception is RequestException requestException)
             {
-                Toast.Next(Toast.Status.Failure, "TOAST_CHECK_NETWORK_CONNECTION".Get());
+                onRejected(requestException);
             }
             else
             {
-                switch (error.StatusCode)
-                {
-                    case 401:
-                        Toast.Next(Toast.Status.Failure, "TOAST_INCORRECT_ID_OR_PASSWORD".Get());
-                        break;
-                    case 404:
-                        Toast.Next(Toast.Status.Failure, "TOAST_ID_NOT_FOUND".Get());
-                        break;
-                    default:
-                        Toast.Next(Toast.Status.Failure, "TOAST_STATUS_CODE".Get(error.StatusCode));
-                        break;
-                }
+                Debug.LogError($"Exception thrown by promise");
+                Debug.LogError(exception);
+                throw exception;
             }
-
-            onRejected?.Invoke(error);
         });
     }
 

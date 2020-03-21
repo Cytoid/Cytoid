@@ -22,7 +22,7 @@ public class CharacterDisplay : MonoBehaviour, ScreenBecameActiveListener, Scree
         print("CharacterDisplay: Loaded " + assetId);
         loadedTachie = await Context.RemoteResourceManager.LoadResource(assetId);
         IsLoaded = true;
-        loadedTachie.transform.parent = transform;
+        loadedTachie.transform.SetParent(transform);
         loadedTachie.transform.localPosition = Vector3.zero;
         loadedTachie.transform.localScale = Vector3.one;
         Enter();

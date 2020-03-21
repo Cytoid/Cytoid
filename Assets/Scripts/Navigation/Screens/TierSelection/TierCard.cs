@@ -69,7 +69,8 @@ public class TierCard : MonoBehaviour
             characterRoot.gameObject.SetActive(tier.Meta.character != null);
             if (tier.Meta.character != null)
             {
-                characterDisplay.Load(tier.Meta.character.asset + "Tachie");
+                characterDisplay.Load(tier.Meta.character.TachieAssetId);
+                characterDisplay.canvasGroup.alpha = 0;
             }
 
             gradientPane.SetModel(tier);
@@ -100,6 +101,7 @@ public class TierCard : MonoBehaviour
                 var criterionEntry = Instantiate(criterionEntryPrefab, criteriaHolder.transform);
                 criterionEntry.SetModel(criterion.Description, CriterionState.Passed);
             }
+
             LayoutFixer.Fix(criteriaHolder.transform);
         }
     }
@@ -118,7 +120,7 @@ public class TierCard : MonoBehaviour
         cardOverlayImage.SetAlpha(1 - a);
         if (characterDisplay.IsLoaded)
         {
-            characterDisplay.canvasGroup.alpha = 1 - a;
+            characterDisplay.canvasGroup.alpha = a;
         }
         rectTransform.localScale = Vector3.one * (0.9f + Mathf.Lerp(0.1f, 0, t));
         if (t < 0.5f)

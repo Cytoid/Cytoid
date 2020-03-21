@@ -1,29 +1,32 @@
 using System;
+using Newtonsoft.Json;
 
 [Serializable]
 public class CharacterMeta
 {
-    public string name;
-    public string description;
-    public Illustrator illustrator;
-    public CharacterDesigner characterDesigner;
-    
+    [JsonProperty("name")] public string Name { get; set; }
+    [JsonProperty("description")] public string Description { get; set; }
+    [JsonProperty("illustrator")] public IllustratorMeta Illustrator { get; set; }
+    [JsonProperty("characterDesigner")] public CharacterDesignerMeta CharacterDesigner { get; set; }
+
     [Serializable]
-    public class Illustrator
+    public class IllustratorMeta
     {
-        public string name;
-        public string url;
-    }
-    
-    [Serializable]
-    public class CharacterDesigner
-    {
-        public string name;
-        public string url;
+        [JsonProperty("name")] public string Name { get; set; }
+        [JsonProperty("url")] public string Url { get; set; }
     }
 
-    public OnlineLevel level;
-    public string asset;
-    public string tachieAsset;
+    [Serializable]
+    public class CharacterDesignerMeta
+    {
+        [JsonProperty("name")] public string Name { get; set; }
+        [JsonProperty("url")] public string Url { get; set; }
+    }
+
+    [JsonProperty("level")] public OnlineLevel Level { get; set; }
+    [JsonProperty("asset")] public string AssetId { get; set; }
+    [JsonProperty("tachieAsset")] public string TachieAssetId { get; set; }
+
+    public override string ToString() => JsonConvert.SerializeObject(this);
     
 }

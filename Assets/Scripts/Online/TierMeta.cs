@@ -22,6 +22,7 @@ public class TierMeta
     public double thresholdAccuracy;
     public double maxHealth;
 
+    [Serializable]
     public class ColorPalette
     {
         public string background;
@@ -48,6 +49,7 @@ public class Tier
 
     public bool locked;
     public double completion;
+    public int? rank;
     [JsonProperty("tier")] public TierMeta Meta;
 }
 

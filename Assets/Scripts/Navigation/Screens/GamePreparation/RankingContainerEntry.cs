@@ -20,10 +20,10 @@ public class RankingContainerEntry : ContainerEntry<RankingEntry>
     public override void SetModel(RankingEntry entry)
     {
         Model = entry;
-        background.SetActive(Context.OnlinePlayer.IsAuthenticated && entry.owner.uid == Context.OnlinePlayer.Uid);
+        background.SetActive(Context.OnlinePlayer.IsAuthenticated && entry.owner.Uid == Context.OnlinePlayer.Uid);
         avatar.SetModel(entry.owner);
         rank.text = "#" + entry.rank;
-        name.text = entry.owner.uid;
+        name.text = entry.owner.Uid;
         performance.SetModel(entry);
     }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Networking;
 using Proyecto26.Common;
@@ -91,7 +92,7 @@ namespace Proyecto26
                 if (err == null && res.Data != null && options.WillParseBody)
                 {
                     try {
-                        body = JsonUtility.FromJson<TResponse>(res.Text);
+                        body = JsonConvert.DeserializeObject<TResponse>(res.Text); // EDIT: Cytoid
                     }
                     catch (Exception error) {
                         DebugLog(options.EnableDebug, string.Format("Invalid JSON format\nError: {0}", error.Message), true);
@@ -108,7 +109,7 @@ namespace Proyecto26
                 if (err == null && res.Data != null && options.WillParseBody)
                 {
                     try { 
-                        body = JsonHelper.ArrayFromJson<TResponse>(res.Text);
+                        body = JsonHelper.ArrayFromJson<TResponse>(res.Text); // EDIT: Cytoid
                     }
                     catch (Exception error)
                     {

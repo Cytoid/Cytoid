@@ -6,6 +6,7 @@ public class ContentTabs : LabelSelect
 {
     
     public List<TransitionElement> tabs;
+    public List<RectTransform> viewportContents;
 
     public ContentTabSelectEvent onTabSelect = new ContentTabSelectEvent();
     
@@ -17,8 +18,7 @@ public class ContentTabs : LabelSelect
             var tab = tabs[index];
             if (index == newIndex)
             {
-                var rect = tab.transform.Find("Viewport/Content").transform as RectTransform;
-                rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, 0);
+                viewportContents[index].anchoredPosition = new Vector2(viewportContents[index].anchoredPosition.x, 0);
                 tab.Enter(false);
                 tab.canvasGroup.blocksRaycasts = true;
             }

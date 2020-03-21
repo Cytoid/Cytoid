@@ -65,14 +65,6 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
                  !string.IsNullOrEmpty(Context.OnlinePlayer.JwtToken))
         {
             SetSigningIn();
-            Context.OnlinePlayer.AuthenticateWithJwtToken()
-                .Then(profile =>
-                {
-                    Toast.Next(Toast.Status.Success, "TOAST_SUCCESSFULLY_SIGNED_IN".Get());
-                    SetSignedIn(profile);
-                })
-                .Catch(error => SetSignedOut())
-                .HandleRequestErrors(error => SetSignedOut());
         }
         else
         {
@@ -100,20 +92,81 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
         LayoutFixer.Fix(layoutGroup.transform);
         background.color = Color.white;
         spinner.IsSpinning = true;
+        
+        Context.OnlinePlayer.AuthenticateWithJwtToken()
+            .Then(profile =>
+            {
+                Toast.Next(Toast.Status.Success, "TOAST_SUCCESSFULLY_SIGNED_IN".Get());
+                SetSignedIn(profile);
+
+                if (Context.IsOffline()) Context.SetOffline(false);
+            })
+            .CatchRequestError(error =>
+            {
+                if (error.IsNetworkError)
+                {
+                    var dialog = Dialog.Instantiate();
+                    dialog.Message = "DIALOG_USE_OFFLINE_MODE".Get();
+                    dialog.UseProgress = false;
+                    dialog.UsePositiveButton = true;
+                    dialog.UseNegativeButton = true;
+                    dialog.OnPositiveButtonClicked = _ =>
+                    {
+                        Context.SetOffline(true);
+                        Context.OnlinePlayer.FetchProfile().Then(it =>
+                        {
+                            if (it == null)
+                            {
+                                SetSignedOut();
+                                Context.OnlinePlayer.Deauthenticate();
+                            }
+                            else
+                            {
+                                SetSignedIn(Context.OnlinePlayer.LastProfile = it);
+                                Context.OnlinePlayer.IsAuthenticated = true;
+                            }
+                            dialog.Close();
+                        }).Catch(exception => throw new InvalidOperationException()); // Impossible
+                    };
+                    dialog.OnNegativeButtonClicked = _ =>
+                    {
+                        dialog.Close();
+                        SetSigningIn();
+                    };
+                    dialog.Open();
+                }
+                else
+                {
+                    switch (error.StatusCode)
+                    {
+                        case 401:
+                            Toast.Next(Toast.Status.Failure, "TOAST_INCORRECT_ID_OR_PASSWORD".Get());
+                            break;
+                        case 404:
+                            Toast.Next(Toast.Status.Failure, "TOAST_ID_NOT_FOUND".Get());
+                            break;
+                        default:
+                            Toast.Next(Toast.Status.Failure, "TOAST_STATUS_CODE".Get(error.StatusCode));
+                            break;
+                    }
+
+                    SetSignedOut();
+                }
+            });
     }
 
     public async void SetSignedIn(Profile profile)
     {
-        name.text = profile.user.uid;
+        name.text = profile.User.Uid;
         name.DOKill();
         name.DOFade(1, 0.2f);
         infoLayoutGroup.gameObject.SetActive(true);
-        infoLayoutGroup.gameObject.SetActive(true);
+        LayoutFixer.Fix(layoutGroup.transform);
         if (avatarImage.sprite == null)
         {
             spinner.IsSpinning = true;
             var sprite = await Context.AssetMemory.LoadAsset<Sprite>(
-                profile.user.avatarURL?.WithSizeParam(256, 256) ?? profile.user.avatar.large, 
+                profile.User.AvatarUrl?.WithSizeParam(256, 256) ?? profile.User.Avatar.LargeUrl, 
                 AssetTag.PlayerAvatar,
                 useFileCache: true
             );
@@ -212,13 +265,13 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
 
     public void UpdateRatingAndLevel(Profile profile, bool showChange = false)
     {
-        rating.text = $"{"PROFILE_WIDGET_RATING".Get()} {profile.rating:N2}";
-        level.text = $"{"PROFILE_WIDGET_LEVEL".Get()} {profile.exp.currentLevel}";
+        rating.text = $"{"PROFILE_WIDGET_RATING".Get()} {profile.Rating:N2}";
+        level.text = $"{"PROFILE_WIDGET_LEVEL".Get()} {profile.Exp.CurrentLevel}";
 
         if (showChange && lastProfile != null)
         {
-            var lastRating = Math.Floor(lastProfile.rating * 100) / 100;
-            var currentRating = Math.Floor(profile.rating * 100) / 100;
+            var lastRating = Math.Floor(lastProfile.Rating * 100) / 100;
+            var currentRating = Math.Floor(profile.Rating * 100) / 100;
             var rtDifference = currentRating - lastRating;
             if (rtDifference >= 0.01)
             {
@@ -229,7 +282,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
                 rating.text += $" <color=#E55934>({Math.Round(rtDifference, 2)})</color>";
             }
 
-            var levelDifference = profile.exp.currentLevel - lastProfile.exp.currentLevel;
+            var levelDifference = profile.Exp.CurrentLevel - lastProfile.Exp.CurrentLevel;
             if (levelDifference > 0)
             {
                 level.text += $" <color=#9BC53D>(+{levelDifference})</color>";

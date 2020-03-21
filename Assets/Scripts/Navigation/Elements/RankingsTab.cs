@@ -49,12 +49,7 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
                 if (token != updateRankingToken) return (-1, null);
                 var (rank, entries) = ret;
                 rankingContainer.SetData(entries);
-                if (rank > 0)
-                {
-                    if (rank > 99) rankingText.text = "#99+";
-                    else rankingText.text = "#" + rank;
-                }
-                else rankingText.text = "N/A";
+                SetRanking(rank);
 
                 rankingContainerStatusText.text = "";
                 if (entries.Count == 0)
@@ -75,29 +70,34 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
 
                 return ret;
             })
-            .Catch(error =>
+            .CatchRequestError(error =>
             {
                 if (token != updateRankingToken) return (-1, null);
-                if (error is RequestException reqError)
-                {
-                    if (reqError.StatusCode != 404)
+                if (error.IsHttpError) {
+                    if (error.StatusCode != 404)
                     {
-                        Debug.LogError(error);
+                        throw error;
                     }
-                }
-                else
-                {
-                    Debug.LogError(error);
                 }
                 rankingText.text = "N/A";
                 rankingContainerStatusText.text = "GAME_PREP_RANKINGS_COULD_NOT_DOWNLOAD".Get();
-                throw error;
+                return (-1, null);
             })
             .Finally(() =>
             {
                 if (token != updateRankingToken) return;
                 spinner.IsSpinning = false;
             });
+    }
+
+    public void SetRanking(int rank)
+    {
+        if (rank > 0)
+        {
+            if (rank > 99) rankingText.text = "#99+";
+            else rankingText.text = "#" + rank;
+        }
+        else rankingText.text = "N/A";
     }
     
     private DateTime updateTierRankingToken;
@@ -116,13 +116,10 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
             {
                 if (token != updateTierRankingToken) return (-1, null);
                 var (rank, entries) = ret;
+                print($"Rank: {rank}");
+                print($"Entries: {entries}");
                 tierRankingContainer.SetData(entries);
-                if (rank > 0)
-                {
-                    if (rank > 99) rankingText.text = "#99+";
-                    else rankingText.text = "#" + rank;
-                }
-                else rankingText.text = "N/A";
+                SetRanking(rank);
 
                 rankingContainerStatusText.text = "";
                 if (entries.Count == 0)
@@ -144,23 +141,19 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
 
                 return ret;
             })
-            .Catch(error =>
+            .CatchRequestError(error =>
             {
                 if (token != updateTierRankingToken) return (-1, null);
-                if (error is RequestException reqError)
+                if (error.IsHttpError)
                 {
-                    if (reqError.StatusCode != 404)
+                    if (error.StatusCode != 404)
                     {
-                        Debug.LogError(error);
+                        throw error;
                     }
-                }
-                else
-                {
-                    Debug.LogError(error);
                 }
                 rankingText.text = "N/A";
                 rankingContainerStatusText.text = "TIER_RANKINGS_COULD_NOT_DOWNLOAD".Get();
-                throw error;
+                return (-1, null);
             })
             .Finally(() =>
             {

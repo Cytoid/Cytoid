@@ -4,7 +4,7 @@ LANGUAGE_EN	[LanguageName] in english	English	French	Spanish	German	Italian 	Por
 LANGUAGE_DIRECTION	ltr or rtl (text direction used by game code)	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	ltr	rtl	rtl	ltr	ltr	ltr	itr	ltr
 																																	
 Polyglot	100																																
-TRANSLATORS	Enter your Cytoid ID here!	tigerhix		beasten			bearusu_myo		sinednikral									miso-oden	tigerhix / teages_0v0 / 2394425147 / water_lift	lumixanth										lunaflina / exogram	howtopassthisuse	speedymlg7	2394425147 / tigerhix / HPTuse?
+TRANSLATORS	Enter your Cytoid ID here!	tigerhix		beasten			bearusu_myo		sinednikral									miso-oden	tigerhix / teages_0v0 / 2394425147 / water_lift	lumixanth										lunaflina / exogram	howtopassthisuse	speedymlg7	2394425147 / tigerhix / howtopassthisuse
 INIT_TOUCH_TO_START		Touch to start		Toque para comenzar			Toque para começar		Нажмите чтобы продолжить									画面をタップしてください	轻触以开始	—　點　擊　開　始　—	터치하세요									Nhấn để bắt đầu	Pindutin para magsimula	Sentuh layar untuk memulai	啊wee改哈鞥嫦娥我剛不疤痕處哈維楚王嗡阿格王朔！
 INIT_VERSION		VERSION {0}		Versión {0}			Versão {0}		Версия {0}									バージョン {0}	版本 {0}	{0} 版本	버전 {0}									Phiên bản {0}	Bersyon {0}	Versi {0}	贵阳市政厅 {0}
 INIT_UNPACKING_X		Unpacking {0}		Extrayendo {0}			Extraindo {0}		Распаковка {0}									展開中… {0}	解压 {0}	解壓「{0}」中……	추출중... {0}									Đang giải nén {0}			
@@ -61,17 +61,17 @@ TOAST_ENTER_PASSWORD		Please enter your password.		Por favor, ingrese su contras
 TOAST_INCORRECT_ID_OR_PASSWORD		Incorrect Cytoid ID or password.		Cytoid ID o contraseña incorrecta.			Senha ou Cytoid ID incorretos.		Неверный Cytoid ID или пароль.									Cytoid ID か パスワード が間違ってます。	Cytoid ID 或者密码错误。	Cytoid ID 或者密碼錯誤。	잘못된 Cytoid 아이디 또는 비밀번호 입니다.									ID Cytoid hoặc mật khẩu không đúng.	Mali ang iyong Cytoid ID o Password	Cytoid ID atau password yang salah telah dimasukkan.	你号的骨灰扬了
 TOAST_STATUS_CODE		Status code: {0}		Código de estado: {0}			Código de status: {0}		Статус-код: {0}									ステータスコード: {0}	状态代码：{0}	伺服器狀態代碼：{0}	상황 코드: {0}									Mã trạng thái: {0}	Status code: {0}	Kode status: {0}	{0}啊wee！
 TOAST_ID_NOT_FOUND		This Cytoid ID does not exist.		Este Cytoid ID no existe			Esse Cytoid ID não existe.		Этот Cytoid ID не существует.									この Cytoid ID は存在しません。	此 Cytoid ID 不存在。	該 Cytoid ID 不存在！	가입하지 않은 아이디 입니다.									ID Cytoid này không tồn tại.	Wala ang iyong inilagay na Cytoid ID		啊wee改哈鞥嫦娥我刚不疤痕处哈维楚王嗡阿格王朔！！！！！！！！！！！！
-TOAST_COULD_NOT_DOWNLOAD_TIER_DATA		Could not download tier data.		No se pudo descargar los datos de nivel.																	티어 정보 다운로드 실패										Di' makapagdownload ng Tier Data		
-TOAST_SUCCESSFULLY_DOWNLOADED_TIER_DATA		Successfully downloaded tier data.		Descargado los datos del nivel con éxito																	티어 정보 다운로드 성공										Nadownload na ang Tier Data		
-TOAST_AUTOMATICALLY_PROCEEDING_TO_NEXT_STAGE_X		Automatically proceeding to next stage in {0} seconds.		Procediendo automáticamente al siguiente nivel en {0} segundos.																	자동으로 {0} 초후에 다음 스테이지가 시작됩니다.												
-TOAST_LEVEL_VERIFICATION_FAILED		Level verification failed.																															
-TOAST_SERVER_INTERNAL_ERROR		Server internal error.																															
-TOAST_TIER_CLEARED		Tier cleared.																															
-TOAST_TIER_NOT_FOUND		Tier not found.																															
-TOAST_TIER_VERIFICATION_FAILED		Tier verification failed.																															
-TOAST_SWITCHED_TO_OFFLINE_MODE		Switched to offline mode.																															
-																																	
-																																	
+TOAST_COULD_NOT_DOWNLOAD_TIER_DATA		Could not download tier data.		No se pudo descargar los datos de nivel.															段位数据下载失败。		티어 정보 다운로드 실패										Di' makapagdownload ng Tier Data		
+TOAST_SUCCESSFULLY_DOWNLOADED_TIER_DATA		Successfully downloaded tier data.		Descargado los datos del nivel con éxito															段位数据下载成功。		티어 정보 다운로드 성공										Nadownload na ang Tier Data		
+TOAST_TIER_PROCEEDING_TO_NEXT_STAGE_X		Proceeding to next stage in {0} seconds...		Procediendo automáticamente al siguiente nivel en {0} segundos.															将在 {0} 秒后自动进入下一阶段...		자동으로 {0} 초후에 다음 스테이지가 시작됩니다.												
+TOAST_LEVEL_VERIFICATION_FAILED		Level verification failed.																	关卡校验失败。														
+TOAST_SERVER_INTERNAL_ERROR		Server internal error.																	服务器内部错误。														
+TOAST_TIER_CLEARED		Tier cleared.																	段位考核成功。														
+TOAST_TIER_NOT_FOUND		Tier not found.																	无法找到段位。														
+TOAST_TIER_VERIFICATION_FAILED		Tier verification failed.																	段位校验失败。														
+TOAST_SWITCHED_TO_OFFLINE_MODE		Switched to offline mode.																	已切换到离线模式。														
+TOAST_TIER_TIMED_OUT		Timed out. Tier failed.																	休息时间超时。段位考核失败。														
+TOAST_INITIALIZING_TRAINING_MODE		Initializing training mode. This may take a while...																	初始化训练模式中。请稍候...														
 DIALOG_RATE_THIS_LEVEL		Rate this level!		Califique este nivel!			Avalie esse nível!		Оцените этот уровень!									このレベルを評価しよう！	给关卡打个分吧！	評分一下吧！	이 채보를 평가해주세요!									Hãy đánh giá level!	Markahan ang lebel	Beri nilai level ini!	打分啊111111
 DIALOG_LEVEL_OUTDATED		This level is outdated.\nWould you like to update now?		Este nivel está desactualizado. \n¿Desea actualizarlo ahora?			Esse nível está desatualizado.\nGostaria de atualizá-lo agora?		Уровень устарел. \nЖелаете обновить его?									最新版のレベルがあります。\nアップデートしますか？	侦测到当前关卡不是最新版本。\n是否立即更新？	裝置內的關卡並非最新版本。\n要立即更新嗎？	본 채보는 새로운 버전이 있습니다. /n다운로드를 진행할까요?									Level này đã cũ. \nBạn có muốn cập nhật level bây giờ không?	Ang lebel na ito ay outdated. Gusto mo bang i-update ito?	Level ini outdated. Apakah anda ingin mengupdatenya?	关卡过期了。\n更新吗bbb
 DIALOG_DOWNLOADING		Downloading...		Descargando...			Baixando...		Скачивание...									ダウンロード中…	下载中...	下載中……	다운로드중...									Đang tải...	Nagdadownload...	Mengunduh...	这个杯子是拿来喝水的吗
@@ -80,12 +80,12 @@ DIALOG_CONFIRM_DELETE		Delete "{0}"?\nYour best performance will not be deleted.
 DIALOG_COMING_SOON		Coming soon!		Muy pronto!			Em breve!		Скоро!									お楽しみに！	即将上线，敬请期待！	賣力施工中，敬請期待！	출시 예정									Sẽ có trong thời gian ngắn!	Malapit na!	Coming soon!	贵阳贵阳咕咕咕
 DIALOG_RETRY_SYNCHRONIZE_PERFORMANCE		Could not synchronize performance. Retry?		No se pudo sincronizar su rendimiento. ¿Desea Intentar otra vez?			Não foi possível sincronizar sua performance. Tentar outra vez?		Не удалось синхронизировать счёт. Повторить?									同期に失敗しました。再試行しますか？	成绩同步失败。\n是否重试？	成績同步失敗。\n要重試嗎？	플레이를 업로드 못하였습니다. 다시 시도할까요?									Không thể tải thành tích lên. Thử lại?	Di' makasynchronize ang iyong performance. Ulitin?	Tidak dapat menyinkron performa. Coba lagi?	无法贵阳。是否贵阳？
 DIALOG_UNPACKING		Unpacking...		Extrayendo...			Extraindo...		Распаковка...									展開中…	解包中...	解壓中……	추출중...									Đang giải nén...	Tatangalin sa folder...	Memuat...	欢迎新魔王中...
-DIALOG_RETRY_SYNCHRONIZE_TIER_PERFORMANCE		Could not synchronize tier performance. Retry?																															
-DIALOG_OFFLINE_FEATURE_NOT_AVAILABLE		<b>You are offline.</b>\nTo use this feature, you must go online first.																															
-DIALOG_OFFLINE_LEVEL_NOT_AVAILABLE		<b>You are offline.</b>\nThis level has not been downloaded. To play this level, you must go online first.																															
-DIALOG_COULD_NOT_CONNECT_TO_SERVER		Could not connect to server.																															
-DIALOG_USE_OFFLINE_MODE		Could not connect to server.\nDo you want to play in offline mode?																															
-																																	
+DIALOG_RETRY_SYNCHRONIZE_TIER_PERFORMANCE		Could not synchronize tier performance. Retry?																	段位考核成绩同步失败。\n是否重试？														
+DIALOG_OFFLINE_FEATURE_NOT_AVAILABLE		<b>You are offline.</b>\nTo use this feature, you must go online first.																	<b>当前处于离线模式。</b>\n要使用此功能，请先退出离线模式。														
+DIALOG_OFFLINE_LEVEL_NOT_AVAILABLE		<b>You are offline.</b>\nThis level has not been downloaded. To play this level, you must go online first.																	<b>当前处于离线模式。</b>\n此关卡尚未被下载。要游玩此关卡，\n请先退出离线模式。														
+DIALOG_COULD_NOT_CONNECT_TO_SERVER		Could not connect to server.																	无法连接到服务器。														
+DIALOG_USE_OFFLINE_MODE		Could not connect to server.\nDo you want to play in offline mode?																	无法连接到服务器。\n是否切换到离线模式？														
+DIALOG_RESTART_REQUIRED		Resources were updated.\nPlease restart the game.																	游戏资源已更新。\n请重启游戏。														
 																																	
 																																	
 																																	
@@ -275,10 +275,10 @@ MODS_AUTO_FLICK		Auto Flick		Auto Flick			Auto Flick		Авто Флик									
 MODS_AUTO_FLICK_DESC		Autoplay the flick notes.		Las notas flick se reproducirán solas			As notas flick são completadas automaticamente.		Автоплей флик-нот									フリックのみ自動で取ってくれます	自动游玩关卡（仅限 Flick）。	僅自動演示 Flick 拍點										Tự động chơi những nốt gạt.	I-autoplay ang flick note 	Memainkan note flick secara otomatis.	那里我偷懒写了个四训韩
 MODS_AUTO_HOLD		Auto Hold		Auto Hold			Auto Hold		Авто Холд									Auto Hold	Auto Hold	Auto (Hold)										Auto Hold			疯怒娘比起重机
 MODS_AUTO_HOLD_DESC		Autoplay the hold notes.		Las notas sostener se reproducirán solas			Todas as notas de segurar são completadas automaticamente.		Автоплей холд-нот									ホールドのみ自動で取ってくれます	自动游玩关卡（仅限 Hold）。	僅自動演示 Hold 與 Long Hold 拍點										Tự động chơi những nốt giữ.	I-autoplay ang hold note	Memainkan note hold secara otomatis.	我疯怒傻了？？？？？、
-GAME_PREP_SETTINGS_GENERAL		GENERAL SETTINGS		AJUSTES GENERALES			CONFIGURAÇÕES GERAIS		ОСНОВНЫЕ НАСТРОЙКИ									基本設定	通用设置	基本設定										Cài đặt chung	Pangkalahatang Setting	SETELAN UMUM	
-GAME_PREP_SETTINGS_GAMEPLAY		GAMEPLAY SETTINGS		AJUSTES DE JUGABILIDAD			CONFIGURAÇÕES DE GAMEPLAY		НАСТРОЙКИ ГЕЙМПЛЕЯ									プレイ設定	游玩设置	遊玩設定										Cài đặt trò chơi		SETELAN PERMAINAN	
-GAME_PREP_SETTINGS_VISUAL		VISUAL SETTINGS		AJUSTES VISUALES			CONFIGURAÇÕES VISUAIS		НАСТРОЙКИ ВИЗУАЛА									表示設定	视觉设置	視覺設定										Cài đặt cấu hình	Biswal Setting	SETELAN VISUAL	
-GAME_PREP_SETTINGS_ADVANCED		ADVANCED SETTINGS		AJUSTES AVANZADOS			CONFIGURAÇÕES AVANÇADAS		РАСШИРЕННЫЕ НАСТРОЙКИ									上級設定	进阶设置	進階設定										Cài đặt nâng cao		SETELAN ADVANCED	
+GAME_PREP_SETTINGS_GENERAL		GENERAL SETTINGS		AJUSTES GENERALES			CONFIGURAÇÕES GERAIS		ОСНОВНЫЕ НАСТРОЙКИ									基本設定	通用设置	基本設定										Cài đặt chung	Pangkalahatang Setting	SETELAN UMUM	H
+GAME_PREP_SETTINGS_GAMEPLAY		GAMEPLAY SETTINGS		AJUSTES DE JUGABILIDAD			CONFIGURAÇÕES DE GAMEPLAY		НАСТРОЙКИ ГЕЙМПЛЕЯ									プレイ設定	游玩设置	遊玩設定										Cài đặt trò chơi		SETELAN PERMAINAN	P
+GAME_PREP_SETTINGS_VISUAL		VISUAL SETTINGS		AJUSTES VISUALES			CONFIGURAÇÕES VISUAIS		НАСТРОЙКИ ВИЗУАЛА									表示設定	视觉设置	視覺設定										Cài đặt cấu hình	Biswal Setting	SETELAN VISUAL	T
+GAME_PREP_SETTINGS_ADVANCED		ADVANCED SETTINGS		AJUSTES AVANZADOS			CONFIGURAÇÕES AVANÇADAS		РАСШИРЕННЫЕ НАСТРОЙКИ									上級設定	进阶设置	進階設定										Cài đặt nâng cao		SETELAN ADVANCED	use
 																																	
 GAME_PREP_SETTINGS_CURRENT_LEVEL_SETTINGS		CURRENT LEVEL SETTINGS		AJUSTES DEL NIVEL ACTUAL			CONFIGURAÇÕES DO NÍVEL ATUAL		НАСТРОЙКИ ТЕКУЩЕГО УРОВНЯ									レベル別の設定	当前关卡设置	當前關卡設定										Cài đặt level hiện tại		SETELAN PADA LEVEL INI	
 GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET		Level note offset		Equilibrio de las notas del nivel			Offset das notas do nível		Задержка нот на уровне									ノーツ調整	当前关卡谱面偏移	當前關卡譜面校正										Cân chỉnh thời gian level	Offset ng nota sa lebel	Offset note pada level ini	
@@ -293,7 +293,7 @@ GAME_PREP_INFO_ID		ID		ID			ID		ID									ID	ID	ID										ID
 GAME_PREP_INFO_VERSION		VERSION		VERSION			VERSÃO		ВЕРСИЯ									バージョン	版本	版本										Phiên bản	Bersyon	VERSI	
 GAME_PREP_BEST_PERFORMANCE		BEST PERFORMANCE		MEJOR RENDIMIENTO			MELHOR PERFORMANCE		ЛУЧШИЙ СЧЁТ									HIGH SCORE	最佳纪录	最高紀錄										Thành tích tốt nhất	Pinakamahusay na laro	PERFORMA TERBAIK	最佳纪录
 GAME_PREP_BEST_PERFORMANCE_PRACTICE		BEST PERFORMANCE (PRACTICE)		MEJOR RENDIMIENTO (PRACTICA)			MELHOR PERFORMANCE (PRÁTICA)		ЛУЧШИЙ СЧЁТ (ПРАКТИКА)									HIGH SCORE (練習モード)	最佳纪录（练习模式）	最高紀錄（練習）										Thành tích tốt nhất (Tập luyện)	Pinakamahusay na laro (naka-practice)	PERFORMA TERBAIK (LATIHAN)	最佳纪录（dd模式）
-GAME_PREP_VIEW_ON_CYTOIDIO		View on CytoidIO																															
+GAME_PREP_VIEW_ON_CYTOIDIO		View on CytoidIO																	在 CytoidIO 查看														
 																																	
 																																	
 																																	
@@ -333,11 +333,11 @@ COMMUNITY_SELECT_TIME_PAST_YEAR		Past year		Ultimo año			Ano passado		Прош�
 RESULT_MODE_PRACTICE		Practice		Practica			Prática		Практика									練習モード	练习模式	練習模式										Luyện tập	Pagsasanay	Latihan	dd模式
 RESULT_SHARE		Share		Compartir			Compartilhar		Поделиться									共有	分享	分享										Chia sẻ		Bagikan	发群炫耀
 RESULT_X_ACCURACY		{0}% accuracy		{0}% de presición			{0}% de precisão		{0}% точность									{0}% Accuracy	{0} 精准度	<b>準確度</b> {0}%										{0}% độ chính xác			
-RESULT_FULL_ACCURACY		Full accuracy		Precisión total			Full accuracy		Абсолютная точность									Full accuracy	完美精准度	<b>準確度</b> 100.00%										Độ chính xác hoàn hảo	Lahat Perpekto		
+RESULT_FULL_ACCURACY		Full accuracy		Precisión total			Full accuracy		Абсолютная точность									Full accuracy	完美精准度	<b>準確度</b> 100.00%										Độ chính xác hoàn hảo	Lahat Perpekto		Ay, sana all
 RESULT_X_COMBO		{0} max combo		{0} combo máximo			Combo máximo de {0}		{0} макс. комбо									{0} max combo	{0} 最大连击	<b>Max Combo</b> {0}										{0} Combo tối đa			
-RESULT_FULL_COMBO		Full combo		Full Combo			Full combo		Полное комбо									Full combo	全连击	<b>Full Combo</b>										Combo hoàn hảo	Full Combo		
-RESULT_AVG_TIMING_ERR		ATE		ATE			ATE		АТЕ									ATE	平均判定误差	平均差										S/số t/gian TB			
-RESULT_STD_TIMING_ERR		STE		STE			STE		STE									STE	标准判定误差	標準差										S/số t/gian chuẩn			
+RESULT_FULL_COMBO		Full combo		Full Combo			Full combo		Полное комбо									Full combo	全连击	<b>Full Combo</b>										Combo hoàn hảo	Full Combo		MGA BOBO!
+RESULT_AVG_TIMING_ERR		ATE		ATE			ATE		АТЕ									ATE	平均判定误差	平均差										S/số t/gian TB			何してる
+RESULT_STD_TIMING_ERR		STE		STE			STE		STE									STE	标准判定误差	標準差										S/số t/gian chuẩn			愛してる
 RESULT_RETRY		Retry		Reintentar			Tentar\noutra\nvez		Повторить									Retry	重试	重新開始										Thử lại	Ulitin	Ulangi	铲车！
 RESULT_NEXT		Next!		Siguiente!			Próximo!		Дальше!									Next!	继续！	繼續！										Tiếp!	Susunod!	Lanjut!	贵阳！
 RESULT_NEW	This is only shown after the initial play	New!		Nuevo!			Novo recorde!		Новый!									New!	初见！	初次過關！										Mới!	Bagong iskor!	High Score!	大爸爸！
@@ -347,7 +347,7 @@ GAME_CALIBRATION_MODE		CALIBRATION MODE		MODO DE CALIBRACION			MODO CALIBRAÇÃO
 GAME_SPEED_UP	Only latin characters are supported!	SPEED UP					ACELERANDO		УСКОРЕНИЕ									SPEED UP	SPEED UP	SPEED UP										TĂNG TỐC ĐỘ!	BIBILIS NA!	TAMBAH KECEPATAN	MUDAMUDAMUDAMUDAMUDA
 GAME_SLOW_DOWN	Only latin characters are supported!	SLOW DOWN		DESACELERANDO			DESACELERANDO		ТОРМОЖЕНИЕ									SPEED DOWN	SLOW DOWN	SPEED DOWN										GIẢM TỐC ĐỘ!	MABAGAL NA...	KURANG KECEPATAN	zenzenzense
 GAME_RESUME_IN_X	Only latin characters are supported!	RESUMING IN {0}S		CONTINUANDO {0}S			RETOMANDO EM {0} SEG		ПРОДОЛЖАЕМ ЧЕРЕЗ {0}С									RESUMING IN {0}S	RESUMING IN {0}S	RESUMING IN {0}s...										BẮT ĐẦU TRONG {0} GIÂY	Itutuloy na sa {0} segundo	MELANJUTKAN DALAM {0} DETIK	{0} cont'
-GAME_CALIBRATION_AUTOPLAY		AUTOPLAY		AUTOPLAY			AUTOPLAY		АВТОПЛЕЙ									AUTOPLAY	自动播放	自動演示										TỰ ĐỘNG CHƠI			
+GAME_CALIBRATION_AUTOPLAY		AUTOPLAY		AUTOPLAY			AUTOPLAY		АВТОПЛЕЙ									AUTOPLAY	自动播放	自動演示										TỰ ĐỘNG CHƠI			Bakit ganun?
 GAME_CALIBRATION_HIT_SOUND		HIT SOUND		SONIDO DE ACIERTO			SOM DE ACERTO		ХИТ-САУНД									タップ音	打击音	打擊音效										TIẾNG BẤM			
 GAME_CALIBRATION_NOTE_OFFSET		NOTE OFFSET		EQUILIBRIO DE NOTA			DESLOCAMENTO DE NOTA		ЗАДЕРЖКА НОТЫ									ノーツ調整	谱面偏移	譜面校正										CÂN CHỈNH THỜI GIAN NỐT	Offset ng nota	OFFSET PADA NOTE	
 GAME_CALIBRATION_NOTE_OFFSET_DESC		If you feel the notes are <b>ahead</b> of the music, <b>increase</b> the offset. Vice versa.		Si usted siente que las notas están <b>más adelante</b> que la música, <b>aumente</b> el equilibrio. Vice versa.			Se você sente que as notas estão <b>à frente</b> da música, <b>aumente</b> o deslocamento ou vice-versa.		Если ноты <b>несовместимы<b> с музыкой, <повысьте> задержку. Или наоборот.									ノーツとのタイミングが <b>遅い</b> 場合、数値を <b>増やして</b> 下さい。また、逆も同様です。	如果你觉得 Note 比音乐要<b>早</b>，请<b>增加</b>偏移；\n否则，请减少偏移。	音樂<b>太慢</b>就<b>增加</b>數值；音樂<b>太快</b>則<b>減少</b>數值。\n以 0.01 秒（方框）／0.05 秒（圓框）為單位\n左右增減來進行調整。										Nếu bạn cảm thấy nốt đang <b> trước</b> nhạc thì <b> tăng </b> mức bù thời gian và ngược lại.	Kung sa tingin mo ang nota ay <b>maaga</b> sa musika, <b>itaas</b> ang offset. Baliktarin kapag baliktad ang resulta	Jika nada terasa lebih cepat dari musik, tambahkan offset. Sama dengan jika note terasa lebih lambat, kurangi offset.	
@@ -368,66 +368,74 @@ GAME_RESUME		Resume		Continuar			Retomar		Возобновить									再開	
 																																	
 																															Note: The following texts below cannot be translated.		
 TIER_TIERS	WORK IN PROGRESS, DON'T TRANSLATE BELOW ENTRIES YET!	Tiers							Ранги										段位														
-TIER_INFO_TITLE		What are <b>Tiers</b>?							Что такое <b>Ранги<b>?																								
-TIER_INFO_CONTENT		[To be written]							[Waiting for info]																								
-TIER_LOCKED		Locked																															
-TIER_NOT_DOWNLOADED		Not Downloaded																															
+									Что такое <b>Ранги<b>?																								
+									[Waiting for info]																								
+TIER_LOCKED		Locked																	未解锁														
+TIER_NOT_DOWNLOADED		Not Downloaded																	未下载														
 																																	
-TIER_FAILED		Failed...																															
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-																																	
-TIER_REWARD_CHARACTER		REWARD CHARACTER																															
-TIER_COMPLETION_PERCENTAGE		{0}% of players completed this tier							{0}% игроков прошли этот ранг																								
-TIER_COMPLETION_CRITERIA		COMPLETION CRITERIA							ЦЕЛИ																								
-TIER_COMPLETION_RATE		COMPLETION RATE							Полное комбо																								
-TIER_RESULT_SUMMARY		Summary							Количество промахов ≤ {0}																								
-TIER_NEXT_STAGE		Next!							Макс. комбо ≥ {0}																								
-TIER_FINISH		Next!							Точность {0}%																								
-TIER_SUMMARY		Summary							Счёт ≥ {0}																								
-TIER_GO_BACK		Go back																															
-TIER_START		Start!							Начать!																								
-TIER_DOWNLOAD		Download!																															
-TIER_CRITERIA_AVG_ACCURACY		Average accuracy ≥ {0}%																															
-TIER_CRITERIA_STAGE_ACCURACY		Accuracy ≥ {0}% at {1}																															
-TIER_CRITERIA_TOTAL_SCORE		Total score ≥ {0}																															
-TIER_CRITERIA_STAGE_SCORE		Score ≥ {0} at {1}																															
-TIER_CRITERIA_TOTAL_COMBO		Total combo ≥ {0}																															
-TIER_CRITERIA_STAGE_COMBO		Combo ≥ {0} at {1}																															
-TIER_CRITERIA_FULL_COMBO		Full combo																															
-TIER_CRITERIA_STAGE_FULL_COMBO		Full combo at {0}																															
-TIER_CRITERIA_BAD_MISS_COUNT		Total Bad + Miss ≤ {0}																															
-TIER_CRITERIA_STAGE_BAD_MISS_COUNT		Bad + Miss ≤ {0} at {1}																															
-TIER_CRITERIA_GOOD_COUNT		Total Good ≤ {0}																															
-TIER_CRITERIA_STAGE_GOOD_COUNT		Good ≤ {0} at {1}																															
-TIER_CRITERIA_GREAT_COUNT		Total Great ≤ {0}																															
-TIER_CRITERIA_STAGE_GREAT_COUNT		Great ≤ {0} at {1}																															
-TIER_CRITERIA_HEALTH_PERCENTAGE		Remaining health ≥ {0}%																															
-TIER_STAGE_1ST		1st																															
-TIER_STAGE_2ND		2nd																															
-TIER_STAGE_3RD		3rd																															
-TIER_CLEARED		Cleared!																															
-TIER_RANKINGS_DOWNLOADING		Downloading tier rankings...																															
-TIER_RANKINGS_COULD_NOT_DOWNLOAD		Could not download tier rankings.																															
-TIER_RANKINGS_BE_THE_FIRST		Nobody has cleared this tier yet. Be the first!																															
-																																	
-																																	
-CHARACTER_FAILED_TO_DOWNLOAD		Failed to download character data.																															
-CHARACTER_CHANGE_CHARACTER		CHANGE																															
-CHARACTER_ILLUSTRATOR		ILLUSTRATOR																															
-CHARACTER_CHARACTER_DESIGNER		CHARACTER DESIGNER																															
+TIER_FAILED		Failed...																	考核失败...														
 																																	
 																																	
 																																	
 																																	
 																																	
 																																	
+TIER_TUTORIAL		<b><size=40>Tiers!</size></b>\nAssess your Cytoid skills.																	<b><size=40>Tiers!</size></b>\nAssess your Cytoid skills.														
+TIER_REWARD_CHARACTER		REWARD CHARACTER																	奖励角色														
+TIER_COMPLETION_PERCENTAGE		{0}% of players completed this tier							{0}% игроков прошли этот ранг										{0}% 的玩家达成了此段位														
+TIER_COMPLETION_CRITERIA		COMPLETION CRITERIA							ЦЕЛИ										达成条件														
+TIER_COMPLETION_RATE		COMPLETION RATE							Полное комбо										达成率														
+TIER_RESULT_SUMMARY		Summary							Количество промахов ≤ {0}										考核结果														
+TIER_NEXT_STAGE		Next!							Макс. комбо ≥ {0}										下一首！														
+TIER_FINISH		Next!							Точность {0}%										完成！														
+									Счёт ≥ {0}																								
+TIER_GO_BACK		Go back																	返回														
 																																	
-OFFLINE		Offline																															
-OFFLINE_FEATURE_NOT_AVAILABLE		You are offline.																															
-OFFLINE_GO_OFFLINE		Go offline																															
-OFFLINE_GO_ONLINE		Go online																															
+																																	
+TIER_CRITERIA_AVG_ACCURACY		Average accuracy ≥ {0}%																	平均精准度 ≥ {0}%														
+TIER_CRITERIA_STAGE_ACCURACY		Accuracy ≥ {0}% at {1}																	{1}精准度 ≥ {0}%														
+TIER_CRITERIA_TOTAL_SCORE		Total score ≥ {0}																	总分 ≥ {0}														
+TIER_CRITERIA_STAGE_SCORE		Score ≥ {0} at {1}																	{1}分数 ≥ {0}														
+TIER_CRITERIA_TOTAL_COMBO		Total combo ≥ {0}																	总连击数 ≥ {0}														
+TIER_CRITERIA_STAGE_COMBO		Combo ≥ {0} at {1}																	{1}连击数 ≥ {0}														
+TIER_CRITERIA_FULL_COMBO		Full combo																	全连击														
+TIER_CRITERIA_STAGE_FULL_COMBO		Full combo at {0}																	{0}全连击														
+TIER_CRITERIA_BAD_MISS_COUNT		Total Bad + Miss ≤ {0}																	总 Bad + Miss 数 ≤ {0}														
+TIER_CRITERIA_STAGE_BAD_MISS_COUNT		Bad + Miss ≤ {0} at {1}																	{1} Bad + Miss 数 ≤ {0}														
+TIER_CRITERIA_GOOD_COUNT		Total Good ≤ {0}																	总 Good 数 ≤ {0}														
+TIER_CRITERIA_STAGE_GOOD_COUNT		Good ≤ {0} at {1}																	{1} Good 数 ≤ {0}														
+TIER_CRITERIA_GREAT_COUNT		Total Great ≤ {0}																	总 Great 数 ≤ {0}														
+TIER_CRITERIA_STAGE_GREAT_COUNT		Great ≤ {0} at {1}																	{1} Great 数 ≤ {0}														
+TIER_CRITERIA_HEALTH_PERCENTAGE		Remaining health ≥ {0}%																	剩余血量 ≥ {0}%														
+TIER_STAGE_1ST		1st stage																	第 1 首														
+TIER_STAGE_2ND		2nd stage																	第 2 首														
+TIER_STAGE_3RD		3rd stage																	第 3 首														
+TIER_CLEARED		Cleared!																	达成！														
+TIER_RANKINGS_DOWNLOADING		Downloading tier rankings...																	下载段位排行中...														
+TIER_RANKINGS_COULD_NOT_DOWNLOAD		Could not download tier rankings.																	无法下载段位排行。														
+TIER_RANKINGS_BE_THE_FIRST		Nobody has cleared this tier yet. Be the first!																	暂无排行。成为第一个人吧！														
+																																	
+CHARACTER_TUTORIAL		<b><size=40>Pick your character!</size></b>\nUnlock more by clearing tiers, completing events, or unlocking achievements.																	<b><size=40>选择心仪的角色吧！</size></b>\n更多角色可通过达成段位、参与活动、或解锁成就获得。														
+CHARACTER_FAILED_TO_DOWNLOAD		Failed to download character data.																	下载角色数据失败。														
+CHARACTER_CHANGE_CHARACTER		CHANGE																	更换角色														
+CHARACTER_ILLUSTRATOR		ILLUSTRATOR																	画师														
+CHARACTER_CHARACTER_DESIGNER		CHARACTER DESIGNER																	角色原案														
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+OFFLINE		Offline																	离线														
+OFFLINE_FEATURE_NOT_AVAILABLE		You are offline.																	目前处于离线模式。														
+OFFLINE_GO_OFFLINE		Go offline																	离线模式														
+OFFLINE_GO_ONLINE		Go online																	退出离线模式														
+																																	
+																																	
+																																	
+																																	
+																																	
+																																	
+TRAINING_TITLE		Cytoid Training																	Cytoid Training														
+TRAINING_DESCRIPTION		Time to brush up on the basics.																	想提升基本功，就从这里开始吧！														

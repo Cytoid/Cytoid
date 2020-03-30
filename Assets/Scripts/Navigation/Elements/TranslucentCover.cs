@@ -8,7 +8,7 @@ using UnityEngine.UI;
 public class TranslucentCover : SingletonMonoBehavior<TranslucentCover>
 {
     private Image image;
-    private static CancellationTokenSource hideToken;
+    private static CancellationTokenSource asyncToken;
 
     protected override void Awake()
     {
@@ -33,34 +33,64 @@ public class TranslucentCover : SingletonMonoBehavior<TranslucentCover>
             it.sprite = sprite;
             it.FitSpriteAspectRatio();
         });
+        
+        MainTranslucentImage.Instance.WillUpdateTranslucentImage();
     }
 
-    public static void Show(float toAlpha = 1, float fadeDuration = 0.8f)
+    public static void Show(float toAlpha = 1, float fadeDuration = 0.4f)
     {
-        hideToken?.Cancel();
-        Instance.image.Apply(it =>
+        asyncToken?.Cancel();
+        Instance.image.Apply(async it =>
         {
             it.enabled = true;
             it.DOKill();
-            it.DOFade(toAlpha, fadeDuration);
+            if (fadeDuration > 0)
+            {
+                it.DOFade(toAlpha, fadeDuration);
+                asyncToken = new CancellationTokenSource();
+                try
+                {
+                    await UniTask.Delay(TimeSpan.FromSeconds(fadeDuration), cancellationToken: asyncToken.Token);
+                }
+                catch
+                {
+                    return;
+                }
+            }
+            else
+            {
+                it.SetAlpha(toAlpha);
+            }
+            MainTranslucentImage.Instance.WillUpdateTranslucentImage();
         });
     }
 
-    public static void Hide(float fadeDuration = 0.8f)
+    public static void Hide(float fadeDuration = 0.4f, bool clearSprite = true  )
     {
+        asyncToken?.Cancel();
         Instance.image.Apply(async it =>
         {
             it.DOKill();
-            it.DOFade(0, fadeDuration);
-            hideToken = new CancellationTokenSource();
-            try
+            if (fadeDuration > 0)
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(fadeDuration), cancellationToken: hideToken.Token);
+                it.DOFade(0, fadeDuration);
+                asyncToken = new CancellationTokenSource();
+                try
+                {
+                    await UniTask.Delay(TimeSpan.FromSeconds(fadeDuration), cancellationToken: asyncToken.Token);
+                }
+                catch
+                {
+                    return;
+                }
             }
-            catch
+            else
             {
-                return;
+                it.SetAlpha(0);
             }
+
+            if (clearSprite) it.sprite = null;
+            MainTranslucentImage.Instance.WillUpdateTranslucentImage();
 
             it.enabled = false;
         });

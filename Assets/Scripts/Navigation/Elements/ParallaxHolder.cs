@@ -1,4 +1,5 @@
 using System;
+using LeTai.Asset.TranslucentImage;
 using UniRx.Async;
 
 public class ParallaxHolder : SingletonMonoBehavior<ParallaxHolder>
@@ -15,6 +16,11 @@ public class ParallaxHolder : SingletonMonoBehavior<ParallaxHolder>
         {
             if (WillDelaySet) await UniTask.Delay(TimeSpan.FromSeconds(0.4f));
             Load(it.parallaxPrefab);
+            if (MainTranslucentImage.Static)
+            {
+                MainTranslucentImage.Instance.uiCamera.gameObject.SetActive(true);
+                MainTranslucentImage.ParallaxElement.gameObject.SetActive(true);
+            }
         });
     }
 

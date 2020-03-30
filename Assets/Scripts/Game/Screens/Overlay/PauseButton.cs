@@ -1,13 +1,14 @@
 using System;
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class PauseButton : InteractableMonoBehavior
 {
     public Game game;
 
     [GetComponent] public TransitionElement transitionElement;
-    [GetComponent] public InteractableMonoBehavior interactableMonoBehavior;
+    [FormerlySerializedAs("interactableMonoBehavior")] [GetComponent] public InteractableMonoBehavior interactableMonoBehavior;
     public CanvasGroup canvasGroup;
 
     public float normalOpacity = 0.3f;

@@ -23,7 +23,7 @@ public class TierCard : MonoBehaviour
     
     public Image cardOverlayImage;
     
-    public Tier Tier { get; private set; }
+    public TierData Tier { get; private set; }
     public int Index { get; private set; }
     public bool IsScrollRectFix { get; set; }
 
@@ -41,9 +41,9 @@ public class TierCard : MonoBehaviour
         characterDisplay.Unload();
     }
 
-    public void ScrollCellContent(object obj) => SetModel((Tier) obj);
+    public void ScrollCellContent(object obj) => SetModel((TierData) obj);
 
-    public void SetModel(Tier tier)
+    public void SetModel(TierData tier)
     {
         Tier = tier;
         IsScrollRectFix = tier.isScrollRectFix;
@@ -126,12 +126,12 @@ public class TierCard : MonoBehaviour
         if (t < 0.5f)
         {
             canvas.overrideSorting = true;
-            canvas.sortingOrder = -1;
+            canvas.sortingOrder = 9;
         }
         else
         {
             canvas.overrideSorting = true;
-            canvas.sortingOrder = -2;
+            canvas.sortingOrder = 8;
         }
     }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Proyecto26;
 using UniRx.Async;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
 
 public class CharacterSelectionScreen : Screen
@@ -42,15 +43,12 @@ public class CharacterSelectionScreen : Screen
             var dialog = Dialog.Instantiate();
             dialog.UsePositiveButton = true;
             dialog.UseNegativeButton = false;
-            dialog.Message =
-                "<b><size=40>Characters!</size></b>\nUnlock more by clearing tiers, completing events, or unlocking achievements.";
+            dialog.Message = "CHARACTER_TUTORIAL".Get();
             dialog.Open();
         });
-        previousButton.onPointerClick.AddListener(_ => PreviousCharacter());
-        nextButton.onPointerClick.AddListener(_ => NextCharacter());
     }
 
-    public override void OnScreenBecameActive()
+    public override async void OnScreenBecameActive()
     {
         characterTransitionElement.Apply(it =>
         {
@@ -67,15 +65,8 @@ public class CharacterSelectionScreen : Screen
             {
                 if (characters.Count == 0)
                 {
-                    var dialog = Dialog.Instantiate();
-                    dialog.Message = "DIALOG_OFFLINE_FEATURE_NOT_AVAILABLE";
-                    dialog.OnPositiveButtonClicked = it =>
-                    {
-                        Context.ScreenManager.ChangeScreen(Context.ScreenManager.PopAndPeekHistory(), ScreenTransition.Out,
-                            addTargetScreenToHistory: false);
-                        it.Close();
-                    };
-                    dialog.Open();
+                    // TODO: This should not happen! We have Sayaka
+                    Dialog.PromptGoBack("DIALOG_OFFLINE_FEATURE_NOT_AVAILABLE".Get());
                     return;
                 }
                 DownloadAvailableCharacters(characters);
@@ -86,25 +77,31 @@ public class CharacterSelectionScreen : Screen
                 {
                     throw error;
                 }
-
-                var dialog = Dialog.Instantiate();
-                dialog.Message = "DIALOG_COULD_NOT_CONNECT_TO_SERVER";
-                dialog.OnPositiveButtonClicked = it =>
-                {
-                    Context.ScreenManager.ChangeScreen(Context.ScreenManager.PopAndPeekHistory(), ScreenTransition.Out,
-                        addTargetScreenToHistory: false);
-                    it.Close();
-                };
-                dialog.Open();
+                Dialog.PromptGoBack("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
             })
             .Finally(() => SpinnerOverlay.Hide());
     }
 
     public async void DownloadAvailableCharacters(List<CharacterMeta> characters)
     {
+        var downloadsRequired = 0;
         foreach (var meta in characters)
         {
-            var success = await Context.CharacterManager.DownloadCharacterAssetDialog(meta.AssetId);
+            if (!await Context.RemoteAssetManager.Exists(meta.AssetId))
+            {
+                downloadsRequired++;
+            }
+        }
+
+        await Context.RemoteAssetManager.UpdateCatalog();
+
+        availableCharacters.Clear();
+
+        var downloaded = 0;
+        foreach (var meta in characters)
+        {
+            var (success, locallyResolved) = await Context.CharacterManager.DownloadCharacterAssetDialog(meta.AssetId);
+            if (!locallyResolved) downloaded++;
             if (!success)
             {
                 Toast.Next(Toast.Status.Failure, "CHARACTER_FAILED_TO_DOWNLOAD".Get());
@@ -115,10 +112,42 @@ public class CharacterSelectionScreen : Screen
             }
         }
 
+        if (downloaded > downloadsRequired)
+        {
+            // Update was performed, which requires player to restart the game
+            // Why? Too lazy to figure out Addressable stuff...
+            Dialog.PromptUnclosable("DIALOG_RESTART_REQUIRED".Get());
+            return;
+        }
+
+        if (availableCharacters.Count == 0)
+        {
+            Dialog.PromptGoBack("DIALOG_OFFLINE_FEATURE_NOT_AVAILABLE".Get());
+            return;
+        }
+
+        previousButton.onPointerClick.RemoveAllListeners();
+        nextButton.onPointerClick.RemoveAllListeners();
+        if (availableCharacters.Count == 1)
+        {
+            previousButton.scaleOnClick = false;
+            nextButton.scaleOnClick = false;
+            previousButton.GetComponentInChildren<Image>().SetAlpha(0.3f);
+            nextButton.GetComponentInChildren<Image>().SetAlpha(0.3f);
+        }
+        else
+        {
+            previousButton.scaleOnClick = true;
+            nextButton.scaleOnClick = true;
+            previousButton.GetComponentInChildren<Image>().SetAlpha(1f);
+            nextButton.GetComponentInChildren<Image>().SetAlpha(1f);
+            previousButton.onPointerClick.AddListener(_ => PreviousCharacter());
+            nextButton.onPointerClick.AddListener(_ => NextCharacter());
+        }
+
         selectedIndex =
             availableCharacters.FindIndex(it =>
                 it.AssetId == Context.CharacterManager.SelectedCharacterAssetId);
-
         if (selectedIndex < 0) selectedIndex = 0; // Reset to default
         LoadCharacter(availableCharacters[selectedIndex]);
     }
@@ -128,12 +157,6 @@ public class CharacterSelectionScreen : Screen
         ParallaxHolder.WillDelaySet = true;
 
         var isNewCharacter = Context.CharacterManager.ActiveCharacterAssetId != meta.AssetId;
-        var character = await Context.CharacterManager.SetActiveCharacter(meta.AssetId);
-        if (character == null)
-        {
-            throw new Exception("Character not downloaded or corrupted");
-        }
-
         if (isNewCharacter)
         {
             SpinnerOverlay.Show();
@@ -144,6 +167,12 @@ public class CharacterSelectionScreen : Screen
             characterTransitionElement.Leave(false);
 
             await UniTask.Delay(TimeSpan.FromSeconds(0.4f));
+        }
+
+        var character = await Context.CharacterManager.SetActiveCharacter(meta.AssetId);
+        if (character == null)
+        {
+            throw new Exception("Character not downloaded or corrupted");
         }
 
         nameText.text = meta.Name;
@@ -167,7 +196,7 @@ public class CharacterSelectionScreen : Screen
         }
 
         infoCard.transform.RebuildLayout();
-        characterDisplay.Load(CharacterAsset.GetTachieAssetId(meta.AssetId));
+        await characterDisplay.Load(CharacterAsset.GetTachieAssetId(meta.AssetId));
 
         infoCard.Enter();
         characterTransitionElement.Leave(false, true);

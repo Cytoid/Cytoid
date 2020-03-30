@@ -5,10 +5,13 @@ using UnityEngine;
 
 public class OpaqueOverlay : SingletonMonoBehavior<OpaqueOverlay>
 {
+    [GetComponent] public Canvas canvas;
     [GetComponent] public CanvasGroup canvasGroup;
     
     private void Start()
     {
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = NavigationSortingOrder.OpaqueOverlay;
         canvasGroup.alpha = 0;
         canvasGroup.blocksRaycasts = false;
         canvasGroup.interactable = false;

@@ -241,6 +241,9 @@ namespace Coffee.UIExtensions
 
 			int x = (int)((softMaskBuffer.width - 1) * Mathf.Clamp01(sp.x / Screen.width));
 			int y = (int)((softMaskBuffer.height - 1) * Mathf.Clamp01(sp.y / Screen.height));
+			
+			// EDIT: Cytoid
+			return true;
 			return 0.5f < GetPixelValue(x, y, interactions);
 		}
 

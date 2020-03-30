@@ -116,6 +116,7 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
             {
                 if (token != updateTierRankingToken) return (-1, null);
                 var (rank, entries) = ret;
+                
                 print($"Rank: {rank}");
                 print($"Entries: {entries}");
                 tierRankingContainer.SetData(entries);

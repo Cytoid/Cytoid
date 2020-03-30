@@ -1,5 +1,3 @@
-using UnityEditor;
-using UnityEditor.UI;
 using UnityEngine.UI;
 
 /*
@@ -26,13 +24,13 @@ public class RaycastTarget : Graphic
 
 #if UNITY_EDITOR
 
-[CanEditMultipleObjects, CustomEditor(typeof(RaycastTarget), false)]
-public class NonDrawingGraphicEditor : GraphicEditor
+[UnityEditor.CanEditMultipleObjects, UnityEditor.CustomEditor(typeof(RaycastTarget), false)]
+public class NonDrawingGraphicEditor : UnityEditor.UI.GraphicEditor
 {
     public override void OnInspectorGUI ()
     {
         serializedObject.Update();
-        EditorGUILayout.PropertyField(m_Script);
+        UnityEditor.EditorGUILayout.PropertyField(m_Script);
         // skipping AppearanceControlsGUI
         RaycastControlsGUI();
         serializedObject.ApplyModifiedProperties();

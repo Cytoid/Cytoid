@@ -140,7 +140,7 @@ public class Chart
                     break;
                 case 3:
                     note.tint = note.direction == 1 ? 0.94f : 1.06f;
-                    if (note.next_id > 0)
+                    if (note.next_id > 0 && Model.note_map.ContainsKey(note.next_id))
                     {
                         note.nextdraglinestarttime = note.intro_time - 0.133f;
                         note.nextdraglinestoptime = Model.note_map[note.next_id].intro_time - 0.132f;
@@ -149,7 +149,7 @@ public class Chart
                     break;
                 case 4:
                     note.tint = note.direction == 1 ? 0.94f : 1.06f;
-                    if (note.next_id > 0)
+                    if (note.next_id > 0 && Model.note_map.ContainsKey(note.next_id))
                     {
                         note.nextdraglinestarttime = note.intro_time - 0.133f;
                         note.nextdraglinestoptime = Model.note_map[note.next_id].intro_time - 0.132f;
@@ -163,7 +163,7 @@ public class Chart
 
         foreach (var note in Model.note_list)
         {
-            if (note.next_id <= 0) continue;
+            if (note.next_id <= 0 || !Model.note_map.ContainsKey(note.next_id)) continue;
 
             var noteThis = note;
             var noteNext = Model.note_map[note.next_id];

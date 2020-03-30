@@ -13,6 +13,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
 {
     [GetComponent] public RectTransform rectTransform;
     public HorizontalLayoutGroup layoutGroup;
+    public Canvas canvas;
     public CanvasGroup canvasGroup;
     public Image background;
     public Image avatarImage;
@@ -29,6 +30,8 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
     {
         SetSignedOut();
         infoLayoutGroup.gameObject.SetActive(false);
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = NavigationSortingOrder.ProfileWidget;
         canvasGroup.alpha = 0;
         canvasGroup.blocksRaycasts = false;
     }

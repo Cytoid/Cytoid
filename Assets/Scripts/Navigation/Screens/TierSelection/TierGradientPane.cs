@@ -7,7 +7,7 @@ public class TierGradientPane : MonoBehaviour
     public Text completionPercentageText;
     public GradientMeshEffect backgroundGradient;
 
-    public void SetModel(Tier tier)
+    public void SetModel(TierData tier)
     {
         titleText.text = tier.Meta.name;
         completionPercentageText.text = "TIER_COMPLETION_PERCENTAGE"

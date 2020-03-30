@@ -15,8 +15,8 @@ public class TierMeta
     [JsonIgnore] public List<Criterion> parsedCriteria;
     
     public List<OnlineLevel> stages;
-    [JsonIgnore] public List<Level> parsedStages = new List<Level>();
-    [JsonIgnore] public List<bool> validStages = new List<bool>();
+    [JsonIgnore] public List<Level> parsedStages;
+    [JsonIgnore] public List<bool> validStages;
     
     public CharacterMeta character;
     public double thresholdAccuracy;
@@ -39,7 +39,7 @@ public class CriterionMeta
 }
 
 [Serializable]
-public class Tier
+public class TierData
 {
     [JsonIgnore] public bool isScrollRectFix;
     [JsonIgnore] public int index;
@@ -54,8 +54,8 @@ public class Tier
 }
 
 [Serializable]
-public class Season
+public class SeasonData
 {
     public string uid;
-    public List<Tier> tiers;
+    public List<TierData> tiers;
 }

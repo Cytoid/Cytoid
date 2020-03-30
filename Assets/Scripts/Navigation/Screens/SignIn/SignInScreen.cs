@@ -10,13 +10,20 @@ public class SignInScreen : Screen
     public InputField uidInput;
     public InputField passwordInput;
     public TransitionElement closeButton;
-
+    public CharacterDisplay characterDisplay;
+    
     public override string GetId() => Id;
 
     public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
         uidInput.text = Context.OnlinePlayer.Uid;
+    }
+
+    public override void OnScreenBecameActive()
+    {
+        base.OnScreenBecameActive();
+        characterDisplay.Load("SayakaTachie");
     }
 
     public async UniTask SignIn()

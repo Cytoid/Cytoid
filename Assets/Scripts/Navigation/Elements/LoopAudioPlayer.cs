@@ -99,8 +99,9 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
     public void SetMainAudio(IntroloopAudio audio)
     {
         mainLoopAudio = audio;
-        if (playingAudio != null) {
-            IntroloopPlayer.Instance.Play(audio, 1f);
+        if (playingAudio != null)
+        {
+            PlayAudio(mainLoopAudio, 1f);
         }
     }
 

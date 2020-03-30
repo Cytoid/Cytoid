@@ -13,7 +13,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 
-public class TierResultScreen : Screen, ScreenChangeListener
+public class TierResultScreen : Screen
 {
     public const string Id = "TierResult";
 

@@ -42,6 +42,7 @@ public class ProfileScreen : Screen, ScreenChangeListener
         signOutButton.onPointerClick.AddListener(_ =>
         {
             Context.OnlinePlayer.Deauthenticate();
+            Context.SetOffline(false);
             Context.ScreenManager.History.Clear();
             Context.ScreenManager.ChangeScreen(MainMenuScreen.Id, ScreenTransition.In);
             Toast.Next(Toast.Status.Success, "TOAST_SUCCESSFULLY_SIGNED_OUT".Get());
@@ -63,7 +64,7 @@ public class ProfileScreen : Screen, ScreenChangeListener
 
             if (index == 1)
             {
-                UpdateLeaderboard(leaderboardModeSelect.Value);
+                if (Context.IsOnline()) UpdateLeaderboard(leaderboardModeSelect.Value);
             }
         });
         leaderboardModeSelect.onSelect.AddListener(UpdateLeaderboard);

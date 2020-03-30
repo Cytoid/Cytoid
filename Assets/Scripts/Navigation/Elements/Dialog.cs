@@ -91,7 +91,7 @@ public class Dialog : MonoBehaviour
     protected virtual void Awake()
     {
         canvas.overrideSorting = true;
-        canvas.sortingOrder = 98;
+        canvas.sortingOrder = NavigationSortingOrder.Dialog;
         canvasGroup.alpha = 1;
         canvasGroup.interactable = true;
         canvasGroup.blocksRaycasts = true;
@@ -134,6 +134,28 @@ public class Dialog : MonoBehaviour
         dialog.UseNegativeButton = false;
         dialog.UseProgress = false;
         return dialog;
+    }
+
+    public static void PromptGoBack(string message)
+    {
+        var dialog = Instantiate();
+        dialog.Message = message;
+        dialog.OnPositiveButtonClicked = it =>
+        {
+            Context.ScreenManager.ChangeScreen(Context.ScreenManager.PopAndPeekHistory(), ScreenTransition.Out,
+                addTargetScreenToHistory: false);
+            it.Close();
+        };
+        dialog.Open();
+    }
+    
+    public static void PromptUnclosable(string message)
+    {
+        var dialog = Instantiate();
+        dialog.Message = message;
+        dialog.UsePositiveButton = false;
+        dialog.UseNegativeButton = false;
+        dialog.Open();
     }
 }
 

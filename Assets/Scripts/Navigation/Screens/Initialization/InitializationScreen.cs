@@ -26,11 +26,12 @@ public class InitializationScreen : Screen
         statusText.text = "";
         
         Context.LevelManager.OnLevelInstallProgress.AddListener(OnLevelInstallProgress);
-        await Context.LevelManager.InstallAllFromDataPath();
+        await Context.LevelManager.InstallUserCommunityLevels();
         Context.LevelManager.OnLevelInstallProgress.RemoveListener(OnLevelInstallProgress);
         
         Context.LevelManager.OnLevelLoadProgress.AddListener(OnLevelLoadProgress);
         await Context.LevelManager.LoadLevelsOfType(LevelType.Community);
+        await Context.LevelManager.LoadLevelsOfType(LevelType.Official);
         Context.LevelManager.OnLevelLoadProgress.RemoveListener(OnLevelLoadProgress);
 
         spinnerElement.gameObject.SetActive(false);

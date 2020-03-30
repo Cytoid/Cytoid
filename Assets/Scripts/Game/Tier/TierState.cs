@@ -5,7 +5,7 @@ using UnityEngine;
 
 public sealed class TierState
 {
-    public Tier Tier { get; }
+    public TierData Tier { get; }
 
     public List<Criterion> Criteria => Tier.Meta.parsedCriteria;
 
@@ -32,14 +32,11 @@ public sealed class TierState
 
     public HashSet<Mod> Mods => Stages.First().Mods;
 
-    [AvailableOnComplete]
-    public Dictionary<NoteGrade, int> GradeCounts => OnCompleteGuard(gradeCounts);
+    public Dictionary<NoteGrade, int> GradeCounts => gradeCounts;
 
-    [AvailableOnComplete]
-    public int EarlyCount => OnCompleteGuard(Stages.Sum(it => it.EarlyCount));
+    public int EarlyCount => Stages.Sum(it => it.EarlyCount);
     
-    [AvailableOnComplete]
-    public int LateCount => OnCompleteGuard(Stages.Sum(it => it.LateCount));
+    public int LateCount => Stages.Sum(it => it.LateCount);
     
     [AvailableOnComplete]
     public double AverageTimingError => OnCompleteGuard(Stages.Sum(state => state.Judgements.Values.Sum(it => it.Error)) / Stages.Sum(it => it.Judgements.Count));
@@ -58,7 +55,7 @@ public sealed class TierState
 
     private Dictionary<NoteGrade, int> gradeCounts = new Dictionary<NoteGrade, int>();
 
-    public TierState(Tier tier)
+    public TierState(TierData tier)
     {
         Tier = tier;
         Stages = new GameState[tier.Meta.stages.Count];
@@ -78,26 +75,28 @@ public sealed class TierState
         {
             Completion = 0;
         }
-
-        foreach (NoteGrade grade in Enum.GetValues(typeof(NoteGrade)))
-        {
-            if (grade == NoteGrade.None) continue;
-            gradeCounts[grade] = Stages.Sum(it => it.GradeCounts[grade]);
-        }
     }
 
     public void OnStageComplete()
     {
+        foreach (NoteGrade grade in Enum.GetValues(typeof(NoteGrade)))
+        {
+            if (grade == NoteGrade.None) continue;
+            gradeCounts[grade] = Stages.Sum(it => it?.GradeCounts[grade] ?? 0);
+        }
+        
         if (Criteria.Any(it => it.Judge(this) == CriterionState.Failed))
         {
             IsFailed = true;
         }
-        
-        // Refill health by 30% of lost health
-        var maxHealth = Tier.Meta.maxHealth;
-        Health += 0.3 * (maxHealth - Health);
-        if (Health > maxHealth) Health = maxHealth;
-        
+        else if (CurrentStageIndex < Stages.Length - 1)
+        {
+            // Refill health by 30% of lost health
+            var maxHealth = Tier.Meta.maxHealth;
+            Health += 0.3 * (maxHealth - Health);
+            if (Health > maxHealth) Health = maxHealth;
+        }
+
         if (CurrentStageIndex == Stages.Length - 1)
         {
             OnComplete();

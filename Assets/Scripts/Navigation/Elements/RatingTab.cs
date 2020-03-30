@@ -4,7 +4,7 @@ using RSG;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class RatingTab : MonoBehaviour
+public class RatingTab : MonoBehaviour, ScreenInitializedListener
 {
     public GameObject icon;
     public SpinnerElement spinner;
@@ -14,7 +14,7 @@ public class RatingTab : MonoBehaviour
 
     private string levelId;
     
-    private void OnServerInitialized()
+    public void OnScreenInitialized()
     {
         ratingText.text = "";
     }

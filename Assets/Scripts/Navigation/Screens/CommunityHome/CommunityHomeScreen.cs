@@ -8,7 +8,7 @@ using UniRx.Async;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class CommunityHomeScreen : Screen, ScreenChangeListener
+public class CommunityHomeScreen : Screen
 {
     public const string Id = "CommunityHome";
 

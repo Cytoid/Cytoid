@@ -9,6 +9,7 @@ using Tayx.Graphy;
 using UniRx.Async;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
@@ -17,7 +18,7 @@ public class Context : SingletonMonoBehavior<Context>
     public const string Version = "2.0 Alpha 5";
 
     public static string ApiUrl = "https://api.cytoid.io";
-    public const string ServicesUrl = "http://192.168.3.13:4000";
+    public const string ServicesUrl = "http://dorm.neoto.xin:4000";
     public const string WebsiteUrl = "https://cytoid.io";
 
     public const int ReferenceWidth = 1920;
@@ -48,7 +49,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static readonly FontManager FontManager = new FontManager();
     public static readonly LevelManager LevelManager = new LevelManager();
     public static readonly CharacterManager CharacterManager = new CharacterManager();
-    public static readonly RemoteResourceManager RemoteResourceManager = new RemoteResourceManager();
+    public static readonly RemoteAssetManager RemoteAssetManager = new RemoteAssetManager();
     public static readonly AssetMemory AssetMemory = new AssetMemory();
 
     public static LiteDatabase Database;
@@ -106,8 +107,10 @@ public class Context : SingletonMonoBehavior<Context>
             $"Filename=\"{Path.Combine(Application.persistentDataPath, "Cytoid.db")}\";"
             //+ $" Password={SecuredConstants.DbSecret}"
         );
-        Database.GetCollection<Profile>();
-        Database.GetCollection<CharacterMeta>();
+        
+        // Warm up LiteDB
+        Database.GetCollection<Profile>().FindOne(_ => true);
+        Database.GetCollection<CharacterMeta>().FindOne(_ => true);
 
         FontManager.LoadFonts();
 
@@ -135,7 +138,6 @@ public class Context : SingletonMonoBehavior<Context>
         Input.gyro.enabled = true;
 
         UserDataPath = Application.persistentDataPath;
-        print("User data path: " + UserDataPath);
 
         if (Application.platform == RuntimePlatform.Android)
         {
@@ -166,7 +168,8 @@ public class Context : SingletonMonoBehavior<Context>
                 .Replace("Documents/", "")
                 .Replace("Documents", "") + "/tmp/me.tigerhix.cytoid-Inbox/";
         }
-
+        print("User data path: " + UserDataPath);
+        
 #if UNITY_EDITOR
         Application.runInBackground = true;
 #endif
@@ -180,8 +183,9 @@ public class Context : SingletonMonoBehavior<Context>
         Localization.Instance.SelectLanguage((Language) LocalPlayer.Language);
         OnLanguageChanged.Invoke();
 
-        await RemoteResourceManager.UpdateCatalog(); // TODO TODO TODO!!!
-        if (!await CharacterManager.SetActiveCharacter(CharacterManager.SelectedCharacterAssetId))
+        await Addressables.InitializeAsync().Task;
+
+        if (await CharacterManager.SetActiveCharacter(CharacterManager.SelectedCharacterAssetId) == null)
         {
             // Reset to default
             CharacterManager.SelectedCharacterAssetId = null;
@@ -192,7 +196,7 @@ public class Context : SingletonMonoBehavior<Context>
         {
             await UniTask.WaitUntil(() => ScreenManager != null);
 
-            if (false)
+            if (true)
             {
                 ScreenManager.ChangeScreen(InitializationScreen.Id, ScreenTransition.None);
             }
@@ -212,7 +216,7 @@ public class Context : SingletonMonoBehavior<Context>
                 ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.None);
             }
 
-            if (true)
+            if (false)
             {
                 // Load result
                 await LevelManager.LoadFromMetadataFiles(LevelType.Community,
@@ -260,6 +264,8 @@ public class Context : SingletonMonoBehavior<Context>
             // Wait until character is loaded
             await CharacterManager.SetSelectedCharacterActive();
 
+            MainTranslucentImage.Instance.WillUpdateTranslucentImage();
+
             // Restore history
             ScreenManager.History = new Stack<string>(navigationScreenHistory);
 
@@ -280,7 +286,7 @@ public class Context : SingletonMonoBehavior<Context>
             }
             else if (GameState != null)
             {
-                if (GameState.IsCompleted)
+                if (GameState.IsCompleted && (GameState.Mode == GameMode.Classic || GameState.Mode == GameMode.Practice))
                 {
                     // Show result screen
                     ScreenManager.ChangeScreen(ResultScreen.Id, ScreenTransition.None, addTargetScreenToHistory: false);
@@ -378,6 +384,12 @@ public class Context : SingletonMonoBehavior<Context>
                     (int) (InitialHeight * 0.5f), true);
                 QualitySettings.masterTextureLimit = 1;
                 break;
+        }
+        MainTranslucentImage.Static = LocalPlayer.GraphicsQuality != "high";
+        if (ScreenManager != null && ScreenManager.ActiveScreenId != null)
+        {
+            if (MainTranslucentImage.Instance != null)
+                MainTranslucentImage.Instance.WillUpdateTranslucentImage();
         }
     }
 

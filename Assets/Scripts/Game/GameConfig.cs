@@ -11,7 +11,7 @@ public class GameConfig
     public Color GlobalRingColorOverride;
     public readonly Dictionary<NoteType, Color[]> GlobalFillColorsOverride = new Dictionary<NoteType, Color[]>();
 
-    public bool UseClassicStyle = false;
+    public bool UseClassicStyle = true;
     public float NoteSizeMultiplier;
     public readonly Dictionary<NoteType, float> NoteSizes = new Dictionary<NoteType, float>();
     public readonly Dictionary<NoteType, float> NoteHitboxSizes = new Dictionary<NoteType, float>();

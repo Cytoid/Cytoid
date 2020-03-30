@@ -274,7 +274,8 @@ public class OnlinePlayer
         return RestClient.GetArray<TierRankingEntry>(new RequestHelper
         {
             Uri = $"{Context.ServicesUrl}/seasons/alpha/tiers/{tierId}/records",
-            Headers = Context.OnlinePlayer.GetAuthorizationHeaders()
+            Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
+            EnableDebug = true
         }).Then(array => (-1, array.ToList()));
     }
 }

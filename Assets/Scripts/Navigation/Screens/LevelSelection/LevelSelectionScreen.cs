@@ -48,7 +48,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
             searchInputField.onEndEdit.AddListener(value =>
             {
                 actionTabs.Close();
-                if (!value.IsNullOrEmptyTrimmed()) RefillLevels();
+                RefillLevels();
             });
         }
         

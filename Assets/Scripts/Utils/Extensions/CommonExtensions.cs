@@ -9,13 +9,9 @@ using DG.Tweening.Plugins.Options;
 using Newtonsoft.Json;
 using Proyecto26;
 using RSG;
-using UniRx;
-using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.Events;
 using UnityEngine.UI;
-using Object = System.Object;
 
 public static class CommonExtensions
 {

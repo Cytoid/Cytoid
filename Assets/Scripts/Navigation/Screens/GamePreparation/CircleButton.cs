@@ -1,5 +1,7 @@
 using System;
+using DG.Tweening;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class CircleButton : MonoBehaviour, ScreenInitializedListener, ScreenBecameInactiveListener
@@ -7,7 +9,7 @@ public class CircleButton : MonoBehaviour, ScreenInitializedListener, ScreenBeca
     [GetComponentInChildren] public GradientMeshEffect gradient;
     [GetComponentInChildren] public Text text;
     
-    [GetComponent] public InteractableMonoBehavior interactableMonoBehavior;
+    [FormerlySerializedAs("interactableMonoBehavior")] [GetComponent] public InteractableMonoBehavior interactableMonoBehavior;
     [GetComponent] public PulseElement pulseElement;
     public ScheduledPulse scheduledPulse;
     
@@ -33,6 +35,20 @@ public class CircleButton : MonoBehaviour, ScreenInitializedListener, ScreenBeca
         if (scheduledPulse != null)
         {
             scheduledPulse.NextPulseTime = long.MaxValue;
+        }
+    }
+
+    public void MockClick()
+    {
+        if (interactableMonoBehavior.scaleOnClick)
+        {
+            DOTween.Sequence()
+                .Append(transform.DOScale(interactableMonoBehavior.scaleToOnClick, 0.2f).SetEase(Ease.OutCubic))
+                .Append(transform.DOScale(1f, 0.2f).SetEase(Ease.OutCubic));
+        }
+        if (interactableMonoBehavior.pulseOnClick)
+        {
+            pulseElement.Pulse();
         }
     }
 

@@ -4,9 +4,11 @@ using UniRx.Async;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class TierBreakScreen : Screen, ScreenChangeListener
+public class TierBreakScreen : Screen
 {
     public const string Id = "TierBreak";
+    private const int IntermissionSeconds = 30;
+    private static readonly int[] BroadcastAddTimes = {15, 10};
 
     public Text modeText;
     
@@ -26,6 +28,9 @@ public class TierBreakScreen : Screen, ScreenChangeListener
     public GameObject criterionEntryPrefab;
     private TierState tierState;
     private GameState gameState;
+    private DateTimeOffset proceedToNextStageTime;
+    private DateTimeOffset nextBroadcastCountdownTime;
+    private int broadcastCount;
 
     public override string GetId() => Id;
 
@@ -88,19 +93,13 @@ public class TierBreakScreen : Screen, ScreenChangeListener
         difficultyBall.SetModel(stage.Difficulty, stage.DifficultyLevel);
         stageTitleText.text = stage.Level.Meta.title;
 
-        print("ss: " +nextStageButton.scheduledPulse.startPulsingOnScreenBecameActive);
-        print(nextStageButton.scheduledPulse.NextPulseTime);
         if (tierState.IsFailed)
         {
-            print("Failed");
             retryButton.StartPulsing();
-            print(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + "/" + retryButton.scheduledPulse.NextPulseTime);
         }
         else
         {
-            print("Not failed");
             nextStageButton.StartPulsing();
-            print(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + "/" + retryButton.scheduledPulse.NextPulseTime);
         }
         
         nextStageButton.State = tierState.IsFailed ? CircleButtonState.GoBack : (tierState.IsCompleted ? CircleButtonState.Finish : CircleButtonState.NextStage);
@@ -123,7 +122,7 @@ public class TierBreakScreen : Screen, ScreenChangeListener
             retryButton.StopPulsing();
             Retry();
         });
-        
+
         // Update criterion entries
         foreach (Transform child in criterionEntryHolder.transform) Destroy(child.gameObject);
         
@@ -145,6 +144,67 @@ public class TierBreakScreen : Screen, ScreenChangeListener
 
         TranslucentCover.Show(0.9f);
         ProfileWidget.Instance.Enter();
+        
+        if (!tierState.IsCompleted)
+        {
+            proceedToNextStageTime = DateTimeOffset.UtcNow.AddSeconds(IntermissionSeconds);
+            nextBroadcastCountdownTime = DateTimeOffset.UtcNow;
+        }
+        else
+        {
+            proceedToNextStageTime = DateTimeOffset.MaxValue;
+            nextBroadcastCountdownTime = DateTimeOffset.MaxValue;
+        }
+    }
+
+    public override void OnScreenUpdate()
+    {
+        base.OnScreenUpdate();
+
+        if (DateTimeOffset.UtcNow > proceedToNextStageTime)
+        {
+            nextStageButton.MockClick();
+            nextStageButton.StopPulsing();
+            NextStage();
+        } 
+        else if (DateTimeOffset.UtcNow > nextBroadcastCountdownTime)
+        {
+            Toast.Next(Toast.Status.Loading, "TOAST_TIER_PROCEEDING_TO_NEXT_STAGE_X".Get((int) Math.Ceiling((proceedToNextStageTime - DateTimeOffset.UtcNow).TotalSeconds)));
+            if (broadcastCount >= BroadcastAddTimes.Length)
+            {
+                nextBroadcastCountdownTime = DateTimeOffset.MaxValue;
+                return;
+            }
+            nextBroadcastCountdownTime = DateTimeOffset.UtcNow.AddSeconds(BroadcastAddTimes[broadcastCount++]);
+        }
+    }
+
+    private void OnApplicationPause(bool pauseStatus)
+    {
+        // Resuming?
+        if (!pauseStatus && State == ScreenState.Active)
+        {
+            if (DateTimeOffset.UtcNow > proceedToNextStageTime)
+            {
+                // Fail!
+                Toast.Next(Toast.Status.Failure, "TOAST_TIER_TIMED_OUT");
+                retryButton.StartPulsing();
+        
+                nextStageButton.State = CircleButtonState.GoBack;
+                nextStageButton.interactableMonoBehavior.onPointerClick.AddListener(_ =>
+                {
+                    nextStageButton.StopPulsing();
+                    GoBack();
+                });
+                retryButton.State = CircleButtonState.Retry;
+                retryButton.interactableMonoBehavior.onPointerClick.AddListener(_ =>
+                {
+                    retryButton.StopPulsing();
+                    Retry();
+                });
+                
+            }
+        }
     }
     
     public async void Retry()

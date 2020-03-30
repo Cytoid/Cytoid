@@ -22,6 +22,7 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
 
     public string ActiveScreenId { get; protected set; }
     public string ChangingToScreenId { get; protected set; }
+    public bool IsChangingScreen => ChangingToScreenId != null;
     private HashSet<ScreenChangeListener> screenChangeListeners = new HashSet<ScreenChangeListener>();
     private CancellationTokenSource screenChangeCancellationTokenSource;
 

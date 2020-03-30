@@ -67,11 +67,11 @@ public static class MockData
         }
     }, DateTime.UtcNow, DateTime.UtcNow);
 
-    public static Season Season => new Season
+    public static SeasonData Season => new SeasonData
     {
-        tiers = new List<Tier>
+        tiers = new List<TierData>
         {
-            new Tier()
+            new TierData()
             {
                 completion = 2,
                 locked = false,
@@ -109,7 +109,8 @@ public static class MockData
                             Version = 1,
                         }
                     },
-                    parsedStages = new List<Level> {TierLevel},
+                    parsedStages = new List<Level> {TierLevel, TierLevel, TierLevel},
+                    parsedCriteria = new List<Criterion> {new StageFullComboCriterion(0), new StageFullComboCriterion(1), new StageFullComboCriterion(2)},
                     character = new CharacterMeta
                     {
                         Name = "まふまふ",
@@ -118,7 +119,7 @@ public static class MockData
                     }
                 }
             },
-            new Tier
+            new TierData
             {
                 completion = 1.877f,
                 locked = false,
@@ -156,9 +157,11 @@ public static class MockData
                             Version = 1
                         }
                     },
+                    parsedStages = new List<Level> {TierLevel, TierLevel, TierLevel},
+                    parsedCriteria = new List<Criterion> {new StageFullComboCriterion(0), new StageFullComboCriterion(1), new StageFullComboCriterion(2)}
                 }
             },
-            new Tier
+            new TierData
             {
                 completion = 0,
                 locked = true,
@@ -196,6 +199,8 @@ public static class MockData
                             Version = 1
                         }
                     },
+                    parsedStages = new List<Level> {TierLevel, TierLevel, TierLevel},
+                    parsedCriteria = new List<Criterion> {new StageFullComboCriterion(0), new StageFullComboCriterion(1), new StageFullComboCriterion(2)}
                 }
             },
         }

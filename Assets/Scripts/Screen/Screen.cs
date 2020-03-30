@@ -200,6 +200,7 @@ public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveLi
 
     public virtual void OnScreenDestroyed()
     {
+        Context.ScreenManager.createdScreens.Remove(this);
         onScreenDestroyed.Invoke();
     }
 

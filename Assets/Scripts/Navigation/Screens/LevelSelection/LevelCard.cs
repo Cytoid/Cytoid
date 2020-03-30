@@ -202,6 +202,11 @@ public class LevelCard : InteractableMonoBehavior
         base.OnPointerClick(eventData);
         if (level != null)
         {
+            if (Context.ScreenManager.IsChangingScreen)
+            {
+                return;
+            }
+            
             if (Context.IsOffline() && !level.IsLocal)
             {
                 var dialog = Dialog.Instantiate();
@@ -232,8 +237,8 @@ public class LevelCard : InteractableMonoBehavior
     public void OnAction()
     {
         if (!level.IsLocal) return;
-        /*if (Context.ScreenManager.ActiveScreenId != LevelSelectionScreen.Id &&
-            Context.ScreenManager.ActiveScreenId != CommunityLevelSelectionScreen.Id) return;*/
+        if (Context.ScreenManager.ActiveScreenId != LevelSelectionScreen.Id &&
+            Context.ScreenManager.ActiveScreenId != CommunityLevelSelectionScreen.Id) return;
 
         var dialog = Dialog.Instantiate();
         dialog.Message = "DIALOG_CONFIRM_DELETE".Get(level.Meta.title);

@@ -1,3 +1,4 @@
+using System.Linq;
 using LeTai.Asset.TranslucentImage;
 using Polyglot;
 using UnityEngine;
@@ -37,9 +38,8 @@ public class MainMenuScreen : Screen
         upperLeftOverlayImage.SetAlpha(Context.CharacterManager.GetActiveCharacterAsset().mainMenuUpperLeftOverlayAlpha);
         rightOverlayImage.SetAlpha(Context.CharacterManager.GetActiveCharacterAsset().mainMenuRightOverlayAlpha);
         
-        TranslucentImageSource.Disabled = Context.LocalPlayer.GraphicsQuality == "low";
-
-        freePlayText.text = "MAIN_LEVELS_LOADED".Get(Context.LevelManager.LoadedLocalLevels.Count);
+        freePlayText.text = "MAIN_LEVELS_LOADED".Get(Context.LevelManager.LoadedLocalLevels.Count(it => 
+            it.Value.Type == LevelType.Community || it.Value.Type == LevelType.Official));
         freePlayText.transform.RebuildLayout();
         ProfileWidget.Instance.Enter();
 

@@ -8,7 +8,7 @@ using UnityEngine.UI;
 public class ParallaxElement : MonoBehaviour, ScreenChangeListener
 {
     public static bool UseGyroscope = true;
-    public static float GyroscopeMultiplier = 24f;
+    public static float GyroscopeMultiplier = 36f;
     public const float MenuSpeed = 100;
 
     public bool Enabled { get; set; } = true;

@@ -26,12 +26,12 @@ public class LevelManager
     public readonly Dictionary<string, Level> LoadedLocalLevels = new Dictionary<string, Level>();
     private readonly HashSet<string> loadedPaths = new HashSet<string>();
 
-    public async UniTask<List<string>> InstallAllFromDataPath()
+    public async UniTask<List<string>> InstallUserCommunityLevels()
     {
         if (Application.platform == RuntimePlatform.IPhonePlayer)
         {
             var files = new List<string>();
-            var inboxPath = Context.UserDataPath + "/Inbox/"; 
+            var inboxPath = Context.UserDataPath + "/Inbox/";
             if (Directory.Exists(inboxPath))
             {
                 files.AddRange(Directory.GetFiles(inboxPath, "*.cytoidlevel"));
@@ -86,23 +86,28 @@ public class LevelManager
             Debug.LogError("Cannot read from data path");
             return new List<string>();
         }
-        
+
+        return await InstallLevels(levelFiles, LevelType.Community);
+    }
+
+    public async UniTask<List<string>> InstallLevels(List<string> packagePaths, LevelType type)
+    {
         var loadedLevelJsonFiles = new List<string>();
         var index = 1;
-        foreach (var levelFile in levelFiles)
+        foreach (var levelFile in packagePaths)
         {
             var fileName = Path.GetFileNameWithoutExtension(levelFile);
-            OnLevelInstallProgress.Invoke(fileName, index, levelFiles.Count);
+            OnLevelInstallProgress.Invoke(fileName, index, packagePaths.Count);
 
-            var destFolder = $"{Context.UserDataPath}/{fileName}";
+            var destFolder = $"{type.GetDataPath()}/{fileName}";
             if (await UnpackLevelPackage(levelFile, destFolder))
             {
                 loadedLevelJsonFiles.Add(destFolder + "/level.json");
-                Debug.Log($"Installed {index}/{levelFiles.Count}: {levelFile}");
+                Debug.Log($"Installed {index}/{packagePaths.Count}: {levelFile}");
             }
             else
             {
-                Debug.LogWarning($"Could not install {index}/{levelFiles.Count}: {levelFile}");
+                Debug.LogWarning($"Could not install {index}/{packagePaths.Count}: {levelFile}");
             }
 
             try

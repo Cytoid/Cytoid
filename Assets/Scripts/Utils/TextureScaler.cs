@@ -73,6 +73,7 @@ public class TextureScaler
             Debug.Log($"To height: {toHeight}, Rect: {texR}");
             result.ReadPixels(texR, 0, 0, true);
         }
+        result.Apply();
 
         return result;
     }

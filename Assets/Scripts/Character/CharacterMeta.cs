@@ -28,5 +28,5 @@ public class CharacterMeta
     [JsonProperty("tachieAsset")] public string TachieAssetId { get; set; }
 
     public override string ToString() => JsonConvert.SerializeObject(this);
-    
+
 }

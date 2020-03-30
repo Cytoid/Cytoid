@@ -1,3 +1,5 @@
+using System;
+using UniRx.Async;
 using UnityEditor;
 using UnityEngine;
 
@@ -16,12 +18,16 @@ public class CharacterDisplay : MonoBehaviour, ScreenBecameActiveListener, Scree
     private GameObject loadedTachie;
     private RectTransform rectTransform;
 
-    public async void Load(string assetId)
+    private DateTime asyncLoadToken;
+
+    public async UniTask Load(string assetId)
     {
         Unload();
         
         print("CharacterDisplay: Loaded " + assetId);
-        loadedTachie = await Context.RemoteResourceManager.LoadResource(assetId);
+        var token = asyncLoadToken = DateTime.Now;
+        loadedTachie = await Context.RemoteAssetManager.LoadAsset(assetId);
+        if (token != asyncLoadToken) return;
         IsLoaded = true;
         var t = (RectTransform) loadedTachie.transform;
         t.SetParent(transform);
@@ -47,7 +53,7 @@ public class CharacterDisplay : MonoBehaviour, ScreenBecameActiveListener, Scree
             IsLoaded = false;
             print("CharacterDisplay: Unloaded");
             Destroy(loadedTachie.gameObject);
-            Context.RemoteResourceManager.Release(loadedTachie);
+            Context.RemoteAssetManager.Release(loadedTachie);
             loadedTachie = null;
             if (rectTransform != null)
             {

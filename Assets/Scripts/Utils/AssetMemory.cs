@@ -107,14 +107,15 @@ public class AssetMemory
                             return default;
                         }
                     }
-
-                    if (PrintDebugMessages) Debug.Log($"AssetMemory: Saved {path} to {fileCachePath}");
+                    else
+                    {
+                        hasFileCache = true;
+                        if (PrintDebugMessages) Debug.Log($"AssetMemory: Saved {path} to {fileCachePath}");
+                    }
                 }
-
-                hasFileCache = true;
             }
 
-            if (PrintDebugMessages) Debug.Log($"AssetMemory: Cached at {fileCachePath}");
+            if (hasFileCache) if (PrintDebugMessages) Debug.Log($"AssetMemory: Cached at {fileCachePath}");
         }
 
         T asset = default;
@@ -154,58 +155,16 @@ public class AssetMemory
                 texture.name = path;
 
                 // Fit crop
-                // TODO: For some reasons, the texture read would be black unless I do stupid I/O like this...
-                // TODO: Apparently still partially broken on iOS
                 if (options is SpriteAssetOptions spriteOptions)
                 {
                     if (spriteOptions.FitCropSize != default &&
                         (texture.width != spriteOptions.FitCropSize[0] ||
                          texture.height != spriteOptions.FitCropSize[1]))
                     {
-                        if (PrintDebugMessages) Debug.Log("AssetMemory: Start cropping");
-
-                        var tmpPath = Path.Combine(Application.temporaryCachePath, "Tmp");
-                        Directory.CreateDirectory(tmpPath);
-                        var filename = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds();
-
-                        bytes = texture.EncodeToJPG();
-                        var innerPath = Path.Combine(tmpPath, $"{filename}");
-                        File.WriteAllBytes(innerPath, bytes);
+                        var croppedTexture = TextureScaler.FitCrop(texture, spriteOptions.FitCropSize[0], spriteOptions.FitCropSize[1]);
+                        croppedTexture.name = path;
                         Object.Destroy(texture);
-
-                        using (var request2 = UnityWebRequest.Get(innerPath))
-                        {
-                            await request2.SendWebRequest();
-                            texture = request2.downloadHandler.data.ToTexture2D();
-                            texture = TextureScaler.FitCrop(texture, spriteOptions.FitCropSize[0],
-                                spriteOptions.FitCropSize[1]);
-                            bytes = texture.EncodeToJPG();
-                            File.WriteAllBytes(innerPath, bytes);
-                            Object.Destroy(texture);
-
-                            using (var request3 = UnityWebRequest.Get(innerPath))
-                            {
-                                await request3.SendWebRequest();
-                                texture = request3.downloadHandler.data.ToTexture2D();
-                                if (PrintDebugMessages) Debug.Log($"Size: {texture.width}/{texture.height}");
-                            }
-
-                            if (cancellationToken != default && cancellationToken.IsCancellationRequested)
-                            {
-                                File.Delete(innerPath);
-                                isLoading.Remove(path);
-                                return default;
-                            }
-                        }
-
-                        if (cancellationToken != default && cancellationToken.IsCancellationRequested)
-                        {
-                            File.Delete(innerPath);
-                            isLoading.Remove(path);
-                            return default;
-                        }
-
-                        File.Delete(innerPath);
+                        texture = croppedTexture;
                     }
                 }
 
@@ -310,7 +269,7 @@ public class AssetMemory
             .Replace("?", "~")
             .Replace("&", ".")
             .Replace("%", ".");
-        var path = Path.Combine(Application.temporaryCachePath, uri);
+        var path = Application.temporaryCachePath + "/Online/" + uri;
         var dirPath = Path.GetDirectoryName(path);
         Directory.CreateDirectory(dirPath ?? throw new Exception());
         return path;

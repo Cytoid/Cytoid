@@ -76,8 +76,14 @@ public class OnlineLevel
     // TODO: NEO!!!!
 
     [JsonProperty("music")] public string MusicUrl { get; set; }
-    [JsonProperty("music_preview")] public string MusicPreviewUrl { get; set; }
+    [JsonProperty("musicPreview")] public string MusicPreviewUrl { get; set; }
     [JsonProperty("cover")] public OnlineImageAsset Cover { get; set; }
+
+    public bool HasLocal(LevelType type)
+    {
+        return Context.LevelManager.LoadedLocalLevels.ContainsKey(Uid)
+            && Context.LevelManager.LoadedLocalLevels[Uid].Type == type;
+    }
 
     public Level ToLevel(LevelType type, bool resolveLocalLevel = true)
     {

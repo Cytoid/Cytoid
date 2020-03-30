@@ -24,12 +24,13 @@ public class TierSelectionScreen : Screen
     public GradientMeshEffect completionRateGradient;
     public CircleButton startButton;
     public DepthCover cover;
+    public InteractableMonoBehavior helpButton;
 
     public ActionTabs actionTabs;
     public RankingsTab rankingsTab;
     
     public Vector2 ScreenCenter { get; private set; }
-    public Tier SelectedTier { get; private set; }
+    public TierData SelectedTier { get; private set; }
 
     private TierCard selectedTierCard;
     
@@ -60,6 +61,23 @@ public class TierSelectionScreen : Screen
                 UnloadResources();
             }
         });
+        
+        actionTabs.onTabChanged.AddListener((prev, next) =>
+        {
+            if (next.index == 0)
+            {
+                OnRankingsTab();
+            }   
+        });
+        
+        helpButton.onPointerClick.AddListener(_ =>
+        {
+            var dialog = Dialog.Instantiate();
+            dialog.UsePositiveButton = true;
+            dialog.UseNegativeButton = false;
+            dialog.Message = "TIER_TUTORIAL".Get();
+            dialog.Open();
+        });
     }
 
     public override async void OnScreenBecameActive()
@@ -76,6 +94,10 @@ public class TierSelectionScreen : Screen
         SpinnerOverlay.Show();
         await Context.LevelManager.LoadLevelsOfType(LevelType.Tier);
 
+        /*SpinnerOverlay.Hide();
+        OnContentLoaded(new Content{season = MockData.Season});
+        return;*/
+        
         RestClient.Get(new RequestHelper
         {
             Uri = $"{Context.ServicesUrl}/seasons/alpha",
@@ -83,21 +105,18 @@ public class TierSelectionScreen : Screen
         }).Then(res =>
         {
             print("TierSelection: " + res.Text);
-            var season = JsonConvert.DeserializeObject<Season>(res.Text);
+            var season = JsonConvert.DeserializeObject<SeasonData>(res.Text);
             SavedContent = new Content {season = season};
             OnContentLoaded(SavedContent);
-        }).Catch(error =>
+        }).CatchRequestError(error =>
         {
-            Debug.LogError(error);
-        }).Finally(() => SpinnerOverlay.Hide());
-
-        actionTabs.onTabChanged.AddListener((prev, next) =>
-        {
-            if (next.index == 0)
+            if (!error.IsNetworkError)
             {
-                OnRankingsTab();
-            }   
-        });
+                throw error;
+            }
+            Dialog.PromptGoBack("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
+        }).Finally(() => SpinnerOverlay.Hide());
+        
         /*if (SavedContent != null)
         {
             OnContentLoaded(SavedContent);
@@ -113,19 +132,26 @@ public class TierSelectionScreen : Screen
         scrollRect.ClearCells();
         
         scrollRect.totalCount = content.season.tiers.Count + 1;
-        var tiers = new List<Tier>(content.season.tiers) {new Tier {isScrollRectFix = true}};
+        var tiers = new List<TierData>(content.season.tiers) {new TierData {isScrollRectFix = true}};
         for (var i = 0; i < tiers.Count - 1; i++)
         {
             var tier = tiers[i];
             tier.index = i;
-            tier.Meta.parsedCriteria = tier.Meta.criteria.Select(Criterion.Parse).ToList();
-            tier.Meta.parsedStages = new List<Level>();
-            for (var stage = 0; stage < Math.Min(tier.Meta.stages.Count, 3); stage++)
+            if (tier.Meta.parsedCriteria == default)
             {
-                var level = tier.Meta.stages[stage].ToLevel(LevelType.Tier);
-                tier.Meta.parsedStages.Add(level);
-                tier.Meta.validStages.Add(level.IsLocal && level.Type == LevelType.Tier &&
-                                          level.Meta.version == tier.Meta.stages[stage].Version);
+                tier.Meta.parsedCriteria = tier.Meta.criteria.Select(Criterion.Parse).ToList();
+            }
+            if (tier.Meta.parsedStages == default)
+            {
+                tier.Meta.parsedStages = new List<Level>();
+                tier.Meta.validStages = new List<bool>();
+                for (var stage = 0; stage < Math.Min(tier.Meta.stages.Count, 3); stage++)
+                {
+                    var level = tier.Meta.stages[stage].ToLevel(LevelType.Tier);
+                    tier.Meta.parsedStages.Add(level);
+                    tier.Meta.validStages.Add(level.IsLocal && level.Type == LevelType.Tier &&
+                                              level.Meta.version == tier.Meta.stages[stage].Version);
+                }
             }
         }
 
@@ -198,7 +224,7 @@ public class TierSelectionScreen : Screen
 
     private DateTime asyncCoverToken;
 
-    public async void OnTierSelected(Tier tier)
+    public async void OnTierSelected(TierData tier)
     {
         SelectedTier = tier;
         print("Selected tier " + (tier.Meta.name));
@@ -226,7 +252,7 @@ public class TierSelectionScreen : Screen
         var lastStage = tier.Meta.parsedStages.Last();
         if (lastStage.IsLocal)
         {
-            sprite = await Context.AssetMemory.LoadAsset<Sprite>(lastStage.Path + lastStage.Meta.background.path, AssetTag.TierCover);
+            sprite = await Context.AssetMemory.LoadAsset<Sprite>("file://" + lastStage.Path + lastStage.Meta.background.path, AssetTag.TierCover);
         }
         else
         {
@@ -344,7 +370,7 @@ public class TierSelectionScreen : Screen
     
     public class Content
     {
-        public Season season;
+        public SeasonData season;
     }
 
 }

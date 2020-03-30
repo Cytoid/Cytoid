@@ -17,13 +17,13 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
             // Install levels
             SpinnerOverlay.Show();
             
-            Context.LevelManager.OnLevelInstallProgress.AddListener(OnLevelInstallProgress);
-            var loadedLevelJsonFiles = await Context.LevelManager.InstallAllFromDataPath();
-            Context.LevelManager.OnLevelInstallProgress.RemoveListener(OnLevelInstallProgress);
+            Context.LevelManager.OnLevelInstallProgress.AddListener(SpinnerOverlay.OnLevelInstallProgress);
+            var loadedLevelJsonFiles = await Context.LevelManager.InstallUserCommunityLevels();
+            Context.LevelManager.OnLevelInstallProgress.RemoveListener(SpinnerOverlay.OnLevelInstallProgress);
             
-            Context.LevelManager.OnLevelLoadProgress.AddListener(OnLevelLoadProgress);
+            Context.LevelManager.OnLevelLoadProgress.AddListener(SpinnerOverlay.OnLevelLoadProgress);
             var loadedLevels = await Context.LevelManager.LoadFromMetadataFiles(LevelType.Community, loadedLevelJsonFiles, true);
-            Context.LevelManager.OnLevelLoadProgress.RemoveListener(OnLevelLoadProgress);
+            Context.LevelManager.OnLevelLoadProgress.RemoveListener(SpinnerOverlay.OnLevelLoadProgress);
 
             SpinnerOverlay.Hide();
             
@@ -44,18 +44,6 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
                 Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.In);
             }
         }
-    }
-    
-    private void OnLevelInstallProgress(string fileName, int current, int total)
-    {
-        SpinnerOverlay.Instance.message.text = total > 1
-            ? "INIT_UNPACKING_X_Y".Get(fileName, current, total)
-            : "INIT_UNPACKING_X".Get(fileName);
-    }
-    
-    private void OnLevelLoadProgress(string levelId, int current, int total)
-    {
-        SpinnerOverlay.Instance.message.text = "INIT_LOADING_X_Y".Get(levelId, current, total);
     }
 
     protected override void Awake()

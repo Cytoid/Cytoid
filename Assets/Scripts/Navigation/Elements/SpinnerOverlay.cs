@@ -6,12 +6,15 @@ using UnityEngine.UI;
 
 public class SpinnerOverlay : SingletonMonoBehavior<SpinnerOverlay>
 {
+    [GetComponent] public Canvas canvas;
     [GetComponent] public CanvasGroup canvasGroup;
     [GetComponentInChildren] public SpinnerElement spinnerElement;
     public Text message;
     
     private void Start()
     {
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = NavigationSortingOrder.SpinnerOverlay;
         canvasGroup.alpha = 0;
         canvasGroup.blocksRaycasts = false;
         canvasGroup.interactable = false;
@@ -52,5 +55,17 @@ public class SpinnerOverlay : SingletonMonoBehavior<SpinnerOverlay>
             await UniTask.Delay(TimeSpan.FromSeconds(0.2f));
             onFullyHidden();
         }
+    }
+    
+    public static void OnLevelInstallProgress(string fileName, int current, int total)
+    {
+        Instance.message.text = total > 1
+            ? "INIT_UNPACKING_X_Y".Get(fileName, current, total)
+            : "INIT_UNPACKING_X".Get(fileName);
+    }
+    
+    public static void OnLevelLoadProgress(string levelId, int current, int total)
+    {
+        Instance.message.text = "INIT_LOADING_X_Y".Get(levelId, current, total);
     }
 }

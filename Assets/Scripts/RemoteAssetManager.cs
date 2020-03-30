@@ -3,12 +3,11 @@ using UniRx.Async;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-public class RemoteResourceManager
+public class RemoteAssetManager
 {
     
     public async UniTask UpdateCatalog()
     {
-        await Addressables.InitializeAsync().Task;
         var list = await Addressables.CheckForCatalogUpdates().Task;
         if (list != null && list.Count > 0)
         {
@@ -16,65 +15,76 @@ public class RemoteResourceManager
         }
     }
 
-    public async UniTask<GameObject> LoadLocalResource(string key)
+    public async UniTask<bool> Exists(string assetId)
     {
-        return await Addressables.InstantiateAsync(key).Task;
+        var list = await Addressables.LoadResourceLocationsAsync(assetId).Task;        
+        return list != null && list.Count > 0;
     }
 
-    public async UniTask DownloadResourceDialog(
+    public async UniTask<GameObject> LoadDownloadedAsset(string assetId)
+    {
+        return await Addressables.InstantiateAsync(assetId).Task;
+    }
+
+    public async UniTask DownloadAssetDialog(
         string key,
         bool allowAbort = true,
         Action onDownloadSucceeded = default,
         Action onDownloadAborted = default,
-        Action onDownloadFailed = default
+        Action onDownloadFailed = default,
+        Action onLocallyResolved = default
     )
     {
-        await LoadResourceImpl(key, true, false, allowAbort, onDownloadSucceeded, onDownloadAborted,
-            onDownloadFailed);
+        await LoadAssetImpl(key, true, false, allowAbort, onDownloadSucceeded, onDownloadAborted,
+            onDownloadFailed, onLocallyResolved);
     }
 
-    public async UniTask<GameObject> LoadResourceDialog(
+    public async UniTask<GameObject> LoadAssetDialog(
         string key,
         bool allowAbort = true,
         Action onDownloadSucceeded = default,
         Action onDownloadAborted = default,
-        Action onDownloadFailed = default
+        Action onDownloadFailed = default,
+        Action onLocallyResolved = default
     )
     {
-        return await LoadResourceImpl(key, true, true, allowAbort, onDownloadSucceeded, onDownloadAborted,
-            onDownloadFailed);
+        return await LoadAssetImpl(key, true, true, allowAbort, onDownloadSucceeded, onDownloadAborted,
+            onDownloadFailed, onLocallyResolved);
     }
     
-    public async UniTask DownloadResource(
+    public async UniTask DownloadAsset(
         string key,
         Action onDownloadSucceeded = default,
         Action onDownloadAborted = default,
-        Action onDownloadFailed = default
+        Action onDownloadFailed = default,
+        Action onLocallyResolved = default
     )
     {
-        await LoadResourceImpl(key, false, false, false, onDownloadSucceeded, onDownloadAborted,
-            onDownloadFailed);
+        await LoadAssetImpl(key, false, false, false, onDownloadSucceeded, onDownloadAborted,
+            onDownloadFailed, onLocallyResolved);
     }
     
-    public async UniTask<GameObject> LoadResource(
+    public async UniTask<GameObject> LoadAsset(
         string key,
         Action onDownloadSucceeded = default,
         Action onDownloadAborted = default,
-        Action onDownloadFailed = default
+        Action onDownloadFailed = default,
+        Action onLocallyResolved = default
     )
     {
-        return await LoadResourceImpl(key, false, true, false, onDownloadSucceeded, onDownloadAborted,
-            onDownloadFailed);
+        return await LoadAssetImpl(key, false, true, false, onDownloadSucceeded, onDownloadAborted,
+            onDownloadFailed, onLocallyResolved);
     }
     
-    private async UniTask<GameObject> LoadResourceImpl(
+    private async UniTask<GameObject> LoadAssetImpl(
         string key,
         bool showDialog = false,
         bool willInstantiate = false,
         bool allowAbort = true,
         Action onDownloadSucceeded = default,
         Action onDownloadAborted = default,
-        Action onDownloadFailed = default
+        Action onDownloadFailed = default,
+        Action onLocallyResolved = default
     )
     {
         if (key == null) throw new ArgumentNullException(nameof(key));
@@ -82,6 +92,7 @@ public class RemoteResourceManager
         
         // TODO: 1) Asset not found? 2) Network exception?
         
+        if (onLocallyResolved == default) onLocallyResolved = () => { };
         if (onDownloadSucceeded == default) onDownloadSucceeded = () => { };
         if (onDownloadAborted == default) onDownloadAborted = () => { };
         if (onDownloadFailed == default) onDownloadFailed = () => { };
@@ -140,6 +151,10 @@ public class RemoteResourceManager
             {
                 onDownloadFailed();
             }
+        }
+        else
+        {
+            onLocallyResolved();
         }
 
         if (aborted) return null;

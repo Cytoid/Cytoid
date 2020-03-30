@@ -22,6 +22,7 @@ public static class SettingsFactory
                         ("Español", (int) Language.Spanish),
                         ("Indonesia", (int) Language.Indonesian),
                         ("Português BR", (int) Language.Portuguese_Brazil),
+                        ("Pусский", (int) Language.Russian),
                         ("Tagalog", (int) Language.Filipino),
                         ("Tiếng Việt", (int) Language.Vietnamese),
                         ("简体中文", (int) Language.Simplified_Chinese),
@@ -119,7 +120,6 @@ public static class SettingsFactory
                     });
                 element.caretSelect.onSelect.AddListener((_, quality) =>
                 {
-                    TranslucentImageSource.Disabled = Context.LocalPlayer.GraphicsQuality == "low";
                     Context.UpdateGraphicsQuality();
                 });
             });

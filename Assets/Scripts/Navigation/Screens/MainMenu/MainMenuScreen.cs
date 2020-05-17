@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using System.Linq;
 using LeTai.Asset.TranslucentImage;
+using Newtonsoft.Json;
 using Polyglot;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,21 +22,13 @@ public class MainMenuScreen : Screen
     public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
-        aboutButton.onPointerClick.AddListener(it =>
-        {
-            var dialog = Dialog.Instantiate();
-            dialog.Message = $"<b>Cytoid {Context.Version}</b>\nThank you for playing!";
-            dialog.UseProgress = false;
-            dialog.UsePositiveButton = true;
-            dialog.UseNegativeButton = false;
-            dialog.Open();
-        });
+        aboutButton.onPointerClick.AddListener(it => Dialog.PromptAlert($"<b>Cytoid {Context.Version}</b>\nThank you for playing!"));
     }
 
     public override void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
-        
+
         upperLeftOverlayImage.SetAlpha(Context.CharacterManager.GetActiveCharacterAsset().mainMenuUpperLeftOverlayAlpha);
         rightOverlayImage.SetAlpha(Context.CharacterManager.GetActiveCharacterAsset().mainMenuRightOverlayAlpha);
         

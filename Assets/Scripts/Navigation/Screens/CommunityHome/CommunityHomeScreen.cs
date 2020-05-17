@@ -12,7 +12,7 @@ public class CommunityHomeScreen : Screen
 {
     public const string Id = "CommunityHome";
 
-    private static readonly Layout defaultLayout = new Layout
+    private static readonly Layout DefaultLayout = new Layout
     {
         Sections = new List<Layout.Section>
         {
@@ -50,8 +50,8 @@ public class CommunityHomeScreen : Screen
         }
     };
 
-    private static float savedScrollPosition;
-    private static Content savedContent;
+    public static Content LoadedContent;
+    private static float lastScrollPosition;
 
     public GameObject sectionPrefab;
     public GameObject levelCardPrefab;
@@ -75,10 +75,10 @@ public class CommunityHomeScreen : Screen
         base.OnScreenBecameActive();
 
         contentHolder.alpha = 0;
-        if (savedContent != null)
+        if (LoadedContent != null)
         {
-            OnContentLoaded(savedContent);
-            scrollRect.verticalNormalizedPosition = savedScrollPosition;
+            OnContentLoaded(LoadedContent);
+            scrollRect.verticalNormalizedPosition = lastScrollPosition;
         }
         else
         {
@@ -89,7 +89,7 @@ public class CommunityHomeScreen : Screen
     public override void OnScreenBecameInactive()
     {
         base.OnScreenBecameInactive();
-        savedScrollPosition = scrollRect.verticalNormalizedPosition;
+        lastScrollPosition = scrollRect.verticalNormalizedPosition;
     }
 
     public void LoadContent()
@@ -98,7 +98,7 @@ public class CommunityHomeScreen : Screen
         
         var content = new Content();
         var promises = new List<RSG.IPromise<OnlineLevel[]>>();
-        foreach (var section in defaultLayout.Sections)
+        foreach (var section in DefaultLayout.Sections)
         {
             promises.Add( RestClient.GetArray<OnlineLevel>(new RequestHelper
             {
@@ -112,9 +112,9 @@ public class CommunityHomeScreen : Screen
             .Then(payload =>
             {
                 content.SectionOnlineLevels = payload.Select(it => it.ToList()).ToList();
-                content.Layout = defaultLayout;
-                savedContent = content;
-                OnContentLoaded(savedContent);
+                content.Layout = DefaultLayout;
+                LoadedContent = content;
+                OnContentLoaded(LoadedContent);
             })
             .Catch(error =>
             {
@@ -143,7 +143,7 @@ public class CommunityHomeScreen : Screen
             }
             sectionBehavior.viewMoreButton.onPointerClick.AddListener(_ =>
             {
-                CommunityLevelSelectionScreen.SavedContent = new CommunityLevelSelectionScreen.Content
+                CommunityLevelSelectionScreen.LoadedContent = new CommunityLevelSelectionScreen.Content
                 {
                     Query = section.Query.JsonDeepCopy(),
                     OnlineLevels = null // Signal reload
@@ -162,7 +162,7 @@ public class CommunityHomeScreen : Screen
     {
         if (query.IsNullOrEmptyTrimmed()) return;
         
-        CommunityLevelSelectionScreen.SavedContent = new CommunityLevelSelectionScreen.Content
+        CommunityLevelSelectionScreen.LoadedContent = new CommunityLevelSelectionScreen.Content
         {
             Query = new OnlineLevelQuery
             {
@@ -182,12 +182,12 @@ public class CommunityHomeScreen : Screen
         base.OnScreenChangeFinished(from, to);
         if (from == this && to is MainMenuScreen)
         {
-            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalCoverThumbnail);
-            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.OnlineCoverThumbnail);
+            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalLevelCoverThumbnail);
+            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.RemoteLevelCoverThumbnail);
             
             searchInputField.SetTextWithoutNotify("");
-            savedContent = null;
-            savedScrollPosition = default;
+            LoadedContent = null;
+            lastScrollPosition = default;
             
             foreach (Transform child in sectionHolder) Destroy(child.gameObject);
         }

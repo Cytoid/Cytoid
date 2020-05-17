@@ -1,16 +1,9 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
-using DG.Tweening;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Proyecto26;
 using UniRx.Async;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.UI;
 
 public class TierResultScreen : Screen
@@ -42,10 +35,15 @@ public class TierResultScreen : Screen
     
     public override string GetId() => Id;
 
-    public override async void OnScreenInitialized()
+    public override void OnScreenDestroyed()
     {
-        base.OnScreenInitialized();
-        ScreenManager.Instance.AddHandler(this);
+        base.OnScreenDestroyed();
+        Context.ScreenManager.RemoveHandler(this);
+    }
+
+    public override async void OnScreenBecameActive()
+    {
+        base.OnScreenBecameActive();
         
         tierState = Context.TierState;
         if (tierState == null)
@@ -68,27 +66,20 @@ public class TierResultScreen : Screen
 
         nextButton.State = CircleButtonState.Next;
         nextButton.StartPulsing();
-        nextButton.interactableMonoBehavior.onPointerClick.AddListener(_ =>
+        nextButton.interactableMonoBehavior.onPointerClick.SetListener(_ =>
         {
             nextButton.StopPulsing();
             Done();
         });
         retryButton.State = CircleButtonState.Retry;
-        retryButton.interactableMonoBehavior.onPointerClick.AddListener(_ =>
+        retryButton.interactableMonoBehavior.onPointerClick.SetListener(_ =>
         {
             retryButton.StopPulsing();
             Retry();
         });
 
         // Update performance info
-        if (tierState.Completion < 1)
-        {
-            scoreText.text = "TIER_FAILED".Get();
-        }
-        else
-        {
-            scoreText.text = (Mathf.FloorToInt((float) (tierState.Completion) * 100 * 100) / 100).ToString("0.00") + "%";
-        }
+        scoreText.text = (Mathf.Floor((float) tierState.Completion * 100 * 100) / 100).ToString("0.00") + "%";
         accuracyText.text = "RESULT_X_ACCURACY".Get((Math.Floor(tierState.AverageAccuracy * 100 * 100) / 100).ToString("0.00"));
         if (Mathf.Approximately((float) tierState.AverageAccuracy, 1))
         {
@@ -121,7 +112,7 @@ public class TierResultScreen : Screen
                                   $"<b>Late</b> {tierState.LateCount}    " +
                                   $"<b>{"RESULT_AVG_TIMING_ERR".Get()}</b> {tierState.AverageTimingError:0.000}s    " +
                                   $"<b>{"RESULT_STD_TIMING_ERR".Get()}</b> {tierState.StandardTimingError:0.000}s";
-        if (!Context.LocalPlayer.DisplayEarlyLateIndicators) advancedMetricText.text = "";
+        if (!Context.LocalPlayer.Settings.DisplayEarlyLateIndicators) advancedMetricText.text = "";
 
         newBestText.text = "";
         if (tierState.Completion >= 1)
@@ -143,20 +134,9 @@ public class TierResultScreen : Screen
             }
         }
 
-        shareButton.onPointerClick.AddListener(_ => StartCoroutine(Share()));
+        shareButton.onPointerClick.SetListener(_ => StartCoroutine(Share()));
 
         await Resources.UnloadUnusedAssets();
-    }
-    
-    public override void OnScreenDestroyed()
-    {
-        base.OnScreenDestroyed();
-        Context.ScreenManager.RemoveHandler(this);
-    }
-
-    public override void OnScreenBecameActive()
-    {
-        base.OnScreenBecameActive();
         
         gradientPane.SetModel(tierState.Tier);
         for (var index = 0; index < Math.Min(tierState.Tier.Meta.parsedStages.Count, 3); index++)
@@ -164,11 +144,11 @@ public class TierResultScreen : Screen
             var widget = stageResultWidgets[index];
             var level = tierState.Tier.Meta.parsedStages[index];
             var stageResult = tierState.Stages[index];
-            widget.difficultyBall.SetModel(Difficulty.Parse(level.Meta.charts[0].type), level.Meta.charts[0].difficulty);
+            widget.difficultyBall.SetModel(Difficulty.Parse(level.Meta.charts.Last().type), level.Meta.charts.Last().difficulty);
             widget.titleText.text = level.Meta.title;
-            widget.performanceWidget.SetModel(new LocalPlayer.Performance
+            widget.performanceWidget.SetModel(new LevelRecord.Performance
             {
-                Score = (int) stageResult.Score, Accuracy = (float) (stageResult.Accuracy * 100)
+                Score = (int) stageResult.Score, Accuracy = stageResult.Accuracy
             });
         }
         
@@ -246,12 +226,17 @@ public class TierResultScreen : Screen
 
         var uploadTierRecord = SecuredOperations.MakeTierRecord(tierState);
         SecuredOperations.UploadTierRecord(tierState, uploadTierRecord)
-            .Then(_ =>
+            .Then(stateChange =>
                 {
                     Toast.Next(Toast.Status.Success, "TOAST_TIER_CLEARED".Get());
                     EnterControls();
                     rankingsTab.UpdateTierRankings(tierState.Tier.Id);
                     Context.OnlinePlayer.FetchProfile();
+
+                    if (stateChange.rewards.Count > 0)
+                    {
+                        RewardOverlay.Show(stateChange.rewards);
+                    }
                 }
             ).CatchRequestError(error =>
             {
@@ -294,8 +279,6 @@ public class TierResultScreen : Screen
                 {
                     dialog.Close();
                     EnterControls();
-                    // TODO:
-                    //rankingsTab.UpdateRankings(gameState.Level.Id, gameState.Difficulty.Id);
                     Context.OnlinePlayer.FetchProfile();
                 };
                 dialog.Open();

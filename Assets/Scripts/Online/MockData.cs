@@ -3,71 +3,93 @@ using System.Collections.Generic;
 
 public static class MockData
 {
-    public static Level CommunityLevel => new Level(Context.UserDataPath + "/f/", LevelType.Community, new LevelMeta
+    public static EventMeta Event => new EventMeta
     {
-        version = 1,
-        schema_version = 2,
-        id = "f",
-        title = "(^^)",
-        artist = "Yamajet",
-        illustrator = "BOF2007",
-        charter = "JJLin Vanquisher",
-        music = new LevelMeta.MusicSection
-        {
-            path = "Music.wav",
-        },
-        music_preview = new LevelMeta.MusicSection
-        {
-            path = "Music.wav",
-        },
-        background = new LevelMeta.BackgroundSection
-        {
-            path = "bg_gamever.png"
-        },
-        charts = new List<LevelMeta.ChartSection>
-        {
-            new LevelMeta.ChartSection
-            {
-                type = "extreme",
-                difficulty = 4,
-                path = "output.cyt"
-            }
-        }
-    }, DateTime.UtcNow, DateTime.UtcNow);
-    
-    public static Level TierLevel => new Level(Context.UserDataPath + "/f.tier/", LevelType.Tier, new LevelMeta
-    {
-        version = 1,
-        schema_version = 2,
-        id = "f",
-        title = "(^^)",
-        artist = "Yamajet",
-        illustrator = "BOF2007",
-        charter = "JJLin Vanquisher",
-        music = new LevelMeta.MusicSection
-        {
-            path = "Music.wav",
-        },
-        music_preview = new LevelMeta.MusicSection
-        {
-            path = "Music.wav",
-        },
-        background = new LevelMeta.BackgroundSection
-        {
-            path = "bg_gamever.png"
-        },
-        charts = new List<LevelMeta.ChartSection>
-        {
-            new LevelMeta.ChartSection
-            {
-                type = "extreme",
-                difficulty = 4,
-                path = "output.cyt"
-            }
-        }
-    }, DateTime.UtcNow, DateTime.UtcNow);
+        id = "cytoidfes2020",
+        logoUrl = "https://artifacts.cytoid.io/test/cytoidfes.png",
+        coverUrl = "https://artifacts.cytoid.io/test/band.jpg",
+        postUrl = "https://cytoid.io",
+        startDate = new DateTimeOffset(2020, 6, 1, 0, 0, 0, TimeSpan.Zero),
+        endDate = new DateTimeOffset(2020, 6, 14, 23, 59, 59, TimeSpan.Zero),
+        associatedCollectionId = "5e8a17f4ba92e40007f106da",
+    };
 
-    public static SeasonData Season => new SeasonData
+    public static CollectionMeta Collection => new CollectionMeta
+    {
+        uid = "",
+        title = "Chapter: Enlightened",
+        slogan = "Alice has a special bond with someone from the rift. Will she be able to overcome her fears?",
+        cover = new OnlineImageAsset
+        {
+            OriginalUrl = "https://assets.cytoid.io/covers/xkCgp8OySMV5CWWgda0Yk8Z1vVR5nEoulimyZt0r022TC5GiSgez96nwnzA5RVOU"
+        }
+    };
+
+    public static Level CommunityLevel => Level.FromLocal(Context.UserDataPath + "/f/", LevelType.Community, new LevelMeta
+    {
+        version = 1,
+        schema_version = 2,
+        id = "f",
+        title = "(^^)",
+        artist = "Yamajet",
+        illustrator = "BOF2007",
+        charter = "JJLin Vanquisher",
+        music = new LevelMeta.MusicSection
+        {
+            path = "Music.wav",
+        },
+        music_preview = new LevelMeta.MusicSection
+        {
+            path = "Music.wav",
+        },
+        background = new LevelMeta.BackgroundSection
+        {
+            path = "bg_gamever.png"
+        },
+        charts = new List<LevelMeta.ChartSection>
+        {
+            new LevelMeta.ChartSection
+            {
+                type = "extreme",
+                difficulty = 4,
+                path = "output.cyt"
+            }
+        }
+    });
+    
+    public static Level TierLevel => Level.FromLocal(Context.UserDataPath + "/f.tier/", LevelType.Tier, new LevelMeta
+    {
+        version = 1,
+        schema_version = 2,
+        id = "f",
+        title = "(^^)",
+        artist = "Yamajet",
+        illustrator = "BOF2007",
+        charter = "JJLin Vanquisher",
+        music = new LevelMeta.MusicSection
+        {
+            path = "Music.wav",
+        },
+        music_preview = new LevelMeta.MusicSection
+        {
+            path = "Music.wav",
+        },
+        background = new LevelMeta.BackgroundSection
+        {
+            path = "bg_gamever.png"
+        },
+        charts = new List<LevelMeta.ChartSection>
+        {
+            new LevelMeta.ChartSection
+            {
+                type = "extreme",
+                difficulty = 4,
+                path = "output.cyt"
+            }
+        }
+    });
+
+    public static SeasonMeta Season => new SeasonMeta
     {
         tiers = new List<TierData>
         {

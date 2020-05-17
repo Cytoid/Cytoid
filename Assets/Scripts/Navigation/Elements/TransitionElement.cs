@@ -38,6 +38,7 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
     public bool leaveOnScreenBecomeInactive = true;
     public float leaveOnScreenBecomeInactiveDelay;
 
+    public bool useEditorStateAsDefault = false;
     public bool disableRaycasts = false;
     public bool actOnOtherGameObjects = false;
     public bool printDebugInfo = false;
@@ -46,6 +47,7 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
     public bool IsInTransition { get; protected set; }
     public bool IsEntering { get; protected set; }
 
+    private bool specifiedDefault;
     private Vector3 defaultAnchoredPosition;
     private Vector3 defaultScale;
     private Vector3 defaultAnchorMax;
@@ -63,6 +65,10 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
             canvasGroup.alpha = 0;
             canvasGroup.blocksRaycasts = false;
         }
+        if (useEditorStateAsDefault)
+        {
+            UseCurrentStateAsDefault();
+        }
     }
 
     protected void Start()
@@ -75,6 +81,7 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
 
     public void UseCurrentStateAsDefault()
     {
+        specifiedDefault = true;
         defaultAnchoredPosition = rectTransform.anchoredPosition;
         defaultScale = rectTransform.localScale;
         defaultAnchorMax = rectTransform.anchorMax;
@@ -83,16 +90,16 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
         defaultSizeDelta = rectTransform.sizeDelta;
     }
 
-    public void Enter(bool waitForTransition = true, bool immediate = false)
+    public void Enter(bool waitForTransition = true, bool immediate = false, Action onComplete = null)
     {
         StartTransition(true, enterFrom, enterMultiplier, enterDuration, enterDelay, enterEase, waitForTransition,
-            immediate);
+            immediate, onComplete);
     }
 
-    public void Leave(bool waitForTransition = true, bool immediate = false)
+    public void Leave(bool waitForTransition = true, bool immediate = false, Action onComplete = null)
     {
         StartTransition(false, leaveTo, leaveMultiplier, leaveDuration, leaveDelay, leaveEase, waitForTransition,
-            immediate);
+            immediate, onComplete);
     }
 
     protected void OnDestroy()
@@ -115,6 +122,10 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
         Action onComplete = null
     )
     {
+        if (!specifiedDefault)
+        {
+            Debug.LogWarning(gameObject.name + ": Not specified default for TransitionElement!");
+        }
         if (printDebugInfo)
         {
             print(gameObject.name + $" StartTransition(toShow: {toShow}, transition: {transition}, multiplier: {multiplier}, duration: {duration}, delay: {delay}, ease: {ease}," +
@@ -123,6 +134,7 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
         }
         if (toShow == IsShown)
         {
+            onComplete?.Invoke();
             return;
         }
 

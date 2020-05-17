@@ -10,8 +10,8 @@ public class GamePreparationScreen : Screen
 {
     public const string Id = "GamePreparation";
     public const bool PrintDebugMessages = true;
-
-    [GetComponent] public AudioSource previewAudioSource;
+    
+    public AudioSource previewAudioSource;
 
     [GetComponentInChildrenName] public DepthCover cover;
     public Text bestPerformanceDescriptionText;
@@ -37,7 +37,6 @@ public class GamePreparationScreen : Screen
     public Transform visualSettingsHolder;
     public Transform advancedSettingsHolder;
     
-    private DateTime asyncRequestsToken;
     private bool initializedSettingsTab;
     
     public Level Level { get; set; }
@@ -53,7 +52,6 @@ public class GamePreparationScreen : Screen
         {
             if (!initializedSettingsTab && next.index == 3)
             {
-                initializedSettingsTab = true;
                 SpinnerOverlay.Show();
                 await UniTask.DelayFrame(5);
                 InitializeSettingsTab();
@@ -63,11 +61,12 @@ public class GamePreparationScreen : Screen
         });
 
         var lp = Context.LocalPlayer;
-        practiceModeToggle.Select((!lp.PlayRanked).BoolToString(), false);
+        practiceModeToggle.Select((!lp.Settings.PlayRanked).BoolToString(), false);
         practiceModeToggle.onSelect.AddListener(it =>
         {
             var ranked = !bool.Parse(it);
-            lp.PlayRanked = ranked;
+            lp.Settings.PlayRanked = ranked;
+            lp.SaveSettings();
             LoadLevelPerformance();
             UpdateStartButton();
         });
@@ -76,15 +75,12 @@ public class GamePreparationScreen : Screen
         
         Context.LevelManager.OnLevelMetaUpdated.AddListener(OnLevelMetaUpdated);
         Context.OnlinePlayer.OnLevelBestPerformanceUpdated.AddListener(OnLevelBestPerformanceUpdated);
-        
-        Context.OnLanguageChanged.AddListener(() => initializedSettingsTab = false);
     }
 
     public override void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
-        asyncRequestsToken = DateTime.Now;
-
+        
         if (Context.SelectedLevel == null)
         {
             Debug.LogWarning("Context.SelectedLevel is null");
@@ -134,7 +130,6 @@ public class GamePreparationScreen : Screen
         }
 
         LoadLevelPerformance();
-        LoadLevelSettings();
         LoadCover(needReload);
         LoadPreview(needReload);
 
@@ -162,7 +157,7 @@ public class GamePreparationScreen : Screen
     {
         if (Level.IsLocal)
         {
-            startButton.State = Context.LocalPlayer.PlayRanked ? CircleButtonState.Start : CircleButtonState.Practice;
+            startButton.State = Context.LocalPlayer.Settings.PlayRanked ? CircleButtonState.Start : CircleButtonState.Practice;
         }
         else
         {
@@ -174,13 +169,17 @@ public class GamePreparationScreen : Screen
     {
         if (level != Level) return;
         Toast.Enqueue(Toast.Status.Success, "TOAST_LEVEL_METADATA_SYNCHRONIZED".Get());
-        Context.OnSelectedLevelChanged.Invoke(Context.SelectedLevel);
+        Context.OnSelectedLevelChanged.Invoke(level);
     }
+    
+    private DateTime asyncCoverToken;
 
     public async void LoadCover(bool load)
     {
         if (load)
         {
+            asyncCoverToken = DateTime.Now;
+            
             string path;
             if (Level.IsLocal)
             {
@@ -191,11 +190,11 @@ public class GamePreparationScreen : Screen
                 path = Level.Meta.background.path.WithImageCdn().WithSizeParam(1280, 800);
             }
 
-            var token = asyncRequestsToken;
+            var token = asyncCoverToken;
 
             var sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.GameCover, useFileCache: true);
 
-            if (asyncRequestsToken != token)
+            if (asyncCoverToken != token)
             {
                 return;
             }
@@ -211,10 +210,14 @@ public class GamePreparationScreen : Screen
         }
     }
 
+    private DateTime asyncPreviewToken;
+    
     public async void LoadPreview(bool load)
     {
         if (load)
         {
+            asyncPreviewToken = DateTime.Now;
+            
             string path;
             if (Level.IsLocal)
             {
@@ -226,11 +229,11 @@ public class GamePreparationScreen : Screen
             }
 
             // Load
-            var token = asyncRequestsToken;
+            var token = asyncPreviewToken;
             
             var audioClip = await Context.AssetMemory.LoadAsset<AudioClip>(path, AssetTag.PreviewMusic, useFileCache: true);
 
-            if (asyncRequestsToken != token)
+            if (asyncPreviewToken != token)
             {
                 return;
             }
@@ -243,35 +246,37 @@ public class GamePreparationScreen : Screen
 
         previewAudioSource.volume = 0;
         previewAudioSource.DOKill();
-        previewAudioSource.DOFade(Context.LocalPlayer.MusicVolume, 1f).SetEase(Ease.Linear);
+        previewAudioSource.DOFade(Context.LocalPlayer.Settings.MusicVolume, 0.5f).SetEase(Ease.Linear);
         previewAudioSource.loop = true;
         previewAudioSource.Play();
-    }
-
-    public override void OnScreenUpdate()
-    {
-        base.OnScreenUpdate();
-        previewAudioSource.volume = Context.LocalPlayer.MusicVolume; // TODO: Migrate preview to audio manager
     }
 
     public void LoadLevelPerformance()
     {
         bestPerformanceDescriptionText.text =
-            (Context.LocalPlayer.PlayRanked ? "GAME_PREP_BEST_PERFORMANCE" : "GAME_PREP_BEST_PERFORMANCE_PRACTICE").Get();
-        if (!Context.LocalPlayer.HasPerformance(Context.SelectedLevel.Id, Context.SelectedDifficulty.Id,
-            Context.LocalPlayer.PlayRanked))
+            (Context.LocalPlayer.Settings.PlayRanked ? "GAME_PREP_BEST_PERFORMANCE" : "GAME_PREP_BEST_PERFORMANCE_PRACTICE").Get();
+
+        var record = Level.Record;
+        if (record == null || !record.BestPerformances.ContainsKey(Context.SelectedDifficulty.Id))
         {
-            bestPerformanceWidget.SetModel(new LocalPlayer.Performance()); // 0
+            bestPerformanceWidget.SetModel(new LevelRecord.Performance()); // 0
         }
         else
         {
-            var performance = Context.LocalPlayer.GetBestPerformance(Context.SelectedLevel.Id,
-                Context.SelectedDifficulty.Id,
-                Context.LocalPlayer.PlayRanked);
-            bestPerformanceWidget.SetModel(performance);
+            bestPerformanceWidget.SetModel(record.BestPerformances[Context.SelectedDifficulty.Id]);
         }
 
         LayoutRebuilder.ForceRebuildLayoutImmediate(bestPerformanceDescriptionText.transform as RectTransform);
+        
+        calibratePreferenceElement.SetContent(null, null,
+            () => record?.RelativeNoteOffset ?? 0f,
+            offset =>
+            {
+                Level.Record.RelativeNoteOffset = offset;
+                Level.SaveRecord();
+            },
+            "SETTINGS_UNIT_SECONDS".Get(),
+            0.ToString());
     }
 
     public void OnLevelBestPerformanceUpdated(string levelId)
@@ -279,16 +284,6 @@ public class GamePreparationScreen : Screen
         if (levelId != Level.Id) return;
         LoadLevelPerformance();
         Toast.Next(Toast.Status.Success, "TOAST_BEST_PERFORMANCE_SYNCHRONIZED".Get());
-    }
-
-    public void LoadLevelSettings()
-    {
-        var lp = Context.LocalPlayer;
-        calibratePreferenceElement.SetContent(null, null,
-            () => lp.GetLevelNoteOffset(Context.SelectedLevel.Id),
-            it => lp.SetLevelNoteOffset(Context.SelectedLevel.Id, it),
-            "SETTINGS_UNIT_SECONDS".Get(),
-            0.ToString());
     }
 
     public override void OnScreenDestroyed()
@@ -304,21 +299,25 @@ public class GamePreparationScreen : Screen
         Context.LevelManager.OnLevelMetaUpdated.RemoveListener(OnLevelMetaUpdated);
         Context.OnlinePlayer.OnLevelBestPerformanceUpdated.RemoveListener(OnLevelBestPerformanceUpdated);
 
-        asyncRequestsToken = DateTime.Now;
-        previewAudioSource.DOFade(0, 1f).SetEase(Ease.Linear).onComplete = () =>
+        asyncCoverToken = DateTime.Now;
+        asyncPreviewToken = DateTime.Now;
+        previewAudioSource.DOFade(0, 0.5f).SetEase(Ease.Linear).onComplete = () =>
         {
             previewAudioSource.Stop();
+            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.PreviewMusic);
         };
     }
 
     public override void OnScreenChangeFinished(Screen from, Screen to)
     {
         base.OnScreenChangeFinished(from, to);
-        if (from == this && to != null && !(to is ProfileScreen))
+        if (from == this && to != null)
         {
-            // Unload resources
-            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.GameCover);
-            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.PreviewMusic);
+            initializedSettingsTab = false;
+            if (!(to is ProfileScreen))
+            {
+                Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.GameCover);
+            }
         }
     }
 
@@ -328,7 +327,7 @@ public class GamePreparationScreen : Screen
         {
             Context.SelectedGameMode = 
                 willCalibrate ? GameMode.Calibration : 
-                    Context.LocalPlayer.PlayRanked ? GameMode.Classic : GameMode.Practice;
+                    Context.LocalPlayer.Settings.PlayRanked ? GameMode.Standard : GameMode.Practice;
             
             State = ScreenState.Inactive;
             startButton.StopPulsing();
@@ -338,7 +337,7 @@ public class GamePreparationScreen : Screen
             LoopAudioPlayer.Instance.StopAudio(0.4f);
 
             Context.AudioManager.Get("LevelStart").Play();
-            Context.SelectedMods = Context.LocalPlayer.EnabledMods;
+            Context.SelectedMods = Context.LocalPlayer.Settings.EnabledMods.ToHashSet();
 
             var sceneLoader = new SceneLoader("Game");
             sceneLoader.Load();
@@ -400,6 +399,10 @@ public class GamePreparationScreen : Screen
 
     public async void InitializeSettingsTab()
     {
+        DestroySettingsTab();
+        
+        initializedSettingsTab = true;
+        
         calibratePreferenceElement.SetContent("GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET".Get(), "GAME_PREP_SETTINGS_LEVEL_NOTE_OFFSET_DESC".Get());
         calibratePreferenceElement.calibrateButton.onPointerClick.AddListener(_ =>
         {
@@ -407,18 +410,24 @@ public class GamePreparationScreen : Screen
             OnStartButton();
         });
 
-        foreach (Transform child in generalSettingsHolder) Destroy(child.gameObject);
-        foreach (Transform child in gameplaySettingsHolder) Destroy(child.gameObject);
-        foreach (Transform child in visualSettingsHolder) Destroy(child.gameObject);
-        foreach (Transform child in advancedSettingsHolder) Destroy(child.gameObject);
         SettingsFactory.InstantiateGeneralSettings(generalSettingsHolder);
         SettingsFactory.InstantiateGameplaySettings(gameplaySettingsHolder);
         SettingsFactory.InstantiateVisualSettings(visualSettingsHolder);
         SettingsFactory.InstantiateAdvancedSettings(advancedSettingsHolder);
 
+        LayoutStaticizer.Activate(settingsTabContent);
         LayoutFixer.Fix(settingsTabContent);
         await UniTask.DelayFrame(5);
         LayoutStaticizer.Staticize(settingsTabContent);
+    }
+
+    public void DestroySettingsTab()
+    {
+        initializedSettingsTab = false;
+        foreach (Transform child in generalSettingsHolder) Destroy(child.gameObject);
+        foreach (Transform child in gameplaySettingsHolder) Destroy(child.gameObject);
+        foreach (Transform child in visualSettingsHolder) Destroy(child.gameObject);
+        foreach (Transform child in advancedSettingsHolder) Destroy(child.gameObject);
     }
 
 }

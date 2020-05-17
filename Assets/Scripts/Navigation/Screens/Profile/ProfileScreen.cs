@@ -78,8 +78,7 @@ public class ProfileScreen : Screen, ScreenChangeListener
         characterTransitionElement.enterDelay = 0.4f;
         base.OnScreenBecameActive();
         
-        characterTransitionElement.onEnterStarted.RemoveAllListeners();
-        characterTransitionElement.onEnterStarted.AddListener(() =>
+        characterTransitionElement.onEnterStarted.SetListener(() =>
         {
             characterTransitionElement.enterDuration = 0.4f;
             characterTransitionElement.enterDelay = 0;
@@ -96,7 +95,7 @@ public class ProfileScreen : Screen, ScreenChangeListener
         totalRankedPlaysText.text = profile.Activities.TotalRankedPlays.ToString("N0");
         totalClearedNotesText.text = profile.Activities.ClearedNotes.ToString("N0");
         highestMaxComboText.text = profile.Activities.MaxCombo.ToString("N0");
-        avgRankedAccuracyText.text = (profile.Activities.AverageRankedAccuracy * 100).ToString("0.00") + "%";
+        avgRankedAccuracyText.text = ((profile.Activities.AverageRankedAccuracy ?? 0) * 100).ToString("0.00") + "%";
         totalRankedScoreText.text = profile.Activities.TotalRankedScore.ToString("N0");
         totalPlayTimeText.text = TimeSpan.FromSeconds(profile.Activities.TotalPlayTime)
             .Let(it => it.ToString(it.Days > 0 ? @"d\d\ h\h\ m\m\ s\s" : @"h\h\ m\m\ s\s"));

@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using E7.Introloop;
 using Proyecto26;
 using RSG;
 using UniRx.Async;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using UnityEngine.Events;
 
 public class CharacterManager
@@ -89,6 +87,7 @@ public class CharacterManager
     {
         if (Context.IsOnline())
         {
+            
             // Online
             return RestClient.GetArray<CharacterMeta>(new RequestHelper
             {

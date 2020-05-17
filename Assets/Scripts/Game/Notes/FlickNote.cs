@@ -68,8 +68,8 @@ public class FlickNote : Note
         {
             if (timeUntil >= 0)
             {
-                if (timeUntil < 0.400f) grade = NoteGrade.Great;
-                if (timeUntil <= 0.120f) grade = NoteGrade.Perfect;
+                if (timeUntil < 0.150f) grade = NoteGrade.Great; // 0.400
+                if (timeUntil <= 0.060f) grade = NoteGrade.Perfect; // 0.120
             }
             else
             {

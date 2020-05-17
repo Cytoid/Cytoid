@@ -14,6 +14,8 @@ namespace UnityEngine.UI
         public Bounds viewBounds;
         public Bounds contentBounds;
 
+        private RectTransform rectTransform;
+        
         protected override float GetSize(RectTransform item)
         {
             float size = contentSpacing;
@@ -51,6 +53,7 @@ namespace UnityEngine.UI
             
             // EDIT: Cytoid
             contentLayoutGroup = content.GetComponent<LayoutGroup>();
+            rectTransform = GetComponent<RectTransform>();
             // End of EDIT
         }
         
@@ -74,12 +77,13 @@ namespace UnityEngine.UI
             this.viewBounds = viewBounds;
             this.contentBounds = contentBounds;
             float dBottom = GetBottomPadding(), dTop = GetTopPadding();
+            float selfBottom = rectTransform.offsetMin.y, selfTop = -rectTransform.offsetMax.y;
             // End of EDIT
 
-            if (viewBounds.min.y < contentBounds.min.y + dBottom * thresholdMultiplier) // EDIT: Cytoid
+            if (viewBounds.min.y < contentBounds.min.y + (dBottom + selfBottom) * thresholdMultiplier) // EDIT: Cytoid
             {
                 float size = NewItemAtEnd(), totalSize = size;
-                while (size > 0 && viewBounds.min.y < contentBounds.min.y + dBottom * thresholdMultiplier - totalSize)
+                while (size > 0 && viewBounds.min.y < contentBounds.min.y + (dBottom + selfBottom) * thresholdMultiplier - totalSize)
                 {
                     size = NewItemAtEnd();
                     totalSize += size;
@@ -88,10 +92,10 @@ namespace UnityEngine.UI
                     changed = true;
             }
 
-            if (viewBounds.max.y > contentBounds.max.y - dTop * thresholdMultiplier) // EDIT: Cytoid
+            if (viewBounds.max.y > contentBounds.max.y - (dTop + selfTop) * thresholdMultiplier) // EDIT: Cytoid
             {
                 float size = NewItemAtStart(), totalSize = size;
-                while (size > 0 && viewBounds.max.y > contentBounds.max.y - dTop * thresholdMultiplier + totalSize)
+                while (size > 0 && viewBounds.max.y > contentBounds.max.y - (dTop + selfTop) * thresholdMultiplier + totalSize)
                 {
                     size = NewItemAtStart();
                     totalSize += size;
@@ -100,10 +104,10 @@ namespace UnityEngine.UI
                     changed = true;
             }
 
-            if (viewBounds.min.y > contentBounds.min.y + dBottom * thresholdMultiplier + threshold)
+            if (viewBounds.min.y > contentBounds.min.y + (dBottom + selfBottom) * thresholdMultiplier + threshold)
             {
                 float size = DeleteItemAtEnd(), totalSize = size;
-                while (size > 0 && viewBounds.min.y > contentBounds.min.y + dBottom + threshold + totalSize)
+                while (size > 0 && viewBounds.min.y > contentBounds.min.y + (dBottom + selfBottom) + threshold + totalSize)
                 {
                     size = DeleteItemAtEnd();
                     totalSize += size;
@@ -112,10 +116,10 @@ namespace UnityEngine.UI
                     changed = true;
             }
 
-            if (viewBounds.max.y < contentBounds.max.y - dTop * thresholdMultiplier - threshold)
+            if (viewBounds.max.y < contentBounds.max.y - (dTop + selfTop) * thresholdMultiplier - threshold)
             {
                 float size = DeleteItemAtStart(), totalSize = size;
-                while (size > 0 && viewBounds.max.y < contentBounds.max.y - dTop - threshold - totalSize)
+                while (size > 0 && viewBounds.max.y < contentBounds.max.y - (dTop + selfTop) - threshold - totalSize)
                 {
                     size = DeleteItemAtStart();
                     totalSize += size;

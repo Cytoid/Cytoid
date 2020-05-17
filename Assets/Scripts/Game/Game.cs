@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Cytoid.Storyboard;
+using TMPro;
 using UnityEngine;
 using UniRx.Async;
 using UnityEditor;
@@ -46,7 +47,9 @@ public class Game : MonoBehaviour
     public float EditorMusicInitialPosition;
     public bool EditorForceAutoMod;
     public GameMode EditorGameMode = GameMode.Unspecified;
-
+    public bool EditorImmediatelyComplete;
+    public bool EditorImmediatelyCompleteFail;
+    
     public AudioManager.Controller Music { get; protected set; }
     
     public List<UniTask> BeforeStartTasks { get; protected set; } = new List<UniTask>();
@@ -79,6 +82,8 @@ public class Game : MonoBehaviour
         EditorMusicInitialPosition = 0;
         EditorGameMode = GameMode.Unspecified;
         EditorForceAutoMod = false;
+        EditorImmediatelyComplete = false;
+        EditorImmediatelyCompleteFail = false;
 #endif
     }
 
@@ -170,7 +175,7 @@ public class Game : MonoBehaviour
         var width = height * ratio;
         var topRatio = 0.0966666f;
         var bottomRatio = 0.07f;
-        var verticalRatio = 1 - width * (topRatio + bottomRatio) / height + (3 - Context.LocalPlayer.VerticalMargin) * 0.05f;
+        var verticalRatio = 1 - width * (topRatio + bottomRatio) / height + (3 - Context.LocalPlayer.Settings.VerticalMargin) * 0.05f;
         var verticalOffset = -(width * (topRatio - (topRatio + bottomRatio) / 2.0f));
         Chart = new Chart(
             chartText,
@@ -179,7 +184,7 @@ public class Game : MonoBehaviour
             true,
             mods.Contains(Mod.Fast) ? 1.5f : (mods.Contains(Mod.Slow) ? 0.75f : 1),
             camera.orthographicSize,
-            0.8f + (5 - Context.LocalPlayer.HorizontalMargin - 1) * 0.02f,
+            0.8f + (5 - Context.LocalPlayer.Settings.HorizontalMargin - 1) * 0.02f,
             verticalRatio,
             verticalOffset
         );
@@ -216,9 +221,9 @@ public class Game : MonoBehaviour
         }
 
         // Load hit sound
-        if (Context.LocalPlayer.HitSound != "none")
+        if (Context.LocalPlayer.Settings.HitSound != "none")
         {
-            var resource = await Resources.LoadAsync<AudioClip>("Audio/HitSounds/" + Context.LocalPlayer.HitSound);
+            var resource = await Resources.LoadAsync<AudioClip>("Audio/HitSounds/" + Context.LocalPlayer.Settings.HitSound);
             Context.AudioManager.Load("HitSound", resource as AudioClip, isResource: true);
         }
 
@@ -239,7 +244,8 @@ public class Game : MonoBehaviour
         Context.SetAutoRotation(false);
         
         // Update last played time
-        Level.PlayedDate = DateTime.UtcNow;
+        Level.Record.LastPlayedDate = DateTimeOffset.UtcNow;
+        Level.SaveRecord();
 
         IsLoaded = true;
         onGameLoaded.Invoke(this);
@@ -274,6 +280,19 @@ public class Game : MonoBehaviour
         State.IsStarted = true;
         State.IsPlaying = true;
         onGameStarted.Invoke(this);
+
+        if (Application.isEditor && EditorImmediatelyComplete)
+        {
+            if (EditorImmediatelyCompleteFail)
+            {
+                Fail();
+            }
+            else 
+            {
+                State.FillTestData(Chart.Model.note_list.Count);
+                Complete();
+            }
+        }
     }
 
     private double lastDspTime = -1;
@@ -288,7 +307,7 @@ public class Game : MonoBehaviour
         
         if (!State.IsPlaying) return;
 
-        if (Input.GetKeyDown(KeyCode.Escape) && !(this is StoryboardGame))
+        if (Input.GetKeyDown(KeyCode.Escape) && !(this is StoryboardGame) && State.Mode != GameMode.Tier)
         {
             Pause();
             return;
@@ -514,7 +533,7 @@ public class Game : MonoBehaviour
         onGameAborted.Invoke(this);
         
         Dispose();
-
+        
         var sceneLoader = new SceneLoader("Navigation");
         sceneLoader.Load();
         Context.ScreenManager.ChangeScreen(OverlayScreen.Id, ScreenTransition.None, 0.4f, 1,
@@ -559,6 +578,7 @@ public class Game : MonoBehaviour
         print("Game completed");
 
         State.IsCompleted = true;
+
         State.OnComplete();
         if (State.Mode == GameMode.Tier)
         {
@@ -567,18 +587,23 @@ public class Game : MonoBehaviour
         inputController.DisableInput();
 
         onGameCompleted.Invoke(this);
-
-        var volume = 3f;
-        // Wait for audio to finish
-        await UniTask.WaitUntil(() =>
+        
+        if (!EditorImmediatelyComplete)
         {
-            volume -= 1 / 180f;
-            if (volume < 1)
+            var volume = 3f;
+            // Wait for audio to finish
+            await UniTask.WaitUntil(() =>
             {
-                Music.Volume = volume;
-            }
-            return volume <= 0 || Music.IsFinished();
-        });
+                volume -= 1 / 180f;
+                if (volume < 1)
+                {
+                    Music.Volume = volume;
+                }
+
+                return volume <= 0 || Music.IsFinished();
+            });
+        }
+
         print("Audio ended");
         Context.AudioManager.Unload("Level");
         
@@ -593,16 +618,6 @@ public class Game : MonoBehaviour
         sceneLoader.Load();
 
         await UniTask.Delay(TimeSpan.FromSeconds(1.5f));
-        
-        if (State.Mode == GameMode.Calibration || State.Mods.Contains(Mod.Auto) || State.Mods.Contains(Mod.AutoDrag)
-                                          || State.Mods.Contains(Mod.AutoHold) || State.Mods.Contains(Mod.AutoFlick))
-        {
-            // TODO: Simply go back. Handle more?
-        }
-        else
-        {
-            // TODO: Same as above
-        }
 
         sceneLoader.Activate();
     }

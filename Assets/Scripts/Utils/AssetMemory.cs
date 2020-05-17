@@ -12,8 +12,8 @@ public class AssetMemory
 {
     private static readonly Dictionary<AssetTag, int> TagLimits = new Dictionary<AssetTag, int>
     {
-        {AssetTag.LocalCoverThumbnail, 21},
-        {AssetTag.OnlineCoverThumbnail, 21},
+        {AssetTag.LocalLevelCoverThumbnail, 24},
+        {AssetTag.RemoteLevelCoverThumbnail, 24},
         {AssetTag.PlayerAvatar, 1},
         {AssetTag.Avatar, 100},
         {AssetTag.GameCover, 1},
@@ -337,13 +337,17 @@ public enum AssetTag
 {
     Avatar,
     PlayerAvatar,
-    LocalCoverThumbnail,
-    OnlineCoverThumbnail,
+    LocalLevelCoverThumbnail,
+    RemoteLevelCoverThumbnail,
+    CollectionCoverThumbnail,
     GameCover,
     TierCover,
     CharacterThumbnail,
     Storyboard,
-    PreviewMusic
+    PreviewMusic,
+    EventCover,
+    EventLogo,
+    CollectionCover
 }
 
 public class AssetOptions

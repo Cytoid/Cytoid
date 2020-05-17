@@ -10,6 +10,7 @@ public class GameObjectProvider : SingletonMonoBehavior<GameObjectProvider>
      public GameObject flickNotePrefab;
      public GameObject holdNotePrefab;
      public GameObject longHoldNotePrefab;
+     public NoteId noteIdPrefab;
      public Image cover;
      public GameObject boundaryBottom;
      public GameObject boundaryTop;

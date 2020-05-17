@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Text;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -43,7 +44,7 @@ namespace Proyecto26
                     else
                     {
                         var err = CreateException(request);
-                        DebugLog(options.EnableDebug, err, true);
+                        DebugLog(options.EnableDebug, $"Error: {err}, Url: {options.Uri}, Body: {(request.uploadHandler != null ? Encoding.UTF8.GetString(request.uploadHandler.data) : "null")}", true);
                         callback(err, response);
                         break;
                     }
@@ -66,7 +67,8 @@ namespace Proyecto26
 
         private static RequestException CreateException(UnityWebRequest request)
         {
-            return new RequestException(request.error, request.isHttpError, request.isNetworkError, request.responseCode, /*request.downloadHandler.text*/ "Response muted");
+            return new RequestException(request.error, request.isHttpError, request.isNetworkError, request.responseCode, 
+                  Application.isEditor ? request.downloadHandler.text : "Response muted");
         }
 
         private static void DebugLog(bool debugEnabled, object message, bool isError)

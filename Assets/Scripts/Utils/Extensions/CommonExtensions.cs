@@ -11,10 +11,29 @@ using Proyecto26;
 using RSG;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 public static class CommonExtensions
 {
+    public static void SetListener(this UnityEvent unityEvent, UnityAction call)
+    {
+        unityEvent.RemoveAllListeners();
+        unityEvent.AddListener(call);
+    }
+    
+    public static void SetListener<T>(this UnityEvent<T> unityEvent, UnityAction<T> call)
+    {
+        unityEvent.RemoveAllListeners();
+        unityEvent.AddListener(call);
+    }
+    
+    public static void SetListener<T1, T2>(this UnityEvent<T1, T2> unityEvent, UnityAction<T1, T2> call)
+    {
+        unityEvent.RemoveAllListeners();
+        unityEvent.AddListener(call);
+    }
+    
     public static float Clamp(this float f, float min, float max)
     {
         return Mathf.Max(min, Math.Min(max, f));
@@ -339,7 +358,11 @@ public static class CommonExtensions
     {
         Assert.IsTrue(rgbString != null);
         if (ColorLookup.ContainsKey(rgbString.ToLower())) return ColorLookup[rgbString.ToLower()];
-        if (!ColorUtility.TryParseHtmlString(rgbString, out var color)) return Color.clear;
+        if (!ColorUtility.TryParseHtmlString(rgbString, out var color))
+        {
+            Debug.LogError($"Invalid color string: {rgbString}");
+            return Color.clear;
+        }
         ColorLookup[rgbString.ToLower()] = color;
         return color;
     }

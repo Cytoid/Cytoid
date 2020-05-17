@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using DG.Tweening;
 using LiteDB;
+using Newtonsoft.Json;
 using Polyglot;
 using Tayx.Graphy;
 using UniRx.Async;
@@ -15,11 +16,13 @@ using UnityEngine.SceneManagement;
 
 public class Context : SingletonMonoBehavior<Context>
 {
-    public const string Version = "2.0 Alpha 5";
+    public const string Version = "2.0 Alpha 6";
 
     public static string ApiUrl = "https://api.cytoid.io";
     public const string ServicesUrl = "http://dorm.neoto.xin:4000";
     public const string WebsiteUrl = "https://cytoid.io";
+
+    public const string OfficialAccountId = "cytoid";
 
     public const int ReferenceWidth = 1920;
     public const int ReferenceHeight = 1080;
@@ -100,26 +103,53 @@ public class Context : SingletonMonoBehavior<Context>
         Resources.UnloadUnusedAssets();
     }
 
+    private void OnApplicationQuit()
+    {
+        Database?.Dispose();
+    }
+
     private async void InitializeApplication()
     {
         Application.lowMemory += OnLowMemory;
-        Database = new LiteDatabase(
-            $"Filename=\"{Path.Combine(Application.persistentDataPath, "Cytoid.db")}\";"
-            //+ $" Password={SecuredConstants.DbSecret}"
+        JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+        {
+            Converters = new List<JsonConverter>
+            {
+                new UnityColorConverter()
+            },
+            ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+        };
+        BsonMapper.Global.RegisterType
+        (
+            color => "#" + ColorUtility.ToHtmlStringRGB(color),
+            s => s.AsString.ToColor()
         );
         
+        Database = new LiteDatabase(
+            new ConnectionString
+            {
+                Filename = Path.Combine(Application.persistentDataPath, "Cytoid.db"),
+                // Password = SecuredConstants.DbSecret,
+                Connection = Application.isEditor ? ConnectionType.Shared : ConnectionType.Direct
+            }
+        );
+
         // Warm up LiteDB
-        Database.GetCollection<Profile>().FindOne(_ => true);
-        Database.GetCollection<CharacterMeta>().FindOne(_ => true);
+        Database.GetProfile();
+        // Database.DropCollection("settings");
+        // Database.DropCollection("level_records"); /////// TODO TODO TODO TODO
+        
+        // Load settings
+        LocalPlayer.LoadSettings();
 
         FontManager.LoadFonts();
 
         var audioConfig = AudioSettings.GetConfiguration();
         DefaultDspBufferSize = audioConfig.dspBufferSize;
 
-        if (Application.platform == RuntimePlatform.Android && LocalPlayer.DspBufferSize > 0)
+        if (Application.platform == RuntimePlatform.Android && LocalPlayer.Settings.AndroidDspBufferSize > 0)
         {
-            audioConfig.dspBufferSize = LocalPlayer.DspBufferSize;
+            audioConfig.dspBufferSize = LocalPlayer.Settings.AndroidDspBufferSize;
             AudioSettings.Reset(audioConfig);
         }
 
@@ -174,13 +204,13 @@ public class Context : SingletonMonoBehavior<Context>
         Application.runInBackground = true;
 #endif
 
-        SelectedMods = new HashSet<Mod>(LocalPlayer.EnabledMods);
+        SelectedMods = new HashSet<Mod>(LocalPlayer.Settings.EnabledMods);
 
         PreSceneChangedEvent.AddListener(PreSceneChanged);
         PostSceneChangedEvent.AddListener(PostSceneChanged);
 
         OnLanguageChanged.AddListener(FontManager.UpdateSceneTexts);
-        Localization.Instance.SelectLanguage((Language) LocalPlayer.Language);
+        Localization.Instance.SelectLanguage((Language) LocalPlayer.Settings.Language);
         OnLanguageChanged.Invoke();
 
         await Addressables.InitializeAsync().Task;
@@ -219,11 +249,13 @@ public class Context : SingletonMonoBehavior<Context>
             if (false)
             {
                 // Load result
-                await LevelManager.LoadFromMetadataFiles(LevelType.Community,
-                    new List<string> {UserDataPath + "/suconh_typex.alice/level.json"});
+                await LevelManager.LoadFromMetadataFiles(LevelType.Community, new List<string>
+                    {UserDataPath + "/fizzest.sentimental.crisis/level.json"});
                 SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
-                SelectedDifficulty = Difficulty.Hard;
-                ScreenManager.ChangeScreen("Result", ScreenTransition.None);
+                SelectedDifficulty =
+                    Difficulty.Parse(LevelManager.LoadedLocalLevels.Values.First().Meta.charts.First().type);
+                
+                ScreenManager.ChangeScreen(ResultScreen.Id, ScreenTransition.None);
             }
 
             if (false)
@@ -286,7 +318,8 @@ public class Context : SingletonMonoBehavior<Context>
             }
             else if (GameState != null)
             {
-                if (GameState.IsCompleted && (GameState.Mode == GameMode.Classic || GameState.Mode == GameMode.Practice))
+                var usedAuto =  GameState.Mods.Contains(Mod.Auto) || GameState.Mods.Contains(Mod.AutoDrag) || GameState.Mods.Contains(Mod.AutoHold) || GameState.Mods.Contains(Mod.AutoFlick);
+                if (GameState.IsCompleted && (GameState.Mode == GameMode.Standard || GameState.Mode == GameMode.Practice) && !usedAuto)
                 {
                     // Show result screen
                     ScreenManager.ChangeScreen(ResultScreen.Id, ScreenTransition.None, addTargetScreenToHistory: false);
@@ -351,9 +384,9 @@ public class Context : SingletonMonoBehavior<Context>
 
     public static void UpdateProfilerDisplay()
     {
-        print("Profiler display: " + LocalPlayer.DisplayProfiler);
+        print("Profiler display: " + LocalPlayer.Settings.DisplayProfiler);
         if (graphyManager == null) return;
-        if (LocalPlayer.DisplayProfiler)
+        if (LocalPlayer.Settings.DisplayProfiler)
         {
             graphyManager.Enable();
             graphyManager.FpsModuleState = GraphyManager.ModuleState.FULL;
@@ -368,24 +401,24 @@ public class Context : SingletonMonoBehavior<Context>
 
     public static void UpdateGraphicsQuality()
     {
-        switch (LocalPlayer.GraphicsQuality)
+        switch (LocalPlayer.Settings.GraphicsQuality)
         {
-            case "high":
+            case GraphicsQuality.High:
                 UnityEngine.Screen.SetResolution(InitialWidth, InitialHeight, true);
                 QualitySettings.masterTextureLimit = 0;
                 break;
-            case "medium":
+            case GraphicsQuality.Medium:
                 UnityEngine.Screen.SetResolution((int) (InitialWidth * 0.7f),
                     (int) (InitialHeight * 0.7f), true);
                 QualitySettings.masterTextureLimit = 0;
                 break;
-            case "low":
+            case GraphicsQuality.Low:
                 UnityEngine.Screen.SetResolution((int) (InitialWidth * 0.5f),
                     (int) (InitialHeight * 0.5f), true);
                 QualitySettings.masterTextureLimit = 1;
                 break;
         }
-        MainTranslucentImage.Static = LocalPlayer.GraphicsQuality != "high";
+        MainTranslucentImage.Static = LocalPlayer.Settings.GraphicsQuality != GraphicsQuality.High;
         if (ScreenManager != null && ScreenManager.ActiveScreenId != null)
         {
             if (MainTranslucentImage.Instance != null)
@@ -440,7 +473,7 @@ public class ContextEditor : Editor
         {
             if (Context.AssetMemory != null)
             {
-                GUILayout.Label($"Asset memory usage:");
+                GUILayout.Label("Asset memory usage:");
                 foreach (AssetTag tag in Enum.GetValues(typeof(AssetTag)))
                 {
                     GUILayout.Label(
@@ -473,6 +506,14 @@ public class ContextEditor : Editor
                 {
                     Context.ApiUrl = "https://api.cytoid.io";
                 }
+            }
+
+            if (GUILayout.Button("Reward Overlay"))
+            {
+                RewardOverlay.Show(new List<OnlinePlayerStateChange.Reward>
+                {
+                    JsonConvert.DeserializeObject<OnlinePlayerStateChange.Reward>(@"{""type"":""character"",""value"":{""illustrator"":{""name"":""しがらき"",""url"":""https://www.pixiv.net/en/users/1004274""},""designer"":{""name"":"""",""url"":""""},""name"":""Mafumafu"",""description"":""何でも屋です。"",""_id"":""5e6f90dcdab3462655fb93a4"",""levelId"":4101,""asset"":""Mafu"",""tachieAsset"":""MafuTachie"",""id"":""5e6f90dcdab3462655fb93a4""}}")
+                });
             }
 
             EditorUtility.SetDirty(target);

@@ -22,12 +22,12 @@ public class EffectController : MonoBehaviour
 
     public void OnGameLoaded()
     {
-        clearEffectSizeMultiplier = Context.LocalPlayer.ClearFXSize;
+        clearEffectSizeMultiplier = Context.LocalPlayer.Settings.ClearEffectsSize;
     }
 
     public void PlayClearEffect(NoteRenderer noteRenderer, NoteGrade grade, float timeUntilEnd)
     {
-        PlayClearEffect(noteRenderer, grade, timeUntilEnd, Context.LocalPlayer.DisplayEarlyLateIndicators);
+        PlayClearEffect(noteRenderer, grade, timeUntilEnd, Context.LocalPlayer.Settings.DisplayEarlyLateIndicators);
     }
 
     public void PlayClearEffect(NoteRenderer noteRenderer, NoteGrade grade, float timeUntilEnd, bool earlyLateIndicator)

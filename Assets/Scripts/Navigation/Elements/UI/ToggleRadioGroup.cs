@@ -17,9 +17,10 @@ public class ToggleRadioGroup : RadioGroup
         }
         
         // Clear existing
+        OnDestroy();
         foreach (Transform child in transform)
         {
-            Destroy(child.gameObject);
+            DestroyImmediate(child.gameObject);
         }
 
         Assert.IsTrue(labels.Count == values.Count);
@@ -31,8 +32,10 @@ public class ToggleRadioGroup : RadioGroup
             var toggleRadioButton = child.GetComponent<ToggleRadioButton>();
             toggleRadioButton.label.text = label;
             toggleRadioButton.value = value;
+            RadioButtons.Add(toggleRadioButton);
         }
 
         base.Initialize();
     }
+
 }

@@ -9,8 +9,8 @@ using UnityEngine.UI;
 
 public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
 {
+    public static Content LoadedContent;
     private static float savedScrollPosition = -1;
-    public static Content SavedContent;
 
     public const string Id = "CommunityLevelSelection";
 
@@ -29,67 +29,75 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
 
     public override string GetId() => Id;
 
+    private void InstantiateOptions(Content content)
+    {
+        var search = content?.Query != null && !content.Query.search.IsNullOrEmptyTrimmed();
+        titleText.text = "COMMUNITY_SELECT_BROWSE".Get();
+        sortRadioGroup.SetContent(null, null,
+            () => "creation_date", it => LoadContent(),
+            search ? new[]
+            {
+                ("COMMUNITY_SELECT_SORT_BY_UPLOADED_DATE".Get(), "creation_date"),
+                ("COMMUNITY_SELECT_SORT_BY_MODIFIED_DATE".Get(), "modified_date"),
+                ("COMMUNITY_SELECT_SORT_BY_DOWNLOADS".Get(), "downloads"),
+                ("COMMUNITY_SELECT_SORT_BY_DIFFICULTY".Get(), "difficulty"),
+                ("COMMUNITY_SELECT_SORT_BY_DURATION".Get(), "duration")
+            } : new []
+            {
+                ("COMMUNITY_SELECT_SORT_BY_UPLOADED_DATE".Get(), "creation_date"),
+                ("COMMUNITY_SELECT_SORT_BY_MODIFIED_DATE".Get(), "modified_date"),
+                ("COMMUNITY_SELECT_SORT_BY_RATING".Get(), "rating"),
+                ("COMMUNITY_SELECT_SORT_BY_DOWNLOADS".Get(), "downloads"),
+                ("COMMUNITY_SELECT_SORT_BY_DIFFICULTY".Get(), "difficulty"),
+                ("COMMUNITY_SELECT_SORT_BY_DURATION".Get(), "duration")
+            });
+        orderRadioGroup.SetContent(null, null,
+            () => "desc", it => LoadContent(),
+            new[]
+            {
+                ("COMMUNITY_SELECT_SORT_ORDER_ASC".Get(), "asc"),
+                ("COMMUNITY_SELECT_SORT_ORDER_DESC".Get(), "desc")
+            });
+        categoryRadioGroup.SetContent(null, null,
+            () => "category", it => LoadContent(),
+            new[]
+            {
+                ("COMMUNITY_SELECT_CATEGORY_ALL".Get(), "all"),
+                ("COMMUNITY_SELECT_CATEGORY_FEATURED".Get(), "featured")
+            });
+        timeRadioGroup.SetContent(null, null,
+            () => "all", it => LoadContent(),
+            new[]
+            {
+                ("COMMUNITY_SELECT_TIME_ANY_TIME".Get(), "all"),
+                ("COMMUNITY_SELECT_TIME_PAST_WEEK".Get(), "week"),
+                ("COMMUNITY_SELECT_TIME_PAST_MONTH".Get(), "month"),
+                ("COMMUNITY_SELECT_TIME_PAST_6_MONTHS".Get(), "halfyear"),
+                ("COMMUNITY_SELECT_TIME_PAST_YEAR".Get(), "year")
+            });
+        sortRadioGroup.transform.parent.RebuildLayout();
+    }
+
     public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
+        
+        InstantiateOptions(null);
 
-        void InstantiateOptions()
-        {
-            titleText.text = "COMMUNITY_SELECT_BROWSE".Get();
-            sortRadioGroup.SetContent(null, null,
-                () => "creation_date", it => LoadContent(),
-                new []
-                {
-                    ("COMMUNITY_SELECT_SORT_BY_UPLOADED_DATE".Get(), "creation_date"),
-                    ("COMMUNITY_SELECT_SORT_BY_MODIFIED_DATE".Get(), "modified_date"),
-                    ("COMMUNITY_SELECT_SORT_BY_RATING".Get(), "rating"),
-                    ("COMMUNITY_SELECT_SORT_BY_DOWNLOADS".Get(), "downloads"),
-                    ("COMMUNITY_SELECT_SORT_BY_DIFFICULTY".Get(), "difficulty"),
-                    ("COMMUNITY_SELECT_SORT_BY_DURATION".Get(), "duration")
-                });
-            orderRadioGroup.SetContent(null, null,
-                () => "desc", it => LoadContent(),
-                new []
-                {
-                    ("COMMUNITY_SELECT_SORT_ORDER_ASC".Get(), "asc"),
-                    ("COMMUNITY_SELECT_SORT_ORDER_DESC".Get(), "desc")
-                });
-            categoryRadioGroup.SetContent(null, null,
-                () => "category", it => LoadContent(),
-                new []
-                {
-                    ("COMMUNITY_SELECT_CATEGORY_ALL".Get(), "all"),
-                    ("COMMUNITY_SELECT_CATEGORY_FEATURED".Get(), "featured")
-                });
-            timeRadioGroup.SetContent(null, null,
-                () => "all", it => LoadContent(),
-                new []
-                {
-                    ("COMMUNITY_SELECT_TIME_ANY_TIME".Get(), "all"),
-                    ("COMMUNITY_SELECT_TIME_PAST_WEEK".Get(), "week"),
-                    ("COMMUNITY_SELECT_TIME_PAST_MONTH".Get(), "month"),
-                    ("COMMUNITY_SELECT_TIME_PAST_6_MONTHS".Get(), "halfyear"),
-                    ("COMMUNITY_SELECT_TIME_PAST_YEAR".Get(), "year")
-                });
-        }
-        
-        InstantiateOptions();
-        Context.OnLanguageChanged.AddListener(InstantiateOptions);
-        
         searchInputField.onEndEdit.AddListener(value =>
         {
             actionTabs.Close();
             LoadContent();
         });
-        
+
         Context.LevelManager.OnLevelDeleted.AddListener(_ =>
         {
             if (State != ScreenState.Active) return;
             // Reload active content
-            if (SavedContent.OnlineLevels != null)
+            if (LoadedContent.OnlineLevels != null)
             {
                 savedScrollPosition = scrollRect.verticalNormalizedPosition;
-                OnContentLoaded(SavedContent);
+                OnContentLoaded(LoadedContent);
                 scrollRect.SetVerticalNormalizedPositionFix(savedScrollPosition);
             }
         });
@@ -99,16 +107,16 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
     {
         base.OnScreenBecameActive();
 
-        if (SavedContent != null)
+        if (LoadedContent != null)
         {
-            sortRadioGroup.radioGroup.Select(SavedContent.Query.sort, false);
-            orderRadioGroup.radioGroup.Select(SavedContent.Query.order, false);
-            categoryRadioGroup.radioGroup.Select(SavedContent.Query.category, false);
-            timeRadioGroup.radioGroup.Select(SavedContent.Query.time, false);
-            searchInputField.SetTextWithoutNotify(SavedContent.Query.search);
-            if (SavedContent.OnlineLevels != null)
+            sortRadioGroup.radioGroup.Select(LoadedContent.Query.sort, false);
+            orderRadioGroup.radioGroup.Select(LoadedContent.Query.order, false);
+            categoryRadioGroup.radioGroup.Select(LoadedContent.Query.category, false);
+            timeRadioGroup.radioGroup.Select(LoadedContent.Query.time, false);
+            searchInputField.SetTextWithoutNotify(LoadedContent.Query.search);
+            if (LoadedContent.OnlineLevels != null)
             {
-                OnContentLoaded(SavedContent);
+                OnContentLoaded(LoadedContent);
                 if (savedScrollPosition > 0)
                 {
                     scrollRect.SetVerticalNormalizedPositionFix(savedScrollPosition);
@@ -153,10 +161,11 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
 
     public void LoadMoreContent()
     {
-        if (!canLoadMore || SavedContent == null) return;
+        if (!canLoadMore || LoadedContent == null) return;
         canLoadMore = false;
-        scrollRect.OnEndDrag(new PointerEventData(EventSystem.current).Also(it => it.button = PointerEventData.InputButton.Left));
-        LoadContent(SavedContent.Query, SavedContent.PageLoaded + 1, true);
+        scrollRect.OnEndDrag(
+            new PointerEventData(EventSystem.current).Also(it => it.button = PointerEventData.InputButton.Left));
+        LoadContent(LoadedContent.Query, LoadedContent.PageLoaded + 1, true);
     }
 
     public void LoadContent(OnlineLevelQuery query, int page = 0, bool append = false)
@@ -167,14 +176,7 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
 
         var content = new Content
         {
-            Query = new OnlineLevelQuery
-            {
-                sort = sortRadioGroup.radioGroup.Value,
-                order = orderRadioGroup.radioGroup.Value,
-                category = categoryRadioGroup.radioGroup.Value,
-                time = timeRadioGroup.radioGroup.Value,
-                search = searchInputField.text
-            }
+            Query = query
         };
         RestClient.GetArray<OnlineLevel>(new RequestHelper
         {
@@ -186,16 +188,18 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
             if (entries == null) throw new Exception("Entries returned null");
             if (append)
             {
-                content.OnlineLevels = SavedContent.OnlineLevels;
+                content.OnlineLevels = LoadedContent.OnlineLevels;
                 content.OnlineLevels.AddRange(entries.ToList());
             }
             else
             {
                 content.OnlineLevels = entries.ToList();
             }
+
             content.PageLoaded = page;
-            SavedContent = content;
-            OnContentLoaded(SavedContent, append);
+            LoadedContent = content;
+
+            OnContentLoaded(LoadedContent, append);
         }).Catch(error =>
         {
             Toast.Next(Toast.Status.Failure, "TOAST_CHECK_NETWORK_CONNECTION".Get());
@@ -218,7 +222,8 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
     {
         if (!append) scrollRect.ClearCells();
         scrollRect.totalCount = content.OnlineLevels.Count;
-        scrollRect.objectsToFill = content.OnlineLevels.Select(it => it.ToLevel(LevelType.Community)).Cast<object>().ToArray();
+        scrollRect.objectsToFill =
+            content.OnlineLevels.Select(it => it.ToLevel(LevelType.Community)).Cast<object>().ToArray();
         if (append) scrollRect.RefreshCells();
         else scrollRect.RefillCells();
         if (content.OnlineLevels.Count <= 9 && content.PageLoaded == 0)
@@ -231,7 +236,7 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
             Run.After(1f, () => canLoadMore = true);
         }
     }
-    
+
     public override void OnScreenUpdate()
     {
         base.OnScreenUpdate();
@@ -252,7 +257,7 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
             scrollRect.ClearCells();
             if (to is CommunityHomeScreen)
             {
-                SavedContent = null;
+                LoadedContent = null;
                 savedScrollPosition = default;
             }
         }
@@ -271,7 +276,6 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
 [CustomEditor(typeof(CommunityLevelSelectionScreen))]
 public class CommunityLevelSelectionScreenEditor : Editor
 {
-
     public override void OnInspectorGUI()
     {
         DrawDefaultInspector();

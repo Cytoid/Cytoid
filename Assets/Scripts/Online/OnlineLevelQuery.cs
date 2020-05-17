@@ -11,9 +11,19 @@ public class OnlineLevelQuery
 
     public string BuildUri(int limit = -1, int page = 0)
     {
-        var uri = $"{Context.ApiUrl}/levels?" +
-                  $"sort={sort}&order={order}&search={search}" +
-                  $"&date_start={ConvertTimeSpanToDateStart(time)}&page={page}";
+        string uri;
+        if (search.IsNullOrEmptyTrimmed())
+        {
+            uri = $"{Context.ApiUrl}/levels?" +
+                $"sort={sort}&order={order}" +
+                $"&date_start={ConvertTimeSpanToDateStart(time)}&page={page}";
+        }
+        else
+        {
+            uri = $"{Context.ServicesUrl}/search/levels?search={search}&" +
+                $"sort={sort}&order={order}" +
+                $"&date_start={ConvertTimeSpanToDateStart(time)}&page={page}";
+        }
         if (category == "featured")
         {
             uri += "&featured=true";

@@ -32,10 +32,10 @@ namespace Cytoid.Storyboard
             // Parse storyboard file
 
             RootObject = JObject.Parse(content);
-            JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+            /*JsonConvert.DefaultSettings = () => new JsonSerializerSettings
             {
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore
-            };
+            };*/ // Moved to Context.cs
 
             // Templates
             if (RootObject["templates"] != null)

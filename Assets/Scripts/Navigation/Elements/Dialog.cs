@@ -157,6 +157,15 @@ public class Dialog : MonoBehaviour
         dialog.UseNegativeButton = false;
         dialog.Open();
     }
+
+    public static void PromptAlert(string message)
+    {
+        var dialog = Instantiate();
+        dialog.UsePositiveButton = true;
+        dialog.UseNegativeButton = false;
+        dialog.Message = message;
+        dialog.Open();
+    }
 }
 
 public class DialogUpdateEvent : UnityEvent<Dialog>

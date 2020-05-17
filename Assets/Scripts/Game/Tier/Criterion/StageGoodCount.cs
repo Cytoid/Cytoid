@@ -1,6 +1,6 @@
 public class StageGoodCountCriterion : Criterion
 {
-    public override string Description => "TIER_CRITERIA_GOOD_COUNT".Get(MaxCount, StageName(StageIndex));
+    public override string Description => "TIER_CRITERIA_STAGE_GOOD_COUNT".Get(MaxCount, StageName(StageIndex));
 
     public int StageIndex { get; }
     public int MaxCount { get; }

@@ -10,6 +10,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
     
     public const string Id = "LevelSelection";
 
+    public TransitionElement levelGrid;
     public LoopVerticalScrollRect scrollRect;
 
     public LabelSelect categorySelect;
@@ -29,17 +30,17 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         
         void InstantiateOptions() {
             var lp = Context.LocalPlayer;
-            sortByRadioGroup.SetContent("LEVEL_SELECT_SORT_BY".Get(), null, () => lp.LocalLevelsSortBy,
-                it => lp.LocalLevelsSortBy = it, new []
+            sortByRadioGroup.SetContent("LEVEL_SELECT_SORT_BY".Get(), null, () => lp.Settings.LocalLevelSort,
+                it => lp.Settings.LocalLevelSort = it, new []
                 {
-                    ("LEVEL_SELECT_SORT_BY_ADDED_DATE".Get(), LevelSort.AddedDate.ToString()),
-                    ("LEVEL_SELECT_SORT_BY_PLAYED_DATE".Get(), LevelSort.PlayedDate.ToString()),
-                    ("LEVEL_SELECT_SORT_BY_DIFFICULTY".Get(), LevelSort.Difficulty.ToString()),
-                    ("LEVEL_SELECT_SORT_BY_TITLE".Get(), LevelSort.Title.ToString())
+                    ("LEVEL_SELECT_SORT_BY_ADDED_DATE".Get(), LevelSort.AddedDate),
+                    ("LEVEL_SELECT_SORT_BY_PLAYED_DATE".Get(), LevelSort.LastPlayedDate),
+                    ("LEVEL_SELECT_SORT_BY_DIFFICULTY".Get(), LevelSort.Difficulty),
+                    ("LEVEL_SELECT_SORT_BY_TITLE".Get(), LevelSort.Title)
                 });
             sortByRadioGroup.radioGroup.onSelect.AddListener(value => RefillLevels());
-            sortOrderRadioGroup.SetContent("LEVEL_SELECT_SORT_ORDER".Get(), null, () => lp.LocalLevelsSortInAscendingOrder,
-                it => lp.LocalLevelsSortInAscendingOrder = it, new []
+            sortOrderRadioGroup.SetContent("LEVEL_SELECT_SORT_ORDER".Get(), null, () => lp.Settings.LocalLevelSortIsAscending,
+                it => lp.Settings.LocalLevelSortIsAscending = it, new []
                 {
                     ("LEVEL_SELECT_SORT_ORDER_ASC".Get(), true),
                     ("LEVEL_SELECT_SORT_ORDER_DESC".Get(), false)
@@ -185,10 +186,10 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
                 );
                 break;
             case LevelSort.AddedDate:
-                levels.Sort((a, b) => a.AddedDate.CompareTo(b.AddedDate) * (asc ? 1 : -1));
+                levels.Sort((a, b) => a.Record.AddedDate.CompareTo(b.Record.AddedDate) * (asc ? 1 : -1));
                 break;
-            case LevelSort.PlayedDate:
-                levels.Sort((a, b) => a.PlayedDate.CompareTo(b.PlayedDate) * (asc ? 1 : -1));
+            case LevelSort.LastPlayedDate:
+                levels.Sort((a, b) => a.Record.LastPlayedDate.CompareTo(b.Record.LastPlayedDate) * (asc ? 1 : -1));
                 break;
         }
 
@@ -202,6 +203,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         base.OnScreenChangeStarted(from, to);
         if (from is MainMenuScreen && to == this)
         {
+            levelGrid.Enter();
             // Clear search query
             searchInputField.SetTextWithoutNotify("");
         }
@@ -209,9 +211,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         {
             SavedContent = new Content
             {
-                CategoryIndex = categorySelect.SelectedIndex,
-                Sort = (LevelSort) Enum.Parse(typeof(LevelSort), sortByRadioGroup.radioGroup.Value),
-                IsAscendingOrder = bool.Parse(sortOrderRadioGroup.radioGroup.Value)
+                CategoryIndex = categorySelect.SelectedIndex
             };
         }
     }
@@ -221,10 +221,11 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         base.OnScreenChangeFinished(from, to);
         if (from == this)
         {
-            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalCoverThumbnail);
+            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalLevelCoverThumbnail);
             scrollRect.ClearCells();
             if (to is MainMenuScreen)
             {
+                levelGrid.Leave();
                 savedScrollPosition = default;
             }
         }
@@ -233,8 +234,6 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
     public class Content
     {
         public int CategoryIndex;
-        public LevelSort Sort;
-        public bool IsAscendingOrder;
     }
 
 }
@@ -244,5 +243,6 @@ public enum LevelSort
     Title,
     Difficulty,
     AddedDate,
-    PlayedDate
+    LastPlayedDate,
+    PlayCount
 }

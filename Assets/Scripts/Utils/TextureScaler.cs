@@ -55,14 +55,14 @@ public class TextureScaler
         result.Resize(width, height);
         var targetRatio = width * 1.0f / height;
         var ratio = tex.width * 1.0f / tex.height;
-        Debug.Log($"Width: {width}, Height: {height}, Texture width: {tex.width}, Texture height: {tex.height}, Target ratio: {targetRatio}, Texture ratio: {ratio}");
+        // Debug.Log($"Width: {width}, Height: {height}, Texture width: {tex.width}, Texture height: {tex.height}, Target ratio: {targetRatio}, Texture ratio: {ratio}");
         Rect texR;
         if (targetRatio < ratio)
         {
             var toWidth = tex.width * height * 1.0f / tex.height;
             texR = new Rect((int) ((toWidth - width) / 2), 0, width, height);
             _gpu_scale(tex, (int) toWidth, height, mode);
-            Debug.Log($"To width: {toWidth}, Rect: {texR}");
+            // Debug.Log($"To width: {toWidth}, Rect: {texR}");
             result.ReadPixels(texR, 0, 0, true);
         }
         else
@@ -70,7 +70,7 @@ public class TextureScaler
             var toHeight = tex.height * width * 1.0f / tex.width;
             texR = new Rect(0, (int) ((toHeight - height) / 2), width, height);
             _gpu_scale(tex, width, (int) toHeight, mode);
-            Debug.Log($"To height: {toHeight}, Rect: {texR}");
+            // Debug.Log($"To height: {toHeight}, Rect: {texR}");
             result.ReadPixels(texR, 0, 0, true);
         }
         result.Apply();

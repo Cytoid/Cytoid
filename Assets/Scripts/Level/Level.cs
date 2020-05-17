@@ -10,41 +10,43 @@ public class Level
     public OnlineLevel OnlineLevel;
     
     public LevelMeta Meta;
+    public LevelRecord Record;
+    
     public string Id => Meta.id;
 
     public string Path;
     public string PackagePath;
-    public DateTime AddedDate;
 
-    public DateTime PlayedDate
+    private Level()
     {
-        get => playedDate;
-        set
-        {
-            playedDate = value;
-            Context.LocalPlayer.SetLastPlayedDate(Id, value);
-        }
     }
 
-    private DateTime playedDate;
+    public static Level FromLocal(string path, LevelType type, LevelMeta meta)
+    {
+        return new Level {
+            Type = type,
+            IsLocal = true,
+            PackagePath = $"{Context.ApiUrl}/levels/{meta.id}/resources",
+            Path = path,
+            Meta = meta,
+            Record = Context.Database.GetLevelRecord(meta.id) ?? new LevelRecord{LevelId = meta.id}
+        };
+    }
     
-    public Level(string path, LevelType type, LevelMeta meta, DateTime addedDate, DateTime playedDate)
+    public static Level FromRemote(string packagePath, LevelType type, LevelMeta meta)
     {
-        Type = type;
-        IsLocal = true;
-        PackagePath = $"{Context.ApiUrl}/levels/{meta.id}/resources";
-        Path = path;
-        Meta = meta;
-        AddedDate = addedDate;
-        this.playedDate = playedDate;
+        return new Level {
+            Type = type,
+            IsLocal = false,
+            PackagePath = packagePath,
+            Meta = meta,
+            Record = Context.Database.GetLevelRecord(meta.id) ?? new LevelRecord{LevelId = meta.id}
+        };
     }
 
-    public Level(string packagePath, LevelType type, LevelMeta meta)
+    public void SaveRecord()
     {
-        Type = type;
-        IsLocal = false;
-        PackagePath = packagePath;
-        Meta = meta;
+        Context.Database.SetLevelRecord(Record);
     }
 
 }

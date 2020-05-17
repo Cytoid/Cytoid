@@ -15,6 +15,13 @@ public class PillRadioGroup : RadioGroup
         {
             radioButtonPrefab = Resources.Load<GameObject>("Prefabs/UI/Preference/PillRadioButton");
         }
+        
+        // Clear existing
+        OnDestroy();
+        foreach (Transform child in transform)
+        {
+            DestroyImmediate(child.gameObject);
+        }
 
         Assert.IsTrue(labels.Count == values.Count);
         radioButtonPrefab.GetComponent<RectTransform>().SetWidth(labels.Count > 2 ? 128 : 192);
@@ -26,6 +33,7 @@ public class PillRadioGroup : RadioGroup
             var pillRadioButton = child.GetComponent<PillRadioButton>();
             pillRadioButton.label.text = label;
             pillRadioButton.value = value;
+            RadioButtons.Add(pillRadioButton);
         }
 
         base.Initialize();

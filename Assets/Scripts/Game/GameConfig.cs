@@ -12,6 +12,7 @@ public class GameConfig
     public readonly Dictionary<NoteType, Color[]> GlobalFillColorsOverride = new Dictionary<NoteType, Color[]>();
 
     public bool UseClassicStyle = true;
+    public bool DisplayNoteIds = false;
     public float NoteSizeMultiplier;
     public readonly Dictionary<NoteType, float> NoteSizes = new Dictionary<NoteType, float>();
     public readonly Dictionary<NoteType, float> NoteHitboxSizes = new Dictionary<NoteType, float>();
@@ -39,10 +40,11 @@ public class GameConfig
         var chart = game.Chart;
 
         var lp = Context.LocalPlayer;
-        ChartOffset = lp.BaseNoteOffset + lp.GetLevelNoteOffset(game.Level.Id);
-        if (DetectHeadset.Detect()) ChartOffset += lp.HeadsetNoteOffset;
+        ChartOffset = lp.Settings.BaseNoteOffset + game.Level.Record.RelativeNoteOffset;
+        if (DetectHeadset.Detect()) ChartOffset += lp.Settings.HeadsetNoteOffset;
 
         UseScannerSmoothing = true;
+        DisplayNoteIds = Context.LocalPlayer.Settings.DisplayNoteIds;
 
         GlobalRingColorOverride = chart.Model.ring_color?.ToColor() ?? Color.clear;
         foreach (NoteType type in Enum.GetValues(typeof(NoteType)))
@@ -54,7 +56,7 @@ public class GameConfig
             };
         }
 
-        NoteSizeMultiplier = (float) chart.Model.size * (1 + 0.133333f + lp.NoteSize);
+        NoteSizeMultiplier = (float) chart.Model.size * (1 + 0.133333f + lp.Settings.NoteSize);
 
         NoteSizes[NoteType.Click] = (game.camera.orthographicSize * 2.0f) * (7.0f / 9.0f) / 5.0f * 1.2675f;
         NoteSizes[NoteType.DragHead] = NoteSizes[NoteType.Click] * 0.8f;
@@ -64,29 +66,29 @@ public class GameConfig
         NoteSizes[NoteType.Flick] = NoteSizes[NoteType.Click] * 1.125f;
 
         NoteHitboxSizes[NoteType.Click] =
-            new[] {0.666666f * 1.111111f, 0.666666f * 1.333333f, 0.666666f * 1.555555f}[lp.ClickHitboxSize];
+            new[] {0.666666f * 1.111111f, 0.666666f * 1.333333f, 0.666666f * 1.555555f}[lp.Settings.HitboxSizes[NoteType.Click]];
         NoteHitboxSizes[NoteType.DragHead] =
-            new[] {0.666666f * 1.111111f, 0.666666f * 1.333333f, 0.666666f * 1.555555f}[lp.DragHitboxSize];
+            new[] {0.666666f * 1.111111f, 0.666666f * 1.333333f, 0.666666f * 1.555555f}[lp.Settings.HitboxSizes[NoteType.DragChild]];
         NoteHitboxSizes[NoteType.DragChild] =
-            new[] {0.888888f * 1.111111f, 0.888888f * 1.333333f, 0.888888f * 1.555555f}[lp.DragHitboxSize];
+            new[] {0.888888f * 1.111111f, 0.888888f * 1.333333f, 0.888888f * 1.555555f}[lp.Settings.HitboxSizes[NoteType.DragChild]];
         NoteHitboxSizes[NoteType.Hold] = NoteHitboxSizes[NoteType.LongHold] =
-            new[] {0.888888f * 1.111111f, 0.888888f * 1.333333f, 0.888888f * 1.555555f}[lp.HoldHitboxSize];
+            new[] {0.888888f * 1.111111f, 0.888888f * 1.333333f, 0.888888f * 1.555555f}[lp.Settings.HitboxSizes[NoteType.Hold]];
         NoteHitboxSizes[NoteType.Flick] =
-            new[] {0.888888f * 1.111111f, 0.888888f * 1.333333f, 0.888888f * 1.555555f}[lp.FlickHitboxSize];
+            new[] {0.888888f * 1.111111f, 0.888888f * 1.333333f, 0.888888f * 1.555555f}[lp.Settings.HitboxSizes[NoteType.Flick]];
 
         foreach (NoteType type in Enum.GetValues(typeof(NoteType)))
         {
             NoteRingColors[type] = new[]
             {
-                chart.Model.ring_color?.ToColor() ?? lp.GetRingColor(type, false),
-                chart.Model.ring_color?.ToColor() ?? lp.GetRingColor(type, true)
+                chart.Model.ring_color?.ToColor() ?? lp.Settings.NoteRingColors[type],
+                chart.Model.ring_color?.ToColor() ?? lp.Settings.NoteRingColors[type]
             };
             NoteFillColors[type] = new[]
             {
                 chart.Model.fill_colors[NoteColorChartOverrideMapping[type][0]]?.ToColor() ??
-                lp.GetFillColor(type, false),
+                lp.Settings.NoteFillColors[type],
                 chart.Model.fill_colors[NoteColorChartOverrideMapping[type][1]]?.ToColor() ??
-                lp.GetFillColor(type, true)
+                lp.Settings.NoteFillColorsAlt[type],
             };
         }
 
@@ -101,7 +103,7 @@ public class GameConfig
 
         if (game.Storyboard != null && game.Storyboard.Controllers.Count > 0)
         {
-            game.Storyboard.Config.UseEffects = Context.LocalPlayer.UseStoryboardEffects;
+            game.Storyboard.Config.UseEffects = Context.LocalPlayer.Settings.DisplayStoryboardEffects;
         }
 
         Context.UpdateGraphicsQuality();

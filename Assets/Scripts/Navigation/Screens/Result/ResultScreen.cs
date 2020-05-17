@@ -11,7 +11,7 @@ using UniRx.Async;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ResultScreen : Screen, ScreenChangeListener
+public class ResultScreen : Screen
 {
     public const string Id = "Result";
 
@@ -42,22 +42,17 @@ public class ResultScreen : Screen, ScreenChangeListener
 
     public override string GetId() => Id;
 
-    public override async void OnScreenInitialized()
+    public override async void OnScreenBecameActive()
     {
-        base.OnScreenInitialized();
+        base.OnScreenBecameActive();
 
         gameState = Context.GameState;
         if (gameState == null)
         {
             // Test mode
             Debug.Log("Result not set, entering test mode...");
-            await Context.LevelManager.LoadFromMetadataFiles(LevelType.Community, new List<string>
-                {Context.UserDataPath + "/suconh_typex.alice/level.json"});
-            Context.SelectedLevel = Context.LevelManager.LoadedLocalLevels.Values.First();
-            Context.SelectedDifficulty =
-                Difficulty.Parse(Context.LevelManager.LoadedLocalLevels.Values.First().Meta.charts[0].type);
-            Context.LocalPlayer.PlayRanked = false;
-            gameState = new GameState(Context.SelectedLevel, Context.SelectedDifficulty);
+            
+            gameState = new GameState(GameMode.Practice, Context.SelectedLevel, Context.SelectedDifficulty);
             Context.OnlinePlayer.OnAuthenticated.AddListener(() =>
             {
                 rankingsTab.UpdateRankings(Context.SelectedLevel.Id, Context.SelectedDifficulty.Id);
@@ -70,13 +65,13 @@ public class ResultScreen : Screen, ScreenChangeListener
 
         nextButton.State = CircleButtonState.Next;
         nextButton.StartPulsing();
-        nextButton.interactableMonoBehavior.onPointerClick.AddListener(_ =>
+        nextButton.interactableMonoBehavior.onPointerClick.SetListener(_ =>
         {
             nextButton.StopPulsing();
             Done();
         });
         retryButton.State = CircleButtonState.Retry;
-        retryButton.interactableMonoBehavior.onPointerClick.AddListener(_ =>
+        retryButton.interactableMonoBehavior.onPointerClick.SetListener(_ =>
         {
             retryButton.StopPulsing();
             Retry();
@@ -123,68 +118,51 @@ public class ResultScreen : Screen, ScreenChangeListener
                                   $"<b>Late</b> {gameState.LateCount}    " +
                                   $"<b>{"RESULT_AVG_TIMING_ERR".Get()}</b> {gameState.AverageTimingError:0.000}s    " +
                                   $"<b>{"RESULT_STD_TIMING_ERR".Get()}</b> {gameState.StandardTimingError:0.000}s";
-        if (!Context.LocalPlayer.DisplayEarlyLateIndicators) advancedMetricText.text = "";
+        if (!Context.LocalPlayer.Settings.DisplayEarlyLateIndicators) advancedMetricText.text = "";
+
+        var performance = new LevelRecord.Performance {Score = (int) gameState.Score, Accuracy = gameState.Accuracy};
+
+        var record = gameState.Level.Record;
 
         // Increment local play count
-        Context.LocalPlayer.SetPlayCount(gameState.Level.Id, gameState.Difficulty.Id,
-            Context.LocalPlayer.GetPlayCount(gameState.Level.Id, gameState.Difficulty.Id) + 1);
-
-        // Save performance to local
-        var clearType = string.Empty;
-        if (gameState.Mods.Contains(Mod.AP)) clearType = "AP";
-        if (gameState.Mods.Contains(Mod.FC)) clearType = "FC";
-        if (gameState.Mods.Contains(Mod.Hard)) clearType = "Hard";
-        if (gameState.Mods.Contains(Mod.ExHard)) clearType = "ExHard";
-
-        if (!Context.LocalPlayer.HasPerformance(gameState.Level.Id, gameState.Difficulty.Id,
-            Context.LocalPlayer.PlayRanked))
+        if (record.PlayCounts.ContainsKey(gameState.Difficulty.Id))
         {
-            newBestText.text = "RESULT_NEW".Get();
-            Context.LocalPlayer.SetBestPerformance(gameState.Level.Id, gameState.Difficulty.Id,
-                Context.LocalPlayer.PlayRanked,
-                new LocalPlayer.Performance
-                {
-                    Score = (int) gameState.Score, Accuracy = (float) (gameState.Accuracy * 100), ClearType = clearType
-                });
+            record.PlayCounts[gameState.Difficulty.Id] += 1;
         }
         else
         {
-            var historicBest = Context.LocalPlayer.GetBestPerformance(gameState.Level.Id,
-                gameState.Difficulty.Id, Context.LocalPlayer.PlayRanked);
-            var newBest = new LocalPlayer.Performance
+            record.PlayCounts[gameState.Difficulty.Id] = 1;
+        }
+        
+        // Save performance to local
+        var bestPerformances = gameState.Mode == GameMode.Standard
+            ? record.BestPerformances
+            : record.BestPracticePerformances;
+
+        if (!bestPerformances.ContainsKey(gameState.Difficulty.Id))
+        {
+            newBestText.text = "RESULT_NEW".Get();
+            bestPerformances[gameState.Difficulty.Id] = performance;
+        }
+        else
+        {
+            var historicBest = bestPerformances[gameState.Difficulty.Id];
+            if (performance.Score > historicBest.Score)
             {
-                Score = historicBest.Score, Accuracy = historicBest.Accuracy, ClearType = historicBest.ClearType
-            };
-            if (gameState.Score > historicBest.Score)
-            {
-                newBestText.text = $"+{Mathf.FloorToInt((float) (gameState.Score - historicBest.Score))}";
-                newBest.Score = (int) gameState.Score;
-                newBest.ClearType = clearType;
+                newBestText.text = $"+{performance.Score - historicBest.Score}";
+                bestPerformances[gameState.Difficulty.Id] = performance;
             }
             else
             {
                 newBestText.text = "";
             }
-
-            var multipliedAccuracy = gameState.Accuracy * 100;
-            if (multipliedAccuracy > historicBest.Accuracy)
-            {
-                newBest.Accuracy = (float) multipliedAccuracy;
-            }
-
-            Context.LocalPlayer.SetBestPerformance(gameState.Level.Id, gameState.Difficulty.Id,
-                Context.LocalPlayer.PlayRanked, newBest);
         }
+        gameState.Level.SaveRecord();
 
-        shareButton.onPointerClick.AddListener(_ => StartCoroutine(Share()));
+        shareButton.onPointerClick.SetListener(_ => StartCoroutine(Share()));
 
         await Resources.UnloadUnusedAssets();
-    }
-
-    public override void OnScreenBecameActive()
-    {
-        base.OnScreenBecameActive();
-
+        
         TranslucentCover.Show(0.9f);
         ProfileWidget.Instance.Enter();
         upperRightColumn.Enter();
@@ -202,7 +180,7 @@ public class ResultScreen : Screen, ScreenChangeListener
         {
             rankingsIcon.SetActive(true);
             ratingIcon.SetActive(true);
-            if (Context.LocalPlayer.PlayRanked && !Context.OnlinePlayer.IsAuthenticated)
+            if (gameState.Mode == GameMode.Standard && !Context.OnlinePlayer.IsAuthenticated)
             {
                 rankingsTab.UpdateRankings(gameState.Level.Id, gameState.Difficulty.Id);
             }
@@ -272,6 +250,9 @@ public class ResultScreen : Screen, ScreenChangeListener
 
     public void UploadRecord()
     {
+        var usedAuto =  gameState.Mods.Contains(Mod.Auto) || gameState.Mods.Contains(Mod.AutoDrag) || gameState.Mods.Contains(Mod.AutoHold) || gameState.Mods.Contains(Mod.AutoFlick);
+        if (!Application.isEditor && usedAuto) throw new Exception();
+        
         rankingsTab.spinner.IsSpinning = true;
 
         var uploadRecord = SecuredOperations.MakeRecord(gameState);

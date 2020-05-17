@@ -62,7 +62,7 @@ public class NoteOffsetWidget : MonoBehaviour
             }
             else
             {
-                offset = Context.LocalPlayer.GetLevelNoteOffset(game.Level.Id);
+                offset = game.Level.Record.RelativeNoteOffset;
                 UpdateOffsetText();
                 canvasGroup.alpha = 1;
                 transitionElement.UseCurrentStateAsDefault();
@@ -86,7 +86,8 @@ public class NoteOffsetWidget : MonoBehaviour
         game.Config.ChartOffset += dOffset;
         game.ResynchronizeChartOnNextFrame = true;
         // Save config
-        Context.LocalPlayer.SetLevelNoteOffset(game.Level.Id, (float) Math.Round(offset, 2));
+        game.Level.Record.RelativeNoteOffset = (float) Math.Round(offset, 2);
+        game.Level.SaveRecord();
     }
 
     private void UpdateOffsetText()

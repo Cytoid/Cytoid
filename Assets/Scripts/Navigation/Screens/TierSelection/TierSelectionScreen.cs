@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using DG.Tweening;
+using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Proyecto26;
 using UniRx;
@@ -13,7 +15,10 @@ using UnityEngine.UI;
 public class TierSelectionScreen : Screen
 {
     public const string Id = "TierSelection";
-    public static Content SavedContent;
+    public static Content LoadedContent;
+    private static float lastScrollPosition = -1;
+
+    public AudioSource previewAudioSource;
 
     public LoopVerticalScrollRect scrollRect;
     public VerticalLayoutGroup scrollRectContentLayoutGroup;
@@ -29,10 +34,18 @@ public class TierSelectionScreen : Screen
     public ActionTabs actionTabs;
     public RankingsTab rankingsTab;
     
+    public Transform settingsTabContent;
+    public Transform currentTierSettingsHolder;
+    public Transform generalSettingsHolder;
+    public Transform gameplaySettingsHolder;
+    public Transform visualSettingsHolder;
+    public Transform advancedSettingsHolder;
+
     public Vector2 ScreenCenter { get; private set; }
     public TierData SelectedTier { get; private set; }
 
     private TierCard selectedTierCard;
+    private bool initializedSettingsTab;
     
     public override string GetId() => Id;
 
@@ -67,16 +80,16 @@ public class TierSelectionScreen : Screen
             if (next.index == 0)
             {
                 OnRankingsTab();
-            }   
+            } 
+            else if (next.index == 2)
+            {
+                OnSettingsTab();
+            }
         });
         
         helpButton.onPointerClick.AddListener(_ =>
         {
-            var dialog = Dialog.Instantiate();
-            dialog.UsePositiveButton = true;
-            dialog.UseNegativeButton = false;
-            dialog.Message = "TIER_TUTORIAL".Get();
-            dialog.Open();
+            Dialog.PromptAlert("TIER_TUTORIAL".Get());
         });
     }
 
@@ -86,53 +99,73 @@ public class TierSelectionScreen : Screen
         ProfileWidget.Instance.Enter();
         ScreenCenter = new Vector2(UnityEngine.Screen.width / 2f, UnityEngine.Screen.height / 2f);
         var height = RectTransform.rect.height;
-        print("Rect height: " + height);
         var padding = scrollRectContentLayoutGroup.padding;
         padding.top = padding.bottom = (int) ((height - 576) / 2f); // TODO: Un-hardcode tier card height but I'm lazy lol
         scrollRectContentLayoutGroup.padding = padding;
-        
-        SpinnerOverlay.Show();
-        await Context.LevelManager.LoadLevelsOfType(LevelType.Tier);
 
-        /*SpinnerOverlay.Hide();
-        OnContentLoaded(new Content{season = MockData.Season});
-        return;*/
-        
-        RestClient.Get(new RequestHelper
+        if (LoadedContent == null)
         {
-            Uri = $"{Context.ServicesUrl}/seasons/alpha",
-            Headers = Context.OnlinePlayer.GetAuthorizationHeaders()
-        }).Then(res =>
-        {
-            print("TierSelection: " + res.Text);
-            var season = JsonConvert.DeserializeObject<SeasonData>(res.Text);
-            SavedContent = new Content {season = season};
-            OnContentLoaded(SavedContent);
-        }).CatchRequestError(error =>
-        {
-            if (!error.IsNetworkError)
+            SpinnerOverlay.Show();
+            await Context.LevelManager.LoadLevelsOfType(LevelType.Tier);
+            RestClient.Get(new RequestHelper
             {
-                throw error;
-            }
-            Dialog.PromptGoBack("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
-        }).Finally(() => SpinnerOverlay.Hide());
-        
-        /*if (SavedContent != null)
-        {
-            OnContentLoaded(SavedContent);
+                Uri = $"{Context.ServicesUrl}/seasons/alpha",
+                Headers = Context.OnlinePlayer.GetAuthorizationHeaders()
+            }).Then(res =>
+            {
+                print("TierSelection: " + res.Text);
+                var season = JsonConvert.DeserializeObject<SeasonMeta>(res.Text);
+                LoadedContent = new Content {Season = season};
+                OnContentLoaded(LoadedContent);
+                Run.After(0.4f, () =>
+                {
+                    SpinnerOverlay.Hide();
+                    Dialog.PromptAlert("ALPHA_TIER_WARNING".Get());
+                });
+            }).CatchRequestError(error =>
+            {
+                if (!error.IsNetworkError)
+                {
+                    throw error;
+                }
+
+                SpinnerOverlay.Hide();
+                Dialog.PromptGoBack("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
+            });
         }
         else
         {
-            // request
-        }*/
+            SpinnerOverlay.Show();
+            OnContentLoaded(LoadedContent);
+            Run.After(0.4f, () => SpinnerOverlay.Hide());
+        }
     }
 
-    public void OnContentLoaded(Content content)
+    public override void OnScreenBecameInactive()
+    {
+        base.OnScreenBecameInactive();
+
+        asyncCoverToken = DateTime.Now;
+        asyncPreviewToken = DateTime.Now;
+        
+        previewAudioSource.DOFade(0, 0.5f).SetEase(Ease.Linear).onComplete = () =>
+        {
+            previewAudioSource.Stop();
+            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.PreviewMusic);
+        };
+
+        if (LoadedContent != null)
+        {
+            lastScrollPosition = scrollRect.verticalNormalizedPosition;
+        }
+    }
+
+    public async void OnContentLoaded(Content content)
     {
         scrollRect.ClearCells();
         
-        scrollRect.totalCount = content.season.tiers.Count + 1;
-        var tiers = new List<TierData>(content.season.tiers) {new TierData {isScrollRectFix = true}};
+        scrollRect.totalCount = content.Season.tiers.Count + 1;
+        var tiers = new List<TierData>(content.Season.tiers) {new TierData {isScrollRectFix = true}};
         for (var i = 0; i < tiers.Count - 1; i++)
         {
             var tier = tiers[i];
@@ -162,11 +195,18 @@ public class TierSelectionScreen : Screen
             it.Leave(false, true);
             it.Enter();
         });
+        LayoutFixer.Fix(scrollRect.content);
 
+        if (lastScrollPosition > 0)
+        {
+            await UniTask.DelayFrame(5);
+            LayoutFixer.Fix(scrollRect.content);
+            scrollRect.SetVerticalNormalizedPositionFix(lastScrollPosition);
+        }
         StartCoroutine(SnapCoroutine());
     }
     
-    private bool isDragging = false;
+    private bool isDragging;
     private IEnumerator snapCoroutine;
 
     public void OnBeginDrag()
@@ -188,7 +228,7 @@ public class TierSelectionScreen : Screen
         StartCoroutine(snapCoroutine = SnapCoroutine());
     }
 
-    private IEnumerator SnapCoroutine()
+    private IEnumerator SnapCoroutine(string tierId = null)
     {
         while (Math.Abs(scrollRect.velocity.y) > 1024)
         {
@@ -201,33 +241,39 @@ public class TierSelectionScreen : Screen
             snapCoroutine = null;
             yield break;
         }
-
-        LayoutRebuilder.ForceRebuildLayoutImmediate(scrollRect.content);
+        
         try
         {
-            var toTierCard = tierCards
-                .FindAll(it => !it.Tier.isScrollRectFix)
-                .MinBy(it => Math.Abs(it.rectTransform.GetScreenSpaceCenter(it.canvas).y - ScreenCenter.y));
-            scrollRect.SrollToCell(toTierCard.Index, 1024);
+            TierCard toTierCard;
+            if (tierId == null)
+            { 
+                toTierCard = tierCards
+                    .FindAll(it => !it.Tier.isScrollRectFix)
+                    .MinBy(it => Math.Abs(it.rectTransform.GetScreenSpaceCenter(it.canvas).y - ScreenCenter.y));
+                scrollRect.SrollToCell(toTierCard.Index, 1024);
+            }
+            else
+            {
+                toTierCard = tierCards.FirstOrDefault(it => it.Tier.Id == tierId);
+                if (toTierCard == null) toTierCard = tierCards[0];
+                scrollRect.SrollToCell(toTierCard.Index, 1024);
+            }
             selectedTierCard = toTierCard;
             OnTierSelected(toTierCard.Tier);
         }
         catch (Exception e)
         {
             Debug.LogWarning(e);
-            print(tierCards.Count);
             tierCards.FindAll(it => !it.Tier.isScrollRectFix).ForEach(it => print(Math.Abs(it.rectTransform.GetScreenSpaceCenter(it.canvas).y - ScreenCenter.y)));
         }
 
         snapCoroutine = null;
     }
 
-    private DateTime asyncCoverToken;
-
-    public async void OnTierSelected(TierData tier)
+    public void OnTierSelected(TierData tier)
     {
         SelectedTier = tier;
-        print("Selected tier " + (tier.Meta.name));
+        print("Selected tier " + tier.Meta.name);
 
         if (tier.Meta.character != null)
         {
@@ -243,13 +289,22 @@ public class TierSelectionScreen : Screen
         }
         
         rankingsTab.SetRanking(SelectedTier.rank ?? -1);
-        
+        initializedSettingsTab = false;
+
+        LoadCover();
+        LoadPreview();
+    }
+    
+    private DateTime asyncCoverToken;
+
+    private async void LoadCover()
+    {
         asyncCoverToken = DateTime.Now;
 
         var token = asyncCoverToken;
 
         Sprite sprite;
-        var lastStage = tier.Meta.parsedStages.Last();
+        var lastStage = SelectedTier.Meta.parsedStages.Last();
         if (lastStage.IsLocal)
         {
             sprite = await Context.AssetMemory.LoadAsset<Sprite>("file://" + lastStage.Path + lastStage.Meta.background.path, AssetTag.TierCover);
@@ -270,19 +325,89 @@ public class TierSelectionScreen : Screen
             cover.OnCoverLoaded(sprite);
         }
     }
+    
+    private DateTime asyncPreviewToken;
+    private string lastPreviewPath;
+
+    private async void LoadPreview()
+    {
+        asyncPreviewToken = DateTime.Now;
+        
+        var lastStage = SelectedTier.Meta.parsedStages.Last();
+        string path;
+        if (lastStage.IsLocal)
+        {
+            path = "file://" + lastStage.Path + lastStage.Meta.music_preview.path;
+        }
+        else
+        {
+            path = lastStage.Meta.music_preview.path;
+        }
+        if (lastPreviewPath == path)
+        {
+            return;
+        }
+        lastPreviewPath = path;
+
+        // Load
+        var token = asyncPreviewToken;
+        
+        previewAudioSource.DOKill();
+        previewAudioSource.DOFade(0, 0.5f).SetEase(Ease.Linear);
+        await UniTask.Delay(TimeSpan.FromSeconds(0.5f));
+        
+        if (asyncPreviewToken != token)
+        {
+            return;
+        }
+            
+        var audioClip = await Context.AssetMemory.LoadAsset<AudioClip>(path, AssetTag.PreviewMusic, useFileCache: true);
+
+        if (asyncPreviewToken != token)
+        {
+            return;
+        }
+        
+        if (State == ScreenState.Active)
+        {
+            previewAudioSource.clip = audioClip;
+        }
+        
+        previewAudioSource.volume = 0;
+        previewAudioSource.DOKill();
+        previewAudioSource.DOFade(Context.LocalPlayer.Settings.MusicVolume, 0.5f).SetEase(Ease.Linear);
+        previewAudioSource.loop = true;
+        previewAudioSource.Play();
+    }
 
     private void OnRankingsTab()
     {
         rankingsTab.UpdateTierRankings(SelectedTier.Id);
+    }
+
+    private async void OnSettingsTab()
+    {
+        if (!initializedSettingsTab)
+        {
+            SpinnerOverlay.Show();
+            await UniTask.DelayFrame(5);
+            InitializeSettingsTab();
+            await UniTask.DelayFrame(5);
+            SpinnerOverlay.Hide();
+        }
     }
     
     public async void OnStartButton()
     {
         if (SelectedTier.StagesValid)
         {
+            lastScrollPosition = scrollRect.verticalNormalizedPosition;
+            
             State = ScreenState.Inactive;
             Context.SelectedGameMode = GameMode.Tier;
             Context.TierState = new TierState(SelectedTier);
+
+            LoadedContent.Season = null;
 
             scrollRect.GetComponentsInChildren<TierCard>().ForEach(it => it.OnTierStart());
             ProfileWidget.Instance.FadeOut();
@@ -290,7 +415,7 @@ public class TierSelectionScreen : Screen
             
             Context.AudioManager.Get("LevelStart").Play();
 
-            Context.SelectedMods = Context.LocalPlayer.EnabledMods; // This will be filtered
+            Context.SelectedMods = Context.LocalPlayer.Settings.EnabledMods.ToHashSet(); // This will be filtered
             
             await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
 
@@ -352,9 +477,18 @@ public class TierSelectionScreen : Screen
     public override void OnScreenChangeFinished(Screen from, Screen to)
     {
         base.OnScreenChangeFinished(from, to);
-        if (from == this && to != null && !(to is ProfileScreen))
+        if (from == this && to != null)
         {
-            UnloadResources();
+            lastPreviewPath = null;
+            DestroySettingsTab();
+            if (!(to is ProfileScreen))
+            {
+                UnloadResources();
+                if (to is MainMenuScreen)
+                {
+                    LoadedContent.Season = null;
+                }
+            }
         }
     }
 
@@ -362,15 +496,62 @@ public class TierSelectionScreen : Screen
     {
         scrollRect.ClearCells();
         Context.LevelManager.UnloadLevelsOfType(LevelType.Tier);
-        Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalCoverThumbnail);
-        Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.OnlineCoverThumbnail);
+        Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalLevelCoverThumbnail);
+        Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.RemoteLevelCoverThumbnail);
         Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.CharacterThumbnail);
         Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.TierCover);
     }
     
+    public async void InitializeSettingsTab()
+    {
+        DestroySettingsTab();
+        
+        initializedSettingsTab = true;
+        
+        var lp = Context.LocalPlayer;
+        var provider = PreferenceElementProvider.Instance;
+
+        foreach (var (stringKey, index) in new[] {("1ST", 0), ("2ND", 1), ("3RD", 2)})
+        {
+            var levelId = SelectedTier.Meta.stages[index].Uid;
+            var level = Context.LevelManager.LoadedLocalLevels[levelId];
+            
+            Instantiate(provider.input, currentTierSettingsHolder)
+                .SetContent("TIER_SETTINGS_LEVEL_NOTE_OFFSET".Get($"TIER_STAGE_{stringKey}".Get()),
+                    "",
+                    () => level.Record.RelativeNoteOffset,
+                    it =>
+                    {
+                        level.Record.RelativeNoteOffset = it;
+                        level.SaveRecord();
+                    },
+                    "SETTINGS_UNIT_SECONDS".Get(), 0.ToString());
+        }
+        
+        SettingsFactory.InstantiateGeneralSettings(generalSettingsHolder);
+        SettingsFactory.InstantiateGameplaySettings(gameplaySettingsHolder);
+        SettingsFactory.InstantiateVisualSettings(visualSettingsHolder);
+        SettingsFactory.InstantiateAdvancedSettings(advancedSettingsHolder);
+
+        LayoutStaticizer.Activate(settingsTabContent);
+        LayoutFixer.Fix(settingsTabContent);
+        await UniTask.DelayFrame(5);
+        LayoutStaticizer.Staticize(settingsTabContent);
+    }
+    
+    public void DestroySettingsTab()
+    {
+        initializedSettingsTab = false;
+        foreach (Transform child in currentTierSettingsHolder) Destroy(child.gameObject);
+        foreach (Transform child in generalSettingsHolder) Destroy(child.gameObject);
+        foreach (Transform child in gameplaySettingsHolder) Destroy(child.gameObject);
+        foreach (Transform child in visualSettingsHolder) Destroy(child.gameObject);
+        foreach (Transform child in advancedSettingsHolder) Destroy(child.gameObject);
+    }
+
     public class Content
     {
-        public SeasonData season;
+        public SeasonMeta Season;
     }
 
 }

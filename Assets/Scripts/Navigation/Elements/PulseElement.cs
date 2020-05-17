@@ -13,6 +13,8 @@ public class PulseElement : MonoBehaviour
 
     public float initialAlpha = 0.6f;
     public float finalSize = 2f;
+    public bool overrideFinalSizeY = false;
+    public float finalSizeY = -1;
     public float duration = 3f;
     public bool overlay = false;
     
@@ -125,7 +127,7 @@ public class PulseElement : MonoBehaviour
 
     private async void PostPulse(GameObject clone, CanvasGroup canvasGroup)
     {
-        if (clone == null) return;
+        if (this == null || canvasGroup == null || clone == null) return;
         
         var cloneRectTransform = clone.GetComponent<RectTransform>();
 
@@ -142,7 +144,19 @@ public class PulseElement : MonoBehaviour
         
         canvasGroup.alpha = initialAlpha;
         canvasGroup.DOFade(0, duration);
-        clone.GetComponent<RectTransform>().DOScale(finalSize, duration).SetEase(ease);
+        if (overrideFinalSizeY)
+        {
+            clone.GetComponent<RectTransform>().Apply(it =>
+            {
+                it.DOScaleX(finalSize, duration).SetEase(ease);
+                it.DOScaleY(finalSizeY, duration).SetEase(ease);
+            });
+        }
+        else
+        {
+            clone.GetComponent<RectTransform>().DOScale(finalSize, duration).SetEase(ease);
+        }
+        
         
         await UniTask.Delay(TimeSpan.FromSeconds(duration));
 

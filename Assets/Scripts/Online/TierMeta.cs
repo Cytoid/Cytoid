@@ -54,7 +54,7 @@ public class TierData
 }
 
 [Serializable]
-public class SeasonData
+public class SeasonMeta
 {
     public string uid;
     public List<TierData> tiers;

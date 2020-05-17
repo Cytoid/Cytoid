@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
+using Object = UnityEngine.Object;
 
 public class ClassicNoteRenderer : NoteRenderer
 {
@@ -10,6 +12,9 @@ public class ClassicNoteRenderer : NoteRenderer
     public readonly SpriteRenderer Ring;
     public readonly SpriteRenderer Fill;
 
+    protected readonly bool DisplayNoteId;
+    protected readonly NoteId NoteId;
+
     public ClassicNoteRenderer(Note note) : base(note)
     {
         Ring = Note.transform.Find("NoteRing").GetComponent<SpriteRenderer>();
@@ -17,6 +22,15 @@ public class ClassicNoteRenderer : NoteRenderer
 
         Ring.enabled = false;
         Fill.enabled = false;
+        
+        // Generate note ID
+        if (Game.Config.DisplayNoteIds)
+        {
+            DisplayNoteId = true;
+            NoteId = Object.Instantiate(GameObjectProvider.Instance.noteIdPrefab, Note.transform);
+            NoteId.SetModel(note.Model);
+            NoteId.gameObject.SetActive(false);
+        }
     }
 
     public override void OnNoteLoaded()
@@ -61,18 +75,23 @@ public class ClassicNoteRenderer : NoteRenderer
     {
         if (!Note.IsCleared && Game.Time >= Note.Model.intro_time && Game.Time <= Note.Model.end_time + Note.MissThreshold)
         {
-            Ring.enabled = true;
-            Fill.enabled = true;
             if (Game.State.Mods.Contains(Mod.HideNotes))
             {
                 Ring.enabled = false;
                 Fill.enabled = false;
+            }
+            else
+            {
+                Ring.enabled = true;
+                Fill.enabled = true;
+                if (DisplayNoteId) NoteId.gameObject.SetActive(true);
             }
         }
         else
         {
             Ring.enabled = false;
             Fill.enabled = false;
+            if (DisplayNoteId) NoteId.gameObject.SetActive(false);
         }
     }
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using DG.Tweening;
 using UniRx.Async;
@@ -22,7 +23,7 @@ public class TierStageCard : InteractableMonoBehavior
     private CancellationTokenSource actionToken;
     private Vector2 pressPosition;
 
-    public void SetModel(Level level, ColorGradient gradient)
+    public async void SetModel(Level level, ColorGradient gradient)
     {
         this.level = level;
         
@@ -31,14 +32,17 @@ public class TierStageCard : InteractableMonoBehavior
         titleLocalized.text = level.Meta.title_localized;
         titleLocalized.gameObject.SetActive(!level.Meta.title_localized.IsNullOrEmptyTrimmed());
 
-        difficultyBall.SetModel(Difficulty.Parse(level.Meta.charts[0].type), level.Meta.charts[0].difficulty);
+        difficultyBall.SetModel(Difficulty.Parse(level.Meta.charts.Last().type), level.Meta.charts.Last().difficulty);
         overlayGradient.SetGradient(gradient);
 
         transform.RebuildLayout();
         difficultyBall.gameObject.SetActive(false);
         difficultyBall.gameObject.SetActive(true);
-
+        
         LoadCover();
+        
+        await UniTask.DelayFrame(0); // Unity :)
+        if (gameObject != null) transform.RebuildLayout();
     }
 
     private CancellationTokenSource coverToken = new CancellationTokenSource();
@@ -61,13 +65,13 @@ public class TierStageCard : InteractableMonoBehavior
             if (level.IsLocal)
             {
                 var path = "file://" + level.Path + LevelManager.CoverThumbnailFilename;
-                sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.LocalCoverThumbnail,
+                sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.LocalLevelCoverThumbnail,
                     coverToken.Token);
             }
             else
             {
                 var path = level.OnlineLevel.Cover.StripeUrl;
-                sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.OnlineCoverThumbnail,
+                sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.RemoteLevelCoverThumbnail,
                     coverToken.Token, true, new SpriteAssetOptions(new []{ Context.ThumbnailWidth, Context.ThumbnailHeight }));
             }
         }

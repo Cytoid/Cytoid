@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Proyecto26;
 using RSG;
 using UnityEngine;
@@ -26,7 +27,7 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
 
     public void OnScreenBecameActive()
     {
-        if (!Context.LocalPlayer.PlayRanked && this.GetScreenParent() is ResultScreen)
+        if (!Context.LocalPlayer.Settings.PlayRanked && this.GetScreenParent() is ResultScreen)
         {
             icon.SetActive(false);
         }
@@ -60,8 +61,7 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
                 if (entries.Count > 0)
                 {
                     viewMoreButton.gameObject.SetActive(true);
-                    viewMoreButton.onPointerClick.RemoveAllListeners();
-                    viewMoreButton.onPointerClick.AddListener(_ =>
+                    viewMoreButton.onPointerClick.SetListener(_ =>
                     {
                         Application.OpenURL(
                             $"https://cytoid.io/levels/{levelId}"); // TODO: Jump to selected difficulty?
@@ -92,6 +92,7 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
 
     public void SetRanking(int rank)
     {
+        if (this == null) return;
         if (rank > 0)
         {
             if (rank > 99) rankingText.text = "#99+";
@@ -111,6 +112,7 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
         tierRankingContainer.Clear();
         rankingContainerStatusText.text = "TIER_RANKINGS_DOWNLOADING".Get();
         var token = updateTierRankingToken = DateTime.Now;
+        
         return Context.OnlinePlayer.GetTierRankings(tierId)
             .Then(ret =>
             {
@@ -118,7 +120,7 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
                 var (rank, entries) = ret;
                 
                 print($"Rank: {rank}");
-                print($"Entries: {entries}");
+                print($"Entries: {entries.ToList()}");
                 tierRankingContainer.SetData(entries);
                 SetRanking(rank);
 
@@ -132,8 +134,7 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
                 /*if (entries.Count > 0)
                 {
                     viewMoreButton.gameObject.SetActive(true);
-                    viewMoreButton.onPointerClick.RemoveAllListeners();
-                    viewMoreButton.onPointerClick.AddListener(_ =>
+                    viewMoreButton.onPointerClick.SetListener(_ =>
                     {
                         Application.OpenURL(
                             $"https://cytoid.io/levels/{levelId}"); // TODO: Jump to selected difficulty?
@@ -161,6 +162,11 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
                 if (token != updateTierRankingToken) return;
                 spinner.IsSpinning = false;
             });
+    }
+
+    private void OnDestroy()
+    {
+        updateTierRankingToken = DateTime.MinValue;
     }
     
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 public sealed class GameState
 {
@@ -9,7 +10,7 @@ public sealed class GameState
     
     public Level Level { get; }
     
-    public Difficulty Difficulty { get;}
+    public Difficulty Difficulty { get; }
     
     public int DifficultyLevel { get; }
     
@@ -141,14 +142,35 @@ public sealed class GameState
         Difficulty = Difficulty.Parse(Level.Meta.charts[0].type);
     }
     
-    public GameState(Level level, Difficulty difficulty) : this()
+    public GameState(GameMode mode, Level level, Difficulty difficulty) : this()
     {
+        Mode = mode;
         Level = level;
         Difficulty = difficulty;
     }
 
+    public void FillTestData(int noteCount)
+    {
+        if (!Application.isEditor) throw new Exception();
+
+        ClearCount = noteCount;
+        for (var i = 0; i < noteCount; i++) Judgements[i] = new NoteJudgement
+        {
+            IsJudged = true,
+            Grade = NoteGrade.Perfect,
+            Error = 0,
+        };
+        Combo = MaxCombo = noteCount;
+        Score = 1000000;
+        Accuracy = 1.000000;
+    }
+
     public void Judge(Note note, NoteGrade grade, double error, double greatGradeWeight)
     {
+        if (IsCompleted || IsFailed)
+        {
+            return;
+        }
         if (Judgements[note.Model.id].IsJudged)
         {
             Debug.LogWarning($"Trying to judge note {note.Model.id} which is already judged.");
@@ -629,7 +651,7 @@ public enum HpModType
 public enum GameMode
 {
     Unspecified = 0,
-    Classic = 1,
+    Standard = 1,
     Practice = 2,
     Calibration = 3,
     Tier = 4,

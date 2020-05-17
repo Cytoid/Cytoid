@@ -38,17 +38,10 @@ public class CharacterSelectionScreen : Screen
         characterDisplay.loadOnScreenBecameActive = false;
         infoCard.enterOnScreenBecomeActive = characterTransitionElement.enterOnScreenBecomeActive = false;
 
-        helpButton.onPointerClick.AddListener(_ =>
-        {
-            var dialog = Dialog.Instantiate();
-            dialog.UsePositiveButton = true;
-            dialog.UseNegativeButton = false;
-            dialog.Message = "CHARACTER_TUTORIAL".Get();
-            dialog.Open();
-        });
+        helpButton.onPointerClick.AddListener(_ => Dialog.PromptAlert("CHARACTER_TUTORIAL".Get()));
     }
 
-    public override async void OnScreenBecameActive()
+    public override void OnScreenBecameActive()
     {
         characterTransitionElement.Apply(it =>
         {
@@ -87,11 +80,12 @@ public class CharacterSelectionScreen : Screen
         var downloadsRequired = 0;
         foreach (var meta in characters)
         {
-            if (!await Context.RemoteAssetManager.Exists(meta.AssetId))
+            if (!await Context.RemoteAssetManager.IsCached(meta.AssetId))
             {
                 downloadsRequired++;
             }
         }
+        print($"Number of downloads required: {downloadsRequired}");
 
         await Context.RemoteAssetManager.UpdateCatalog();
 
@@ -101,7 +95,11 @@ public class CharacterSelectionScreen : Screen
         foreach (var meta in characters)
         {
             var (success, locallyResolved) = await Context.CharacterManager.DownloadCharacterAssetDialog(meta.AssetId);
-            if (!locallyResolved) downloaded++;
+            if (!locallyResolved)
+            {
+                downloaded++;
+                print("Downloaded " + meta.AssetId);
+            }
             if (!success)
             {
                 Toast.Next(Toast.Status.Failure, "CHARACTER_FAILED_TO_DOWNLOAD".Get());
@@ -111,6 +109,7 @@ public class CharacterSelectionScreen : Screen
                 availableCharacters.Add(meta);
             }
         }
+        print($"Number of downloads: {downloaded}");
 
         if (downloaded > downloadsRequired)
         {
@@ -150,6 +149,8 @@ public class CharacterSelectionScreen : Screen
                 it.AssetId == Context.CharacterManager.SelectedCharacterAssetId);
         if (selectedIndex < 0) selectedIndex = 0; // Reset to default
         LoadCharacter(availableCharacters[selectedIndex]);
+        
+        Dialog.PromptAlert("ALPHA_CHARACTER_WARNING".Get());
     }
 
     public async void LoadCharacter(CharacterMeta meta)
@@ -165,8 +166,6 @@ public class CharacterSelectionScreen : Screen
 
             infoCard.Leave(false);
             characterTransitionElement.Leave(false);
-
-            await UniTask.Delay(TimeSpan.FromSeconds(0.4f));
         }
 
         var character = await Context.CharacterManager.SetActiveCharacter(meta.AssetId);
@@ -175,19 +174,22 @@ public class CharacterSelectionScreen : Screen
             throw new Exception("Character not downloaded or corrupted");
         }
 
+        if (isNewCharacter)
+        {
+            await UniTask.Delay(TimeSpan.FromSeconds(0.4f));
+        }
+
         nameText.text = meta.Name;
         nameGradient.SetGradient(character.nameGradient.GetGradient());
         descriptionText.text = meta.Description;
         levelCard.SetModel(meta.Level.ToLevel(LevelType.Official));
         illustratorText.text = meta.Illustrator.Name;
-        illustratorProfileButton.onPointerClick.RemoveAllListeners();
-        illustratorProfileButton.onPointerClick.AddListener(_ => Application.OpenURL(meta.Illustrator.Url));
+        illustratorProfileButton.onPointerClick.SetListener(_ => Application.OpenURL(meta.Illustrator.Url));
         if (meta.CharacterDesigner != null && !meta.CharacterDesigner.Name.IsNullOrEmptyTrimmed())
         {
             characterDesignerHolder.gameObject.SetActive(true);
             characterDesignerText.text = meta.CharacterDesigner.Name;
-            characterDesignerProfileButton.onPointerClick.RemoveAllListeners();
-            characterDesignerProfileButton.onPointerClick.AddListener(_ =>
+            characterDesignerProfileButton.onPointerClick.SetListener(_ =>
                 Application.OpenURL(meta.CharacterDesigner.Url));
         }
         else

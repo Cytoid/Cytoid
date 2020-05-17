@@ -44,7 +44,7 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
     public void UpdateMaxVolume()
     {
         var previousMaxVolume = maxVolume;
-        maxVolume = Context.LocalPlayer.MusicVolume;
+        maxVolume = Context.LocalPlayer.Settings.MusicVolume;
         if (maxVolume == 0) maxVolume = float.MinValue;
         audioMixerGroup.audioMixer.GetFloat("MasterVolume", out var currentMixerGroupVolume);
         var currentVolume = ConvertTo01Volume(currentMixerGroupVolume);
@@ -63,7 +63,7 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
         return Mathf.Exp(f / 20);
     }
 
-    public void PlayAudio(IntroloopAudio audio, float fadeInDuration = 0.8f, float crossfadeDuration = 0.8f)
+    public void PlayAudio(IntroloopAudio audio, float fadeInDuration = 0.5f, float crossfadeDuration = 0.5f)
     {
         if (playingAudio == audio) return;
         var duration = playingAudio != null ? crossfadeDuration : fadeInDuration;
@@ -72,7 +72,7 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
         IntroloopPlayer.Instance.Play(audio, duration);
     }
 
-    public void StopAudio(float fadeOutDuration = 0.8f)
+    public void StopAudio(float fadeOutDuration = 0.5f)
     {
         if (playingAudio == null) return;
         if (PrintDebugMessages) print("LoopAudioPlayer: Stopped audio " + playingAudio.name);
@@ -107,12 +107,12 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
 
     public async void OnScreenChangeStarted(Screen from, Screen to)
     {
-        if (to is GamePreparationScreen)
+        if (to is GamePreparationScreen || to is TierSelectionScreen)
         {
             FadeOutLoopPlayer();
             return;
         }
-        if (from is GamePreparationScreen && to != null)
+        if ((from is GamePreparationScreen || from is TierSelectionScreen) && to != null)
         {
             FadeInLoopPlayer();
             PlayAudio(mainLoopAudio);
@@ -128,11 +128,6 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
             PlayAudio(resultLoopAudio, 0);
             await UniTask.DelayFrame(5); // Introloop bug: Audio not switched immediately, causing ear rape
             FadeInLoopPlayer(0);
-            return;
-        }
-        if ((from is TierBreakScreen || from is TierResultScreen) && to is TierSelectionScreen)
-        {
-            PlayAudio(mainLoopAudio);
         }
     }
 

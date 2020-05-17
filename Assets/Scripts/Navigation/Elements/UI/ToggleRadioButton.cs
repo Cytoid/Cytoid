@@ -4,8 +4,6 @@ using UnityEngine.UI;
 public class ToggleRadioButton : RadioButton
 {
 
-    private static bool loadingSprites;
-    
     public Sprite radioOnSprite;
     public Sprite radioOffSprite;
 

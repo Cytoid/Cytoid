@@ -63,7 +63,7 @@ public abstract class Note : MonoBehaviour
         }
 
         // Hit sound
-        if (grade != NoteGrade.Miss && (!(this is HoldNote) || Context.LocalPlayer.HoldHitSoundTiming.Let(it => it == (int) HoldHitSoundTiming.End || it == (int) HoldHitSoundTiming.Both)))
+        if (grade != NoteGrade.Miss && (!(this is HoldNote) || Context.LocalPlayer.Settings.HoldHitSoundTiming.Let(it => it == HoldHitSoundTiming.End || it == HoldHitSoundTiming.Both)))
         {
             PlayHitSound();
         }
@@ -129,6 +129,7 @@ public abstract class Note : MonoBehaviour
 
     protected virtual void Destroy()
     {
+        if (gameObject == null) return;
         Destroy(gameObject);
         Renderer.Cleanup();
     }

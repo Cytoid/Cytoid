@@ -59,14 +59,15 @@ public class HitSoundSelect : MonoBehaviour, ScreenBecameActiveListener
         select.labels = new List<string>(HitSoundNameKeys.Select(it => it.Get()));
         select.values = new List<string>(HitSounds);
         var lp = Context.LocalPlayer;
-        select.Select(lp.HitSound, false, false);
+        select.Select(lp.Settings.HitSound, false, false);
         select.onSelect.RemoveAllListeners();
         select.onSelect.AddListener((_, it) =>
         {
-            lp.HitSound = it;
+            lp.Settings.HitSound = it;
+            lp.SaveSettings();
             if (it != "none")
             {
-                var audioClip = Resources.Load<AudioClip>("Audio/HitSounds/" + Context.LocalPlayer.HitSound);
+                var audioClip = Resources.Load<AudioClip>("Audio/HitSounds/" + it);
                 var hitSound = Context.AudioManager.Load("HitSound", audioClip, isResource: true);
                 hitSound.Play();
             }

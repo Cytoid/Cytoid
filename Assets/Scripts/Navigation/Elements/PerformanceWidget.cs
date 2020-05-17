@@ -24,9 +24,9 @@ public class PerformanceWidget : ContainerEntry<RankingEntry>
 
     public override RankingEntry GetModel() => Model;
 
-    public void SetModel(LocalPlayer.Performance performance)
+    public void SetModel(LevelRecord.Performance performance)
     {
-        SetModel(new RankingEntry { score = performance.Score, accuracy = performance.Accuracy / 100.0f });
+        SetModel(new RankingEntry { score = performance.Score, accuracy = performance.Accuracy });
     }
     
 }

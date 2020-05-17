@@ -7,6 +7,7 @@ using RSG;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Events;
+using UnityEngine.SocialPlatforms.Impl;
 
 public class OnlinePlayer
 {
@@ -164,24 +165,14 @@ public class OnlinePlayer
             }).Then(profile =>
             {
                 LastProfile = profile;
-                Context.Database.Let(it =>
-                {
-                    it.DropCollection("profile");
-                    var col = it.GetCollection<Profile>("profile");
-                    col.Insert(profile);
-                });
+                Context.Database.SetProfile(profile);
                 OnProfileChanged.Invoke(profile);
                 return profile;
             });
         }
         
         // Offline: Load from DB
-        return Context.Database.Let(it =>
-        {
-            var col = it.GetCollection<Profile>("profile");
-            var result = col.FindOne(x => true);
-            return Promise<Profile>.Resolved(result);
-        });
+        return Promise<Profile>.Resolved(Context.Database.GetProfile());
     }
 
     public IPromise<(int, List<RankingEntry>)> GetLevelRankings(string levelId, string chartType)
@@ -192,7 +183,7 @@ public class OnlinePlayer
         {
             return RestClient.GetArray<RankingEntry>(new RequestHelper
                 {
-                    Uri = $"{Context.ApiUrl}/levels/{levelId}/charts/{chartType}/ranking",
+                    Uri = $"{Context.ServicesUrl}/levels/{levelId}/charts/{chartType}/records?limit=10",
                     Headers = GetAuthorizationHeaders(),
                     EnableDebug = true
                 })
@@ -205,8 +196,9 @@ public class OnlinePlayer
                     return RestClient.GetArray<RankingEntry>(new RequestHelper
                     {
                         Uri =
-                            $"{Context.ApiUrl}/levels/{levelId}/charts/{chartType}/ranking?user={Context.OnlinePlayer.Uid}&userLimit=6",
+                            $"{Context.ServicesUrl}/levels/{levelId}/charts/{chartType}/user_ranking?user={Context.OnlinePlayer.Uid}&limit=6",
                         Headers = GetAuthorizationHeaders(),
+                        EnableDebug = true
                     });
                 })
                 .Then(data =>
@@ -244,15 +236,24 @@ public class OnlinePlayer
 
                     if (userEntry != null)
                     {
-                        // Replace local performance only if higher score
-                        var localPerformance = Context.LocalPlayer.GetBestPerformance(levelId, chartType, true);
-                        if (userEntry.score > localPerformance.Score)
+                        // Replace local performance only if higher or equal score
+                        var record = Context.Database.GetLevelRecord(levelId);
+                        if (record == null || !record.BestPerformances.ContainsKey(chartType) ||
+                            record.BestPerformances[chartType].Score < userEntry.score)
                         {
-                            Context.LocalPlayer.SetBestPerformance(levelId, chartType, true, new LocalPlayer.Performance
+                            if (record == null) record = new LevelRecord
                             {
-                                Score = userEntry.score, Accuracy = userEntry.accuracy * 100f, ClearType = string.Empty
-                            }); // TODO: ClearType
-
+                                LevelId = levelId
+                            };
+                            
+                            var newBest = new LevelRecord.Performance
+                            {
+                                Score = userEntry.score,
+                                Accuracy = userEntry.accuracy
+                            };
+                            record.BestPerformances[chartType] = newBest;
+                            Context.Database.SetLevelRecord(record);
+                            
                             OnLevelBestPerformanceUpdated.Invoke(levelId);
                         }
                     }
@@ -270,14 +271,63 @@ public class OnlinePlayer
     
     public IPromise<(int, List<TierRankingEntry>)> GetTierRankings(string tierId)
     {
-        // TODO: Personal rank
+        var entries = new List<TierRankingEntry>();
+        var top10 = new List<TierRankingEntry>();
         return RestClient.GetArray<TierRankingEntry>(new RequestHelper
         {
-            Uri = $"{Context.ServicesUrl}/seasons/alpha/tiers/{tierId}/records",
+            Uri = $"{Context.ServicesUrl}/seasons/alpha/tiers/{tierId}/records?limit=10",
             Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
             EnableDebug = true
-        }).Then(array => (-1, array.ToList()));
+        }).Then(data =>
+                {
+                    top10 = data.ToList();
+                    // Add the first 3
+                    entries.AddRange(top10.GetRange(0, Math.Min(3, top10.Count)));
+
+                    return RestClient.GetArray<TierRankingEntry>(new RequestHelper
+                    {
+                        Uri =
+                            $"{Context.ServicesUrl}/seasons/alpha/tiers/{tierId}/user_ranking?user={Context.OnlinePlayer.Uid}&limit=6",
+                        Headers = GetAuthorizationHeaders(),
+                        EnableDebug = true
+                    });
+                })
+                .Then(data =>
+                {
+                    var list = data.ToList();
+
+                    // Find user's position
+                    var userRank = -1;
+                    TierRankingEntry userEntry = null;
+                    for (var index = 0; index < data.Length; index++)
+                    {
+                        var entry = data[index];
+                        if (entry.owner.Uid == Context.OnlinePlayer.Uid)
+                        {
+                            userRank = entry.rank;
+                            break;
+                        }
+                    }
+
+                    if (userRank == -1 || userRank <= 10)
+                    {
+                        // Just use top 10
+                        entries = top10;
+                    }
+                    else
+                    {
+                        // Add previous 6 and next 6, and remove accordingly
+                        var append = new List<TierRankingEntry>();
+                        append.AddRange(list);
+                        append.RemoveRange(0, Math.Max(3, Math.Max(0, 10 - userRank)));
+                        if (append.Count > 7) append.RemoveRange(7, append.Count - 7);
+                        entries.AddRange(append);
+                    }
+
+                    return (userRank, entries);
+                });
     }
+
 }
 
 public class ProfileChangedEvent : UnityEvent<Profile>

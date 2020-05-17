@@ -6,7 +6,7 @@ public class RankingEntry
     public int rank;
     
     public int score;
-    public float accuracy; // 0~1
+    public double accuracy; // 0~1
     public Details details;
     public string[] mods;
     public OnlineUser owner;

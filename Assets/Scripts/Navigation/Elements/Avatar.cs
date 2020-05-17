@@ -55,7 +55,7 @@ public class Avatar : InteractableMonoBehavior
     
     public void SetAvatarSprite(Sprite sprite)
     {
-        if (gameObject == null) return;
+        if (this == null || gameObject == null) return;
         avatarSpinner.IsSpinning = false;
         avatarImage.sprite = sprite;
         avatarImage.DOColor(Color.white, 0.4f).OnComplete(() =>

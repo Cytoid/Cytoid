@@ -18,16 +18,24 @@ public static class ScoreGrades
 {
     public static ScoreGrade FromTierCompletion(double score)
     {
-        var grade = ScoreGrade.F;
+        var grade = ScoreGrade.A;
         if (score == 2)
         {
             grade = ScoreGrade.MAX;
         }
-        else if (score >= 1.9)
+        else if (score >= 1.8)
         {
             grade = ScoreGrade.SSS;
         }
-        else if (score >= 1.5)
+        else if (score >= 1.6)
+        {
+            grade = ScoreGrade.SS;
+        }
+        else if (score >= 1.4)
+        {
+            grade = ScoreGrade.S;
+        }
+        else if (score >= 1.2)
         {
             grade = ScoreGrade.AA;
         }

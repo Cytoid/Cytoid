@@ -17,16 +17,19 @@ public class CharacterDisplay : MonoBehaviour, ScreenBecameActiveListener, Scree
 
     private GameObject loadedTachie;
     private RectTransform rectTransform;
-
     private DateTime asyncLoadToken;
+    private bool isLoading;
 
-    public async UniTask Load(string assetId)
+    public async UniTask Load(string tachieAssetId)
     {
+        if (isLoading) await UniTask.WaitUntil(() => !isLoading);
+
+        isLoading = true;
         Unload();
         
-        print("CharacterDisplay: Loaded " + assetId);
+        print("CharacterDisplay: Loaded " + tachieAssetId);
         var token = asyncLoadToken = DateTime.Now;
-        loadedTachie = await Context.RemoteAssetManager.LoadAsset(assetId);
+        loadedTachie = await Context.RemoteAssetManager.LoadAsset(tachieAssetId);
         if (token != asyncLoadToken) return;
         IsLoaded = true;
         var t = (RectTransform) loadedTachie.transform;
@@ -34,6 +37,8 @@ public class CharacterDisplay : MonoBehaviour, ScreenBecameActiveListener, Scree
         t.anchoredPosition = Vector3.zero;
         t.localScale = Vector3.one;
         Enter();
+
+        isLoading = false;
     }
 
     public void Enter()

@@ -97,7 +97,7 @@ public class OnlineLevel
             }
         }
 
-        return new Level($"{Context.ApiUrl}/levels/{Uid}/resources", type, GenerateLevelMeta())
+        return Level.FromRemote($"{Context.ApiUrl}/levels/{Uid}/resources", type, GenerateLevelMeta())
             .Also(it => it.OnlineLevel = this);
     }
 

@@ -32,8 +32,7 @@ public class RatingTab : MonoBehaviour, ScreenInitializedListener
         }
 
         rateLevelElement.SetModel(id, data);
-        rateLevelElement.rateButton.onPointerClick.RemoveAllListeners();
-        rateLevelElement.rateButton.onPointerClick.AddListener(_ =>
+        rateLevelElement.rateButton.onPointerClick.SetListener(_ =>
         {
             var dialog = RateLevelDialog.Instantiate(id, data.rating ?? -1);
             dialog.onLevelRated.AddListener(rating => OnLevelRatingUpdated(id, rating));
@@ -47,7 +46,7 @@ public class RatingTab : MonoBehaviour, ScreenInitializedListener
         spinner.IsSpinning = true;
         return RestClient.Get<LevelRating>(new RequestHelper
             {
-                Uri = $"{Context.ApiUrl}/levels/{id}/ratings",
+                Uri = $"{Context.ServicesUrl}/levels/{id}/ratings",
                 Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
                 EnableDebug = true
             })

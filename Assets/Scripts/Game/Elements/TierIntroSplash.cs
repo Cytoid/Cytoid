@@ -16,7 +16,7 @@ public class TierIntroSplash : AwaitableAnimatedElement
         if (game.State.Mode == GameMode.Tier && Context.TierState.CurrentStageIndex == 0)
         {
             text.text = Context.TierState.Tier.Meta.name;
-            //game.BeforeStartTasks.Add(Animate());
+            game.BeforeStartTasks.Add(Animate());
         }
     }
 }

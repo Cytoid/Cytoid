@@ -14,6 +14,7 @@ public class LevelCard : InteractableMonoBehavior
     public Text title;
     public Text titleLocalized;
 
+    public bool isStatic;
     public List<DifficultyBall> difficultyBalls = new List<DifficultyBall>();
 
     private Level level;
@@ -42,10 +43,18 @@ public class LevelCard : InteractableMonoBehavior
 
     private void Awake()
     {
+        Unload();
+    }
+
+    public void Unload()
+    {
         artist.text = "";
         title.text = "";
         titleLocalized.text = "";
         for (var index = 0; index < 3; index++) difficultyBalls[index].gameObject.SetActive(false);
+        cover.sprite = null;
+        cover.DOKill();
+        cover.SetAlpha(0);
     }
 
     public void SetModel(Level level)
@@ -111,14 +120,14 @@ public class LevelCard : InteractableMonoBehavior
             if (level.IsLocal)
             {
                 var path = "file://" + level.Path + LevelManager.CoverThumbnailFilename;
-                sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.LocalCoverThumbnail,
+                sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.LocalLevelCoverThumbnail,
                     coverToken.Token);
             }
             else
             {
                 var path = level.Meta.background.path.WithImageCdn().WithSizeParam(
                     Context.ThumbnailWidth, Context.ThumbnailHeight);
-                sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.OnlineCoverThumbnail,
+                sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.RemoteLevelCoverThumbnail,
                     coverToken.Token, true,
                     new SpriteAssetOptions(new[] {Context.ThumbnailWidth, Context.ThumbnailHeight}));
             }
@@ -159,6 +168,8 @@ public class LevelCard : InteractableMonoBehavior
     public override async void OnPointerDown(PointerEventData eventData)
     {
         base.OnPointerDown(eventData);
+        if (isStatic) return;
+        
         pressPosition = eventData.position;
         if (loadedCover) cover.DOFade(1.0f, 0.2f).SetEase(Ease.OutCubic);
         // cover.rectTransform.DOScale(1.02f, 0.2f).SetEase(Ease.OutCubic);
@@ -184,6 +195,12 @@ public class LevelCard : InteractableMonoBehavior
 
     public override void OnPointerUp(PointerEventData eventData)
     {
+        if (isStatic)
+        {
+            base.OnPointerUp(eventData);
+            return;
+        }
+        
         var d = Vector2.Distance(pressPosition, eventData.position);
         if (d > 0.005f * Context.ReferenceWidth || ignoreNextPointerUp)
         {
@@ -200,6 +217,7 @@ public class LevelCard : InteractableMonoBehavior
     public override void OnPointerClick(PointerEventData eventData)
     {
         base.OnPointerClick(eventData);
+        if (isStatic) return;
         if (level != null)
         {
             if (Context.ScreenManager.IsChangingScreen)
@@ -209,9 +227,7 @@ public class LevelCard : InteractableMonoBehavior
             
             if (Context.IsOffline() && !level.IsLocal)
             {
-                var dialog = Dialog.Instantiate();
-                dialog.Message = "DIALOG_OFFLINE_LEVEL_NOT_AVAILABLE".Get();
-                dialog.Open();
+                Dialog.PromptAlert("DIALOG_OFFLINE_LEVEL_NOT_AVAILABLE".Get());
                 return;
             }
 

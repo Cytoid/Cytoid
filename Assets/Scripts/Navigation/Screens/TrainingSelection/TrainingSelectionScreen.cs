@@ -11,8 +11,8 @@ using UnityEngine.UI;
 
 public class TrainingSelectionScreen : Screen
 {
-    private static Content savedContent;
-    private static float savedScrollPosition = -1;
+    public static Content LoadedContent;
+    private static float lastScrollPosition = -1;
 
     public const string Id = "TrainingSelection";
 
@@ -32,9 +32,9 @@ public class TrainingSelectionScreen : Screen
         base.OnScreenBecameActive();
         characterDisplay.Load("KaedeTachie");
 
-        if (savedContent != null)
+        if (LoadedContent != null)
         {
-            OnContentLoaded(savedContent);
+            OnContentLoaded(LoadedContent);
         }
         else
         {
@@ -58,7 +58,7 @@ public class TrainingSelectionScreen : Screen
     public override void OnScreenBecameInactive()
     {
         base.OnScreenBecameInactive();
-        savedScrollPosition = scrollRect.verticalNormalizedPosition;
+        lastScrollPosition = scrollRect.verticalNormalizedPosition;
     }
 
     public override void OnScreenDestroyed()
@@ -70,12 +70,12 @@ public class TrainingSelectionScreen : Screen
 
     public void OnContentLoaded(Content content)
     {
-        scrollRect.totalCount = content.levels.Count;
-        scrollRect.objectsToFill = content.levels.ToArray().Cast<object>().ToArray();
+        scrollRect.totalCount = content.Levels.Count;
+        scrollRect.objectsToFill = content.Levels.ToArray().Cast<object>().ToArray();
         scrollRect.RefillCells();
-        if (savedScrollPosition > 0)
+        if (lastScrollPosition > 0)
         {
-            scrollRect.SetVerticalNormalizedPositionFix(savedScrollPosition);
+            scrollRect.SetVerticalNormalizedPositionFix(lastScrollPosition);
         }
         scrollRect.GetComponent<TransitionElement>()
             .Let(it =>
@@ -214,8 +214,8 @@ public class TrainingSelectionScreen : Screen
 
             SpinnerOverlay.Hide();
 
-            savedContent = new Content {levels = levels.OrderBy(it => it.Meta.GetEasiestDifficultyLevel()).ToList()};
-            OnContentLoaded(savedContent);
+            LoadedContent = new Content {Levels = levels.OrderBy(it => it.Meta.GetEasiestDifficultyLevel()).ToList()};
+            OnContentLoaded(LoadedContent);
         }
     }
 
@@ -224,21 +224,20 @@ public class TrainingSelectionScreen : Screen
         base.OnScreenChangeFinished(from, to);
         if (from == this)
         {
-            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalCoverThumbnail);
+            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalLevelCoverThumbnail);
             scrollRect.ClearCells();
             if (to is MainMenuScreen)
             {
-                savedContent = null;
-                savedScrollPosition = default;
+                LoadedContent = null;
+                lastScrollPosition = default;
                 Context.LevelManager.UnloadLevelsOfType(LevelType.Training);
             }
         }
     }
 
-    [Serializable]
     public class Content
     {
-        public List<Level> levels;
+        public List<Level> Levels;
     }
     
     [Serializable]

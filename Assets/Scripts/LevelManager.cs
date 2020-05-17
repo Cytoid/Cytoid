@@ -294,7 +294,7 @@ public class LevelManager
     {
         LoadedLocalLevels.Clear();
         loadedPaths.Clear();
-        Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalCoverThumbnail);
+        Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalLevelCoverThumbnail);
     }
 
     public async UniTask<List<Level>> LoadFromMetadataFiles(LevelType type, List<string> jsonPaths, bool forceReload = false)
@@ -303,6 +303,7 @@ public class LevelManager
         int index;
         for (index = 0; index < jsonPaths.Count; index++)
         {
+            var timer = new BenchmarkTimer($"Level loader ({index + 1} / {jsonPaths.Count})") {Enabled = false};
             var jsonPath = jsonPaths[index];
             try
             {
@@ -322,17 +323,19 @@ public class LevelManager
                 if (info.Directory == null) continue;
 
                 var path = info.Directory.FullName + Path.DirectorySeparatorChar;
-             
+
                 if (!forceReload && loadedPaths.Contains(path))
                 {
                     Debug.LogWarning($"Level from {path} is already loaded");
                     Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {path}");
                     continue;
                 }
-                
+
                 Debug.Log($"Loading {index + 1}/{jsonPaths.Count} from {path}");
 
                 var meta = JsonConvert.DeserializeObject<LevelMeta>(File.ReadAllText(jsonPath));
+
+                timer.Time("Deserialization");
 
                 if (meta == null)
                 {
@@ -340,7 +343,7 @@ public class LevelManager
                     Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {path}");
                     continue;
                 }
-                
+
                 if (LoadedLocalLevels.ContainsKey(meta.id))
                 {
                     if (LoadedLocalLevels[meta.id].Type != LevelType.Community && type == LevelType.Community)
@@ -350,8 +353,10 @@ public class LevelManager
                         continue;
                     }
                 }
-                
+
                 OnLevelLoadProgress.Invoke(meta.id, index + 1, jsonPaths.Count);
+
+                timer.Time("OnLevelLoadProgressEvent");
 
                 // Sort charts
                 meta.SortCharts();
@@ -364,29 +369,20 @@ public class LevelManager
                     continue;
                 }
 
-                var isLibrary = Context.Library.Levels.ContainsKey(meta.id);
-                DateTime addedDate;
-                if (isLibrary)
+                timer.Time("Validate");
+
+                var level = Level.FromLocal(path, type, meta);
+
+                var record = level.Record;
+
+                if (record.AddedDate == DateTimeOffset.MinValue)
                 {
-                    addedDate = Context.Library.Levels[meta.id].addedDate;
+                    record.AddedDate = info.LastWriteTimeUtc;
                 }
-                else
-                {
-                    addedDate = Context.LocalPlayer.GetAddedDate(meta.id);
-                    if (addedDate == default)
-                    {
-                        addedDate = info.LastWriteTimeUtc;
-                        Context.LocalPlayer.SetAddedDate(meta.id, addedDate);
-                    }
-                }
-                
-                var level = new Level(path, 
-                    type,
-                    meta,
-                    addedDate,
-                    Context.LocalPlayer.GetLastPlayedDate(meta.id)
-                );
-                
+
+                level.SaveRecord();
+                timer.Time("LevelRecord");
+
                 LoadedLocalLevels[meta.id] = level;
                 loadedPaths.Add(path);
                 results.Add(level);
@@ -437,9 +433,11 @@ public class LevelManager
                             Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {jsonPath}");
                         }
                     }
+
+                    timer.Time("Generate thumbnail");
                 }
 
-                Debug.Log($"Loaded {index + 1}/{jsonPaths.Count}: {meta.id}");
+                Debug.Log($"Loaded {index + 1}/{jsonPaths.Count}: {meta.id} ");
             }
             catch (Exception e)
             {
@@ -447,6 +445,8 @@ public class LevelManager
                 Debug.LogError($"Unexpected error while loading from {jsonPath}");
                 Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {jsonPath}");
             }
+
+            timer.Time();
         }
 
         return results;

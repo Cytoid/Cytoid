@@ -34,9 +34,10 @@ public class TierBreakScreen : Screen
 
     public override string GetId() => Id;
 
-    public override async void OnScreenInitialized()
+    public override async void OnScreenBecameActive()
     {
-        base.OnScreenInitialized();
+        base.OnScreenBecameActive();
+        
         // TODO: Most code here is the same as the one in ResultScreen.cs. Refactor?
 
         gameState = Context.GameState;
@@ -81,10 +82,7 @@ public class TierBreakScreen : Screen
                                   $"<b>Late</b> {gameState.LateCount}    " +
                                   $"<b>{"RESULT_AVG_TIMING_ERR".Get()}</b> {gameState.AverageTimingError:0.000}s    " +
                                   $"<b>{"RESULT_STD_TIMING_ERR".Get()}</b> {gameState.StandardTimingError:0.000}s";
-        if (!Context.LocalPlayer.DisplayEarlyLateIndicators) advancedMetricText.text = "";
-        
-        // TIER START!!!
-        // =====================
+        if (!Context.LocalPlayer.Settings.DisplayEarlyLateIndicators) advancedMetricText.text = "";
         
         tierState = Context.TierState;
         modeText.text = tierState.Tier.Meta.name;
@@ -103,7 +101,7 @@ public class TierBreakScreen : Screen
         }
         
         nextStageButton.State = tierState.IsFailed ? CircleButtonState.GoBack : (tierState.IsCompleted ? CircleButtonState.Finish : CircleButtonState.NextStage);
-        nextStageButton.interactableMonoBehavior.onPointerClick.AddListener(_ =>
+        nextStageButton.interactableMonoBehavior.onPointerClick.SetListener(_ =>
         {
             nextStageButton.StopPulsing();
             if (tierState.IsFailed)
@@ -117,7 +115,7 @@ public class TierBreakScreen : Screen
             }
         });
         retryButton.State = CircleButtonState.Retry;
-        retryButton.interactableMonoBehavior.onPointerClick.AddListener(_ =>
+        retryButton.interactableMonoBehavior.onPointerClick.SetListener(_ =>
         {
             retryButton.StopPulsing();
             Retry();
@@ -136,16 +134,16 @@ public class TierBreakScreen : Screen
         criterionEntryHolder.transform.RebuildLayout();
 
         await Resources.UnloadUnusedAssets();
-    }
-
-    public override void OnScreenBecameActive()
-    {
-        base.OnScreenBecameActive();
 
         TranslucentCover.Show(0.9f);
         ProfileWidget.Instance.Enter();
+
+        if (tierState.IsFailed)
+        {
+            Toast.Next(Toast.Status.Failure, "TOAST_TIER_FAILED".Get());
+        }
         
-        if (!tierState.IsCompleted)
+        if (!tierState.IsCompleted && !tierState.IsFailed)
         {
             proceedToNextStageTime = DateTimeOffset.UtcNow.AddSeconds(IntermissionSeconds);
             nextBroadcastCountdownTime = DateTimeOffset.UtcNow;
@@ -187,7 +185,7 @@ public class TierBreakScreen : Screen
             if (DateTimeOffset.UtcNow > proceedToNextStageTime)
             {
                 // Fail!
-                Toast.Next(Toast.Status.Failure, "TOAST_TIER_TIMED_OUT");
+                Dialog.PromptAlert("DIALOG_TIER_TIMED_OUT".Get());
                 retryButton.StartPulsing();
         
                 nextStageButton.State = CircleButtonState.GoBack;
@@ -203,6 +201,7 @@ public class TierBreakScreen : Screen
                     Retry();
                 });
                 
+                proceedToNextStageTime = DateTimeOffset.MaxValue;
             }
         }
     }
@@ -250,7 +249,8 @@ public class TierBreakScreen : Screen
     public void GoBack()
     {
         TranslucentCover.Hide();
-        
+
+        Context.TierState = null;
         Context.ScreenManager.ChangeScreen(TierSelectionScreen.Id, ScreenTransition.Out, willDestroy: true,
             onFinished: screen => Resources.UnloadUnusedAssets());
         Context.AudioManager.Get("LevelStart").Play();

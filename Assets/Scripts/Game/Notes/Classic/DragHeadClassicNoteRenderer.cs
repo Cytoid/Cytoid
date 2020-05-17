@@ -26,21 +26,25 @@ public class DragHeadClassicNoteRenderer : ClassicNoteRenderer
         {
             SpriteMask.enabled = Game.Time >= Note.Model.intro_time;
         }
-        
         if (Game.Time >= Note.Model.intro_time && (!Game.State.IsJudged(DragHeadNote.EndNoteModel.id) || Game.Time < DragHeadNote.EndNoteModel.start_time))
         {
-            Ring.enabled = true;
-            Fill.enabled = true;
             if (Game.State.Mods.Contains(Mod.HideNotes))
             {
                 Ring.enabled = false;
                 Fill.enabled = false;
+            }
+            else
+            {
+                Ring.enabled = true;
+                Fill.enabled = true;
+                if (DisplayNoteId) NoteId.gameObject.SetActive(true);
             }
         }
         else
         {
             Ring.enabled = false;
             Fill.enabled = false;
+            if (DisplayNoteId) NoteId.gameObject.SetActive(false);
         }
     }
 

@@ -1,9 +1,6 @@
-using System;
 using DG.Tweening;
-using LeTai.Asset.TranslucentImage;
 using UniRx.Async;
 using UnityEngine.UI;
-using Color = UnityEngine.Color;
 
 public class InitializationScreen : Screen
 {
@@ -24,6 +21,8 @@ public class InitializationScreen : Screen
         TranslucentCover.Show(0.5f, 2f);
         spinnerElement.IsSpinning = true;
         statusText.text = "";
+
+        await UniTask.DelayFrame(10);
         
         Context.LevelManager.OnLevelInstallProgress.AddListener(OnLevelInstallProgress);
         await Context.LevelManager.InstallUserCommunityLevels();
@@ -33,6 +32,13 @@ public class InitializationScreen : Screen
         await Context.LevelManager.LoadLevelsOfType(LevelType.Community);
         await Context.LevelManager.LoadLevelsOfType(LevelType.Official);
         Context.LevelManager.OnLevelLoadProgress.RemoveListener(OnLevelLoadProgress);
+
+        if (Context.LocalPlayer.ShouldMigrate)
+        {
+            statusText.text = "INIT_MIGRATING_DATA".Get();
+            statusText.transform.RebuildLayout();
+            await Context.LocalPlayer.Migrate();
+        }
 
         spinnerElement.gameObject.SetActive(false);
         statusText.text = "INIT_TOUCH_TO_START".Get();

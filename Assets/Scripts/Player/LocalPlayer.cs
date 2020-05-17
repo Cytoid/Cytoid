@@ -1,11 +1,170 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UniRx.Async;
 using UnityEngine;
 
 public class LocalPlayer
 {
-    
+
+    public LocalPlayerSettings Settings { get; private set; }
+
+    public bool ShouldMigrate { get; private set; }
+
+    private readonly LocalPlayerLegacy legacy = new LocalPlayerLegacy();
+
+    public void LoadSettings()
+    {
+        Context.Database.Let(it =>
+        {
+            var col = it.GetCollection<LocalPlayerSettings>("settings");
+            var result = col.FindOne(x => true);
+
+            if (result == null)
+            {
+                // TODO: Remove migration... one day
+                ShouldMigrate = true;
+                result = CreateSettingsFromLegacy();
+                col.Insert(result);
+            }
+            
+            Settings = result;
+        });
+    }
+
+    public void SaveSettings()
+    {
+        Context.Database.Let(it =>
+        {
+            it.DropCollection("settings");
+            it.GetCollection<LocalPlayerSettings>("settings").Insert(Settings);
+        });
+    }
+
+    public async UniTask Migrate()
+    {
+        await UniTask.DelayFrame(30);
+        Context.Database.Let(it =>
+        {
+            foreach (var level in Context.LevelManager.LoadedLocalLevels.Values)
+            {
+                var record = new LevelRecord
+                {
+                    LevelId = level.Id,
+                    RelativeNoteOffset = legacy.GetLevelNoteOffset(level.Id),
+                    AddedDate = legacy.GetAddedDate(level.Id).Let(time => time == default ? DateTimeOffset.MinValue : new DateTimeOffset(time)),
+                    LastPlayedDate = legacy.GetLastPlayedDate(level.Id).Let(time => time == default ? DateTimeOffset.MinValue : new DateTimeOffset(time)),
+                    BestPerformances = new Dictionary<string, LevelRecord.Performance>(),
+                    BestPracticePerformances = new Dictionary<string, LevelRecord.Performance>(),
+                    PlayCounts = new Dictionary<string, int>(),
+                };
+                foreach (var chart in level.Meta.charts)
+                {
+                    record.PlayCounts[chart.type] = legacy.GetPlayCount(level.Id, chart.type);
+                    
+                    if (legacy.HasPerformance(level.Id, chart.type, true))
+                    {
+                        var bestPerformance = legacy.GetBestPerformance(level.Id, chart.type, true).Let(p =>
+                            new LevelRecord.Performance
+                            {
+                                Score = p.Score,
+                                Accuracy = p.Accuracy / 100.0,
+                            });
+                        record.BestPerformances[chart.type] = bestPerformance;
+                    }
+
+                    if (legacy.HasPerformance(level.Id, chart.type, false))
+                    {
+                        var bestPracticePerformance = legacy.GetBestPerformance(level.Id, chart.type, false).Let(p =>
+                            new LevelRecord.Performance
+                            {
+                                Score = p.Score,
+                                Accuracy = p.Accuracy / 100.0,
+                            });
+                        record.BestPracticePerformances[chart.type] = bestPracticePerformance;
+                    }
+                }
+
+                Context.Database.SetLevelRecord(record, true);
+            }
+        });
+    }
+
+    private LocalPlayerSettings CreateSettingsFromLegacy()
+    {
+        Debug.Log($"Fill color: {legacy.GetFillColor(NoteType.Click, false)}");
+        Debug.Log($"Hitbox size: {legacy.ClickHitboxSize}");
+        var settings = new LocalPlayerSettings
+        {
+            SchemaVersion = 1,
+            Language = legacy.Language,
+            PlayRanked = legacy.PlayRanked,
+            EnabledMods = legacy.EnabledMods.ToList(),
+            DisplayBoundaries = legacy.ShowBoundaries,
+            DisplayEarlyLateIndicators = legacy.DisplayEarlyLateIndicators,
+            HitboxSizes = new Dictionary<NoteType, int>
+            {
+                {NoteType.Click, legacy.ClickHitboxSize},
+                {NoteType.DragChild, legacy.DragHitboxSize},
+                {NoteType.DragHead, legacy.DragHitboxSize},
+                {NoteType.Hold, legacy.HoldHitboxSize},
+                {NoteType.LongHold, legacy.HoldHitboxSize},
+                {NoteType.Flick, legacy.FlickHitboxSize},
+            },
+            NoteRingColors = new Dictionary<NoteType, Color>
+            {
+                {NoteType.Click, legacy.GetRingColor(NoteType.Click, false)},
+                {NoteType.DragChild, legacy.GetRingColor(NoteType.DragChild, false)},
+                {NoteType.DragHead, legacy.GetRingColor(NoteType.DragHead, false)},
+                {NoteType.Hold, legacy.GetRingColor(NoteType.Hold, false)},
+                {NoteType.LongHold, legacy.GetRingColor(NoteType.LongHold, false)},
+                {NoteType.Flick, legacy.GetRingColor(NoteType.Flick, false)},
+            },
+            NoteFillColors = new Dictionary<NoteType, Color>
+            {
+                {NoteType.Click, legacy.GetFillColor(NoteType.Click, false)},
+                {NoteType.DragChild, legacy.GetFillColor(NoteType.DragChild, false)},
+                {NoteType.DragHead, legacy.GetFillColor(NoteType.DragHead, false)},
+                {NoteType.Hold, legacy.GetFillColor(NoteType.Hold, false)},
+                {NoteType.LongHold, legacy.GetFillColor(NoteType.LongHold, false)},
+                {NoteType.Flick, legacy.GetFillColor(NoteType.Flick, false)},
+            },
+            NoteFillColorsAlt = new Dictionary<NoteType, Color>
+            {
+                {NoteType.Click, legacy.GetFillColor(NoteType.Click, true)},
+                {NoteType.DragChild, legacy.GetFillColor(NoteType.DragChild, true)},
+                {NoteType.DragHead, legacy.GetFillColor(NoteType.DragHead, true)},
+                {NoteType.Hold, legacy.GetFillColor(NoteType.Hold, true)},
+                {NoteType.LongHold, legacy.GetFillColor(NoteType.LongHold, true)},
+                {NoteType.Flick, legacy.GetFillColor(NoteType.Flick, true)},
+            },
+            HoldHitSoundTiming = (HoldHitSoundTiming) legacy.HoldHitSoundTiming,
+            NoteSize = legacy.NoteSize,
+            HorizontalMargin = legacy.HorizontalMargin,
+            VerticalMargin = legacy.VerticalMargin,
+            CoverOpacity = legacy.CoverOpacity,
+            MusicVolume = legacy.MusicVolume,
+            SoundEffectsVolume = legacy.SoundEffectsVolume,
+            HitSound = legacy.HitSound,
+            HitTapticFeedback = legacy.HitTapticFeedback,
+            DisplayStoryboardEffects = legacy.UseStoryboardEffects,
+            GraphicsQuality = (GraphicsQuality) Enum.Parse(typeof(GraphicsQuality), legacy.GraphicsQuality, true),
+            BaseNoteOffset = legacy.BaseNoteOffset,
+            HeadsetNoteOffset = legacy.HeadsetNoteOffset,
+            ClearEffectsSize = legacy.ClearFXSize,
+            DisplayProfiler = legacy.DisplayProfiler,
+            DisplayNoteIds = legacy.DisplayNoteIds,
+            LocalLevelSort = (LevelSort) Enum.Parse(typeof(LevelSort), legacy.LocalLevelsSortBy),
+            AndroidDspBufferSize = legacy.DspBufferSize,
+            LocalLevelSortIsAscending = legacy.LocalLevelsSortInAscendingOrder
+        };
+        return settings;
+    }
+
+}
+
+public class LocalPlayerLegacy
+{
     public int Language
     {
         get => PlayerPrefs.GetInt("Language", 0);
@@ -277,7 +436,7 @@ public class LocalPlayer
     {
         return SecuredPlayerPrefs.HasKey(LastPlayedKey(levelId)) ? 
             DateTime.Parse(SecuredPlayerPrefs.GetString(LastPlayedKey(levelId), null)) : 
-            DateTime.MinValue;
+            default;
     }
 
     public void SetLastPlayedDate(string levelId, DateTime dateTime)

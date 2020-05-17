@@ -12,9 +12,7 @@ public class MainMenuCardButton : NavigationElement
     {
         if (requireOnline && Context.IsOffline())
         {
-            var dialog = Dialog.Instantiate();
-            dialog.Message = "DIALOG_OFFLINE_FEATURE_NOT_AVAILABLE".Get();
-            dialog.Open();
+            Dialog.PromptAlert("DIALOG_OFFLINE_FEATURE_NOT_AVAILABLE".Get());
             return;
         }
 

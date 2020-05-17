@@ -10,10 +10,10 @@ public class AllPerfectSplash : AwaitableAnimatedElement
 
     public void OnGameComplete()
     {
-        if (game.State.Mode != GameMode.Calibration && game.State.Score == 1000000)
+        if (game.State.Mode != GameMode.Calibration && game.State.Score == 1000000 && !game.EditorImmediatelyComplete)
         {
             game.BeforeExitTasks.Add(Animate());
-            Context.AudioManager.Get("LevelMax").Play(AudioTrackIndex.RoundRobin);
+            Context.AudioManager.Get("LevelMax").Play();
         }
     }
 }

@@ -21,6 +21,12 @@ public class RemoteAssetManager
         return list != null && list.Count > 0;
     }
 
+    public async UniTask<bool> IsCached(string assetId)
+    {
+        var totalSize = (ulong) await Addressables.GetDownloadSizeAsync(assetId).Task;
+        return totalSize == 0;
+    }
+
     public async UniTask<GameObject> LoadDownloadedAsset(string assetId)
     {
         return await Addressables.InstantiateAsync(assetId).Task;

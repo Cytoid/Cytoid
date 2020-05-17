@@ -30,7 +30,7 @@ public class MainTranslucentImage : SingletonMonoBehavior<MainTranslucentImage>,
     }
 
     private static readonly List<string> OverlayScreenIds = new List<string> {SignInScreen.Id, ProfileScreen.Id};
-    private static readonly List<string> BlockedScreenIds = new List<string> {GamePreparationScreen.Id, TierSelectionScreen.Id};
+    private static readonly List<string> BlockedScreenIds = new List<string> {GamePreparationScreen.Id, TierSelectionScreen.Id, EventSelectionScreen.Id};
 
     public void Initialize()
     {

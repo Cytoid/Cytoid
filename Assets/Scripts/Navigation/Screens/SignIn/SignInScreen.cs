@@ -17,7 +17,7 @@ public class SignInScreen : Screen
     public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
-        uidInput.text = Context.OnlinePlayer.Uid;
+        uidInput.text = Context.Player.Id;
     }
 
     public override void OnScreenBecameActive()
@@ -43,7 +43,8 @@ public class SignInScreen : Screen
 
         var completed = false;
 
-        Context.OnlinePlayer.Uid = uidInput.text.Trim();
+        Context.Player.Settings.PlayerId = uidInput.text.Trim();
+        Context.Player.SaveSettings();
         Context.OnlinePlayer.Authenticate(passwordInput.text)
             .Then(profile =>
             {

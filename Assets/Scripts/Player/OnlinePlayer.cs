@@ -5,9 +5,7 @@ using Newtonsoft.Json.Linq;
 using Proyecto26;
 using RSG;
 using UnityEngine;
-using UnityEngine.Assertions;
 using UnityEngine.Events;
-using UnityEngine.SocialPlatforms.Impl;
 
 public class OnlinePlayer
 {
@@ -34,14 +32,13 @@ public class OnlinePlayer
                 Uri = Context.ApiUrl + "/session",
                 BodyString = JObject.FromObject(new
                 {
-                    username = Uid,
+                    username = Context.Player.Id,
                     password
                 }).ToString()
             }).Then(session =>
                 {
-                    JwtToken = session.token;
-                    Debug.Log(session.token);
-                    Id = session.user.Id;
+                    Context.Player.Settings.LoginToken = session.token;
+                    Context.Player.SaveSettings();
                     return FetchProfile();
                 }
             ).Then(profile =>
@@ -56,7 +53,8 @@ public class OnlinePlayer
                 {
                     if (requestException.IsHttpError)
                     {
-                        JwtToken = null;
+                        Context.Player.Settings.LoginToken = null;
+                        Context.Player.SaveSettings();
                     }
                 }
                 reject(result);
@@ -68,7 +66,7 @@ public class OnlinePlayer
     {
         IsAuthenticating = true;
 
-        var jwtToken = JwtToken;
+        var jwtToken = Context.Player.Settings.LoginToken;
         if (jwtToken == null) throw new ArgumentException();
 
         Debug.Log($"JWT token: {jwtToken}");
@@ -85,9 +83,8 @@ public class OnlinePlayer
                 }
             }).Then(session =>
                 {
-                    JwtToken = session.token;
-                    Debug.Log(session.token);
-                    Id = session.user.Id;
+                    Context.Player.Settings.LoginToken = session.token;
+                    Context.Player.SaveSettings();
                     return FetchProfile();
                 }
             ).Then(profile =>
@@ -102,7 +99,8 @@ public class OnlinePlayer
                 {
                     if (requestException.IsHttpError)
                     {
-                        JwtToken = null;
+                        Context.Player.Settings.LoginToken = null;
+                        Context.Player.SaveSettings();
                     }
                 }
                 reject(result);
@@ -112,7 +110,8 @@ public class OnlinePlayer
 
     public void Deauthenticate()
     {
-        JwtToken = null;
+        Context.Player.Settings.LoginToken = null;
+        Context.Player.SaveSettings();
         LastProfile = null;
         IsAuthenticating = false;
         IsAuthenticated = false;
@@ -121,33 +120,15 @@ public class OnlinePlayer
         Context.Database.DropCollection("characters");
     }
 
-    public string Id
-    {
-        get => PlayerPrefs.GetString("Id");
-        set => PlayerPrefs.SetString("Id", value);
-    }
-
-    public string Uid
-    {
-        get => PlayerPrefs.GetString("Uid");
-        set => PlayerPrefs.SetString("Uid", value);
-    }
-
-    public string JwtToken
-    {
-        get => SecuredPlayerPrefs.GetString("JwtToken", null);
-        set => SecuredPlayerPrefs.SetString("JwtToken", value);
-    }
-
     public Dictionary<string, string> GetAuthorizationHeaders()
     {
-        if (JwtToken == null)
+        if (Context.Player.Settings.LoginToken == null)
         {
             return new Dictionary<string, string>();
         }
         return new Dictionary<string, string>
         {
-            {"Authorization", "JWT " + JwtToken}
+            {"Authorization", "JWT " + Context.Player.Settings.LoginToken}
         };
     }
 
@@ -156,7 +137,7 @@ public class OnlinePlayer
         if (Context.IsOnline())
         {
             // Online
-            if (uid == null) uid = Uid;
+            if (uid == null) uid = Context.Player.Id;
             return RestClient.Get<Profile>(new RequestHelper
             {
                 Uri = $"{Context.ApiUrl}/profile/{uid}/full",
@@ -196,7 +177,7 @@ public class OnlinePlayer
                     return RestClient.GetArray<RankingEntry>(new RequestHelper
                     {
                         Uri =
-                            $"{Context.ServicesUrl}/levels/{levelId}/charts/{chartType}/user_ranking?user={Context.OnlinePlayer.Uid}&limit=6",
+                            $"{Context.ServicesUrl}/levels/{levelId}/charts/{chartType}/user_ranking?user={Context.Player.Id}&limit=6",
                         Headers = GetAuthorizationHeaders(),
                         EnableDebug = true
                     });
@@ -211,7 +192,7 @@ public class OnlinePlayer
                     for (var index = 0; index < data.Length; index++)
                     {
                         var entry = data[index];
-                        if (entry.owner.Uid == Context.OnlinePlayer.Uid)
+                        if (entry.owner.Uid == Context.Player.Id)
                         {
                             userRank = entry.rank;
                             userEntry = entry;
@@ -287,7 +268,7 @@ public class OnlinePlayer
                     return RestClient.GetArray<TierRankingEntry>(new RequestHelper
                     {
                         Uri =
-                            $"{Context.ServicesUrl}/seasons/alpha/tiers/{tierId}/user_ranking?user={Context.OnlinePlayer.Uid}&limit=6",
+                            $"{Context.ServicesUrl}/seasons/alpha/tiers/{tierId}/user_ranking?user={Context.Player.Id}&limit=6",
                         Headers = GetAuthorizationHeaders(),
                         EnableDebug = true
                     });
@@ -302,7 +283,7 @@ public class OnlinePlayer
                     for (var index = 0; index < data.Length; index++)
                     {
                         var entry = data[index];
-                        if (entry.owner.Uid == Context.OnlinePlayer.Uid)
+                        if (entry.owner.Uid == Context.Player.Id)
                         {
                             userRank = entry.rank;
                             break;

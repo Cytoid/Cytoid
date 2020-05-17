@@ -39,12 +39,12 @@ public class GameConfig
     {
         var chart = game.Chart;
 
-        var lp = Context.LocalPlayer;
+        var lp = Context.Player;
         ChartOffset = lp.Settings.BaseNoteOffset + game.Level.Record.RelativeNoteOffset;
         if (DetectHeadset.Detect()) ChartOffset += lp.Settings.HeadsetNoteOffset;
 
         UseScannerSmoothing = true;
-        DisplayNoteIds = Context.LocalPlayer.Settings.DisplayNoteIds;
+        DisplayNoteIds = Context.Player.Settings.DisplayNoteIds;
 
         GlobalRingColorOverride = chart.Model.ring_color?.ToColor() ?? Color.clear;
         foreach (NoteType type in Enum.GetValues(typeof(NoteType)))
@@ -103,7 +103,7 @@ public class GameConfig
 
         if (game.Storyboard != null && game.Storyboard.Controllers.Count > 0)
         {
-            game.Storyboard.Config.UseEffects = Context.LocalPlayer.Settings.DisplayStoryboardEffects;
+            game.Storyboard.Config.UseEffects = Context.Player.Settings.DisplayStoryboardEffects;
         }
 
         Context.UpdateGraphicsQuality();

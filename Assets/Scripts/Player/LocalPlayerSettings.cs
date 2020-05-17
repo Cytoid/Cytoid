@@ -9,6 +9,12 @@ using UnityEngine;
 public class LocalPlayerSettings
 {
     [JsonProperty("schema_version")] public int SchemaVersion { get; set; }
+    
+    [JsonProperty("player_id")] public string PlayerId { get; set; }
+    
+    [JsonProperty("login_token")] public string LoginToken { get; set; }
+    
+    [JsonProperty("active_character_id")] public string ActiveCharacterId { get; set; }
 
     [JsonProperty("language")] public int Language { get; set; } = 0;
     [JsonProperty("play_ranked")] public bool PlayRanked { get; set; } = true;

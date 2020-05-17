@@ -112,7 +112,7 @@ public class TierResultScreen : Screen
                                   $"<b>Late</b> {tierState.LateCount}    " +
                                   $"<b>{"RESULT_AVG_TIMING_ERR".Get()}</b> {tierState.AverageTimingError:0.000}s    " +
                                   $"<b>{"RESULT_STD_TIMING_ERR".Get()}</b> {tierState.StandardTimingError:0.000}s";
-        if (!Context.LocalPlayer.Settings.DisplayEarlyLateIndicators) advancedMetricText.text = "";
+        if (!Context.Player.Settings.DisplayEarlyLateIndicators) advancedMetricText.text = "";
 
         newBestText.text = "";
         if (tierState.Completion >= 1)

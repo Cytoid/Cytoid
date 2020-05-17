@@ -4,8 +4,10 @@ using System.Linq;
 using UniRx.Async;
 using UnityEngine;
 
-public class LocalPlayer
+public class Player
 {
+
+    public string Id => Settings.PlayerId;
 
     public LocalPlayerSettings Settings { get; private set; }
 
@@ -97,6 +99,9 @@ public class LocalPlayer
         var settings = new LocalPlayerSettings
         {
             SchemaVersion = 1,
+            PlayerId = PlayerPrefs.GetString("Uid"),
+            LoginToken = SecuredPlayerPrefs.GetString("JwtToken", null),
+            ActiveCharacterId = PlayerPrefs.GetString("ActiveCharacter", null),
             Language = legacy.Language,
             PlayRanked = legacy.PlayRanked,
             EnabledMods = legacy.EnabledMods.ToList(),

@@ -69,7 +69,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
     {
         foreach (var controller in controllers.Values)
         {
-            controller.Volume = controller.IsMusic ? Context.LocalPlayer.Settings.MusicVolume : Context.LocalPlayer.Settings.SoundEffectsVolume;
+            controller.Volume = controller.IsMusic ? Context.Player.Settings.MusicVolume : Context.Player.Settings.SoundEffectsVolume;
         }
     }
 
@@ -120,7 +120,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         {
             this.audioClip = audioClip;
             this.isResource = isResource;
-            volume = isMusic ? Context.LocalPlayer.Settings.MusicVolume : Context.LocalPlayer.Settings.SoundEffectsVolume;
+            volume = isMusic ? Context.Player.Settings.MusicVolume : Context.Player.Settings.SoundEffectsVolume;
         }
 
         public AudioSource Source => Parent.audioSources[index];
@@ -219,7 +219,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         {
             pointer = NativeAudio.Load(audioClip, NativeAudio.LoadOptions.defaultOptions);
             length = audioClip.length;
-            volume = isMusic ? Context.LocalPlayer.Settings.MusicVolume : Context.LocalPlayer.Settings.SoundEffectsVolume;
+            volume = isMusic ? Context.Player.Settings.MusicVolume : Context.Player.Settings.SoundEffectsVolume;
         }
 
         public override float Volume

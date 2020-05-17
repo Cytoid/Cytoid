@@ -175,7 +175,7 @@ public class Game : MonoBehaviour
         var width = height * ratio;
         var topRatio = 0.0966666f;
         var bottomRatio = 0.07f;
-        var verticalRatio = 1 - width * (topRatio + bottomRatio) / height + (3 - Context.LocalPlayer.Settings.VerticalMargin) * 0.05f;
+        var verticalRatio = 1 - width * (topRatio + bottomRatio) / height + (3 - Context.Player.Settings.VerticalMargin) * 0.05f;
         var verticalOffset = -(width * (topRatio - (topRatio + bottomRatio) / 2.0f));
         Chart = new Chart(
             chartText,
@@ -184,7 +184,7 @@ public class Game : MonoBehaviour
             true,
             mods.Contains(Mod.Fast) ? 1.5f : (mods.Contains(Mod.Slow) ? 0.75f : 1),
             camera.orthographicSize,
-            0.8f + (5 - Context.LocalPlayer.Settings.HorizontalMargin - 1) * 0.02f,
+            0.8f + (5 - Context.Player.Settings.HorizontalMargin - 1) * 0.02f,
             verticalRatio,
             verticalOffset
         );
@@ -221,9 +221,9 @@ public class Game : MonoBehaviour
         }
 
         // Load hit sound
-        if (Context.LocalPlayer.Settings.HitSound != "none")
+        if (Context.Player.Settings.HitSound != "none")
         {
-            var resource = await Resources.LoadAsync<AudioClip>("Audio/HitSounds/" + Context.LocalPlayer.Settings.HitSound);
+            var resource = await Resources.LoadAsync<AudioClip>("Audio/HitSounds/" + Context.Player.Settings.HitSound);
             Context.AudioManager.Load("HitSound", resource as AudioClip, isResource: true);
         }
 

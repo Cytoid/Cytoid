@@ -58,7 +58,7 @@ public class HitSoundSelect : MonoBehaviour, ScreenBecameActiveListener
         if (select == null) select = GetComponentInChildren<CaretSelect>();
         select.labels = new List<string>(HitSoundNameKeys.Select(it => it.Get()));
         select.values = new List<string>(HitSounds);
-        var lp = Context.LocalPlayer;
+        var lp = Context.Player;
         select.Select(lp.Settings.HitSound, false, false);
         select.onSelect.RemoveAllListeners();
         select.onSelect.AddListener((_, it) =>

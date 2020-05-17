@@ -26,7 +26,7 @@ public class HoldNote : Note
             HeldDuration = Game.Time - HoldingStartTime;
             HoldProgress = (Game.Time - Model.start_time) / Model.Duration;
             
-            if (!playedHitSoundAtBegin && HoldProgress >= 0 && Context.LocalPlayer.Settings.HoldHitSoundTiming.Let(it => it == HoldHitSoundTiming.Begin || it == HoldHitSoundTiming.Both))
+            if (!playedHitSoundAtBegin && HoldProgress >= 0 && Context.Player.Settings.HoldHitSoundTiming.Let(it => it == HoldHitSoundTiming.Begin || it == HoldHitSoundTiming.Both))
             {
                 playedHitSoundAtBegin = true;
                 PlayHitSound();

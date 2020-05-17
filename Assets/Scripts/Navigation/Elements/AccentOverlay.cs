@@ -19,7 +19,7 @@ public class AccentOverlay : MonoBehaviour, ScreenBecameActiveListener
         {
             case ResultScreen.Id:
                 // TODO: Big refactors needed lol
-                if (!Context.LocalPlayer.Settings.PlayRanked)
+                if (!Context.Player.Settings.PlayRanked)
                 {
                     image.color = "#F953C6".ToColor().WithAlpha(0.7f);
                     text.text = "RESULT_MODE_PRACTICE".Get();

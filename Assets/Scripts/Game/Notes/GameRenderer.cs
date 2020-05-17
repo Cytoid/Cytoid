@@ -31,7 +31,7 @@ public class GameRenderer
         boundaryBottom = GameObjectProvider.Instance.boundaryBottom;
         boundaryTopAnimator = boundaryTop.GetComponentInChildren<Animator>();
         boundaryBottomAnimator = boundaryBottom.GetComponentInChildren<Animator>();
-        if (!Context.LocalPlayer.Settings.DisplayBoundaries)
+        if (!Context.Player.Settings.DisplayBoundaries)
         {
             this.ListOf(
                 boundaryTop.GetComponentInChildren<SpriteRenderer>(),
@@ -58,7 +58,7 @@ public class GameRenderer
         var path = "file://" + Game.Level.Path + Game.Level.Meta.background.path;
         cover.sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.GameCover);
         cover.FitSpriteAspectRatio();
-        cover.DOFade(Context.LocalPlayer.Settings.CoverOpacity, 0.8f);
+        cover.DOFade(Context.Player.Settings.CoverOpacity, 0.8f);
     }
 
     public void OnGameCompleted()

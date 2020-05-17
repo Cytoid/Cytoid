@@ -33,11 +33,11 @@ public class InitializationScreen : Screen
         await Context.LevelManager.LoadLevelsOfType(LevelType.Official);
         Context.LevelManager.OnLevelLoadProgress.RemoveListener(OnLevelLoadProgress);
 
-        if (Context.LocalPlayer.ShouldMigrate)
+        if (Context.Player.ShouldMigrate)
         {
             statusText.text = "INIT_MIGRATING_DATA".Get();
             statusText.transform.RebuildLayout();
-            await Context.LocalPlayer.Migrate();
+            await Context.Player.Migrate();
         }
 
         spinnerElement.gameObject.SetActive(false);

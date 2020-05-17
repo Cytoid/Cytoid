@@ -375,7 +375,7 @@ public class TierSelectionScreen : Screen
         
         previewAudioSource.volume = 0;
         previewAudioSource.DOKill();
-        previewAudioSource.DOFade(Context.LocalPlayer.Settings.MusicVolume, 0.5f).SetEase(Ease.Linear);
+        previewAudioSource.DOFade(Context.Player.Settings.MusicVolume, 0.5f).SetEase(Ease.Linear);
         previewAudioSource.loop = true;
         previewAudioSource.Play();
     }
@@ -415,7 +415,7 @@ public class TierSelectionScreen : Screen
             
             Context.AudioManager.Get("LevelStart").Play();
 
-            Context.SelectedMods = Context.LocalPlayer.Settings.EnabledMods.ToHashSet(); // This will be filtered
+            Context.SelectedMods = Context.Player.Settings.EnabledMods.ToHashSet(); // This will be filtered
             
             await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
 
@@ -508,7 +508,7 @@ public class TierSelectionScreen : Screen
         
         initializedSettingsTab = true;
         
-        var lp = Context.LocalPlayer;
+        var lp = Context.Player;
         var provider = PreferenceElementProvider.Instance;
 
         foreach (var (stringKey, index) in new[] {("1ST", 0), ("2ND", 1), ("3RD", 2)})

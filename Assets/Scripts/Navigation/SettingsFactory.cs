@@ -8,7 +8,7 @@ public static class SettingsFactory
 {
     public static void InstantiateGeneralSettings(Transform parent, bool more = false)
     {
-        var lp = Context.LocalPlayer;
+        var lp = Context.Player;
         var provider = PreferenceElementProvider.Instance;
 
         if (more)
@@ -160,7 +160,7 @@ public static class SettingsFactory
 
     public static void InstantiateGameplaySettings(Transform parent)
     {
-        var lp = Context.LocalPlayer;
+        var lp = Context.Player;
         var provider = PreferenceElementProvider.Instance;
         
         Object.Instantiate(provider.pillRadioGroup, parent)
@@ -215,7 +215,7 @@ public static class SettingsFactory
 
     public static void InstantiateVisualSettings(Transform parent)
     {
-        var lp = Context.LocalPlayer;
+        var lp = Context.Player;
         var provider = PreferenceElementProvider.Instance;
 
         Object.Instantiate(provider.select, parent)
@@ -316,7 +316,7 @@ public static class SettingsFactory
 
     public static void InstantiateAdvancedSettings(Transform parent)
     {
-        var lp = Context.LocalPlayer;
+        var lp = Context.Player;
         var provider = PreferenceElementProvider.Instance;
 
         if (Application.platform == RuntimePlatform.Android)
@@ -331,7 +331,7 @@ public static class SettingsFactory
                 element.caretSelect.onSelect.AddListener((_, value) =>
                 {
                     var audioConfig = AudioSettings.GetConfiguration();
-                    audioConfig.dspBufferSize = Context.LocalPlayer.Settings.AndroidDspBufferSize > 0 ? Context.LocalPlayer.Settings.AndroidDspBufferSize : Context.DefaultDspBufferSize;
+                    audioConfig.dspBufferSize = Context.Player.Settings.AndroidDspBufferSize > 0 ? Context.Player.Settings.AndroidDspBufferSize : Context.DefaultDspBufferSize;
                     AudioSettings.Reset(audioConfig);
                 });
             });

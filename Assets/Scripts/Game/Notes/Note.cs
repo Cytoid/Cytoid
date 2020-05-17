@@ -63,7 +63,7 @@ public abstract class Note : MonoBehaviour
         }
 
         // Hit sound
-        if (grade != NoteGrade.Miss && (!(this is HoldNote) || Context.LocalPlayer.Settings.HoldHitSoundTiming.Let(it => it == HoldHitSoundTiming.End || it == HoldHitSoundTiming.Both)))
+        if (grade != NoteGrade.Miss && (!(this is HoldNote) || Context.Player.Settings.HoldHitSoundTiming.Let(it => it == HoldHitSoundTiming.End || it == HoldHitSoundTiming.Both)))
         {
             PlayHitSound();
         }

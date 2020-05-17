@@ -82,7 +82,7 @@ public class TierBreakScreen : Screen
                                   $"<b>Late</b> {gameState.LateCount}    " +
                                   $"<b>{"RESULT_AVG_TIMING_ERR".Get()}</b> {gameState.AverageTimingError:0.000}s    " +
                                   $"<b>{"RESULT_STD_TIMING_ERR".Get()}</b> {gameState.StandardTimingError:0.000}s";
-        if (!Context.LocalPlayer.Settings.DisplayEarlyLateIndicators) advancedMetricText.text = "";
+        if (!Context.Player.Settings.DisplayEarlyLateIndicators) advancedMetricText.text = "";
         
         tierState = Context.TierState;
         modeText.text = tierState.Tier.Meta.name;

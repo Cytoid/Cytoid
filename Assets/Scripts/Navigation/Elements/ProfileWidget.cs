@@ -65,7 +65,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
             SetSignedIn(Context.OnlinePlayer.LastProfile);
         }
         else if (!Context.OnlinePlayer.IsAuthenticated && !Context.OnlinePlayer.IsAuthenticating &&
-                 !string.IsNullOrEmpty(Context.OnlinePlayer.JwtToken))
+                 !string.IsNullOrEmpty(Context.Player.Settings.LoginToken))
         {
             SetSigningIn();
         }

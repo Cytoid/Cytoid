@@ -47,8 +47,8 @@ public class ModPill : InteractableMonoBehavior
         if (pulse) pulseElement.Pulse();
         
         // Save config
-        Context.LocalPlayer.Settings.EnabledMods = Context.SelectedMods.ToList();
-        Context.LocalPlayer.SaveSettings();
+        Context.Player.Settings.EnabledMods = Context.SelectedMods.ToList();
+        Context.Player.SaveSettings();
     }
     
 }

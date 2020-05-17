@@ -13,11 +13,11 @@ public class CharacterManager
 
     public string SelectedCharacterAssetId
     {
-        get => PlayerPrefs.GetString("ActiveCharacter", "Hancho");
+        get => Context.Player.Settings.ActiveCharacterId ?? "Hancho";
         set
         {
-            if (value == null) PlayerPrefs.DeleteKey("ActiveCharacter");
-            else PlayerPrefs.SetString("ActiveCharacter", value);
+            Context.Player.Settings.ActiveCharacterId = value;
+            Context.Player.SaveSettings();
         }
     }
 

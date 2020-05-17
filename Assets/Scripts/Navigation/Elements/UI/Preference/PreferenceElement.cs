@@ -45,7 +45,7 @@ public class PreferenceElement : MonoBehaviour, ScreenBecameActiveListener
         return value =>
         {
             action(value);
-            if (saveSettingsOnChange) Context.LocalPlayer.SaveSettings();
+            if (saveSettingsOnChange) Context.Player.SaveSettings();
         };
     }
     

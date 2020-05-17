@@ -132,7 +132,7 @@ public class ProfileScreen : Screen, ScreenChangeListener
         SpinnerOverlay.Show();
         
         var uri = Context.ApiUrl + "/leaderboard?limit=50";
-        if (mode == "me") uri += "&user=" + Context.OnlinePlayer.Uid;
+        if (mode == "me") uri += "&user=" + Context.Player.Id;
         RestClient.GetArray<Leaderboard.Entry>(new RequestHelper
         {
             Uri = uri,
@@ -142,7 +142,7 @@ public class ProfileScreen : Screen, ScreenChangeListener
             leaderboard.SetData(data);
             if (mode == "me")
             {
-                var meEntry = leaderboard.Entries.Find(it => it.Model.owner.Uid == Context.OnlinePlayer.Uid);
+                var meEntry = leaderboard.Entries.Find(it => it.Model.owner.Uid == Context.Player.Id);
                 if (meEntry != null)
                 {
                     await UniTask.DelayFrame(0);

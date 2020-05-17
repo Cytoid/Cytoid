@@ -44,7 +44,7 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
     public void UpdateMaxVolume()
     {
         var previousMaxVolume = maxVolume;
-        maxVolume = Context.LocalPlayer.Settings.MusicVolume;
+        maxVolume = Context.Player.Settings.MusicVolume;
         if (maxVolume == 0) maxVolume = float.MinValue;
         audioMixerGroup.audioMixer.GetFloat("MasterVolume", out var currentMixerGroupVolume);
         var currentVolume = ConvertTo01Volume(currentMixerGroupVolume);

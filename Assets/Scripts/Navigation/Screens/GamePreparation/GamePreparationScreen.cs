@@ -60,7 +60,7 @@ public class GamePreparationScreen : Screen
             }
         });
 
-        var lp = Context.LocalPlayer;
+        var lp = Context.Player;
         practiceModeToggle.Select((!lp.Settings.PlayRanked).BoolToString(), false);
         practiceModeToggle.onSelect.AddListener(it =>
         {
@@ -157,7 +157,7 @@ public class GamePreparationScreen : Screen
     {
         if (Level.IsLocal)
         {
-            startButton.State = Context.LocalPlayer.Settings.PlayRanked ? CircleButtonState.Start : CircleButtonState.Practice;
+            startButton.State = Context.Player.Settings.PlayRanked ? CircleButtonState.Start : CircleButtonState.Practice;
         }
         else
         {
@@ -246,7 +246,7 @@ public class GamePreparationScreen : Screen
 
         previewAudioSource.volume = 0;
         previewAudioSource.DOKill();
-        previewAudioSource.DOFade(Context.LocalPlayer.Settings.MusicVolume, 0.5f).SetEase(Ease.Linear);
+        previewAudioSource.DOFade(Context.Player.Settings.MusicVolume, 0.5f).SetEase(Ease.Linear);
         previewAudioSource.loop = true;
         previewAudioSource.Play();
     }
@@ -254,7 +254,7 @@ public class GamePreparationScreen : Screen
     public void LoadLevelPerformance()
     {
         bestPerformanceDescriptionText.text =
-            (Context.LocalPlayer.Settings.PlayRanked ? "GAME_PREP_BEST_PERFORMANCE" : "GAME_PREP_BEST_PERFORMANCE_PRACTICE").Get();
+            (Context.Player.Settings.PlayRanked ? "GAME_PREP_BEST_PERFORMANCE" : "GAME_PREP_BEST_PERFORMANCE_PRACTICE").Get();
 
         var record = Level.Record;
         if (record == null || !record.BestPerformances.ContainsKey(Context.SelectedDifficulty.Id))
@@ -327,7 +327,7 @@ public class GamePreparationScreen : Screen
         {
             Context.SelectedGameMode = 
                 willCalibrate ? GameMode.Calibration : 
-                    Context.LocalPlayer.Settings.PlayRanked ? GameMode.Standard : GameMode.Practice;
+                    Context.Player.Settings.PlayRanked ? GameMode.Standard : GameMode.Practice;
             
             State = ScreenState.Inactive;
             startButton.StopPulsing();
@@ -337,7 +337,7 @@ public class GamePreparationScreen : Screen
             LoopAudioPlayer.Instance.StopAudio(0.4f);
 
             Context.AudioManager.Get("LevelStart").Play();
-            Context.SelectedMods = Context.LocalPlayer.Settings.EnabledMods.ToHashSet();
+            Context.SelectedMods = Context.Player.Settings.EnabledMods.ToHashSet();
 
             var sceneLoader = new SceneLoader("Game");
             sceneLoader.Load();

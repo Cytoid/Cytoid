@@ -75,7 +75,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static GameState GameState;
     public static TierState TierState;
 
-    public static readonly LocalPlayer LocalPlayer = new LocalPlayer();
+    public static readonly Player Player = new Player();
     public static readonly OnlinePlayer OnlinePlayer = new OnlinePlayer();
 
     private static bool offline;
@@ -140,16 +140,16 @@ public class Context : SingletonMonoBehavior<Context>
         // Database.DropCollection("level_records"); /////// TODO TODO TODO TODO
         
         // Load settings
-        LocalPlayer.LoadSettings();
+        Player.LoadSettings();
 
         FontManager.LoadFonts();
 
         var audioConfig = AudioSettings.GetConfiguration();
         DefaultDspBufferSize = audioConfig.dspBufferSize;
 
-        if (Application.platform == RuntimePlatform.Android && LocalPlayer.Settings.AndroidDspBufferSize > 0)
+        if (Application.platform == RuntimePlatform.Android && Player.Settings.AndroidDspBufferSize > 0)
         {
-            audioConfig.dspBufferSize = LocalPlayer.Settings.AndroidDspBufferSize;
+            audioConfig.dspBufferSize = Player.Settings.AndroidDspBufferSize;
             AudioSettings.Reset(audioConfig);
         }
 
@@ -204,13 +204,13 @@ public class Context : SingletonMonoBehavior<Context>
         Application.runInBackground = true;
 #endif
 
-        SelectedMods = new HashSet<Mod>(LocalPlayer.Settings.EnabledMods);
+        SelectedMods = new HashSet<Mod>(Player.Settings.EnabledMods);
 
         PreSceneChangedEvent.AddListener(PreSceneChanged);
         PostSceneChangedEvent.AddListener(PostSceneChanged);
 
         OnLanguageChanged.AddListener(FontManager.UpdateSceneTexts);
-        Localization.Instance.SelectLanguage((Language) LocalPlayer.Settings.Language);
+        Localization.Instance.SelectLanguage((Language) Player.Settings.Language);
         OnLanguageChanged.Invoke();
 
         await Addressables.InitializeAsync().Task;
@@ -384,9 +384,9 @@ public class Context : SingletonMonoBehavior<Context>
 
     public static void UpdateProfilerDisplay()
     {
-        print("Profiler display: " + LocalPlayer.Settings.DisplayProfiler);
+        print("Profiler display: " + Player.Settings.DisplayProfiler);
         if (graphyManager == null) return;
-        if (LocalPlayer.Settings.DisplayProfiler)
+        if (Player.Settings.DisplayProfiler)
         {
             graphyManager.Enable();
             graphyManager.FpsModuleState = GraphyManager.ModuleState.FULL;
@@ -401,7 +401,7 @@ public class Context : SingletonMonoBehavior<Context>
 
     public static void UpdateGraphicsQuality()
     {
-        switch (LocalPlayer.Settings.GraphicsQuality)
+        switch (Player.Settings.GraphicsQuality)
         {
             case GraphicsQuality.High:
                 UnityEngine.Screen.SetResolution(InitialWidth, InitialHeight, true);
@@ -418,7 +418,7 @@ public class Context : SingletonMonoBehavior<Context>
                 QualitySettings.masterTextureLimit = 1;
                 break;
         }
-        MainTranslucentImage.Static = LocalPlayer.Settings.GraphicsQuality != GraphicsQuality.High;
+        MainTranslucentImage.Static = Player.Settings.GraphicsQuality != GraphicsQuality.High;
         if (ScreenManager != null && ScreenManager.ActiveScreenId != null)
         {
             if (MainTranslucentImage.Instance != null)

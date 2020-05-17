@@ -29,7 +29,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         categorySelect.onSelect.AddListener((index, canvasGroup) => RefillLevels());
         
         void InstantiateOptions() {
-            var lp = Context.LocalPlayer;
+            var lp = Context.Player;
             sortByRadioGroup.SetContent("LEVEL_SELECT_SORT_BY".Get(), null, () => lp.Settings.LocalLevelSort,
                 it => lp.Settings.LocalLevelSort = it, new []
                 {

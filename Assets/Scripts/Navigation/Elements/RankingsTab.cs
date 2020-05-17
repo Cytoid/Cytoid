@@ -27,7 +27,7 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
 
     public void OnScreenBecameActive()
     {
-        if (!Context.LocalPlayer.Settings.PlayRanked && this.GetScreenParent() is ResultScreen)
+        if (!Context.Player.Settings.PlayRanked && this.GetScreenParent() is ResultScreen)
         {
             icon.SetActive(false);
         }

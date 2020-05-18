@@ -55,12 +55,11 @@ public class InputController : MonoBehaviour
             var note = game.Notes[id];
             if (!note.HasEmerged || note.IsCleared) continue;
 
-            if (note.Type != NoteType.DragHead && note.Type != NoteType.DragChild)
+            if (note.Type != NoteType.DragHead && note.Type != NoteType.DragChild && note.Type != NoteType.CDragChild)
             {
                 TouchableNormalNotes.Add(note);
-            }
-
-            if (note.Type == NoteType.DragHead || note.Type == NoteType.DragChild)
+            } 
+            else 
             {
                 TouchableDragNotes.Add(note);
             }

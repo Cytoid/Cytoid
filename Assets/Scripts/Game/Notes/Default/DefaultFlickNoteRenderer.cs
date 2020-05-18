@@ -1,9 +1,9 @@
 using DragonBones;
 
-public class FlickDefaultNoteRenderer : DefaultNoteRenderer
+public class DefaultFlickNoteRenderer : DefaultNoteRenderer
 {
     
-    public FlickDefaultNoteRenderer(Note note) : base(note)
+    public DefaultFlickNoteRenderer(Note note) : base(note)
     {
     }
     

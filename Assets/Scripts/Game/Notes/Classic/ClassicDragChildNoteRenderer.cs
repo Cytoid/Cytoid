@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
 
-public class DragChildNoteClassicRenderer : ClassicNoteRenderer
+public class ClassicDragChildNoteRenderer : ClassicNoteRenderer
 {
     protected SpriteMask SpriteMask;
         
-    public DragChildNoteClassicRenderer(DragChildNote dragChildNote) : base(dragChildNote)
+    public ClassicDragChildNoteRenderer(DragChildNote dragChildNote) : base(dragChildNote)
     {
         SpriteMask = Note.transform.GetComponentInChildren<SpriteMask>();
     }

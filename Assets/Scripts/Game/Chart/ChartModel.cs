@@ -107,7 +107,7 @@ public class ChartModel
 
         public Note GetDragEndNote(ChartModel parent)
         {
-            Assert.IsTrue((NoteType) type == NoteType.DragHead || (NoteType) type == NoteType.DragChild, $"Expected DragHead or DragChild, but type is {((NoteType) type).ToString()} for note {id}");
+            Assert.IsTrue((NoteType) type == NoteType.DragHead || (NoteType) type == NoteType.DragChild || (NoteType) type == NoteType.CDragHead || (NoteType) type == NoteType.CDragChild, $"Expected (C)DragHead or (C)DragChild, but type is {((NoteType) type).ToString()} for note {id}");
             return next_id <= 0 ? this : parent.note_map[next_id].GetDragEndNote(parent);
         }
 

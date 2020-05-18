@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DG.Tweening;
+using Proyecto26;
 using UniRx.Async;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.UI;
 
 public class EventSelectionScreen : Screen
@@ -56,32 +59,6 @@ public class EventSelectionScreen : Screen
         {
             LoadContent();
         }
-        
-        return;
-        
-        SpinnerOverlay.Show();
-        SpinnerOverlay.Hide();
-
-        /*Context.CharacterManager.GetAvailableCharactersMeta()
-            .Then(characters =>
-            {
-                if (characters.Count == 0)
-                {
-                    // TODO: This should not happen! We have Sayaka
-                    Dialog.PromptGoBack("DIALOG_OFFLINE_FEATURE_NOT_AVAILABLE".Get());
-                    return;
-                }
-                DownloadAvailableCharacters(characters);
-            })
-            .CatchRequestError(error =>
-            {
-                if (!error.IsNetworkError)
-                {
-                    throw error;
-                }
-                Dialog.PromptGoBack("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
-            })
-            .Finally(() => SpinnerOverlay.Hide());*/
     }
 
     public override void OnScreenBecameInactive()
@@ -92,8 +69,27 @@ public class EventSelectionScreen : Screen
 
     public void LoadContent()
     {
-        LoadedContent = new Content {Events = new List<EventMeta> {MockData.Event, MockData.Event}};
-        OnContentLoaded(LoadedContent);
+        SpinnerOverlay.Show();
+
+        RestClient.GetArray<EventMeta>(new RequestHelper {
+            Uri = $"{Context.ServicesUrl}/posts",
+            Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
+            EnableDebug = true
+        }).Then(data =>
+            {
+                var events = data.ToList().FindAll(it => it.startDate != null && it.endDate != null); // Filter events form posts
+                
+                SpinnerOverlay.Hide();
+
+                LoadedContent = new Content {Events = events};
+                OnContentLoaded(LoadedContent);
+            })
+            .CatchRequestError(error =>
+            {
+                Debug.LogError(error);
+                Dialog.PromptGoBack("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
+                SpinnerOverlay.Hide();
+            });
     }
 
     public async void OnContentLoaded(Content content)
@@ -128,6 +124,8 @@ public class EventSelectionScreen : Screen
         var token = loadToken = DateTimeOffset.Now;
         async void LoadCover()
         {
+            Assert.IsNotNull(meta.cover);
+            
             var tasks = new List<UniTask>();
             if (coverImage.sprite != null)
             {
@@ -135,7 +133,7 @@ public class EventSelectionScreen : Screen
                 coverImage.DOColor(Color.black, 0.4f);
                 tasks.Add(UniTask.Delay(TimeSpan.FromSeconds(0.4f)));
             }
-            var downloadTask = Context.AssetMemory.LoadAsset<Sprite>(meta.coverUrl, AssetTag.EventCover, useFileCache: true);
+            var downloadTask = Context.AssetMemory.LoadAsset<Sprite>(meta.cover.OriginalUrl, AssetTag.EventCover, useFileCache: true);
             tasks.Add(downloadTask);
 
             await UniTask.WhenAll(tasks);
@@ -147,6 +145,8 @@ public class EventSelectionScreen : Screen
         }
         async void LoadLogo()
         {
+            Assert.IsNotNull(meta.logo);
+            
             var tasks = new List<UniTask>();
             if (logoImage.sprite != null)
             {
@@ -154,7 +154,7 @@ public class EventSelectionScreen : Screen
                 logoImage.DOFade(0, 0.4f);
                 tasks.Add(UniTask.Delay(TimeSpan.FromSeconds(0.4f)));
             }
-            var downloadTask = Context.AssetMemory.LoadAsset<Sprite>(meta.logoUrl, AssetTag.EventLogo, useFileCache: true);
+            var downloadTask = Context.AssetMemory.LoadAsset<Sprite>(meta.logo.OriginalUrl, AssetTag.EventLogo, useFileCache: true);
             tasks.Add(downloadTask);
 
             await UniTask.WhenAll(tasks);
@@ -168,23 +168,29 @@ public class EventSelectionScreen : Screen
         
         infoBanner.Leave(onComplete: () =>
         {
-            viewDetailsButton.onPointerClick.SetListener(_ => Application.OpenURL(meta.postUrl));
+            viewDetailsButton.onPointerClick.SetListener(_ => Application.OpenURL($"{Context.WebsiteUrl}/posts/cytoidfes-2020"));
             const string dateFormat = "yyyy/MM/dd HH:mm";
-            durationText.text = meta.startDate.ToString(dateFormat) + "~" + meta.endDate.ToString(dateFormat);
+            durationText.text = meta.startDate.Value.LocalDateTime.ToString(dateFormat) + "~" + meta.endDate.Value.LocalDateTime.ToString(dateFormat);
             enterButton.onPointerClick.SetListener(_ =>
             {
-                if (meta.associatedLevelUid != null)
+                if (meta.locked)
                 {
+                    // TODO
+                }
+                
+                if (meta.levelId != null)
+                {
+                    return;/*
                     Context.SelectedLevel = meta.associatedLevel.ToLevel(LevelType.Official);
                     Context.ScreenManager.ChangeScreen(
                         GamePreparationScreen.Id, ScreenTransition.In, 0.4f,
                         transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter()
-                    );
+                    );*/
                 } 
-                else if (meta.associatedCollectionId != null)
+                else if (meta.collectionId != null)
                 {
                     CollectionDetailsScreen.LoadedContent = new CollectionDetailsScreen.Content
-                        {Id = meta.associatedCollectionId};
+                        {Id = meta.collectionId};
                     Context.ScreenManager.ChangeScreen(
                         CollectionDetailsScreen.Id, ScreenTransition.In, 0.4f,
                         transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter()

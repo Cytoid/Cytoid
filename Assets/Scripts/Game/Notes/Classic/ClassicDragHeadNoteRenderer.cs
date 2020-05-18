@@ -1,21 +1,24 @@
 ﻿using UnityEngine;
 using Object = UnityEngine.Object;
 
-public class DragHeadClassicNoteRenderer : ClassicNoteRenderer
+public class ClassicDragHeadNoteRenderer : ClassicNoteRenderer
 {
     public DragHeadNote DragHeadNote => (DragHeadNote) Note;
     
     protected SpriteMask SpriteMask;
-
-    public DragHeadClassicNoteRenderer(DragHeadNote dragHeadNote) : base(dragHeadNote)
+    protected SpriteRenderer CDragFill;
+    
+    public ClassicDragHeadNoteRenderer(DragHeadNote dragHeadNote) : base(dragHeadNote)
     {
         SpriteMask = Note.transform.GetComponentInChildren<SpriteMask>();
+        CDragFill = Note.transform.Find("NoteRing/CDragFill")?.GetComponent<SpriteRenderer>();
     }
 
     public override void OnNoteLoaded()
     {
         base.OnNoteLoaded();
         Fill.sortingOrder = Ring.sortingOrder + 1;
+        if (CDragFill != null) CDragFill.sortingOrder = Fill.sortingOrder + 1;
         SpriteMask.frontSortingOrder = Note.Model.id + 1;
         SpriteMask.backSortingOrder = Note.Model.id - 2;
     }
@@ -32,11 +35,17 @@ public class DragHeadClassicNoteRenderer : ClassicNoteRenderer
             {
                 Ring.enabled = false;
                 Fill.enabled = false;
+                if (CDragFill != null) CDragFill.enabled = false;
             }
             else
             {
                 Ring.enabled = true;
                 Fill.enabled = true;
+                if (CDragFill != null)
+                {
+                    CDragFill.enabled = true;
+                    //CDragFill.transform.SetLocalEulerAnglesZ(DragHeadNote.FromNoteModel.rotation);
+                }
                 if (DisplayNoteId) NoteId.gameObject.SetActive(true);
             }
         }
@@ -44,27 +53,49 @@ public class DragHeadClassicNoteRenderer : ClassicNoteRenderer
         {
             Ring.enabled = false;
             Fill.enabled = false;
+            if (CDragFill != null) CDragFill.enabled = false;
             if (DisplayNoteId) NoteId.gameObject.SetActive(false);
         }
     }
 
     protected override void UpdateTransformScale()
     {
-        const float minSize = 0.7f;
-        var timeRequired = 1.175f / Note.Model.speed;
-        var timeScale = Mathf.Clamp((Game.Time - Note.Model.intro_time) / timeRequired, 0f, 1f);
-        var timeScaledSize = BaseTransformSize * minSize + BaseTransformSize * (1 - minSize) * timeScale;
+        if (DragHeadNote.IsCDrag)
+        {
+            base.UpdateTransformScale();
+        }
+        else
+        {
+            const float minSize = 0.7f;
+            var timeRequired = 1.175f / Note.Model.speed;
+            var timeScale = Mathf.Clamp((Game.Time - Note.Model.intro_time) / timeRequired, 0f, 1f);
+            var timeScaledSize = BaseTransformSize * minSize + BaseTransformSize * (1 - minSize) * timeScale;
 
-        Note.transform.SetLocalScaleXY(timeScaledSize, timeScaledSize);
+            Note.transform.SetLocalScaleXY(timeScaledSize, timeScaledSize);
+        }
     }
 
     protected override void UpdateFillScale()
     {
+        if (DragHeadNote.IsCDrag)
+        {
+            base.UpdateFillScale();
+        }
+    }
+
+    protected override void UpdateComponentOpacity()
+    {
+        base.UpdateComponentOpacity();
+        if (DragHeadNote.IsCDrag)
+        {
+            CDragFill.color = Ring.color;
+        }
     }
 
     public override void Cleanup()
     {
         base.Cleanup();
         Object.Destroy(SpriteMask);
+        if (CDragFill != null) Object.Destroy(CDragFill);
     }
 }

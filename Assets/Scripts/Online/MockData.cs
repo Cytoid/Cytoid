@@ -3,16 +3,6 @@ using System.Collections.Generic;
 
 public static class MockData
 {
-    public static EventMeta Event => new EventMeta
-    {
-        id = "cytoidfes2020",
-        logoUrl = "https://artifacts.cytoid.io/test/cytoidfes.png",
-        coverUrl = "https://artifacts.cytoid.io/test/band.jpg",
-        postUrl = "https://cytoid.io",
-        startDate = new DateTimeOffset(2020, 6, 1, 0, 0, 0, TimeSpan.Zero),
-        endDate = new DateTimeOffset(2020, 6, 14, 23, 59, 59, TimeSpan.Zero),
-        associatedCollectionId = "5e8a17f4ba92e40007f106da",
-    };
 
     public static CollectionMeta Collection => new CollectionMeta
     {

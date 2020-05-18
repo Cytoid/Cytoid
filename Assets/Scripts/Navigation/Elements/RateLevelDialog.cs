@@ -67,11 +67,12 @@ public class RateLevelDialog : Dialog
             print($"Rated {Rating}/10");
             positiveButton.IsSpinning = true;
             OnPositiveButtonClicked = _ => { };
+            
             RestClient.Post<LevelRating>(request = new RequestHelper
                 {
                     Uri = $"{Context.ServicesUrl}/levels/{levelId}/ratings",
                     Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
-                    Body = new LevelRating
+                    Body = new PostLevelRating
                     {
                         rating = rating
                     },
@@ -153,6 +154,12 @@ public class RateLevelDialog : Dialog
         }
 
         return dialog;
+    }
+
+    [Serializable]
+    private class PostLevelRating
+    {
+        public int rating;
     }
 }
 

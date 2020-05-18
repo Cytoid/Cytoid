@@ -26,7 +26,7 @@ public class Level
         return new Level {
             Type = type,
             IsLocal = true,
-            PackagePath = $"{Context.ApiUrl}/levels/{meta.id}/resources",
+            PackagePath = $"{Context.ServicesUrl}/levels/{meta.id}/resources",
             Path = path,
             Meta = meta,
             Record = Context.Database.GetLevelRecord(meta.id) ?? new LevelRecord{LevelId = meta.id}

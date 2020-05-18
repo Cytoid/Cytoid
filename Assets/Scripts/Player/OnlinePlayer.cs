@@ -29,12 +29,12 @@ public class OnlinePlayer
         {
             RestClient.Post<Session>(new RequestHelper
             {
-                Uri = Context.ApiUrl + "/session",
-                BodyString = JObject.FromObject(new
+                Uri = Context.ServicesUrl + "/session",
+                BodyString = JObject.FromObject(SecuredOperations.AddCaptcha(new
                 {
                     username = Context.Player.Id,
-                    password
-                }).ToString()
+                    password,
+                })).ToString()
             }).Then(session =>
                 {
                     Context.Player.Settings.LoginToken = session.token;
@@ -73,14 +73,15 @@ public class OnlinePlayer
 
         return new Promise<Profile>((resolve, reject) =>
         {
-            RestClient.Post<Session>(new RequestHelper
+            RestClient.Get<Session>(new RequestHelper
             {
-                Uri = Context.ApiUrl + "/session",
-                BodyString = JObject.FromObject(new { }).ToString(),
+                Uri = Context.ServicesUrl + "/session",
+                BodyString = JObject.FromObject(SecuredOperations.AddCaptcha(new { })).ToString(),
                 Headers = new Dictionary<string, string>
                 {
                     {"Authorization", "JWT " + jwtToken}
-                }
+                },
+                EnableDebug = true
             }).Then(session =>
                 {
                     Context.Player.Settings.LoginToken = session.token;
@@ -140,7 +141,7 @@ public class OnlinePlayer
             if (uid == null) uid = Context.Player.Id;
             return RestClient.Get<Profile>(new RequestHelper
             {
-                Uri = $"{Context.ApiUrl}/profile/{uid}/full",
+                Uri = $"{Context.ServicesUrl}/profile/{uid}",
                 Headers = GetAuthorizationHeaders(),
                 EnableDebug = true
             }).Then(profile =>
@@ -245,8 +246,8 @@ public class OnlinePlayer
 
         return RestClient.GetArray<RankingEntry>(new RequestHelper
         {
-            Uri = $"{Context.ApiUrl}/levels/{levelId}/charts/{chartType}/ranking",
-            Headers = Context.OnlinePlayer.GetAuthorizationHeaders()
+            Uri = $"{Context.ServicesUrl}/levels/{levelId}/charts/{chartType}/records",
+            EnableDebug = true,
         }).Then(array => (-1, array.ToList()));
     }
     

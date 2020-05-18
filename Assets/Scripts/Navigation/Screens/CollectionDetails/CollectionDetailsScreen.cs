@@ -135,7 +135,11 @@ public class CollectionDetailsScreen : Screen
         
         SpinnerOverlay.Show();
 
-        RestClient.Get<CollectionMeta>($"{Context.ServicesUrl}/collections/{LoadedContent.Id}")
+        RestClient.Get<CollectionMeta>(new RequestHelper {
+            Uri = $"{Context.ServicesUrl}/collections/{LoadedContent.Id}",
+            Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
+            EnableDebug = true
+        })
             .Then(meta =>
             {
                 SpinnerOverlay.Hide();

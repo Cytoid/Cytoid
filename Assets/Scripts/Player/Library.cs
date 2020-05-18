@@ -48,7 +48,7 @@ public class Library
         {
             RestClient.Get<OnlineLevel>(new RequestHelper
             {
-                Uri = $"{Context.ApiUrl}/levels/io.cytoid.interference2",
+                Uri = $"{Context.ServicesUrl}/levels/io.cytoid.interference2",
                 Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
             }).Then(it =>
             {

@@ -1,9 +1,9 @@
 using DragonBones;
 
-public class ClickNoteDefaultRenderer : DefaultNoteRenderer
+public class DefaultClickNoteRenderer : DefaultNoteRenderer
 {
     
-    public ClickNoteDefaultRenderer(Note note) : base(note)
+    public DefaultClickNoteRenderer(Note note) : base(note)
     {
     }
 

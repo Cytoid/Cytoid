@@ -8,14 +8,16 @@ public class DragHeadNote : Note
     protected override NoteRenderer CreateRenderer()
     {
         return Game.Config.UseClassicStyle
-            ? (NoteRenderer) new DragHeadClassicNoteRenderer(this)
-            : new DragHeadDefaultNoteRenderer(this);
+            ? (NoteRenderer) new ClassicDragHeadNoteRenderer(this)
+            : new DefaultDragHeadNoteRenderer(this);
     }
 
     // Drag head is constantly moving from drag note to drag note
     public ChartModel.Note FromNoteModel { get; protected set; }
     public ChartModel.Note ToNoteModel { get; protected set; }
     public ChartModel.Note EndNoteModel { get; protected set; }
+
+    public bool IsCDrag => Model.type == (int) NoteType.CDragHead;
 
     public override void SetData(Game game, int noteId)
     {
@@ -28,14 +30,15 @@ public class DragHeadNote : Note
     protected override void OnGameUpdate()
     {
         base.OnGameUpdate();
+        
+        transform.eulerAngles = new Vector3(0, 0,  90 - FromNoteModel.rotation);
 
         if (Game.Time >= Model.start_time)
         {
             // Move drag head
             transform.position = Vector3.Lerp(FromNoteModel.position, ToNoteModel.position,
                 (Game.Time - FromNoteModel.start_time) / (ToNoteModel.start_time - FromNoteModel.start_time));
-            transform.eulerAngles = new Vector3(0, 0, 45 - ToNoteModel.rotation);
-            
+
             // Moved to next note?
             if (Game.Time >= ToNoteModel.start_time)
             {
@@ -94,12 +97,16 @@ public class DragHeadNote : Note
     protected override async void AwaitAndDestroy()
     {
         // Don't destroy until the drag is over
-        await UniTask.WaitUntil(() => Game.Time >= EndNoteModel.end_time + NoteType.DragChild.GetDefaultMissThreshold());
+        await UniTask.WaitUntil(() => Game.Time >= EndNoteModel.end_time + (IsCDrag ? NoteType.CDragChild : NoteType.DragChild).GetDefaultMissThreshold());
         Destroy();
     }
 
     public override NoteGrade CalculateGrade()
     {
+        if (IsCDrag)
+        {
+            return base.CalculateGrade();
+        }
         var grade = NoteGrade.Miss;
         if (TimeUntilStart >= 0)
         {

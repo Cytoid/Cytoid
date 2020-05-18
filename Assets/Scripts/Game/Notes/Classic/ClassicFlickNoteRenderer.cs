@@ -1,13 +1,13 @@
 ﻿using UnityEngine;
 
-public class FlickClassicNoteRenderer : ClassicNoteRenderer
+public class ClassicFlickNoteRenderer : ClassicNoteRenderer
 {
     private SpriteRenderer leftArrow;
     private SpriteRenderer rightArrow;
 
     private float maxArrowOffset;
 
-    public FlickClassicNoteRenderer(FlickNote flickNote) : base(flickNote)
+    public ClassicFlickNoteRenderer(FlickNote flickNote) : base(flickNote)
     {
         maxArrowOffset = Game.camera.orthographicSize * 0.3f;
         leftArrow = Note.transform.Find("LeftArrow").GetComponent<SpriteRenderer>();

@@ -444,6 +444,28 @@ public sealed class GameState
             })
         },
         {
+            NoteType.CDragHead, new NoteHpMod(new List<HpMod>
+            {
+                new HpMod(0.2, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(-8, HpModType.Percentage)
+            })
+        },
+        {
+            NoteType.CDragChild, new NoteHpMod(new List<HpMod>
+            {
+                new HpMod(0.1, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(-2.4, HpModType.Percentage)
+            })
+        },
+        {
             NoteType.Flick, new NoteHpMod(new List<HpMod>
             {
                 new HpMod(1, HpModType.Absolute),
@@ -514,6 +536,28 @@ public sealed class GameState
             })
         },
         {
+            NoteType.CDragHead, new NoteHpMod(new List<HpMod>
+            {
+                new HpMod(0.2, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(-20, HpModType.Percentage)
+            })
+        },
+        {
+            NoteType.CDragChild, new NoteHpMod(new List<HpMod>
+            {
+                new HpMod(0.1, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(-6, HpModType.Percentage)
+            })
+        },
+        {
             NoteType.Flick, new NoteHpMod(new List<HpMod>
             {
                 new HpMod(1, HpModType.Absolute),
@@ -574,6 +618,28 @@ public sealed class GameState
         },
         {
             NoteType.DragChild, new NoteHpMod(new List<HpMod>
+            {
+                new HpMod(0.1, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(-6, HpModType.Percentage)
+            })
+        },
+        {
+            NoteType.CDragHead, new NoteHpMod(new List<HpMod>
+            {
+                new HpMod(0.2, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(-20, HpModType.Percentage)
+            })
+        },
+        {
+            NoteType.CDragChild, new NoteHpMod(new List<HpMod>
             {
                 new HpMod(0.1, HpModType.Absolute),
                 new HpMod(0, HpModType.Absolute),

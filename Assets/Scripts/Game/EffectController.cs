@@ -61,18 +61,22 @@ public class EffectController : MonoBehaviour
         settings.sectorCount = noteRenderer.Note.Type == NoteType.Flick ? 4 : 100;
         settings.start.innerColor = settings.start.outerColor = color.WithAlpha(1);
         settings.end.innerColor = settings.end.outerColor = color.WithAlpha(0);
-        settings.end.size = (noteRenderer.Note.Type == NoteType.DragHead || noteRenderer.Note.Type == NoteType.DragChild
+        settings.end.size = (noteRenderer.Note.Type == NoteType.DragHead || noteRenderer.Note.Type == NoteType.DragChild ||
+                             noteRenderer.Note.Type == NoteType.CDragHead || noteRenderer.Note.Type == NoteType.CDragChild
                                 ? 4f
                                 : 5f) * noteRenderer.Game.Config.NoteSizeMultiplier * (1 + clearEffectSizeMultiplier);
         settings.start.thickness = 1.333f;
         settings.end.thickness = 0.333f;
         flatFx.AddEffect(at, 1);
-
-        var clearFx = this.clearFx;
-        if (noteRenderer is DragChildNoteClassicRenderer || noteRenderer is DragHeadClassicNoteRenderer)
+        
+        var isDrag = noteRenderer is ClassicDragChildNoteRenderer || noteRenderer is ClassicDragHeadNoteRenderer;
+        if (noteRenderer is ClassicDragHeadNoteRenderer dragHeadNoteRenderer &&
+            dragHeadNoteRenderer.DragHeadNote.IsCDrag)
         {
-            clearFx = clearDragFx;
+            isDrag = false;
         }
+
+        var clearFx = isDrag ? clearDragFx : this.clearFx;
 
         if (grade == NoteGrade.Miss)
         {
@@ -85,7 +89,8 @@ public class EffectController : MonoBehaviour
             mainModule.duration /= 0.3f;
             mainModule.startColor = game.Config.NoteGradeEffectColors[grade];
 
-            if (noteRenderer.Note.Type == NoteType.DragHead || noteRenderer.Note.Type == NoteType.DragChild)
+            if (noteRenderer.Note.Type == NoteType.DragHead || noteRenderer.Note.Type == NoteType.DragChild ||
+                noteRenderer.Note.Type == NoteType.CDragHead || noteRenderer.Note.Type == NoteType.CDragChild)
                 fx.transform.localScale = new Vector3(2, 2, 2);
 
             fx.Play();
@@ -97,7 +102,7 @@ public class EffectController : MonoBehaviour
             fx.transform.SetParent(effectParent.transform, true);
             fx.Stop();
 
-            if (!(noteRenderer is DragChildNoteClassicRenderer) && !(noteRenderer is DragHeadClassicNoteRenderer))
+            if (!isDrag)
             {
                 if (earlyLateIndicator)
                 {
@@ -124,7 +129,8 @@ public class EffectController : MonoBehaviour
             mainModule.duration /= speed;
             mainModule.startColor = color.WithAlpha(1);
 
-            if (noteRenderer.Note.Type == NoteType.DragHead || noteRenderer.Note.Type == NoteType.DragChild)
+            if (noteRenderer.Note.Type == NoteType.DragHead || noteRenderer.Note.Type == NoteType.DragChild ||
+                noteRenderer.Note.Type == NoteType.CDragHead || noteRenderer.Note.Type == NoteType.CDragChild)
                 fx.transform.localScale = new Vector3(3f, 3f, 3f);
 
             fx.Play();

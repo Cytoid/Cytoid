@@ -1,11 +1,11 @@
 using DragonBones;
 using UnityEngine;
 
-public class DragHeadDefaultNoteRenderer : DefaultNoteRenderer
+public class DefaultDragHeadNoteRenderer : DefaultNoteRenderer
 {
     public DragHeadNote DragHeadNote => (DragHeadNote) Note;
 
-    public DragHeadDefaultNoteRenderer(Note note) : base(note)
+    public DefaultDragHeadNoteRenderer(Note note) : base(note)
     {
     }
 

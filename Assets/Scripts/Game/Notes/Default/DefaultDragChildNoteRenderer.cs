@@ -1,9 +1,9 @@
 using DragonBones;
 
-public class DragChildDefaultNoteRenderer : DefaultNoteRenderer
+public class DefaultDragChildNoteRenderer : DefaultNoteRenderer
 {
     
-    public DragChildDefaultNoteRenderer(Note note) : base(note)
+    public DefaultDragChildNoteRenderer(Note note) : base(note)
     {
     }
     

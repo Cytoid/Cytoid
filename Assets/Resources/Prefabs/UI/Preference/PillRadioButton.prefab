@@ -283,6 +283,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   initialAlpha: 0.8
   finalSize: 1.3
+  overrideFinalSizeY: 0
+  finalSizeY: -1
   duration: 0.4
   overlay: 0
   ease: 9

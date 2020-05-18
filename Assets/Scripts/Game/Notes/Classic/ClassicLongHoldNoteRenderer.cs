@@ -1,20 +1,20 @@
 ﻿using System.Linq.Expressions;
 using UnityEngine;
 
-public class LongHoldClassicNoteRenderer : HoldClassicNoteRenderer
+public class ClassicLongHoldNoteRenderer : ClassicHoldNoteRenderer
 {
     public SpriteRenderer Line2;
     public SpriteRenderer CompletedLine2;
 
     private float orthographicSize;
 
-    public LongHoldClassicNoteRenderer(LongHoldNote holdNote) : base(holdNote) => Expression.Empty();
+    public ClassicLongHoldNoteRenderer(LongHoldNote holdNote) : base(holdNote) => Expression.Empty();
 
     protected override void InitializeHoldComponents()
     {
         orthographicSize = Game.camera.orthographicSize;
         // Override base renderer
-        var provider = LongHoldNoteClassicRendererProvider.Instance;
+        var provider = ClassicLongHoldNoteRendererProvider.Instance;
         Line = Object.Instantiate(provider.linePrefab, Note.transform, false).GetComponent<SpriteRenderer>();
         Line.color = Line.color.WithAlpha(0);
         Line2 = Object.Instantiate(provider.linePrefab, Note.transform, false).GetComponent<SpriteRenderer>();

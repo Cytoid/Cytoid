@@ -44,7 +44,7 @@ namespace Proyecto26
                     else
                     {
                         var err = CreateException(request);
-                        DebugLog(options.EnableDebug, $"Error: {err}, Url: {options.Uri}, Body: {(request.uploadHandler != null ? Encoding.UTF8.GetString(request.uploadHandler.data) : "null")}", true);
+                        DebugLog(options.EnableDebug, $"Error: {err}, Url: {options.Uri}, Body: {(request.uploadHandler != null ? Encoding.UTF8.GetString(request.uploadHandler.data) : "null")}, Response: {response.Text}", true);
                         callback(err, response);
                         break;
                     }

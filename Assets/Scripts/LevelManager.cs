@@ -147,7 +147,7 @@ public class LevelManager
         {
             RestClient.Get<OnlineLevel>(new RequestHelper
             {
-                Uri = $"{Context.ApiUrl}/levels/{levelId}",
+                Uri = $"{Context.ServicesUrl}/levels/{levelId}",
                 Headers = Context.OnlinePlayer.GetAuthorizationHeaders()
             }).Then(it =>
             {
@@ -567,7 +567,7 @@ public class LevelManager
         var totalSize = 0UL;
         var downloading = false;
         var aborted = false;
-        var targetFile = $"{Application.temporaryCachePath}/Downloads/{level.Id}.cytoidlevel";
+        var targetFile = $"{Application.temporaryCachePath}/Downloads/{level.Id}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}.cytoidlevel";
         var destFolder = $"{level.Type.GetDataPath()}/{level.Id}";
         
         try
@@ -596,7 +596,7 @@ public class LevelManager
         };
         RestClient.Get<OnlineLevel>(req = new RequestHelper
         {
-            Uri = $"{Context.ApiUrl}/levels/{level.Id}",
+            Uri = $"{Context.ServicesUrl}/levels/{level.Id}",
             Headers = Context.OnlinePlayer.GetAuthorizationHeaders()
         }).Then(it =>
         {
@@ -612,7 +612,8 @@ public class LevelManager
             return RestClient.Get<OnlineLevelResources>(req = new RequestHelper
             {
                 Uri = level.PackagePath,
-                Headers = Context.OnlinePlayer.GetAuthorizationHeaders()
+                Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
+                Body = SecuredOperations.AddCaptcha(new {})
             });
         }).Then(res =>
         {

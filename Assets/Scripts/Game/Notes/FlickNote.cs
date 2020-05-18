@@ -12,8 +12,8 @@ public class FlickNote : Note
     protected override NoteRenderer CreateRenderer()
     {
         return Game.Config.UseClassicStyle
-            ? (NoteRenderer) new FlickClassicNoteRenderer(this)
-            : new FlickDefaultNoteRenderer(this);
+            ? (NoteRenderer) new ClassicFlickNoteRenderer(this)
+            : new DefaultFlickNoteRenderer(this);
     }
 
     public override void OnTouch(Vector2 screenPos)

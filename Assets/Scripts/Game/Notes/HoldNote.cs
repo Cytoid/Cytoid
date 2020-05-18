@@ -14,8 +14,8 @@ public class HoldNote : Note
     protected override NoteRenderer CreateRenderer()
     {
         return Game.Config.UseClassicStyle
-            ? (NoteRenderer) new HoldClassicNoteRenderer(this)
-            : new HoldDefaultNoteRenderer(this);
+            ? (NoteRenderer) new ClassicHoldNoteRenderer(this)
+            : new DefaultHoldNoteRenderer(this);
     }
 
     protected override void OnGameUpdate()

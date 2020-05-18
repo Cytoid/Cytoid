@@ -120,34 +120,27 @@ public class Chart
                                        (page.end_tick -
                                         page.start_tick));
 
-            if (note.type == 3 || note.type == 4)
+            if (note.type == (int) NoteType.DragHead || note.type == (int) NoteType.DragChild || 
+                note.type == (int) NoteType.CDragHead || note.type == (int) NoteType.CDragChild)
                 note.intro_time = note.start_time - 1.175f / note.speed;
             else
                 note.intro_time = note.start_time - 1.367f / note.speed;
         }
 
         foreach (var note in Model.note_list)
-            switch (note.type)
+            switch ((NoteType) note.type)
             {
-                case 0:
+                case NoteType.Click:
                     note.tint = note.direction == 1 ? 0.94f : 1.06f;
                     break;
-                case 1:
+                case NoteType.Hold:
                     note.tint = note.direction == 1 ? 0.94f : 1.06f;
                     break;
-                case 2:
+                case NoteType.LongHold:
                     note.tint = note.direction == 1 ? 0.94f : 1.06f;
                     break;
-                case 3:
-                    note.tint = note.direction == 1 ? 0.94f : 1.06f;
-                    if (note.next_id > 0 && Model.note_map.ContainsKey(note.next_id))
-                    {
-                        note.nextdraglinestarttime = note.intro_time - 0.133f;
-                        note.nextdraglinestoptime = Model.note_map[note.next_id].intro_time - 0.132f;
-                    }
-
-                    break;
-                case 4:
+                case NoteType.DragHead:
+                case NoteType.CDragHead:
                     note.tint = note.direction == 1 ? 0.94f : 1.06f;
                     if (note.next_id > 0 && Model.note_map.ContainsKey(note.next_id))
                     {
@@ -156,7 +149,17 @@ public class Chart
                     }
 
                     break;
-                case 5:
+                case NoteType.DragChild:
+                case NoteType.CDragChild:
+                    note.tint = note.direction == 1 ? 0.94f : 1.06f;
+                    if (note.next_id > 0 && Model.note_map.ContainsKey(note.next_id))
+                    {
+                        note.nextdraglinestarttime = note.intro_time - 0.133f;
+                        note.nextdraglinestoptime = Model.note_map[note.next_id].intro_time - 0.132f;
+                    }
+
+                    break;
+                case NoteType.Flick:
                     note.tint = note.direction == 1 ? 1.00f : 1.30f;
                     break;
             }

@@ -31,6 +31,7 @@ public class TierSelectionScreen : Screen
     public DepthCover cover;
     public InteractableMonoBehavior helpButton;
 
+    public TransitionElement icons;
     public ActionTabs actionTabs;
     public RankingsTab rankingsTab;
     
@@ -119,6 +120,7 @@ public class TierSelectionScreen : Screen
                 OnContentLoaded(LoadedContent);
                 Run.After(0.4f, () =>
                 {
+                    icons.Enter();
                     SpinnerOverlay.Hide();
                     Dialog.PromptAlert("ALPHA_TIER_WARNING".Get());
                 });
@@ -137,7 +139,11 @@ public class TierSelectionScreen : Screen
         {
             SpinnerOverlay.Show();
             OnContentLoaded(LoadedContent);
-            Run.After(0.4f, () => SpinnerOverlay.Hide());
+            Run.After(0.4f, () =>
+            {
+                icons.Enter();
+                SpinnerOverlay.Hide();
+            });
         }
     }
 

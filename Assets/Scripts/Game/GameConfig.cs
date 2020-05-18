@@ -32,7 +32,9 @@ public class GameConfig
         {NoteType.DragChild, new[] {2, 3}},
         {NoteType.Hold, new[] {4, 5}},
         {NoteType.LongHold, new[] {6, 7}},
-        {NoteType.Flick, new[] {8, 9}}
+        {NoteType.Flick, new[] {8, 9}},
+        {NoteType.CDragHead, new[] {2, 3}},
+        {NoteType.CDragChild, new[] {2, 3}}
     };
 
     public void OnGameLoaded(Game game)
@@ -58,18 +60,18 @@ public class GameConfig
 
         NoteSizeMultiplier = (float) chart.Model.size * (1 + 0.133333f + lp.Settings.NoteSize);
 
-        NoteSizes[NoteType.Click] = (game.camera.orthographicSize * 2.0f) * (7.0f / 9.0f) / 5.0f * 1.2675f;
+        NoteSizes[NoteType.Click] = NoteSizes[NoteType.CDragHead] = (game.camera.orthographicSize * 2.0f) * (7.0f / 9.0f) / 5.0f * 1.2675f;
         NoteSizes[NoteType.DragHead] = NoteSizes[NoteType.Click] * 0.8f;
-        NoteSizes[NoteType.DragChild] = NoteSizes[NoteType.Click] * 0.65f;
+        NoteSizes[NoteType.DragChild] = NoteSizes[NoteType.CDragChild] = NoteSizes[NoteType.Click] * 0.65f;
         NoteSizes[NoteType.Hold] = NoteSizes[NoteType.Click];
         NoteSizes[NoteType.LongHold] = NoteSizes[NoteType.Click];
         NoteSizes[NoteType.Flick] = NoteSizes[NoteType.Click] * 1.125f;
 
-        NoteHitboxSizes[NoteType.Click] =
+        NoteHitboxSizes[NoteType.Click] = NoteHitboxSizes[NoteType.CDragHead] =
             new[] {0.666666f * 1.111111f, 0.666666f * 1.333333f, 0.666666f * 1.555555f}[lp.Settings.HitboxSizes[NoteType.Click]];
         NoteHitboxSizes[NoteType.DragHead] =
             new[] {0.666666f * 1.111111f, 0.666666f * 1.333333f, 0.666666f * 1.555555f}[lp.Settings.HitboxSizes[NoteType.DragChild]];
-        NoteHitboxSizes[NoteType.DragChild] =
+        NoteHitboxSizes[NoteType.DragChild] = NoteHitboxSizes[NoteType.CDragChild] =
             new[] {0.888888f * 1.111111f, 0.888888f * 1.333333f, 0.888888f * 1.555555f}[lp.Settings.HitboxSizes[NoteType.DragChild]];
         NoteHitboxSizes[NoteType.Hold] = NoteHitboxSizes[NoteType.LongHold] =
             new[] {0.888888f * 1.111111f, 0.888888f * 1.333333f, 0.888888f * 1.555555f}[lp.Settings.HitboxSizes[NoteType.Hold]];
@@ -116,7 +118,7 @@ public class GameConfig
 
     public Color GetFillColor(ChartModel.Note note)
     {
-        if ((NoteType) note.type == NoteType.DragChild) return GetRingColor(note); // Special case: drag child
+        if ((NoteType) note.type == NoteType.DragChild || (NoteType) note.type == NoteType.CDragChild) return GetRingColor(note); // Special case: drag child
         return note.UseAlternativeColor() ? NoteFillColors[(NoteType) note.type][0] : NoteFillColors[(NoteType) note.type][1];
     }
 

@@ -44,6 +44,7 @@ public class Game : MonoBehaviour
     
     public bool ResynchronizeChartOnNextFrame { get; set; }
 
+    public string EditorDefaultLevelDirectory = "yy.badapple";
     public float EditorMusicInitialPosition;
     public bool EditorForceAutoMod;
     public GameMode EditorGameMode = GameMode.Unspecified;
@@ -135,9 +136,11 @@ public class Game : MonoBehaviour
             if (Context.SelectedLevel == null && Application.isEditor)
             {
                 // Load test level
-                await Context.LevelManager.LoadFromMetadataFiles(LevelType.Community, new List<string> { Context.UserDataPath + "/tar1412.iwannabeit/level.json" });
+                await Context.LevelManager.LoadFromMetadataFiles(LevelType.Community, new List<string> {
+                    $"{Context.UserDataPath}/{EditorDefaultLevelDirectory}/level.json"
+                });
                 Context.SelectedLevel = Context.LevelManager.LoadedLocalLevels.Values.First();
-                Context.SelectedDifficulty = Difficulty.Extreme;
+                Context.SelectedDifficulty = Context.SelectedLevel.Meta.GetHardestDifficulty();
             }
             Level = Context.SelectedLevel;
             Difficulty = Context.SelectedDifficulty;
@@ -375,6 +378,7 @@ public class Game : MonoBehaviour
                 switch ((NoteType) notes[Chart.CurrentNoteId].type)
                 {
                     case NoteType.DragHead:
+                    case NoteType.CDragHead:
                         var id = Chart.CurrentNoteId;
                         while (notes[id].next_id > 0)
                         {
@@ -414,7 +418,11 @@ public class Game : MonoBehaviour
             case NoteType.DragHead:
                 note = Instantiate(provider.dragHeadNotePrefab, contentParent.transform).GetComponent<Note>();
                 break;
+            case NoteType.CDragHead:
+                note = Instantiate(provider.cDragChildNotePrefab, contentParent.transform).GetComponent<Note>();
+                break;
             case NoteType.DragChild:
+            case NoteType.CDragChild:
                 note = Instantiate(provider.dragChildNotePrefab, contentParent.transform).GetComponent<Note>();
                 break;
             case NoteType.Flick:

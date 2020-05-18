@@ -20,7 +20,7 @@ public class OnlinePlayerStateChange
         public RewardType Type => type == "level" ? RewardType.Level : RewardType.Character;
 
         [JsonConstructor]
-        private Reward()
+        public Reward()
         {
             onlineLevelValue = new Lazy<OnlineLevel>(() => value.ToObject<OnlineLevel>());
             characterValue = new Lazy<CharacterMeta>(() => value.ToObject<CharacterMeta>());

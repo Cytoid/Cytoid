@@ -3,7 +3,7 @@
     protected override NoteRenderer CreateRenderer()
     {
         return Game.Config.UseClassicStyle
-            ? (NoteRenderer) new LongHoldClassicNoteRenderer(this)
-            : new LongHoldClassicNoteRenderer(this);
+            ? (NoteRenderer) new ClassicLongHoldNoteRenderer(this)
+            : new ClassicLongHoldNoteRenderer(this);
     }
 }

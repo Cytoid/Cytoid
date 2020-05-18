@@ -29,8 +29,11 @@ public class Player
                 result = CreateSettingsFromLegacy();
                 col.Insert(result);
             }
+
+            result.EnsureDefault();
             
             Settings = result;
+            SaveSettings();
         });
     }
 

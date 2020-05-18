@@ -36,11 +36,11 @@ public class Profile
     [Serializable]
     public class ActivitiesData
     {
-        [JsonProperty("total_ranked_plays")] public int TotalRankedPlays { get; set; }
-        [JsonProperty("cleared_notes")] public long ClearedNotes { get; set; }
-        [JsonProperty("max_combo")] public int MaxCombo { get; set; }
-        [JsonProperty("average_ranked_accuracy")] public double? AverageRankedAccuracy { get; set; }
-        [JsonProperty("total_ranked_score")] public long TotalRankedScore { get; set; }
-        [JsonProperty("total_play_time")] public long TotalPlayTime { get; set; }
+        [JsonProperty("totalRankedPlays")] public int TotalRankedPlays { get; set; }
+        [JsonProperty("clearedNotes")] public long ClearedNotes { get; set; }
+        [JsonProperty("maxCombo")] public int MaxCombo { get; set; }
+        [JsonProperty("averageRankedAccuracy")] public double? AverageRankedAccuracy { get; set; }
+        [JsonProperty("totalRankedScore")] public long TotalRankedScore { get; set; }
+        [JsonProperty("totalPlayTime")] public long TotalPlayTime { get; set; }
     }
 }

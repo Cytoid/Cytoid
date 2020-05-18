@@ -8,6 +8,22 @@ using UnityEngine;
 [Serializable]
 public class LocalPlayerSettings
 {
+
+    public void EnsureDefault()
+    {
+        var dummy = new LocalPlayerSettings();
+        NoteRingColors = LeftJoin(dummy.NoteRingColors, dummy.NoteRingColors);
+        NoteFillColors = LeftJoin(dummy.NoteFillColors, dummy.NoteFillColors);
+        NoteFillColorsAlt = LeftJoin(dummy.NoteFillColorsAlt, dummy.NoteFillColorsAlt);
+    }
+
+    private Dictionary<TK, TV> LeftJoin<TK, TV>(Dictionary<TK, TV> from, Dictionary<TK, TV> to)
+    {
+        var dummy = new Dictionary<TK, TV>(to);
+        from.ToList().ForEach(x => dummy[x.Key] = x.Value);
+        return dummy;
+    }
+
     [JsonProperty("schema_version")] public int SchemaVersion { get; set; }
     
     [JsonProperty("player_id")] public string PlayerId { get; set; }
@@ -49,6 +65,8 @@ public class LocalPlayerSettings
         {NoteType.Hold, "#FFFFFF".ToColor()},
         {NoteType.LongHold, "#FFFFFF".ToColor()},
         {NoteType.Flick, "#FFFFFF".ToColor()},
+        {NoteType.CDragChild, "#FFFFFF".ToColor()},
+        {NoteType.CDragHead, "#FFFFFF".ToColor()},
     };
 
     [JsonProperty("note_fill_colors")]
@@ -61,6 +79,8 @@ public class LocalPlayerSettings
         {NoteType.Hold, "#35A7FF".ToColor()},
         {NoteType.LongHold, "#F2C85A".ToColor()},
         {NoteType.Flick, "#35A7FF".ToColor()},
+        {NoteType.CDragChild, "#39E59E".ToColor()},
+        {NoteType.CDragHead, "#39E59E".ToColor()},
     };
 
     [JsonProperty("note_fill_colors_alt")]
@@ -73,6 +93,8 @@ public class LocalPlayerSettings
         {NoteType.Hold, "#FF5964".ToColor()},
         {NoteType.LongHold, "#F2C85A".ToColor()},
         {NoteType.Flick, "#FF5964".ToColor()},
+        {NoteType.CDragChild, "#39E59E".ToColor()},
+        {NoteType.CDragHead, "#39E59E".ToColor()},
     };
 
     [JsonProperty("hold_hit_sound_timing")]

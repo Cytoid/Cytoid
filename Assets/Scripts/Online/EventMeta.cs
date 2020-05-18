@@ -1,15 +1,20 @@
 using System;
+using JetBrains.Annotations;
 
 [Serializable]
 public class EventMeta
 {
-    public string id;
-    public string logoUrl;
-    public string coverUrl;
-    public string postUrl;
-    public DateTimeOffset startDate;
-    public DateTimeOffset endDate;
-    public string associatedLevelUid;
-    public OnlineLevel associatedLevel;
-    public string associatedCollectionId;
+    public string uid;
+    public string title;
+    public string slogan;
+
+    public bool locked;
+    
+    public DateTimeOffset? startDate;
+    public DateTimeOffset? endDate;
+
+    public int? levelId;
+    public string collectionId;
+    [CanBeNull] public OnlineImageAsset cover;
+    [CanBeNull] public OnlineImageAsset logo;
 }

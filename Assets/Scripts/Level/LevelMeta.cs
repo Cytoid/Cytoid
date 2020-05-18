@@ -71,6 +71,16 @@ public class LevelMeta : IComparable<LevelMeta>
     {
         return charts.Max(it => it.difficulty);
     }
+    
+    public Difficulty GetEasiestDifficulty()
+    {
+        return charts.Min(it => Difficulty.Parse(it.type));
+    }
+
+    public Difficulty GetHardestDifficulty()
+    {
+        return charts.Max(it => Difficulty.Parse(it.type));
+    }
 
     [Serializable]
     public class MusicSection

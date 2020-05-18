@@ -279,6 +279,17 @@ public static class SettingsFactory
                 () => lp.Settings.NoteFillColorsAlt[NoteType.DragChild], it => lp.Settings.NoteFillColorsAlt[NoteType.DragChild] = it,
                 "", "#39E59E", true)
             .SaveSettingsOnChange();
+        
+        Object.Instantiate(provider.input, parent)
+            .SetContent("SETTINGS_FILL_COLOR_C_DRAG_UP".Get(), "SETTINGS_FILL_COLOR_C_DRAG_DESC".Get(),
+                () => lp.Settings.NoteFillColors[NoteType.CDragChild], it => lp.Settings.NoteFillColors[NoteType.CDragChild] = it,
+                "", "#39E59E", true)
+            .SaveSettingsOnChange();
+        Object.Instantiate(provider.input, parent)
+            .SetContent("SETTINGS_FILL_COLOR_C_DRAG_DOWN".Get(), "",
+                () => lp.Settings.NoteFillColorsAlt[NoteType.CDragChild], it => lp.Settings.NoteFillColorsAlt[NoteType.CDragChild] = it,
+                "", "#39E59E", true)
+            .SaveSettingsOnChange();
 
         Object.Instantiate(provider.input, parent)
             .SetContent("SETTINGS_FILL_COLOR_HOLD_UP".Get(), "SETTINGS_FILL_COLOR_HOLD_DESC".Get(),

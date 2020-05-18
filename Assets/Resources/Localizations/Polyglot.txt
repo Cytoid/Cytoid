@@ -169,6 +169,9 @@ SETTINGS_FILL_COLOR_CLICK_DESC		Change the click note fill color		Cambia el colo
 SETTINGS_FILL_COLOR_DRAG_UP		Fill color (drag, up)		Color de relleno (arrastrar, arriba)	Füllfarbe (ziehen, nach oben)		Cor de preenchimento (arrastar, acima)	Cor de preenchimento (arrastar, acima)	Цвет заливки (драг, вверх)									スライド (登り)	内圆颜色（Drag，上）	Drag 填充顏色（↑）	드래그 (상) 노트 색									Màu trong (kéo, trên)	Punuin ng kulay (drag, taas)	Warna tengah (drag, atas)	
 SETTINGS_FILL_COLOR_DRAG_DOWN		Fill color (drag, down)		Color de relleno (arrastrar, abajo)	Füllfarbe (ziehen, nach unten)		Cor de preenchimento (arrastar, abaixo)	Cor de preenchimento (arrastar, abaixo)	Цвет заливки (драг, вниз)									スライド (下り)	内圆颜色（Drag，下）	Drag 填充顏色（↓）	드래그 (하) 노트 색									Màu trong (kéo, dưới)	Punuin ng kulay (drag, baba)	Warna tengah (drag, bawah)	
 SETTINGS_FILL_COLOR_DRAG_DESC		Change the drag note fill color		Cambia el color de relleno a las notas arrastrar	Verändert die Füllarben der Ziehnoten		Muda a cor do preenchimento da nota de arrastar quando a linha de julgamento sobe ou desce	Muda a cor do preenchimento da nota de arrastar quando a linha de julgamento sobe ou desce	Изменяет цвет заливки драг-ноты									スライドノーツの色を変更します	调整 Drag 内圆的颜色	調整 Drag 的填充顏色	드래그 노트 색깔을 바꿉니다									Thay đổi màu trong của nốt kéo	Ibahin ang kulay ng nota	Mengubah warna tengah pada note drag	
+SETTINGS_FILL_COLOR_C_DRAG_UP		Fill color (c-drag, up)																															
+SETTINGS_FILL_COLOR_C_DRAG_DOWN		Fill color (c-drag, down)																															
+SETTINGS_FILL_COLOR_C_DRAG_DESC		Change the c-drag note fill color																															
 SETTINGS_FILL_COLOR_HOLD_UP		Fill color (hold, up)		Color de relleno (sostener, arriba)	Füllfarbe (halten, nach oben)		Cor de preenchimento (segurar, acima)	Cor de preenchimento (segurar, acima)	Цвет заливки (холд, вверх)									ホールド (登り)	内圆颜色（Hold，上）	Hold 填充顏色（↑）	홀드 (상) 노트 색									Màu trong (giữ, trên)	Punuin ng kulay (hold, taas)	Warna tengah (hold, atas)	
 SETTINGS_FILL_COLOR_HOLD_DOWN		Fill color (hold, down)		Color de relleno (sostener, abajo)	Füllfarbe (halten, nach unten)		Cor de preenchimento (segurar, abaixo)	Cor de preenchimento (segurar, abaixo)	Цвет заливки (холд, вниз)									ホールド (下り)	内圆颜色（Hold，下）	Hold 填充顏色（↓）	홀드 (하) 노트 색									Màu trong (giữ, dưới)	Punuin ng kulay (hold, baba)	Warna tengah (hold, bawah)	
 SETTINGS_FILL_COLOR_HOLD_DESC		Change the hold note fill color		Cambial el color de relleno de las notas sostener	Verändert die Füllfarben der Haltenoten		Muda a cor de preeenchimento da nota de segurar quando a linha de julgamento sobe ou desce	Muda a cor de preeenchimento da nota de segurar quando a linha de julgamento sobe ou desce	Изменяет цвет заливки холд-ноты									ホールドノーツの色を変更します	调整 Hold 内圆的颜色	調整 Hold 的填充顏色	홀드 노트 색깔을 바꿉니다									Thay đổi màu trong của nốt giữ	Ibahin ang kulay ng notang hold	Mengubah warna tengah pada note hold	
@@ -433,8 +436,8 @@ OFFLINE_FEATURE_NOT_AVAILABLE		You are offline.		Esta fuera de línea	Du bist Of
 OFFLINE_GO_OFFLINE		Go offline		Estar fuera de línea	Geh Offline		Ficar offline	Ficar offline											离线模式		오프라인 모드 켜기												
 OFFLINE_GO_ONLINE		Go online		Estar en línea	Geh Online		Ficar online	Ficar online											退出离线模式		오프라인 모드 끄기												
 																																	
-REWARD_LEVEL_UNLOCKED		Level unlocked		Nivel desbloqueado	Level Freigeschaltet		Nível Desbloqueado	Nível Desbloqueado											关卡已解锁		채보 열림												
-REWARD_CHARACTER_UNLOCKED		Character unlocked		Personaje desbloqueado	Charakter Freigeschaltet		Personagem desbloqueado	Personagem desbloqueado											角色已解锁		캐릭터 열림										Nabuksan mo na ang character na ito.		
+REWARD_LEVEL_ADDED_TO_LIBRARY		LEVEL ADDED TO LIBRARY																	关卡已添加到库中														
+REWARD_CHARACTER_UNLOCKED		CHARACTER UNLOCKED		Personaje desbloqueado	Charakter Freigeschaltet		Personagem desbloqueado	Personagem desbloqueado											角色已解锁		캐릭터 열림										Nabuksan mo na ang character na ito.		
 																																	
 																																	
 																																	

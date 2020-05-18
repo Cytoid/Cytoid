@@ -60,6 +60,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
     public void Enter()
     {
         FadeIn();
+        if (Context.OnlinePlayer.IsAuthenticating) return;
         if (Context.OnlinePlayer.IsAuthenticated)
         {
             SetSignedIn(Context.OnlinePlayer.LastProfile);

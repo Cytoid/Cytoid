@@ -15,7 +15,7 @@ namespace Proyecto26
                 if (_runner == null)
                 {
                     _runner = new GameObject("Static Coroutine RestClient").AddComponent<CoroutineHolder>();
-                    Object.DontDestroyOnLoad(_runner);
+                    // Object.DontDestroyOnLoad(_runner); // Cytoid: Don't persist between scenes
                 }
                 return _runner;
             }

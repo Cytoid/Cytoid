@@ -201,7 +201,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
     public override void OnScreenChangeStarted(Screen from, Screen to)
     {
         base.OnScreenChangeStarted(from, to);
-        if (from is MainMenuScreen && to == this)
+        if (to == this)
         {
             levelGrid.Enter();
             // Clear search query

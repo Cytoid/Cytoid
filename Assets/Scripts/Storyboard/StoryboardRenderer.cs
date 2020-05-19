@@ -27,6 +27,9 @@ namespace Cytoid.Storyboard
 
         public Dictionary<Sprite, UnityEngine.UI.Image> UiSprites { get; } =
             new Dictionary<Sprite, UnityEngine.UI.Image>();
+        
+        public Dictionary<string, Text> TextLookup { get; } = new Dictionary<string, Text>();
+        public Dictionary<string, Sprite> SpriteLookup { get; } = new Dictionary<string, Sprite>();
 
         public TextEaser TextEaser { get; private set; }
         public SpriteEaser SpriteEaser { get; private set; }

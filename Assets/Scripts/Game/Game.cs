@@ -62,6 +62,7 @@ public class Game : MonoBehaviour
     public GameEvent onGameLoaded = new GameEvent();
     public GameEvent onGameStarted = new GameEvent();
     public GameEvent onGameUpdate = new GameEvent();
+    public GameEvent onGameLateUpdate = new GameEvent();
     public GameEvent onGamePaused = new GameEvent();
     public GameEvent onGameWillUnpause = new GameEvent();
     public GameEvent onGameUnpaused = new GameEvent();
@@ -404,6 +405,7 @@ public class Game : MonoBehaviour
         }
 
         onGameUpdate.Invoke(this);
+        onGameLateUpdate.Invoke(this);
     }
 
     public virtual void SpawnNote(ChartModel.Note model)

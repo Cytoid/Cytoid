@@ -99,21 +99,12 @@ public class Chart
             var flip = isHorizontallyInverted ? -1 : 1;
 
             note.position = new Vector3(
-                ((float) note.x * 2 * horizontalRatio - horizontalRatio) * baseSize *
-                UnityEngine.Screen.width / UnityEngine.Screen.height * flip,
-                (float) (
-                    verticalRatio * page.scan_line_direction *
-                    (-baseSize + 2.0f *
-                     baseSize *
-                     (note.tick - page.start_tick) * 1.0f /
-                     (page.end_tick - page.start_tick))
-                    + verticalOffset)
+                ConvertChartXToScreenX((float) note.x),
+                GetNoteScreenY(note)
             );
 
             note.end_position = new Vector3(
-                ((float) note.x * 2 * horizontalRatio - horizontalRatio) * baseSize * UnityEngine.Screen.width /
-                UnityEngine.Screen.height
-                * flip,
+                note.position.x,
                 ConvertChartTickToScreenY((float) (note.tick + note.hold_tick))
             );
 
@@ -166,7 +157,7 @@ public class Chart
                     break;
             }
 
-        foreach (var note in Model.note_list)
+        /*foreach (var note in Model.note_list)
         {
             if (note.next_id <= 0 || !Model.note_map.ContainsKey(note.next_id)) continue;
 
@@ -184,7 +175,7 @@ public class Chart
                     Mathf.Atan((noteNext.position.x - noteThis.position.x) /
                                (noteNext.position.y - noteThis.position.y)) / Mathf.PI * 180f +
                     (noteNext.position.y > noteThis.position.y ? 0 : 180);
-        }
+        }*/
 
         MusicOffset = (float) Model.music_offset;
     }
@@ -261,6 +252,18 @@ public class Chart
         return verticalRatio *
                (-baseSize + 2.0f * baseSize * y)
                + verticalOffset;
+    }
+
+    public float GetNoteScreenY(ChartModel.Note note)
+    {
+        var page = Model.page_list[note.page_index];
+        return (float) (
+            verticalRatio * page.scan_line_direction *
+            (-baseSize + 2.0f *
+                baseSize *
+                (note.tick - page.start_tick) * 1.0f /
+                (page.end_tick - page.start_tick))
+            + verticalOffset);
     }
 
     public float ConvertChartTickToScreenY(float tick)

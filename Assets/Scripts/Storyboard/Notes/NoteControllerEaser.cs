@@ -17,7 +17,11 @@ namespace Cytoid.Storyboard.Notes
                     }
                     else
                     {
-                        Game.Config.NoteXOverride.Remove(From.Note.Value);
+                        if (Game.Config.NoteXOverride.Remove(From.Note.Value))
+                        {
+                            var note = Game.Chart.Model.note_map[From.Note.Value];
+                            note.position.x = Game.Chart.ConvertChartXToScreenX((float) note.x);
+                        }
                     }
                 }
                 
@@ -26,10 +30,15 @@ namespace Cytoid.Storyboard.Notes
                     if (From.OverrideY.Value)
                     {
                         Game.Config.NoteYOverride[From.Note.Value] = From.Y.IsSet() ? EaseFloat(From.Y, To.Y) : 0.5f;
+                        // Game.Chart.Model.note_map[From.Note.Value].direction = 1;
                     }
                     else
                     {
-                        Game.Config.NoteYOverride.Remove(From.Note.Value);
+                        if (Game.Config.NoteYOverride.Remove(From.Note.Value))
+                        {
+                            var note = Game.Chart.Model.note_map[From.Note.Value];
+                            note.position.y = Game.Chart.GetNoteScreenY(note);
+                        }
                     }
                 }
                 

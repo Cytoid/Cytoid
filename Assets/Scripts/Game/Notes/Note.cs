@@ -9,6 +9,7 @@ public abstract class Note : MonoBehaviour
     [NonSerialized] public NoteRenderer Renderer;
 
     public ChartModel.Note Model { get; private set; }
+    public ChartModel.Note NextModel { get; private set; }
     public ChartModel Chart { get; private set; }
     public ChartModel.Page Page { get; private set; }
     public NoteType Type { get; private set; }
@@ -30,6 +31,11 @@ public abstract class Note : MonoBehaviour
         Game = game;
         Chart = game.Chart.Model;
         Model = game.Chart.Model.note_map[noteId];
+        if (Model.next_id > 0 && Chart.note_map.ContainsKey(Model.next_id))
+        {
+            NextModel = Chart.note_map[Model.next_id];
+        }
+
         Page = Chart.page_list[Model.page_index];
         Type = (NoteType) Model.type;
 
@@ -38,6 +44,7 @@ public abstract class Note : MonoBehaviour
         MissThreshold = Type.GetDefaultMissThreshold();
         
         Game.onGameUpdate.AddListener(_ => OnGameUpdate());
+        Game.onGameLateUpdate.AddListener(_ => OnGameLateUpdate());
     }
 
     public virtual void Clear(NoteGrade grade)
@@ -90,8 +97,8 @@ public abstract class Note : MonoBehaviour
             position.y = chart.ConvertChartYToScreenY(config.NoteYOverride[Model.id]);
         }
         
-        gameObject.transform.position = position;
-        
+        gameObject.transform.position = Model.position = position;
+
         // Reset cleared status in player mode
         if (Game is PlayerGame && IsCleared)
         {
@@ -127,6 +134,22 @@ public abstract class Note : MonoBehaviour
         }
 
         Renderer.OnLateUpdate();
+    }
+
+    protected virtual void OnGameLateUpdate()
+    {
+        if (NextModel == null) return;
+        if (Model.position == NextModel.position)
+            Model.rotation = 0;
+        else if (Math.Abs(Model.position.y - NextModel.position.y) < 0.000001)
+            Model.rotation = Model.position.x > NextModel.position.x ? -90 : 90;
+        else if (Math.Abs(Model.position.x - NextModel.position.x) < 0.000001)
+            Model.rotation = Model.position.y > NextModel.position.y ? 180 : 0;
+        else
+            Model.rotation =
+                Mathf.Atan((NextModel.position.x - Model.position.x) /
+                           (NextModel.position.y - Model.position.y)) / Mathf.PI * 180f +
+                (NextModel.position.y > Model.position.y ? 0 : 180);
     }
 
     public virtual bool ShouldMiss()

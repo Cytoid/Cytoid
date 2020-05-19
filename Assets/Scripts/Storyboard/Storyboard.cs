@@ -97,6 +97,28 @@ namespace Cytoid.Storyboard
                     foreach (var objectToken in PopulateJObjects((JObject) childToken))
                     {
                         var noteController = LoadObject<NoteController, NoteControllerState>(objectToken);
+                        /*for (var i = 0; i < 2000; i++)
+                        {
+                            var id = i;
+                            if (!Game.Chart.Model.note_map.ContainsKey(i)) continue;
+                            var newNoteController = new NoteController
+                            {
+                                States = new List<NoteControllerState>
+                                {
+                                    noteController.States[0].JsonDeepCopy().Also(it =>
+                                    {
+                                        it.Note = id;
+                                        it.Time = Game.Chart.Model.note_map[id].intro_time - 0.1f;
+                                    }),
+                                    noteController.States[1].JsonDeepCopy().Also(it =>
+                                    {
+                                        it.Time = Game.Chart.Model.note_map[id].start_time;
+                                    }),
+                                }
+                            };
+                            NoteControllers.Add(newNoteController);
+                        }*/
+
                         if (noteController != null) NoteControllers.Add(noteController);
                     }
                 }

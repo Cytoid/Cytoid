@@ -27,9 +27,9 @@ public class DragHeadNote : Note
         EndNoteModel = FromNoteModel.GetDragEndNote(game.Chart.Model);
     }
 
-    protected override void OnGameUpdate()
+    protected override void OnGameLateUpdate()
     {
-        base.OnGameUpdate();
+        base.OnGameLateUpdate();
         
         transform.eulerAngles = new Vector3(0, 0,  90 - FromNoteModel.rotation);
 

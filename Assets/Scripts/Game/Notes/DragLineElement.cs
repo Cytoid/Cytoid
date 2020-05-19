@@ -29,16 +29,23 @@ public class DragLineElement : MonoBehaviour
         spriteRenderer.material.SetFloat("_End", 0.0f);
         spriteRenderer.material.SetFloat("_Start", 0.0f);
         await UniTask.DelayFrame(0);
+        UpdateTransform();
+        spriteRenderer.sortingOrder = fromNoteModel.id;
+    }
+
+    private void UpdateTransform()
+    {
+        transform.position = fromNoteModel.position;
         length = Vector3.Distance(fromNoteModel.position, toNoteModel.position);
         spriteRenderer.material.mainTextureScale = new Vector2(1.0f, length / 0.16f);
-        transform.position = fromNoteModel.position;
         transform.eulerAngles = new Vector3(0, 0, -fromNoteModel.rotation);
         transform.localScale = new Vector3(1.0f, length / 0.16f);
-        spriteRenderer.sortingOrder = fromNoteModel.id;
     }
 
     private void Update()
     {
+        UpdateTransform();
+        
         spriteRenderer.enabled = !game.State.Mods.Contains(Mod.HideNotes);
 
         if (game is PlayerGame)

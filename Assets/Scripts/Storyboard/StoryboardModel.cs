@@ -32,6 +32,11 @@ namespace Cytoid.Storyboard
     }
 
     [Serializable]
+    public class NoteController : Object<NoteControllerState>
+    {
+    }
+
+    [Serializable]
     public class ObjectState
     {
         public float AddTime = float.MinValue;
@@ -85,6 +90,22 @@ namespace Cytoid.Storyboard
         public Color Color;
         public string Path;
         public bool? PreserveAspect;
+    }
+
+    [Serializable]
+    public class NoteControllerState : ObjectState
+    {
+        public int? Note;
+        public bool? OverrideX;
+        public float X = float.MinValue;
+        public bool? OverrideY;
+        public float Y = float.MinValue;
+        public bool? OverrideRingColor;
+        public Color RingColor;
+        public bool? OverrideFillColor;
+        public Color FillColor;
+        public float OpacityMultiplier = float.MinValue;
+        public float SizeMultiplier = float.MinValue;
     }
 
     [Serializable]

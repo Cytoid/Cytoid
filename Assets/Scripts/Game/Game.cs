@@ -33,6 +33,8 @@ public class Game : MonoBehaviour
 
     public Storyboard Storyboard { get; protected set; }
     
+    public string StoryboardPath { get; protected set; }
+    
     public float Time { get; protected set; }
     public float MusicLength { get; protected set; }
     public float ChartLength { get; protected set; }
@@ -75,7 +77,7 @@ public class Game : MonoBehaviour
     public GameEvent onTopBoundaryBounded = new GameEvent();
     public GameEvent onBottomBoundaryBounded = new GameEvent();
 
-    protected void Awake()
+    protected virtual void Awake()
     {
         Renderer = new GameRenderer(this);
         
@@ -88,7 +90,7 @@ public class Game : MonoBehaviour
 #endif
     }
 
-    protected async void Start()
+    protected virtual async void Start()
     {
         await Initialize();
     }
@@ -211,14 +213,14 @@ public class Game : MonoBehaviour
         MusicLength = Music.Length;
         
         // Load storyboard
-        var storyboardPath =
+        StoryboardPath =
             Level.Path + (chartMeta.storyboard != null ? chartMeta.storyboard.path : "storyboard.json");
 
-        if (File.Exists(storyboardPath)) {
+        if (File.Exists(StoryboardPath)) {
             // Initialize storyboard
             // TODO: Why File.ReadAllText() works but not UnityWebRequest?
             // (UnityWebRequest downloaded text could not be parsed by Newtonsoft.Json)
-            var storyboardText = File.ReadAllText(storyboardPath);
+            var storyboardText = File.ReadAllText(StoryboardPath);
             Storyboard = new Storyboard(this, storyboardText);
             await Storyboard.Initialize();
         }
@@ -261,7 +263,7 @@ public class Game : MonoBehaviour
         }
     }
 
-    protected async void StartGame()
+    protected async virtual void StartGame()
     {
         await UniTask.WhenAll(BeforeStartTasks);
         
@@ -302,6 +304,27 @@ public class Game : MonoBehaviour
 
     private int ticksBeforeSynchronization = 600;
 
+    protected virtual void SynchronizeMusic()
+    {
+        // Update current states
+        ticksBeforeSynchronization--;
+        var resumeElapsedTime = UnityEngine.Time.realtimeSinceStartup - GameStartedOrResumedTimestamp;
+        var nowDspTime = AudioSettings.dspTime;
+        // Sync: every 600 ticks (=10 seconds) and every tick within the first 0.5 seconds after start/unpause
+        if ((ResynchronizeChartOnNextFrame || ticksBeforeSynchronization <= 0 || resumeElapsedTime < 0.5f) && nowDspTime != lastDspTime)
+        {
+            ResynchronizeChartOnNextFrame = false;
+            Time = (float) nowDspTime;
+            lastDspTime = nowDspTime;
+            ticksBeforeSynchronization = 600;
+            Time = (float) (Time - Config.ChartOffset + Chart.MusicOffset - MusicStartedTimestamp);
+        }
+        else
+        {
+            Time += UnityEngine.Time.unscaledDeltaTime;
+        }
+    }
+    
     protected virtual void Update()
     {
         if (!IsLoaded) return;
@@ -310,7 +333,7 @@ public class Game : MonoBehaviour
         
         if (!State.IsPlaying) return;
 
-        if (Input.GetKeyDown(KeyCode.Escape) && !(this is StoryboardGame) && State.Mode != GameMode.Tier)
+        if (Input.GetKeyDown(KeyCode.Escape) && !(this is PlayerGame) && State.Mode != GameMode.Tier)
         {
             Pause();
             return;
@@ -322,23 +345,7 @@ public class Game : MonoBehaviour
         {
             if (State.ClearCount >= Chart.Model.note_list.Count) Complete();
 
-            // Update current states
-            ticksBeforeSynchronization--;
-            var resumeElapsedTime = UnityEngine.Time.realtimeSinceStartup - GameStartedOrResumedTimestamp;
-            var nowDspTime = AudioSettings.dspTime;
-            // Sync: every 600 ticks (=10 seconds) and every tick within the first 0.5 seconds after start/unpause
-            if ((ResynchronizeChartOnNextFrame || ticksBeforeSynchronization <= 0 || resumeElapsedTime < 0.5f) && nowDspTime != lastDspTime)
-            {
-                ResynchronizeChartOnNextFrame = false;
-                Time = (float) nowDspTime;
-                lastDspTime = nowDspTime;
-                ticksBeforeSynchronization = 600;
-                Time = (float) (Time - Config.ChartOffset + Chart.MusicOffset - MusicStartedTimestamp);
-            }
-            else
-            {
-                Time += UnityEngine.Time.unscaledDeltaTime;
-            }
+            SynchronizeMusic();
             MusicProgress = Time / MusicLength;
             ChartProgress = Time / ChartLength;
 
@@ -455,7 +462,7 @@ public class Game : MonoBehaviour
         }
     }
 
-    public bool Pause()
+    public virtual bool Pause()
     {
         if (!IsLoaded || !State.IsPlaying || State.IsCompleted || State.IsFailed) return false;
         print("Game paused");
@@ -483,7 +490,7 @@ public class Game : MonoBehaviour
 
     private CancellationTokenSource unpauseToken;
 
-    public async void WillUnpause()
+    public virtual async void WillUnpause()
     {
         if (!IsLoaded || State.IsPlaying || State.IsCompleted || State.IsFailed || UnpauseCountdown > 0) return;
         if (State.Mode == GameMode.Tier) throw new InvalidOperationException();
@@ -527,7 +534,7 @@ public class Game : MonoBehaviour
         onGameUnpaused.Invoke(this);
     }
 
-    public void Abort()
+    public virtual void Abort()
     {
         print("Game aborted");
         
@@ -548,7 +555,7 @@ public class Game : MonoBehaviour
             onFinished: screen => sceneLoader.Activate());
     }
 
-    public void Retry()
+    public virtual void Retry()
     {
         print("Game retried");
         
@@ -630,7 +637,7 @@ public class Game : MonoBehaviour
         sceneLoader.Activate();
     }
 
-    public void Dispose()
+    public virtual void Dispose()
     {
         inputController.DisableInput();
 
@@ -649,7 +656,7 @@ public class NoteEvent : UnityEvent<Game, Note>
 
 #if UNITY_EDITOR
 
-[CustomEditor(typeof(Game))]
+[CustomEditor(typeof(Game), true)]
 public class GameEditor : Editor
 {
     public override void OnInspectorGUI()

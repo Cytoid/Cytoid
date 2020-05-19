@@ -36,6 +36,7 @@ namespace Polyglot
         Vietnamese = 28,
         Filipino = 29,
         Indonesian = 30,
-        Fujaoese = 31
+        Fujaoese = 31,
+        Ukrainian = 32
     }
 }

@@ -173,6 +173,7 @@ public sealed class GameState
         }
         if (Judgements[note.Model.id].IsJudged)
         {
+            return;
             Debug.LogWarning($"Trying to judge note {note.Model.id} which is already judged.");
         }
 

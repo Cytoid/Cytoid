@@ -56,7 +56,7 @@ public class RewardOverlay : SingletonMonoBehavior<RewardOverlay>
                 switch (reward.Type)
                 {
                     case OnlinePlayerStateChange.Reward.RewardType.Level:
-                        it.message.text = "REWARD_LEVEL_UNLOCKED".Get();
+                        it.message.text = "REWARD_LEVEL_ADDED_TO_LIBRARY".Get();
                         it.levelCard.gameObject.SetActive(true);
                         it.levelCard.SetModel(reward.onlineLevelValue.Value.ToLevel(LevelType.Official));
                         break;

@@ -72,16 +72,14 @@ public class EventSelectionScreen : Screen
         SpinnerOverlay.Show();
 
         RestClient.GetArray<EventMeta>(new RequestHelper {
-            Uri = $"{Context.ServicesUrl}/posts",
+            Uri = $"{Context.ServicesUrl}/posts?type=event",
             Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
             EnableDebug = true
         }).Then(data =>
             {
-                var events = data.ToList().FindAll(it => it.startDate != null && it.endDate != null); // Filter events form posts
-                
                 SpinnerOverlay.Hide();
 
-                LoadedContent = new Content {Events = events};
+                LoadedContent = new Content {Events = data.ToList()};
                 OnContentLoaded(LoadedContent);
             })
             .CatchRequestError(error =>
@@ -95,10 +93,16 @@ public class EventSelectionScreen : Screen
     public async void OnContentLoaded(Content content)
     {
         events = content.Events;
+
+        if (events.Count == 0)
+        {
+            Dialog.PromptGoBack("DIALOG_EVENTS_NOT_AVAILABLE".Get());
+            return;
+        }
         
         previousButton.onPointerClick.RemoveAllListeners();
         nextButton.onPointerClick.RemoveAllListeners();
-        if (content.Events.Count == 1)
+        if (events.Count == 1)
         {
             previousButton.scaleOnClick = false;
             nextButton.scaleOnClick = false;
@@ -170,7 +174,9 @@ public class EventSelectionScreen : Screen
         {
             viewDetailsButton.onPointerClick.SetListener(_ => Application.OpenURL($"{Context.WebsiteUrl}/posts/cytoidfes-2020"));
             const string dateFormat = "yyyy/MM/dd HH:mm";
-            durationText.text = meta.startDate.Value.LocalDateTime.ToString(dateFormat) + "~" + meta.endDate.Value.LocalDateTime.ToString(dateFormat);
+            durationText.text = (meta.startDate.HasValue ? meta.startDate.Value.LocalDateTime.ToString(dateFormat) : "")
+                                + "~"
+                                + (meta.endDate.HasValue ? meta.endDate.Value.LocalDateTime.ToString(dateFormat) : "");
             enterButton.onPointerClick.SetListener(_ =>
             {
                 if (meta.locked)

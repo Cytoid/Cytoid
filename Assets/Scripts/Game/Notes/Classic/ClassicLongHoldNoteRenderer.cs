@@ -38,9 +38,7 @@ public class ClassicLongHoldNoteRenderer : ClassicHoldNoteRenderer
     public override void OnNoteLoaded()
     {
         base.OnNoteLoaded();
-        var newProgressRingScale = ProgressRing.transform.localScale.x * SizeMultiplier;
-        ProgressRing.transform.SetLocalScaleXY(newProgressRingScale, newProgressRingScale);
-        
+
         CompletedLine2.size = new Vector2(1, 0);
         Line.size = new Vector2(1, orthographicSize * 4);
         Line2.size = new Vector2(1, orthographicSize * 4);

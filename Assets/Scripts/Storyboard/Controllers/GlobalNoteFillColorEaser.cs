@@ -2,7 +2,7 @@ using System.Linq;
 
 namespace Cytoid.Storyboard.Controllers
 {
-    public class NoteFillColorEaser : StoryboardRendererEaser<ControllerState>
+    public class GlobalNoteFillColorEaser : StoryboardRendererEaser<ControllerState>
     {
         public override void OnUpdate()
         {

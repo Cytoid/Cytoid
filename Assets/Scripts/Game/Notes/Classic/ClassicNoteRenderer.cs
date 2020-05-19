@@ -24,11 +24,12 @@ public class ClassicNoteRenderer : NoteRenderer
         Fill.enabled = false;
         
         // Generate note ID
-        if (Game.Config.DisplayNoteIds)
+        if (Game.Config.DisplayNoteIds || Game is PlayerGame)
         {
             DisplayNoteId = true;
             NoteId = Object.Instantiate(GameObjectProvider.Instance.noteIdPrefab, Note.transform);
             NoteId.SetModel(note.Model);
+            NoteId.Visible = Game.Config.DisplayNoteIds || (Game is PlayerGame playerGame && !playerGame.HideInterface);
             NoteId.gameObject.SetActive(false);
         }
     }
@@ -38,7 +39,7 @@ public class ClassicNoteRenderer : NoteRenderer
         var config = Game.Config;
 
         // Calculate base size
-        SizeMultiplier = Game.Config.NoteSizeMultiplier;
+        SizeMultiplier = Game.Config.GlobalNoteSizeMultiplier;
         if (Note.Model.size != double.MinValue)
         {
             // Chart note override?
@@ -58,6 +59,7 @@ public class ClassicNoteRenderer : NoteRenderer
 
     protected override void Render()
     {
+        if (NoteId != null) NoteId.Visible = !(Game is PlayerGame playerGame) || !playerGame.HideInterface;
         UpdateCollider();
         UpdateComponentStates();
         UpdateColors();
@@ -84,14 +86,20 @@ public class ClassicNoteRenderer : NoteRenderer
             {
                 Ring.enabled = true;
                 Fill.enabled = true;
-                if (DisplayNoteId) NoteId.gameObject.SetActive(true);
+                if (DisplayNoteId)
+                {
+                    NoteId.gameObject.SetActive(true);
+                }
             }
         }
         else
         {
             Ring.enabled = false;
             Fill.enabled = false;
-            if (DisplayNoteId) NoteId.gameObject.SetActive(false);
+            if (DisplayNoteId)
+            {
+                NoteId.gameObject.SetActive(false);
+            }
         }
     }
 
@@ -107,10 +115,18 @@ public class ClassicNoteRenderer : NoteRenderer
     
     protected virtual void UpdateTransformScale()
     {
+        var sizeMultiplier = 1f;
+        if (Game.Config.NoteSizeMultiplier.ContainsKey(Note.Model.id))
+        {
+            sizeMultiplier = Game.Config.NoteSizeMultiplier[Note.Model.id];
+        }
+
+        var transformSize = BaseTransformSize * sizeMultiplier;
+        
         // Scale entire transform
         const float minPercentageSize = 0.4f;
         var timeRequired = 1.367f / Note.Model.speed;
-        var timeScaledSize = BaseTransformSize * minPercentageSize + BaseTransformSize * (1 - minPercentageSize) *
+        var timeScaledSize = transformSize * minPercentageSize + transformSize * (1 - minPercentageSize) *
                              Mathf.Clamp((Game.Time - Note.Model.intro_time) / timeRequired, 0f, 1f);
 
         var transform = Note.transform;
@@ -147,6 +163,10 @@ public class ClassicNoteRenderer : NoteRenderer
         else EasedOpacity = maxOpacity;
         
         EasedOpacity *= Game.Config.GlobalNoteOpacityMultiplier;
+        if (Game.Config.NoteOpacityMultiplier.ContainsKey(Note.Model.id))
+        {
+            EasedOpacity *= Game.Config.NoteOpacityMultiplier[Note.Model.id];
+        }
 
         Ring.color = Ring.color.WithAlpha(EasedOpacity);
         Fill.color = Fill.color.WithAlpha(EasedOpacity);

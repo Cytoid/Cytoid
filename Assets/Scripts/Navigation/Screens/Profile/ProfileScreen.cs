@@ -96,7 +96,7 @@ public class ProfileScreen : Screen, ScreenChangeListener
         totalClearedNotesText.text = profile.Activities.ClearedNotes.ToString("N0");
         highestMaxComboText.text = profile.Activities.MaxCombo.ToString("N0");
         avgRankedAccuracyText.text = ((profile.Activities.AverageRankedAccuracy ?? 0) * 100).ToString("0.00") + "%";
-        totalRankedScoreText.text = profile.Activities.TotalRankedScore.ToString("N0");
+        totalRankedScoreText.text = (profile.Activities.TotalRankedScore ?? 0).ToString("N0");
         totalPlayTimeText.text = TimeSpan.FromSeconds(profile.Activities.TotalPlayTime)
             .Let(it => it.ToString(it.Days > 0 ? @"d\d\ h\h\ m\m\ s\s" : @"h\h\ m\m\ s\s"));
         LayoutFixer.Fix(ratingText.transform.parent.transform);

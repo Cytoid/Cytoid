@@ -1,6 +1,6 @@
 namespace Cytoid.Storyboard.Controllers
 {
-    public class NoteRingColorEaser : StoryboardRendererEaser<ControllerState>
+    public class GlobalNoteRingColorEaser : StoryboardRendererEaser<ControllerState>
     {
         public override void OnUpdate()
         {

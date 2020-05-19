@@ -107,6 +107,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         public abstract void Stop();
         public abstract void Unload();
         public abstract bool IsFinished();
+        public abstract bool IsPlaying();
     }
 
     public class UnityController : Controller
@@ -206,6 +207,11 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         {
             return !Source.isPlaying;
         }
+
+        public override bool IsPlaying()
+        {
+            return Source.isPlaying;
+        }
     }
 
     public class Exceed7Controller : Controller
@@ -214,6 +220,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         private NativeAudioController controller;
         private float length;
         private float volume = 1f;
+        private bool isPlaying = false;
 
         public Exceed7Controller(AudioManager parent, AudioClip audioClip, bool isMusic) : base(parent, isMusic)
         {
@@ -247,6 +254,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
                 audioPlayerIndex = Parent.GetAvailableIndex(trackIndex)
             });
             controller.SetVolume(volume);
+            isPlaying = true;
             Debug.Log("Controller volume set to " + volume);
         }
 
@@ -257,16 +265,19 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
 
         public override void Pause()
         {
+            isPlaying = false;
             controller.TrackPause();
         }
 
         public override void Resume()
         {
+            isPlaying = true;
             controller.TrackResume();
         }
 
         public override void Stop()
         {
+            isPlaying = false;
             controller.Stop();
         }
 
@@ -281,6 +292,11 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         {
             print("Playback time: " + PlaybackTime + ", Length: " + length);
             return Mathf.Approximately(PlaybackTime, 0) || PlaybackTime >= length;
+        }
+
+        public override bool IsPlaying()
+        {
+            return isPlaying;
         }
 
     }

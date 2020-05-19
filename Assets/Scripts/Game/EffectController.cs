@@ -64,7 +64,7 @@ public class EffectController : MonoBehaviour
         settings.end.size = (noteRenderer.Note.Type == NoteType.DragHead || noteRenderer.Note.Type == NoteType.DragChild ||
                              noteRenderer.Note.Type == NoteType.CDragHead || noteRenderer.Note.Type == NoteType.CDragChild
                                 ? 4f
-                                : 5f) * noteRenderer.Game.Config.NoteSizeMultiplier * (1 + clearEffectSizeMultiplier);
+                                : 5f) * noteRenderer.Game.Config.GlobalNoteSizeMultiplier * (1 + clearEffectSizeMultiplier);
         settings.start.thickness = 1.333f;
         settings.end.thickness = 0.333f;
         flatFx.AddEffect(at, 1);

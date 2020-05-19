@@ -35,7 +35,6 @@ public abstract class Note : MonoBehaviour
 
         Renderer = CreateRenderer();
         Renderer.OnNoteLoaded();
-        gameObject.transform.position = Model.position;
         MissThreshold = Type.GetDefaultMissThreshold();
         
         Game.onGameUpdate.AddListener(_ => OnGameUpdate());
@@ -49,14 +48,14 @@ public abstract class Note : MonoBehaviour
         Renderer.OnClear(grade);
         Game.State.Judge(this, grade, -TimeUntilEnd, GreatGradeWeight);
 
-        if (!(Game is StoryboardGame))
+        if (!(Game is PlayerGame))
         {
             Game.onNoteClear.Invoke(Game, this);
             AwaitAndDestroy();
         }
         else
         {
-            if (TimeUntilEnd > -5) // Prevent storyboard seeking
+            if (TimeUntilEnd > -5) // Prevent player seeking
             {
                 Game.onNoteClear.Invoke(Game, this);
             }
@@ -79,10 +78,24 @@ public abstract class Note : MonoBehaviour
 
     protected virtual void OnGameUpdate()
     {
-        // Reset cleared status in storyboarding mode
-        if (Game is StoryboardGame && IsCleared)
+        var config = Game.Config;
+        var chart = Game.Chart;
+        var position = Model.position;
+        if (config.NoteXOverride.ContainsKey(Model.id))
         {
-            if (Game.Time <= Model.intro_time)
+            position.x = chart.ConvertChartXToScreenX(config.NoteXOverride[Model.id]);
+        }
+        if (config.NoteYOverride.ContainsKey(Model.id))
+        {
+            position.y = chart.ConvertChartYToScreenY(config.NoteYOverride[Model.id]);
+        }
+        
+        gameObject.transform.position = position;
+        
+        // Reset cleared status in player mode
+        if (Game is PlayerGame && IsCleared)
+        {
+            if (TimeUntilStart >= 0)
             {
                 IsCleared = false;
             }

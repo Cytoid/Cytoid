@@ -20,7 +20,7 @@ public class Context : SingletonMonoBehavior<Context>
     public const string Version = "2.0 Alpha 6";
 
     public static string ApiUrl = "https://api.cytoid.io";
-    public const string ServicesUrl = "http://dorm.neoto.xin:4000";
+    public const string ServicesUrl = "https://services.cytoid.io";
     public const string WebsiteUrl = "https://cytoid.io";
 
     public const string OfficialAccountId = "cytoid";
@@ -214,56 +214,59 @@ public class Context : SingletonMonoBehavior<Context>
         Localization.Instance.SelectLanguage((Language) Player.Settings.Language);
         OnLanguageChanged.Invoke();
 
-        await Addressables.InitializeAsync().Task;
-
-        if (await CharacterManager.SetActiveCharacter(CharacterManager.SelectedCharacterAssetId) == null)
+        switch (SceneManager.GetActiveScene().name)
         {
-            // Reset to default
-            CharacterManager.SelectedCharacterAssetId = null;
-            await CharacterManager.SetActiveCharacter(CharacterManager.SelectedCharacterAssetId);
-        }
+            case "Navigation":
+                await Addressables.InitializeAsync().Task;
 
-        if (SceneManager.GetActiveScene().name == "Navigation")
-        {
-            await UniTask.WaitUntil(() => ScreenManager != null);
+                if (await CharacterManager.SetActiveCharacter(CharacterManager.SelectedCharacterAssetId) == null)
+                {
+                    // Reset to default
+                    CharacterManager.SelectedCharacterAssetId = null;
+                    await CharacterManager.SetActiveCharacter(CharacterManager.SelectedCharacterAssetId);
+                }
+                await UniTask.WaitUntil(() => ScreenManager != null);
 
-            if (true)
-            {
-                ScreenManager.ChangeScreen(InitializationScreen.Id, ScreenTransition.None);
-            }
+                if (true)
+                {
+                    ScreenManager.ChangeScreen(InitializationScreen.Id, ScreenTransition.None);
+                }
 
-            if (false)
-            {
-                ScreenManager.ChangeScreen(TrainingSelectionScreen.Id, ScreenTransition.None);
-            }
+                if (false)
+                {
+                    ScreenManager.ChangeScreen(TrainingSelectionScreen.Id, ScreenTransition.None);
+                }
 
-            if (false)
-            {
-                // Load f.fff
-                await LevelManager.LoadFromMetadataFiles(LevelType.Community,
-                    new List<string> {UserDataPath + "/f.fff/level.json"});
-                SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
-                SelectedDifficulty = Difficulty.Parse(SelectedLevel.Meta.charts[0].type);
-                ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.None);
-            }
+                if (false)
+                {
+                    // Load f.fff
+                    await LevelManager.LoadFromMetadataFiles(LevelType.Community,
+                        new List<string> {UserDataPath + "/f.fff/level.json"});
+                    SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
+                    SelectedDifficulty = Difficulty.Parse(SelectedLevel.Meta.charts[0].type);
+                    ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.None);
+                }
 
-            if (false)
-            {
-                // Load result
-                await LevelManager.LoadFromMetadataFiles(LevelType.Community, new List<string>
-                    {UserDataPath + "/fizzest.sentimental.crisis/level.json"});
-                SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
-                SelectedDifficulty =
-                    Difficulty.Parse(LevelManager.LoadedLocalLevels.Values.First().Meta.charts.First().type);
+                if (false)
+                {
+                    // Load result
+                    await LevelManager.LoadFromMetadataFiles(LevelType.Community, new List<string>
+                        {UserDataPath + "/fizzest.sentimental.crisis/level.json"});
+                    SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
+                    SelectedDifficulty =
+                        Difficulty.Parse(LevelManager.LoadedLocalLevels.Values.First().Meta.charts.First().type);
                 
-                ScreenManager.ChangeScreen(ResultScreen.Id, ScreenTransition.None);
-            }
+                    ScreenManager.ChangeScreen(ResultScreen.Id, ScreenTransition.None);
+                }
 
-            if (false)
-            {
-                // Load result
-                ScreenManager.ChangeScreen(TierResultScreen.Id, ScreenTransition.None);
-            }
+                if (false)
+                {
+                    // Load result
+                    ScreenManager.ChangeScreen(TierResultScreen.Id, ScreenTransition.None);
+                }
+                break;
+            case "Game":
+                break;
         }
 
         await UniTask.DelayFrame(0);

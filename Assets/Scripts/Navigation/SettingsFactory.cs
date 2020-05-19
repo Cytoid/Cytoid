@@ -19,12 +19,14 @@ public static class SettingsFactory
                     () => lp.Settings.Language, it => lp.Settings.Language = it, new[]
                     {
                         ("English", (int) Language.English),
+                        ("Čeština", (int) Language.Czech),
                         ("Español", (int) Language.Spanish),
                         ("Indonesia", (int) Language.Indonesian),
                         ("Português BR", (int) Language.Portuguese_Brazil),
                         ("Pусский", (int) Language.Russian),
                         ("Tagalog", (int) Language.Filipino),
                         ("Tiếng Việt", (int) Language.Vietnamese),
+                        ("Українська мова", (int) Language.Ukrainian),
                         ("简体中文", (int) Language.Simplified_Chinese),
                         ("正體中文", (int) Language.Traditional_Chinese),
                         ("日本語", (int) Language.Japanese),

@@ -40,7 +40,7 @@ public class Profile
         [JsonProperty("clearedNotes")] public long ClearedNotes { get; set; }
         [JsonProperty("maxCombo")] public int MaxCombo { get; set; }
         [JsonProperty("averageRankedAccuracy")] public double? AverageRankedAccuracy { get; set; }
-        [JsonProperty("totalRankedScore")] public long TotalRankedScore { get; set; }
+        [JsonProperty("totalRankedScore")] public long? TotalRankedScore { get; set; }
         [JsonProperty("totalPlayTime")] public long TotalPlayTime { get; set; }
     }
 }

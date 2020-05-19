@@ -41,11 +41,7 @@ public class ClassicDragHeadNoteRenderer : ClassicNoteRenderer
             {
                 Ring.enabled = true;
                 Fill.enabled = true;
-                if (CDragFill != null)
-                {
-                    CDragFill.enabled = true;
-                    //CDragFill.transform.SetLocalEulerAnglesZ(DragHeadNote.FromNoteModel.rotation);
-                }
+                if (CDragFill != null) CDragFill.enabled = true;
                 if (DisplayNoteId) NoteId.gameObject.SetActive(true);
             }
         }

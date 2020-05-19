@@ -34,6 +34,7 @@ public class NLayerLoader
             {
                 var f = new MpegFile(filePath);
                 createdFiles.Add(f);
+                f.Time = TimeSpan.FromSeconds(position * 1.0f / f.SampleRate);
                 file = f;
             });
     }

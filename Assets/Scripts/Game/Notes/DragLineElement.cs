@@ -41,7 +41,7 @@ public class DragLineElement : MonoBehaviour
     {
         spriteRenderer.enabled = !game.State.Mods.Contains(Mod.HideNotes);
 
-        if (game is StoryboardGame)
+        if (game is PlayerGame)
         {
             spriteRenderer.enabled = outroRatio < 1;
         }

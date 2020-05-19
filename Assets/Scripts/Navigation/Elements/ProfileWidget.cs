@@ -91,6 +91,8 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
     public void SetSigningIn()
     {
         name.text = "PROFILE_WIDGET_SIGNING_IN".Get();
+        name.DOKill();
+        name.color = name.color.WithAlpha(1);
         name.DOFade(0, 0.4f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutFlash);
         infoLayoutGroup.gameObject.SetActive(false);
         LayoutFixer.Fix(layoutGroup.transform);

@@ -1,10 +1,23 @@
+using System;
 using TMPro;
 using UnityEngine;
 
 public class NoteId : MonoBehaviour
 {
+    
+    public bool Visible
+    {
+        get => visible;
+        set
+        {
+            visible = value;
+            text.color = text.color.WithAlpha(visible ? 1 : 0);
+        }
+    }
+    
     public TextMeshPro text;
-
+    private bool visible;
+    
     public void SetModel(ChartModel.Note note)
     {
         text.text = note.id.ToString();
@@ -25,4 +38,5 @@ public class NoteId : MonoBehaviour
                 break;
         }
     }
+
 }

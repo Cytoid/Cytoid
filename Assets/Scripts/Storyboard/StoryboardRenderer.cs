@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cytoid.Storyboard.Controllers;
+using Cytoid.Storyboard.Notes;
 using Cytoid.Storyboard.Sprites;
 using Cytoid.Storyboard.Texts;
 using Newtonsoft.Json;
@@ -21,14 +22,15 @@ namespace Cytoid.Storyboard
         public float Time => Game.Time;
         public StoryboardRendererProvider Provider => StoryboardRendererProvider.Instance;
 
-        public Dictionary<Text, List<UnityEngine.UI.Text>> UiTexts { get; } =
-            new Dictionary<Text, List<UnityEngine.UI.Text>>();
+        public Dictionary<Text, UnityEngine.UI.Text> UiTexts { get; } =
+            new Dictionary<Text, UnityEngine.UI.Text>();
 
-        public Dictionary<Sprite, List<UnityEngine.UI.Image>> UiSprites { get; } =
-            new Dictionary<Sprite, List<UnityEngine.UI.Image>>();
+        public Dictionary<Sprite, UnityEngine.UI.Image> UiSprites { get; } =
+            new Dictionary<Sprite, UnityEngine.UI.Image>();
 
         public TextEaser TextEaser { get; private set; }
         public SpriteEaser SpriteEaser { get; private set; }
+        public NoteControllerEaser NoteControllerEaser { get; private set; }
         public List<StoryboardRendererEaser<ControllerState>> ControllerEasers { get; private set; }
 
         public StoryboardRenderer(Storyboard storyboard)
@@ -38,20 +40,13 @@ namespace Cytoid.Storyboard
 
         public void Clear()
         {
-            // Clear texts
-            UiTexts.Keys.ForEach(it => DestroySceneObjects(it.Id));
-            UiTexts.Clear();
-
-            // Clear sprites
-            UiSprites.Keys.ForEach(it => DestroySceneObjects(it.Id));
-            UiSprites.Clear();
-
-            // Clear sprite cache
-            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.Storyboard);
+            UiTexts.Keys.ForEach(it => DestroyText(it));
+            UiSprites.Keys.ForEach(it => DestroySprite(it));            
 
             // Initialize easers
             TextEaser = new TextEaser();
             SpriteEaser = new SpriteEaser();
+            NoteControllerEaser = new NoteControllerEaser();
             ControllerEasers = new List<StoryboardRendererEaser<ControllerState>>
             {
                 new StoryboardOpacityEaser(),
@@ -62,8 +57,8 @@ namespace Cytoid.Storyboard
                 new ScannerColorEaser(),
                 new ScannerSmoothingEaser(),
                 new ScannerPositionEaser(),
-                new NoteRingColorEaser(),
-                new NoteFillColorEaser(),
+                new GlobalNoteRingColorEaser(),
+                new GlobalNoteFillColorEaser(),
 
                 new RadialBlurEaser(),
                 new ColorAdjustmentEaser(),
@@ -91,6 +86,18 @@ namespace Cytoid.Storyboard
             camera.transform.eulerAngles = Vector3.zero;
             camera.orthographic = true;
             camera.fieldOfView = 53.2f;
+        }
+
+        public void Dispose()
+        {
+            var texts = new List<Text>(UiTexts.Keys);
+            texts.ForEach(it => DestroyText(it, true));
+            UiTexts.Clear();
+            var sprites = new List<Sprite>(UiSprites.Keys);
+            sprites.ForEach(it => DestroySprite(it, true));
+            UiSprites.Clear();
+            Clear();
+            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.Storyboard);
         }
 
         public async UniTask Initialize()
@@ -121,7 +128,11 @@ namespace Cytoid.Storyboard
             await UniTask.WhenAll(spawnSpriteTasks);
             
             // Clear on abort/retry/complete
-            Game.onGameDisposed.AddListener(_ => Clear());
+            Game.onGameDisposed.AddListener(_ =>
+            {
+                Clear();
+                Dispose();
+            });
             Game.onGamePaused.AddListener(_ =>
             {
                 // TODO: Pause SB
@@ -139,66 +150,59 @@ namespace Cytoid.Storyboard
             UpdateTexts();
             UpdateSprites();
             UpdateControllers();
+            UpdateNoteControllers();
         }
 
         protected virtual void UpdateTexts()
         {
-            foreach (var (text, list) in UiTexts.Select(it => (it.Key, it.Value)))
+            var removals = new List<Text>();
+            foreach (var (text, ui) in UiTexts.Select(it => (it.Key, it.Value)))
             {
-                var removals = new List<UnityEngine.UI.Text>();
-                list.ForEach(ui =>
+                FindStates(text.States, out var fromState, out var toState);
+
+                if (fromState == null) continue;
+
+                // Destroy?
+                if (fromState.Destroy)
                 {
-                    FindStates(text.States, out var fromState, out var toState);
+                    removals.Add(text);
+                    continue;
+                }
 
-                    if (fromState == null) return;
-
-                    // Destroy?
-                    if (fromState.Destroy)
-                    {
-                        Object.Destroy(ui.gameObject);
-                        removals.Add(ui);
-                        return;
-                    }
-
-                    TextEaser.Renderer = this;
-                    TextEaser.From = fromState;
-                    TextEaser.To = toState;
-                    TextEaser.Ease = fromState.Easing;
-                    TextEaser.Ui = ui;
-                    TextEaser.OnUpdate();
-                });
-                removals.ForEach(it => list.Remove(it));
+                TextEaser.Renderer = this;
+                TextEaser.From = fromState;
+                TextEaser.To = toState;
+                TextEaser.Ease = fromState.Easing;
+                TextEaser.Ui = ui;
+                TextEaser.OnUpdate();
             }
+            removals.ForEach(it => DestroyText(it));
         }
 
         protected virtual void UpdateSprites()
         {
-            foreach (var (sprite, list) in UiSprites.Select(it => (it.Key, it.Value)))
+            var removals = new List<Sprite>();
+            foreach (var (sprite, ui) in UiSprites.Select(it => (it.Key, it.Value)))
             {
-                var removals = new List<UnityEngine.UI.Image>();
-                list.ForEach(ui =>
+                FindStates(sprite.States, out var fromState, out var toState);
+
+                if (fromState == null) continue;
+
+                // Destroy?
+                if (fromState.Destroy)
                 {
-                    FindStates(sprite.States, out var fromState, out var toState);
+                    removals.Add(sprite);
+                    continue;
+                }
 
-                    if (fromState == null) return;
-
-                    // Destroy?
-                    if (fromState.Destroy)
-                    {
-                        Object.Destroy(ui.gameObject);
-                        removals.Add(ui);
-                        return;
-                    }
-
-                    SpriteEaser.Renderer = this;
-                    SpriteEaser.From = fromState;
-                    SpriteEaser.To = toState;
-                    SpriteEaser.Ease = fromState.Easing;
-                    SpriteEaser.Ui = ui;
-                    SpriteEaser.OnUpdate();
-                });
-                removals.ForEach(it => list.Remove(it));
+                SpriteEaser.Renderer = this;
+                SpriteEaser.From = fromState;
+                SpriteEaser.To = toState;
+                SpriteEaser.Ease = fromState.Easing;
+                SpriteEaser.Ui = ui;
+                SpriteEaser.OnUpdate();
             }
+            removals.ForEach(it => DestroySprite(it));
         }
 
         protected virtual void UpdateControllers()
@@ -216,6 +220,22 @@ namespace Cytoid.Storyboard
                         it.Ease = fromState.Easing;
                         it.OnUpdate();
                     });
+                }
+            }
+        }
+        
+        protected virtual void UpdateNoteControllers()
+        {
+            foreach (var controller in Storyboard.NoteControllers)
+            {
+                FindStates(controller.States, out var fromState, out var toState);
+                if (fromState != null)
+                {
+                    NoteControllerEaser.Renderer = this;
+                    NoteControllerEaser.From = fromState;
+                    NoteControllerEaser.To = toState;
+                    NoteControllerEaser.Ease = fromState.Easing;
+                    NoteControllerEaser.OnUpdate();
                 }
             }
         }
@@ -264,30 +284,15 @@ namespace Cytoid.Storyboard
 
         public void DestroySceneObjects(string id)
         {
-            foreach (var (text, list) in UiTexts.Select(it => (it.Key, it.Value)))
-            {
-                if (text.Id == id)
-                {
-                    list.ForEach(it => Object.Destroy(it.gameObject));
-                    list.Clear();
-                }
-            }
-
-            foreach (var (sprite, list) in UiSprites.Select(it => (it.Key, it.Value)))
-            {
-                if (sprite.Id == id)
-                {
-                    list.ForEach(it => Object.Destroy(it.gameObject));
-                    list.Clear();
-                }
-            }
+            UiTexts.Keys.Where(it => it.Id == id).ForEach(it => DestroyText(it));
+            UiSprites.Keys.Where(it => it.Id == id).ForEach(it => DestroySprite(it));
         }
 
         public void SpawnText(Text text)
         {
             var ui = Object.Instantiate(Provider.TextPrefab, Provider.Canvas.transform);
-            if (!UiTexts.ContainsKey(text)) UiTexts[text] = new List<UnityEngine.UI.Text>();
-            UiTexts[text].Add(ui);
+            if (UiTexts.ContainsKey(text)) DestroyText(text, true);
+            UiTexts[text] = ui;
             
             ui.fontSize = 20;
             ui.alignment = TextAnchor.MiddleCenter;
@@ -298,8 +303,8 @@ namespace Cytoid.Storyboard
         public async UniTask SpawnSprite(Sprite sprite)
         {
             var ui = Object.Instantiate(Provider.SpritePrefab, Provider.Canvas.transform);
-            if (!UiSprites.ContainsKey(sprite)) UiSprites[sprite] = new List<UnityEngine.UI.Image>();
-            UiSprites[sprite].Add(ui);
+            if (UiSprites.ContainsKey(sprite)) DestroySprite(sprite, true);
+            UiSprites[sprite] = ui;
             
             ui.color = UnityEngine.Color.white;
             ui.preserveAspect = true;
@@ -314,6 +319,42 @@ namespace Cytoid.Storyboard
 
             var path = "file://" + Game.Level.Path + spritePath;
             ui.sprite = await Context.AssetMemory.LoadAsset<UnityEngine.Sprite>(path, AssetTag.Storyboard);
+        }
+
+        public void DestroyText(Text text, bool forceDestroy = false)
+        {
+            if (!UiTexts.ContainsKey(text)) return;
+            if (!forceDestroy && Game is PlayerGame)
+            {
+                var ui = UiTexts[text];
+                ui.fontSize = 20;
+                ui.alignment = TextAnchor.MiddleCenter;
+                ui.color = UnityEngine.Color.white;
+                ui.GetComponent<CanvasGroup>().alpha = 0;
+            }
+            else
+            {
+                Object.Destroy(UiTexts[text]);
+                UiTexts.Remove(text);
+            }
+        }
+        
+        public void DestroySprite(Sprite sprite, bool forceDestroy = false)
+        {
+            if (!UiSprites.ContainsKey(sprite)) return;
+
+            if (!forceDestroy && Game is PlayerGame)
+            {
+                var ui = UiSprites[sprite];
+                ui.color = UnityEngine.Color.white;
+                ui.preserveAspect = true;
+                ui.GetComponent<CanvasGroup>().alpha = 0;
+            }
+            else
+            {
+                Object.Destroy(UiSprites[sprite]);
+                UiSprites.Remove(sprite);
+            }
         }
 
         public void RecalculateTime<T>(Object<T> obj) where T : ObjectState

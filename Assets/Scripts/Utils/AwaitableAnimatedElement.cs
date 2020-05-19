@@ -66,7 +66,7 @@ public class AwaitableAnimatedElement : InteractableMonoBehavior
 
 #if UNITY_EDITOR
 
-[CustomEditor(typeof(AwaitableAnimatedElement))]
+[CustomEditor(typeof(AwaitableAnimatedElement), true)]
 public class AwaitableAnimatedElementEditor : Editor
 {
     public override async void OnInspectorGUI()

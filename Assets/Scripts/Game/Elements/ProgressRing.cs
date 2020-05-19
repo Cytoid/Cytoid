@@ -26,5 +26,12 @@ public class ProgressRing : MonoBehaviour
         spriteRenderer.sharedMaterial.SetFloat(maxCutoffId, maxCutoff);
         spriteRenderer.sharedMaterial.SetColor(fillColorId, fillColor);
     }
+    
+    public void Reset()
+    {
+        if (spriteRenderer != null) spriteRenderer.enabled = false;
+        maxCutoff = 0;
+        fillCutoff = 0;
+    }
 
 }

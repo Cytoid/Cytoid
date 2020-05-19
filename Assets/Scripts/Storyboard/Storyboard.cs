@@ -16,12 +16,13 @@ namespace Cytoid.Storyboard
         public StoryboardConfig Config { get; }
         
         public readonly JObject RootObject;
-        public readonly List<Controller> Controllers = new List<Controller>();
-        public readonly List<Sprite> Sprites = new List<Sprite>();
-
-        public readonly Dictionary<string, JObject> Templates = new Dictionary<string, JObject>();
+        
         public readonly List<Text> Texts = new List<Text>();
+        public readonly List<Sprite> Sprites = new List<Sprite>();
+        public readonly List<Controller> Controllers = new List<Controller>();
+        public readonly List<NoteController> NoteControllers = new List<NoteController>();
         public readonly List<Trigger> Triggers = new List<Trigger>();
+        public readonly Dictionary<string, JObject> Templates = new Dictionary<string, JObject>();
 
         public Storyboard(Game game, string content)
         {
@@ -39,40 +40,68 @@ namespace Cytoid.Storyboard
 
             // Templates
             if (RootObject["templates"] != null)
+            {
                 foreach (var templateProperty in RootObject["templates"].Children<JProperty>())
+                {
                     Templates[templateProperty.Name] = templateProperty.Value.ToObject<JObject>();
+                }
+            }
 
             // Text
             if (RootObject["texts"] != null)
+            {
                 foreach (var childToken in (JArray) RootObject["texts"])
-                foreach (var objectToken in PopulateJObjects((JObject) childToken))
                 {
-                    var text = LoadObject<Text, TextState>(objectToken);
-                    if (text != null) Texts.Add(text);
+                    foreach (var objectToken in PopulateJObjects((JObject) childToken))
+                    {
+                        var text = LoadObject<Text, TextState>(objectToken);
+                        if (text != null) Texts.Add(text);
+                    }
                 }
+            }
 
             // Sprite
             if (RootObject["sprites"] != null)
             {
                 foreach (var childToken in (JArray) RootObject["sprites"])
-                foreach (var objectToken in PopulateJObjects((JObject) childToken))
                 {
-                    var sprite = LoadObject<Sprite, SpriteState>(objectToken);
-                    if (sprite != null) Sprites.Add(sprite);
+                    foreach (var objectToken in PopulateJObjects((JObject) childToken))
+                    {
+                        var sprite = LoadObject<Sprite, SpriteState>(objectToken);
+                        if (sprite != null) Sprites.Add(sprite);
+                    }
                 }
             }
 
             // Controller
             if (RootObject["controllers"] != null)
+            {
                 foreach (var childToken in (JArray) RootObject["controllers"])
-                foreach (var objectToken in PopulateJObjects((JObject) childToken))
                 {
-                    // Controllers must have a time
-                    if (objectToken["time"] == null) objectToken["time"] = 0;
+                    foreach (var objectToken in PopulateJObjects((JObject) childToken))
+                    {
+                        // Controllers must have a time
+                        if (objectToken["time"] == null) objectToken["time"] = 0;
 
-                    var controller = LoadObject<Controller, ControllerState>(objectToken);
-                    if (controller != null) Controllers.Add(controller);
+                        var controller = LoadObject<Controller, ControllerState>(objectToken);
+                        if (controller != null) Controllers.Add(controller);
+                    }
                 }
+            }
+
+            // Note controllers
+            if (RootObject["note_controllers"] != null)
+            {
+                foreach (var childToken in (JArray) RootObject["note_controllers"])
+                {
+                    foreach (var objectToken in PopulateJObjects((JObject) childToken))
+                    {
+                        var noteController = LoadObject<NoteController, NoteControllerState>(objectToken);
+                        if (noteController != null) NoteControllers.Add(noteController);
+                    }
+                }
+            }
+                
 
             // Trigger
             if (RootObject["triggers"] != null)
@@ -80,6 +109,17 @@ namespace Cytoid.Storyboard
                     Triggers.Add(LoadTrigger(objectToken));
             // Register note clear listener for triggers
             Game.onNoteClear.AddListener(OnNoteClear);
+            Game.onGameDisposed.AddListener(_ => Dispose());
+        }
+
+        public void Dispose()
+        {
+            Texts.Clear();
+            Sprites.Clear();
+            Controllers.Clear();
+            NoteControllers.Clear();
+            Triggers.Clear();
+            Templates.Clear();
         }
 
         public async UniTask Initialize()
@@ -341,7 +381,6 @@ namespace Cytoid.Storyboard
                 var state = baseState != null ? (baseState as TextState).JsonDeepCopy() : new TextState();
                 if (templateObject != null) ParseTextState(state, templateObject, baseState as TextState);
                 ParseTextState(state, stateObject, baseState as TextState);
-
                 return state;
             }
 
@@ -358,6 +397,14 @@ namespace Cytoid.Storyboard
                 var state = baseState != null ? (baseState as ControllerState).JsonDeepCopy() : new ControllerState();
                 if (templateObject != null) ParseControllerState(state, templateObject, baseState as ControllerState);
                 ParseControllerState(state, stateObject, baseState as ControllerState);
+                return state;
+            }
+            
+            if (type == typeof(NoteControllerState))
+            {
+                var state = baseState != null ? (baseState as NoteControllerState).JsonDeepCopy() : new NoteControllerState();
+                if (templateObject != null) ParseNoteControllerState(state, templateObject, baseState as NoteControllerState);
+                ParseNoteControllerState(state, stateObject, baseState as NoteControllerState);
                 return state;
             }
 
@@ -470,6 +517,25 @@ namespace Cytoid.Storyboard
             state.PreserveAspect = (bool?) json.SelectToken("preserve_aspect") ?? state.PreserveAspect;
             if (ColorUtility.TryParseHtmlString((string) json.SelectToken("color"), out var tmp))
                 state.Color = new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a};
+        }
+        
+        private void ParseNoteControllerState(NoteControllerState state, JObject json, NoteControllerState baseState)
+        {
+            ParseObjectState(state, json, baseState);
+            
+            state.Note = (int?) json.SelectToken("note") ?? state.Note;
+            state.OverrideX = (bool?) json.SelectToken("override_x") ?? state.OverrideX;
+            state.X = (float?) json.SelectToken("x") ?? state.X;
+            state.OverrideY = (bool?) json.SelectToken("override_y") ?? state.OverrideY;
+            state.Y = (float?) json.SelectToken("y") ?? state.Y;
+            state.OverrideRingColor = (bool?) json.SelectToken("override_color") ?? state.OverrideRingColor;
+            if (ColorUtility.TryParseHtmlString((string) json.SelectToken("color"), out var tmp))
+                state.RingColor = new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a};
+            state.OverrideFillColor = (bool?) json.SelectToken("override_color") ?? state.OverrideFillColor;
+            if (ColorUtility.TryParseHtmlString((string) json.SelectToken("color"), out var tmp2))
+                state.FillColor = new Color {R = tmp2.r, G = tmp2.g, B = tmp2.b, A = tmp2.a};
+            state.OpacityMultiplier = (float?) json.SelectToken("opacity_multiplier") ?? state.OpacityMultiplier;
+            state.SizeMultiplier = (float?) json.SelectToken("size_multiplier") ?? state.SizeMultiplier;
         }
 
         private void ParseControllerState(ControllerState state, JObject json, ControllerState baseState)

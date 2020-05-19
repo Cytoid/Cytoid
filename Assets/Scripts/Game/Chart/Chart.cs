@@ -7,6 +7,7 @@ using UnityEngine;
 public class Chart
 {
     private readonly float baseSize;
+    private readonly float horizontalRatio;
     private readonly float verticalOffset;
     private readonly float verticalRatio;
     public ChartModel Model { get; }
@@ -50,6 +51,7 @@ public class Chart
         }
 
         baseSize = cameraOrthographicSize;
+        this.horizontalRatio = horizontalRatio;
         // verticalOffset = -baseSize * 0.04f;
         this.verticalRatio = verticalRatio;
         this.verticalOffset = verticalOffset;
@@ -112,7 +114,7 @@ public class Chart
                 ((float) note.x * 2 * horizontalRatio - horizontalRatio) * baseSize * UnityEngine.Screen.width /
                 UnityEngine.Screen.height
                 * flip,
-                GetNotePosition((float) (note.tick + note.hold_tick))
+                ConvertChartTickToScreenY((float) (note.tick + note.hold_tick))
             );
 
             note.holdlength = (float) (verticalRatio * 2.0f * baseSize *
@@ -248,7 +250,20 @@ public class Chart
         return tempo >= 1.367f ? 1.0f : 1.367f / tempo;
     }
 
-    public float GetNotePosition(float tick)
+    public float ConvertChartXToScreenX(float x)
+    {
+        return (x * 2 * horizontalRatio - horizontalRatio) * baseSize *
+            UnityEngine.Screen.width / UnityEngine.Screen.height * (IsHorizontallyInverted ? -1 : 1);
+    }
+    
+    public float ConvertChartYToScreenY(float y)
+    {
+        return verticalRatio *
+               (-baseSize + 2.0f * baseSize * y)
+               + verticalOffset;
+    }
+
+    public float ConvertChartTickToScreenY(float tick)
     {
         var targetPageId = 0;
         while (targetPageId < Model.page_list.Count && tick > Model.page_list[targetPageId].end_tick)

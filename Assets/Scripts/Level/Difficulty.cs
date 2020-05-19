@@ -1,4 +1,6 @@
-public class Difficulty
+using System;
+
+public class Difficulty : IComparable<Difficulty>
 {
     public static readonly Difficulty Easy =
         new Difficulty(0, "easy", "Easy", "#67b26f", "#4ca2cd", 135);
@@ -27,14 +29,10 @@ public class Difficulty
         ToColor = toColor;
         Angle = angle;
     }
-    
-    public static bool operator<(Difficulty a, Difficulty b)
+
+    public int CompareTo(Difficulty other)
     {
-        return a.order < b.order;
-    }
-    public static bool operator>(Difficulty a, Difficulty b)
-    {
-        return a.order > b.order;
+        return order.CompareTo(other.order);
     }
 
     public static string ConvertToDisplayLevel(int level)
@@ -58,4 +56,5 @@ public class Difficulty
                 return Extreme;
         }
     }
+    
 }

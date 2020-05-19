@@ -17,7 +17,7 @@ public class NoteRenderer
 
     public virtual void OnLateUpdate()
     {
-        Collider.radius = Note.Game.Config.NoteHitboxSizes[Note.Type] / Note.Game.Config.NoteSizeMultiplier;
+        Collider.radius = Note.Game.Config.NoteHitboxSizes[Note.Type] / Note.Game.Config.GlobalNoteSizeMultiplier;
         Render();
     }
 

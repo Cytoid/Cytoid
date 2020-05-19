@@ -33,8 +33,6 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
         ProgressRing = Object.Instantiate(provider.progressRingPrefab, Note.transform, false)
             .GetComponent<ProgressRing>();
         Triangle = Object.Instantiate(provider.trianglePrefab).GetComponent<MeshTriangle>();
-        var newProgressRingScale = ProgressRing.transform.localScale.x * SizeMultiplier;
-        ProgressRing.transform.SetLocalScaleXY(newProgressRingScale, newProgressRingScale);
         ProgressRing.maxCutoff = 0;
         ProgressRing.fillCutoff = 0;
         CompletedLine.size = new Vector2(1, 0);
@@ -48,6 +46,9 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
         Triangle.Note = Note.Model;
         // TODO: Magic number
         ProgressRing.gameObject.GetComponent<SpriteRenderer>().material.renderQueue = 3000 + Note.Model.id;
+        var newProgressRingScale = ProgressRing.transform.localScale.x * SizeMultiplier;
+        ProgressRing.transform.SetLocalScaleXY(newProgressRingScale, newProgressRingScale);
+
         CompletedLine.size = new Vector2(1, 0);
         Line.size = new Vector2(1, 0.21f * Mathf.Floor(Note.Model.holdlength / 0.21f));
     }
@@ -107,7 +108,9 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
             CompletedLine.enabled = false;
             CompletedLine.size = new Vector2(1, 0);
             ProgressRing.enabled = false;
+            ProgressRing.Reset();
             Triangle.enabled = false;
+            Triangle.Reset();
             SpriteMask.enabled = false;
         }
     }
@@ -138,6 +141,18 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
 
     protected override void UpdateFillScale()
     {
+    }
+
+    public override void OnClear(NoteGrade grade)
+    {
+        base.OnClear(grade);
+        Line.enabled = false;
+        CompletedLine.enabled = false;
+        ProgressRing.Reset();
+        ProgressRing.enabled = false;
+        Triangle.Reset();
+        Triangle.enabled = false;
+        SpriteMask.enabled = false;
     }
 
     public override void Cleanup()

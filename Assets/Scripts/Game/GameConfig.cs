@@ -7,13 +7,20 @@ public class GameConfig
     public float ChartOffset;
     public bool UseScannerSmoothing;
 
+    public float GlobalNoteSizeMultiplier;
     public float GlobalNoteOpacityMultiplier = 1f;
     public Color GlobalRingColorOverride;
     public readonly Dictionary<NoteType, Color[]> GlobalFillColorsOverride = new Dictionary<NoteType, Color[]>();
-
+    
+    public readonly Dictionary<int, float> NoteXOverride = new Dictionary<int, float>();
+    public readonly Dictionary<int, float> NoteYOverride = new Dictionary<int, float>();
+    public readonly Dictionary<int, Color> NoteRingColorOverride = new Dictionary<int, Color>();
+    public readonly Dictionary<int, Color> NoteFillColorOverride = new Dictionary<int, Color>();
+    public readonly Dictionary<int, float> NoteOpacityMultiplier = new Dictionary<int, float>();
+    public readonly Dictionary<int, float> NoteSizeMultiplier = new Dictionary<int, float>();
+    
     public bool UseClassicStyle = true;
     public bool DisplayNoteIds = false;
-    public float NoteSizeMultiplier;
     public readonly Dictionary<NoteType, float> NoteSizes = new Dictionary<NoteType, float>();
     public readonly Dictionary<NoteType, float> NoteHitboxSizes = new Dictionary<NoteType, float>();
     public readonly Dictionary<NoteType, Color[]> NoteRingColors = new Dictionary<NoteType, Color[]>();
@@ -58,7 +65,7 @@ public class GameConfig
             };
         }
 
-        NoteSizeMultiplier = (float) chart.Model.size * (1 + 0.133333f + lp.Settings.NoteSize);
+        GlobalNoteSizeMultiplier = (float) chart.Model.size * (1 + 0.133333f + lp.Settings.NoteSize);
 
         NoteSizes[NoteType.Click] = NoteSizes[NoteType.CDragHead] = (game.camera.orthographicSize * 2.0f) * (7.0f / 9.0f) / 5.0f * 1.2675f;
         NoteSizes[NoteType.DragHead] = NoteSizes[NoteType.Click] * 0.8f;
@@ -124,11 +131,13 @@ public class GameConfig
 
     public Color GetRingColorOverride(ChartModel.Note note)
     {
+        if (NoteRingColorOverride.ContainsKey(note.id)) return NoteRingColorOverride[note.id];
         return GlobalRingColorOverride;
     }
 
     public Color GetFillColorOverride(ChartModel.Note note)
     {
+        if (NoteFillColorOverride.ContainsKey(note.id)) return NoteFillColorOverride[note.id];
         return note.UseAlternativeColor()
             ? GlobalFillColorsOverride[(NoteType) note.type][0]
             : GlobalFillColorsOverride[(NoteType) note.type][1];

@@ -24,7 +24,7 @@ public abstract class DefaultNoteRenderer : NoteRenderer
         var config = Game.Config;
 
         // Calculate base size
-        SizeMultiplier = Game.Config.NoteSizeMultiplier;
+        SizeMultiplier = Game.Config.GlobalNoteSizeMultiplier;
         if (Note.Model.size != double.MinValue)
         {
             // Chart note override?

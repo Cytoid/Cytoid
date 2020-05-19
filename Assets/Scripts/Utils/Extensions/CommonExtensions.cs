@@ -34,6 +34,11 @@ public static class CommonExtensions
         unityEvent.AddListener(call);
     }
     
+    public static IEnumerable<T> Flatten<T>(this IEnumerable<IEnumerable<T>> source)
+    {
+        return source.SelectMany(x => x);
+    }
+    
     public static float Clamp(this float f, float min, float max)
     {
         return Mathf.Max(min, Math.Min(max, f));

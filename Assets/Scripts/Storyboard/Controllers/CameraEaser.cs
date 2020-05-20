@@ -10,13 +10,13 @@ namespace Cytoid.Storyboard.Controllers
             // X
             if (From.X.IsSet())
             {
-                transform.SetX(EaseOrthographicX(From.X, To.X));
+                transform.SetX(EaseFloat(From.X, To.X));
             }
 
             // Y
             if (From.Y.IsSet())
             {
-                transform.SetY(EaseOrthographicY(From.Y, To.Y));
+                transform.SetY(EaseFloat(From.Y, To.Y));
             }
 
             // RotX

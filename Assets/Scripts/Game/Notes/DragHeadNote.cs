@@ -31,7 +31,7 @@ public class DragHeadNote : Note
     {
         base.OnGameLateUpdate();
         
-        transform.eulerAngles = new Vector3(0, 0,  90 - FromNoteModel.rotation);
+        transform.eulerAngles = new Vector3(0, 0,  -FromNoteModel.rotation);
 
         if (Game.Time >= Model.start_time)
         {

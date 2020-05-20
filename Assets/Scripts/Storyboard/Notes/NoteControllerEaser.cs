@@ -1,5 +1,3 @@
-using UnityEngine;
-
 namespace Cytoid.Storyboard.Notes
 {
     public class NoteControllerEaser : StoryboardRendererEaser<NoteControllerState>
@@ -30,7 +28,6 @@ namespace Cytoid.Storyboard.Notes
                     if (From.OverrideY.Value)
                     {
                         Game.Config.NoteYOverride[From.Note.Value] = From.Y.IsSet() ? EaseFloat(From.Y, To.Y) : 0.5f;
-                        // Game.Chart.Model.note_map[From.Note.Value].direction = 1;
                     }
                     else
                     {
@@ -40,6 +37,12 @@ namespace Cytoid.Storyboard.Notes
                             note.position.y = Game.Chart.GetNoteScreenY(note);
                         }
                     }
+                }
+                
+                if (From.Rot.IsSet())
+                {
+                    var note = Game.Chart.Model.note_map[From.Note.Value];
+                    note.rotation = From.Rot.IsSet() ? EaseFloat(From.Rot, To.Rot) : 0;
                 }
                 
                 if (From.OverrideRingColor.IsSet())
@@ -74,6 +77,18 @@ namespace Cytoid.Storyboard.Notes
                 if (From.SizeMultiplier.IsSet())
                 {
                     Game.Config.NoteSizeMultiplier[From.Note.Value] = EaseFloat(From.SizeMultiplier, To.SizeMultiplier);
+                }
+                
+                if (From.HoldDirection.IsSet())
+                {
+                    var note = Game.Chart.Model.note_map[From.Note.Value];
+                    note.direction = From.HoldDirection;
+                }
+                
+                if (From.Style.IsSet())
+                {
+                    var note = Game.Chart.Model.note_map[From.Note.Value];
+                    note.style = From.Style;
                 }
             }
         }

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UniRx.Async;
 using UnityEngine;
@@ -21,6 +20,7 @@ namespace Cytoid.Storyboard
         public readonly List<Sprite> Sprites = new List<Sprite>();
         public readonly List<Controller> Controllers = new List<Controller>();
         public readonly List<NoteController> NoteControllers = new List<NoteController>();
+        public readonly List<Line> Lines = new List<Line>();
         public readonly List<Trigger> Triggers = new List<Trigger>();
         public readonly Dictionary<string, JObject> Templates = new Dictionary<string, JObject>();
 
@@ -97,33 +97,23 @@ namespace Cytoid.Storyboard
                     foreach (var objectToken in PopulateJObjects((JObject) childToken))
                     {
                         var noteController = LoadObject<NoteController, NoteControllerState>(objectToken);
-                        /*for (var i = 0; i < 2000; i++)
-                        {
-                            var id = i;
-                            if (!Game.Chart.Model.note_map.ContainsKey(i)) continue;
-                            var newNoteController = new NoteController
-                            {
-                                States = new List<NoteControllerState>
-                                {
-                                    noteController.States[0].JsonDeepCopy().Also(it =>
-                                    {
-                                        it.Note = id;
-                                        it.Time = Game.Chart.Model.note_map[id].intro_time - 0.1f;
-                                    }),
-                                    noteController.States[1].JsonDeepCopy().Also(it =>
-                                    {
-                                        it.Time = Game.Chart.Model.note_map[id].start_time;
-                                    }),
-                                }
-                            };
-                            NoteControllers.Add(newNoteController);
-                        }*/
-
                         if (noteController != null) NoteControllers.Add(noteController);
                     }
                 }
             }
                 
+            // Lines
+            if (RootObject["lines"] != null)
+            {
+                foreach (var childToken in (JArray) RootObject["lines"])
+                {
+                    foreach (var objectToken in PopulateJObjects((JObject) childToken))
+                    {
+                        var line = LoadObject<Line, LineState>(objectToken);
+                        if (line != null) Lines.Add(line);
+                    }
+                }
+            }
 
             // Trigger
             if (RootObject["triggers"] != null)
@@ -201,7 +191,7 @@ namespace Cytoid.Storyboard
                 var value = x.Value;
                 if (name == "time")
                 {
-                    value.Replace(ParseTime(value));
+                    value.Replace(ParseTime(obj, value));
                 }
                 else
                 {
@@ -239,7 +229,7 @@ namespace Cytoid.Storyboard
          */
         private List<JObject> PopulateJObjects(JObject obj)
         {
-            var actualObjects = new List<JObject>();
+            var timePopulatedObjects = new List<JObject>();
 
             var timeToken = obj.SelectToken("relative_time");
             if (timeToken != null && timeToken.Type == JTokenType.Array)
@@ -247,7 +237,7 @@ namespace Cytoid.Storyboard
                 {
                     var newObj = (JObject) obj.DeepClone();
                     newObj["relative_time"] = time;
-                    actualObjects.Add(newObj);
+                    timePopulatedObjects.Add(newObj);
                 }
 
             timeToken = obj.SelectToken("add_time");
@@ -256,7 +246,7 @@ namespace Cytoid.Storyboard
                 {
                     var newObj = (JObject) obj.DeepClone();
                     newObj["add_time"] = time;
-                    actualObjects.Add(newObj);
+                    timePopulatedObjects.Add(newObj);
                 }
 
             timeToken = obj.SelectToken("time");
@@ -265,10 +255,67 @@ namespace Cytoid.Storyboard
                 {
                     var newObj = (JObject) obj.DeepClone();
                     newObj["time"] = time;
-                    actualObjects.Add(newObj);
+                    timePopulatedObjects.Add(newObj);
                 }
 
-            return actualObjects.Count == 0 ? new List<JObject> {obj} : actualObjects;
+            timePopulatedObjects = timePopulatedObjects.Count == 0 ? new List<JObject> {obj} : timePopulatedObjects;
+
+            var populatedObjects = new List<JObject>();
+
+            foreach (var obj2 in timePopulatedObjects)
+            {
+                var noteSelectorToken = obj.SelectToken("note");
+                if (noteSelectorToken != null && noteSelectorToken.Type == JTokenType.Object)
+                {
+                    // Note selector
+                    var noteSelector = new NoteSelector();
+                    noteSelector.Start = (int?) noteSelectorToken.SelectToken("start") ?? noteSelector.Start;
+                    noteSelector.End = (int?) noteSelectorToken.SelectToken("end") ?? noteSelector.End;
+                    var typeToken = noteSelectorToken.SelectToken("type");
+                    if (typeToken != null)
+                    {
+                        if (typeToken.Type == JTokenType.Integer)
+                        {
+                            noteSelector.Types.Add((int) typeToken);
+                        }
+                        else if (typeToken.Type == JTokenType.Array)
+                        {
+                            foreach (var noteToken in typeToken.Values())
+                            {
+                                noteSelector.Types.Add((int) noteToken);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        ((NoteType[]) Enum.GetValues(typeof(NoteType))).ForEach(it => noteSelector.Types.Add((int) it));
+                    }
+
+                    var noteIds = new List<int>();
+                    foreach (var chartNote in Game.Chart.Model.note_list)
+                    {
+                        if (noteSelector.Types.Contains(chartNote.type)
+                            && noteSelector.Start <= chartNote.id
+                            && noteSelector.End >= chartNote.id)
+                        {
+                            noteIds.Add(chartNote.id);
+                        }
+                    }
+
+                    foreach (var noteId in noteIds)
+                    {
+                        var newObj = (JObject) obj2.DeepClone();
+                        newObj["note"] = noteId;
+                        populatedObjects.Add(newObj);
+                    }
+                }
+                else
+                {
+                    populatedObjects.AddRange(timePopulatedObjects);
+                }
+            }
+
+            return populatedObjects;
         }
 
         private Trigger LoadTrigger(JToken token)
@@ -309,11 +356,11 @@ namespace Cytoid.Storyboard
 
                 // Template has states?
                 if (templateObject["states"] != null)
-                    AddStates(states, initialState, templateObject, ParseTime(obj.SelectToken("time")));
+                    AddStates(states, initialState, templateObject, ParseTime(obj, obj.SelectToken("time")));
             }
 
             // Create inline states
-            AddStates(states, initialState, obj, ParseTime(obj.SelectToken("time")));
+            AddStates(states, initialState, obj, ParseTime(obj, obj.SelectToken("time")));
 
             return new TO
             {
@@ -325,7 +372,7 @@ namespace Cytoid.Storyboard
         private void AddStates<T>(List<T> states, T baseState, JObject rootObject, float? rootBaseTime)
             where T : ObjectState
         {
-            var baseTime = ParseTime(rootObject.SelectToken("time")) ?? rootBaseTime ?? float.MaxValue; // We set this to float.MaxValue, so if time is not set, the object is not displayed
+            var baseTime = ParseTime(rootObject, rootObject.SelectToken("time")) ?? rootBaseTime ?? float.MaxValue; // We set this to float.MaxValue, so if time is not set, the object is not displayed
 
             if (rootObject["states"] != null && rootObject["states"].Type != JTokenType.Null)
             {
@@ -429,11 +476,21 @@ namespace Cytoid.Storyboard
                 ParseNoteControllerState(state, stateObject, baseState as NoteControllerState);
                 return state;
             }
+            
+            if (type == typeof(LineState))
+            {
+                var state = baseState != null ? (baseState as LineState).JsonDeepCopy() : new LineState();
+                if (templateObject != null) ParseLineState(state, templateObject, baseState as LineState);
+                ParseLineState(state, stateObject, baseState as LineState);
+                return state;
+            }
 
             throw new ArgumentException();
         }
 
-        private float? ParseTime(JToken token)
+        private Dictionary<string, object> replacements = new Dictionary<string, object>();
+
+        private float? ParseTime(JObject obj, JToken token)
         {
             if (token == null) return null;
 
@@ -446,7 +503,25 @@ namespace Cytoid.Storyboard
                 var offset = 0f;
                 if (split.Length == 3) offset = float.Parse(split[2]);
 
-                var id = int.Parse(split[1]);
+                var id = split[1].Let(it =>
+                {
+                    if (it == "$note")
+                    {
+                        var noteToken = obj.SelectToken("note");
+                        if (noteToken != null)
+                        {
+                            var value = (int) noteToken;
+                            replacements["note"] = value;
+                            return value;
+                        }
+                        if (!replacements.ContainsKey("note"))
+                        {
+                            throw new Exception("$note not found");
+                        }
+                        return (int) replacements["note"];
+                    }
+                    return int.Parse(it);
+                });
                 var note = Game.Chart.Model.note_map[id];
                 switch (type)
                 {
@@ -464,10 +539,82 @@ namespace Cytoid.Storyboard
             return null;
         }
 
+        private enum ReferenceUnit
+        {
+            World,
+            StageX, StageY, // Canvas: 800 x 600 
+            NoteX, NoteY, // Notes: 1 x 1
+            CameraX, CameraY, // Orthographic
+        }
+
+        private float? ParseNumber(JToken token, ReferenceUnit defaultReferenceUnit, bool scaleToCanvas)
+        {
+            if (token == null) return null;
+            if (token.Type == JTokenType.Integer) return ConvertNumber((int) token, defaultReferenceUnit);
+            if (token.Type == JTokenType.Float) return ConvertNumber((float) token, defaultReferenceUnit);
+            if (token.Type == JTokenType.String)
+            {
+                var split = ((string) token).Split(':');
+                if (split.Length == 1) return ConvertNumber(float.Parse(split[0]), defaultReferenceUnit);
+                var type = split[0].ToLower();
+                var value = float.Parse(split[1]);
+                return ConvertNumber(value, (ReferenceUnit) Enum.Parse(typeof(ReferenceUnit), type, true));
+            }
+
+            float ConvertNumber(float value, ReferenceUnit referenceSpace)
+            {
+                float res;
+                switch (referenceSpace)
+                {
+                    case ReferenceUnit.World:
+                        res = value;
+                        break;
+                    case ReferenceUnit.StageX:
+                        res = value / StoryboardRenderer.ReferenceWidth * Game.camera.orthographicSize / UnityEngine.Screen.height * UnityEngine.Screen.width;
+                        break;
+                    case ReferenceUnit.StageY:
+                        res = value / StoryboardRenderer.ReferenceHeight * Game.camera.orthographicSize;
+                        break;
+                    case ReferenceUnit.NoteX:
+                        res = Game.Chart.ConvertChartXToScreenX(value);
+                        break;
+                    case ReferenceUnit.NoteY:
+                        res = Game.Chart.ConvertChartYToScreenY(value);
+                        break;
+                    case ReferenceUnit.CameraX:
+                        res = value * Game.camera.orthographicSize / UnityEngine.Screen.height * UnityEngine.Screen.width;
+                        break;
+                    case ReferenceUnit.CameraY:
+                        res = value * Game.camera.orthographicSize;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+                if (scaleToCanvas)
+                {
+                    switch (referenceSpace)
+                    {
+                        case ReferenceUnit.StageX:
+                        case ReferenceUnit.NoteX:
+                        case ReferenceUnit.CameraX:
+                            res = res / (Game.camera.orthographicSize / UnityEngine.Screen.height * UnityEngine.Screen.width) * Renderer.Provider.CanvasRect.width;
+                            break;
+                        case ReferenceUnit.StageY:
+                        case ReferenceUnit.NoteY:
+                        case ReferenceUnit.CameraY:
+                            res = res / Game.camera.orthographicSize * Renderer.Provider.CanvasRect.height;
+                            break;
+                    }
+                }
+                return res;
+            }
+            throw new ArgumentException();
+        }
+
         private void ParseObjectState(ObjectState state, JObject json, ObjectState baseState)
         {
             var token = json.SelectToken("time");
-            state.Time = ParseTime(token) ?? state.Time;
+            state.Time = ParseTime(json, token) ?? state.Time;
 
             state.Easing = json["easing"] != null
                 ? (EasingFunction.Ease) Enum.Parse(typeof(EasingFunction.Ease), (string) json["easing"], true)
@@ -475,12 +622,12 @@ namespace Cytoid.Storyboard
             state.Destroy = (bool?) json.SelectToken("destroy") ?? state.Destroy;
         }
 
-        private void ParseSceneObjectState(SceneObjectState state, JObject json, SceneObjectState baseState)
+        private void ParseCanvasObjectState(CanvasObjectState state, JObject json, CanvasObjectState baseState)
         {
             ParseObjectState(state, json, baseState);
 
-            state.X = (float?) json.SelectToken("x") ?? state.X;
-            state.Y = (float?) json.SelectToken("y") ?? state.Y;
+            state.X = ParseNumber(json.SelectToken("x"), ReferenceUnit.StageX, true) ?? state.X;
+            state.Y = ParseNumber(json.SelectToken("y"), ReferenceUnit.StageY, true) ?? state.Y;
 
             if (baseState != null)
             {
@@ -489,8 +636,8 @@ namespace Cytoid.Storyboard
                 var baseY = baseState.Y;
                 if (!baseY.IsSet()) baseY = 0;
 
-                var dx = (float?) json.SelectToken("dx");
-                var dy = (float?) json.SelectToken("dy");
+                var dx = ParseNumber(json.SelectToken("dx"), ReferenceUnit.StageX, true);
+                var dy = ParseNumber(json.SelectToken("dy"), ReferenceUnit.StageY, true);
 
                 if (dx != null) state.X = baseX + (float) dx;
                 if (dy != null) state.Y = baseY + (float) dy;
@@ -511,8 +658,8 @@ namespace Cytoid.Storyboard
 
             state.Opacity = (float?) json.SelectToken("opacity") ?? state.Opacity;
 
-            state.Width = (float?) json.SelectToken("width") ?? state.Width;
-            state.Height = (float?) json.SelectToken("height") ?? state.Height;
+            state.Width = ParseNumber(json.SelectToken("width"), ReferenceUnit.StageX, true) ?? state.Width;
+            state.Height = ParseNumber(json.SelectToken("height"), ReferenceUnit.StageY, true) ?? state.Height;
             state.FillWidth = (bool?) json.SelectToken("fill_width") ?? state.FillWidth;
 
             state.Layer = (int?) json.SelectToken("layer") ?? state.Layer;
@@ -521,7 +668,7 @@ namespace Cytoid.Storyboard
 
         private void ParseTextState(TextState state, JObject json, TextState baseState)
         {
-            ParseSceneObjectState(state, json, baseState);
+            ParseCanvasObjectState(state, json, baseState);
 
             state.Font = (string) json.SelectToken("font") ?? state.Font;
             if (ColorUtility.TryParseHtmlString((string) json.SelectToken("color"), out var tmp))
@@ -533,7 +680,7 @@ namespace Cytoid.Storyboard
 
         private void ParseSpriteState(SpriteState state, JObject json, SpriteState baseState)
         {
-            ParseSceneObjectState(state, json, baseState);
+            ParseCanvasObjectState(state, json, baseState);
 
             state.Path = (string) json.SelectToken("path") ?? state.Path;
             state.PreserveAspect = (bool?) json.SelectToken("preserve_aspect") ?? state.PreserveAspect;
@@ -547,9 +694,10 @@ namespace Cytoid.Storyboard
             
             state.Note = (int?) json.SelectToken("note") ?? state.Note;
             state.OverrideX = (bool?) json.SelectToken("override_x") ?? state.OverrideX;
-            state.X = (float?) json.SelectToken("x") ?? state.X;
+            state.X = ParseNumber(json.SelectToken("x"), ReferenceUnit.NoteX, false) ?? state.X;
             state.OverrideY = (bool?) json.SelectToken("override_y") ?? state.OverrideY;
-            state.Y = (float?) json.SelectToken("y") ?? state.Y;
+            state.Y = ParseNumber(json.SelectToken("y"), ReferenceUnit.NoteY, false) ?? state.Y;
+            state.Rot = (float?) json.SelectToken("rot") ?? state.Rot;
             state.OverrideRingColor = (bool?) json.SelectToken("override_color") ?? state.OverrideRingColor;
             if (ColorUtility.TryParseHtmlString((string) json.SelectToken("color"), out var tmp))
                 state.RingColor = new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a};
@@ -558,6 +706,27 @@ namespace Cytoid.Storyboard
                 state.FillColor = new Color {R = tmp2.r, G = tmp2.g, B = tmp2.b, A = tmp2.a};
             state.OpacityMultiplier = (float?) json.SelectToken("opacity_multiplier") ?? state.OpacityMultiplier;
             state.SizeMultiplier = (float?) json.SelectToken("size_multiplier") ?? state.SizeMultiplier;
+            state.HoldDirection = (int?) json.SelectToken("hold_direction") ?? state.HoldDirection;
+            state.Style = (int?) json.SelectToken("style") ?? state.Style;
+        }
+        
+        private void ParseLineState(LineState state, JObject json, LineState baseState)
+        {
+            ParseObjectState(state, json, baseState);
+
+            json.SelectToken("pos").ToArray().ForEach(it =>
+            {
+                var pos = new LinePosition();;
+                pos.X = ParseNumber(it.SelectToken("x"), ReferenceUnit.NoteX, false) ?? 0;
+                pos.Y = ParseNumber(it.SelectToken("y"), ReferenceUnit.NoteY, false) ?? 0;
+                state.Pos.Add(pos);
+            });
+            state.Width = ParseNumber(json.SelectToken("width"), ReferenceUnit.World, false) ?? state.Width;
+            if (ColorUtility.TryParseHtmlString((string) json.SelectToken("color"), out var tmp))
+                state.Color = new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a};
+            state.Opacity = (float?) json.SelectToken("opacity") ?? state.Opacity;
+            state.Layer = (int?) json.SelectToken("layer") ?? state.Layer;
+            state.Order = (int?) json.SelectToken("order") ?? state.Order;
         }
 
         private void ParseControllerState(ControllerState state, JObject json, ControllerState baseState)
@@ -572,8 +741,8 @@ namespace Cytoid.Storyboard
             state.Size = (float?) json.SelectToken("size") ?? state.Size;
             state.Fov = (float?) json.SelectToken("fov") ?? state.Fov;
             state.Perspective = (bool?) json.SelectToken("perspective") ?? state.Perspective;
-            state.X = (float?) json.SelectToken("x") ?? state.X;
-            state.Y = (float?) json.SelectToken("y") ?? state.Y;
+            state.X = ParseNumber(json.SelectToken("x"), ReferenceUnit.CameraX, false) ?? state.X;
+            state.Y = ParseNumber(json.SelectToken("y"), ReferenceUnit.CameraY, false) ?? state.Y;
             state.RotX = (float?) json.SelectToken("rot_x") ?? state.RotX;
             state.RotY = (float?) json.SelectToken("rot_y") ?? state.RotY;
             state.RotZ = (float?) json.SelectToken("rot_z") ?? state.RotZ;
@@ -582,7 +751,7 @@ namespace Cytoid.Storyboard
                 state.ScanlineColor = new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a};
             state.ScanlineSmoothing = (bool?) json.SelectToken("scanline_smoothing") ?? state.ScanlineSmoothing;
             state.OverrideScanlinePos = (bool?) json.SelectToken("override_scanline_pos") ?? state.OverrideScanlinePos;
-            state.ScanlinePos = (float?) json.SelectToken("scanline_pos") ?? state.ScanlinePos;
+            state.ScanlinePos = ParseNumber(json.SelectToken("scanline_pos"), ReferenceUnit.NoteY, false) ?? state.ScanlinePos;
             state.NoteOpacityMultiplier =
                 (float?) json.SelectToken("note_opacity_multiplier") ?? state.NoteOpacityMultiplier;
             if (ColorUtility.TryParseHtmlString((string) json.SelectToken("note_ring_color"), out tmp))

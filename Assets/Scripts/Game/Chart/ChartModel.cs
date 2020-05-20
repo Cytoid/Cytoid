@@ -12,7 +12,7 @@ public class ChartModel
     public List<Tempo> tempo_list = new List<Tempo>();
     public List<Page> page_list = new List<Page>();
     public List<Note> note_list = new List<Note>();
-    [JsonIgnore] public Dictionary<int, Note> note_map = new Dictionary<int, Note>();
+    public Dictionary<int, Note> note_map = new Dictionary<int, Note>();
     public List<EventOrder> event_order_list = new List<EventOrder>();
 
     public double music_offset;
@@ -102,7 +102,8 @@ public class ChartModel
         public float tint;
         public float nextdraglinestarttime;
         public float nextdraglinestoptime;
-
+        public int style = 1;
+        
         public float Duration => end_time - start_time;
 
         public Note GetDragEndNote(ChartModel parent)
@@ -116,6 +117,37 @@ public class ChartModel
             var alt = direction > 0;
             if (is_forward) alt = !alt;
             return alt;
+        }
+
+        public void PasteFrom(Note note)
+        {
+            page_index = note.page_index;
+            type = note.type;
+            id = note.id;
+            tick = note.tick;
+            x = note.x;
+            has_sibling = note.has_sibling;
+            hold_tick = note.hold_tick;
+            next_id = note.next_id;
+            is_forward = note.is_forward;
+            approach_rate = note.approach_rate;
+            size = note.size;
+            ring_color = note.ring_color;
+            fill_color = note.fill_color;
+            opacity = note.opacity;
+            start_time = note.start_time;
+            end_time = note.end_time;
+            position = note.position;
+            end_position = note.end_position;
+            holdlength = note.holdlength;
+            speed = note.speed;
+            intro_time = note.intro_time;
+            direction = note.direction;
+            rotation = note.rotation;
+            tint = note.tint;
+            nextdraglinestarttime = note.nextdraglinestarttime;
+            nextdraglinestoptime = note.nextdraglinestoptime;
+            style = note.style;
         }
     }
 }

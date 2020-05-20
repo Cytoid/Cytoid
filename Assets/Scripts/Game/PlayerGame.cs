@@ -16,11 +16,14 @@ public class PlayerGame : Game
     public bool PlayerPaused { get; set; }
     
     private FileSystemWatcher watcher;
+    private ChartModel originalChartModel;
 
     protected override void Awake()
     {
         base.Awake();
         Application.runInBackground = true;
+        var audioConfig = AudioSettings.GetConfiguration();
+        audioConfig.dspBufferSize = 1024;
         slider.onValueChanged.AddListener(OnSliderSeek);
     }
     
@@ -39,6 +42,7 @@ public class PlayerGame : Game
 
         if (Storyboard != null)
         {
+            originalChartModel = Chart.Model.JsonDeepCopy();
             Storyboard.Config.UseEffects = true;
             // Watch for file changes
             print($"Enabling file watcher on {StoryboardPath}");
@@ -68,6 +72,11 @@ public class PlayerGame : Game
     {
         Storyboard.Dispose();
         Storyboard.Renderer.Dispose();
+
+        foreach (var (id, note) in Chart.Model.note_map.Select(it => (it.Key, it.Value)))
+        {
+            note.PasteFrom(originalChartModel.note_map[id]);
+        }
 
         Storyboard = new Storyboard(this, File.ReadAllText(StoryboardPath));
         Storyboard.Initialize();

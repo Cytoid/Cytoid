@@ -62,7 +62,15 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
             CompletedLine.enabled = true;
             CompletedLine.transform.SetLocalScaleX(Line.transform.localScale.x);
             ProgressRing.enabled = true;
-            Triangle.enabled = true;
+            switch (Note.Model.style)
+            {
+                case 1:
+                    Triangle.enabled = true;
+                    break;
+                case 2:
+                    Triangle.enabled = false;
+                    break;
+            }
             SpriteMask.enabled = true;
             Triangle.isShowing = HoldNote.IsHolding && Game.Time >= Note.Model.start_time;
             if (Game.State.Mods.Contains(Mod.HideNotes))
@@ -91,14 +99,31 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
                         ProgressRing.fillColor = Fill.color;
                         ProgressRing.maxCutoff = Mathf.Min(1, 1.333f * HoldNote.HoldProgress);
                         ProgressRing.fillCutoff = Mathf.Min(1, HoldNote.HoldProgress);
-                        CompletedLine.size = new Vector2(1, Note.Model.holdlength * HoldNote.HoldProgress);
-
+                        
                         if (Time.realtimeSinceStartup >= NextHoldEffectTimestamp && Game.State.IsPlaying)
                         {
                             NextHoldEffectTimestamp = Time.realtimeSinceStartup + 1f / 8f;
                             Game.effectController.PlayClassicHoldEffect(this);
                         }
                     }
+                }
+                
+                switch (Note.Model.style)
+                {
+                    case 1:
+                    {
+                        if (HoldNote.IsHolding)
+                        {
+                            if (Note.Game.Time > Note.Model.start_time)
+                            {
+                                CompletedLine.size = new Vector2(1, Note.Model.holdlength * HoldNote.HoldProgress);
+                            }
+                        }
+                        break;
+                    }
+                    case 2:
+                        Line.size = new Vector2(1, Note.Model.holdlength * (1 - HoldNote.HoldProgress));
+                        break;
                 }
             }
         }

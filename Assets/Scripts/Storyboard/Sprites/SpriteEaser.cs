@@ -13,13 +13,13 @@ namespace Cytoid.Storyboard.Sprites
             // X
             if (From.X.IsSet())
             {
-                rectTransform.SetLocalX(EaseCanvasX(From.X, To.X));
+                rectTransform.SetLocalX(EaseFloat(From.X, To.X));
             }
 
             // Y
             if (From.Y.IsSet())
             {
-                rectTransform.SetLocalY(EaseCanvasY(From.Y, To.Y));
+                rectTransform.SetLocalY(EaseFloat(From.Y, To.Y));
             }
 
             // RotX
@@ -86,20 +86,20 @@ namespace Cytoid.Storyboard.Sprites
                 // Width
                 if (From.Width.IsSet())
                 {
-                    rectTransform.SetWidth(EaseCanvasX(From.Width, To.Width));
+                    rectTransform.SetWidth(EaseFloat(From.Width, To.Width));
                 }
 
                 // Height
                 if (From.Height.IsSet())
                 {
-                    rectTransform.SetHeight(EaseCanvasY(From.Height, To.Height));
+                    rectTransform.SetHeight(EaseFloat(From.Height, To.Height));
                 }
             }
 
             // Height
             if (From.Height.IsSet())
             {
-                rectTransform.SetHeight(EaseCanvasY(From.Height, To.Height));
+                rectTransform.SetHeight(EaseFloat(From.Height, To.Height));
             }
 
             // Preserve aspect

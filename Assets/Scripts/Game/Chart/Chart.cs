@@ -10,7 +10,8 @@ public class Chart
     private readonly float horizontalRatio;
     private readonly float verticalOffset;
     private readonly float verticalRatio;
-    public ChartModel Model { get; }
+    
+    public ChartModel Model { get; set; }
     
     public int CurrentTempoId { get; set; }
     public int CurrentPageId { get; set; }
@@ -297,7 +298,7 @@ public class Chart
             CurrentPageId++;
         if (CurrentPageId == Model.page_list.Count)
         {
-            if (UseScannerSmoothing)
+            if (useScannerSmoothing)
                 return (float) (-verticalRatio * Model.page_list[CurrentPageId - 1].scan_line_direction *
                                 (-baseSize + 2.0f *
                                  baseSize *
@@ -314,7 +315,7 @@ public class Chart
                    + verticalOffset;
         }
 
-        if (UseScannerSmoothing)
+        if (useScannerSmoothing)
             return (float) (verticalRatio * Model.page_list[CurrentPageId].scan_line_direction *
                             (-baseSize + 2.0f *
                              baseSize *
@@ -332,9 +333,7 @@ public class Chart
 
     public float GetScanlinePosition01(float percentage)
     {
-        return verticalRatio *
-               (-baseSize + 2.0f * baseSize * percentage)
-               + verticalOffset;
+        return ConvertChartYToScreenY(percentage);
     }
 
     public float GetBoundaryPosition(bool bottom)

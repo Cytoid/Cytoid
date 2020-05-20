@@ -197,7 +197,7 @@ public class Scanner : SingletonMonoBehavior<Scanner>
         // Position
         if (positionOverride != float.MinValue)
         {
-            transform.SetY(chart.GetScanlinePosition01(positionOverride));
+            transform.SetY(positionOverride);
         }
         else
         {

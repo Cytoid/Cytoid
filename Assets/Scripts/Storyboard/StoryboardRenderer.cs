@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cytoid.Storyboard.Controllers;
+using Cytoid.Storyboard.Lines;
 using Cytoid.Storyboard.Notes;
 using Cytoid.Storyboard.Sprites;
 using Cytoid.Storyboard.Texts;
@@ -27,12 +28,16 @@ namespace Cytoid.Storyboard
 
         public Dictionary<Sprite, UnityEngine.UI.Image> UiSprites { get; } =
             new Dictionary<Sprite, UnityEngine.UI.Image>();
-        
+
+        public Dictionary<Line, LineRenderer> LineRenderers { get; } =
+            new Dictionary<Line, LineRenderer>();
+
         public Dictionary<string, Text> TextLookup { get; } = new Dictionary<string, Text>();
         public Dictionary<string, Sprite> SpriteLookup { get; } = new Dictionary<string, Sprite>();
 
         public TextEaser TextEaser { get; private set; }
         public SpriteEaser SpriteEaser { get; private set; }
+        public LineEaser LineEaser { get; private set; }
         public NoteControllerEaser NoteControllerEaser { get; private set; }
         public List<StoryboardRendererEaser<ControllerState>> ControllerEasers { get; private set; }
 
@@ -45,10 +50,12 @@ namespace Cytoid.Storyboard
         {
             UiTexts.Keys.ForEach(it => DestroyText(it));
             UiSprites.Keys.ForEach(it => DestroySprite(it));            
+            LineRenderers.Keys.ForEach(it => DestroyLine(it));            
 
             // Initialize easers
             TextEaser = new TextEaser();
             SpriteEaser = new SpriteEaser();
+            LineEaser = new LineEaser();
             NoteControllerEaser = new NoteControllerEaser();
             ControllerEasers = new List<StoryboardRendererEaser<ControllerState>>
             {
@@ -99,6 +106,9 @@ namespace Cytoid.Storyboard
             var sprites = new List<Sprite>(UiSprites.Keys);
             sprites.ForEach(it => DestroySprite(it, true));
             UiSprites.Clear();
+            var lines = new List<Line>(LineRenderers.Keys);
+            lines.ForEach(it => DestroyLine(it, true));
+            LineRenderers.Clear();
             Clear();
             Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.Storyboard);
         }
@@ -123,12 +133,20 @@ namespace Cytoid.Storyboard
             {
                 if (!sprite.IsManuallySpawned())
                 {
-                    Debug.Log("Spawned " + sprite.Id);
                     spawnSpriteTasks.Add(SpawnSprite(sprite));
                 }
             }
 
             await UniTask.WhenAll(spawnSpriteTasks);
+            
+            // Create initially spawned lines
+            foreach (var line in Storyboard.Lines)
+            {
+                if (!line.IsManuallySpawned())
+                {
+                    SpawnLine(line);
+                }
+            }
             
             // Clear on abort/retry/complete
             Game.onGameDisposed.AddListener(_ =>
@@ -152,6 +170,7 @@ namespace Cytoid.Storyboard
 
             UpdateTexts();
             UpdateSprites();
+            UpdateLines();
             UpdateControllers();
             UpdateNoteControllers();
         }
@@ -208,6 +227,32 @@ namespace Cytoid.Storyboard
             removals.ForEach(it => DestroySprite(it));
         }
 
+        protected virtual void UpdateLines()
+        {
+            var removals = new List<Line>();
+            foreach (var (line, renderer) in LineRenderers.Select(it => (it.Key, it.Value)))
+            {
+                FindStates(line.States, out var fromState, out var toState);
+
+                if (fromState == null) continue;
+
+                // Destroy?
+                if (fromState.Destroy)
+                {
+                    removals.Add(line);
+                    continue;
+                }
+
+                LineEaser.Renderer = this;
+                LineEaser.From = fromState;
+                LineEaser.To = toState;
+                LineEaser.Ease = fromState.Easing;
+                LineEaser.Line = renderer;
+                LineEaser.OnUpdate();
+            }
+            removals.ForEach(it => DestroyLine(it));
+        }
+        
         protected virtual void UpdateControllers()
         {
             foreach (var controller in Storyboard.Controllers)
@@ -250,7 +295,7 @@ namespace Cytoid.Storyboard
             {
                 foreach (var id in trigger.Spawn)
                 {
-                    SpawnSceneObject(id);
+                    SpawnObject(id);
                 }
             }
 
@@ -259,12 +304,12 @@ namespace Cytoid.Storyboard
             {
                 foreach (var id in trigger.Destroy)
                 {
-                    DestroySceneObjects(id);
+                    DestroyObjects(id);
                 }
             }
         }
 
-        public async void SpawnSceneObject(string id)
+        public async void SpawnObject(string id)
         {
             foreach (var child in Storyboard.Texts)
             {
@@ -283,9 +328,18 @@ namespace Cytoid.Storyboard
                 await SpawnSprite(sprite);
                 break;
             }
+
+            foreach (var child in Storyboard.Lines)
+            {
+                if (child.Id != id) continue;
+                var line = child.JsonDeepCopy();
+                RecalculateTime(line);
+                SpawnLine(line);
+                break;
+            }
         }
 
-        public void DestroySceneObjects(string id)
+        public void DestroyObjects(string id)
         {
             UiTexts.Keys.Where(it => it.Id == id).ForEach(it => DestroyText(it));
             UiSprites.Keys.Where(it => it.Id == id).ForEach(it => DestroySprite(it));
@@ -324,6 +378,20 @@ namespace Cytoid.Storyboard
             ui.sprite = await Context.AssetMemory.LoadAsset<UnityEngine.Sprite>(path, AssetTag.Storyboard);
         }
 
+        public void SpawnLine(Line line)
+        {
+            var gameObject = new GameObject("Line_" + line.Id);
+            gameObject.transform.parent = Game.contentParent.transform;
+            var renderer = gameObject.AddComponent<LineRenderer>();
+            if (LineRenderers.ContainsKey(line)) DestroyLine(line, true);
+            LineRenderers[line] = renderer;
+            
+            renderer.positionCount = 0;
+            renderer.startColor = renderer.endColor = UnityEngine.Color.white.WithAlpha(0);
+            renderer.startWidth = renderer.endWidth = 0.05f;
+            renderer.material = Scanner.Instance.lineRenderer.material;
+        }
+
         public void DestroyText(Text text, bool forceDestroy = false)
         {
             if (!UiTexts.ContainsKey(text)) return;
@@ -357,6 +425,25 @@ namespace Cytoid.Storyboard
             {
                 Object.Destroy(UiSprites[sprite]);
                 UiSprites.Remove(sprite);
+            }
+        }
+        
+        public void DestroyLine(Line line, bool forceDestroy = false)
+        {
+            if (!LineRenderers.ContainsKey(line)) return;
+
+            if (!forceDestroy && Game is PlayerGame)
+            {
+                var renderer = LineRenderers[line];
+                renderer.positionCount = 0;
+                renderer.SetPositions(new Vector3[]{});
+                renderer.startColor = renderer.endColor = UnityEngine.Color.white.WithAlpha(0);
+                renderer.startWidth = renderer.endWidth = 0.05f;
+            }
+            else
+            {
+                Object.Destroy(LineRenderers[line]);
+                LineRenderers.Remove(line);
             }
         }
 
@@ -408,8 +495,7 @@ namespace Cytoid.Storyboard
                     return;
                 }
 
-            currentState = states.Last();
-            nextState = currentState;
+            currentState = nextState = states.Last();
         }
     }
 }

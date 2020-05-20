@@ -86,15 +86,14 @@ public abstract class Note : MonoBehaviour
     protected virtual void OnGameUpdate()
     {
         var config = Game.Config;
-        var chart = Game.Chart;
         var position = Model.position;
         if (config.NoteXOverride.ContainsKey(Model.id))
         {
-            position.x = chart.ConvertChartXToScreenX(config.NoteXOverride[Model.id]);
+            position.x = config.NoteXOverride[Model.id];
         }
         if (config.NoteYOverride.ContainsKey(Model.id))
         {
-            position.y = chart.ConvertChartYToScreenY(config.NoteYOverride[Model.id]);
+            position.y = config.NoteYOverride[Model.id];
         }
         
         gameObject.transform.position = Model.position = position;
@@ -138,18 +137,22 @@ public abstract class Note : MonoBehaviour
 
     protected virtual void OnGameLateUpdate()
     {
-        if (NextModel == null) return;
-        if (Model.position == NextModel.position)
-            Model.rotation = 0;
-        else if (Math.Abs(Model.position.y - NextModel.position.y) < 0.000001)
-            Model.rotation = Model.position.x > NextModel.position.x ? -90 : 90;
-        else if (Math.Abs(Model.position.x - NextModel.position.x) < 0.000001)
-            Model.rotation = Model.position.y > NextModel.position.y ? 180 : 0;
-        else
-            Model.rotation =
-                Mathf.Atan((NextModel.position.x - Model.position.x) /
-                           (NextModel.position.y - Model.position.y)) / Mathf.PI * 180f +
-                (NextModel.position.y > Model.position.y ? 0 : 180);
+        if (NextModel != null)
+        {
+            if (Model.position == NextModel.position)
+                Model.rotation = 0;
+            else if (Math.Abs(Model.position.y - NextModel.position.y) < 0.000001)
+                Model.rotation = Model.position.x > NextModel.position.x ? -90 : 90;
+            else if (Math.Abs(Model.position.x - NextModel.position.x) < 0.000001)
+                Model.rotation = Model.position.y > NextModel.position.y ? 180 : 0;
+            else
+                Model.rotation =
+                    Mathf.Atan((NextModel.position.x - Model.position.x) /
+                               (NextModel.position.y - Model.position.y)) / Mathf.PI * 180f +
+                    (NextModel.position.y > Model.position.y ? 0 : 180);
+        }
+
+        gameObject.transform.eulerAngles = new Vector3(0, 0, -Model.rotation);
     }
 
     public virtual bool ShouldMiss()

@@ -32,40 +32,6 @@ namespace Cytoid.Storyboard
             if (!j.IsSet()) return i.ToUnityColor();
             return UnityEngine.Color.Lerp(i.ToUnityColor(), j.ToUnityColor(), EaseFloat(0, 1));
         }
-
-        protected float EaseCanvasX(float i, float j)
-        {
-            if (!j.IsSet()) return i;
-            return EaseFloat(
-                i / StoryboardRenderer.ReferenceWidth * Provider.CanvasRect.width,
-                j / StoryboardRenderer.ReferenceWidth * Provider.CanvasRect.width
-            );
-        }
-
-        protected float EaseCanvasY(float i, float j)
-        {
-            if (!j.IsSet()) return i;
-            return EaseFloat(
-                i / StoryboardRenderer.ReferenceHeight * Provider.CanvasRect.height,
-                j / StoryboardRenderer.ReferenceHeight * Provider.CanvasRect.height
-            );
-        }
-
-        protected float EaseOrthographicX(float i, float j)
-        {
-            if (!j.IsSet()) return i;
-            var orthographicSize = Game.camera.orthographicSize;
-            return EaseFloat(
-                i * orthographicSize / UnityEngine.Screen.height * UnityEngine.Screen.width,
-                j * orthographicSize / UnityEngine.Screen.height * UnityEngine.Screen.width
-            );
-        }
-
-        protected float EaseOrthographicY(float i, float j)
-        {
-            if (!j.IsSet()) return i;
-            var orthographicSize = Game.camera.orthographicSize;
-            return EaseFloat(i * orthographicSize, j * orthographicSize);
-        }
+        
     }
 }

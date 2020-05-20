@@ -227,7 +227,7 @@ public class Context : SingletonMonoBehavior<Context>
                 }
                 await UniTask.WaitUntil(() => ScreenManager != null);
 
-                if (true)
+                if (false)
                 {
                     ScreenManager.ChangeScreen(InitializationScreen.Id, ScreenTransition.None);
                 }
@@ -247,7 +247,7 @@ public class Context : SingletonMonoBehavior<Context>
                     ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.None);
                 }
 
-                if (false)
+                if (true)
                 {
                     // Load result
                     await LevelManager.LoadFromMetadataFiles(LevelType.Community, new List<string>

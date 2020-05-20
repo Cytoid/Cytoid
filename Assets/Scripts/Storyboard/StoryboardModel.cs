@@ -35,6 +35,11 @@ namespace Cytoid.Storyboard
     public class NoteController : Object<NoteControllerState>
     {
     }
+    
+    [Serializable]
+    public class Line : Object<LineState>
+    {
+    }
 
     [Serializable]
     public class ObjectState
@@ -50,7 +55,7 @@ namespace Cytoid.Storyboard
     }
 
     [Serializable]
-    public class SceneObjectState : ObjectState
+    public class CanvasObjectState : ObjectState
     {
         public bool? FillWidth;
         public float Height = float.MinValue;
@@ -75,7 +80,7 @@ namespace Cytoid.Storyboard
     }
 
     [Serializable]
-    public class TextState : SceneObjectState
+    public class TextState : CanvasObjectState
     {
         public string Align;
         public Color Color;
@@ -85,11 +90,19 @@ namespace Cytoid.Storyboard
     }
 
     [Serializable]
-    public class SpriteState : SceneObjectState
+    public class SpriteState : CanvasObjectState
     {
         public Color Color;
         public string Path;
         public bool? PreserveAspect;
+    }
+
+    [Serializable]
+    public class NoteSelector
+    {
+        public HashSet<int> Types = new HashSet<int>();
+        public int Start = int.MinValue;
+        public int End = int.MaxValue;
     }
 
     [Serializable]
@@ -100,12 +113,33 @@ namespace Cytoid.Storyboard
         public float X = float.MinValue;
         public bool? OverrideY;
         public float Y = float.MinValue;
+        public float Rot = float.MinValue;
         public bool? OverrideRingColor;
         public Color RingColor;
         public bool? OverrideFillColor;
         public Color FillColor;
         public float OpacityMultiplier = float.MinValue;
         public float SizeMultiplier = float.MinValue;
+        public int HoldDirection = int.MinValue;
+        public int Style = int.MinValue;
+    }
+
+    [Serializable]
+    public class LinePosition
+    {
+        public float X = float.MinValue;
+        public float Y = float.MinValue;
+    }
+
+    [Serializable]
+    public class LineState : ObjectState
+    {
+        public List<LinePosition> Pos = new List<LinePosition>();
+        public float Width = float.MinValue;
+        public Color Color;
+        public float Opacity = float.MinValue;
+        public int Layer = int.MinValue;
+        public int Order = int.MinValue;
     }
 
     [Serializable]
@@ -240,6 +274,14 @@ namespace Cytoid.Storyboard
         public UnityEngine.Color ToUnityColor()
         {
             return new UnityEngine.Color(R, G, B, A);
+        }
+
+        public Color WithAlpha(float alpha)
+        {
+            return new Color
+            {
+                R = R, G = G, B = B, A = alpha
+            };
         }
     }
 

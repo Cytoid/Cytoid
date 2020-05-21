@@ -2,16 +2,8 @@ namespace Cytoid.Storyboard.Controllers
 {
     public class ArtifactEaser : StoryboardRendererEaser<ControllerState>
     {
-        public ArtifactEaser()
+        public ArtifactEaser(StoryboardRenderer renderer) : base(renderer)
         {
-            Provider.Artifact.Apply(it =>
-            {
-                it.enabled = false;
-                it.Fade = 1;
-                it.Colorisation = 1;
-                it.Parasite = 1;
-                it.Noise = 1;
-            });
         }
 
         public override void OnUpdate()

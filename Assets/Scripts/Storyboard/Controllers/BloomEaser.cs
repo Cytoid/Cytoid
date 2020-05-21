@@ -4,17 +4,11 @@ namespace Cytoid.Storyboard.Controllers
 {
     public class BloomEaser : StoryboardRendererEaser<ControllerState>
     {
-        private SleekRenderPostProcess sleek;
+        private readonly SleekRenderPostProcess sleek;
         
-        public BloomEaser()
+        public BloomEaser(StoryboardRenderer renderer) : base(renderer)
         {
             sleek = Provider.SleekRender;
-            sleek.Apply(it =>
-            {
-                it.enabled = false;
-                it.settings.bloomEnabled = false;
-                it.settings.bloomIntensity = 0;
-            });
         }
 
         public override void OnUpdate()

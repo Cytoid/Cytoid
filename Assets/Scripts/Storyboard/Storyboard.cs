@@ -21,12 +21,13 @@ namespace Cytoid.Storyboard
         
         public readonly JObject RootObject;
         
-        public readonly List<Text> Texts = new List<Text>();
-        public readonly List<Sprite> Sprites = new List<Sprite>();
-        public readonly List<Controller> Controllers = new List<Controller>();
-        public readonly List<NoteController> NoteControllers = new List<NoteController>();
-        public readonly List<Line> Lines = new List<Line>();
-        public readonly List<Video> Videos = new List<Video>();
+        public readonly Dictionary<string, Text> Texts = new Dictionary<string, Text>();
+        public readonly Dictionary<string, Sprite> Sprites = new Dictionary<string, Sprite>();
+        public readonly Dictionary<string, Controller> Controllers = new Dictionary<string, Controller>();
+        public readonly Dictionary<string, NoteController> NoteControllers = new Dictionary<string, NoteController>();
+        public readonly Dictionary<string, Line> Lines = new Dictionary<string, Line>();
+        public readonly Dictionary<string, Video> Videos = new Dictionary<string, Video>();
+        
         public readonly List<Trigger> Triggers = new List<Trigger>();
         public readonly Dictionary<string, JObject> Templates = new Dictionary<string, JObject>();
 
@@ -53,7 +54,7 @@ namespace Cytoid.Storyboard
                 }
             }
 
-            void ParseStateObjects<TO, TS>(string rootTokenName, ICollection<TO> addToList, Action<JObject> tokenPreprocessor = null)
+            void ParseStateObjects<TO, TS>(string rootTokenName, Dictionary<string, TO> addToDictionary, Action<JObject> tokenPreprocessor = null)
                 where TO : Object<TS>, new() where TS : ObjectState, new()
             {
                 if (RootObject[rootTokenName] == null) return;
@@ -63,7 +64,7 @@ namespace Cytoid.Storyboard
                     {
                         tokenPreprocessor?.Invoke(objectToken);
                         var obj = LoadObject<TO, TS>(objectToken);
-                        if (obj != null) addToList.Add(obj);
+                        if (obj != null) addToDictionary[obj.Id] = obj;
                     }
                 }
             }
@@ -75,7 +76,7 @@ namespace Cytoid.Storyboard
             ParseStateObjects<NoteController, NoteControllerState>("note_controllers", NoteControllers);
             ParseStateObjects<Controller, ControllerState>("controllers", Controllers, token =>
             {
-                // Controllers must have a time
+                // Controllers have time default to zero
                 if (token["time"] == null) token["time"] = 0;
             });
             

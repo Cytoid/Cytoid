@@ -2,13 +2,8 @@ namespace Cytoid.Storyboard.Controllers
 {
     public class GlitchEaser : StoryboardRendererEaser<ControllerState>
     {
-        public GlitchEaser()
+        public GlitchEaser(StoryboardRenderer renderer) : base(renderer)
         {
-            Provider.Glitch.Apply(it =>
-            {
-                it.enabled = false;
-                it.Glitch = 1f;
-            });
         }
 
         public override void OnUpdate()

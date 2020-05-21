@@ -2,13 +2,8 @@ namespace Cytoid.Storyboard.Controllers
 {
     public class FisheyeEaser : StoryboardRendererEaser<ControllerState>
     {
-        public FisheyeEaser()
-        {  
-            Provider.Fisheye.Apply(it =>
-            {
-                it.enabled = false;
-                it.Distortion = 0.5f;
-            });
+        public FisheyeEaser(StoryboardRenderer renderer) : base(renderer)
+        {
         }
 
         public override void OnUpdate()

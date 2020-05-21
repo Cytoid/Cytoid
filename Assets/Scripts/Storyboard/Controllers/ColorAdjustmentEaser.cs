@@ -2,15 +2,8 @@ namespace Cytoid.Storyboard.Controllers
 {
     public class ColorAdjustmentEaser : StoryboardRendererEaser<ControllerState>
     {
-        public ColorAdjustmentEaser()
+        public ColorAdjustmentEaser(StoryboardRenderer renderer) : base(renderer)
         {
-            Provider.ColorAdjustment.Apply(it =>
-            {
-                it.enabled = false;
-                it.Brightness = 1;
-                it.Saturation = 1;
-                it.Contrast = 1;
-            });
         }
 
         public override void OnUpdate()

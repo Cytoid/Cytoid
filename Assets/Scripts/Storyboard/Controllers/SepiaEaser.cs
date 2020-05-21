@@ -2,13 +2,8 @@ namespace Cytoid.Storyboard.Controllers
 {
     public class SepiaEaser : StoryboardRendererEaser<ControllerState>
     {
-        public SepiaEaser()
+        public SepiaEaser(StoryboardRenderer renderer) : base(renderer)
         {
-            Provider.Sepia.Apply(it =>
-            {
-                it.enabled = false;
-                it._Fade = 1;
-            });
         }
 
         public override void OnUpdate()

@@ -78,7 +78,7 @@ public class PlayerGame : Game
             note.PasteFrom(originalChartModel.note_map[id]);
         }
 
-        Storyboard = new Storyboard(this, File.ReadAllText(StoryboardPath));
+        Storyboard = new Cytoid.Storyboard.Storyboard(this, File.ReadAllText(StoryboardPath));
         Storyboard.Initialize();
     }
 

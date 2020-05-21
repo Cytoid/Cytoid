@@ -4,8 +4,15 @@ namespace Cytoid.Storyboard.Lines
 {
     public class LineEaser : StoryboardRendererEaser<LineState>
     {
-        public LineRenderer Line { get; set; }
+        public Sprites.LineRenderer LineRenderer { get; }
 
+        public LineRenderer Line => LineRenderer.Line;
+
+        public LineEaser(Sprites.LineRenderer renderer) : base(renderer.MainRenderer)
+        {
+            LineRenderer = renderer;
+        }
+        
         public override void OnUpdate()
         {
             // Pos

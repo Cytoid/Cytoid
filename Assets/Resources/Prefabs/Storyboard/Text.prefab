@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 114551777642525302}
   - component: {fileID: 114306846601699780}
   - component: {fileID: 6966549370238359540}
-  - component: {fileID: 8783430161601720935}
   - component: {fileID: 2261298961218424960}
   m_Layer: 5
   m_Name: Text
@@ -116,18 +115,6 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
---- !u!225 &8783430161601720935
-CanvasGroup:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1004734512482912}
-  m_Enabled: 1
-  m_Alpha: 0
-  m_Interactable: 0
-  m_BlocksRaycasts: 0
-  m_IgnoreParentGroups: 0
 --- !u!114 &2261298961218424960
 MonoBehaviour:
   m_ObjectHideFlags: 0

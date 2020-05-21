@@ -5,11 +5,17 @@ namespace Cytoid.Storyboard.Texts
 {
     public class TextEaser : StoryboardRendererEaser<TextState>
     {
-        public UnityEngine.UI.Text Ui { get; set; }
+        public TextRenderer TextRenderer { get; }
+        public UnityEngine.UI.Text Text => TextRenderer.Text;
+        
+        public TextEaser(TextRenderer renderer) : base(renderer.MainRenderer)
+        {
+            TextRenderer = renderer;
+        }
 
         public override void OnUpdate()
         {
-            var rectTransform = Ui.rectTransform;
+            var rectTransform = Text.rectTransform;
 
             // X
             if (From.X.IsSet())
@@ -59,13 +65,13 @@ namespace Cytoid.Storyboard.Texts
             // Color
             if (From.Color.IsSet())
             {
-                Ui.color = EaseColor(From.Color, To.Color);
+                Text.color = EaseColor(From.Color, To.Color);
             }
 
             // Opacity
             if (From.Opacity.IsSet())
             {
-                Ui.GetComponent<CanvasGroup>().alpha = EaseFloat(From.Opacity, To.Opacity);
+                Text.color = Text.color.WithAlpha(EaseFloat(From.Opacity, To.Opacity));
             }
 
             // PivotX
@@ -106,19 +112,19 @@ namespace Cytoid.Storyboard.Texts
             // Text
             if (From.Text.IsSet())
             {
-                Ui.text = From.Text;
+                Text.text = From.Text;
             }
 
             // Size
             if (From.Size.IsSet())
             {
-                Ui.fontSize = From.Size;
+                Text.fontSize = From.Size;
             }
 
             // Align
             if (From.Align.IsSet())
             {
-                Ui.alignment =
+                Text.alignment =
                     (TextAnchor) Enum.Parse(typeof(TextAnchor), From.Align, true);
             }
 
@@ -128,7 +134,7 @@ namespace Cytoid.Storyboard.Texts
             if (From.Layer.IsSet())
             {
                 From.Layer = Mathf.Clamp(From.Layer, 0, 2);
-                canvas = Ui.GetComponent<Canvas>();
+                canvas = Text.GetComponent<Canvas>();
                 canvas.overrideSorting = true;
                 canvas.sortingLayerName = "Storyboard" + (From.Layer + 1);
             }
@@ -136,9 +142,10 @@ namespace Cytoid.Storyboard.Texts
             // Order
             if (From.Order.IsSet())
             {
-                if (canvas == null) canvas = Ui.GetComponent<Canvas>();
+                if (canvas == null) canvas = Text.GetComponent<Canvas>();
                 canvas.sortingOrder = From.Order;
             }
         }
+        
     }
 }

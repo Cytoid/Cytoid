@@ -2,16 +2,8 @@ namespace Cytoid.Storyboard.Controllers
 {
     public class ArcadeEaser : StoryboardRendererEaser<ControllerState>
     {
-        public ArcadeEaser()
+        public ArcadeEaser(StoryboardRenderer renderer) : base(renderer)
         {
-            Provider.Arcade.Apply(it =>
-            {
-                it.enabled = false;
-                it.Interferance_Size = 1;
-                it.Interferance_Speed = 0.5f;
-                it.Contrast = 1;
-                it.Fade = 1;
-            });
         }
 
         public override void OnUpdate()

@@ -1,20 +1,24 @@
+using Cytoid.Storyboard.Videos;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.Video;
 
 namespace Cytoid.Storyboard.Sprites
 {
-    public class SpriteEaser : StoryboardRendererEaser<SpriteState>
+    public class VideoEaser : StoryboardRendererEaser<VideoState>
     {
-        public SpriteRenderer SpriteRenderer { get; }
-        public UnityEngine.UI.Image Image => SpriteRenderer.Image;
+        public VideoRenderer VideoRenderer { get; }
+        public VideoPlayer VideoPlayer => VideoRenderer.VideoPlayer;
+        public RawImage RawImage => VideoRenderer.RawImage;
         
-        public SpriteEaser(SpriteRenderer renderer) : base(renderer.MainRenderer)
+        public VideoEaser(VideoRenderer renderer) : base(renderer.MainRenderer)
         {
-            SpriteRenderer = renderer;
+            VideoRenderer = renderer;
         }
 
         public override void OnUpdate()
         {
-            var rectTransform = Image.rectTransform;
+            var rectTransform = RawImage.rectTransform;
 
             // X
             if (From.X.IsSet())
@@ -60,7 +64,19 @@ namespace Cytoid.Storyboard.Sprites
             {
                 rectTransform.SetLocalScaleY(EaseFloat(From.ScaleY, To.ScaleY));
             }
+
+            // Color tint
+            if (From.Color.IsSet())
+            {
+                RawImage.color = EaseColor(From.Color, To.Color);
+            }
             
+            // Opacity
+            if (From.Opacity.IsSet())
+            {
+                RawImage.color = RawImage.color.WithAlpha(EaseFloat(From.Opacity, To.Opacity));
+            }
+
             // PivotX
             if (From.PivotX.IsSet())
             {
@@ -102,31 +118,13 @@ namespace Cytoid.Storyboard.Sprites
                 rectTransform.SetHeight(EaseFloat(From.Height, To.Height));
             }
 
-            // Preserve aspect
-            if (From.PreserveAspect.IsSet())
-            {
-                Image.preserveAspect = From.PreserveAspect.Value;
-            }
-
-            // Color tint
-            if (From.Color.IsSet())
-            {
-                Image.color = EaseColor(From.Color, To.Color);
-            }
-            
-            // Opacity
-            if (From.Opacity.IsSet())
-            {
-                Image.color = Image.color.WithAlpha(EaseFloat(From.Opacity, To.Opacity));
-            }
-            
             Canvas canvas = null;
 
             // Layer
             if (From.Layer.IsSet())
             {
                 From.Layer = Mathf.Clamp(From.Layer, 0, 2);
-                canvas = Image.GetComponent<Canvas>();
+                canvas = RawImage.GetComponent<Canvas>();
                 canvas.overrideSorting = true;
                 canvas.sortingLayerName = "Storyboard" + (From.Layer + 1);
             }
@@ -134,7 +132,7 @@ namespace Cytoid.Storyboard.Sprites
             // Order
             if (From.Order.IsSet())
             {
-                if (canvas == null) canvas = Image.GetComponent<Canvas>();
+                if (canvas == null) canvas = RawImage.GetComponent<Canvas>();
                 canvas.sortingOrder = From.Order;
             }
         }

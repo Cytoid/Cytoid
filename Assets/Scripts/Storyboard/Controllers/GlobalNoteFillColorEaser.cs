@@ -4,6 +4,11 @@ namespace Cytoid.Storyboard.Controllers
 {
     public class GlobalNoteFillColorEaser : StoryboardRendererEaser<ControllerState>
     {
+
+        public GlobalNoteFillColorEaser(StoryboardRenderer renderer) : base(renderer)
+        {
+        }
+        
         public override void OnUpdate()
         {
             if (From.NoteFillColors.IsSet())

@@ -2,6 +2,10 @@ namespace Cytoid.Storyboard.Controllers
 {
     public class CameraEaser : StoryboardRendererEaser<ControllerState>
     {
+        public CameraEaser(StoryboardRenderer renderer) : base(renderer)
+        {
+        }
+        
         public override void OnUpdate()
         {
             var camera = Provider.Camera;

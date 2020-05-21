@@ -2,14 +2,8 @@ namespace Cytoid.Storyboard.Controllers
 {
     public class ShockwaveEaser : StoryboardRendererEaser<ControllerState>
     {
-        public ShockwaveEaser()
+        public ShockwaveEaser(StoryboardRenderer renderer) : base(renderer)
         {
-            Provider.Shockwave.Apply(it =>
-            {
-                it.enabled = false;
-                it.TimeX = 1.0f;
-                it.Speed = 1;
-            });
         }
 
         public override void OnUpdate()

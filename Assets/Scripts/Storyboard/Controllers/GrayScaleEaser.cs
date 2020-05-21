@@ -2,13 +2,8 @@ namespace Cytoid.Storyboard.Controllers
 {
     public class GrayScaleEaser : StoryboardRendererEaser<ControllerState>
     {
-        public GrayScaleEaser()
-        {  
-            Provider.GrayScale.Apply(it =>
-            {
-                it.enabled = false;
-                it._Fade = 1;
-            });
+        public GrayScaleEaser(StoryboardRenderer renderer) : base(renderer)
+        {
         }
 
         public override void OnUpdate()

@@ -2,6 +2,9 @@ namespace Cytoid.Storyboard.Notes
 {
     public class NoteControllerEaser : StoryboardRendererEaser<NoteControllerState>
     {
+        public NoteControllerEaser(StoryboardRenderer renderer) : base(renderer)
+        {
+        }
         
         public override void OnUpdate()
         {
@@ -92,5 +95,6 @@ namespace Cytoid.Storyboard.Notes
                 }
             }
         }
+        
     }
 }

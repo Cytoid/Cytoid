@@ -2,16 +2,8 @@ namespace Cytoid.Storyboard.Controllers
 {
     public class FocusEaser : StoryboardRendererEaser<ControllerState>
     {
-        public FocusEaser()
-        {  
-            Provider.Focus.Apply(it =>
-            {
-                it.enabled = false;
-                it.Size = 1;
-                it.Color = UnityEngine.Color.white;
-                it.Speed = 5;
-                it.Intensity = 0.25f;
-            });
+        public FocusEaser(StoryboardRenderer renderer) : base(renderer)
+        {
         }
 
         public override void OnUpdate()

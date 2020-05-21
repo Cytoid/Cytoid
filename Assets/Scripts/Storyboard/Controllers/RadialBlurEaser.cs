@@ -2,13 +2,8 @@ namespace Cytoid.Storyboard.Controllers
 {
     public class RadialBlurEaser : StoryboardRendererEaser<ControllerState>
     {
-        public RadialBlurEaser()
-        {  
-            Provider.RadialBlur.Apply(it =>
-            {
-                it.enabled = false;
-                it.Intensity = 0.025f;
-            });
+        public RadialBlurEaser(StoryboardRenderer renderer) : base(renderer)
+        {
         }
 
         public override void OnUpdate()

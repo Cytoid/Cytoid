@@ -4,13 +4,28 @@ using Newtonsoft.Json;
 
 namespace Cytoid.Storyboard
 {
+
     [Serializable]
-    public class Object<T> where T : ObjectState
+    public abstract class Object
     {
         public string Id;
+
+        public abstract List<ObjectState> GetConcreteStates(); // Quite ugly, but ¯\_(ツ)_/¯
+
+        public abstract bool IsManuallySpawned();
+    }
+    
+    [Serializable]
+    public class Object<T> : Object where T : ObjectState
+    {
         public List<T> States = new List<T>();
 
-        public bool IsManuallySpawned()
+        public override List<ObjectState> GetConcreteStates()
+        {
+            return new List<ObjectState>(States);
+        }
+
+        public override bool IsManuallySpawned()
         {
             return States[0].Time == float.MaxValue;
         }

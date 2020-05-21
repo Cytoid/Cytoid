@@ -2,13 +2,8 @@ namespace Cytoid.Storyboard.Controllers
 {
     public class DreamEaser : StoryboardRendererEaser<ControllerState>
     {
-        public DreamEaser()
-        {  
-            Provider.Dream.Apply(it =>
-            {
-                it.enabled = false;
-                it.Distortion = 1;
-            });
+        public DreamEaser(StoryboardRenderer renderer) : base(renderer)
+        {
         }
 
         public override void OnUpdate()

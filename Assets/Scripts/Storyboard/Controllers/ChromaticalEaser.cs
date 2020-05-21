@@ -2,15 +2,8 @@ namespace Cytoid.Storyboard.Controllers
 {
     public class ChromaticalEaser : StoryboardRendererEaser<ControllerState>
     {
-        public ChromaticalEaser()
+        public ChromaticalEaser(StoryboardRenderer renderer) : base(renderer)
         {
-            Provider.Chromatical.Apply(it =>
-            {
-                it.enabled = false;
-                it.Fade = 1;
-                it.Intensity = 1;
-                it.Speed = 1;
-            });
         }
 
         public override void OnUpdate()

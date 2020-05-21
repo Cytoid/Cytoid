@@ -2,13 +2,8 @@ namespace Cytoid.Storyboard.Controllers
 {
     public class ColorFilterEaser : StoryboardRendererEaser<ControllerState>
     {
-        public ColorFilterEaser()
+        public ColorFilterEaser(StoryboardRenderer renderer) : base(renderer)
         {
-            Provider.ColorFilter.Apply(it =>
-            {
-                it.enabled = false;
-                it.ColorRGB = UnityEngine.Color.white;
-            });
         }
 
         public override void OnUpdate()

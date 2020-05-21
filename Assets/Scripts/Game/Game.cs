@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Cytoid.Storyboard;
-using TMPro;
 using UnityEngine;
 using UniRx.Async;
 using UnityEditor;
@@ -31,7 +30,7 @@ public class Game : MonoBehaviour
     public Chart Chart { get; protected set; }
     public Dictionary<int, Note> Notes { get; } = new Dictionary<int, Note>();
 
-    public Storyboard Storyboard { get; protected set; }
+    public Cytoid.Storyboard.Storyboard Storyboard { get; protected set; }
     
     public string StoryboardPath { get; protected set; }
     
@@ -222,7 +221,7 @@ public class Game : MonoBehaviour
             // TODO: Why File.ReadAllText() works but not UnityWebRequest?
             // (UnityWebRequest downloaded text could not be parsed by Newtonsoft.Json)
             var storyboardText = File.ReadAllText(StoryboardPath);
-            Storyboard = new Storyboard(this, storyboardText);
+            Storyboard = new Cytoid.Storyboard.Storyboard(this, storyboardText);
             await Storyboard.Initialize();
         }
 

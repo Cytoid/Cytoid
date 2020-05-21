@@ -2,13 +2,8 @@ namespace Cytoid.Storyboard.Controllers
 {
     public class NoiseEaser : StoryboardRendererEaser<ControllerState>
     {
-        public NoiseEaser()
-        {  
-            Provider.Noise.Apply(it =>
-            {
-                it.enabled = false;
-                it.Noise = 0.2f;
-            });
+        public NoiseEaser(StoryboardRenderer renderer) : base(renderer)
+        {
         }
 
         public override void OnUpdate()

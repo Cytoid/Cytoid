@@ -120,16 +120,30 @@ public class LevelCard : InteractableMonoBehavior
             if (level.IsLocal)
             {
                 var path = "file://" + level.Path + LevelManager.CoverThumbnailFilename;
-                sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.LocalLevelCoverThumbnail,
-                    coverToken.Token);
+                try
+                {
+                    sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.LocalLevelCoverThumbnail,
+                        coverToken.Token);
+                }
+                catch
+                {
+                    return;
+                }
             }
             else
             {
-                var path = level.Meta.background.path.WithImageCdn().WithSizeParam(
-                    Context.ThumbnailWidth, Context.ThumbnailHeight);
-                sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.RemoteLevelCoverThumbnail,
-                    coverToken.Token, true,
-                    new SpriteAssetOptions(new[] {Context.ThumbnailWidth, Context.ThumbnailHeight}));
+                try
+                {
+                    var path = level.Meta.background.path.WithImageCdn().WithSizeParam(
+                        Context.ThumbnailWidth, Context.ThumbnailHeight);
+                    sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.RemoteLevelCoverThumbnail,
+                        coverToken.Token, true,
+                        new SpriteAssetOptions(new[] {Context.ThumbnailWidth, Context.ThumbnailHeight}));
+                }
+                catch
+                {
+                    return;
+                }
             }
         }
         catch (Exception e)

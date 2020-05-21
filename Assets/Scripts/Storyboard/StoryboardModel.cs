@@ -27,6 +27,11 @@ namespace Cytoid.Storyboard
     }
 
     [Serializable]
+    public class Video : Object<VideoState>
+    {
+    }
+
+    [Serializable]
     public class Controller : Object<ControllerState>
     {
     }
@@ -95,6 +100,13 @@ namespace Cytoid.Storyboard
         public Color Color;
         public string Path;
         public bool? PreserveAspect;
+    }
+
+    [Serializable]
+    public class VideoState : CanvasObjectState
+    {
+        public Color Color;
+        public string Path;
     }
 
     [Serializable]

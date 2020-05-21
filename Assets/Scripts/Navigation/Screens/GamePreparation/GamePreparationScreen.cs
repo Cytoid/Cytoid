@@ -253,17 +253,20 @@ public class GamePreparationScreen : Screen
 
     public void LoadLevelPerformance()
     {
-        bestPerformanceDescriptionText.text =
-            (Context.Player.Settings.PlayRanked ? "GAME_PREP_BEST_PERFORMANCE" : "GAME_PREP_BEST_PERFORMANCE_PRACTICE").Get();
-
+        var practice = !Context.Player.Settings.PlayRanked;
+        bestPerformanceDescriptionText.text = (practice ? "GAME_PREP_BEST_PERFORMANCE_PRACTICE" : "GAME_PREP_BEST_PERFORMANCE").Get();
+        
         var record = Level.Record;
-        if (record == null || !record.BestPerformances.ContainsKey(Context.SelectedDifficulty.Id))
+        if (record == null)
         {
             bestPerformanceWidget.SetModel(new LevelRecord.Performance()); // 0
         }
         else
         {
-            bestPerformanceWidget.SetModel(record.BestPerformances[Context.SelectedDifficulty.Id]);
+            var bestPerformances = practice ? record.BestPracticePerformances : record.BestPerformances;
+            bestPerformanceWidget.SetModel(bestPerformances.ContainsKey(Context.SelectedDifficulty.Id)
+                ? bestPerformances[Context.SelectedDifficulty.Id]
+                : new LevelRecord.Performance());
         }
 
         LayoutRebuilder.ForceRebuildLayoutImmediate(bestPerformanceDescriptionText.transform as RectTransform);

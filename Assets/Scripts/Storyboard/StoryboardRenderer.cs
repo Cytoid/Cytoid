@@ -9,6 +9,7 @@ using Cytoid.Storyboard.Texts;
 using Newtonsoft.Json;
 using UniRx.Async;
 using UnityEngine;
+using UnityEngine.Video;
 using Object = UnityEngine.Object;
 
 namespace Cytoid.Storyboard
@@ -31,6 +32,9 @@ namespace Cytoid.Storyboard
 
         public Dictionary<Line, LineRenderer> LineRenderers { get; } =
             new Dictionary<Line, LineRenderer>();
+
+        public Dictionary<Video, VideoPlayer> VideoPlayers { get; } =
+            new Dictionary<Video, VideoPlayer>();
 
         public Dictionary<string, Text> TextLookup { get; } = new Dictionary<string, Text>();
         public Dictionary<string, Sprite> SpriteLookup { get; } = new Dictionary<string, Sprite>();

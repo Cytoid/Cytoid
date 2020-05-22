@@ -83,26 +83,46 @@ public class ChartModel
         public double hold_tick;
         public int next_id;
         public bool is_forward;
-
         public double approach_rate = 1.0;
         public double size = double.MinValue;
+        public double opacity = double.MinValue;
         public string ring_color;
         public string fill_color;
-        public double opacity = double.MinValue;
 
+        public float y;
         public float start_time;
         public float end_time;
         public Vector3 position;
+        public Vector3 rotation;
         public Vector3 end_position;
         public float holdlength;
         public float speed;
         public float intro_time;
         public int direction;
-        public float rotation;
         public float tint;
         public float nextdraglinestarttime;
         public float nextdraglinestoptime;
         public int style = 1;
+
+        public NoteOverride Override { get; } = new NoteOverride();
+
+        public class NoteOverride
+        {
+            public float? X;
+            public float? Y;
+            public float? Z;
+            public float? RotX;
+            public float? RotY;
+            public float? RotZ;
+            public float XMultiplier = 1;
+            public float YMultiplier = 1;
+            public float XOffset = 0;
+            public float YOffset = 0;
+            public Color? RingColor;
+            public Color? FillColor;
+            public float OpacityMultiplier = 1;
+            public float SizeMultiplier = 1;
+        }
         
         public float Duration => end_time - start_time;
 

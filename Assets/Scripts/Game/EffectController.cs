@@ -36,7 +36,10 @@ public class EffectController : MonoBehaviour
         var at = noteRenderer.Note.transform.position;
         if (noteRenderer.Note.Type == NoteType.Hold || noteRenderer.Note.Type == NoteType.LongHold)
         {
-            at = new Vector3(at.x, Scanner.Instance.transform.position.y, at.z);
+            if (noteRenderer.Note.Model.style == 1)
+            {
+                at = new Vector3(at.x, Scanner.Instance.transform.position.y, at.z);
+            }
         }
         
         var speed = 1f;

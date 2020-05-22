@@ -10,6 +10,7 @@ namespace Cytoid.Storyboard.Controllers
         {
             if (From.UiOpacity.IsSet())
             {
+                if (Game is PlayerGame playerGame && playerGame.HideInterface) return;
                 Provider.UiCanvasGroup.alpha = EaseFloat(From.UiOpacity, To.UiOpacity);
             }
         }

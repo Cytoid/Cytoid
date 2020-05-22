@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace Cytoid.Storyboard.Notes
 {
     public class NoteControllerEaser : StoryboardRendererEaser<NoteControllerState>
@@ -5,96 +7,149 @@ namespace Cytoid.Storyboard.Notes
         public NoteControllerEaser(StoryboardRenderer renderer) : base(renderer)
         {
         }
-        
+
         public override void OnUpdate()
         {
             if (From.Note != null)
             {
+                var note = Game.Chart.Model.note_map[From.Note.Value];
+
                 if (From.OverrideX.IsSet())
                 {
                     if (From.OverrideX.Value)
                     {
-                        Game.Config.NoteXOverride[From.Note.Value] = From.X.IsSet() ? EaseFloat(From.X, To.X) : 0.5f;
+                        note.Override.X = From.X.IsSet() ? EaseFloat(From.X, To.X) : 0.5f;
                     }
                     else
                     {
-                        if (Game.Config.NoteXOverride.Remove(From.Note.Value))
-                        {
-                            var note = Game.Chart.Model.note_map[From.Note.Value];
-                            note.position.x = Game.Chart.ConvertChartXToScreenX((float) note.x);
-                        }
+                        note.Override.X = null;
                     }
                 }
-                
+
                 if (From.OverrideY.IsSet())
                 {
                     if (From.OverrideY.Value)
                     {
-                        Game.Config.NoteYOverride[From.Note.Value] = From.Y.IsSet() ? EaseFloat(From.Y, To.Y) : 0.5f;
+                        note.Override.Y = From.Y.IsSet() ? EaseFloat(From.Y, To.Y) : 0.5f;
                     }
                     else
                     {
-                        if (Game.Config.NoteYOverride.Remove(From.Note.Value))
-                        {
-                            var note = Game.Chart.Model.note_map[From.Note.Value];
-                            note.position.y = Game.Chart.GetNoteScreenY(note);
-                        }
+                        note.Override.Y = null;
                     }
                 }
-                
-                if (From.Rot.IsSet())
+
+                if (From.OverrideZ.IsSet())
                 {
-                    var note = Game.Chart.Model.note_map[From.Note.Value];
-                    note.rotation = From.Rot.IsSet() ? EaseFloat(From.Rot, To.Rot) : 0;
+                    if (From.OverrideZ.Value)
+                    {
+                        note.Override.Z = From.Z.IsSet() ? EaseFloat(From.Z, To.Z) : 0;
+                    }
+                    else
+                    {
+                        note.Override.Z = null;
+                    }
                 }
-                
+
+                if (From.OverrideRotX.IsSet())
+                {
+                    if (From.OverrideRotX.Value)
+                    {
+                        note.Override.RotX = From.RotX.IsSet() ? EaseFloat(From.RotX, To.RotX) : 0;
+                    }
+                    else
+                    {
+                        note.Override.RotX = null;
+                    }
+                }
+
+                if (From.OverrideRotY.IsSet())
+                {
+                    if (From.OverrideRotY.Value)
+                    {
+                        note.Override.RotY = From.RotY.IsSet() ? EaseFloat(From.RotY, To.RotY) : 0;
+                    }
+                    else
+                    {
+                        note.Override.RotY = null;
+                    }
+                }
+
+                if (From.OverrideRotZ.IsSet())
+                {
+                    if (From.OverrideRotZ.Value)
+                    {
+                        note.Override.RotZ = From.RotZ.IsSet() ? EaseFloat(From.RotZ, To.RotZ) : 0;
+                    }
+                    else
+                    {
+                        note.Override.RotZ = null;
+                    }
+                }
+
                 if (From.OverrideRingColor.IsSet())
                 {
                     if (From.OverrideRingColor.Value)
                     {
-                        Game.Config.NoteRingColorOverride[From.Note.Value] = EaseColor(From.RingColor, To.RingColor);
+                        note.Override.RingColor = EaseColor(From.RingColor, To.RingColor);
                     }
                     else
                     {
-                        Game.Config.NoteRingColorOverride.Remove(From.Note.Value);
+                        note.Override.RingColor = null;
                     }
                 }
-                
+
                 if (From.OverrideFillColor.IsSet())
                 {
                     if (From.OverrideFillColor.Value)
                     {
-                        Game.Config.NoteFillColorOverride[From.Note.Value] = EaseColor(From.FillColor, To.FillColor);
+                        note.Override.FillColor = EaseColor(From.FillColor, To.FillColor);
                     }
                     else
                     {
-                        Game.Config.NoteFillColorOverride.Remove(From.Note.Value);
+                        note.Override.FillColor = null;
                     }
                 }
 
                 if (From.OpacityMultiplier.IsSet())
                 {
-                    Game.Config.NoteOpacityMultiplier[From.Note.Value] = EaseFloat(From.OpacityMultiplier, To.OpacityMultiplier);
+                    note.Override.OpacityMultiplier = EaseFloat(From.OpacityMultiplier, To.OpacityMultiplier);
                 }
-                
+
                 if (From.SizeMultiplier.IsSet())
                 {
-                    Game.Config.NoteSizeMultiplier[From.Note.Value] = EaseFloat(From.SizeMultiplier, To.SizeMultiplier);
+                    note.Override.SizeMultiplier = EaseFloat(From.SizeMultiplier, To.SizeMultiplier);
                 }
-                
+
+                if (From.XMultiplier.IsSet())
+                {
+                    note.Override.XMultiplier = EaseFloat(From.XMultiplier, To.XMultiplier);
+                }
+
+                if (From.YMultiplier.IsSet())
+                {
+                    note.Override.YMultiplier = EaseFloat(From.YMultiplier, To.YMultiplier);
+                }
+
+                if (From.XOffset.IsSet())
+                {
+                    note.Override.XOffset = EaseFloat(From.XOffset, To.XOffset);
+                }
+
+                if (From.YOffset.IsSet())
+                {
+                    note.Override.YOffset = EaseFloat(From.YOffset, To.YOffset);
+                }
+
                 if (From.HoldDirection.IsSet())
                 {
-                    var note = Game.Chart.Model.note_map[From.Note.Value];
                     note.direction = From.HoldDirection;
                 }
-                
+
                 if (From.Style.IsSet())
                 {
-                    var note = Game.Chart.Model.note_map[From.Note.Value];
                     note.style = From.Style;
                 }
             }
         }
-        
     }
 }

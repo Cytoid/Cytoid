@@ -164,13 +164,21 @@ namespace Cytoid.Storyboard
             // Clear
             Clear();
 
+            var timer = new BenchmarkTimer("StoryboardRenderer initialization");
             bool Predicate<TO>(TO obj) where TO : Object => !obj.IsManuallySpawned();
             await SpawnObjects<Text, TextState, TextRenderer>(Storyboard.Texts.Values.ToList(), text => new TextRenderer(this, text), Predicate);
+            timer.Time("Text");
             await SpawnObjects<Sprite, SpriteState, SpriteRenderer>(Storyboard.Sprites.Values.ToList(), sprite => new SpriteRenderer(this, sprite), Predicate);
+            timer.Time("Sprite");
             await SpawnObjects<Line, LineState, LineRenderer>(Storyboard.Lines.Values.ToList(), line => new LineRenderer(this, line), Predicate);
+            timer.Time("Line");
             await SpawnObjects<Video, VideoState, VideoRenderer>(Storyboard.Videos.Values.ToList(), line => new VideoRenderer(this, line), Predicate);
+            timer.Time("Video");
             await SpawnObjects<Controller, ControllerState, ControllerRenderer>(Storyboard.Controllers.Values.ToList(), controller => new ControllerRenderer(this, controller), Predicate);
+            timer.Time("Controller");
             await SpawnObjects<NoteController, NoteControllerState, NoteControllerRenderer>(Storyboard.NoteControllers.Values.ToList(), noteController => new NoteControllerRenderer(this, noteController), Predicate);
+            timer.Time("NoteController");
+            timer.Time();
 
             // Clear on abort/retry/complete
             Game.onGameDisposed.AddListener(_ =>
@@ -207,7 +215,7 @@ namespace Cytoid.Storyboard
                     ComponentRenderers[transformedObj.Id] = new List<StoryboardComponentRenderer>();
                 }
                 ComponentRenderers[transformedObj.Id].Add(renderer);
-                Debug.Log($"StoryboardRenderer: Spawned {typeof(TO).Name} with ID {obj.Id}");
+                // Debug.Log($"StoryboardRenderer: Spawned {typeof(TO).Name} with ID {obj.Id}");
                 tasks.Add(renderer.Initialize());
             }
 
@@ -217,15 +225,17 @@ namespace Cytoid.Storyboard
 
         public void OnGameUpdate(Game _)
         {
-            if (Time < 0 || Game.State.IsCompleted) return;
+            var time = Time;
+            if (time < 0 || Game.State.IsCompleted) return;
             
             var outerRemovals = new List<string>();
-            foreach (var (id, renderers) in ComponentRenderers.Select(it => (it.Key, it.Value)))
+            foreach (var id in ComponentRenderers.Keys)
             {
+                var renderers = ComponentRenderers[id];
                 var innerRemovals = new List<StoryboardComponentRenderer>();
                 foreach (var renderer in renderers)
                 {
-                    FindStates(renderer.Component.GetConcreteStates(), out var fromState, out var toState);
+                    renderer.Component.FindStates(time, out var fromState, out var toState);
 
                     if (fromState == null) continue;
 
@@ -281,18 +291,18 @@ namespace Cytoid.Storyboard
         public async void SpawnObjectById(string id)
         {
             bool Predicate<TO>(TO obj) where TO : Object => obj.Id == id;
-            TO Transformer<TO>(TO obj) where TO : Object
+            TO Transformer<TO, TS>(TO obj) where TO : Object<TS> where TS : ObjectState
             {
                 var res = obj.JsonDeepCopy();
-                RecalculateTime(res);
+                RecalculateTime<TO, TS>(res);
                 return res;
             }
-            if (Storyboard.Texts.ContainsKey(id)) await SpawnObjects<Text, TextState, TextRenderer>(new List<Text> {Storyboard.Texts[id]}, text => new TextRenderer(this, text), Predicate, Transformer);
-            if (Storyboard.Sprites.ContainsKey(id)) await SpawnObjects<Sprite, SpriteState, SpriteRenderer>(new List<Sprite> {Storyboard.Sprites[id]}, sprite => new SpriteRenderer(this, sprite), Predicate, Transformer);
-            if (Storyboard.Lines.ContainsKey(id)) await SpawnObjects<Line, LineState, LineRenderer>(new List<Line> {Storyboard.Lines[id]}, line => new LineRenderer(this, line), Predicate, Transformer);
-            if (Storyboard.Videos.ContainsKey(id)) await SpawnObjects<Video, VideoState, VideoRenderer>(new List<Video> {Storyboard.Videos[id]}, line => new VideoRenderer(this, line), Predicate, Transformer);
-            if (Storyboard.Controllers.ContainsKey(id)) await SpawnObjects<Controller, ControllerState, ControllerRenderer>(new List<Controller> {Storyboard.Controllers[id]}, controller => new ControllerRenderer(this, controller), Predicate, Transformer);
-            if (Storyboard.NoteControllers.ContainsKey(id)) await SpawnObjects<NoteController, NoteControllerState, NoteControllerRenderer>(new List<NoteController> {Storyboard.NoteControllers[id]}, noteController => new NoteControllerRenderer(this, noteController), Predicate, Transformer);
+            if (Storyboard.Texts.ContainsKey(id)) await SpawnObjects<Text, TextState, TextRenderer>(new List<Text> {Storyboard.Texts[id]}, text => new TextRenderer(this, text), Predicate, Transformer<Text, TextState>);
+            if (Storyboard.Sprites.ContainsKey(id)) await SpawnObjects<Sprite, SpriteState, SpriteRenderer>(new List<Sprite> {Storyboard.Sprites[id]}, sprite => new SpriteRenderer(this, sprite), Predicate, Transformer<Sprite, SpriteState>);
+            if (Storyboard.Lines.ContainsKey(id)) await SpawnObjects<Line, LineState, LineRenderer>(new List<Line> {Storyboard.Lines[id]}, line => new LineRenderer(this, line), Predicate, Transformer<Line, LineState>);
+            if (Storyboard.Videos.ContainsKey(id)) await SpawnObjects<Video, VideoState, VideoRenderer>(new List<Video> {Storyboard.Videos[id]}, line => new VideoRenderer(this, line), Predicate, Transformer<Video, VideoState>);
+            if (Storyboard.Controllers.ContainsKey(id)) await SpawnObjects<Controller, ControllerState, ControllerRenderer>(new List<Controller> {Storyboard.Controllers[id]}, controller => new ControllerRenderer(this, controller), Predicate, Transformer<Controller, ControllerState>);
+            if (Storyboard.NoteControllers.ContainsKey(id)) await SpawnObjects<NoteController, NoteControllerState, NoteControllerRenderer>(new List<NoteController> {Storyboard.NoteControllers[id]}, noteController => new NoteControllerRenderer(this, noteController), Predicate, Transformer<NoteController, NoteControllerState>);
         }
 
         public void DestroyObjectsById(string id)
@@ -306,10 +316,10 @@ namespace Cytoid.Storyboard
             ComponentRenderers.Remove(id);
         }
 
-        public void RecalculateTime(Object obj)
+        public void RecalculateTime<TO, TS>(TO obj) where TO : Object<TS> where TS : ObjectState
         {
             var baseTime = Time;
-            var states = obj.GetConcreteStates();
+            var states = obj.States;
 
             if (states[0].Time.IsSet())
             {
@@ -337,25 +347,5 @@ namespace Cytoid.Storyboard
             }
         }
 
-        private void FindStates(List<ObjectState> states, out ObjectState currentState, out ObjectState nextState)
-        {
-            if (states.Count == 0)
-            {
-                currentState = null;
-                nextState = null;
-                return;
-            }
-
-            for (var i = 0; i < states.Count; i++)
-                if (states[i].Time > Time) // Next state
-                {
-                    // Current state is the previous state
-                    currentState = i > 0 ? states[i - 1] : null;
-                    nextState = states[i];
-                    return;
-                }
-
-            currentState = nextState = states.Last();
-        }
     }
 }

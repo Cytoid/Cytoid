@@ -27,26 +27,29 @@ namespace Cytoid.Storyboard.Sprites
             {
                 rectTransform.SetLocalY(EaseFloat(From.Y, To.Y));
             }
+            
+            // Z
+            if (From.Z.IsSet())
+            {
+                rectTransform.SetLocalZ(EaseFloat(From.Z, To.Z));
+            }
 
             // RotX
             if (From.RotX.IsSet())
             {
-                rectTransform.localEulerAngles =
-                    rectTransform.localEulerAngles.SetX(EaseFloat(From.RotX, To.RotX));
+                rectTransform.SetLocalEulerAnglesX(EaseFloat(From.RotX, To.RotX));
             }
 
             // RotY
             if (From.RotY.IsSet())
             {
-                rectTransform.localEulerAngles =
-                    rectTransform.localEulerAngles.SetY(EaseFloat(From.RotY, To.RotY));
+                rectTransform.SetLocalEulerAnglesY(EaseFloat(From.RotY, To.RotY));
             }
 
             // RotZ
             if (From.RotZ.IsSet())
             {
-                rectTransform.localEulerAngles =
-                    rectTransform.localEulerAngles.SetZ(EaseFloat(From.RotZ, To.RotZ));
+                rectTransform.SetLocalEulerAnglesZ(EaseFloat(From.RotZ, To.RotZ));
             }
 
             // ScaleX

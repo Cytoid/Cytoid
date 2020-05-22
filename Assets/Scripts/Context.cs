@@ -227,7 +227,7 @@ public class Context : SingletonMonoBehavior<Context>
                 }
                 await UniTask.WaitUntil(() => ScreenManager != null);
 
-                if (false)
+                if (true)
                 {
                     ScreenManager.ChangeScreen(InitializationScreen.Id, ScreenTransition.None);
                 }
@@ -247,7 +247,7 @@ public class Context : SingletonMonoBehavior<Context>
                     ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.None);
                 }
 
-                if (true)
+                if (false)
                 {
                     // Load result
                     await LevelManager.LoadFromMetadataFiles(LevelType.Community, new List<string>
@@ -415,29 +415,34 @@ public class Context : SingletonMonoBehavior<Context>
 
     public static void UpdateGraphicsQuality()
     {
-        switch (Player.Settings.GraphicsQuality)
+        if (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
         {
-            case GraphicsQuality.High:
-                UnityEngine.Screen.SetResolution(InitialWidth, InitialHeight, true);
-                QualitySettings.masterTextureLimit = 0;
-                break;
-            case GraphicsQuality.Medium:
-                UnityEngine.Screen.SetResolution((int) (InitialWidth * 0.7f),
-                    (int) (InitialHeight * 0.7f), true);
-                QualitySettings.masterTextureLimit = 0;
-                break;
-            case GraphicsQuality.Low:
-                UnityEngine.Screen.SetResolution((int) (InitialWidth * 0.5f),
-                    (int) (InitialHeight * 0.5f), true);
-                QualitySettings.masterTextureLimit = 1;
-                break;
+            switch (Player.Settings.GraphicsQuality)
+            {
+                case GraphicsQuality.High:
+                    UnityEngine.Screen.SetResolution(InitialWidth, InitialHeight, true);
+                    QualitySettings.masterTextureLimit = 0;
+                    break;
+                case GraphicsQuality.Medium:
+                    UnityEngine.Screen.SetResolution((int) (InitialWidth * 0.7f),
+                        (int) (InitialHeight * 0.7f), true);
+                    QualitySettings.masterTextureLimit = 0;
+                    break;
+                case GraphicsQuality.Low:
+                    UnityEngine.Screen.SetResolution((int) (InitialWidth * 0.5f),
+                        (int) (InitialHeight * 0.5f), true);
+                    QualitySettings.masterTextureLimit = 1;
+                    break;
+            }
+
+            MainTranslucentImage.Static = Player.Settings.GraphicsQuality != GraphicsQuality.High;
+            if (ScreenManager != null && ScreenManager.ActiveScreenId != null)
+            {
+                if (MainTranslucentImage.Instance != null)
+                    MainTranslucentImage.Instance.WillUpdateTranslucentImage();
+            }
         }
-        MainTranslucentImage.Static = Player.Settings.GraphicsQuality != GraphicsQuality.High;
-        if (ScreenManager != null && ScreenManager.ActiveScreenId != null)
-        {
-            if (MainTranslucentImage.Instance != null)
-                MainTranslucentImage.Instance.WillUpdateTranslucentImage();
-        }
+        // TODO: Windows
     }
 
     public static void SetMajorCanvasBlockRaycasts(bool blocksRaycasts)

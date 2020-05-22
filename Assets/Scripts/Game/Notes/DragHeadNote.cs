@@ -15,7 +15,13 @@ public class DragHeadNote : Note
     // Drag head is constantly moving from drag note to drag note
     public ChartModel.Note FromNoteModel { get; protected set; }
     public ChartModel.Note ToNoteModel { get; protected set; }
+    public ChartModel.Note StartToNoteModel { get; protected set; }
     public ChartModel.Note EndNoteModel { get; protected set; }
+
+    private bool hasFromNote;
+    private Note fromNote;
+    private bool hasToNote;
+    private Note toNote;
 
     public bool IsCDrag => Model.type == (int) NoteType.CDragHead;
 
@@ -24,6 +30,7 @@ public class DragHeadNote : Note
         base.SetData(game, noteId);
         FromNoteModel = Model;
         ToNoteModel = Model.next_id > 0 ? Chart.note_map[Model.next_id] : Model;
+        StartToNoteModel = ToNoteModel;
         EndNoteModel = FromNoteModel.GetDragEndNote(game.Chart.Model);
     }
 
@@ -31,12 +38,25 @@ public class DragHeadNote : Note
     {
         base.OnGameLateUpdate();
         
-        transform.eulerAngles = new Vector3(0, 0,  -FromNoteModel.rotation);
+        transform.localEulerAngles = FromNoteModel.rotation;
+
+        if (!hasFromNote && Game.Notes.ContainsKey(FromNoteModel.id))
+        {
+            hasFromNote = true;
+            fromNote = Game.Notes[FromNoteModel.id];
+        }
+        if (!hasToNote && Game.Notes.ContainsKey(ToNoteModel.id))
+        {
+            hasToNote = true;
+            toNote = Game.Notes[ToNoteModel.id];
+        }
 
         if (Game.Time >= Model.start_time)
         {
             // Move drag head
-            transform.position = Vector3.Lerp(FromNoteModel.position, ToNoteModel.position,
+            transform.localPosition = Vector3.Lerp(
+                hasFromNote ? fromNote.transform.localPosition : FromNoteModel.position, 
+                hasToNote ? toNote.transform.localPosition : ToNoteModel.position,
                 (Game.Time - FromNoteModel.start_time) / (ToNoteModel.start_time - FromNoteModel.start_time));
 
             // Moved to next note?
@@ -44,12 +64,17 @@ public class DragHeadNote : Note
             {
                 if (ToNoteModel == EndNoteModel) // Last note
                 {
-                    transform.position = ToNoteModel.position;
+                    transform.localPosition = hasToNote ? toNote.transform.localPosition : ToNoteModel.position;
                 }
                 else
                 {
                     FromNoteModel = ToNoteModel;
                     ToNoteModel = Chart.note_map[FromNoteModel.next_id];
+                    
+                    hasFromNote = false;
+                    hasToNote = false;
+                    fromNote = null;
+                    toNote = null;
                 }
             }
 
@@ -81,7 +106,12 @@ public class DragHeadNote : Note
         }
         else
         {
-            gameObject.transform.position = Model.position;
+            hasFromNote = false;
+            hasToNote = false;
+            fromNote = null;
+            toNote = null;
+            FromNoteModel = Model;
+            ToNoteModel = StartToNoteModel;
         }
     }
 

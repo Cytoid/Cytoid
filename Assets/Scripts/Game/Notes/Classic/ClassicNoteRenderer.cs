@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 using Object = UnityEngine.Object;
 
 public class ClassicNoteRenderer : NoteRenderer
@@ -89,6 +88,7 @@ public class ClassicNoteRenderer : NoteRenderer
                 if (DisplayNoteId)
                 {
                     NoteId.gameObject.SetActive(true);
+                    NoteId.transform.localEulerAngles = new Vector3(0, 0, -Note.transform.localEulerAngles.z);
                 }
             }
         }
@@ -115,13 +115,9 @@ public class ClassicNoteRenderer : NoteRenderer
     
     protected virtual void UpdateTransformScale()
     {
-        var sizeMultiplier = 1f;
-        if (Game.Config.NoteSizeMultiplier.ContainsKey(Note.Model.id))
-        {
-            sizeMultiplier = Game.Config.NoteSizeMultiplier[Note.Model.id];
-        }
+        var sizeMultiplier = Note.Model.Override.SizeMultiplier;
 
-        var transformSize = BaseTransformSize * sizeMultiplier;
+       var transformSize = BaseTransformSize * sizeMultiplier;
         
         // Scale entire transform
         const float minPercentageSize = 0.4f;
@@ -163,10 +159,7 @@ public class ClassicNoteRenderer : NoteRenderer
         else EasedOpacity = maxOpacity;
         
         EasedOpacity *= Game.Config.GlobalNoteOpacityMultiplier;
-        if (Game.Config.NoteOpacityMultiplier.ContainsKey(Note.Model.id))
-        {
-            EasedOpacity *= Game.Config.NoteOpacityMultiplier[Note.Model.id];
-        }
+        EasedOpacity *= Note.Model.Override.OpacityMultiplier;
 
         Ring.color = Ring.color.WithAlpha(EasedOpacity);
         Fill.color = Fill.color.WithAlpha(EasedOpacity);

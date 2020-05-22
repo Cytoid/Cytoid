@@ -48,10 +48,8 @@ public class InputController : MonoBehaviour
         TouchableNormalNotes.Clear();
         TouchableDragNotes.Clear();
         TouchableHoldNotes.Clear();
-        for (var id = 0; id <= game.Chart.Model.note_list.Count; id++)
+        foreach (var id in game.Notes.Keys)
         {
-            if (!game.Notes.ContainsKey(id)) continue;
-
             var note = game.Notes[id];
             if (!note.HasEmerged || note.IsCleared) continue;
 

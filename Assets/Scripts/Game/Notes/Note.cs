@@ -9,7 +9,11 @@ public abstract class Note : MonoBehaviour
     [NonSerialized] public NoteRenderer Renderer;
 
     public ChartModel.Note Model { get; private set; }
-    public ChartModel.Note NextModel { get; private set; }
+    public ChartModel.Note NextNoteModel { get; private set; }
+
+    private bool hasNextNote;
+    private Note nextNote;
+    
     public ChartModel Chart { get; private set; }
     public ChartModel.Page Page { get; private set; }
     public NoteType Type { get; private set; }
@@ -33,7 +37,7 @@ public abstract class Note : MonoBehaviour
         Model = game.Chart.Model.note_map[noteId];
         if (Model.next_id > 0 && Chart.note_map.ContainsKey(Model.next_id))
         {
-            NextModel = Chart.note_map[Model.next_id];
+            NextNoteModel = Chart.note_map[Model.next_id];
         }
 
         Page = Chart.page_list[Model.page_index];
@@ -85,18 +89,17 @@ public abstract class Note : MonoBehaviour
 
     protected virtual void OnGameUpdate()
     {
-        var config = Game.Config;
-        var position = Model.position;
-        if (config.NoteXOverride.ContainsKey(Model.id))
-        {
-            position.x = config.NoteXOverride[Model.id];
-        }
-        if (config.NoteYOverride.ContainsKey(Model.id))
-        {
-            position.y = config.NoteYOverride[Model.id];
-        }
+        var model = Model;
+        var ovr = model.Override;
+        var position = model.position;
+
+        if (ovr.XMultiplier != 1 || ovr.XOffset != 0) position.x = Game.Chart.ConvertChartXToScreenX((float) model.x * ovr.XMultiplier + ovr.XOffset);
+        if (ovr.YMultiplier != 1 || ovr.YOffset != 0) position.y = Game.Chart.ConvertChartYToScreenY(model.y * ovr.YMultiplier + ovr.YOffset);
+        if (ovr.X != null) position.x = ovr.X.Value;
+        if (ovr.Y != null) position.y = ovr.Y.Value;
+        if (ovr.Z != null) position.z = ovr.Z.Value;
         
-        gameObject.transform.position = Model.position = position;
+        gameObject.transform.localPosition = position;
 
         // Reset cleared status in player mode
         if (Game is PlayerGame && IsCleared)
@@ -137,22 +140,36 @@ public abstract class Note : MonoBehaviour
 
     protected virtual void OnGameLateUpdate()
     {
-        if (NextModel != null)
+        if (NextNoteModel != null)
         {
-            if (Model.position == NextModel.position)
-                Model.rotation = 0;
-            else if (Math.Abs(Model.position.y - NextModel.position.y) < 0.000001)
-                Model.rotation = Model.position.x > NextModel.position.x ? -90 : 90;
-            else if (Math.Abs(Model.position.x - NextModel.position.x) < 0.000001)
-                Model.rotation = Model.position.y > NextModel.position.y ? 180 : 0;
-            else
-                Model.rotation =
-                    Mathf.Atan((NextModel.position.x - Model.position.x) /
-                               (NextModel.position.y - Model.position.y)) / Mathf.PI * 180f +
-                    (NextModel.position.y > Model.position.y ? 0 : 180);
-        }
+            if (!hasNextNote && Game.Notes.ContainsKey(NextNoteModel.id))
+            {
+                hasNextNote = true;
+                nextNote = Game.Notes[NextNoteModel.id];
+            }
 
-        gameObject.transform.eulerAngles = new Vector3(0, 0, -Model.rotation);
+            var position = transform.localPosition;
+            var nextPosition = hasNextNote ? nextNote.transform.localPosition : NextNoteModel.position;
+
+            if (position == nextPosition)
+                Model.rotation = Vector3.zero;
+            else if (Math.Abs(position.y - nextPosition.y) < 0.000001)
+                Model.rotation = new Vector3(0, 0, position.x > nextPosition.x ? 90 : -90);
+            else if (Math.Abs(position.x - nextPosition.x) < 0.000001)
+                Model.rotation = new Vector3(0, 0, position.y > nextPosition.y ? -180 : 0);
+            else
+                Model.rotation = new Vector3(0, 0, -(
+                    Mathf.Atan((nextPosition.x - position.x) /
+                               (nextPosition.y - position.y)) / Mathf.PI * 180f +
+                    (nextPosition.y > position.y ? 0 : 180)));
+        }
+        
+        var rotation = Model.rotation;
+        if (Model.Override.RotX != null) rotation.x = Model.Override.RotX.Value;
+        if (Model.Override.RotY != null) rotation.y = Model.Override.RotY.Value;
+        if (Model.Override.RotZ != null) rotation.z = Model.Override.RotZ.Value;
+
+        gameObject.transform.localEulerAngles = Model.rotation = rotation;
     }
 
     public virtual bool ShouldMiss()

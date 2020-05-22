@@ -6,6 +6,11 @@ public class DragLineElement : MonoBehaviour
     private ChartModel.Note fromNoteModel;
     private ChartModel.Note toNoteModel;
 
+    private bool hasFromNote;
+    private Note fromNote;
+    private bool hasToNote;
+    private Note toNote;
+    
     private float introRatio;
     private float outroRatio;
 
@@ -35,10 +40,24 @@ public class DragLineElement : MonoBehaviour
 
     private void UpdateTransform()
     {
-        transform.position = fromNoteModel.position;
-        length = Vector3.Distance(fromNoteModel.position, toNoteModel.position);
+        if (!hasFromNote && game.Notes.ContainsKey(fromNoteModel.id))
+        {
+            hasFromNote = true;
+            fromNote = game.Notes[fromNoteModel.id];
+        }
+        if (!hasToNote && game.Notes.ContainsKey(toNoteModel.id))
+        {
+            hasToNote = true;
+            toNote = game.Notes[toNoteModel.id];
+        }
+        
+        transform.localPosition = hasFromNote ? fromNote.transform.localPosition : fromNoteModel.position;
+        length = Vector3.Distance(
+            hasFromNote ? fromNote.transform.localPosition : fromNoteModel.position, 
+            hasToNote ? toNote.transform.localPosition : toNoteModel.position
+        );
         spriteRenderer.material.mainTextureScale = new Vector2(1.0f, length / 0.16f);
-        transform.eulerAngles = new Vector3(0, 0, -fromNoteModel.rotation);
+        transform.localEulerAngles = hasFromNote ? fromNote.transform.localEulerAngles : fromNoteModel.rotation;
         transform.localScale = new Vector3(1.0f, length / 0.16f);
     }
 

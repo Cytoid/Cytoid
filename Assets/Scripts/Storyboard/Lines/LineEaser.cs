@@ -24,7 +24,7 @@ namespace Cytoid.Storyboard.Lines
                 Line.SetPosition(i, new Vector3(
                     EaseFloat(fromPos.X, toPos.X), 
                     EaseFloat(fromPos.Y, toPos.Y), 
-                    0
+                    EaseFloat(fromPos.Z, toPos.Z)
                 ));
             }
 

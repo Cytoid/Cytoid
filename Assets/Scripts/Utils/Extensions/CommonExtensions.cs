@@ -659,6 +659,27 @@ public static class CommonExtensions
         transform.localPosition = localPosition;
     }
     
+    public static void SetLocalZ(this Transform transform, float z)
+    {
+        var localPosition = transform.localPosition;
+        localPosition = new Vector3(localPosition.x, localPosition.y, z);
+        transform.localPosition = localPosition;
+    }
+    
+    public static void SetLocalEulerAnglesX(this Transform transform, float x)
+    {
+        var eulerAngles = transform.localEulerAngles;
+        eulerAngles = new Vector3(x, eulerAngles.y, eulerAngles.z);
+        transform.localEulerAngles = eulerAngles;
+    }
+    
+    public static void SetLocalEulerAnglesY(this Transform transform, float y)
+    {
+        var eulerAngles = transform.localEulerAngles;
+        eulerAngles = new Vector3(eulerAngles.x, y, eulerAngles.z);
+        transform.localEulerAngles = eulerAngles;
+    }
+    
     public static void SetLocalEulerAnglesZ(this Transform transform, float z)
     {
         var eulerAngles = transform.localEulerAngles;

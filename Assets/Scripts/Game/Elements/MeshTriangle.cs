@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class MeshTriangle : MonoBehaviour
 {
-    [NonSerialized] public ChartModel.Note Note;
+    [NonSerialized] public Note Note;
     public bool isShowing;
 
     private Mesh mesh;
@@ -54,9 +54,10 @@ public class MeshTriangle : MonoBehaviour
         {
             var orthographicSize = mainCamera.orthographicSize;
             var scannerPosition = scanner.transform.position;
+            var notePosition = Note.transform.position;
             mesh.vertices = new[]
             {
-                Note.position,
+                notePosition,
                 new Vector3(-orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height,
                     scannerPosition.y),
                 new Vector3(orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height,
@@ -65,7 +66,7 @@ public class MeshTriangle : MonoBehaviour
 
             mesh.uv = new[]
             {
-                new Vector2(Note.position.x, Note.position.y),
+                (Vector2) notePosition,
                 new Vector2(-orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height,
                     scannerPosition.y),
                 new Vector2(orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height,

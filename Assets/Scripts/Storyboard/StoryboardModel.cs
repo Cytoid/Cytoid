@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 
 namespace Cytoid.Storyboard
@@ -10,9 +11,9 @@ namespace Cytoid.Storyboard
     {
         public string Id;
 
-        public abstract List<ObjectState> GetConcreteStates(); // Quite ugly, but ¯\_(ツ)_/¯
-
         public abstract bool IsManuallySpawned();
+
+        public abstract void FindStates(float time, out ObjectState currentState, out ObjectState nextState);
     }
     
     [Serializable]
@@ -20,14 +21,32 @@ namespace Cytoid.Storyboard
     {
         public List<T> States = new List<T>();
 
-        public override List<ObjectState> GetConcreteStates()
-        {
-            return new List<ObjectState>(States);
-        }
-
         public override bool IsManuallySpawned()
         {
             return States[0].Time == float.MaxValue;
+        }
+        
+        public override void FindStates(float time, out ObjectState currentState, out ObjectState nextState)
+        {
+            // TODO: Offline lookup generation?
+            
+            if (States.Count == 0)
+            {
+                currentState = null;
+                nextState = null;
+                return;
+            }
+
+            for (var i = 0; i < States.Count; i++)
+                if (States[i].Time > time) // Next state
+                {
+                    // Current state is the previous state
+                    currentState = i > 0 ? States[i - 1] : null;
+                    nextState = States[i];
+                    return;
+                }
+
+            currentState = nextState = States.Last();
         }
     }
 
@@ -97,6 +116,7 @@ namespace Cytoid.Storyboard
         public float Width = float.MinValue;
         public float X = float.MinValue;
         public float Y = float.MinValue;
+        public float Z = float.MinValue;
     }
 
     [Serializable]
@@ -130,6 +150,9 @@ namespace Cytoid.Storyboard
         public HashSet<int> Types = new HashSet<int>();
         public int Start = int.MinValue;
         public int End = int.MaxValue;
+        public int Direction = int.MinValue;
+        public float MinX = int.MinValue;
+        public float MaxX = int.MaxValue;
     }
 
     [Serializable]
@@ -138,9 +161,20 @@ namespace Cytoid.Storyboard
         public int? Note;
         public bool? OverrideX;
         public float X = float.MinValue;
+        public float XMultiplier = float.MinValue;
+        public float XOffset = float.MinValue;
         public bool? OverrideY;
         public float Y = float.MinValue;
-        public float Rot = float.MinValue;
+        public float YMultiplier = float.MinValue;
+        public float YOffset = float.MinValue;
+        public bool? OverrideZ;
+        public float Z = float.MinValue;
+        public bool? OverrideRotX;
+        public float RotX = float.MinValue;
+        public bool? OverrideRotY;
+        public float RotY = float.MinValue;
+        public bool? OverrideRotZ;
+        public float RotZ = float.MinValue;
         public bool? OverrideRingColor;
         public Color RingColor;
         public bool? OverrideFillColor;
@@ -156,6 +190,7 @@ namespace Cytoid.Storyboard
     {
         public float X = float.MinValue;
         public float Y = float.MinValue;
+        public float Z = float.MinValue;
     }
 
     [Serializable]
@@ -264,6 +299,7 @@ namespace Cytoid.Storyboard
         public float VignetteStart = float.MinValue; // Range: 0~1
         public float X = float.MinValue; // Every x/y = 2 * Camera.main.orthographicSize
         public float Y = float.MinValue;
+        public float Z = float.MinValue;
     }
 
     [Serializable]

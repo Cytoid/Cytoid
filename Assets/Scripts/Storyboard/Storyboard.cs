@@ -8,6 +8,7 @@ using Cytoid.Storyboard.Notes;
 using Cytoid.Storyboard.Sprites;
 using Cytoid.Storyboard.Texts;
 using Cytoid.Storyboard.Videos;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UniRx.Async;
 
@@ -27,8 +28,8 @@ namespace Cytoid.Storyboard
         public readonly Dictionary<string, NoteController> NoteControllers = new Dictionary<string, NoteController>();
         public readonly Dictionary<string, Line> Lines = new Dictionary<string, Line>();
         public readonly Dictionary<string, Video> Videos = new Dictionary<string, Video>();
-        
         public readonly List<Trigger> Triggers = new List<Trigger>();
+        
         public readonly Dictionary<string, JObject> Templates = new Dictionary<string, JObject>();
 
         public Storyboard(Game game, string content)
@@ -44,46 +45,71 @@ namespace Cytoid.Storyboard
             {
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore
             };*/ // Moved to Context.cs
-            
-            // Templates
-            if (RootObject["templates"] != null)
-            {
-                foreach (var templateProperty in RootObject["templates"].Children<JProperty>())
-                {
-                    Templates[templateProperty.Name] = templateProperty.Value.ToObject<JObject>();
-                }
-            }
 
-            void ParseStateObjects<TO, TS>(string rootTokenName, Dictionary<string, TO> addToDictionary, Action<JObject> tokenPreprocessor = null)
-                where TO : Object<TS>, new() where TS : ObjectState, new()
+            if ((bool?) RootObject["compiled"] == true)
             {
-                if (RootObject[rootTokenName] == null) return;
-                foreach (var childToken in (JArray) RootObject[rootTokenName])
+                // Directly load into memory
+                ((JArray) RootObject["texts"]).Select(it => it.ToObject<Text>()).ForEach(it => Texts[it.Id] = it);
+                ((JArray) RootObject["sprites"]).Select(it => it.ToObject<Sprite>()).ForEach(it => Sprites[it.Id] = it);
+                ((JArray) RootObject["videos"]).Select(it => it.ToObject<Video>()).ForEach(it => Videos[it.Id] = it);
+                ((JArray) RootObject["lines"]).Select(it => it.ToObject<Line>()).ForEach(it => Lines[it.Id] = it);
+                ((JArray) RootObject["controllers"]).Select(it => it.ToObject<Controller>()).ForEach(it => Controllers[it.Id] = it);
+                ((JArray) RootObject["note_controllers"]).Select(it => it.ToObject<NoteController>()).ForEach(it => NoteControllers[it.Id] = it);
+            }
+            else
+            {
+                // Parse
+                
+                // Templates
+                if (RootObject["templates"] != null)
                 {
-                    foreach (var objectToken in PopulateJObjects((JObject) childToken))
+                    foreach (var templateProperty in RootObject["templates"].Children<JProperty>())
                     {
-                        tokenPreprocessor?.Invoke(objectToken);
-                        var obj = LoadObject<TO, TS>(objectToken);
-                        if (obj != null) addToDictionary[obj.Id] = obj;
+                        Templates[templateProperty.Name] = templateProperty.Value.ToObject<JObject>();
                     }
                 }
+
+                void ParseStateObjects<TO, TS>(string rootTokenName, Dictionary<string, TO> addToDictionary,
+                    Action<JObject> tokenPreprocessor = null)
+                    where TO : Object<TS>, new() where TS : ObjectState, new()
+                {
+                    if (RootObject[rootTokenName] == null) return;
+                    foreach (var childToken in (JArray) RootObject[rootTokenName])
+                    {
+                        foreach (var objectToken in PopulateJObjects((JObject) childToken))
+                        {
+                            tokenPreprocessor?.Invoke(objectToken);
+                            var obj = LoadObject<TO, TS>(objectToken);
+                            if (obj != null) addToDictionary[obj.Id] = obj;
+                        }
+                    }
+                }
+
+                var timer = new BenchmarkTimer("Storyboard parsing");
+                ParseStateObjects<Text, TextState>("texts", Texts);
+                timer.Time("Text");
+                ParseStateObjects<Sprite, SpriteState>("sprites", Sprites);
+                timer.Time("Sprite");
+                ParseStateObjects<Video, VideoState>("videos", Videos);
+                timer.Time("Videos");
+                ParseStateObjects<Line, LineState>("lines", Lines);
+                timer.Time("Lines");
+                ParseStateObjects<NoteController, NoteControllerState>("note_controllers", NoteControllers);
+                timer.Time("NoteController");
+                ParseStateObjects<Controller, ControllerState>("controllers", Controllers, token =>
+                {
+                    // Controllers have time default to zero
+                    if (token["time"] == null) token["time"] = 0;
+                });
+                timer.Time("Controller");
+                timer.Time();
+
+                // Trigger
+                if (RootObject["triggers"] != null)
+                    foreach (var objectToken in (JArray) RootObject["triggers"])
+                        Triggers.Add(LoadTrigger(objectToken));
             }
 
-            ParseStateObjects<Text, TextState>("texts", Texts);
-            ParseStateObjects<Sprite, SpriteState>("sprites", Sprites);
-            ParseStateObjects<Video, VideoState>("videos", Videos);
-            ParseStateObjects<Line, LineState>("lines", Lines);
-            ParseStateObjects<NoteController, NoteControllerState>("note_controllers", NoteControllers);
-            ParseStateObjects<Controller, ControllerState>("controllers", Controllers, token =>
-            {
-                // Controllers have time default to zero
-                if (token["time"] == null) token["time"] = 0;
-            });
-            
-            // Trigger
-            if (RootObject["triggers"] != null)
-                foreach (var objectToken in (JArray) RootObject["triggers"])
-                    Triggers.Add(LoadTrigger(objectToken));
             // Register note clear listener for triggers
             Game.onNoteClear.AddListener(OnNoteClear);
             Game.onGameDisposed.AddListener(_ => Dispose());
@@ -144,8 +170,27 @@ namespace Cytoid.Storyboard
 
         public JObject Compile()
         {
-            RecursivelyParseTime(RootObject);
-            return RootObject;
+            var root = new JObject();
+            root["compiled"] = true;
+            var texts = new JArray();
+            Texts.Values.ForEach(it => texts.Add(JObject.FromObject(it)));
+            root["texts"] = texts;
+            var sprites = new JArray();
+            Sprites.Values.ForEach(it => sprites.Add(JObject.FromObject(it)));
+            root["sprites"] = sprites;
+            var videos = new JArray();
+            Videos.Values.ForEach(it => videos.Add(JObject.FromObject(it)));
+            root["videos"] = videos;
+            var lines = new JArray();
+            Lines.Values.ForEach(it => lines.Add(JObject.FromObject(it)));
+            root["lines"] = lines;
+            var controllers = new JArray();
+            Controllers.Values.ForEach(it => controllers.Add(JObject.FromObject(it)));
+            root["controllers"] = controllers;
+            var noteControllers = new JArray();
+            NoteControllers.Values.ForEach(it => noteControllers.Add(JObject.FromObject(it)));
+            root["note_controllers"] = noteControllers;
+            return root;
         }
 
         private void RecursivelyParseTime(JObject obj)
@@ -229,54 +274,75 @@ namespace Cytoid.Storyboard
 
             foreach (var obj2 in timePopulatedObjects)
             {
-                var noteSelectorToken = obj.SelectToken("note");
-                if (noteSelectorToken != null && noteSelectorToken.Type == JTokenType.Object)
+                var noteSpecifierToken = obj.SelectToken("note");
+                if (noteSpecifierToken != null)
                 {
-                    // Note selector
-                    var noteSelector = new NoteSelector();
-                    noteSelector.Start = (int?) noteSelectorToken.SelectToken("start") ?? noteSelector.Start;
-                    noteSelector.End = (int?) noteSelectorToken.SelectToken("end") ?? noteSelector.End;
-                    var typeToken = noteSelectorToken.SelectToken("type");
-                    if (typeToken != null)
+                    if (noteSpecifierToken.Type == JTokenType.Object)
                     {
-                        if (typeToken.Type == JTokenType.Integer)
+                        // Note selector
+                        var noteSelector = new NoteSelector();
+                        noteSelector.Start = (int?) noteSpecifierToken.SelectToken("start") ?? noteSelector.Start;
+                        noteSelector.End = (int?) noteSpecifierToken.SelectToken("end") ?? noteSelector.End;
+                        noteSelector.Direction = (int?) noteSpecifierToken.SelectToken("direction") ?? noteSelector.Direction;
+                        noteSelector.MinX = (float?) noteSpecifierToken.SelectToken("min_x") ?? noteSelector.MinX;
+                        noteSelector.MaxX = (float?) noteSpecifierToken.SelectToken("max_x") ?? noteSelector.MaxX;
+                        var typeToken = noteSpecifierToken.SelectToken("type");
+                        if (typeToken != null)
                         {
-                            noteSelector.Types.Add((int) typeToken);
-                        }
-                        else if (typeToken.Type == JTokenType.Array)
-                        {
-                            foreach (var noteToken in typeToken.Values())
+                            if (typeToken.Type == JTokenType.Integer)
                             {
-                                noteSelector.Types.Add((int) noteToken);
+                                noteSelector.Types.Add((int) typeToken);
+                            }
+                            else if (typeToken.Type == JTokenType.Array)
+                            {
+                                foreach (var noteToken in typeToken.Values())
+                                {
+                                    noteSelector.Types.Add((int) noteToken);
+                                }
                             }
                         }
-                    }
-                    else
-                    {
-                        ((NoteType[]) Enum.GetValues(typeof(NoteType))).ForEach(it => noteSelector.Types.Add((int) it));
-                    }
-
-                    var noteIds = new List<int>();
-                    foreach (var chartNote in Game.Chart.Model.note_list)
-                    {
-                        if (noteSelector.Types.Contains(chartNote.type)
-                            && noteSelector.Start <= chartNote.id
-                            && noteSelector.End >= chartNote.id)
+                        else
                         {
-                            noteIds.Add(chartNote.id);
+                            ((NoteType[]) Enum.GetValues(typeof(NoteType))).ForEach(it =>
+                                noteSelector.Types.Add((int) it));
                         }
-                    }
 
-                    foreach (var noteId in noteIds)
+                        var noteIds = new List<int>();
+                        foreach (var chartNote in Game.Chart.Model.note_list)
+                        {
+                            if (noteSelector.Types.Contains(chartNote.type)
+                                && noteSelector.Start <= chartNote.id
+                                && noteSelector.End >= chartNote.id
+                                && noteSelector.MinX <= chartNote.x
+                                && noteSelector.MaxX >= chartNote.x)
+                            {
+                                if (!noteSelector.Direction.IsSet() || noteSelector.Direction == chartNote.direction)
+                                {
+                                    noteIds.Add(chartNote.id);
+                                }
+                            }
+                        }
+
+                        foreach (var noteId in noteIds)
+                        {
+                            var newObj = (JObject) obj2.DeepClone();
+                            newObj["note"] = noteId;
+                            populatedObjects.Add(newObj);
+                        }
+                    } 
+                    else if (noteSpecifierToken.Type == JTokenType.Array)
                     {
-                        var newObj = (JObject) obj2.DeepClone();
-                        newObj["note"] = noteId;
-                        populatedObjects.Add(newObj);
+                        foreach (var noteToken in noteSpecifierToken.Values())
+                        {
+                            var newObj = (JObject) obj2.DeepClone();
+                            newObj["note"] = (int) noteToken;
+                            populatedObjects.Add(newObj);
+                        }
                     }
                 }
                 else
                 {
-                    populatedObjects.AddRange(timePopulatedObjects);
+                    populatedObjects.Add(obj2);
                 }
             }
 
@@ -419,7 +485,7 @@ namespace Cytoid.Storyboard
             return state;
         }
 
-        private Dictionary<string, object> replacements = new Dictionary<string, object>();
+        private readonly Dictionary<string, object> replacements = new Dictionary<string, object>();
 
         public float? ParseTime(JObject obj, JToken token)
         {

@@ -42,7 +42,11 @@ public class ClassicDragHeadNoteRenderer : ClassicNoteRenderer
                 Ring.enabled = true;
                 Fill.enabled = true;
                 if (CDragFill != null) CDragFill.enabled = true;
-                if (DisplayNoteId) NoteId.gameObject.SetActive(true);
+                if (DisplayNoteId)
+                {
+                    NoteId.gameObject.SetActive(true);
+                    NoteId.transform.localEulerAngles = new Vector3(0, 0, -Note.transform.localEulerAngles.z);
+                }
             }
         }
         else

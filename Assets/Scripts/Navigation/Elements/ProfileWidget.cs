@@ -168,7 +168,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
         name.DOFade(1, 0.2f);
         infoLayoutGroup.gameObject.SetActive(true);
         LayoutFixer.Fix(layoutGroup.transform);
-        if (avatarImage.sprite == null)
+        if (avatarImage.sprite == null && Context.IsOnline())
         {
             spinner.IsSpinning = true;
             var sprite = await Context.AssetMemory.LoadAsset<Sprite>(

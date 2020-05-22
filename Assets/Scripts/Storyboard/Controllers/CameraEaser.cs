@@ -22,6 +22,12 @@ namespace Cytoid.Storyboard.Controllers
             {
                 transform.SetY(EaseFloat(From.Y, To.Y));
             }
+            
+            // Z
+            if (From.Z.IsSet())
+            {
+                transform.SetZ(EaseFloat(From.Z, To.Z));
+            }
 
             // RotX
             if (From.RotX.IsSet())

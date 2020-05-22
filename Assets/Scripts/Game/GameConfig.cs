@@ -9,18 +9,12 @@ public class GameConfig
 
     public float GlobalNoteSizeMultiplier;
     public float GlobalNoteOpacityMultiplier = 1f;
+    // TODO: Optimize color override; don't compare it with Color.clear!
     public Color GlobalRingColorOverride;
     public readonly Dictionary<NoteType, Color[]> GlobalFillColorsOverride = new Dictionary<NoteType, Color[]>();
-    
-    public readonly Dictionary<int, float> NoteXOverride = new Dictionary<int, float>();
-    public readonly Dictionary<int, float> NoteYOverride = new Dictionary<int, float>();
-    public readonly Dictionary<int, Color> NoteRingColorOverride = new Dictionary<int, Color>();
-    public readonly Dictionary<int, Color> NoteFillColorOverride = new Dictionary<int, Color>();
-    public readonly Dictionary<int, float> NoteOpacityMultiplier = new Dictionary<int, float>();
-    public readonly Dictionary<int, float> NoteSizeMultiplier = new Dictionary<int, float>();
-    
+
     public bool UseClassicStyle = true;
-    public bool DisplayNoteIds = false;
+    public bool DisplayNoteIds;
     public readonly Dictionary<NoteType, float> NoteSizes = new Dictionary<NoteType, float>();
     public readonly Dictionary<NoteType, float> NoteHitboxSizes = new Dictionary<NoteType, float>();
     public readonly Dictionary<NoteType, Color[]> NoteRingColors = new Dictionary<NoteType, Color[]>();
@@ -131,13 +125,13 @@ public class GameConfig
 
     public Color GetRingColorOverride(ChartModel.Note note)
     {
-        if (NoteRingColorOverride.ContainsKey(note.id)) return NoteRingColorOverride[note.id];
+        if (note.Override.RingColor != null) return note.Override.RingColor.Value;
         return GlobalRingColorOverride;
     }
 
     public Color GetFillColorOverride(ChartModel.Note note)
     {
-        if (NoteFillColorOverride.ContainsKey(note.id)) return NoteFillColorOverride[note.id];
+        if (note.Override.FillColor != null) return note.Override.FillColor.Value;
         return note.UseAlternativeColor()
             ? GlobalFillColorsOverride[(NoteType) note.type][0]
             : GlobalFillColorsOverride[(NoteType) note.type][1];

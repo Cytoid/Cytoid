@@ -47,6 +47,7 @@ namespace Cytoid.Storyboard
             Easer.From = fromState;
             Easer.To = toState;
             Easer.Ease = fromState.Easing;
+            Easer.Time = MainRenderer.Time;
             Easer.OnUpdate();
         }
 

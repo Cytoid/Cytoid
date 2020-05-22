@@ -39,8 +39,9 @@ namespace Cytoid.Storyboard
         {
             ParseObjectState(state, json, baseState);
 
-            state.X = ParseNumber(json.SelectToken("x"), ReferenceUnit.StageX, true) ?? state.X;
-            state.Y = ParseNumber(json.SelectToken("y"), ReferenceUnit.StageY, true) ?? state.Y;
+            state.X = ParseNumber(json.SelectToken("x"), ReferenceUnit.StageX, true, false) ?? state.X;
+            state.Y = ParseNumber(json.SelectToken("y"), ReferenceUnit.StageY, true, false) ?? state.Y;
+            state.Z = ParseNumber(json.SelectToken("z"), ReferenceUnit.World, true, false) ?? state.Z;
 
             if (baseState != null)
             {
@@ -49,8 +50,8 @@ namespace Cytoid.Storyboard
                 var baseY = baseState.Y;
                 if (!baseY.IsSet()) baseY = 0;
 
-                var dx = ParseNumber(json.SelectToken("dx"), ReferenceUnit.StageX, true);
-                var dy = ParseNumber(json.SelectToken("dy"), ReferenceUnit.StageY, true);
+                var dx = ParseNumber(json.SelectToken("dx"), ReferenceUnit.StageX, true, true);
+                var dy = ParseNumber(json.SelectToken("dy"), ReferenceUnit.StageY, true, true);
 
                 if (dx != null) state.X = baseX + (float) dx;
                 if (dy != null) state.Y = baseY + (float) dy;
@@ -71,15 +72,15 @@ namespace Cytoid.Storyboard
 
             state.Opacity = (float?) json.SelectToken("opacity") ?? state.Opacity;
 
-            state.Width = ParseNumber(json.SelectToken("width"), ReferenceUnit.StageX, true) ?? state.Width;
-            state.Height = ParseNumber(json.SelectToken("height"), ReferenceUnit.StageY, true) ?? state.Height;
+            state.Width = ParseNumber(json.SelectToken("width"), ReferenceUnit.StageX, true, true) ?? state.Width;
+            state.Height = ParseNumber(json.SelectToken("height"), ReferenceUnit.StageY, true, true) ?? state.Height;
             state.FillWidth = (bool?) json.SelectToken("fill_width") ?? state.FillWidth;
 
             state.Layer = (int?) json.SelectToken("layer") ?? state.Layer;
             state.Order = (int?) json.SelectToken("order") ?? state.Order;
         }
         
-        protected float? ParseNumber(JToken token, ReferenceUnit defaultUnit, bool scaleToCanvas)
+        protected float? ParseNumber(JToken token, ReferenceUnit defaultUnit, bool scaleToCanvas, bool span)
         {
             if (token == null) return null;
             if (token.Type == JTokenType.Integer) return ConvertNumber((int) token, defaultUnit);
@@ -108,10 +109,10 @@ namespace Cytoid.Storyboard
                         res = value / StoryboardRenderer.ReferenceHeight * Storyboard.Game.camera.orthographicSize;
                         break;
                     case ReferenceUnit.NoteX:
-                        res = Storyboard.Game.Chart.ConvertChartXToScreenX(value);
+                        res = Storyboard.Game.Chart.Let(it => it.ConvertChartXToScreenX(value) - (span ? it.ConvertChartXToScreenX(0) : 0));
                         break;
                     case ReferenceUnit.NoteY:
-                        res = Storyboard.Game.Chart.ConvertChartYToScreenY(value);
+                        res = Storyboard.Game.Chart.Let(it => it.ConvertChartYToScreenY(value) - (span ? it.ConvertChartYToScreenY(0) : 0));
                         break;
                     case ReferenceUnit.CameraX:
                         res = value * Storyboard.Game.camera.orthographicSize / UnityEngine.Screen.height * UnityEngine.Screen.width;

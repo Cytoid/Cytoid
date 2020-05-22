@@ -32,7 +32,7 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
             .GetComponent<SpriteRenderer>();
         ProgressRing = Object.Instantiate(provider.progressRingPrefab, Note.transform, false)
             .GetComponent<ProgressRing>();
-        Triangle = Object.Instantiate(provider.trianglePrefab).GetComponent<MeshTriangle>();
+        Triangle = Object.Instantiate(provider.trianglePrefab, Game.contentParent.transform).GetComponent<MeshTriangle>();
         ProgressRing.maxCutoff = 0;
         ProgressRing.fillCutoff = 0;
         CompletedLine.size = new Vector2(1, 0);
@@ -43,7 +43,7 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
     public override void OnNoteLoaded()
     {
         base.OnNoteLoaded();
-        Triangle.Note = Note.Model;
+        Triangle.Note = Note;
         // TODO: Magic number
         ProgressRing.gameObject.GetComponent<SpriteRenderer>().material.renderQueue = 3000 + Note.Model.id;
         var newProgressRingScale = ProgressRing.transform.localScale.x * SizeMultiplier;

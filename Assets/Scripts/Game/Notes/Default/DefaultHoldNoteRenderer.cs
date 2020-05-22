@@ -34,7 +34,7 @@ public class DefaultHoldNoteRenderer : DefaultNoteRenderer
             .GetComponent<SpriteRenderer>();
         ProgressRing = Object.Instantiate(provider.progressRingPrefab, Note.transform, false)
             .GetComponent<ProgressRing>();
-        Triangle = Object.Instantiate(provider.trianglePrefab).GetComponent<MeshTriangle>();
+        Triangle = Object.Instantiate(provider.trianglePrefab, Game.contentParent.transform).GetComponent<MeshTriangle>();
         var newProgressRingScale = ProgressRing.transform.localScale.x * SizeMultiplier;
         ProgressRing.transform.SetLocalScaleXY(newProgressRingScale, newProgressRingScale);
         ProgressRing.maxCutoff = 0;
@@ -46,7 +46,7 @@ public class DefaultHoldNoteRenderer : DefaultNoteRenderer
     {
         base.OnNoteLoaded();
         InitializeHoldComponents();
-        Triangle.Note = Note.Model;
+        Triangle.Note = Note;
         // TODO: Magic number
         ProgressRing.gameObject.GetComponent<SpriteRenderer>().material.renderQueue = 3000 + Note.Model.id;
         CompletedLine.size = new Vector2(1, 0);

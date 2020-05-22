@@ -10,6 +10,7 @@ public class Chart
     private readonly float horizontalRatio;
     private readonly float verticalOffset;
     private readonly float verticalRatio;
+    private readonly float screenRatio;
     
     public ChartModel Model { get; set; }
     
@@ -57,6 +58,8 @@ public class Chart
         this.verticalRatio = verticalRatio;
         this.verticalOffset = verticalOffset;
 
+        screenRatio = 1.0f * UnityEngine.Screen.width / UnityEngine.Screen.height;
+        
         // Convert tick to absolute time
         foreach (var eventOrder in Model.event_order_list) eventOrder.time = ConvertToTime(eventOrder.tick);
 
@@ -97,12 +100,11 @@ public class Chart
             note.start_time = ConvertToTime((float) note.tick);
             note.end_time = ConvertToTime((float) (note.tick + note.hold_tick));
 
-            var flip = isHorizontallyInverted ? -1 : 1;
-
             note.position = new Vector3(
                 ConvertChartXToScreenX((float) note.x),
                 GetNoteScreenY(note)
             );
+            note.y = GetNoteChartY(note);
 
             note.end_position = new Vector3(
                 note.position.x,
@@ -244,8 +246,7 @@ public class Chart
 
     public float ConvertChartXToScreenX(float x)
     {
-        return (x * 2 * horizontalRatio - horizontalRatio) * baseSize *
-            UnityEngine.Screen.width / UnityEngine.Screen.height * (IsHorizontallyInverted ? -1 : 1);
+        return (x * 2 * horizontalRatio - horizontalRatio) * baseSize * screenRatio * (IsHorizontallyInverted ? -1 : 1);
     }
     
     public float ConvertChartYToScreenY(float y)
@@ -265,6 +266,13 @@ public class Chart
                 (note.tick - page.start_tick) * 1.0f /
                 (page.end_tick - page.start_tick))
             + verticalOffset);
+    }
+    
+    public float GetNoteChartY(ChartModel.Note note)
+    {
+        var page = Model.page_list[note.page_index];
+        return (float) (page.scan_line_direction * ((note.tick - page.start_tick) * 1.0f /
+                                                    (page.end_tick - page.start_tick)));
     }
 
     public float ConvertChartTickToScreenY(float tick)

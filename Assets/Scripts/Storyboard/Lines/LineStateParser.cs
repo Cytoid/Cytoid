@@ -16,12 +16,15 @@ namespace Cytoid.Storyboard.Lines
 
             json.SelectToken("pos").ToArray().ForEach(it =>
             {
-                var pos = new LinePosition();;
-                pos.X = ParseNumber(it.SelectToken("x"), ReferenceUnit.NoteX, false) ?? 0;
-                pos.Y = ParseNumber(it.SelectToken("y"), ReferenceUnit.NoteY, false) ?? 0;
+                var pos = new LinePosition
+                {
+                    X = ParseNumber(it.SelectToken("x"), ReferenceUnit.NoteX, false, false) ?? 0,
+                    Y = ParseNumber(it.SelectToken("y"), ReferenceUnit.NoteY, false, false) ?? 0,
+                    Z = ParseNumber(it.SelectToken("z"), ReferenceUnit.World, false, false) ?? 0
+                };
                 state.Pos.Add(pos);
             });
-            state.Width = ParseNumber(json.SelectToken("width"), ReferenceUnit.World, false) ?? state.Width;
+            state.Width = ParseNumber(json.SelectToken("width"), ReferenceUnit.World, false, true) ?? state.Width;
             if (ColorUtility.TryParseHtmlString((string) json.SelectToken("color"), out var tmp))
                 state.Color = new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a};
             state.Opacity = (float?) json.SelectToken("opacity") ?? state.Opacity;

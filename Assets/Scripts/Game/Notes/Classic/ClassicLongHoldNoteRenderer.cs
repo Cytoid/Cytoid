@@ -25,7 +25,7 @@ public class ClassicLongHoldNoteRenderer : ClassicHoldNoteRenderer
             .GetComponent<SpriteRenderer>();
         ProgressRing = Object.Instantiate(provider.progressRingPrefab, Note.transform, false)
             .GetComponent<ProgressRing>();
-        Triangle = Object.Instantiate(provider.trianglePrefab).GetComponent<MeshTriangle>();
+        Triangle = Object.Instantiate(provider.trianglePrefab, Game.contentParent.transform).GetComponent<MeshTriangle>();
         ProgressRing.maxCutoff = 0;
         ProgressRing.fillCutoff = 0;
         ProgressRing.gameObject.GetComponent<SpriteRenderer>().material.renderQueue =
@@ -91,7 +91,7 @@ public class ClassicLongHoldNoteRenderer : ClassicHoldNoteRenderer
                             bottomLine = CompletedLine2;
                         }
 
-                        var noteY = Note.transform.position.y;
+                        var noteY = Note.transform.localPosition.y;
                         topLine.size = new Vector2(1, (orthographicSize - noteY) * HoldNote.HoldProgress);
                         bottomLine.size = new Vector2(1, -(-orthographicSize - noteY) * HoldNote.HoldProgress);
                     }

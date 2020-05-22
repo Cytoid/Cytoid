@@ -1,6 +1,7 @@
 using SleekRender;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Video;
 
 namespace Cytoid.Storyboard
 {
@@ -35,5 +36,7 @@ namespace Cytoid.Storyboard
 
         public UnityEngine.UI.Text TextPrefab;
         public Image SpritePrefab;
+        public VideoPlayer VideoVideoPlayerPrefab;
+        public RawImage VideoRawImagePrefab;
     }
 }

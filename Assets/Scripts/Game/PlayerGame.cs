@@ -2,7 +2,6 @@
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
-using Cytoid.Storyboard;
 using UniRx.Async;
 using UnityEngine;
 
@@ -22,18 +21,20 @@ public class PlayerGame : Game
     {
         base.Awake();
         Application.runInBackground = true;
+        UnityEngine.Screen.fullScreen = false;
         var audioConfig = AudioSettings.GetConfiguration();
-        audioConfig.dspBufferSize = 1024;
+        audioConfig.dspBufferSize = 2048;
         slider.onValueChanged.AddListener(OnSliderSeek);
     }
     
     protected override async void Start()
     {
+        var path = Application.isEditor
+            ? $"C:/Cytoid/Cytoid/Builds/Player/player/level.json"
+            : $"{Directory.GetParent(Application.dataPath).FullName}/player/level.json";
+
         var level = (await Context.LevelManager.LoadFromMetadataFiles(LevelType.Community,
-            new List<string>
-            {
-                $"{Context.UserDataPath}/player/level.json"
-            })).First();
+            new List<string> {path})).First();
         Context.SelectedLevel = level;
         Context.SelectedDifficulty = level.Meta.GetHardestDifficulty();
         Context.SelectedGameMode = GameMode.Standard;
@@ -70,6 +71,8 @@ public class PlayerGame : Game
 
     public void ReloadStoryboard()
     {
+        if (Storyboard == null) return;
+        
         Storyboard.Dispose();
         Storyboard.Renderer.Dispose();
 
@@ -109,7 +112,7 @@ public class PlayerGame : Game
     protected void OnSliderSeek(float value)
     {
         Music.PlaybackTime = value * MusicLength;
-        Storyboard.Renderer.Clear();
+        Storyboard?.Renderer.Clear();
     }
 
     protected override async void StartGame()
@@ -130,6 +133,7 @@ public class PlayerGame : Game
         {
             if (!PlayerPaused)
             {
+                Storyboard?.Renderer.Clear();
                 Time = 0;
                 Music.PlaybackTime = 0;
                 Music.Play(AudioTrackIndex.Reserved1);

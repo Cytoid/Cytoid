@@ -5,11 +5,12 @@ namespace Cytoid.Storyboard
     public abstract class StoryboardRendererEaser<T> where T : ObjectState
     {
         public StoryboardRenderer Renderer { get; }
+        public float Time { get; set; }
+        
         public StoryboardRendererProvider Provider => StoryboardRendererProvider.Instance;
         public Storyboard Storyboard => Renderer.Storyboard;
         public StoryboardConfig Config => Storyboard.Config;
         public Game Game => Renderer.Game;
-        public float Time => Renderer.Time;
         public EasingFunction.Ease Ease { get; set; }
         public T From { get; set; }
         public T To { get; set; }

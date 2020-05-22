@@ -4,7 +4,7 @@ using static UnityEngine.Object;
 
 namespace Cytoid.Storyboard.Texts
 {
-    public class TextRenderer : StoryboardComponentRenderer<Text, TextState>
+    public class TextRenderer : StageObjectRenderer<Text, TextState>
     {
         
         public UnityEngine.UI.Text Text { get; private set; }

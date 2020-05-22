@@ -8,7 +8,7 @@ using static UnityEngine.Object;
 
 namespace Cytoid.Storyboard.Videos
 {
-    public class VideoRenderer : StoryboardComponentRenderer<Video, VideoState>
+    public class VideoRenderer : StageObjectRenderer<Video, VideoState>
     {
         public VideoPlayer VideoPlayer { get; private set; }
 

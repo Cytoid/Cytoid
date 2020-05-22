@@ -12,7 +12,10 @@ public class CompileStoryboardButton : InteractableMonoBehavior
         {
             var jObject = game.Storyboard.Compile();
             var path = game.Level.Path + "/storyboard_compiled.json";
-            File.WriteAllText(path, JsonConvert.SerializeObject(jObject));
+            File.WriteAllText(path, JsonConvert.SerializeObject(jObject, Formatting.None, new JsonSerializerSettings
+            {
+                DefaultValueHandling = DefaultValueHandling.Ignore
+            }));
         });
     }
 }

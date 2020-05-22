@@ -22,8 +22,8 @@ namespace Cytoid.Storyboard
         public float Time => Game.Time;
         public StoryboardRendererProvider Provider => StoryboardRendererProvider.Instance;
         
-        public readonly Dictionary<string, List<StoryboardComponentRenderer>> ComponentRenderers = 
-            new Dictionary<string, List<StoryboardComponentRenderer>>(); // Object ID to multiple renderer instances
+        public readonly Dictionary<string, StoryboardComponentRenderer> ComponentRenderers = 
+            new Dictionary<string, StoryboardComponentRenderer>(); // Object ID to renderer instance
 
         public StoryboardRenderer(Storyboard storyboard)
         {
@@ -32,10 +32,7 @@ namespace Cytoid.Storyboard
 
         public void Clear()
         {
-            ComponentRenderers.Values.ForEach(renderers =>
-            {
-                renderers.ForEach(it => it.Clear());
-            });
+            ComponentRenderers.Values.ForEach(it => it.Clear());
 
             ResetCamera();
             ResetCameraFilters();
@@ -44,8 +41,9 @@ namespace Cytoid.Storyboard
         private void ResetCamera()
         {
             var camera = Provider.Camera;
-            camera.transform.position = new Vector3(0, 0, -10);
-            camera.transform.eulerAngles = Vector3.zero;
+            var cameraTransform = camera.transform;
+            cameraTransform.position = new Vector3(0, 0, -10);
+            cameraTransform.eulerAngles = Vector3.zero;
             camera.orthographic = true;
             camera.fieldOfView = 53.2f;
         }
@@ -150,10 +148,7 @@ namespace Cytoid.Storyboard
 
         public void Dispose()
         {
-            ComponentRenderers.Values.ForEach(renderers =>
-            {
-                renderers.ForEach(it => it.Dispose());
-            });
+            ComponentRenderers.Values.ForEach(it => it.Dispose());
             ComponentRenderers.Clear();
             Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.Storyboard);
             Clear();
@@ -195,7 +190,7 @@ namespace Cytoid.Storyboard
             });
         }
 
-        private async UniTask<List<TR>> SpawnObjects<TO, TS, TR>(List<TO> objects, Func<TO, TR> rendererCreator, Predicate<TO> predicate = default, Func<TO, TO> transformer = default, bool spawnOne = false) 
+        private async UniTask<List<TR>> SpawnObjects<TO, TS, TR>(List<TO> objects, Func<TO, TR> rendererCreator, Predicate<TO> predicate = default, Func<TO, TO> transformer = default) 
             where TS : ObjectState
             where TO : Object<TS>
             where TR : StoryboardComponentRenderer<TO, TS>
@@ -210,11 +205,12 @@ namespace Cytoid.Storyboard
                 var transformedObj = transformer(obj);
                 
                 var renderer = rendererCreator(transformedObj);
-                if (!ComponentRenderers.ContainsKey(transformedObj.Id))
+                if (ComponentRenderers.ContainsKey(transformedObj.Id))
                 {
-                    ComponentRenderers[transformedObj.Id] = new List<StoryboardComponentRenderer>();
+                    Debug.LogWarning($"Storyboard: Object {transformedObj.Id} is already spawned");
+                    continue;
                 }
-                ComponentRenderers[transformedObj.Id].Add(renderer);
+                ComponentRenderers[transformedObj.Id] = renderer;
                 // Debug.Log($"StoryboardRenderer: Spawned {typeof(TO).Name} with ID {obj.Id}");
                 tasks.Add(renderer.Initialize());
             }
@@ -228,43 +224,34 @@ namespace Cytoid.Storyboard
             var time = Time;
             if (time < 0 || Game.State.IsCompleted) return;
             
-            var outerRemovals = new List<string>();
+            var removals = new List<string>();
             foreach (var id in ComponentRenderers.Keys)
             {
-                var renderers = ComponentRenderers[id];
-                var innerRemovals = new List<StoryboardComponentRenderer>();
-                foreach (var renderer in renderers)
+                var renderer = ComponentRenderers[id];
+                
+                renderer.Component.FindStates(time, out var fromState, out var toState);
+
+                if (fromState == null) continue;
+
+                // Destroy?
+                if (fromState.Destroy)
                 {
-                    renderer.Component.FindStates(time, out var fromState, out var toState);
-
-                    if (fromState == null) continue;
-
-                    // Destroy?
-                    if (fromState.Destroy)
+                    if (Game is PlayerGame)
                     {
-                        if (Game is PlayerGame)
-                        {
-                            renderer.Clear();
-                        }
-                        else
-                        {
-                            renderer.Dispose();
-                            innerRemovals.Add(renderer);
-                        }
-                        continue;
+                        renderer.Clear();
                     }
-
-                    renderer.Update(fromState, toState);
+                    else
+                    {
+                        renderer.Dispose();
+                        removals.Add(id);
+                    }
+                    continue;
                 }
 
-                innerRemovals.ForEach(it =>
-                {
-                    renderers.Remove(it);
-                    if (renderers.Count == 0) outerRemovals.Add(id);
-                });
+                renderer.Update(fromState, toState);
             }
             
-            outerRemovals.ForEach(it => ComponentRenderers.Remove(it));
+            removals.ForEach(it => ComponentRenderers.Remove(it));
         }
 
         public void OnTrigger(Trigger trigger)
@@ -308,7 +295,7 @@ namespace Cytoid.Storyboard
         public void DestroyObjectsById(string id)
         {
             if (!ComponentRenderers.ContainsKey(id)) return;
-            ComponentRenderers[id].ForEach(it =>
+            ComponentRenderers[id].Let(it =>
             {
                 if (Game is PlayerGame) it.Clear();
                 else it.Dispose();

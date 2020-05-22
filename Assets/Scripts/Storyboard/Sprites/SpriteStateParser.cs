@@ -11,7 +11,7 @@ namespace Cytoid.Storyboard.Sprites
 
         public override void Parse(SpriteState state, JObject json, SpriteState baseState)
         {
-            ParseCanvasObjectState(state, json, baseState);
+            ParseStageObjectState(state, json, baseState);
 
             state.Path = (string) json.SelectToken("path") ?? state.Path;
             state.PreserveAspect = (bool?) json.SelectToken("preserve_aspect") ?? state.PreserveAspect;

@@ -35,9 +35,16 @@ namespace Cytoid.Storyboard
             state.Destroy = (bool?) json.SelectToken("destroy") ?? state.Destroy;
         }
         
-        protected void ParseCanvasObjectState(CanvasObjectState state, JObject json, CanvasObjectState baseState)
+        protected void ParseStageObjectState(StageObjectState state, JObject json, StageObjectState baseState)
         {
             ParseObjectState(state, json, baseState);
+
+            var targetId = (string) json.SelectToken("target_id");
+            if (targetId != null)
+            {
+                if (json["id"] != null) throw new ArgumentException("Storyboard: A stage object cannot have both id and target_id");
+                state.TargetId = targetId;
+            }
 
             state.X = ParseNumber(json.SelectToken("x"), ReferenceUnit.StageX, true, false) ?? state.X;
             state.Y = ParseNumber(json.SelectToken("y"), ReferenceUnit.StageY, true, false) ?? state.Y;

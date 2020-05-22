@@ -57,4 +57,12 @@ namespace Cytoid.Storyboard
         }
 
     }
+    
+    public abstract class StageObjectRenderer<TO, TS> : StoryboardComponentRenderer<TO, TS> where TS : StageObjectState where TO : Object<TS>
+    {
+        public StageObjectRenderer(StoryboardRenderer mainRenderer, TO component) : base(mainRenderer, component)
+        {
+        }
+        
+    }
 }

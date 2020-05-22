@@ -11,7 +11,7 @@ namespace Cytoid.Storyboard.Videos
 
         public override void Parse(VideoState state, JObject json, VideoState baseState)
         {
-            ParseCanvasObjectState(state, json, baseState);
+            ParseStageObjectState(state, json, baseState);
 
             state.Path = (string) json.SelectToken("path") ?? state.Path;
             if (ColorUtility.TryParseHtmlString((string) json.SelectToken("color"), out var tmp))

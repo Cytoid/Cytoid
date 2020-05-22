@@ -11,6 +11,7 @@ using Cytoid.Storyboard.Videos;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UniRx.Async;
+using UnityEngine;
 
 namespace Cytoid.Storyboard
 {
@@ -80,7 +81,15 @@ namespace Cytoid.Storyboard
                         {
                             tokenPreprocessor?.Invoke(objectToken);
                             var obj = LoadObject<TO, TS>(objectToken);
-                            if (obj != null) addToDictionary[obj.Id] = obj;
+                            if (obj != null)
+                            {
+                                if (addToDictionary.ContainsKey(obj.Id))
+                                {
+                                    Debug.LogError($"Storyboard: Redefinition of element {obj.Id}");
+                                    continue;
+                                }
+                                addToDictionary[obj.Id] = obj;
+                            }
                         }
                     }
                 }
@@ -182,10 +191,18 @@ namespace Cytoid.Storyboard
             Videos.Values.ForEach(it => videos.Add(JObject.FromObject(it)));
             root["videos"] = videos;
             var lines = new JArray();
-            Lines.Values.ForEach(it => lines.Add(JObject.FromObject(it)));
+            Lines.Values.ForEach(it => lines.Add(JObject.FromObject(it, new JsonSerializer
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                DefaultValueHandling = DefaultValueHandling.Ignore
+            })));
             root["lines"] = lines;
             var controllers = new JArray();
-            Controllers.Values.ForEach(it => controllers.Add(JObject.FromObject(it)));
+            Controllers.Values.ForEach(it => controllers.Add(JObject.FromObject(it, new JsonSerializer
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                DefaultValueHandling = DefaultValueHandling.Ignore
+            })));
             root["controllers"] = controllers;
             var noteControllers = new JArray();
             NoteControllers.Values.ForEach(it => noteControllers.Add(JObject.FromObject(it)));

@@ -94,8 +94,10 @@ namespace Cytoid.Storyboard
     }
 
     [Serializable]
-    public class CanvasObjectState : ObjectState
+    public class StageObjectState : ObjectState
     {
+        public string TargetId;
+        
         public bool? FillWidth;
         public float Height = float.MinValue;
 
@@ -120,7 +122,7 @@ namespace Cytoid.Storyboard
     }
 
     [Serializable]
-    public class TextState : CanvasObjectState
+    public class TextState : StageObjectState
     {
         public string Align;
         public Color Color;
@@ -130,7 +132,7 @@ namespace Cytoid.Storyboard
     }
 
     [Serializable]
-    public class SpriteState : CanvasObjectState
+    public class SpriteState : StageObjectState
     {
         public Color Color;
         public string Path;
@@ -138,7 +140,7 @@ namespace Cytoid.Storyboard
     }
 
     [Serializable]
-    public class VideoState : CanvasObjectState
+    public class VideoState : StageObjectState
     {
         public Color Color;
         public string Path;
@@ -194,7 +196,7 @@ namespace Cytoid.Storyboard
     }
 
     [Serializable]
-    public class LineState : ObjectState
+    public class LineState : StageObjectState
     {
         public List<LinePosition> Pos = new List<LinePosition>();
         public float Width = float.MinValue;
@@ -297,6 +299,7 @@ namespace Cytoid.Storyboard
         public float VignetteEnd = float.MinValue; // Range: 0~1
         public float VignetteIntensity = float.MinValue; // Range: 0~1
         public float VignetteStart = float.MinValue; // Range: 0~1
+        
         public float X = float.MinValue; // Every x/y = 2 * Camera.main.orthographicSize
         public float Y = float.MinValue;
         public float Z = float.MinValue;

@@ -11,7 +11,7 @@ namespace Cytoid.Storyboard.Texts
 
         public override void Parse(TextState state, JObject json, TextState baseState)
         {
-            ParseCanvasObjectState(state, json, baseState);
+            ParseStageObjectState(state, json, baseState);
 
             state.Font = (string) json.SelectToken("font") ?? state.Font;
             if (ColorUtility.TryParseHtmlString((string) json.SelectToken("color"), out var tmp))

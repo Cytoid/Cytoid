@@ -5,7 +5,7 @@ using static UnityEngine.Object;
 
 namespace Cytoid.Storyboard.Sprites
 {
-    public class SpriteRenderer : StoryboardComponentRenderer<Sprite, SpriteState>
+    public class SpriteRenderer : StageObjectRenderer<Sprite, SpriteState>
     {
 
         public UnityEngine.UI.Image Image { get; private set; }

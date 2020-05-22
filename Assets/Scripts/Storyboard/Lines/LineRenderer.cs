@@ -5,7 +5,7 @@ using static UnityEngine.Object;
 
 namespace Cytoid.Storyboard.Sprites
 {
-    public class LineRenderer : StoryboardComponentRenderer<Line, LineState>
+    public class LineRenderer : StageObjectRenderer<Line, LineState>
     {
         public UnityEngine.LineRenderer Line { get; private set; }
 

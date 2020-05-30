@@ -135,6 +135,20 @@ public class GamePreparationScreen : Screen
 
         UpdateTopMenu();
         UpdateStartButton();
+
+        Context.OnSelectedLevelChanged.AddListener(OnSelectedLevelChanged);
+    }
+
+    private void OnSelectedLevelChanged(Level anotherLevel)
+    {
+        if (anotherLevel == Level) return;
+        Level = anotherLevel;
+
+        UpdateTopMenu();
+        LoadPreview(true);
+        LoadCover(true);
+        if (!previewAudioSource.isPlaying) LoadPreview(true);
+        UpdateStartButton();
     }
 
     private void UpdateTopMenu()
@@ -192,7 +206,7 @@ public class GamePreparationScreen : Screen
 
             var token = asyncCoverToken;
 
-            var sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.GameCover, useFileCache: true);
+            var sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.GameCover, allowFileCache: true);
 
             if (asyncCoverToken != token)
             {
@@ -231,7 +245,7 @@ public class GamePreparationScreen : Screen
             // Load
             var token = asyncPreviewToken;
             
-            var audioClip = await Context.AssetMemory.LoadAsset<AudioClip>(path, AssetTag.PreviewMusic, useFileCache: true);
+            var audioClip = await Context.AssetMemory.LoadAsset<AudioClip>(path, AssetTag.PreviewMusic, allowFileCache: true);
 
             if (asyncPreviewToken != token)
             {
@@ -301,6 +315,7 @@ public class GamePreparationScreen : Screen
         Level = null;
         Context.LevelManager.OnLevelMetaUpdated.RemoveListener(OnLevelMetaUpdated);
         Context.OnlinePlayer.OnLevelBestPerformanceUpdated.RemoveListener(OnLevelBestPerformanceUpdated);
+        Context.OnSelectedLevelChanged.RemoveListener(OnSelectedLevelChanged);
 
         asyncCoverToken = DateTime.Now;
         asyncPreviewToken = DateTime.Now;

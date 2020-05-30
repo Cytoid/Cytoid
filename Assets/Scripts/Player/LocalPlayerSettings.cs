@@ -30,7 +30,7 @@ public class LocalPlayerSettings
     
     [JsonProperty("login_token")] public string LoginToken { get; set; }
     
-    [JsonProperty("active_character_id")] public string ActiveCharacterId { get; set; }
+    [JsonProperty("character_id")] public string ActiveCharacterId { get; set; }
 
     [JsonProperty("language")] public int Language { get; set; } = 0;
     [JsonProperty("play_ranked")] public bool PlayRanked { get; set; } = true;
@@ -97,6 +97,8 @@ public class LocalPlayerSettings
         {NoteType.CDragHead, "#39E59E".ToColor()},
     };
 
+    [JsonProperty("use_fill_color_for_drag_child_nodes")] public bool UseFillColorForDragChildNodes = true;
+
     [JsonProperty("hold_hit_sound_timing")]
     public HoldHitSoundTiming HoldHitSoundTiming { get; set; } = HoldHitSoundTiming.Both;
 
@@ -119,10 +121,13 @@ public class LocalPlayerSettings
         Application.platform == RuntimePlatform.Android ? 0.2f : 0.1f;
 
     [JsonProperty("headset_note_offset")] public float HeadsetNoteOffset { get; set; } = -0.05f;
+    [JsonProperty("judgment_offset")] public float JudgmentOffset { get; set; } = 0;
     [JsonProperty("clear_effects_size")] public float ClearEffectsSize { get; set; } = 0; // -0.5~0.5
     [JsonProperty("display_profiler")] public bool DisplayProfiler { get; set; } = false;
     [JsonProperty("display_note_ids")] public bool DisplayNoteIds { get; set; } = false;
     [JsonProperty("local_level_sort")] public LevelSort LocalLevelSort { get; set; } = LevelSort.AddedDate;
+
+    [JsonProperty("use_native_audio")] public bool UseNativeAudio { get; set; } = true;
 
     [JsonProperty("android_dsp_buffer_size")]
     public int AndroidDspBufferSize { get; set; } = -1;

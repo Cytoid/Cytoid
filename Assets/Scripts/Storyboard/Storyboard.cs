@@ -41,6 +41,8 @@ namespace Cytoid.Storyboard
             
             // Parse storyboard file
 
+            UnitFloat.Storyboard = this;
+
             RootObject = JObject.Parse(content);
             /*JsonConvert.DefaultSettings = () => new JsonSerializerSettings
             {
@@ -103,7 +105,11 @@ namespace Cytoid.Storyboard
                 timer.Time("Videos");
                 ParseStateObjects<Line, LineState>("lines", Lines);
                 timer.Time("Lines");
-                ParseStateObjects<NoteController, NoteControllerState>("note_controllers", NoteControllers);
+                ParseStateObjects<NoteController, NoteControllerState>("note_controllers", NoteControllers, token =>
+                {
+                    // Note controllers have time default to zero
+                    if (token["time"] == null) token["time"] = 0;
+                });
                 timer.Time("NoteController");
                 ParseStateObjects<Controller, ControllerState>("controllers", Controllers, token =>
                 {
@@ -132,12 +138,13 @@ namespace Cytoid.Storyboard
             NoteControllers.Clear();
             Triggers.Clear();
             Templates.Clear();
+            Game.onGameLateUpdate.RemoveListener(Renderer.OnGameUpdate);
         }
 
         public async UniTask Initialize()
         {
             await Renderer.Initialize();
-            Game.onGameUpdate.AddListener(Renderer.OnGameUpdate);
+            Game.onGameLateUpdate.AddListener(Renderer.OnGameUpdate);
         }
 
         public void OnNoteClear(Game game, Note note)
@@ -179,33 +186,29 @@ namespace Cytoid.Storyboard
 
         public JObject Compile()
         {
+            var serializer = new JsonSerializer
+            {
+                NullValueHandling = NullValueHandling.Ignore
+            };
             var root = new JObject();
             root["compiled"] = true;
             var texts = new JArray();
-            Texts.Values.ForEach(it => texts.Add(JObject.FromObject(it)));
+            Texts.Values.ForEach(it => texts.Add(JObject.FromObject(it, serializer)));
             root["texts"] = texts;
             var sprites = new JArray();
-            Sprites.Values.ForEach(it => sprites.Add(JObject.FromObject(it)));
+            Sprites.Values.ForEach(it => sprites.Add(JObject.FromObject(it, serializer)));
             root["sprites"] = sprites;
             var videos = new JArray();
-            Videos.Values.ForEach(it => videos.Add(JObject.FromObject(it)));
+            Videos.Values.ForEach(it => videos.Add(JObject.FromObject(it, serializer)));
             root["videos"] = videos;
             var lines = new JArray();
-            Lines.Values.ForEach(it => lines.Add(JObject.FromObject(it, new JsonSerializer
-            {
-                NullValueHandling = NullValueHandling.Ignore,
-                DefaultValueHandling = DefaultValueHandling.Ignore
-            })));
+            Lines.Values.ForEach(it => lines.Add(JObject.FromObject(it, serializer)));
             root["lines"] = lines;
             var controllers = new JArray();
-            Controllers.Values.ForEach(it => controllers.Add(JObject.FromObject(it, new JsonSerializer
-            {
-                NullValueHandling = NullValueHandling.Ignore,
-                DefaultValueHandling = DefaultValueHandling.Ignore
-            })));
+            Controllers.Values.ForEach(it => controllers.Add(JObject.FromObject(it, serializer)));
             root["controllers"] = controllers;
             var noteControllers = new JArray();
-            NoteControllers.Values.ForEach(it => noteControllers.Add(JObject.FromObject(it)));
+            NoteControllers.Values.ForEach(it => noteControllers.Add(JObject.FromObject(it, serializer)));
             root["note_controllers"] = noteControllers;
             return root;
         }
@@ -333,7 +336,7 @@ namespace Cytoid.Storyboard
                                 && noteSelector.MinX <= chartNote.x
                                 && noteSelector.MaxX >= chartNote.x)
                             {
-                                if (!noteSelector.Direction.IsSet() || noteSelector.Direction == chartNote.direction)
+                                if (noteSelector.Direction == null || noteSelector.Direction == chartNote.direction)
                                 {
                                     noteIds.Add(chartNote.id);
                                 }
@@ -355,6 +358,12 @@ namespace Cytoid.Storyboard
                             newObj["note"] = (int) noteToken;
                             populatedObjects.Add(newObj);
                         }
+                    }
+                    else if (noteSpecifierToken.Type == JTokenType.Integer)
+                    {
+                        var newObj = (JObject) obj2.DeepClone();
+                        newObj["note"] = (int) noteSpecifierToken;
+                        populatedObjects.Add(newObj);
                     }
                 }
                 else
@@ -410,9 +419,20 @@ namespace Cytoid.Storyboard
             // Create inline states
             AddStates(states, initialState, obj, ParseTime(obj, obj.SelectToken("time")));
 
+            var id = (string) obj["id"] ?? Path.GetRandomFileName();
+            var targetId = (string) obj.SelectToken("target_id");
+            if (targetId != null && obj["id"] != null) throw new ArgumentException("Storyboard: A stage object cannot have both id and target_id");
+            var parentId = (string) obj.SelectToken("parent_id");
+            
+            if (id.Contains("$note")) id = id.Replace("$note", ((int) replacements["note"]).ToString());
+            if (targetId != null && targetId.Contains("$note")) targetId = targetId.Replace("$note", ((int) replacements["note"]).ToString());
+            if (parentId != null && parentId.Contains("$note")) parentId = parentId.Replace("$note", ((int) replacements["note"]).ToString());
+
             return new TO
             {
-                Id = (string) obj["id"] ?? Path.GetRandomFileName(),
+                Id = id,
+                TargetId = targetId,
+                ParentId = parentId,
                 States = states.OrderBy(state => state.Time).ToList() // Must sort by time
             };
         }

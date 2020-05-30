@@ -59,7 +59,7 @@ public class AudioClipLoader
     public void Unload()
     {
         if (!loaded) return;
-        AudioClip.UnloadAudioData();
+        AudioClip?.UnloadAudioData();
         Object.Destroy(AudioClip);
         AudioClip = null;
         if (nLayerLoader != null)

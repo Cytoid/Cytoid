@@ -23,17 +23,18 @@ public class DragChildNote : Note
     public override NoteGrade CalculateGrade()
     {
         var grade = NoteGrade.Miss;
-        if (TimeUntilStart >= 0)
+        var timeUntil = TimeUntilStart + JudgmentOffset;
+        if (timeUntil >= 0)
         {
             grade = NoteGrade.None;
-            if (TimeUntilStart < 0.250f)
+            if (timeUntil < 0.250f)
             {
                 grade = NoteGrade.Perfect;
             }
         }
         else
         {
-            var timePassed = -TimeUntilStart;
+            var timePassed = -timeUntil;
             if (timePassed < 0.100f)
             {
                 grade = NoteGrade.Perfect;

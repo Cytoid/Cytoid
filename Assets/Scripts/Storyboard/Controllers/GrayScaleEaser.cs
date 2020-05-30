@@ -10,10 +10,10 @@ namespace Cytoid.Storyboard.Controllers
         {
             if (Config.UseEffects)
             {
-                if (From.GrayScale.IsSet())
+                if (From.GrayScale != null)
                 {
                     Provider.GrayScale.enabled = From.GrayScale.Value;
-                    if (From.GrayScale.Value && From.GrayScaleIntensity.IsSet())
+                    if (From.GrayScale.Value && From.GrayScaleIntensity != null)
                     {
                         Provider.GrayScale._Fade = EaseFloat(From.GrayScaleIntensity, To.GrayScaleIntensity);
                     }

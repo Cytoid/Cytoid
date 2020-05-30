@@ -10,7 +10,6 @@ using UnityEngine;
 public class MainTranslucentImage : SingletonMonoBehavior<MainTranslucentImage>, ScreenChangeListener
 {
     public Camera uiCamera;
-    public float baseScale = 1.0f;
     public static ParallaxElement ParallaxElement => ParallaxHolder.Instance.Target;
     [GetComponent] public TranslucentImage translucentImage;
     public bool hiddenOnStart = true;
@@ -39,7 +38,8 @@ public class MainTranslucentImage : SingletonMonoBehavior<MainTranslucentImage>,
         translucentImage.DOFade(1, 2f).SetEase(Ease.OutCubic);
         ParallaxElement.gameObject.SetActive(true);
         ParallaxElement.Enabled = false;
-        ParallaxElement.GetComponent<RectTransform>().DOScale(baseScale * 0.9f, 0.4f).SetEase(Ease.OutCubic);
+        DOTween.To(() => ParallaxElement.ScaleMultiplier, v => ParallaxElement.ScaleMultiplier = v,
+            ParallaxElement.CurrentScale * 0.97f, 0.4f).SetEase(Ease.OutCubic);
         uiCamera.gameObject.SetActive(true);
         WillUpdateTranslucentImage();
     }
@@ -80,7 +80,8 @@ public class MainTranslucentImage : SingletonMonoBehavior<MainTranslucentImage>,
             translucentImage.DOKill();
             translucentImage.DOFade(0, 0.4f).SetEase(Ease.OutCubic);
             ParallaxElement.gameObject.SetActive(true);
-            ParallaxElement.GetComponent<RectTransform>().DOScale(baseScale * 1f, 0.4f).SetEase(Ease.OutCubic);
+            DOTween.To(() => ParallaxElement.ScaleMultiplier, v => ParallaxElement.ScaleMultiplier = v,
+                ParallaxElement.CurrentScale, 0.4f).SetEase(Ease.OutCubic);
         }
         else {
             translucentImage.color = Color.black;
@@ -97,7 +98,8 @@ public class MainTranslucentImage : SingletonMonoBehavior<MainTranslucentImage>,
             else
             {
                 ParallaxElement.gameObject.SetActive(true);
-                ParallaxElement.GetComponent<RectTransform>().DOScale(baseScale * (OverlayScreenIds.Contains(to.GetId()) ? 0.98f : 1.1f), 0.4f).SetEase(Ease.OutCubic);
+                DOTween.To(() => ParallaxElement.ScaleMultiplier, v => ParallaxElement.ScaleMultiplier = v,
+                    ParallaxElement.CurrentScale * (OverlayScreenIds.Contains(to.GetId()) ? 0.98f : 1.1f), 0.4f).SetEase(Ease.OutCubic);
             }
         }
     }

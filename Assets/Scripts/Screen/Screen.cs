@@ -95,6 +95,12 @@ public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveLi
         UseChildrenListeners();
     }
 
+    public virtual void SetBlockRaycasts(bool blockRaycasts)
+    {
+        CanvasGroup.blocksRaycasts = blockRaycasts;
+        CanvasGroup.interactable = blockRaycasts;
+    }
+
     public void RegisterEvents(object obj)
     {
         AddListener<ScreenInitializedListener>(obj, onScreenInitialized, it => it.OnScreenInitialized);

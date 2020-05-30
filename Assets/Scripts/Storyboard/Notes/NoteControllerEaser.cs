@@ -1,154 +1,155 @@
+using Cytoid.Storyboard.Sprites;
 using UnityEngine;
 
 namespace Cytoid.Storyboard.Notes
 {
     public class NoteControllerEaser : StoryboardRendererEaser<NoteControllerState>
     {
-        public NoteControllerEaser(StoryboardRenderer renderer) : base(renderer)
+        private NoteControllerRenderer NoteControllerRenderer { get; }
+
+        private ChartModel.Note Note => NoteControllerRenderer.Note;
+
+        public NoteControllerEaser(NoteControllerRenderer renderer) : base(renderer.MainRenderer)
         {
+            NoteControllerRenderer = renderer;
         }
 
         public override void OnUpdate()
         {
-            if (From.Note != null)
+            if (From.OverrideX != null)
             {
-                var note = Game.Chart.Model.note_map[From.Note.Value];
-
-                if (From.OverrideX.IsSet())
+                if (From.OverrideX.Value)
                 {
-                    if (From.OverrideX.Value)
-                    {
-                        note.Override.X = From.X.IsSet() ? EaseFloat(From.X, To.X) : 0.5f;
-                    }
-                    else
-                    {
-                        note.Override.X = null;
-                    }
+                    Note.Override.X = From.X != null ? EaseFloat(From.X, To.X) : 0.5f;
                 }
-
-                if (From.OverrideY.IsSet())
+                else
                 {
-                    if (From.OverrideY.Value)
-                    {
-                        note.Override.Y = From.Y.IsSet() ? EaseFloat(From.Y, To.Y) : 0.5f;
-                    }
-                    else
-                    {
-                        note.Override.Y = null;
-                    }
+                    Note.Override.X = null;
                 }
+            }
 
-                if (From.OverrideZ.IsSet())
+            if (From.OverrideY != null)
+            {
+                if (From.OverrideY.Value)
                 {
-                    if (From.OverrideZ.Value)
-                    {
-                        note.Override.Z = From.Z.IsSet() ? EaseFloat(From.Z, To.Z) : 0;
-                    }
-                    else
-                    {
-                        note.Override.Z = null;
-                    }
+                    Note.Override.Y = From.Y != null ? EaseFloat(From.Y, To.Y) : 0.5f;
                 }
+                else
+                {
+                    Note.Override.Y = null;
+                }
+            }
 
-                if (From.OverrideRotX.IsSet())
+            if (From.OverrideZ != null)
+            {
+                if (From.OverrideZ.Value)
                 {
-                    if (From.OverrideRotX.Value)
-                    {
-                        note.Override.RotX = From.RotX.IsSet() ? EaseFloat(From.RotX, To.RotX) : 0;
-                    }
-                    else
-                    {
-                        note.Override.RotX = null;
-                    }
+                    Note.Override.Z = From.Z != null ? EaseFloat(From.Z, To.Z) : 0;
                 }
+                else
+                {
+                    Note.Override.Z = null;
+                }
+            }
 
-                if (From.OverrideRotY.IsSet())
+            if (From.OverrideRotX != null)
+            {
+                if (From.OverrideRotX.Value)
                 {
-                    if (From.OverrideRotY.Value)
-                    {
-                        note.Override.RotY = From.RotY.IsSet() ? EaseFloat(From.RotY, To.RotY) : 0;
-                    }
-                    else
-                    {
-                        note.Override.RotY = null;
-                    }
+                    Note.Override.RotX = From.RotX != null ? EaseFloat(From.RotX, To.RotX) : 0;
                 }
+                else
+                {
+                    Note.Override.RotX = null;
+                }
+            }
 
-                if (From.OverrideRotZ.IsSet())
+            if (From.OverrideRotY != null)
+            {
+                if (From.OverrideRotY.Value)
                 {
-                    if (From.OverrideRotZ.Value)
-                    {
-                        note.Override.RotZ = From.RotZ.IsSet() ? EaseFloat(From.RotZ, To.RotZ) : 0;
-                    }
-                    else
-                    {
-                        note.Override.RotZ = null;
-                    }
+                    Note.Override.RotY = From.RotY != null ? EaseFloat(From.RotY, To.RotY) : 0;
                 }
+                else
+                {
+                    Note.Override.RotY = null;
+                }
+            }
 
-                if (From.OverrideRingColor.IsSet())
+            if (From.OverrideRotZ != null)
+            {
+                if (From.OverrideRotZ.Value)
                 {
-                    if (From.OverrideRingColor.Value)
-                    {
-                        note.Override.RingColor = EaseColor(From.RingColor, To.RingColor);
-                    }
-                    else
-                    {
-                        note.Override.RingColor = null;
-                    }
+                    Note.Override.RotZ = From.RotZ != null ? EaseFloat(From.RotZ, To.RotZ) : 0;
                 }
+                else
+                {
+                    Note.Override.RotZ = null;
+                }
+            }
 
-                if (From.OverrideFillColor.IsSet())
+            if (From.OverrideRingColor != null)
+            {
+                if (From.OverrideRingColor.Value)
                 {
-                    if (From.OverrideFillColor.Value)
-                    {
-                        note.Override.FillColor = EaseColor(From.FillColor, To.FillColor);
-                    }
-                    else
-                    {
-                        note.Override.FillColor = null;
-                    }
+                    Note.Override.RingColor = EaseColor(From.RingColor, To.RingColor);
                 }
+                else
+                {
+                    Note.Override.RingColor = null;
+                }
+            }
 
-                if (From.OpacityMultiplier.IsSet())
+            if (From.OverrideFillColor != null)
+            {
+                if (From.OverrideFillColor.Value)
                 {
-                    note.Override.OpacityMultiplier = EaseFloat(From.OpacityMultiplier, To.OpacityMultiplier);
+                    Note.Override.FillColor = EaseColor(From.FillColor, To.FillColor);
                 }
+                else
+                {
+                    Note.Override.FillColor = null;
+                }
+            }
 
-                if (From.SizeMultiplier.IsSet())
-                {
-                    note.Override.SizeMultiplier = EaseFloat(From.SizeMultiplier, To.SizeMultiplier);
-                }
+            if (From.OpacityMultiplier != null)
+            {
+                Note.Override.OpacityMultiplier = EaseFloat(From.OpacityMultiplier, To.OpacityMultiplier);
+            }
 
-                if (From.XMultiplier.IsSet())
-                {
-                    note.Override.XMultiplier = EaseFloat(From.XMultiplier, To.XMultiplier);
-                }
+            if (From.SizeMultiplier != null)
+            {
+                Note.Override.SizeMultiplier = EaseFloat(From.SizeMultiplier, To.SizeMultiplier);
+            }
 
-                if (From.YMultiplier.IsSet())
-                {
-                    note.Override.YMultiplier = EaseFloat(From.YMultiplier, To.YMultiplier);
-                }
+            if (From.XMultiplier != null)
+            {
+                Note.Override.XMultiplier = EaseFloat(From.XMultiplier, To.XMultiplier);
+            }
 
-                if (From.XOffset.IsSet())
-                {
-                    note.Override.XOffset = EaseFloat(From.XOffset, To.XOffset);
-                }
+            if (From.YMultiplier != null)
+            {
+                Note.Override.YMultiplier = EaseFloat(From.YMultiplier, To.YMultiplier);
+            }
 
-                if (From.YOffset.IsSet())
-                {
-                    note.Override.YOffset = EaseFloat(From.YOffset, To.YOffset);
-                }
+            if (From.XOffset != null)
+            {
+                Note.Override.XOffset = EaseFloat(From.XOffset, To.XOffset);
+            }
 
-                if (From.HoldDirection.IsSet())
-                {
-                    note.direction = From.HoldDirection;
-                }
+            if (From.YOffset != null)
+            {
+                Note.Override.YOffset = EaseFloat(From.YOffset, To.YOffset);
+            }
 
-                if (From.Style.IsSet())
-                {
-                    note.style = From.Style;
-                }
+            if (From.HoldDirection != null)
+            {
+                Note.direction = From.HoldDirection.Value;
+            }
+
+            if (From.Style != null)
+            {
+                Note.style = From.Style.Value;
             }
         }
     }

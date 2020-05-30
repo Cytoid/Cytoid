@@ -13,7 +13,7 @@ PlayerSettings:
   useOnDemandResources: 0
   accelerometerFrequency: 60
   companyName: TigerHix
-  productName: CytoidPlayer
+  productName: Cytoid
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0, g: 0, b: 0, a: 1}
@@ -167,8 +167,9 @@ PlayerSettings:
     Android: me.tigerhix.cytoid
     Standalone: com.Company.ProductName
     iPhone: me.tigerhix.cytoid
-  buildNumber: {}
-  AndroidBundleVersionCode: 6
+  buildNumber:
+    iPhone: 10
+  AndroidBundleVersionCode: 10
   AndroidMinSdkVersion: 16
   AndroidTargetSdkVersion: 28
   AndroidPreferredInstallLocation: 1
@@ -240,7 +241,8 @@ PlayerSettings:
   iOSUseLaunchScreenStoryboard: 0
   iOSLaunchScreenCustomStoryboardPath: 
   iOSDeviceRequirements: []
-  iOSURLSchemes: []
+  iOSURLSchemes:
+  - cytoid
   iOSBackgroundModes: 0
   iOSMetalForceHardShadows: 0
   metalEditorSupport: 1

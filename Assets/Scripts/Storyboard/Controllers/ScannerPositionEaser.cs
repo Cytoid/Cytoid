@@ -8,7 +8,7 @@ namespace Cytoid.Storyboard.Controllers
         
         public override void OnUpdate()
         {
-            if (From.OverrideScanlinePos.IsSet())
+            if (From.OverrideScanlinePos != null)
             {
                 Scanner.Instance.positionOverride = From.OverrideScanlinePos.Value
                     ? EaseFloat(From.ScanlinePos, To.ScanlinePos)

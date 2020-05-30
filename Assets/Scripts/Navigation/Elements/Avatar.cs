@@ -37,7 +37,7 @@ public class Avatar : InteractableMonoBehavior
         var sprite = await Context.AssetMemory.LoadAsset<Sprite>(
             user.AvatarUrl?.WithSizeParam(64, 64) ?? user.Avatar.SmallUrl, 
             AssetTag.Avatar,
-            useFileCache: true
+            allowFileCache: true
         );
 
         if (token != asyncRequestToken)

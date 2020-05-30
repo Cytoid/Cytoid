@@ -1,3 +1,4 @@
+using System;
 using Cytoid.Storyboard.Lines;
 using Storyboard.Controllers;
 using UniRx.Async;
@@ -9,6 +10,10 @@ namespace Cytoid.Storyboard.Controllers
     public class ControllerRenderer : StoryboardComponentRenderer<Controller, ControllerState>
     {
 
+        public override Transform Transform => throw new InvalidOperationException();
+        
+        public override bool IsOnCanvas => false;
+        
         public ControllerRenderer(StoryboardRenderer mainRenderer, Controller component) : base(mainRenderer, component)
         {
         }

@@ -29,6 +29,8 @@ public abstract class Note : MonoBehaviour
 
     // For ranked mode: weighted difference between the current timing and the perfect timing
     public float GreatGradeWeight { get; protected set; }
+    
+    public float JudgmentOffset { get; protected set; }
 
     public virtual void SetData(Game game, int noteId)
     {
@@ -46,6 +48,7 @@ public abstract class Note : MonoBehaviour
         Renderer = CreateRenderer();
         Renderer.OnNoteLoaded();
         MissThreshold = Type.GetDefaultMissThreshold();
+        JudgmentOffset = Context.Player.Settings.JudgmentOffset;
         
         Game.onGameUpdate.AddListener(_ => OnGameUpdate());
         Game.onGameLateUpdate.AddListener(_ => OnGameLateUpdate());
@@ -89,18 +92,6 @@ public abstract class Note : MonoBehaviour
 
     protected virtual void OnGameUpdate()
     {
-        var model = Model;
-        var ovr = model.Override;
-        var position = model.position;
-
-        if (ovr.XMultiplier != 1 || ovr.XOffset != 0) position.x = Game.Chart.ConvertChartXToScreenX((float) model.x * ovr.XMultiplier + ovr.XOffset);
-        if (ovr.YMultiplier != 1 || ovr.YOffset != 0) position.y = Game.Chart.ConvertChartYToScreenY(model.y * ovr.YMultiplier + ovr.YOffset);
-        if (ovr.X != null) position.x = ovr.X.Value;
-        if (ovr.Y != null) position.y = ovr.Y.Value;
-        if (ovr.Z != null) position.z = ovr.Z.Value;
-        
-        gameObject.transform.localPosition = position;
-
         // Reset cleared status in player mode
         if (Game is PlayerGame && IsCleared)
         {
@@ -112,6 +103,19 @@ public abstract class Note : MonoBehaviour
 
         if (!IsCleared)
         {
+            // Update position
+            var model = Model;
+            var ovr = model.Override;
+            var position = model.position;
+
+            if (ovr.XMultiplier != 1 || ovr.XOffset != 0) position.x = Game.Chart.ConvertChartXToScreenX((float) model.x * ovr.XMultiplier + ovr.XOffset);
+            if (ovr.YMultiplier != 1 || ovr.YOffset != 0) position.y = Game.Chart.ConvertChartYToScreenY(model.y * ovr.YMultiplier + ovr.YOffset);
+            if (ovr.X != null) position.x = ovr.X.Value;
+            if (ovr.Y != null) position.y = ovr.Y.Value;
+            if (ovr.Z != null) position.z = ovr.Z.Value;
+        
+            gameObject.transform.localPosition = position;
+            
             // Autoplay
             if (IsAutoEnabled())
             {
@@ -142,10 +146,21 @@ public abstract class Note : MonoBehaviour
     {
         if (NextNoteModel != null)
         {
-            if (!hasNextNote && Game.Notes.ContainsKey(NextNoteModel.id))
+            if (Game.Notes.ContainsKey(NextNoteModel.id))
             {
-                hasNextNote = true;
-                nextNote = Game.Notes[NextNoteModel.id];
+                if (!hasNextNote)
+                {
+                    hasNextNote = true;
+                    nextNote = Game.Notes[NextNoteModel.id];
+                }
+            }
+            else
+            {
+                if (hasNextNote)
+                {
+                    hasNextNote = false;
+                    nextNote = null;
+                }
             }
 
             var position = transform.localPosition;
@@ -163,7 +178,7 @@ public abstract class Note : MonoBehaviour
                                (nextPosition.y - position.y)) / Mathf.PI * 180f +
                     (nextPosition.y > position.y ? 0 : 180)));
         }
-        
+
         var rotation = Model.rotation;
         if (Model.Override.RotX != null) rotation.x = Model.Override.RotX.Value;
         if (Model.Override.RotY != null) rotation.y = Model.Override.RotY.Value;
@@ -212,7 +227,7 @@ public abstract class Note : MonoBehaviour
     public virtual NoteGrade CalculateGrade()
     {
         var grade = NoteGrade.None;
-        var timeUntil = TimeUntilStart;
+        var timeUntil = TimeUntilStart + JudgmentOffset;
 
         if (Game.State.Mode == GameMode.Practice)
         {

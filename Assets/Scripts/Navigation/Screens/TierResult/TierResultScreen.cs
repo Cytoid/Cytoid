@@ -236,6 +236,12 @@ public class TierResultScreen : Screen
                     if (stateChange.rewards.Count > 0)
                     {
                         RewardOverlay.Show(stateChange.rewards);
+
+                        if (stateChange.rewards.Any(
+                            it => it.Type == OnlinePlayerStateChange.Reward.RewardType.Character))
+                        {
+                            Context.Library.Fetch();
+                        }
                     }
                 }
             ).CatchRequestError(error =>

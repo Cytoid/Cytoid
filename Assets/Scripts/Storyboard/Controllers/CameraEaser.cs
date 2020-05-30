@@ -12,25 +12,25 @@ namespace Cytoid.Storyboard.Controllers
             var transform = camera.transform;
 
             // X
-            if (From.X.IsSet())
+            if (From.X != null)
             {
                 transform.SetX(EaseFloat(From.X, To.X));
             }
 
             // Y
-            if (From.Y.IsSet())
+            if (From.Y != null)
             {
                 transform.SetY(EaseFloat(From.Y, To.Y));
             }
             
             // Z
-            if (From.Z.IsSet())
+            if (From.Z != null)
             {
                 transform.SetZ(EaseFloat(From.Z, To.Z));
             }
 
             // RotX
-            if (From.RotX.IsSet())
+            if (From.RotX != null)
             {
                 var eulerAngles = transform.eulerAngles;
                 eulerAngles.x = EaseFloat(From.RotX, To.RotX);
@@ -38,7 +38,7 @@ namespace Cytoid.Storyboard.Controllers
             }
 
             // RotY
-            if (From.RotY.IsSet())
+            if (From.RotY != null)
             {
                 var eulerAngles = transform.eulerAngles;
                 eulerAngles.y = EaseFloat(From.RotY, To.RotY);
@@ -46,7 +46,7 @@ namespace Cytoid.Storyboard.Controllers
             }
 
             // RotZ
-            if (From.RotZ.IsSet())
+            if (From.RotZ != null)
             {
                 var eulerAngles = transform.eulerAngles;
                 eulerAngles.z = EaseFloat(From.RotZ, To.RotZ);
@@ -54,10 +54,10 @@ namespace Cytoid.Storyboard.Controllers
             }
 
             // Perspective
-            if (From.Perspective.IsSet())
+            if (From.Perspective != null)
             {
                 camera.orthographic = !From.Perspective.Value;
-                if (From.Perspective.Value && From.Fov.IsSet())
+                if (From.Perspective.Value && From.Fov != null)
                 {
                     camera.fieldOfView = EaseFloat(From.Fov, To.Fov);
                 }

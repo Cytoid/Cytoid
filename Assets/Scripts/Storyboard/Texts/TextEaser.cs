@@ -5,8 +5,11 @@ namespace Cytoid.Storyboard.Texts
 {
     public class TextEaser : StoryboardRendererEaser<TextState>
     {
-        public TextRenderer TextRenderer { get; }
-        public UnityEngine.UI.Text Text => TextRenderer.Text;
+        private TextRenderer TextRenderer { get; }
+        private UnityEngine.UI.Text Text => TextRenderer.Text;
+        private RectTransform RectTransform => TextRenderer.RectTransform;
+        private Canvas Canvas => TextRenderer.Canvas;
+        private CanvasGroup CanvasGroup => TextRenderer.CanvasGroup;
         
         public TextEaser(TextRenderer renderer) : base(renderer.MainRenderer)
         {
@@ -15,135 +18,131 @@ namespace Cytoid.Storyboard.Texts
 
         public override void OnUpdate()
         {
-            var rectTransform = Text.rectTransform;
-
+            TextRenderer.IsTransformActive = true;
+            
             // X
-            if (From.X.IsSet())
+            if (From.X != null)
             {
-                rectTransform.SetLocalX(EaseFloat(From.X, To.X));
+                RectTransform.SetLocalX(EaseFloat(From.X, To.X));
             }
 
             // Y
-            if (From.Y.IsSet())
-            {
-                rectTransform.SetLocalY(EaseFloat(From.Y, To.Y));
+            if (From.Y != null)
+            { 
+                RectTransform.SetLocalY(EaseFloat(From.Y, To.Y));
             }
 
             // RotX
-            if (From.RotX.IsSet())
+            if (From.RotX != null)
             {
-                rectTransform.localEulerAngles =
-                    rectTransform.localEulerAngles.SetX(EaseFloat(From.RotX, To.RotX));
+                RectTransform.localEulerAngles =
+                    RectTransform.localEulerAngles.SetX(EaseFloat(From.RotX, To.RotX));
             }
 
             // RotY
-            if (From.RotY.IsSet())
+            if (From.RotY != null)
             {
-                rectTransform.localEulerAngles =
-                    rectTransform.localEulerAngles.SetY(EaseFloat(From.RotY, To.RotY));
+                RectTransform.localEulerAngles =
+                    RectTransform.localEulerAngles.SetY(EaseFloat(From.RotY, To.RotY));
             }
 
             // RotZ
-            if (From.RotZ.IsSet())
+            if (From.RotZ != null)
             {
-                rectTransform.localEulerAngles =
-                    rectTransform.localEulerAngles.SetZ(EaseFloat(From.RotZ, To.RotZ));
+                RectTransform.localEulerAngles =
+                    RectTransform.localEulerAngles.SetZ(EaseFloat(From.RotZ, To.RotZ));
             }
 
             // ScaleX
-            if (From.ScaleX.IsSet())
+            if (From.ScaleX != null)
             {
-                rectTransform.SetLocalScaleX(EaseFloat(From.ScaleX, To.ScaleX));
+                RectTransform.SetLocalScaleX(EaseFloat(From.ScaleX, To.ScaleX));
             }
 
             // ScaleY
-            if (From.ScaleY.IsSet())
+            if (From.ScaleY != null)
             {
-                rectTransform.SetLocalScaleY(EaseFloat(From.ScaleY, To.ScaleY));
+                RectTransform.SetLocalScaleY(EaseFloat(From.ScaleY, To.ScaleY));
             }
 
             // Color
-            if (From.Color.IsSet())
+            if (From.Color != null)
             {
                 Text.color = EaseColor(From.Color, To.Color);
             }
 
             // Opacity
-            if (From.Opacity.IsSet())
+            if (From.Opacity != null)
             {
-                Text.color = Text.color.WithAlpha(EaseFloat(From.Opacity, To.Opacity));
+                CanvasGroup.alpha = EaseFloat(From.Opacity, To.Opacity);
             }
 
             // PivotX
-            if (From.PivotX.IsSet())
+            if (From.PivotX != null)
             {
-                rectTransform.pivot =
-                    new Vector2(EaseFloat(From.PivotX, To.PivotX), rectTransform.pivot.y);
+                RectTransform.pivot =
+                    new Vector2(EaseFloat(From.PivotX, To.PivotX), RectTransform.pivot.y);
             }
 
             // PivotY
-            if (From.PivotY.IsSet())
+            if (From.PivotY != null)
             {
-                rectTransform.pivot =
-                    new Vector2(rectTransform.pivot.x, EaseFloat(From.PivotY, To.PivotY));
+                RectTransform.pivot =
+                    new Vector2(RectTransform.pivot.x, EaseFloat(From.PivotY, To.PivotY));
             }
 
             // Fill Width
-            if (From.FillWidth.IsSet() && From.FillWidth.Value)
+            if (From.FillWidth != null && From.FillWidth.Value)
             {
-                rectTransform.SetWidth(Provider.CanvasRect.width);
-                rectTransform.SetHeight(10000);
+                RectTransform.SetWidth(Provider.CanvasRect.width);
+                RectTransform.SetHeight(10000);
             }
             else
             {
                 // Width
-                if (From.Width.IsSet())
+                if (From.Width != null)
                 {
-                    rectTransform.SetWidth(EaseFloat(From.Width, To.Width));
+                    RectTransform.SetWidth(EaseFloat(From.Width, To.Width));
                 }
 
                 // Height
-                if (From.Height.IsSet())
+                if (From.Height != null)
                 {
-                    rectTransform.SetHeight(EaseFloat(From.Height, To.Height));
+                    RectTransform.SetHeight(EaseFloat(From.Height, To.Height));
                 }
             }
 
             // Text
-            if (From.Text.IsSet())
+            if (From.Text != null)
             {
                 Text.text = From.Text;
             }
 
             // Size
-            if (From.Size.IsSet())
+            if (From.Size != null)
             {
-                Text.fontSize = From.Size;
+                Text.fontSize = From.Size.Value;
             }
 
             // Align
-            if (From.Align.IsSet())
+            if (From.Align != null)
             {
                 Text.alignment =
                     (TextAnchor) Enum.Parse(typeof(TextAnchor), From.Align, true);
             }
 
-            Canvas canvas = null;
-
             // Layer
-            if (From.Layer.IsSet())
+            if (From.Layer != null)
             {
-                From.Layer = Mathf.Clamp(From.Layer, 0, 2);
-                canvas = Text.GetComponent<Canvas>();
-                canvas.overrideSorting = true;
-                canvas.sortingLayerName = "Storyboard" + (From.Layer + 1);
+                From.Layer = Mathf.Clamp(From.Layer.Value, 0, 2);
+                Canvas.overrideSorting = true;
+                Canvas.sortingLayerName = "Storyboard" + (From.Layer.Value + 1);
             }
 
             // Order
-            if (From.Order.IsSet())
+            if (From.Order != null)
             {
-                if (canvas == null) canvas = Text.GetComponent<Canvas>();
-                canvas.sortingOrder = From.Order;
+                Canvas.sortingOrder = From.Order.Value;
             }
         }
         

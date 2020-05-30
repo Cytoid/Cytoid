@@ -7,7 +7,7 @@ public class CharacterMeta
     [JsonProperty("name")] public string Name { get; set; }
     [JsonProperty("description")] public string Description { get; set; }
     [JsonProperty("illustrator")] public IllustratorMeta Illustrator { get; set; }
-    [JsonProperty("characterDesigner")] public CharacterDesignerMeta CharacterDesigner { get; set; }
+    [JsonProperty("designer")] public CharacterDesignerMeta CharacterDesigner { get; set; }
 
     [Serializable]
     public class IllustratorMeta

@@ -10,9 +10,9 @@ public class InputController : MonoBehaviour
 
     public readonly Dictionary<int, FlickNote> FlickingNotes = new Dictionary<int, FlickNote>();
     public readonly Dictionary<int, HoldNote> HoldingNotes = new Dictionary<int, HoldNote>();
-    public readonly List<Note> TouchableDragNotes = new List<Note>(); // Drag head, Drag child
+    public readonly List<Note> TouchableDragNotes = new List<Note>(); // Drag head, Drag child, CDrag child
     public readonly List<HoldNote> TouchableHoldNotes = new List<HoldNote>(); // Hold, Long hold
-    public readonly List<Note> TouchableNormalNotes = new List<Note>(); // Click, Hold, Long hold, Flick
+    public readonly List<Note> TouchableNormalNotes = new List<Note>(); // Click, CDrag head, Hold, Long hold, Flick
 
     private void Awake()
     {

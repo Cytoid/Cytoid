@@ -91,11 +91,11 @@ public class Chart
 
             note.direction = page.scan_line_direction;
             note.speed = note.page_index == 0 ? 1.0f : CalculateNoteSpeed(note);
-            note.speed *= (float) note.approach_rate;
 
             var modSpeed = 1f;
             modSpeed *= approachRateMultiplier;
             note.speed *= modSpeed;
+            note.speed *= (float) note.approach_rate;
 
             note.start_time = ConvertToTime((float) note.tick);
             note.end_time = ConvertToTime((float) (note.tick + note.hold_tick));

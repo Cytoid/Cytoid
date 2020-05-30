@@ -8,7 +8,7 @@ namespace Cytoid.Storyboard.Controllers
         
         public override void OnUpdate()
         {
-            if (From.ScanlineOpacity.IsSet())
+            if (From.ScanlineOpacity != null)
             {
                 Scanner.Instance.opacity = EaseFloat(From.ScanlineOpacity, To.ScanlineOpacity);
             }

@@ -7,9 +7,11 @@ namespace Cytoid.Storyboard.Sprites
 {
     public class VideoEaser : StoryboardRendererEaser<VideoState>
     {
-        public VideoRenderer VideoRenderer { get; }
-        public VideoPlayer VideoPlayer => VideoRenderer.VideoPlayer;
-        public RawImage RawImage => VideoRenderer.RawImage;
+        private VideoRenderer VideoRenderer { get; }
+        private VideoPlayer VideoPlayer => VideoRenderer.VideoPlayer;
+        private RawImage RawImage => VideoRenderer.RawImage;
+        private RectTransform RectTransform => VideoRenderer.RectTransform;
+        private Canvas Canvas => VideoRenderer.Canvas;
         
         public VideoEaser(VideoRenderer renderer) : base(renderer.MainRenderer)
         {
@@ -18,122 +20,118 @@ namespace Cytoid.Storyboard.Sprites
 
         public override void OnUpdate()
         {
-            var rectTransform = RawImage.rectTransform;
-
+            VideoRenderer.IsTransformActive = true;
+            
             // X
-            if (From.X.IsSet())
+            if (From.X != null)
             {
-                rectTransform.SetLocalX(EaseFloat(From.X, To.X));
+                RectTransform.SetLocalX(EaseFloat(From.X, To.X));
             }
 
             // Y
-            if (From.Y.IsSet())
+            if (From.Y != null)
             {
-                rectTransform.SetLocalY(EaseFloat(From.Y, To.Y));
+                RectTransform.SetLocalY(EaseFloat(From.Y, To.Y));
             }
 
             // RotX
-            if (From.RotX.IsSet())
+            if (From.RotX != null)
             {
-                rectTransform.localEulerAngles =
-                    rectTransform.localEulerAngles.SetX(EaseFloat(From.RotX, To.RotX));
+                RectTransform.localEulerAngles =
+                    RectTransform.localEulerAngles.SetX(EaseFloat(From.RotX, To.RotX));
             }
 
             // RotY
-            if (From.RotY.IsSet())
+            if (From.RotY != null)
             {
-                rectTransform.localEulerAngles =
-                    rectTransform.localEulerAngles.SetY(EaseFloat(From.RotY, To.RotY));
+                RectTransform.localEulerAngles =
+                    RectTransform.localEulerAngles.SetY(EaseFloat(From.RotY, To.RotY));
             }
 
             // RotZ
-            if (From.RotZ.IsSet())
+            if (From.RotZ != null)
             {
-                rectTransform.localEulerAngles =
-                    rectTransform.localEulerAngles.SetZ(EaseFloat(From.RotZ, To.RotZ));
+                RectTransform.localEulerAngles =
+                    RectTransform.localEulerAngles.SetZ(EaseFloat(From.RotZ, To.RotZ));
             }
 
             // ScaleX
-            if (From.ScaleX.IsSet())
+            if (From.ScaleX != null)
             {
-                rectTransform.SetLocalScaleX(EaseFloat(From.ScaleX, To.ScaleX));
+                RectTransform.SetLocalScaleX(EaseFloat(From.ScaleX, To.ScaleX));
             }
 
             // ScaleY
-            if (From.ScaleY.IsSet())
+            if (From.ScaleY != null)
             {
-                rectTransform.SetLocalScaleY(EaseFloat(From.ScaleY, To.ScaleY));
+                RectTransform.SetLocalScaleY(EaseFloat(From.ScaleY, To.ScaleY));
             }
 
             // Color tint
-            if (From.Color.IsSet())
+            if (From.Color != null)
             {
                 RawImage.color = EaseColor(From.Color, To.Color);
             }
             
             // Opacity
-            if (From.Opacity.IsSet())
+            if (From.Opacity != null)
             {
                 RawImage.color = RawImage.color.WithAlpha(EaseFloat(From.Opacity, To.Opacity));
             }
 
             // PivotX
-            if (From.PivotX.IsSet())
+            if (From.PivotX != null)
             {
-                rectTransform.pivot =
-                    new Vector2(EaseFloat(From.PivotX, To.PivotX), rectTransform.pivot.y);
+                RectTransform.pivot =
+                    new Vector2(EaseFloat(From.PivotX, To.PivotX), RectTransform.pivot.y);
             }
 
             // PivotY
-            if (From.PivotY.IsSet())
+            if (From.PivotY != null)
             {
-                rectTransform.pivot =
-                    new Vector2(rectTransform.pivot.x, EaseFloat(From.PivotY, To.PivotY));
+                RectTransform.pivot =
+                    new Vector2(RectTransform.pivot.x, EaseFloat(From.PivotY, To.PivotY));
             }
 
             // Fill Width
-            if (From.FillWidth != null && (bool) From.FillWidth)
+            if (From.FillWidth != null && From.FillWidth.Value)
             {
-                rectTransform.SetWidth(Provider.CanvasRect.width);
-                rectTransform.SetHeight(10000);
+                RectTransform.SetWidth(Provider.CanvasRect.width);
+                RectTransform.SetHeight(10000);
             }
             else
             {
                 // Width
-                if (From.Width.IsSet())
+                if (From.Width != null)
                 {
-                    rectTransform.SetWidth(EaseFloat(From.Width, To.Width));
+                    RectTransform.SetWidth(EaseFloat(From.Width, To.Width));
                 }
 
                 // Height
-                if (From.Height.IsSet())
+                if (From.Height != null)
                 {
-                    rectTransform.SetHeight(EaseFloat(From.Height, To.Height));
+                    RectTransform.SetHeight(EaseFloat(From.Height, To.Height));
                 }
             }
 
             // Height
-            if (From.Height.IsSet())
+            if (From.Height != null)
             {
-                rectTransform.SetHeight(EaseFloat(From.Height, To.Height));
+                RectTransform.SetHeight(EaseFloat(From.Height, To.Height));
             }
 
-            Canvas canvas = null;
-
             // Layer
-            if (From.Layer.IsSet())
+            if (From.Layer != null)
             {
-                From.Layer = Mathf.Clamp(From.Layer, 0, 2);
-                canvas = RawImage.GetComponent<Canvas>();
-                canvas.overrideSorting = true;
-                canvas.sortingLayerName = "Storyboard" + (From.Layer + 1);
+                From.Layer = Mathf.Clamp(From.Layer.Value, 0, 2);
+                Canvas.overrideSorting = true;
+                Canvas.sortingLayerName = "Storyboard" + (From.Layer.Value + 1);
             }
 
             // Order
-            if (From.Order.IsSet())
+            if (From.Order != null)
             {
-                if (canvas == null) canvas = RawImage.GetComponent<Canvas>();
-                canvas.sortingOrder = From.Order;
+                Canvas.sortingOrder = From.Order.Value;
             }
         }
         

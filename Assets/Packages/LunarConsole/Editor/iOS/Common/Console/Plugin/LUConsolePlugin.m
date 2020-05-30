@@ -442,6 +442,7 @@ static NSString *const kScriptMessageTrackEvent = @"track_event";
 
 - (BOOL)shouldDisplayErrorType:(LUConsoleLogType)type
 {
+    return YES;
     if (!LU_IS_CONSOLE_LOG_TYPE_ERROR(type)) {
         return NO;
     }

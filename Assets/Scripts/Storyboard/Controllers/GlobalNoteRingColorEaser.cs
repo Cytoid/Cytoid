@@ -8,7 +8,7 @@ namespace Cytoid.Storyboard.Controllers
         
         public override void OnUpdate()
         {
-            if (From.NoteRingColor.IsSet())
+            if (From.NoteRingColor != null)
             {
                 Game.Config.GlobalRingColorOverride = EaseColor(From.NoteRingColor, To.NoteRingColor);
             }

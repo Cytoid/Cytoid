@@ -11,6 +11,8 @@ public class OnlineLevel
     [JsonProperty("uid")] public string Uid { get; set; }
     [JsonProperty("version")] public int Version { get; set; }
 
+    [JsonProperty("date")] public DateTimeOffset Date { get; set; }
+    
     [JsonProperty("title")] public string Title { get; set; }
     [JsonProperty("metadata")] public OnlineLevelMetadata Metadata { get; set; }
     [JsonProperty("bundle")] public OnlineLevelBundle Bundle { get; set; }
@@ -97,7 +99,7 @@ public class OnlineLevel
             }
         }
 
-        return Level.FromRemote($"{Context.ApiUrl}/levels/{Uid}/resources", type, GenerateLevelMeta())
+        return Level.FromRemote($"{Context.ServicesUrl}/levels/{Uid}/resources", type, GenerateLevelMeta())
             .Also(it => it.OnlineLevel = this);
     }
 

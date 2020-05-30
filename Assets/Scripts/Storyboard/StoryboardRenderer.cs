@@ -19,11 +19,25 @@ namespace Cytoid.Storyboard
 
         public Storyboard Storyboard { get; }
         public Game Game => Storyboard.Game;
+        public Camera Camera { get; private set; }
         public float Time => Game.Time;
         public StoryboardRendererProvider Provider => StoryboardRendererProvider.Instance;
         
         public readonly Dictionary<string, StoryboardComponentRenderer> ComponentRenderers = 
             new Dictionary<string, StoryboardComponentRenderer>(); // Object ID to renderer instance
+
+        public readonly Dictionary<Type, List<StoryboardComponentRenderer>> TypedComponentRenderers =
+            new Dictionary<Type, List<StoryboardComponentRenderer>>();
+        
+        public StoryboardConstants Constants { get; } = new StoryboardConstants();
+        
+        public class StoryboardConstants
+        {
+            public float CanvasToWorldXMultiplier;
+            public float CanvasToWorldYMultiplier;
+            public float WorldToCanvasXMultiplier;
+            public float WorldToCanvasYMultiplier;
+        }
 
         public StoryboardRenderer(Storyboard storyboard)
         {
@@ -36,16 +50,22 @@ namespace Cytoid.Storyboard
 
             ResetCamera();
             ResetCameraFilters();
+            
+            var canvas = Provider.CanvasRect;
+            Constants.CanvasToWorldXMultiplier = 1.0f / canvas.width * Camera.pixelWidth;
+            Constants.CanvasToWorldYMultiplier = 1.0f / canvas.height * Camera.pixelHeight;
+            Constants.WorldToCanvasXMultiplier = 1.0f / Camera.pixelWidth * canvas.width;
+            Constants.WorldToCanvasYMultiplier = 1.0f / Camera.pixelHeight * canvas.height;
         }
 
         private void ResetCamera()
         {
-            var camera = Provider.Camera;
-            var cameraTransform = camera.transform;
+            Camera = Provider.Camera;
+            var cameraTransform = Camera.transform;
             cameraTransform.position = new Vector3(0, 0, -10);
             cameraTransform.eulerAngles = Vector3.zero;
-            camera.orthographic = true;
-            camera.fieldOfView = 53.2f;
+            Camera.orthographic = true;
+            Camera.fieldOfView = 53.2f;
         }
 
         private void ResetCameraFilters()
@@ -150,6 +170,7 @@ namespace Cytoid.Storyboard
         {
             ComponentRenderers.Values.ForEach(it => it.Dispose());
             ComponentRenderers.Clear();
+            TypedComponentRenderers.Clear();
             Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.Storyboard);
             Clear();
         }
@@ -159,8 +180,15 @@ namespace Cytoid.Storyboard
             // Clear
             Clear();
 
+            foreach (var type in new[]
+                {typeof(Text), typeof(Sprite), typeof(Line), typeof(Video), typeof(Controller), typeof(NoteController)})
+            {
+                TypedComponentRenderers[type] = new List<StoryboardComponentRenderer>();
+            }
+            
             var timer = new BenchmarkTimer("StoryboardRenderer initialization");
-            bool Predicate<TO>(TO obj) where TO : Object => !obj.IsManuallySpawned();
+            bool Predicate<TO>(TO obj) where TO : Object => !obj.IsManuallySpawned(); await SpawnObjects<NoteController, NoteControllerState, NoteControllerRenderer>(Storyboard.NoteControllers.Values.ToList(), noteController => new NoteControllerRenderer(this, noteController), Predicate);
+            timer.Time("NoteController"); // Spawn note placeholder transforms
             await SpawnObjects<Text, TextState, TextRenderer>(Storyboard.Texts.Values.ToList(), text => new TextRenderer(this, text), Predicate);
             timer.Time("Text");
             await SpawnObjects<Sprite, SpriteState, SpriteRenderer>(Storyboard.Sprites.Values.ToList(), sprite => new SpriteRenderer(this, sprite), Predicate);
@@ -171,8 +199,6 @@ namespace Cytoid.Storyboard
             timer.Time("Video");
             await SpawnObjects<Controller, ControllerState, ControllerRenderer>(Storyboard.Controllers.Values.ToList(), controller => new ControllerRenderer(this, controller), Predicate);
             timer.Time("Controller");
-            await SpawnObjects<NoteController, NoteControllerState, NoteControllerRenderer>(Storyboard.NoteControllers.Values.ToList(), noteController => new NoteControllerRenderer(this, noteController), Predicate);
-            timer.Time("NoteController");
             timer.Time();
 
             // Clear on abort/retry/complete
@@ -211,6 +237,7 @@ namespace Cytoid.Storyboard
                     continue;
                 }
                 ComponentRenderers[transformedObj.Id] = renderer;
+                TypedComponentRenderers[typeof(TO)].Add(renderer);
                 // Debug.Log($"StoryboardRenderer: Spawned {typeof(TO).Name} with ID {obj.Id}");
                 tasks.Add(renderer.Initialize());
             }
@@ -223,35 +250,49 @@ namespace Cytoid.Storyboard
         {
             var time = Time;
             if (time < 0 || Game.State.IsCompleted) return;
-            
-            var removals = new List<string>();
-            foreach (var id in ComponentRenderers.Keys)
+
+            var updateOrder = new[]
+                {typeof(NoteController), typeof(Text), typeof(Sprite), typeof(Line), typeof(Video), typeof(Controller)};
+
+            var removals = new Dictionary<string, Type>();
+
+            foreach (var type in updateOrder)
             {
-                var renderer = ComponentRenderers[id];
-                
-                renderer.Component.FindStates(time, out var fromState, out var toState);
-
-                if (fromState == null) continue;
-
-                // Destroy?
-                if (fromState.Destroy)
+                var renderers = TypedComponentRenderers[type];
+                foreach (var renderer in renderers)
                 {
-                    if (Game is PlayerGame)
-                    {
-                        renderer.Clear();
-                    }
-                    else
-                    {
-                        renderer.Dispose();
-                        removals.Add(id);
-                    }
-                    continue;
-                }
+                    renderer.Component.FindStates(time, out var fromState, out var toState);
 
-                renderer.Update(fromState, toState);
+                    if (fromState == null) continue;
+
+                    // Destroy?
+                    if (fromState.Destroy != null && fromState.Destroy.Value)
+                    {
+                        if (Game is PlayerGame)
+                        {
+                            renderer.Clear();
+                        }
+                        else
+                        {
+                            renderer.Dispose();
+                            removals[renderer.Component.Id] = type;
+                        }
+
+                        continue;
+                    }
+
+                    renderer.Update(fromState, toState);
+                }
             }
-            
-            removals.ForEach(it => ComponentRenderers.Remove(it));
+
+            removals.ForEach(it =>
+            {
+                var id = it.Key;
+                var type = it.Value;
+                var renderer = ComponentRenderers[id];
+                ComponentRenderers.Remove(id);
+                TypedComponentRenderers[type].Remove(renderer);
+            });
         }
 
         public void OnTrigger(Trigger trigger)
@@ -299,6 +340,7 @@ namespace Cytoid.Storyboard
             {
                 if (Game is PlayerGame) it.Clear();
                 else it.Dispose();
+                TypedComponentRenderers[it.GetType()].Remove(it);
             });
             ComponentRenderers.Remove(id);
         }
@@ -308,26 +350,26 @@ namespace Cytoid.Storyboard
             var baseTime = Time;
             var states = obj.States;
 
-            if (states[0].Time.IsSet())
+            if (obj.IsManuallySpawned())
             {
-                baseTime = states[0].Time;
+                states[0].Time = baseTime;
             }
             else
             {
-                states[0].Time = baseTime;
+                baseTime = states[0].Time;
             }
 
             var lastTime = baseTime;
             foreach (var state in states)
             {
-                if (state.RelativeTime.IsSet())
+                if (state.RelativeTime != null)
                 {
-                    state.Time = baseTime + state.RelativeTime;
+                    state.Time = baseTime + state.RelativeTime.Value;
                 }
 
-                if (state.AddTime.IsSet())
+                if (state.AddTime != null)
                 {
-                    state.Time = lastTime + state.AddTime;
+                    state.Time = lastTime + state.AddTime.Value;
                 }
 
                 lastTime = state.Time;

@@ -10,10 +10,10 @@ namespace Cytoid.Storyboard.Controllers
         {
             if (Config.UseEffects)
             {
-                if (From.Noise.IsSet())
+                if (From.Noise != null)
                 {
                     Provider.Noise.enabled = From.Noise.Value;
-                    if (From.Noise.Value && From.NoiseIntensity.IsSet())
+                    if (From.Noise.Value && From.NoiseIntensity != null)
                     {
                         Provider.Noise.Noise = EaseFloat(From.NoiseIntensity, To.NoiseIntensity);
                     }

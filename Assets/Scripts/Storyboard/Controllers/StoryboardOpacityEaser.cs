@@ -8,7 +8,7 @@ namespace Cytoid.Storyboard.Controllers
         
         public override void OnUpdate()
         {
-            if (From.StoryboardOpacity.IsSet())
+            if (From.StoryboardOpacity != null)
             {
                 Provider.CanvasGroup.alpha = EaseFloat(From.StoryboardOpacity, To.StoryboardOpacity);
             }

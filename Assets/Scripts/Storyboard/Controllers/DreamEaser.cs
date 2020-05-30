@@ -10,10 +10,10 @@ namespace Cytoid.Storyboard.Controllers
         {
             if (Config.UseEffects)
             {
-                if (From.Dream.IsSet())
+                if (From.Dream != null)
                 {
                     Provider.Dream.enabled = From.Dream.Value;
-                    if (From.Dream.Value && From.DreamIntensity.IsSet())
+                    if (From.Dream.Value && From.DreamIntensity != null)
                     {
                         Provider.Dream.Distortion = EaseFloat(From.DreamIntensity, To.DreamIntensity);
                     }

@@ -18,7 +18,7 @@ public class SceneLoader
 
     public async UniTask Load()
     {
-        Context.PreSceneChangedEvent.Invoke(CurrentScene, Scene);
+        Context.PreSceneChanged.Invoke(CurrentScene, Scene);
         AsyncOperation = SceneManager.LoadSceneAsync(Scene);
         AsyncOperation.allowSceneActivation = false;
         await AsyncOperation;
@@ -29,7 +29,7 @@ public class SceneLoader
         if (AsyncOperation == null) await UniTask.WaitUntil(() => AsyncOperation != null);
         AsyncOperation.allowSceneActivation = true;
         await UniTask.WaitUntil(() => AsyncOperation.isDone);
-        Context.PostSceneChangedEvent.Invoke(CurrentScene, Scene);
+        Context.PostSceneChanged.Invoke(CurrentScene, Scene);
     }
 }
 

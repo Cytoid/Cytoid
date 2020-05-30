@@ -4,9 +4,12 @@ using System.Linq;
 using System.Linq.Expressions;
 using UniRx.Async;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerGame : Game
 {
+    public static float StartAt;
+    
     public ExtendedSlider slider;
     public List<CanvasGroup> uiCanvasGroups;
 
@@ -29,16 +32,23 @@ public class PlayerGame : Game
     
     protected override async void Start()
     {
+        await UniTask.WaitUntil(() => Context.IsInitialized);
+        
         var path = Application.isEditor
             ? $"C:/Cytoid/Cytoid/Builds/Player/player/level.json"
             : $"{Directory.GetParent(Application.dataPath).FullName}/player/level.json";
 
-        var level = (await Context.LevelManager.LoadFromMetadataFiles(LevelType.Community,
-            new List<string> {path})).First();
+        if (Context.LevelManager.LoadedLocalLevels.Count == 0)
+        {
+            await Context.LevelManager.LoadFromMetadataFiles(LevelType.Community,
+                new List<string> {path});
+        }
+        var level = Context.LevelManager.LoadedLocalLevels.First().Value;
         Context.SelectedLevel = level;
         Context.SelectedDifficulty = level.Meta.GetHardestDifficulty();
         Context.SelectedGameMode = GameMode.Standard;
         Context.SelectedMods = new HashSet<Mod>{Mod.Auto};
+
         await Initialize();
 
         if (Storyboard != null)
@@ -68,7 +78,7 @@ public class PlayerGame : Game
             watcher.EnableRaisingEvents = true;
         }
     }
-
+    
     public void ReloadStoryboard()
     {
         if (Storyboard == null) return;
@@ -83,6 +93,17 @@ public class PlayerGame : Game
 
         Storyboard = new Cytoid.Storyboard.Storyboard(this, File.ReadAllText(StoryboardPath));
         Storyboard.Initialize();
+    }
+
+    public async void ReloadAll()
+    {
+        StartAt = Time;
+        State.IsPlaying = false;
+        
+        Context.AudioManager.Unload("Level");
+        Dispose();
+
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     protected override void Update()
@@ -120,6 +141,12 @@ public class PlayerGame : Game
         await UniTask.WhenAll(BeforeStartTasks);
         
         Music.Play(AudioTrackIndex.Reserved1);
+        if (StartAt > 0)
+        {
+            Music.PlaybackTime = StartAt;
+            MusicStartedTimestamp -= StartAt;
+        }
+
         PlayerPaused = false;
 
         State.IsStarted = true;

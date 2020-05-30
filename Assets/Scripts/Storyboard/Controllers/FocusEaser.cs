@@ -10,24 +10,24 @@ namespace Cytoid.Storyboard.Controllers
         {
             if (Config.UseEffects)
             {
-                if (From.Focus.IsSet())
+                if (From.Focus != null)
                 {
                     Provider.Focus.enabled = From.Focus.Value;
                     if (From.Focus.Value)
                     {
-                        if (From.FocusIntensity.IsSet())
+                        if (From.FocusIntensity != null)
                         {
                             Provider.Focus.Intensity = EaseFloat(From.FocusIntensity, To.FocusIntensity);
                         }
-                        if (From.FocusSize.IsSet())
+                        if (From.FocusSize != null)
                         {
                             Provider.Focus.Size = EaseFloat(From.FocusSize, To.FocusSize);
                         }
-                        if (From.FocusSpeed.IsSet())
+                        if (From.FocusSpeed != null)
                         {
                             Provider.Focus.Speed = EaseFloat(From.FocusSpeed, To.FocusSpeed);
                         }
-                        if (From.FocusColor.IsSet())
+                        if (From.FocusColor != null)
                         {
                             Provider.Focus.Color = EaseColor(From.FocusColor, To.FocusColor);
                         }

@@ -10,19 +10,19 @@ namespace Cytoid.Storyboard.Controllers
         {
             if (Config.UseEffects)
             {
-                if (From.Chromatical.IsSet())
+                if (From.Chromatical != null)
                 {
                     Provider.Chromatical.enabled = From.Chromatical.Value;
                     if (From.Chromatical.Value)
                     {
-                        if (From.ChromaticalFade.IsSet())
+                        if (From.ChromaticalFade != null)
                             Provider.Chromatical.Fade = EaseFloat(From.ChromaticalFade, To.ChromaticalFade);
 
-                        if (From.ChromaticalIntensity.IsSet())
+                        if (From.ChromaticalIntensity != null)
                             Provider.Chromatical.Intensity =
                                 EaseFloat(From.ChromaticalIntensity, To.ChromaticalIntensity);
 
-                        if (From.ChromaticalSpeed.IsSet())
+                        if (From.ChromaticalSpeed != null)
                             Provider.Chromatical.Speed = EaseFloat(From.ChromaticalSpeed, To.ChromaticalSpeed);
                     }
                     else

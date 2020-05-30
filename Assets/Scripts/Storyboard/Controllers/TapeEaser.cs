@@ -10,7 +10,7 @@ namespace Cytoid.Storyboard.Controllers
         {
             if (Config.UseEffects)
             {
-                if (From.Tape.IsSet())
+                if (From.Tape != null)
                 {
                     Provider.Tape.enabled = From.Tape.Value;
                 }

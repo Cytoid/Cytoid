@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Cytoid.Storyboard
@@ -22,20 +23,32 @@ namespace Cytoid.Storyboard
 
         public abstract void OnUpdate();
 
-        protected float EaseFloat(float i, float j)
+        protected float EaseFloat(float? i, float? j)
         {
-            if (!j.IsSet()) return i;
-            if (Time <= From.Time) return i;
-            if (Time >= To.Time) return j;
+            if (i == null) throw new ArgumentNullException();
+            if (j == null) return i.Value;
+            if (Time <= From.Time) return i.Value;
+            if (Time >= To.Time) return j.Value;
             return EasingFunction
                 .GetEasingFunction(Ease)
-                .Invoke(i, j, (Time - From.Time) / (To.Time - From.Time));
+                .Invoke(i.Value, j.Value, (Time - From.Time) / (To.Time - From.Time));
+        }
+        
+        protected float EaseFloat(UnitFloat i, UnitFloat j)
+        {
+            if (i == null) throw new ArgumentNullException();
+            if (j == null) return i.ConvertedValue;
+            if (Time <= From.Time) return i.ConvertedValue;
+            if (Time >= To.Time) return j.ConvertedValue; 
+            return EasingFunction
+                .GetEasingFunction(Ease)
+                .Invoke(i.ConvertedValue, j.ConvertedValue, (Time - From.Time) / (To.Time - From.Time));
         }
         
         protected UnityEngine.Color EaseColor(Color i, Color j)
         {
-            if (!i.IsSet()) return UnityEngine.Color.clear;
-            if (!j.IsSet()) return i.ToUnityColor();
+            if (i == null) throw new ArgumentNullException();
+            if (j == null) return i.ToUnityColor();
             return UnityEngine.Color.Lerp(i.ToUnityColor(), j.ToUnityColor(), EaseFloat(0, 1));
         }
         

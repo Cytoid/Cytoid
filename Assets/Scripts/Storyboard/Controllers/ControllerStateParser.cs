@@ -23,9 +23,9 @@ namespace Cytoid.Storyboard.Controllers
             state.Size = (float?) json.SelectToken("size") ?? state.Size;
             state.Fov = (float?) json.SelectToken("fov") ?? state.Fov;
             state.Perspective = (bool?) json.SelectToken("perspective") ?? state.Perspective;
-            state.X = ParseNumber(json.SelectToken("x"), ReferenceUnit.CameraX, false, false) ?? state.X;
-            state.Y = ParseNumber(json.SelectToken("y"), ReferenceUnit.CameraY, false, false) ?? state.Y;
-            state.Z = ParseNumber(json.SelectToken("z"), ReferenceUnit.World, false, false) ?? state.Z;
+            state.X = ParseUnitFloat(json.SelectToken("x"), ReferenceUnit.CameraX, false, false) ?? state.X;
+            state.Y = ParseUnitFloat(json.SelectToken("y"), ReferenceUnit.CameraY, false, false) ?? state.Y;
+            state.Z = ParseUnitFloat(json.SelectToken("z"), ReferenceUnit.World, false, false) ?? state.Z;
             state.RotX = (float?) json.SelectToken("rot_x") ?? state.RotX;
             state.RotY = (float?) json.SelectToken("rot_y") ?? state.RotY;
             state.RotZ = (float?) json.SelectToken("rot_z") ?? state.RotZ;
@@ -34,7 +34,7 @@ namespace Cytoid.Storyboard.Controllers
                 state.ScanlineColor = new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a};
             state.ScanlineSmoothing = (bool?) json.SelectToken("scanline_smoothing") ?? state.ScanlineSmoothing;
             state.OverrideScanlinePos = (bool?) json.SelectToken("override_scanline_pos") ?? state.OverrideScanlinePos;
-            state.ScanlinePos = ParseNumber(json.SelectToken("scanline_pos"), ReferenceUnit.NoteY, false, false) ?? state.ScanlinePos;
+            state.ScanlinePos = ParseUnitFloat(json.SelectToken("scanline_pos"), ReferenceUnit.NoteY, false, false) ?? state.ScanlinePos;
             state.NoteOpacityMultiplier =
                 (float?) json.SelectToken("note_opacity_multiplier") ?? state.NoteOpacityMultiplier;
             if (ColorUtility.TryParseHtmlString((string) json.SelectToken("note_ring_color"), out tmp))

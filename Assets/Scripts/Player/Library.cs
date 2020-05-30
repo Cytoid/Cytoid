@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using Newtonsoft.Json;
+using System.Linq;
 using Proyecto26;
 using RSG;
 using UnityEngine;
@@ -11,65 +10,79 @@ public class Library
 {
 
     public readonly Dictionary<string, LibraryLevel> Levels = new Dictionary<string, LibraryLevel>();
-    public readonly LibraryFetchEvent OnLibraryFetch = new LibraryFetchEvent();
+    public readonly UnityEvent OnLibraryFetched = new UnityEvent();
+    public readonly UnityEvent OnLibraryLoaded = new UnityEvent();
 
+    public void Initialize()
+    {
+        LoadFromLocal();
+        Context.OnlinePlayer.OnAuthenticated.AddListener(() => Fetch());
+    }
+    
     public void LoadFromLocal()
     {
         Levels.Clear();
-        
-        var libraryJsonPath = Path.Combine(Application.temporaryCachePath, "library.json");
-        FileInfo info;
-        try
-        {
-            info = new FileInfo(libraryJsonPath);
-        }
-        catch (Exception e)
-        {
-            Debug.LogWarning(e);
-            Debug.LogWarning($"{libraryJsonPath} not found or could not be read");
-            return;
-        }
 
-        if (info.Directory == null) return;
+        var col = Context.Database.GetCollection<LibraryLevel>("library");
+        col.EnsureIndex(x => x.Level.Uid, true);
 
-        var list = JsonConvert.DeserializeObject<List<LibraryLevel>>(File.ReadAllText(libraryJsonPath));
-        if (list == null)
-        {
-            Debug.LogError("library.json is corrupt!");
-            return;
-        }
-        
-        OnLevelsLoaded(list);
+        OnLevelsLoaded(col.FindAll());
     }
 
-    public Promise Fetch()
+    public void Clear()
     {
-        return new Promise((resolve, reject) =>
+        Levels.Clear();
+        Context.Database.DropCollection("library");
+    }
+
+    public Promise<List<LibraryLevel>> Fetch()
+    {
+        var beforeLevelCount = Levels.Count; // This may not be accurate, but whatever!
+        return new Promise<List<LibraryLevel>>((resolve, reject) =>
         {
-            RestClient.Get<OnlineLevel>(new RequestHelper
+            RestClient.GetArray<LibraryLevel>(new RequestHelper
             {
-                Uri = $"{Context.ServicesUrl}/levels/io.cytoid.interference2",
+                Uri = $"{Context.ServicesUrl}/library?granted=true",
                 Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
-            }).Then(it =>
+                EnableDebug = true
+            }).Then(data =>
             {
-                OnLevelsLoaded(new List<LibraryLevel> {new LibraryLevel {addedDate = DateTime.UtcNow, level = it}});
-                resolve();
-                OnLibraryFetch.Invoke();
-            }).Catch(error =>
+                var libraryLevels = data.ToList();
+                Debug.Log($"Fetched {libraryLevels.Count} library levels");
+                libraryLevels.Sort((a, b) => DateTimeOffset.Compare(a.Date, b.Date));
+
+                Context.Database.DropCollection("library");
+                var col = Context.Database.GetCollection<LibraryLevel>("library");
+                col.InsertBulk(libraryLevels);
+                
+                OnLibraryFetched.Invoke();
+                OnLevelsLoaded(libraryLevels);
+                if (beforeLevelCount != Levels.Count)
+                {
+                    Toast.Next(Toast.Status.Success, "TOAST_OFFICIAL_LIBRARY_SYNCHRONIZED".Get());
+                }
+                resolve(libraryLevels);
+            }).CatchRequestError(error =>
             {
-                Debug.LogError(error);
-                reject(error);
+                Debug.LogWarning(error.Response);
+                if (!error.IsNetworkError)
+                {
+                    Debug.LogError(error);
+                    reject(error);
+                }
+                else
+                {
+                    resolve(new List<LibraryLevel>());
+                }
             });
         });
     }
 
-    private void OnLevelsLoaded(List<LibraryLevel> list)
+    private void OnLevelsLoaded(IEnumerable<LibraryLevel> list)
     {
-        list.ForEach(it => Levels[it.level.Uid] = it);
+        Levels.Clear();
+        list.ForEach(it => Levels[it.Level.Uid] = it);
+        OnLibraryLoaded.Invoke();
     }
 
-}
-
-public class LibraryFetchEvent : UnityEvent
-{
 }

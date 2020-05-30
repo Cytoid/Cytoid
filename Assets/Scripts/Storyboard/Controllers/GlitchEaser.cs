@@ -10,10 +10,10 @@ namespace Cytoid.Storyboard.Controllers
         {
             if (Config.UseEffects)
             {
-                if (From.Glitch.IsSet())
+                if (From.Glitch != null)
                 {
                     Provider.Glitch.enabled = From.Glitch.Value;
-                    if (From.Glitch.Value && From.GlitchIntensity.IsSet())
+                    if (From.Glitch.Value && From.GlitchIntensity != null)
                     {
                         Provider.Glitch.Glitch = EaseFloat(From.GlitchIntensity, To.GlitchIntensity);
                     }

@@ -9,7 +9,7 @@ namespace Cytoid.Storyboard.Controllers
         
         public override void OnUpdate()
         {
-            if (From.ScanlineColor.IsSet())
+            if (From.ScanlineColor != null)
             {
                 Scanner.Instance.colorOverride = EaseColor(From.ScanlineColor, To.ScanlineColor);
             }

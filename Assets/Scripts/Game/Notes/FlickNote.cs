@@ -49,7 +49,7 @@ public class FlickNote : Note
         if (ShouldMiss()) return NoteGrade.Miss;
 
         var grade = NoteGrade.None;
-        var timeUntil = TimeUntilStart;
+        var timeUntil = TimeUntilStart + JudgmentOffset;
 
         if (Game.State.Mode == GameMode.Practice)
         {

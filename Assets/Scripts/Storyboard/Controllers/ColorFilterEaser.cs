@@ -10,10 +10,10 @@ namespace Cytoid.Storyboard.Controllers
         {
             if (Config.UseEffects)
             {
-                if (From.ColorFilter.IsSet())
+                if (From.ColorFilter != null)
                 {
                     Provider.ColorFilter.enabled = From.ColorFilter.Value;
-                    if (From.ColorFilter.Value && From.ColorFilterColor.IsSet())
+                    if (From.ColorFilter.Value && From.ColorFilterColor != null)
                     {
                         Provider.ColorFilter.ColorRGB = EaseColor(From.ColorFilterColor, To.ColorFilterColor);
                     }

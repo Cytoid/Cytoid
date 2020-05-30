@@ -29,13 +29,13 @@ namespace Cytoid.Storyboard.Lines
             }
 
             // Width
-            if (From.Width.IsSet())
+            if (From.Width != null)
             {
                 Line.startWidth = Line.endWidth = EaseFloat(From.Width, To.Width);
             }
 
             // Color
-            if (From.Color.IsSet())
+            if (From.Color != null)
             {
                 Line.startColor = Line.endColor = EaseColor(
                     From.Color,
@@ -44,22 +44,22 @@ namespace Cytoid.Storyboard.Lines
             }
             
             // Opacity
-            if (From.Opacity.IsSet())
+            if (From.Opacity != null)
             {
                 Line.startColor = Line.endColor = Line.startColor.WithAlpha(EaseFloat(From.Opacity, To.Opacity));
             }
             
             // Layer
-            if (From.Layer.IsSet())
+            if (From.Layer != null)
             {
-                From.Layer = Mathf.Clamp(From.Layer, 0, 2);
-                Line.sortingLayerName = "Storyboard" + (From.Layer + 1);
+                From.Layer = Mathf.Clamp(From.Layer.Value, 0, 2);
+                Line.sortingLayerName = "Storyboard" + (From.Layer.Value + 1);
             }
 
             // Order
-            if (From.Order.IsSet())
+            if (From.Order != null)
             {
-                Line.sortingOrder = From.Order;
+                Line.sortingOrder = From.Order.Value;
             }
         }
     }

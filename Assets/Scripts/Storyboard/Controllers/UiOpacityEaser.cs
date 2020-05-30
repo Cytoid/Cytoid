@@ -8,7 +8,7 @@ namespace Cytoid.Storyboard.Controllers
         
         public override void OnUpdate()
         {
-            if (From.UiOpacity.IsSet())
+            if (From.UiOpacity != null)
             {
                 if (Game is PlayerGame playerGame && playerGame.HideInterface) return;
                 Provider.UiCanvasGroup.alpha = EaseFloat(From.UiOpacity, To.UiOpacity);

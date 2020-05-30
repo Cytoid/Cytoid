@@ -152,6 +152,11 @@ public class ResultScreen : Screen
                 newBestText.text = $"+{performance.Score - historicBest.Score}";
                 bestPerformances[gameState.Difficulty.Id] = performance;
             }
+            else if (performance.Score == historicBest.Score && performance.Accuracy > historicBest.Accuracy)
+            {
+                newBestText.text = $"+{(Mathf.FloorToInt((float) (performance.Accuracy - historicBest.Accuracy) * 100 * 100) / 100f):0.00}";
+                bestPerformances[gameState.Difficulty.Id] = performance;
+            }
             else
             {
                 newBestText.text = "";

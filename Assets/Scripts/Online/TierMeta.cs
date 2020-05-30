@@ -49,7 +49,6 @@ public class TierData
 
     public bool locked;
     public double completion;
-    public int? rank;
     [JsonProperty("tier")] public TierMeta Meta;
 }
 

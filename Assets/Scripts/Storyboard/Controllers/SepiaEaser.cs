@@ -10,10 +10,10 @@ namespace Cytoid.Storyboard.Controllers
         {
             if (Config.UseEffects)
             {
-                if (From.Sepia.IsSet())
+                if (From.Sepia != null)
                 {
                     Provider.Sepia.enabled = From.Sepia.Value;
-                    if (From.Sepia.Value && From.SepiaIntensity.IsSet())
+                    if (From.Sepia.Value && From.SepiaIntensity != null)
                     {
                         Provider.Sepia._Fade = EaseFloat(From.SepiaIntensity, To.SepiaIntensity);
                     }

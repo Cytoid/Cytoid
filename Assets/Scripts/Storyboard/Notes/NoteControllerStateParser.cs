@@ -16,11 +16,11 @@ namespace Cytoid.Storyboard.Notes
             state.Note = (int?) json.SelectToken("note") ?? state.Note;
             
             state.OverrideX = (bool?) json.SelectToken("override_x") ?? state.OverrideX;
-            state.X = ParseNumber(json.SelectToken("x"), ReferenceUnit.NoteX, false, false) ?? state.X;
+            state.X = ParseUnitFloat(json.SelectToken("x"), ReferenceUnit.NoteX, false, false) ?? state.X;
             state.OverrideY = (bool?) json.SelectToken("override_y") ?? state.OverrideY;
-            state.Y = ParseNumber(json.SelectToken("y"), ReferenceUnit.NoteY, false, false) ?? state.Y;
+            state.Y = ParseUnitFloat(json.SelectToken("y"), ReferenceUnit.NoteY, false, false) ?? state.Y;
             state.OverrideZ = (bool?) json.SelectToken("override_z") ?? state.OverrideZ;
-            state.Z = ParseNumber(json.SelectToken("z"), ReferenceUnit.World, false, false) ?? state.Z;
+            state.Z = ParseUnitFloat(json.SelectToken("z"), ReferenceUnit.World, false, false) ?? state.Z;
             
             state.XMultiplier = (float?) json.SelectToken("x_multiplier") ?? state.XMultiplier;
             state.YMultiplier = (float?) json.SelectToken("y_multiplier") ?? state.YMultiplier;
@@ -28,17 +28,17 @@ namespace Cytoid.Storyboard.Notes
             state.YOffset = (float?) json.SelectToken("dy") ?? state.YOffset;
             
             state.OverrideRotX = (bool?) json.SelectToken("override_rot_x") ?? state.OverrideRotX;
-            state.RotX = ParseNumber(json.SelectToken("rot_x"), ReferenceUnit.World, false, false) ?? state.RotX;
+            state.RotX = (float?) json.SelectToken("rot_x") ?? state.RotX;
             state.OverrideRotY = (bool?) json.SelectToken("override_rot_y") ?? state.OverrideRotY;
-            state.RotY = ParseNumber(json.SelectToken("rot_y"), ReferenceUnit.World, false, false) ?? state.RotY;
+            state.RotY = (float?) json.SelectToken("rot_y") ?? state.RotY;
             state.OverrideRotZ = (bool?) json.SelectToken("override_rot_z") ?? state.OverrideRotZ;
-            state.RotZ = ParseNumber(json.SelectToken("rot_z"), ReferenceUnit.World, false, false) ?? state.RotZ;
+            state.RotZ = (float?) json.SelectToken("rot_z") ?? state.RotZ;
             
-            state.OverrideRingColor = (bool?) json.SelectToken("override_color") ?? state.OverrideRingColor;
-            if (ColorUtility.TryParseHtmlString((string) json.SelectToken("color"), out var tmp))
+            state.OverrideRingColor = (bool?) json.SelectToken("override_ring_color") ?? state.OverrideRingColor;
+            if (ColorUtility.TryParseHtmlString((string) json.SelectToken("ring_color"), out var tmp))
                 state.RingColor = new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a};
-            state.OverrideFillColor = (bool?) json.SelectToken("override_color") ?? state.OverrideFillColor;
-            if (ColorUtility.TryParseHtmlString((string) json.SelectToken("color"), out var tmp2))
+            state.OverrideFillColor = (bool?) json.SelectToken("override_fill_color") ?? state.OverrideFillColor;
+            if (ColorUtility.TryParseHtmlString((string) json.SelectToken("fill_color"), out var tmp2))
                 state.FillColor = new Color {R = tmp2.r, G = tmp2.g, B = tmp2.b, A = tmp2.a};
             state.OpacityMultiplier = (float?) json.SelectToken("opacity_multiplier") ?? state.OpacityMultiplier;
             state.SizeMultiplier = (float?) json.SelectToken("size_multiplier") ?? state.SizeMultiplier;

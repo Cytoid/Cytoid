@@ -17,7 +17,8 @@ public class DragHeadNote : Note
     public ChartModel.Note ToNoteModel { get; protected set; }
     public ChartModel.Note StartToNoteModel { get; protected set; }
     public ChartModel.Note EndNoteModel { get; protected set; }
-
+    public Vector3 OriginalPosition { get; protected set; }
+    
     private bool hasFromNote;
     private Note fromNote;
     private bool hasToNote;
@@ -34,28 +35,59 @@ public class DragHeadNote : Note
         EndNoteModel = FromNoteModel.GetDragEndNote(game.Chart.Model);
     }
 
+    protected override void OnGameUpdate()
+    {
+        base.OnGameUpdate();
+        if (Game.Time < Model.start_time)
+        {
+            OriginalPosition = transform.localPosition;
+        }
+    }
+
     protected override void OnGameLateUpdate()
     {
         base.OnGameLateUpdate();
-        
+
         transform.localEulerAngles = FromNoteModel.rotation;
 
-        if (!hasFromNote && Game.Notes.ContainsKey(FromNoteModel.id))
+        if (Game.Notes.ContainsKey(FromNoteModel.id))
         {
-            hasFromNote = true;
-            fromNote = Game.Notes[FromNoteModel.id];
+            if (!hasFromNote)
+            {
+                hasFromNote = true;
+                fromNote = Game.Notes[FromNoteModel.id];
+            }
         }
-        if (!hasToNote && Game.Notes.ContainsKey(ToNoteModel.id))
+        else
         {
-            hasToNote = true;
-            toNote = Game.Notes[ToNoteModel.id];
+            if (hasFromNote)
+            {
+                hasFromNote = false;
+                fromNote = null;
+            }
+        }
+        if (Game.Notes.ContainsKey(ToNoteModel.id))
+        {
+            if (!hasToNote)
+            {
+                hasToNote = true;
+                toNote = Game.Notes[ToNoteModel.id];
+            }
+        }
+        else
+        {
+            if (hasToNote)
+            {
+                hasToNote = false;
+                toNote = null;
+            }
         }
 
         if (Game.Time >= Model.start_time)
         {
             // Move drag head
             transform.localPosition = Vector3.Lerp(
-                hasFromNote ? fromNote.transform.localPosition : FromNoteModel.position, 
+                (hasFromNote && fromNote != this) ? fromNote.transform.localPosition : FromNoteModel.position, 
                 hasToNote ? toNote.transform.localPosition : ToNoteModel.position,
                 (Game.Time - FromNoteModel.start_time) / (ToNoteModel.start_time - FromNoteModel.start_time));
 
@@ -117,10 +149,14 @@ public class DragHeadNote : Note
 
     public override void OnTouch(Vector2 screenPos)
     {
-        // Do not handle touch event if touched too ahead of scanner
-        if (Model.start_time - Game.Time > 0.31f) return;
-        // Do not handle touch event if in a later page, unless the timing is close (half a screen) TODO: Fix inaccurate algorithm
-        if (Model.page_index > Game.Chart.CurrentPageId && Model.start_time - Game.Time > Page.Duration / 2f) return;
+        if (!IsCDrag)
+        {
+            // Do not handle touch event if touched too ahead of scanner
+            if (Model.start_time - Game.Time > 0.31f) return;
+            // Do not handle touch event if in a later page, unless the timing is close (half a screen) TODO: Fix inaccurate algorithm
+            if (Model.page_index > Game.Chart.CurrentPageId &&
+                Model.start_time - Game.Time > Page.Duration / 2f) return;
+        }
         base.OnTouch(screenPos);
     }
 
@@ -138,17 +174,18 @@ public class DragHeadNote : Note
             return base.CalculateGrade();
         }
         var grade = NoteGrade.Miss;
-        if (TimeUntilStart >= 0)
+        var timeUntilStart = TimeUntilStart + JudgmentOffset;
+        if (timeUntilStart >= 0)
         {
             grade = NoteGrade.None;
-            if (TimeUntilStart < 0.500f)
+            if (timeUntilStart < 0.500f)
             {
                 grade = NoteGrade.Perfect;
             }
         }
         else
         {
-            var timePassed = -TimeUntilStart;
+            var timePassed = -timeUntilStart;
             if (timePassed < 0.200f)
             {
                 grade = NoteGrade.Perfect;

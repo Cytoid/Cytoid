@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using E7.Native;
 using UniRx.Async;
 using UnityEngine;
@@ -17,15 +18,21 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
     private int trackCurrentIndex = RoundRobinStartIndex;
 
     private bool useNativeAudio;
+    private bool isInitialized;
 
     protected override void Awake()
     {
         base.Awake();
         Context.AudioManager = this;
-
         Assert.AreEqual(audioSources.Length, 7);
         trackCurrentIndex = RoundRobinStartIndex;
-        useNativeAudio = NativeAudio.OnSupportedPlatform();
+    }
+
+    public void Initialize()
+    {
+        if (isInitialized) return;
+        isInitialized = true;
+        SetUseNativeAudio(Context.Player.Settings.UseNativeAudio);
         if (useNativeAudio)
         {
             NativeAudio.Initialize(new NativeAudio.InitializationOptions
@@ -34,21 +41,35 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             });
             Debug.Log("Native Audio initialized");
         }
-        else
-        {
-        }
 
-        preloadedAudioClips.ForEach(it => Load(it.name, it));
+        preloadedAudioClips.ForEach(it => Load(it.name, it, isPreloaded: true));
     }
 
-    public Controller Load(string id, AudioClip audioClip, bool? useNativeAudio = null, bool isResource = false, bool isMusic = false)
+    protected override void OnDestroy()
+    {
+        base.OnDestroy();
+        Dispose();
+    }
+
+    public void Dispose()
+    {
+        controllers.Keys.ToList().FindAll(it => !controllers[it].IsPreloaded).ForEach(Unload);
+        controllers.Clear();
+    }
+
+    public void SetUseNativeAudio(bool useNativeAudio)
+    {
+        this.useNativeAudio = NativeAudio.OnSupportedPlatform() && useNativeAudio;
+    }
+
+    public Controller Load(string id, AudioClip audioClip, bool? useNativeAudio = null, bool isResource = false, bool isMusic = false, bool isPreloaded = false)
     {
         if (useNativeAudio == null) useNativeAudio = this.useNativeAudio;
         if (controllers.ContainsKey(id)) Unload(id);
         print("[AudioManager] Loading " + id);
         return controllers[id] = useNativeAudio.Value
-            ? (Controller) new Exceed7Controller(this, audioClip, isMusic)
-            : new UnityController(this, audioClip, isResource, isMusic);
+            ? (Controller) new Exceed7Controller(this, audioClip, isMusic, isPreloaded)
+            : new UnityController(this, audioClip, isResource, isMusic, isPreloaded);
     }
 
     public void Unload(string id)
@@ -90,11 +111,13 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
     {
         protected AudioManager Parent;
         public bool IsMusic { get; }
+        public bool IsPreloaded { get; }
 
-        public Controller(AudioManager parent, bool isMusic)
+        public Controller(AudioManager parent, bool isMusic, bool isPreloaded)
         {
             Parent = parent;
             IsMusic = isMusic;
+            IsPreloaded = isPreloaded;
         }
 
         public abstract float Volume { get; set; }
@@ -117,7 +140,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         private bool isResource;
         private float volume = 1f;
 
-        public UnityController(AudioManager parent, AudioClip audioClip, bool isResource, bool isMusic) : base(parent, isMusic)
+        public UnityController(AudioManager parent, AudioClip audioClip, bool isResource, bool isMusic, bool isPreloaded) : base(parent, isMusic, isPreloaded)
         {
             this.audioClip = audioClip;
             this.isResource = isResource;
@@ -222,7 +245,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         private float volume = 1f;
         private bool isPlaying = false;
 
-        public Exceed7Controller(AudioManager parent, AudioClip audioClip, bool isMusic) : base(parent, isMusic)
+        public Exceed7Controller(AudioManager parent, AudioClip audioClip, bool isMusic, bool isPreloaded) : base(parent, isMusic, isPreloaded)
         {
             pointer = NativeAudio.Load(audioClip, NativeAudio.LoadOptions.defaultOptions);
             length = audioClip.length;

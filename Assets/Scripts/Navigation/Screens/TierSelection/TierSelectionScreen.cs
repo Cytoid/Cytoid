@@ -20,6 +20,7 @@ public class TierSelectionScreen : Screen
 
     public AudioSource previewAudioSource;
 
+    public GraphicRaycaster topCanvasGraphicRaycaster;
     public LoopVerticalScrollRect scrollRect;
     public VerticalLayoutGroup scrollRectContentLayoutGroup;
     public TransitionElement lowerLeftColumn;
@@ -78,11 +79,7 @@ public class TierSelectionScreen : Screen
         
         actionTabs.onTabChanged.AddListener((prev, next) =>
         {
-            if (next.index == 0)
-            {
-                OnRankingsTab();
-            } 
-            else if (next.index == 2)
+            if (next.index == 2)
             {
                 OnSettingsTab();
             }
@@ -164,6 +161,12 @@ public class TierSelectionScreen : Screen
         {
             lastScrollPosition = scrollRect.verticalNormalizedPosition;
         }
+    }
+
+    public override void SetBlockRaycasts(bool blockRaycasts)
+    {
+        base.SetBlockRaycasts(blockRaycasts);
+        topCanvasGraphicRaycaster.enabled = blockRaycasts;
     }
 
     public async void OnContentLoaded(Content content)
@@ -294,7 +297,7 @@ public class TierSelectionScreen : Screen
             startButton.StartPulsing();
         }
         
-        rankingsTab.SetRanking(SelectedTier.rank ?? -1);
+        rankingsTab.UpdateTierRankings(SelectedTier.Id); 
         initializedSettingsTab = false;
 
         LoadCover();
@@ -318,7 +321,7 @@ public class TierSelectionScreen : Screen
         else
         {
             sprite = await Context.AssetMemory.LoadAsset<Sprite>(lastStage.OnlineLevel.Cover.CoverUrl,
-                AssetTag.TierCover, useFileCache: true);
+                AssetTag.TierCover, allowFileCache: true);
         }
 
         if (token != asyncCoverToken)
@@ -367,7 +370,7 @@ public class TierSelectionScreen : Screen
             return;
         }
             
-        var audioClip = await Context.AssetMemory.LoadAsset<AudioClip>(path, AssetTag.PreviewMusic, useFileCache: true);
+        var audioClip = await Context.AssetMemory.LoadAsset<AudioClip>(path, AssetTag.PreviewMusic, allowFileCache: true);
 
         if (asyncPreviewToken != token)
         {
@@ -384,11 +387,6 @@ public class TierSelectionScreen : Screen
         previewAudioSource.DOFade(Context.Player.Settings.MusicVolume, 0.5f).SetEase(Ease.Linear);
         previewAudioSource.loop = true;
         previewAudioSource.Play();
-    }
-
-    private void OnRankingsTab()
-    {
-        rankingsTab.UpdateTierRankings(SelectedTier.Id);
     }
 
     private async void OnSettingsTab()
@@ -413,7 +411,7 @@ public class TierSelectionScreen : Screen
             Context.SelectedGameMode = GameMode.Tier;
             Context.TierState = new TierState(SelectedTier);
 
-            LoadedContent.Season = null;
+            LoadedContent = null;
 
             scrollRect.GetComponentsInChildren<TierCard>().ForEach(it => it.OnTierStart());
             ProfileWidget.Instance.FadeOut();
@@ -492,7 +490,7 @@ public class TierSelectionScreen : Screen
                 UnloadResources();
                 if (to is MainMenuScreen)
                 {
-                    LoadedContent.Season = null;
+                    LoadedContent = null;
                 }
             }
         }
@@ -520,16 +518,26 @@ public class TierSelectionScreen : Screen
         foreach (var (stringKey, index) in new[] {("1ST", 0), ("2ND", 1), ("3RD", 2)})
         {
             var levelId = SelectedTier.Meta.stages[index].Uid;
-            var level = Context.LevelManager.LoadedLocalLevels[levelId];
-            
+
+            var record = Context.Database.GetLevelRecord(levelId);
+            if (record == null)
+            {
+                record = new LevelRecord {LevelId = levelId};
+            }
+
             Instantiate(provider.input, currentTierSettingsHolder)
                 .SetContent("TIER_SETTINGS_LEVEL_NOTE_OFFSET".Get($"TIER_STAGE_{stringKey}".Get()),
                     "",
-                    () => level.Record.RelativeNoteOffset,
+                    () => record.RelativeNoteOffset,
                     it =>
                     {
-                        level.Record.RelativeNoteOffset = it;
-                        level.SaveRecord();
+                        record.RelativeNoteOffset = it;
+                        Context.Database.SetLevelRecord(record);
+
+                        if (Context.LevelManager.LoadedLocalLevels.ContainsKey(levelId))
+                        {
+                            Context.LevelManager.LoadedLocalLevels[levelId].Record = record;
+                        }
                     },
                     "SETTINGS_UNIT_SECONDS".Get(), 0.ToString());
         }

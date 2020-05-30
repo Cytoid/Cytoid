@@ -12,9 +12,14 @@ public class ParallaxElement : MonoBehaviour, ScreenChangeListener
     public const float MenuSpeed = 100;
 
     public bool Enabled { get; set; } = true;
-
+    public float CurrentScale { get; private set; } = 1f;
+    public float ScaleMultiplier { get; set; } = 1f;
+    
     public int width = 1920;
     public int height = 1080;
+
+    public float minScale = 1f;
+    public float maxScale = 1.2f;
 
     public List<float> speeds = new List<float> {200, 120, 180, 200, 75, 50};
     public float multiplier = -540f;
@@ -22,12 +27,15 @@ public class ParallaxElement : MonoBehaviour, ScreenChangeListener
     private readonly List<Layer> layers = new List<Layer>();
     private Layer menuLayer;
     private float extraMultiplier = 1f;
+
+    private Vector2 screenSize;
     
     private async void Awake()
     {
         await UniTask.WaitUntil(() => Context.ScreenManager != null);
         
         if (Application.platform == RuntimePlatform.Android) GyroscopeMultiplier = 24 * 1.8f;
+
         var index = 0;
         foreach (Transform child in transform)
         {
@@ -46,6 +54,22 @@ public class ParallaxElement : MonoBehaviour, ScreenChangeListener
     private void OnDestroy()
     {
         Context.ScreenManager.RemoveHandler(this);
+    }
+
+    private void Update()
+    {
+        var currentScreenSize = new Vector2(UnityEngine.Screen.width, UnityEngine.Screen.height);
+
+        if (currentScreenSize != screenSize)
+        {
+            screenSize = currentScreenSize;
+            
+            const float minRatio = 19.5f / 9;
+            const float maxRatio = 4f / 3;
+            var ratio = currentScreenSize.x / currentScreenSize.y;
+            CurrentScale = minScale + (maxScale - minScale) * ((ratio - minRatio) / (maxRatio - minRatio));
+        }
+        transform.SetLocalScale(CurrentScale * ScaleMultiplier);
     }
 
     private Vector2 gyroPos;

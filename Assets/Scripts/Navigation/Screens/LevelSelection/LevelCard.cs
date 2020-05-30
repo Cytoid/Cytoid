@@ -9,6 +9,8 @@ using UnityEngine.UI;
 
 public class LevelCard : InteractableMonoBehavior
 {
+    public static bool DoNotLoadCover = false;
+    
     public Image cover;
     public Text artist;
     public Text title;
@@ -57,6 +59,12 @@ public class LevelCard : InteractableMonoBehavior
         cover.SetAlpha(0);
     }
 
+    private void OnDestroy()
+    {
+        actionToken?.Cancel();
+        coverToken?.Cancel();
+    }
+
     public void SetModel(Level level)
     {
         this.level = level;
@@ -92,10 +100,24 @@ public class LevelCard : InteractableMonoBehavior
         loadedCover = false;
         cover.DOKill();
         cover.SetAlpha(0);
+
         if (coverToken != null)
         {
             if (!coverToken.IsCancellationRequested) coverToken.Cancel();
             coverToken = null;
+        }
+        
+        if (DoNotLoadCover)
+        {
+            coverToken = new CancellationTokenSource();
+            try
+            {
+                await UniTask.WaitUntil(() => !DoNotLoadCover, cancellationToken: coverToken.Token);
+            }
+            catch
+            {
+                return;
+            }
         }
 
         if (!((RectTransform) transform).IsVisible())

@@ -34,8 +34,8 @@ public class GameConfig
         {NoteType.Hold, new[] {4, 5}},
         {NoteType.LongHold, new[] {6, 7}},
         {NoteType.Flick, new[] {8, 9}},
-        {NoteType.CDragHead, new[] {2, 3}},
-        {NoteType.CDragChild, new[] {2, 3}}
+        {NoteType.CDragHead, new[] {10, 11}},
+        {NoteType.CDragChild, new[] {10, 11}}
     };
 
     public void OnGameLoaded(Game game)
@@ -81,17 +81,20 @@ public class GameConfig
 
         foreach (NoteType type in Enum.GetValues(typeof(NoteType)))
         {
+            var eqType = type;
+            if (type == NoteType.DragHead) eqType = NoteType.DragChild;
+            if (type == NoteType.CDragHead) eqType = NoteType.CDragChild;
             NoteRingColors[type] = new[]
             {
-                chart.Model.ring_color?.ToColor() ?? lp.Settings.NoteRingColors[type],
-                chart.Model.ring_color?.ToColor() ?? lp.Settings.NoteRingColors[type]
+                chart.Model.ring_color?.ToColor() ?? lp.Settings.NoteRingColors[eqType],
+                chart.Model.ring_color?.ToColor() ?? lp.Settings.NoteRingColors[eqType]
             };
             NoteFillColors[type] = new[]
             {
                 chart.Model.fill_colors[NoteColorChartOverrideMapping[type][0]]?.ToColor() ??
-                lp.Settings.NoteFillColors[type],
+                lp.Settings.NoteFillColors[eqType],
                 chart.Model.fill_colors[NoteColorChartOverrideMapping[type][1]]?.ToColor() ??
-                lp.Settings.NoteFillColorsAlt[type],
+                lp.Settings.NoteFillColorsAlt[eqType],
             };
         }
 
@@ -119,7 +122,8 @@ public class GameConfig
 
     public Color GetFillColor(ChartModel.Note note)
     {
-        if ((NoteType) note.type == NoteType.DragChild || (NoteType) note.type == NoteType.CDragChild) return GetRingColor(note); // Special case: drag child
+        if (!Context.Player.Settings.UseFillColorForDragChildNodes && 
+            ((NoteType) note.type == NoteType.DragChild || (NoteType) note.type == NoteType.CDragChild)) return GetRingColor(note);
         return note.UseAlternativeColor() ? NoteFillColors[(NoteType) note.type][0] : NoteFillColors[(NoteType) note.type][1];
     }
 

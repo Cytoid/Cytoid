@@ -11,7 +11,7 @@ namespace Cytoid.Storyboard.Controllers
         
         public override void OnUpdate()
         {
-            if (From.NoteFillColors.IsSet())
+            if (From.NoteFillColors != null)
             {
                 foreach (var (key, value) in GameConfig.NoteColorChartOverrideMapping.Select(it => (it.Key, it.Value)))
                 {

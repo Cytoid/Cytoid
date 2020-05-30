@@ -10,6 +10,8 @@ namespace Cytoid.Storyboard
     public abstract class Object
     {
         public string Id;
+        public string TargetId;
+        public string ParentId;
 
         public abstract bool IsManuallySpawned();
 
@@ -51,17 +53,23 @@ namespace Cytoid.Storyboard
     }
 
     [Serializable]
-    public class Text : Object<TextState>
+    public class StageObject<TS> : Object<TS> where TS : StageObjectState
+    {
+        public string TargetId;
+    }
+
+    [Serializable]
+    public class Text : StageObject<TextState>
     {
     }
 
     [Serializable]
-    public class Sprite : Object<SpriteState>
+    public class Sprite : StageObject<SpriteState>
     {
     }
 
     [Serializable]
-    public class Video : Object<VideoState>
+    public class Video : StageObject<VideoState>
     {
     }
 
@@ -76,49 +84,47 @@ namespace Cytoid.Storyboard
     }
     
     [Serializable]
-    public class Line : Object<LineState>
+    public class Line : StageObject<LineState>
     {
     }
 
     [Serializable]
     public class ObjectState
     {
-        public float AddTime = float.MinValue;
-        public bool Destroy;
-        public EasingFunction.Ease Easing;
+        public float? AddTime;
+        public bool? Destroy;
+        public EasingFunction.Ease? Easing;
 
-        public float RelativeTime = float.MinValue;
+        public float? RelativeTime;
 
-        // If time is not defined, this object is never rendered - unless cloned and recalculated by a trigger
+        // If time is not defined, this object is never rendered (hence float.MaxValue) - unless cloned and recalculated by a trigger
         public float Time = float.MaxValue;
     }
 
     [Serializable]
     public class StageObjectState : ObjectState
     {
-        public string TargetId;
-        
         public bool? FillWidth;
-        public float Height = float.MinValue;
+        public UnitFloat Height;
 
-        public int Layer = int.MinValue;
+        public int? Layer;
 
-        public float Opacity = float.MinValue;
-        public int Order = int.MinValue;
+        public float? Opacity;
+        public int? Order;
 
-        public float PivotX = float.MinValue;
-        public float PivotY = float.MinValue;
-        public float RotX = float.MinValue;
-        public float RotY = float.MinValue;
-        public float RotZ = float.MinValue;
+        public float? PivotX;
+        public float? PivotY ;
+        public float? RotX ;
+        public float? RotY ;
+        public float? RotZ ;
 
-        public float ScaleX = float.MinValue;
-        public float ScaleY = float.MinValue;
+        public float? ScaleX ;
+        public float? ScaleY ;
 
-        public float Width = float.MinValue;
-        public float X = float.MinValue;
-        public float Y = float.MinValue;
-        public float Z = float.MinValue;
+        public UnitFloat Width ;
+        public UnitFloat X ;
+        public UnitFloat Y ;
+        public UnitFloat Z ;
     }
 
     [Serializable]
@@ -127,7 +133,7 @@ namespace Cytoid.Storyboard
         public string Align;
         public Color Color;
         public string Font;
-        public int Size = int.MinValue;
+        public int? Size;
         public string Text;
     }
 
@@ -152,7 +158,7 @@ namespace Cytoid.Storyboard
         public HashSet<int> Types = new HashSet<int>();
         public int Start = int.MinValue;
         public int End = int.MaxValue;
-        public int Direction = int.MinValue;
+        public int? Direction;
         public float MinX = int.MinValue;
         public float MaxX = int.MaxValue;
     }
@@ -162,163 +168,163 @@ namespace Cytoid.Storyboard
     {
         public int? Note;
         public bool? OverrideX;
-        public float X = float.MinValue;
-        public float XMultiplier = float.MinValue;
-        public float XOffset = float.MinValue;
+        public UnitFloat X;
+        public float? XMultiplier;
+        public float? XOffset;
         public bool? OverrideY;
-        public float Y = float.MinValue;
-        public float YMultiplier = float.MinValue;
-        public float YOffset = float.MinValue;
+        public UnitFloat Y;
+        public float? YMultiplier;
+        public float? YOffset;
         public bool? OverrideZ;
-        public float Z = float.MinValue;
+        public UnitFloat Z;
         public bool? OverrideRotX;
-        public float RotX = float.MinValue;
+        public float? RotX;
         public bool? OverrideRotY;
-        public float RotY = float.MinValue;
+        public float? RotY;
         public bool? OverrideRotZ;
-        public float RotZ = float.MinValue;
+        public float? RotZ;
         public bool? OverrideRingColor;
         public Color RingColor;
         public bool? OverrideFillColor;
         public Color FillColor;
-        public float OpacityMultiplier = float.MinValue;
-        public float SizeMultiplier = float.MinValue;
-        public int HoldDirection = int.MinValue;
-        public int Style = int.MinValue;
+        public float? OpacityMultiplier;
+        public float? SizeMultiplier;
+        public int? HoldDirection;
+        public int? Style;
     }
 
     [Serializable]
     public class LinePosition
     {
-        public float X = float.MinValue;
-        public float Y = float.MinValue;
-        public float Z = float.MinValue;
+        public UnitFloat X;
+        public UnitFloat Y;
+        public UnitFloat Z;
     }
 
     [Serializable]
     public class LineState : StageObjectState
     {
         public List<LinePosition> Pos = new List<LinePosition>();
-        public float Width = float.MinValue;
+        public UnitFloat Width;
         public Color Color;
-        public float Opacity = float.MinValue;
-        public int Layer = int.MinValue;
-        public int Order = int.MinValue;
+        public float? Opacity;
+        public int? Layer;
+        public int? Order;
     }
 
     [Serializable]
     public class ControllerState : ObjectState
     {
         public bool? Arcade;
-        public float ArcadeContrast = float.MinValue; // Range: 0~10, Default: 1
-        public float ArcadeIntensity = float.MinValue; // Range: 0~1
-        public float ArcadeInterferanceSize = float.MinValue; // Range: 0~10, Default: 1
-        public float ArcadeInterferanceSpeed = float.MinValue; // Range: 0~10, Default: 0.5
+        public float? ArcadeContrast; // Range: 0~10, Default: 1
+        public float? ArcadeIntensity; // Range: 0~1
+        public float? ArcadeInterferanceSize; // Range: 0~10, Default: 1
+        public float? ArcadeInterferanceSpeed; // Range: 0~10, Default: 0.5
 
         public bool? Artifact;
-        public float ArtifactColorisation = float.MinValue; // Range: -10~10, Default: 1
-        public float ArtifactIntensity = float.MinValue; // Range: 0~1
-        public float ArtifactNoise = float.MinValue; // Range: -10~10, Default: 1
-        public float ArtifactParasite = float.MinValue; // Range: -10~10, Default: 1
-        public float BackgroundDim = float.MinValue;
+        public float? ArtifactColorisation; // Range: -10~10, Default: 1
+        public float? ArtifactIntensity; // Range: 0~1
+        public float? ArtifactNoise; // Range: -10~10, Default: 1
+        public float? ArtifactParasite; // Range: -10~10, Default: 1
+        public float? BackgroundDim;
 
         public bool? Bloom;
-        public float BloomIntensity = float.MinValue; // Range: 0~5
-        public float Brightness = float.MinValue; // Range: 0~10, Default: 1
+        public float? BloomIntensity; // Range: 0~5
+        public float? Brightness; // Range: 0~10, Default: 1
 
         public bool? Chromatic;
 
         public bool? Chromatical;
-        public float ChromaticalFade = float.MinValue; // Range: 0~1
-        public float ChromaticalIntensity = float.MinValue; // Range: 0~1
-        public float ChromaticalSpeed = float.MinValue; // Range: 0~3
-        public float ChromaticEnd = float.MinValue; // Range: 0~1
-        public float ChromaticIntensity = float.MinValue; // Range: 0~0.15
-        public float ChromaticStart = float.MinValue; // Range: 0~1
+        public float? ChromaticalFade; // Range: 0~1
+        public float? ChromaticalIntensity; // Range: 0~1
+        public float? ChromaticalSpeed; // Range: 0~3
+        public float? ChromaticEnd; // Range: 0~1
+        public float? ChromaticIntensity; // Range: 0~0.15
+        public float? ChromaticStart; // Range: 0~1
 
         public bool? ColorAdjustment;
 
         public bool? ColorFilter;
         public Color ColorFilterColor;
-        public float Contrast = float.MinValue; // Range: 0~10, Default: 1
+        public float? Contrast; // Range: 0~10, Default: 1
 
         public bool? Dream;
-        public float DreamIntensity = float.MinValue; // Range: 1~10
+        public float? DreamIntensity; // Range: 1~10
 
         public bool? Fisheye;
-        public float FisheyeIntensity = float.MinValue; // Range: 0~1, Default: 0.5
+        public float? FisheyeIntensity; // Range: 0~1, Default: 0.5
 
         public bool? Focus;
         public Color FocusColor;
-        public float FocusIntensity = float.MinValue; // Range: 0~1, Default: 0.25
-        public float FocusSize = float.MinValue; // Range: 1~10, Default: 1
-        public float FocusSpeed = float.MinValue; // Range: 0~30, Default: 5
-        public float Fov = float.MinValue; // Field of View Default: 53.2
+        public float? FocusIntensity; // Range: 0~1, Default: 0.25
+        public float? FocusSize; // Range: 1~10, Default: 1
+        public float? FocusSpeed; // Range: 0~30, Default: 5
+        public float? Fov; // Field of View Default: 53.2
 
         public bool? Glitch;
-        public float GlitchIntensity = float.MinValue; // Range: 0~1
+        public float? GlitchIntensity; // Range: 0~1
 
         public bool? GrayScale;
-        public float GrayScaleIntensity = float.MinValue; // Range: 0~1
+        public float? GrayScaleIntensity; // Range: 0~1
 
         public bool? Noise;
-        public float NoiseIntensity = float.MinValue; // Range: 0~1, Default: 0.235
+        public float? NoiseIntensity; // Range: 0~1, Default: 0.235
         public List<Color> NoteFillColors;
-        public float NoteOpacityMultiplier = float.MinValue;
+        public float? NoteOpacityMultiplier;
         public Color NoteRingColor;
         public bool? OverrideScanlinePos;
         public bool? Perspective;
 
         public bool? RadialBlur;
-        public float RadialBlurIntensity = float.MinValue; // Range: -0.5~0.5, Default: 0.025
-        public float RotX = float.MinValue;
-        public float RotY = float.MinValue;
-        public float RotZ = float.MinValue;
-        public float Saturation = float.MinValue; // Range: 0~10, Default: 1
+        public float? RadialBlurIntensity; // Range: -0.5~0.5, Default: 0.025
+        public float? RotX;
+        public float? RotY;
+        public float? RotZ;
+        public float? Saturation; // Range: 0~10, Default: 1
 
         public Color ScanlineColor;
-        public float ScanlineOpacity = float.MinValue;
-        public float ScanlinePos = float.MinValue;
+        public float? ScanlineOpacity;
+        public UnitFloat ScanlinePos;
         public bool? ScanlineSmoothing;
 
         public bool? Sepia;
-        public float SepiaIntensity = float.MinValue; // Range: 0~1
+        public float? SepiaIntensity; // Range: 0~1
 
         public bool? Shockwave;
-        public float ShockwaveSpeed = float.MinValue; // Range: 0~10, Default: 1
+        public float? ShockwaveSpeed; // Range: 0~10, Default: 1
 
-        public float Size = float.MinValue; // Camera.main.orthographicSize Default: 5
-        public float StoryboardOpacity = float.MinValue;
+        public float? Size; // Camera.main.orthographicSize Default: 5
+        public float? StoryboardOpacity;
 
         public bool? Tape;
-        public float UiOpacity = float.MinValue;
+        public float? UiOpacity;
 
         public bool? Vignette;
 
         public Color VignetteColor;
-        public float VignetteEnd = float.MinValue; // Range: 0~1
-        public float VignetteIntensity = float.MinValue; // Range: 0~1
-        public float VignetteStart = float.MinValue; // Range: 0~1
+        public float? VignetteEnd; // Range: 0~1
+        public float? VignetteIntensity; // Range: 0~1
+        public float? VignetteStart; // Range: 0~1
         
-        public float X = float.MinValue; // Every x/y = 2 * Camera.main.orthographicSize
-        public float Y = float.MinValue;
-        public float Z = float.MinValue;
+        public UnitFloat X; // Every x/y = 2 * Camera.main.orthographicSize
+        public UnitFloat Y;
+        public UnitFloat Z;
     }
 
     [Serializable]
     public class Trigger
     {
-        public int Combo = int.MinValue;
+        public int? Combo;
         [JsonIgnore] public int CurrentUses;
         public List<string> Destroy = new List<string>();
 
         public List<int> Notes = new List<int>();
-        public int Score = int.MinValue;
+        public int? Score;
         public List<string> Spawn = new List<string>();
 
         [JsonIgnore] public Note Triggerer;
         public TriggerType Type = TriggerType.None;
-        public int Uses = int.MinValue;
+        public int? Uses;
     }
 
     public enum TriggerType
@@ -351,13 +357,4 @@ namespace Cytoid.Storyboard
         }
     }
 
-    public static class StoryboardModelExtensions
-    {
-        public static bool IsSet(this int i) => i != int.MinValue;
-        public static bool IsSet(this float f) => f != float.MinValue;
-        public static bool IsSet(this bool? b) => b != null;
-        public static bool IsSet(this string s) => s != null;
-        public static bool IsSet(this Color c) => c != null;
-        public static bool IsSet<T>(this List<T> l) => l != null;
-    }
 }

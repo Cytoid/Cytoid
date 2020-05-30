@@ -28,8 +28,8 @@ public class TierBreakScreen : Screen
     public GameObject criterionEntryPrefab;
     private TierState tierState;
     private GameState gameState;
-    private DateTimeOffset proceedToNextStageTime;
-    private DateTimeOffset nextBroadcastCountdownTime;
+    private DateTimeOffset proceedToNextStageTime = DateTimeOffset.MaxValue;
+    private DateTimeOffset nextBroadcastCountdownTime = DateTimeOffset.MaxValue;
     private int broadcastCount;
 
     public override string GetId() => Id;

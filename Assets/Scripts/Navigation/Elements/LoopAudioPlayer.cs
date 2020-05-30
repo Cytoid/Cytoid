@@ -10,11 +10,12 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
 {
     private const bool PrintDebugMessages = true;
 
-    public IntroloopAudio mainLoopAudio;
+    public IntroloopAudio defaultLoopAudio;
     public IntroloopAudio resultLoopAudio;
     public AudioMixerGroup audioMixerGroup;
-
+    
     private float maxVolume = 1f;
+    private IntroloopAudio mainLoopAudio;
     private IntroloopAudio playingAudio;
     private bool isFadedOut;
     private DateTime asyncToken;
@@ -30,14 +31,20 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
         }
 
         DontDestroyOnLoad(gameObject);
+        
+        IntroloopPlayer.Instance.SetMixerGroup(audioMixerGroup);
+        Context.PostSceneChanged.AddListener(PostSceneChanged);
+        Context.CharacterManager.OnActiveCharacterSet.AddListener(asset =>
+        {
+            SetMainAudio(asset.musicAudio != null ? asset.musicAudio : defaultLoopAudio);
+        });
+        
+        Context.OnApplicationInitialized.AddListener(Initialize);
     }
 
-    protected void Start()
+    private void Initialize()
     {
-        Context.PostSceneChangedEvent.AddListener(PostSceneChanged);
         Context.ScreenManager.AddHandler(this);
-        Context.CharacterManager.OnActiveCharacterSet.AddListener(asset => SetMainAudio(asset.musicAudio));
-        IntroloopPlayer.Instance.SetMixerGroup(audioMixerGroup);
         UpdateMaxVolume();
     }
 

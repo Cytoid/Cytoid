@@ -8,7 +8,7 @@ namespace Cytoid.Storyboard.Controllers
         
         public override void OnUpdate()
         {
-            if (From.ScanlineSmoothing.IsSet())
+            if (From.ScanlineSmoothing != null)
             {
                 Game.Chart.UseScannerSmoothing = From.ScanlineSmoothing.Value;
             }

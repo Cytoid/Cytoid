@@ -6,6 +6,7 @@ using System.Text;
 using DG.Tweening;
 using ICSharpCode.SharpZipLib.Zip;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Proyecto26;
 using RSG;
 using UniRx.Async;
@@ -377,7 +378,18 @@ public class LevelManager
 
                 if (record.AddedDate == DateTimeOffset.MinValue)
                 {
-                    record.AddedDate = info.LastWriteTimeUtc;
+                    if (type == LevelType.Community)
+                    {
+                        record.AddedDate = info.LastWriteTimeUtc;
+                    } 
+                    else if (type == LevelType.Official)
+                    {
+                        // Check if in library
+                        if (Context.Library.Levels.ContainsKey(level.Id))
+                        {
+                            record.AddedDate = Context.Library.Levels[level.Id].Date;
+                        }
+                    }
                 }
 
                 level.SaveRecord();
@@ -609,11 +621,12 @@ public class LevelManager
             downloading = true;
             Debug.Log("Package path: " + level.PackagePath);
             // Get resources
-            return RestClient.Get<OnlineLevelResources>(req = new RequestHelper
+            return RestClient.Post<OnlineLevelResources>(req = new RequestHelper
             {
                 Uri = level.PackagePath,
                 Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
-                Body = SecuredOperations.AddCaptcha(new {})
+                BodyString = SecuredOperations.WithCaptcha(new { }).ToString(),
+                EnableDebug = true
             });
         }).Then(res =>
         {

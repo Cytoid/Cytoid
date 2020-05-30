@@ -90,7 +90,9 @@ public class CollectionDetailsScreen : Screen
         sloganText.text = collection.slogan;
         sloganText.transform.parent.RebuildLayout();
         scrollRect.totalCount = collection.levels.Count;
-        scrollRect.objectsToFill = collection.levels.Select(it => it.ToLevel(LevelType.Official)).ToArray().Cast<object>().ToArray();
+        scrollRect.objectsToFill = collection.levels.Select(it => it.ToLevel(
+            content.Collection.owner.Id == Context.OfficialAccountId ? LevelType.Official : LevelType.Community    
+        )).ToArray().Cast<object>().ToArray();
         scrollRect.RefillCells();
         if (lastScrollPosition > 0)
         {
@@ -115,7 +117,7 @@ public class CollectionDetailsScreen : Screen
             async void LoadCover()
             {
                 var sprite = await Context.AssetMemory.LoadAsset<Sprite>(content.Collection.cover.OriginalUrl,
-                    AssetTag.CollectionCover, useFileCache: true);
+                    AssetTag.CollectionCover, allowFileCache: true);
                 if (token != loadToken) return;
 
                 coverImage.sprite = sprite;

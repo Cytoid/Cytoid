@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DG.Tweening;
+using ICSharpCode.SharpZipLib.Zip;
 using Proyecto26;
 using UniRx.Async;
 using UnityEngine;
@@ -98,17 +99,37 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
         LayoutFixer.Fix(layoutGroup.transform);
         background.color = Color.white;
         spinner.IsSpinning = true;
+
+        if (Context.IsOffline())
+        {
+            Context.OnlinePlayer.FetchProfile().Then(it =>
+            {
+                if (it == null)
+                {
+                    SetSignedOut();
+                    Context.OnlinePlayer.Deauthenticate();
+                }
+                else
+                {
+                    SetSignedIn(Context.OnlinePlayer.LastProfile = it);
+                    Context.OnlinePlayer.IsAuthenticated = true;
+                }
+            });
+            return;
+        }
         
         Context.OnlinePlayer.AuthenticateWithJwtToken()
             .Then(profile =>
             {
                 Toast.Next(Toast.Status.Success, "TOAST_SUCCESSFULLY_SIGNED_IN".Get());
                 SetSignedIn(profile);
+                Context.OnlinePlayer.IsAuthenticated = true;
 
                 if (Context.IsOffline()) Context.SetOffline(false);
             })
             .CatchRequestError(error =>
             {
+                Context.OnlinePlayer.IsAuthenticated = false;
                 if (error.IsNetworkError)
                 {
                     var dialog = Dialog.Instantiate();
@@ -155,7 +176,6 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
                             Toast.Next(Toast.Status.Failure, "TOAST_STATUS_CODE".Get(error.StatusCode));
                             break;
                     }
-
                     SetSignedOut();
                 }
             });
@@ -168,13 +188,14 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
         name.DOFade(1, 0.2f);
         infoLayoutGroup.gameObject.SetActive(true);
         LayoutFixer.Fix(layoutGroup.transform);
-        if (avatarImage.sprite == null && Context.IsOnline())
+        if (avatarImage.sprite == null)
         {
             spinner.IsSpinning = true;
             var sprite = await Context.AssetMemory.LoadAsset<Sprite>(
                 profile.User.AvatarUrl?.WithSizeParam(256, 256) ?? profile.User.Avatar.LargeUrl, 
                 AssetTag.PlayerAvatar,
-                useFileCache: true
+                allowFileCache: true,
+                useFileCache: Context.IsOffline()
             );
             spinner.IsSpinning = false;
             if (sprite != null)
@@ -183,7 +204,10 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
             }
             else
             {
-                Toast.Enqueue(Toast.Status.Failure, "TOAST_COULD_NOT_DOWNLOAD_AVATAR".Get());
+                if (Context.IsOnline())
+                {
+                    Toast.Enqueue(Toast.Status.Failure, "TOAST_COULD_NOT_DOWNLOAD_AVATAR".Get());
+                }
             }
         }
         UpdateRatingAndLevel(profile);

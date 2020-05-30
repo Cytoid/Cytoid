@@ -30,11 +30,11 @@ public class OnlinePlayer
             RestClient.Post<Session>(new RequestHelper
             {
                 Uri = Context.ServicesUrl + "/session",
-                BodyString = JObject.FromObject(SecuredOperations.AddCaptcha(new
+                BodyString = SecuredOperations.WithCaptcha(new
                 {
                     username = Context.Player.Id,
                     password,
-                })).ToString()
+                }).ToString()
             }).Then(session =>
                 {
                     Context.Player.Settings.LoginToken = session.token;
@@ -48,6 +48,7 @@ public class OnlinePlayer
                 resolve(profile);
             }).Catch(result =>
             {
+                IsAuthenticated = false;
                 Debug.LogError(result);
                 if (result is RequestException requestException)
                 {
@@ -75,8 +76,7 @@ public class OnlinePlayer
         {
             RestClient.Get<Session>(new RequestHelper
             {
-                Uri = Context.ServicesUrl + "/session",
-                BodyString = JObject.FromObject(SecuredOperations.AddCaptcha(new { })).ToString(),
+                Uri = Context.ServicesUrl + $"/session?captcha={SecuredOperations.GetCaptcha()}",
                 Headers = new Dictionary<string, string>
                 {
                     {"Authorization", "JWT " + jwtToken}
@@ -95,10 +95,11 @@ public class OnlinePlayer
                 resolve(profile);
             }).Catch(result =>
             {
+                IsAuthenticated = false; 
                 Debug.LogError(result);
                 if (result is RequestException requestException)
                 {
-                    if (requestException.IsHttpError)
+                    if (!requestException.IsNetworkError)
                     {
                         Context.Player.Settings.LoginToken = null;
                         Context.Player.SaveSettings();
@@ -116,9 +117,13 @@ public class OnlinePlayer
         LastProfile = null;
         IsAuthenticating = false;
         IsAuthenticated = false;
+
+        EventSelectionScreen.LoadedContent = null;
+        TierSelectionScreen.LoadedContent = null;
         
         // Drop user information in DB
         Context.Database.DropCollection("characters");
+        Context.Library.Clear();
     }
 
     public Dictionary<string, string> GetAuthorizationHeaders()
@@ -154,7 +159,7 @@ public class OnlinePlayer
         }
         
         // Offline: Load from DB
-        return Promise<Profile>.Resolved(Context.Database.GetProfile());
+        return Promise<Profile>.Resolved(LastProfile = Context.Database.GetProfile());
     }
 
     public IPromise<(int, List<RankingEntry>)> GetLevelRankings(string levelId, string chartType)
@@ -178,7 +183,7 @@ public class OnlinePlayer
                     return RestClient.GetArray<RankingEntry>(new RequestHelper
                     {
                         Uri =
-                            $"{Context.ServicesUrl}/levels/{levelId}/charts/{chartType}/user_ranking?user={Context.Player.Id}&limit=6",
+                            $"{Context.ServicesUrl}/levels/{levelId}/charts/{chartType}/user_ranking?limit=6",
                         Headers = GetAuthorizationHeaders(),
                         EnableDebug = true
                     });
@@ -235,6 +240,11 @@ public class OnlinePlayer
                             };
                             record.BestPerformances[chartType] = newBest;
                             Context.Database.SetLevelRecord(record);
+
+                            if (Context.LevelManager.LoadedLocalLevels.ContainsKey(levelId))
+                            {
+                                Context.LevelManager.LoadedLocalLevels[levelId].Record = record;
+                            }
                             
                             OnLevelBestPerformanceUpdated.Invoke(levelId);
                         }
@@ -269,7 +279,7 @@ public class OnlinePlayer
                     return RestClient.GetArray<TierRankingEntry>(new RequestHelper
                     {
                         Uri =
-                            $"{Context.ServicesUrl}/seasons/alpha/tiers/{tierId}/user_ranking?user={Context.Player.Id}&limit=6",
+                            $"{Context.ServicesUrl}/seasons/alpha/tiers/{tierId}/user_ranking?limit=6",
                         Headers = GetAuthorizationHeaders(),
                         EnableDebug = true
                     });

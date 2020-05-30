@@ -52,6 +52,7 @@ namespace Storyboard.Controllers
                 it.From = From;
                 it.To = To;
                 it.Ease = Ease;
+                it.Time = Time;
                 it.OnUpdate();
             });
         }

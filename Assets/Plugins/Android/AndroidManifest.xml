@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="me.tigerhix.cytoid" android:installLocation="preferExternal">
+          package="me.tigerhix.cytoid" android:installLocation="preferExternal">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -8,18 +8,25 @@
     <uses-permission android:name="android.permission.BLUETOOTH"/>
 
     <application
-        android:allowBackup="true"
-        android:icon="@mipmap/android_app_icon"
-        android:label="Cytoid"
-        android:supportsRtl="true">
+            android:allowBackup="true"
+            android:icon="@mipmap/android_app_icon"
+            android:label="Cytoid"
+            android:supportsRtl="true">
         <activity
-            android:name="me.tigerhix.cytoid.CytoidPluginActivity"
-            android:screenOrientation="sensorLandscape"
-            android:configChanges="fontScale|keyboard|keyboardHidden|locale|mnc|mcc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|touchscreen"
-            android:label="Cytoid" >
+                android:name="me.tigerhix.cytoid.CytoidPluginActivity"
+                android:screenOrientation="sensorLandscape"
+                android:configChanges="fontScale|keyboard|keyboardHidden|locale|mnc|mcc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|touchscreen"
+                android:label="Cytoid" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <intent-filter>
+                <data android:scheme="cytoid" />
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
             </intent-filter>
 
             <intent-filter>
@@ -67,264 +74,264 @@
             </intent-filter>
             <intent-filter>
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/vnd.cytoid"
-                    android:pathPattern=".*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/vnd.cytoid"
+                        android:pathPattern=".*\\.cytoidlevel" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/cytoid"
-                    android:pathPattern=".*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/cytoid"
+                        android:pathPattern=".*\\.cytoidlevel" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/octet-stream"
-                    android:pathPattern=".*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/octet-stream"
+                        android:pathPattern=".*\\.cytoidlevel" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/zip"
-                    android:pathPattern=".*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/zip"
+                        android:pathPattern=".*\\.cytoidlevel" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/x-zip-compressed"
-                    android:pathPattern=".*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/x-zip-compressed"
+                        android:pathPattern=".*\\.cytoidlevel" />
 
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/vnd.cytoid"
-                    android:pathPattern=".*\\..*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/vnd.cytoid"
+                        android:pathPattern=".*\\..*\\.cytoidlevel" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/cytoid"
-                    android:pathPattern=".*\\..*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/cytoid"
+                        android:pathPattern=".*\\..*\\.cytoidlevel" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/octet-stream"
-                    android:pathPattern=".*\\..*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/octet-stream"
+                        android:pathPattern=".*\\..*\\.cytoidlevel" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/zip"
-                    android:pathPattern=".*\\..*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/zip"
+                        android:pathPattern=".*\\..*\\.cytoidlevel" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/x-zip-compressed"
-                    android:pathPattern=".*\\..*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/x-zip-compressed"
+                        android:pathPattern=".*\\..*\\.cytoidlevel" />
 
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/vnd.cytoid"
-                    android:pathPattern=".*\\..*\\..*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/vnd.cytoid"
+                        android:pathPattern=".*\\..*\\..*\\.cytoidlevel" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/cytoid"
-                    android:pathPattern=".*\\..*\\..*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/cytoid"
+                        android:pathPattern=".*\\..*\\..*\\.cytoidlevel" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/octet-stream"
-                    android:pathPattern=".*\\..*\\..*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/octet-stream"
+                        android:pathPattern=".*\\..*\\..*\\.cytoidlevel" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/zip"
-                    android:pathPattern=".*\\..*\\..*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/zip"
+                        android:pathPattern=".*\\..*\\..*\\.cytoidlevel" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/x-zip-compressed"
-                    android:pathPattern=".*\\..*\\..*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/x-zip-compressed"
+                        android:pathPattern=".*\\..*\\..*\\.cytoidlevel" />
 
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/vnd.cytoid"
-                    android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/vnd.cytoid"
+                        android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/cytoid"
-                    android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/cytoid"
+                        android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/octet-stream"
-                    android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/octet-stream"
+                        android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/zip"
-                    android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/zip"
+                        android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/x-zip-compressed"
-                    android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/x-zip-compressed"
+                        android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel" />
 
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/vnd.cytoid"
-                    android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/vnd.cytoid"
+                        android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/cytoid"
-                    android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/cytoid"
+                        android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/octet-stream"
-                    android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/octet-stream"
+                        android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/zip"
-                    android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/zip"
+                        android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/x-zip-compressed"
-                    android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/x-zip-compressed"
+                        android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel" />
 
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/vnd.cytoid"
-                    android:pathPattern=".*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/vnd.cytoid"
+                        android:pathPattern=".*\\.cytoidlevel.zip" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/cytoid"
-                    android:pathPattern=".*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/cytoid"
+                        android:pathPattern=".*\\.cytoidlevel.zip" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/octet-stream"
-                    android:pathPattern=".*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/octet-stream"
+                        android:pathPattern=".*\\.cytoidlevel.zip" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/zip"
-                    android:pathPattern=".*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/zip"
+                        android:pathPattern=".*\\.cytoidlevel.zip" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/x-zip-compressed"
-                    android:pathPattern=".*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/x-zip-compressed"
+                        android:pathPattern=".*\\.cytoidlevel.zip" />
 
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/vnd.cytoid"
-                    android:pathPattern=".*\\..*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/vnd.cytoid"
+                        android:pathPattern=".*\\..*\\.cytoidlevel.zip" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/cytoid"
-                    android:pathPattern=".*\\..*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/cytoid"
+                        android:pathPattern=".*\\..*\\.cytoidlevel.zip" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/octet-stream"
-                    android:pathPattern=".*\\..*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/octet-stream"
+                        android:pathPattern=".*\\..*\\.cytoidlevel.zip" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/zip"
-                    android:pathPattern=".*\\..*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/zip"
+                        android:pathPattern=".*\\..*\\.cytoidlevel.zip" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/x-zip-compressed"
-                    android:pathPattern=".*\\..*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/x-zip-compressed"
+                        android:pathPattern=".*\\..*\\.cytoidlevel.zip" />
 
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/vnd.cytoid"
-                    android:pathPattern=".*\\..*\\..*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/vnd.cytoid"
+                        android:pathPattern=".*\\..*\\..*\\.cytoidlevel.zip" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/cytoid"
-                    android:pathPattern=".*\\..*\\..*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/cytoid"
+                        android:pathPattern=".*\\..*\\..*\\.cytoidlevel.zip" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/octet-stream"
-                    android:pathPattern=".*\\..*\\..*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/octet-stream"
+                        android:pathPattern=".*\\..*\\..*\\.cytoidlevel.zip" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/zip"
-                    android:pathPattern=".*\\..*\\..*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/zip"
+                        android:pathPattern=".*\\..*\\..*\\.cytoidlevel.zip" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/x-zip-compressed"
-                    android:pathPattern=".*\\..*\\..*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/x-zip-compressed"
+                        android:pathPattern=".*\\..*\\..*\\.cytoidlevel.zip" />
 
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/vnd.cytoid"
-                    android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/vnd.cytoid"
+                        android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel.zip" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/cytoid"
-                    android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/cytoid"
+                        android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel.zip" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/octet-stream"
-                    android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/octet-stream"
+                        android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel.zip" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/zip"
-                    android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/zip"
+                        android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel.zip" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/x-zip-compressed"
-                    android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/x-zip-compressed"
+                        android:pathPattern=".*\\..*\\..*\\..*\\.cytoidlevel.zip" />
 
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/vnd.cytoid"
-                    android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/vnd.cytoid"
+                        android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel.zip" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/cytoid"
-                    android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/cytoid"
+                        android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel.zip" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/octet-stream"
-                    android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/octet-stream"
+                        android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel.zip" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/zip"
-                    android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/zip"
+                        android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel.zip" />
                 <data
-                    android:host="*"
-                    android:scheme="content"
-                    android:mimeType="application/x-zip-compressed"
-                    android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel.zip" />
+                        android:host="*"
+                        android:scheme="content"
+                        android:mimeType="application/x-zip-compressed"
+                        android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel.zip" />
 
                 <action android:name="android.intent.action.VIEW" />
 

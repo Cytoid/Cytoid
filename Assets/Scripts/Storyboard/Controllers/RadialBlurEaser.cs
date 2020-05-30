@@ -10,10 +10,10 @@ namespace Cytoid.Storyboard.Controllers
         {
             if (Config.UseEffects)
             {
-                if (From.RadialBlur.IsSet())
+                if (From.RadialBlur != null)
                 {
                     Provider.RadialBlur.enabled = From.RadialBlur.Value;
-                    if (From.RadialBlur.Value && From.RadialBlurIntensity.IsSet())
+                    if (From.RadialBlur.Value && From.RadialBlurIntensity != null)
                         Provider.RadialBlur.Intensity = EaseFloat(From.RadialBlurIntensity, To.RadialBlurIntensity);
                 }
             }

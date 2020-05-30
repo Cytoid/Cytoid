@@ -1,6 +1,7 @@
 using System.Globalization;
 using Proyecto26;
 using UniRx.Async;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class SignInScreen : Screen
@@ -11,6 +12,7 @@ public class SignInScreen : Screen
     public InputField passwordInput;
     public TransitionElement closeButton;
     public CharacterDisplay characterDisplay;
+    public InteractableMonoBehavior signUpButton;
     
     public override string GetId() => Id;
 
@@ -18,6 +20,7 @@ public class SignInScreen : Screen
     {
         base.OnScreenInitialized();
         uidInput.text = Context.Player.Id;
+        signUpButton.onPointerClick.SetListener(_ => Application.OpenURL("https://cytoid.io/session/signup"));
     }
 
     public override void OnScreenBecameActive()

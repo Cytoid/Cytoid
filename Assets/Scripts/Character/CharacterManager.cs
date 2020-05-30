@@ -13,7 +13,7 @@ public class CharacterManager
 
     public string SelectedCharacterAssetId
     {
-        get => Context.Player.Settings.ActiveCharacterId ?? "Hancho";
+        get => Context.Player.Settings.ActiveCharacterId ?? "Sayaka";
         set
         {
             Context.Player.Settings.ActiveCharacterId = value;
@@ -87,7 +87,6 @@ public class CharacterManager
     {
         if (Context.IsOnline())
         {
-            
             // Online
             return RestClient.GetArray<CharacterMeta>(new RequestHelper
             {

@@ -14,7 +14,7 @@ public class CompileStoryboardButton : InteractableMonoBehavior
             var path = game.Level.Path + "/storyboard_compiled.json";
             File.WriteAllText(path, JsonConvert.SerializeObject(jObject, Formatting.None, new JsonSerializerSettings
             {
-                DefaultValueHandling = DefaultValueHandling.Ignore
+                NullValueHandling = NullValueHandling.Ignore
             }));
         });
     }

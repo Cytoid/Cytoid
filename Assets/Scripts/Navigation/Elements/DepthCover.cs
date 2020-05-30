@@ -26,7 +26,7 @@ public class DepthCover : MonoBehaviour, ScreenListener
     {
         transform.DOKill();
         mask.DOKill();
-        if (sprite != null)
+        if (sprite != null && sprite.texture != null)
         {
             image.sprite = sprite;
             image.FitSpriteAspectRatio();

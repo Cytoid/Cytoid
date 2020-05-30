@@ -115,6 +115,7 @@ public class ProfileScreen : Screen, ScreenChangeListener
         }
         else
         {
+            Context.SetOffline(false);
             ProfileWidget.Instance.SetSigningIn();
         }
     }
@@ -131,26 +132,34 @@ public class ProfileScreen : Screen, ScreenChangeListener
 
         SpinnerOverlay.Show();
         
-        var uri = Context.ApiUrl + "/leaderboard?limit=50";
+        var uri = Context.ServicesUrl + "/leaderboard?limit=50";
         if (mode == "me") uri += "&user=" + Context.Player.Id;
         RestClient.GetArray<Leaderboard.Entry>(new RequestHelper
         {
             Uri = uri,
-            Headers = Context.OnlinePlayer.GetAuthorizationHeaders()
+            Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
+            EnableDebug = true
         }).Then(async data =>
         {
-            leaderboard.SetData(data);
-            if (mode == "me")
+            try
             {
-                var meEntry = leaderboard.Entries.Find(it => it.Model.owner.Uid == Context.Player.Id);
-                if (meEntry != null)
+                leaderboard.SetData(data);
+                if (mode == "me")
                 {
-                    await UniTask.DelayFrame(0);
-                    leaderboardScrollRect.GetComponent<ScrollRectFocusHelper>()
-                        .CenterOnItem(meEntry.transform as RectTransform);
+                    var meEntry = leaderboard.Entries.Find(it => it.Model.owner.Uid == Context.Player.Id);
+                    if (meEntry != null)
+                    {
+                        await UniTask.DelayFrame(0);
+                        leaderboardScrollRect.GetComponent<ScrollRectFocusHelper>()
+                            .CenterOnItem(meEntry.transform as RectTransform);
+                    }
                 }
             }
-        }).Catch(Debug.Log).Finally(() => SpinnerOverlay.Hide());
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+            }
+        }).CatchRequestError(Debug.LogError).Finally(() => SpinnerOverlay.Hide());
     }
 
     public override void OnScreenChangeFinished(Screen from, Screen to)

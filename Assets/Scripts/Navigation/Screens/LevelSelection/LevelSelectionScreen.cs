@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json;
+using Proyecto26;
+using UniRx.Async;
 using UnityEngine.UI;
 
-public class LevelSelectionScreen : Screen, ScreenChangeListener
+public class LevelSelectionScreen : Screen
 {
     private static float savedScrollPosition = -1;
     public static Content SavedContent;
@@ -27,6 +30,10 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         base.OnScreenInitialized();
 
         categorySelect.onSelect.AddListener((index, canvasGroup) => RefillLevels());
+        Context.Library.OnLibraryLoaded.AddListener(() =>
+        {
+            if (State == ScreenState.Active) RefillLevels();
+        });
         
         void InstantiateOptions() {
             var lp = Context.Player;
@@ -66,10 +73,19 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
     public override async void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
-        RefillLevels();
+        
         if (savedScrollPosition > 0)
         {
+            LevelCard.DoNotLoadCover = true;
+            RefillLevels();
             scrollRect.SetVerticalNormalizedPositionFix(savedScrollPosition);
+            
+            await UniTask.DelayFrame(5);
+            LevelCard.DoNotLoadCover = false;
+        }
+        else
+        {
+            RefillLevels();
         }
 
         if (SavedContent != null)
@@ -81,6 +97,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
     public override void OnScreenBecameInactive()
     {
         base.OnScreenBecameInactive();
+        LevelCard.DoNotLoadCover = false;
         savedScrollPosition = scrollRect.verticalNormalizedPosition;
     }
 
@@ -110,10 +127,10 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         switch (category)
         {
             case 1:
-                filters.Add(level => level.Id.StartsWith("io.cytoid"));
+                filters.Add(level => level.Type == LevelType.Official);
                 break;
             case 2:
-                filters.Add(level => !level.Id.StartsWith("io.cytoid"));
+                filters.Add(level => level.Type == LevelType.Community);
                 break;
         }
         var query = searchInputField.text.Trim();
@@ -128,7 +145,11 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
 
     public void RefillLevels(LevelSort sort, bool asc, string query = "", List<Func<Level, bool>> filters = null)
     {
-        var levels = new List<Level>(Context.LevelManager.LoadedLocalLevels.Values.Where(it => it.Type == LevelType.Community));
+        var levels = new List<Level>(Context.LevelManager.LoadedLocalLevels.Values);
+        levels.AddRange(Context.Library.Levels.Values.Select(it => it.Level.ToLevel(LevelType.Official)));
+        
+        // Remove duplicates
+        levels = levels.GroupBy(it => it.Id).Select(it => it.First()).ToList();
 
         if (!query.IsNullOrEmptyTrimmed())
         {

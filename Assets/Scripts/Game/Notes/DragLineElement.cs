@@ -40,21 +40,47 @@ public class DragLineElement : MonoBehaviour
 
     private void UpdateTransform()
     {
-        if (!hasFromNote && game.Notes.ContainsKey(fromNoteModel.id))
+        if (game.Notes.ContainsKey(fromNoteModel.id))
         {
-            hasFromNote = true;
-            fromNote = game.Notes[fromNoteModel.id];
+            if (!hasFromNote)
+            {
+                hasFromNote = true;
+                fromNote = game.Notes[fromNoteModel.id];
+            }
         }
-        if (!hasToNote && game.Notes.ContainsKey(toNoteModel.id))
+        else
         {
-            hasToNote = true;
-            toNote = game.Notes[toNoteModel.id];
+            if (hasFromNote)
+            {
+                hasFromNote = false;
+                fromNote = null;
+            }
         }
+        if (game.Notes.ContainsKey(toNoteModel.id))
+        {
+            if (!hasToNote)
+            {
+                hasToNote = true;
+                toNote = game.Notes[toNoteModel.id];
+            }
+        }
+        else
+        {
+            if (hasToNote)
+            {
+                hasToNote = false;
+                toNote = null;
+            }
+        }
+
+        var fromNotePosition = hasFromNote ? (fromNote is DragHeadNote dragHeadNote ? dragHeadNote.OriginalPosition : fromNote.transform.localPosition) : fromNoteModel.position;
+        var toNotePosition = hasToNote ? toNote.transform.localPosition : toNoteModel.position;
         
-        transform.localPosition = hasFromNote ? fromNote.transform.localPosition : fromNoteModel.position;
+        var transform = this.transform;
+        transform.localPosition = fromNotePosition;
         length = Vector3.Distance(
-            hasFromNote ? fromNote.transform.localPosition : fromNoteModel.position, 
-            hasToNote ? toNote.transform.localPosition : toNoteModel.position
+            fromNotePosition, 
+            toNotePosition
         );
         spriteRenderer.material.mainTextureScale = new Vector2(1.0f, length / 0.16f);
         transform.localEulerAngles = hasFromNote ? fromNote.transform.localEulerAngles : fromNoteModel.rotation;

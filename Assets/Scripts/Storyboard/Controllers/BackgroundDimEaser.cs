@@ -8,7 +8,7 @@ namespace Cytoid.Storyboard.Controllers
 
         public override void OnUpdate()
         {
-            if (From.BackgroundDim.IsSet())
+            if (From.BackgroundDim != null)
             {
                 Provider.Cover.color =
                     Provider.Cover.color.WithAlpha(EaseFloat(1 - From.BackgroundDim, 1 - To.BackgroundDim));

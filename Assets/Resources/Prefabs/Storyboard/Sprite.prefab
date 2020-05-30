@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 222008013637205478}
   - component: {fileID: 114332683519793614}
   - component: {fileID: 3563394059190861444}
+  - component: {fileID: -5991199813383340404}
   m_Layer: 5
   m_Name: Sprite
   m_TagString: Untagged
@@ -95,3 +96,15 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!225 &-5991199813383340404
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1295767636910718}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0

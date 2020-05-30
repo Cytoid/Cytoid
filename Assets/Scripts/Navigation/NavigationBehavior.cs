@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using Proyecto26;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -7,6 +9,96 @@ using UnityEngine.UI;
 
 public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
 {
+    private void Start()
+    {
+        DeepLinkListener.Instance.OnDeepLinkReceived.AddListener(OnDeepLinkReceived);
+    }
+    
+    private DateTimeOffset deepLinkToken = DateTimeOffset.MinValue;
+
+    private async void OnDeepLinkReceived(string url)
+    {
+        var token = deepLinkToken = DateTimeOffset.Now;
+       
+        await UniTask.WaitUntil(() => Context.ScreenManager != null &&
+                                      Context.ScreenManager.History.Contains(MainMenuScreen.Id));
+        if (token != deepLinkToken) return;
+
+        if (!url.StartsWith("cytoid://")) throw new InvalidOperationException();
+        url = url.Substring("cytoid://".Length);
+
+        if (url.StartsWith("levels/"))
+        {
+            var id = url.Substring("levels/".Length);
+            
+            SpinnerOverlay.Show();
+
+            RestClient.Get<OnlineLevel>(new RequestHelper
+            {
+                Uri = $"{Context.ServicesUrl}/levels/{id}"
+            }).Then(async level =>
+            {
+                try
+                {
+                    if (token != deepLinkToken) return;
+
+                    while (Context.ScreenManager.PeekHistory().Let(it => it != null && it != MainMenuScreen.Id))
+                    {
+                        Context.ScreenManager.PopAndPeekHistory();
+                    }
+
+                    // Resolve level
+                    if (Context.LevelManager.LoadedLocalLevels.ContainsKey(level.Uid))
+                    {
+                        var localLevel = Context.LevelManager.LoadedLocalLevels[level.Uid];
+                        Debug.Log($"Online level {level.Uid} resolved locally");
+
+                        Context.ScreenManager.History.Push(LevelSelectionScreen.Id);
+                        Context.ScreenManager.History.Push(GamePreparationScreen.Id);
+                        Context.SelectedLevel = localLevel;
+                    }
+                    else
+                    {
+                        Context.ScreenManager.History.Push(CommunityHomeScreen.Id);
+                        Context.ScreenManager.History.Push(GamePreparationScreen.Id);
+                        Context.SelectedLevel = level.ToLevel(LevelType.Community);
+                    }
+
+                    await UniTask.WaitUntil(() => !Context.ScreenManager.IsChangingScreen);
+
+                    Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.In);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(e);
+                }
+            }).CatchRequestError(error =>
+            {
+                if (token != deepLinkToken) return;
+                if (error.IsHttpError) {
+                    if (error.StatusCode != 404)
+                    {
+                        throw error;
+                    }
+                }
+                Dialog.Instantiate().Also(it =>
+                {
+                    it.Message = "DIALOG_COULD_NOT_OPEN_LEVEL_X".Get(id);
+                    it.UsePositiveButton = true;
+                    it.UseNegativeButton = false;
+                }).Open();
+            }).Finally(() =>
+            {
+                if (token != deepLinkToken) return;
+                SpinnerOverlay.Hide();
+            });
+        }
+        else
+        {
+            Debug.LogError("Unsupported deep link");
+        }
+    }
+
     private async void OnApplicationPause(bool pauseStatus)
     {
         // Resuming?

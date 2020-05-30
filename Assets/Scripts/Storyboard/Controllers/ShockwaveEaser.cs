@@ -10,10 +10,10 @@ namespace Cytoid.Storyboard.Controllers
         {
             if (Config.UseEffects)
             {
-                if (From.Shockwave.IsSet())
+                if (From.Shockwave != null)
                 {
                     Provider.Shockwave.enabled = From.Shockwave.Value;
-                    if (From.Shockwave.Value && From.ShockwaveSpeed.IsSet())
+                    if (From.Shockwave.Value && From.ShockwaveSpeed != null)
                     {
                         Provider.Shockwave.Speed = EaseFloat(From.ShockwaveSpeed, To.ShockwaveSpeed);
                     }

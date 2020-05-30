@@ -28,7 +28,7 @@ public class Game : MonoBehaviour
     
     public Difficulty Difficulty { get; protected set; }
     public Chart Chart { get; protected set; }
-    public Dictionary<int, Note> Notes { get; } = new Dictionary<int, Note>();
+    public SortedDictionary<int, Note> Notes { get; } = new SortedDictionary<int, Note>();
 
     public Cytoid.Storyboard.Storyboard Storyboard { get; protected set; }
     
@@ -92,6 +92,7 @@ public class Game : MonoBehaviour
 
     protected virtual async void Start()
     {
+        await UniTask.WaitUntil(() => Context.IsInitialized);
         await Initialize();
     }
 
@@ -200,6 +201,7 @@ public class Game : MonoBehaviour
         AudioListener.pause = false;
         
         if (Context.AudioManager == null) await UniTask.WaitUntil(() => Context.AudioManager != null);
+        Context.AudioManager.Initialize();
         var audioPath = "file://" + Level.Path + Level.Meta.GetMusicPath(Difficulty.Id);
         var loader = new AudioClipLoader(audioPath);
         await loader.Load();
@@ -220,9 +222,17 @@ public class Game : MonoBehaviour
             // Initialize storyboard
             // TODO: Why File.ReadAllText() works but not UnityWebRequest?
             // (UnityWebRequest downloaded text could not be parsed by Newtonsoft.Json)
-            var storyboardText = File.ReadAllText(StoryboardPath);
-            Storyboard = new Cytoid.Storyboard.Storyboard(this, storyboardText);
-            await Storyboard.Initialize();
+            try
+            {
+                var storyboardText = File.ReadAllText(StoryboardPath);
+                Storyboard = new Cytoid.Storyboard.Storyboard(this, storyboardText);
+                await Storyboard.Initialize();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+                Debug.LogError("Could not load storyboard.");
+            }
         }
 
         // Load hit sound

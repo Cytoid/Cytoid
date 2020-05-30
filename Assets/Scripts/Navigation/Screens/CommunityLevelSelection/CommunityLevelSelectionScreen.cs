@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Proyecto26;
+using UniRx.Async;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -103,7 +104,7 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
         });
     }
 
-    public override void OnScreenBecameActive()
+    public override async void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
 
@@ -116,11 +117,15 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
             searchInputField.SetTextWithoutNotify(LoadedContent.Query.search);
             if (LoadedContent.OnlineLevels != null)
             {
+                LevelCard.DoNotLoadCover = true;
                 OnContentLoaded(LoadedContent);
                 if (savedScrollPosition > 0)
                 {
                     scrollRect.SetVerticalNormalizedPositionFix(savedScrollPosition);
                 }
+
+                await UniTask.DelayFrame(5);
+                LevelCard.DoNotLoadCover = false;
             }
             else
             {
@@ -136,6 +141,8 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
     public override void OnScreenBecameInactive()
     {
         base.OnScreenBecameInactive();
+        LevelCard.DoNotLoadCover = false;
+        
         canLoadMore = false;
         savedScrollPosition = scrollRect.verticalNormalizedPosition;
     }
@@ -186,6 +193,11 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
         }).Then(entries =>
         {
             if (entries == null) throw new Exception("Entries returned null");
+            if (LoadedContent == null)
+            {
+                append = false;
+                Debug.LogWarning("LoadedContent is null but set append to true");
+            }
             if (append)
             {
                 content.OnlineLevels = LoadedContent.OnlineLevels;

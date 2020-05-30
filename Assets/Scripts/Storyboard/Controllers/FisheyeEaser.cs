@@ -10,10 +10,10 @@ namespace Cytoid.Storyboard.Controllers
         {
             if (Config.UseEffects)
             {
-                if (From.Fisheye.IsSet())
+                if (From.Fisheye != null)
                 {
                     Provider.Fisheye.enabled = From.Fisheye.Value;
-                    if (From.Fisheye.Value && From.FisheyeIntensity.IsSet())
+                    if (From.Fisheye.Value && From.FisheyeIntensity != null)
                     {
                         Provider.Fisheye.Distortion = EaseFloat(From.FisheyeIntensity, To.FisheyeIntensity);
                     }

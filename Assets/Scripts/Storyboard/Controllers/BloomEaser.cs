@@ -15,12 +15,12 @@ namespace Cytoid.Storyboard.Controllers
         {
             if (Config.UseEffects)
             {
-                if (From.Bloom.IsSet())
+                if (From.Bloom != null)
                 {
                     sleek.enabled = sleek.settings.bloomEnabled = From.Bloom.Value;
                     if (From.Bloom.Value)
                     {
-                        if (From.BloomIntensity.IsSet())
+                        if (From.BloomIntensity != null)
                         {
                             sleek.settings.bloomIntensity = EaseFloat(From.BloomIntensity, To.BloomIntensity);
                         }

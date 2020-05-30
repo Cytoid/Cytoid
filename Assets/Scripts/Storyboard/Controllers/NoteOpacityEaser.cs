@@ -8,7 +8,7 @@ namespace Cytoid.Storyboard.Controllers
         
         public override void OnUpdate()
         {
-            if (From.NoteOpacityMultiplier.IsSet())
+            if (From.NoteOpacityMultiplier != null)
             {
                 Game.Config.GlobalNoteOpacityMultiplier = EaseFloat(From.NoteOpacityMultiplier, To.NoteOpacityMultiplier);
             }

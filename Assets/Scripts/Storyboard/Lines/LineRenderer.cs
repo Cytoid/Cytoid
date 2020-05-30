@@ -5,10 +5,14 @@ using static UnityEngine.Object;
 
 namespace Cytoid.Storyboard.Sprites
 {
-    public class LineRenderer : StageObjectRenderer<Line, LineState>
+    public class LineRenderer : StoryboardComponentRenderer<Line, LineState>
     {
         public UnityEngine.LineRenderer Line { get; private set; }
 
+        public override Transform Transform => Line.transform;
+        
+        public override bool IsOnCanvas => false;
+        
         public LineRenderer(StoryboardRenderer mainRenderer, Line component) : base(mainRenderer, component)
         {
         }
@@ -17,10 +21,18 @@ namespace Cytoid.Storyboard.Sprites
 
         public override async UniTask Initialize()
         {
-            var gameObject = new GameObject("Line_" + Component.Id);
-            gameObject.transform.parent = MainRenderer.Game.contentParent.transform;
-            Line = gameObject.AddComponent<UnityEngine.LineRenderer>();
-            Clear();
+            var targetRenderer = GetTargetRenderer<LineRenderer>();
+            if (targetRenderer != null)
+            {
+                Line = targetRenderer.Line;
+            }
+            else
+            {
+                var gameObject = new GameObject("Line_" + Component.Id);
+                gameObject.transform.parent = MainRenderer.Game.contentParent.transform;
+                Line = gameObject.AddComponent<UnityEngine.LineRenderer>();
+                Clear();
+            }
         }
 
         public override void Clear()

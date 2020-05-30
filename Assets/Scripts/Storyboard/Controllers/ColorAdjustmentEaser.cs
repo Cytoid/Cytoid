@@ -15,13 +15,13 @@ namespace Cytoid.Storyboard.Controllers
                     Provider.ColorAdjustment.enabled = From.ColorAdjustment.Value;
                     if (From.ColorAdjustment.Value)
                     {
-                        if (From.Brightness.IsSet())
+                        if (From.Brightness != null)
                             Provider.ColorAdjustment.Brightness = EaseFloat(From.Brightness, To.Brightness);
 
-                        if (From.Saturation.IsSet())
+                        if (From.Saturation != null)
                             Provider.ColorAdjustment.Saturation = EaseFloat(From.Saturation, To.Saturation);
 
-                        if (From.Contrast.IsSet())
+                        if (From.Contrast != null)
                             Provider.ColorAdjustment.Contrast = EaseFloat(From.Contrast, To.Contrast);
                     }
                 }

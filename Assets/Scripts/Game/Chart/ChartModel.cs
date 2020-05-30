@@ -19,7 +19,7 @@ public class ChartModel
     public double size = 1.0;
     public double opacity = 1.0;
     public string ring_color;
-    public string[] fill_colors = new string[10];
+    public string[] fill_colors = new string[12];
     
     [Serializable]
     public class Page

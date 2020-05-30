@@ -4,20 +4,46 @@ using static UnityEngine.Object;
 
 namespace Cytoid.Storyboard.Texts
 {
-    public class TextRenderer : StageObjectRenderer<Text, TextState>
+    public class TextRenderer : StoryboardComponentRenderer<Text, TextState>
     {
         
         public UnityEngine.UI.Text Text { get; private set; }
         
+        public RectTransform RectTransform { get; private set; }
+        
+        public Canvas Canvas { get; private set; }
+        
+        public CanvasGroup CanvasGroup { get; private set; }
+        
         public TextRenderer(StoryboardRenderer mainRenderer, Text component) : base(mainRenderer, component)
         {
         }
-        
+
+        public override Transform Transform => RectTransform;
+
+        public override bool IsOnCanvas => true;
+
         public override async UniTask Initialize()
         {
-            Text = Instantiate(Provider.TextPrefab, Provider.Canvas.transform);
-            Text.gameObject.name = $"Text[{Component.States[0].Text}]";
-            Clear();
+            var targetRenderer = GetTargetRenderer<TextRenderer>();
+            if (targetRenderer != null)
+            {
+                Text = targetRenderer.Text;
+                RectTransform = targetRenderer.RectTransform;
+                Canvas = targetRenderer.Canvas;
+                CanvasGroup = targetRenderer.CanvasGroup;
+            }
+            else
+            {
+                Text = Instantiate(Provider.TextPrefab, GetParentTransform());
+                RectTransform = Text.rectTransform;
+                Canvas = Text.GetComponent<Canvas>();
+                Canvas.overrideSorting = true;
+                Canvas.sortingLayerName = "Storyboard1";
+                CanvasGroup = Text.GetComponent<CanvasGroup>();
+                Text.gameObject.name = $"Text[{Component.States[0].Text}]";
+                Clear();
+            }
         }
 
         public override StoryboardRendererEaser<TextState> CreateEaser() => new TextEaser(this);
@@ -27,7 +53,9 @@ namespace Cytoid.Storyboard.Texts
             Text.text = "";
             Text.fontSize = 20;
             Text.alignment = TextAnchor.MiddleCenter;
-            Text.color = UnityEngine.Color.white.WithAlpha(0);
+            Text.color = UnityEngine.Color.white;
+            CanvasGroup.alpha = 0;
+            IsTransformActive = false;
         }
 
         public override void Dispose()

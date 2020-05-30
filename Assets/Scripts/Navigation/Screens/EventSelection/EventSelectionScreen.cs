@@ -72,7 +72,7 @@ public class EventSelectionScreen : Screen
         SpinnerOverlay.Show();
 
         RestClient.GetArray<EventMeta>(new RequestHelper {
-            Uri = $"{Context.ServicesUrl}/posts?type=event",
+            Uri = $"{Context.ServicesUrl}/events",
             Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
             EnableDebug = true
         }).Then(data =>
@@ -137,7 +137,7 @@ public class EventSelectionScreen : Screen
                 coverImage.DOColor(Color.black, 0.4f);
                 tasks.Add(UniTask.Delay(TimeSpan.FromSeconds(0.4f)));
             }
-            var downloadTask = Context.AssetMemory.LoadAsset<Sprite>(meta.cover.OriginalUrl, AssetTag.EventCover, useFileCache: true);
+            var downloadTask = Context.AssetMemory.LoadAsset<Sprite>(meta.cover.OriginalUrl, AssetTag.EventCover, allowFileCache: true);
             tasks.Add(downloadTask);
 
             await UniTask.WhenAll(tasks);
@@ -158,7 +158,7 @@ public class EventSelectionScreen : Screen
                 logoImage.DOFade(0, 0.4f);
                 tasks.Add(UniTask.Delay(TimeSpan.FromSeconds(0.4f)));
             }
-            var downloadTask = Context.AssetMemory.LoadAsset<Sprite>(meta.logo.OriginalUrl, AssetTag.EventLogo, useFileCache: true);
+            var downloadTask = Context.AssetMemory.LoadAsset<Sprite>(meta.logo.OriginalUrl, AssetTag.EventLogo, allowFileCache: true);
             tasks.Add(downloadTask);
 
             await UniTask.WhenAll(tasks);
@@ -182,12 +182,13 @@ public class EventSelectionScreen : Screen
                 if (meta.locked)
                 {
                     // TODO
+                    return;
                 }
                 
                 if (meta.levelId != null)
                 {
-                    return;/*
-                    Context.SelectedLevel = meta.associatedLevel.ToLevel(LevelType.Official);
+                    return;
+                    /*Context.SelectedLevel = meta.levelId.ToLevel(LevelType.Official);
                     Context.ScreenManager.ChangeScreen(
                         GamePreparationScreen.Id, ScreenTransition.In, 0.4f,
                         transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter()
@@ -203,6 +204,7 @@ public class EventSelectionScreen : Screen
                     );
                 }
             });
+            infoBanner.transform.RebuildLayout();
             infoBanner.Enter();
         });
     }

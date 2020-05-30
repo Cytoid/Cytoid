@@ -1,8 +1,11 @@
+using System;
+using System.Globalization;
 using LeTai.Asset.TranslucentImage;
 using Polyglot;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Object = UnityEngine.Object;
 
 public static class SettingsFactory
 {
@@ -158,6 +161,17 @@ public static class SettingsFactory
                 () => lp.Settings.HeadsetNoteOffset, it => lp.Settings.HeadsetNoteOffset = it,
                 "SETTINGS_UNIT_SECONDS".Get(), 0.ToString())
             .SaveSettingsOnChange();
+        
+        var input = Object.Instantiate(provider.input, parent);
+        input.SetContent("SETTINGS_JUDGMENT_OFFSET".Get(), "SETTINGS_JUDGMENT_OFFSET_DESC".Get(),
+                () => lp.Settings.JudgmentOffset, it =>
+                {
+                    it = Mathf.Clamp(it, -0.5f, 0.5f);
+                    lp.Settings.JudgmentOffset = it;
+                    input.inputField.text = it.ToString(CultureInfo.InvariantCulture);
+                },
+                "SETTINGS_UNIT_SECONDS".Get(), 0.ToString())
+            .SaveSettingsOnChange();
     }
 
     public static void InstantiateGameplaySettings(Transform parent)
@@ -179,7 +193,7 @@ public static class SettingsFactory
             .SaveSettingsOnChange();
         Object.Instantiate(provider.pillRadioGroup, parent)
             .SetContent("SETTINGS_HITBOX_SIZE_DRAG".Get(), "",
-                () => lp.Settings.HitboxSizes[NoteType.DragHead], it => lp.Settings.HitboxSizes[NoteType.DragHead] = it, new []
+                () => lp.Settings.HitboxSizes[NoteType.DragChild], it => lp.Settings.HitboxSizes[NoteType.DragChild] = it, new []
                 {
                     ("SETTINGS_SIZE_SMALL".Get(), 0), ("SETTINGS_SIZE_MEDIUM".Get(), 1), ("SETTINGS_SIZE_LARGE".Get(), 2)
                 })
@@ -239,7 +253,7 @@ public static class SettingsFactory
         
         Object.Instantiate(provider.pillRadioGroup, parent)
             .SetContent("SETTINGS_SHOW_BOUNDARIES".Get(), "SETTINGS_SHOW_BOUNDARIES_DESC".Get(),
-                () => lp.Settings.DisplayStoryboardEffects, it => lp.Settings.DisplayStoryboardEffects = it)
+                () => lp.Settings.DisplayBoundaries, it => lp.Settings.DisplayBoundaries = it)
             .SaveSettingsOnChange();
         Object.Instantiate(provider.select, parent)
             .SetContent("SETTINGS_BACKGROUND_OPACITY".Get(), "SETTINGS_BACKGROUND_OPACITY_DESC".Get(),
@@ -325,6 +339,10 @@ public static class SettingsFactory
                 () => lp.Settings.NoteFillColorsAlt[NoteType.Flick], it => lp.Settings.NoteFillColorsAlt[NoteType.Flick] = it,
                 "", "#FF5964", true)
             .SaveSettingsOnChange();
+        Object.Instantiate(provider.pillRadioGroup, parent)
+            .SetContent("SETTINGS_USE_FILL_COLOR_FOR_DRAG_CHILD_NODES".Get(), "SETTINGS_USE_FILL_COLOR_FOR_DRAG_CHILD_NODES_DESC".Get(),
+                () => lp.Settings.UseFillColorForDragChildNodes, it => lp.Settings.UseFillColorForDragChildNodes = it)
+            .SaveSettingsOnChange();
     }
 
     public static void InstantiateAdvancedSettings(Transform parent)
@@ -348,6 +366,18 @@ public static class SettingsFactory
                     AudioSettings.Reset(audioConfig);
                 });
             });
+        }
+
+        if (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
+        {
+            Object.Instantiate(provider.pillRadioGroup, parent)
+                .SetContent("SETTINGS_USE_NATIVE_AUDIO".Get(), "SETTINGS_USE_NATIVE_AUDIO_DESC".Get(),
+                    () => lp.Settings.UseNativeAudio, it =>
+                    {
+                        lp.Settings.UseNativeAudio = it;
+                        Context.AudioManager.SetUseNativeAudio(it);
+                    })
+                .SaveSettingsOnChange();
         }
 
         Object.Instantiate(provider.pillRadioGroup, parent)

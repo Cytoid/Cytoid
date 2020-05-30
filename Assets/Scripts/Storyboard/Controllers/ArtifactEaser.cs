@@ -10,28 +10,28 @@ namespace Cytoid.Storyboard.Controllers
         {
             if (Config.UseEffects)
             {
-                if (From.Artifact.IsSet())
+                if (From.Artifact != null)
                 {
                     Provider.Artifact.enabled = From.Artifact.Value;
                     if (From.Artifact.Value)
                     {
-                        if (From.ArtifactIntensity.IsSet())
+                        if (From.ArtifactIntensity != null)
                         {
                             Provider.Artifact.Fade = EaseFloat(From.ArtifactIntensity, To.ArtifactIntensity);
                         }
 
-                        if (From.ArtifactColorisation.IsSet())
+                        if (From.ArtifactColorisation != null)
                         {
                             Provider.Artifact.Colorisation =
                                 EaseFloat(From.ArtifactColorisation, To.ArtifactColorisation);
                         }
 
-                        if (From.ArtifactParasite.IsSet())
+                        if (From.ArtifactParasite != null)
                         {
                             Provider.Artifact.Parasite = EaseFloat(From.ArtifactParasite, To.ArtifactParasite);
                         }
 
-                        if (From.ArtifactNoise.IsSet())
+                        if (From.ArtifactNoise != null)
                         {
                             Provider.Artifact.Noise = EaseFloat(From.ArtifactNoise, To.ArtifactNoise);
                         }

@@ -13,16 +13,33 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Events;
+using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class Context : SingletonMonoBehavior<Context>
 {
-    public const string Version = "2.0 Alpha 6";
+    public const string Version = "2.0 Beta 1 RC";
 
     public static string ApiUrl = "https://api.cytoid.io";
-    public const string ServicesUrl = "https://services.cytoid.io";
+    public static string ServicesUrl = "https://services.cytoid.io";
     public const string WebsiteUrl = "https://cytoid.io";
 
+    public string AddressableRemoteUrl
+    {
+        get
+        {
+#if UNITY_ANDROID
+                return "https://artifacts.cytoid.io/addressables/Android/";
+#elif UNITY_IOS
+                return "https://artifacts.cytoid.io/addressables/iOS/";
+#else
+                throw new InvalidOperationException();
+#endif
+        }
+    }
+    public const string AddressableCatalogName = "2.0b";
+    
     public const string OfficialAccountId = "cytoid";
 
     public const int ReferenceWidth = 1920;
@@ -31,8 +48,12 @@ public class Context : SingletonMonoBehavior<Context>
     public const int ThumbnailWidth = 576;
     public const int ThumbnailHeight = 360;
 
-    public static readonly PreSceneChangedEvent PreSceneChangedEvent = new PreSceneChangedEvent();
-    public static readonly PostSceneChangedEvent PostSceneChangedEvent = new PostSceneChangedEvent();
+    public static int AndroidVersionCode = -1;
+
+    public static readonly PreSceneChangedEvent PreSceneChanged = new PreSceneChangedEvent();
+    public static readonly PostSceneChangedEvent PostSceneChanged = new PostSceneChangedEvent();
+    public static readonly UnityEvent OnApplicationInitialized = new UnityEvent();
+    public static bool IsInitialized { get; private set; }
 
     public static readonly LevelEvent
         OnSelectedLevelChanged = new LevelEvent(); // TODO: This feels definitely unnecessary. Integrate with screen?
@@ -55,7 +76,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static readonly CharacterManager CharacterManager = new CharacterManager();
     public static readonly RemoteAssetManager RemoteAssetManager = new RemoteAssetManager();
     public static readonly AssetMemory AssetMemory = new AssetMemory();
-
+    
     public static LiteDatabase Database;
 
     public static Level SelectedLevel
@@ -112,6 +133,10 @@ public class Context : SingletonMonoBehavior<Context>
     private async void InitializeApplication()
     {
         Application.lowMemory += OnLowMemory;
+        Application.targetFrameRate = 120;
+        Input.gyro.enabled = true;
+        DOTween.defaultEaseType = Ease.OutCubic;
+        UnityEngine.Screen.sleepTimeout = SleepTimeout.NeverSleep;
         JsonConvert.DefaultSettings = () => new JsonSerializerSettings
         {
             Converters = new List<JsonConverter>
@@ -125,35 +150,67 @@ public class Context : SingletonMonoBehavior<Context>
             color => "#" + ColorUtility.ToHtmlStringRGB(color),
             s => s.AsString.ToColor()
         );
-        
-        Database = new LiteDatabase(
-            new ConnectionString
-            {
-                Filename = Path.Combine(Application.persistentDataPath, "Cytoid.db"),
-                // Password = SecuredConstants.DbSecret,
-                Connection = Application.isEditor ? ConnectionType.Shared : ConnectionType.Direct
+
+        if (Application.platform == RuntimePlatform.Android)
+        {
+            // Get Android version
+            using (var version = new AndroidJavaClass("android.os.Build$VERSION")) {
+                AndroidVersionCode = version.GetStatic<int>("SDK_INT");
             }
-        );
-
-        // Warm up LiteDB
-        Database.GetProfile();
-        // Database.DropCollection("settings");
-        // Database.DropCollection("level_records"); /////// TODO TODO TODO TODO
+        }
         
-        // Load settings
-        Player.LoadSettings();
-
+        // Initialize fonts
         FontManager.LoadFonts();
 
+        try
+        {
+            Database = new LiteDatabase(
+                new ConnectionString
+                {
+                    Filename = Path.Combine(Application.persistentDataPath, "Cytoid.db"),
+                    // Password = SecuredConstants.DbSecret,
+                    Connection = Application.isEditor ? ConnectionType.Shared : ConnectionType.Direct
+                }
+            );
+        }
+        catch (Exception e)
+        {
+            Debug.LogError(e);
+            Dialog.Instantiate().Also(it =>
+            {
+                it.UseNegativeButton = false;
+                it.UsePositiveButton = false;
+                it.Message =
+                    "DIALOG_CRITICAL_ERROR_COULD_NOT_START_GAME_REASON_X".Get("DIALOG_CRITICAL_ERROR_REASON_DATABASE"
+                        .Get());
+            }).Open();
+            return;
+        }
+
+        // LiteDB warm-up
+        Library.Initialize();
+        
+        // Load settings
+        Player.Initialize();
+        Player.LoadSettings();
+
+        // Initialize audio
         var audioConfig = AudioSettings.GetConfiguration();
         DefaultDspBufferSize = audioConfig.dspBufferSize;
 
-        if (Application.platform == RuntimePlatform.Android && Player.Settings.AndroidDspBufferSize > 0)
+        if (Application.isEditor)
+        {
+            audioConfig.dspBufferSize = 2048;
+        }
+        else if (Application.platform == RuntimePlatform.Android && Player.Settings.AndroidDspBufferSize > 0)
         {
             audioConfig.dspBufferSize = Player.Settings.AndroidDspBufferSize;
             AudioSettings.Reset(audioConfig);
         }
 
+        await UniTask.WaitUntil(() => AudioManager != null);
+        AudioManager.Initialize();
+        
         if (Application.platform == RuntimePlatform.IPhonePlayer)
         {
             // MMVibrationManager.iOSInitializeHaptics();
@@ -162,12 +219,7 @@ public class Context : SingletonMonoBehavior<Context>
         InitialWidth = UnityEngine.Screen.width;
         InitialHeight = UnityEngine.Screen.height;
         UpdateGraphicsQuality();
-
-        DOTween.defaultEaseType = Ease.OutCubic;
-        UnityEngine.Screen.sleepTimeout = SleepTimeout.NeverSleep;
-        Application.targetFrameRate = 120;
-        Input.gyro.enabled = true;
-
+        
         UserDataPath = Application.persistentDataPath;
 
         if (Application.platform == RuntimePlatform.Android)
@@ -207,8 +259,8 @@ public class Context : SingletonMonoBehavior<Context>
 
         SelectedMods = new HashSet<Mod>(Player.Settings.EnabledMods);
 
-        PreSceneChangedEvent.AddListener(PreSceneChanged);
-        PostSceneChangedEvent.AddListener(PostSceneChanged);
+        PreSceneChanged.AddListener(OnPreSceneChanged);
+        PostSceneChanged.AddListener(OnPostSceneChanged);
 
         OnLanguageChanged.AddListener(FontManager.UpdateSceneTexts);
         Localization.Instance.SelectLanguage((Language) Player.Settings.Language);
@@ -217,14 +269,16 @@ public class Context : SingletonMonoBehavior<Context>
         switch (SceneManager.GetActiveScene().name)
         {
             case "Navigation":
-                await Addressables.InitializeAsync().Task;
-
+                await InitializeAddressables();
+                Debug.Log("Initializing character asset");
+                var timer = new BenchmarkTimer("Character");
                 if (await CharacterManager.SetActiveCharacter(CharacterManager.SelectedCharacterAssetId) == null)
                 {
                     // Reset to default
                     CharacterManager.SelectedCharacterAssetId = null;
                     await CharacterManager.SetActiveCharacter(CharacterManager.SelectedCharacterAssetId);
                 }
+                timer.Time();
                 await UniTask.WaitUntil(() => ScreenManager != null);
 
                 if (true)
@@ -273,19 +327,41 @@ public class Context : SingletonMonoBehavior<Context>
 
         graphyManager = GraphyManager.Instance;
         UpdateProfilerDisplay();
-        
-        OnlinePlayer.OnAuthenticated.AddListener(() =>
-        {
-            print(RestClient.Get(new RequestHelper
-            {
-                Uri = $"{ServicesUrl}/library",
-                Headers = OnlinePlayer.GetAuthorizationHeaders(),
-                EnableDebug = true
-            }));
-        });
+
+        IsInitialized = true;
+        OnApplicationInitialized.Invoke();
     }
 
-    public static void PreSceneChanged(string prev, string next)
+    public async UniTask InitializeAddressables()
+    {
+        var timer = new BenchmarkTimer("Addressables");
+        Debug.Log("Initializing addressables");
+        
+        var proceed = false;
+        RestClient.Get(new RequestHelper
+        {
+            Uri = AddressableRemoteUrl + $"catalog_{AddressableCatalogName}.hash",
+            Timeout = 3
+        }).Then(_ =>
+        {
+            Debug.Log("Fetching catalog from artifact server");
+        }).CatchRequestError(it =>
+        {
+            TextDataProvider.ForceFailRemote = true;
+            Debug.LogWarning(it);
+            Debug.LogWarning("Cannot connect to artifact server. Aborting catalog update.");
+            Toast.Next(Toast.Status.Failure, "TOAST_COULD_NOT_CONNECT_TO_SERVER_ENTERING_OFFLINE_MODE".Get());
+            SetOffline(true);
+        }).Finally(() => proceed = true);
+        await UniTask.WaitUntil(() => proceed);
+        
+        await Addressables.InitializeAsync().Task;
+        timer.Time();
+
+        TextDataProvider.ForceFailRemote = false;
+    }
+
+    public static void OnPreSceneChanged(string prev, string next)
     {
         if (prev == "Navigation" && next == "Game")
         {
@@ -295,7 +371,7 @@ public class Context : SingletonMonoBehavior<Context>
         }
     }
 
-    public static async void PostSceneChanged(string prev, string next)
+    public static async void OnPostSceneChanged(string prev, string next)
     {
         if (prev == "Navigation" && next == "Game")
         {
@@ -306,6 +382,7 @@ public class Context : SingletonMonoBehavior<Context>
         if (prev == "Game" && next == "Navigation")
         {
             Input.gyro.enabled = true;
+            AudioManager.Initialize();
 
             // Wait until character is loaded
             await CharacterManager.SetSelectedCharacterActive();
@@ -447,10 +524,10 @@ public class Context : SingletonMonoBehavior<Context>
 
     public static void SetMajorCanvasBlockRaycasts(bool blocksRaycasts)
     {
+        if (ScreenManager == null) return;
         if (ScreenManager.ActiveScreenId != null)
         {
-            ScreenManager.ActiveScreen.CanvasGroup.blocksRaycasts = blocksRaycasts;
-            ScreenManager.ActiveScreen.CanvasGroup.interactable = blocksRaycasts;
+            ScreenManager.ActiveScreen.SetBlockRaycasts(blocksRaycasts);
         }
 
         if (ProfileWidget.Instance != null)
@@ -517,13 +594,13 @@ public class ContextEditor : Editor
 
             if (GUILayout.Button("Make API work/not work"))
             {
-                if (Context.ApiUrl == "https://api.cytoid.io")
+                if (Context.ServicesUrl == "https://services.cytoid.io")
                 {
-                    Context.ApiUrl = "https://apissss.cytoid.io";
+                    Context.ServicesUrl = "https://servicessss.cytoid.io";
                 }
                 else
                 {
-                    Context.ApiUrl = "https://api.cytoid.io";
+                    Context.ServicesUrl = "https://services.cytoid.io";
                 }
             }
 

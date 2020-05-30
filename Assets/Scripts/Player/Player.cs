@@ -15,6 +15,18 @@ public class Player
 
     private readonly LocalPlayerLegacy legacy = new LocalPlayerLegacy();
 
+    public void Initialize()
+    {
+        LoadSettings();
+        ValidateData();
+    }
+
+    public void ValidateData()
+    {
+        var col = Context.Database.GetCollection<LevelRecord>("level_records");
+        col.DeleteMany(it => it.LevelId == null);
+    }
+    
     public void LoadSettings()
     {
         Context.Database.Let(it =>
@@ -91,6 +103,7 @@ public class Player
                 }
 
                 Context.Database.SetLevelRecord(record, true);
+                level.Record = record;
             }
         });
     }
@@ -104,7 +117,7 @@ public class Player
             SchemaVersion = 1,
             PlayerId = PlayerPrefs.GetString("Uid"),
             LoginToken = SecuredPlayerPrefs.GetString("JwtToken", null),
-            ActiveCharacterId = PlayerPrefs.GetString("ActiveCharacter", null),
+            ActiveCharacterId = null,
             Language = legacy.Language,
             PlayRanked = legacy.PlayRanked,
             EnabledMods = legacy.EnabledMods.ToList(),
@@ -156,13 +169,13 @@ public class Player
             HitSound = legacy.HitSound,
             HitTapticFeedback = legacy.HitTapticFeedback,
             DisplayStoryboardEffects = legacy.UseStoryboardEffects,
-            GraphicsQuality = (GraphicsQuality) Enum.Parse(typeof(GraphicsQuality), legacy.GraphicsQuality, true),
+            GraphicsQuality = Enum.TryParse<GraphicsQuality>(legacy.GraphicsQuality, out var result) ? result : (Application.platform == RuntimePlatform.IPhonePlayer ? GraphicsQuality.High : GraphicsQuality.Medium),
             BaseNoteOffset = legacy.BaseNoteOffset,
             HeadsetNoteOffset = legacy.HeadsetNoteOffset,
             ClearEffectsSize = legacy.ClearFXSize,
             DisplayProfiler = legacy.DisplayProfiler,
             DisplayNoteIds = legacy.DisplayNoteIds,
-            LocalLevelSort = (LevelSort) Enum.Parse(typeof(LevelSort), legacy.LocalLevelsSortBy),
+            LocalLevelSort = Enum.TryParse<LevelSort>(legacy.LocalLevelsSortBy, out var sort) ? sort : LevelSort.AddedDate,
             AndroidDspBufferSize = legacy.DspBufferSize,
             LocalLevelSortIsAscending = legacy.LocalLevelsSortInAscendingOrder
         };

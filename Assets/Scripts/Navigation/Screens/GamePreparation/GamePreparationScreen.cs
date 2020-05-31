@@ -1,5 +1,4 @@
 using System;
-using System.Linq.Expressions;
 using DG.Tweening;
 using Newtonsoft.Json;
 using UniRx.Async;
@@ -22,6 +21,10 @@ public class GamePreparationScreen : Screen
     public ActionTabs actionTabs;
     public RankingsTab rankingsTab;
     public RatingTab ratingTab;
+
+    public RectTransform ownerRoot;
+    public Avatar ownerAvatar;
+    public Text ownerName;
 
     public GameObject gameplayIcon;
     public GameObject settingsIcon;
@@ -111,6 +114,7 @@ public class GamePreparationScreen : Screen
             var localVersion = Level.Meta.version;
             Context.LevelManager.FetchLevelMeta(Level.Id, true).Then(it =>
             {
+                LoadOwner();
                 print($"Remote version: {it.version}, local version: {localVersion}");
                 if (it.version > Level.Meta.version)
                 {
@@ -132,7 +136,8 @@ public class GamePreparationScreen : Screen
         LoadLevelPerformance();
         LoadCover(needReload);
         LoadPreview(needReload);
-
+        LoadOwner();
+        
         UpdateTopMenu();
         UpdateStartButton();
 
@@ -147,8 +152,25 @@ public class GamePreparationScreen : Screen
         UpdateTopMenu();
         LoadPreview(true);
         LoadCover(true);
+        LoadOwner();
         if (!previewAudioSource.isPlaying) LoadPreview(true);
         UpdateStartButton();
+    }
+
+    private void LoadOwner()
+    {
+        if (Level.Type == LevelType.Community && Level.OnlineLevel?.Owner != null)
+        {
+            ownerRoot.gameObject.SetActive(true);
+            ownerAvatar.action = AvatarAction.ViewLevels;
+            ownerAvatar.SetModel(Level.OnlineLevel.Owner);
+            ownerName.text = Level.OnlineLevel.Owner.Uid;
+        }
+        else
+        {
+            ownerRoot.gameObject.SetActive(false);
+            ownerAvatar.Dispose();
+        }
     }
 
     private void UpdateTopMenu()
@@ -299,6 +321,7 @@ public class GamePreparationScreen : Screen
     public void OnLevelBestPerformanceUpdated(string levelId)
     {
         if (levelId != Level.Id) return;
+        if (!Level.IsLocal) Level.Record = Context.Database.GetLevelRecord(levelId) ?? Level.Record;
         LoadLevelPerformance();
         Toast.Next(Toast.Status.Success, "TOAST_BEST_PERFORMANCE_SYNCHRONIZED".Get());
     }
@@ -313,6 +336,8 @@ public class GamePreparationScreen : Screen
     {
         base.OnScreenBecameInactive();
         Level = null;
+        ownerRoot.gameObject.SetActive(false);
+        ownerAvatar.Dispose();
         Context.LevelManager.OnLevelMetaUpdated.RemoveListener(OnLevelMetaUpdated);
         Context.OnlinePlayer.OnLevelBestPerformanceUpdated.RemoveListener(OnLevelBestPerformanceUpdated);
         Context.OnSelectedLevelChanged.RemoveListener(OnSelectedLevelChanged);
@@ -402,6 +427,11 @@ public class GamePreparationScreen : Screen
                 Context.SelectedLevel = level;
                 Toast.Enqueue(Toast.Status.Success, "TOAST_SUCCESSFULLY_DOWNLOADED_LEVEL".Get());
 
+                if (Level.Type == LevelType.Community && Context.Player.ShouldOneShot("Community Level Offset Calibration"))
+                {
+                    Dialog.Prompt("DIALOG_TUTORIAL_OFFSET_CALIBRATION".Get());
+                }
+                
                 UpdateTopMenu();
                 LoadPreview(true);
                 LoadCover(true);

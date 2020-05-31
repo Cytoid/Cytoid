@@ -139,6 +139,7 @@ public class AssetMemory
                 }
                 else
                 {
+                    isLoading.Remove(path);
                     return default;
                 }
             }
@@ -215,6 +216,7 @@ public class AssetMemory
             
             if (loader.Error != null)
             {
+                isLoading.Remove(path);
                 Debug.LogError($"AssetMemory: Failed to download audio from {path}");
                 Debug.LogError(loader.Error);
                 return default;

@@ -66,9 +66,8 @@ public class ClassicDragHeadNoteRenderer : ClassicNoteRenderer
         }
         else
         {
-            const float minSize = 0.7f;
-            var timeRequired = 1.175f / Note.Model.speed;
-            var timeScale = Mathf.Clamp((Game.Time - Note.Model.intro_time) / timeRequired, 0f, 1f);
+            var minSize = Note.Model.initial_scale;
+            var timeScale = Mathf.Clamp((Game.Time - Note.Model.intro_time) / (Note.Model.start_time - Note.Model.intro_time), 0f, 1f);
             var timeScaledSize = BaseTransformSize * minSize + BaseTransformSize * (1 - minSize) * timeScale;
 
             Note.transform.SetLocalScaleXY(timeScaledSize, timeScaledSize);

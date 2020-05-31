@@ -70,8 +70,8 @@ public class RateLevelDialog : Dialog
             
             RestClient.Post<LevelRating>(request = new RequestHelper
                 {
-                    Uri = $"{Context.ServicesUrl}/levels/{levelId}/ratings",
-                    Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
+                    Uri = $"{Context.ApiUrl}/levels/{levelId}/ratings",
+                    Headers = Context.OnlinePlayer.GetRequestHeaders(),
                     Body = new PostLevelRating
                     {
                         rating = rating

@@ -49,12 +49,15 @@ Shader "UI/RoundedCorners/RoundedCorners" {
             #pragma vertex vert
             #pragma fragment frag
             
+            #include "./../../Coffee/UIExtensions/SoftMaskForUGUI/SoftMask.cginc"	// Add for soft mask
+			#pragma shader_feature __ SOFTMASK_EDITOR	// Add for soft mask
+            
             float4 _WidthHeightRadius;
             sampler2D _MainTex;
 
             fixed4 frag (v2f i) : SV_Target {
                 float alpha = CalcAlpha(i.uv, _WidthHeightRadius.xy, _WidthHeightRadius.z);
-                return mixAlpha(tex2D(_MainTex, i.uv), i.color, alpha);
+                return mixAlpha(tex2D(_MainTex, i.uv), i.color, alpha * SoftMask(i.vertex, i.vertex));
             }
             
             ENDCG

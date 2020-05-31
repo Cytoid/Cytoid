@@ -107,8 +107,8 @@ public class TierSelectionScreen : Screen
             await Context.LevelManager.LoadLevelsOfType(LevelType.Tier);
             RestClient.Get(new RequestHelper
             {
-                Uri = $"{Context.ServicesUrl}/seasons/alpha",
-                Headers = Context.OnlinePlayer.GetAuthorizationHeaders()
+                Uri = $"{Context.ApiUrl}/seasons/alpha",
+                Headers = Context.OnlinePlayer.GetRequestHeaders()
             }).Then(res =>
             {
                 print("TierSelection: " + res.Text);

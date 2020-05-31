@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using DG.Tweening;
 using LiteDB;
+using MoreMountains.NiceVibrations;
 using Newtonsoft.Json;
 using Polyglot;
 using Proyecto26;
@@ -15,24 +16,27 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.Events;
 using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
 public class Context : SingletonMonoBehavior<Context>
 {
-    public const string Version = "2.0 Beta 1 RC";
+    public const string VersionName = "2.0 Beta 1";
+    public const string VersionString = "2.0.0";
+    
+    public static string MockApiUrl;
 
-    public static string ApiUrl = "https://api.cytoid.io";
-    public static string ServicesUrl = "https://services.cytoid.io";
-    public const string WebsiteUrl = "https://cytoid.io";
-
-    public string AddressableRemoteUrl
+    public static string ApiUrl => MockApiUrl ?? Player.Settings.CdnRegion.GetApiUrl();
+    public static string WebsiteUrl =>  Player.Settings.CdnRegion.GetWebsiteUrl();
+    public static string AddressableRemoteBaseUrl => Player.Settings.CdnRegion.GetAddressableRemoteBaseUrl();
+    public static string StoreUrl => Player.Settings.CdnRegion.GetStoreUrl();
+    
+    public static string AddressableRemoteFullUrl
     {
         get
         {
 #if UNITY_ANDROID
-                return "https://artifacts.cytoid.io/addressables/Android/";
+                return $"{AddressableRemoteBaseUrl}/addressables/Android/";
 #elif UNITY_IOS
-                return "https://artifacts.cytoid.io/addressables/iOS/";
+                return $"{AddressableRemoteBaseUrl}/addressables/iOS/";
 #else
                 throw new InvalidOperationException();
 #endif
@@ -45,8 +49,11 @@ public class Context : SingletonMonoBehavior<Context>
     public const int ReferenceWidth = 1920;
     public const int ReferenceHeight = 1080;
 
-    public const int ThumbnailWidth = 576;
-    public const int ThumbnailHeight = 360;
+    public const int LevelThumbnailWidth = 576;
+    public const int LevelThumbnailHeight = 360;
+    
+    public const int CollectionThumbnailWidth = 576;
+    public const int CollectionThumbnailHeight = 192;
 
     public static int AndroidVersionCode = -1;
 
@@ -132,6 +139,8 @@ public class Context : SingletonMonoBehavior<Context>
 
     private async void InitializeApplication()
     {
+        Debug.Log($"Package name: {Application.identifier}");
+        
         Application.lowMemory += OnLowMemory;
         Application.targetFrameRate = 120;
         Input.gyro.enabled = true;
@@ -192,7 +201,9 @@ public class Context : SingletonMonoBehavior<Context>
         
         // Load settings
         Player.Initialize();
-        Player.LoadSettings();
+        
+        // Check region
+        await DetectServerCdn();
 
         // Initialize audio
         var audioConfig = AudioSettings.GetConfiguration();
@@ -210,11 +221,6 @@ public class Context : SingletonMonoBehavior<Context>
 
         await UniTask.WaitUntil(() => AudioManager != null);
         AudioManager.Initialize();
-        
-        if (Application.platform == RuntimePlatform.IPhonePlayer)
-        {
-            // MMVibrationManager.iOSInitializeHaptics();
-        }
 
         InitialWidth = UnityEngine.Screen.width;
         InitialHeight = UnityEngine.Screen.height;
@@ -332,6 +338,49 @@ public class Context : SingletonMonoBehavior<Context>
         OnApplicationInitialized.Invoke();
     }
 
+    public async UniTask DetectServerCdn()
+    {
+        if (!Player.ShouldOneShot("Detect Server CDN")) return;
+
+        Debug.Log("Detecting server CDN");
+
+        if (Application.identifier == "me.tigerhix.cytoid")
+        {
+            var resolved = false;
+
+            RestClient.Get<RegionInfo>(new RequestHelper
+            {
+                Uri = "https://services.cytoid.io/ping",
+                Timeout = 3,
+                EnableDebug = true
+            }).Then(it =>
+            {
+                Player.Settings.CdnRegion = it.countryCode == "CN" ? CdnRegion.MainlandChina : CdnRegion.International;
+                resolved = true;
+            }).CatchRequestError(it =>
+            {
+                Debug.LogWarning(it);
+                RestClient.Get(new RequestHelper
+                {
+                    Uri = "https://api.cytoid.cn/ping",
+                    Timeout = 3,
+                    EnableDebug = true
+                }).Then(x => { Player.Settings.CdnRegion = CdnRegion.MainlandChina; }).CatchRequestError(x =>
+                {
+                    Debug.LogWarning(x);
+                    Player.ClearOneShot("Detect Server CDN");
+                }).Finally(() => resolved = true);
+            });
+            await UniTask.WaitUntil(() => resolved);
+        } 
+        else if (Application.identifier == "me.tigerhix.cytoid.cn")
+        {
+            Player.Settings.CdnRegion = CdnRegion.MainlandChina;
+        }
+
+        Debug.Log($"Detected: {Player.Settings.CdnRegion}");
+    }
+
     public async UniTask InitializeAddressables()
     {
         var timer = new BenchmarkTimer("Addressables");
@@ -340,7 +389,7 @@ public class Context : SingletonMonoBehavior<Context>
         var proceed = false;
         RestClient.Get(new RequestHelper
         {
-            Uri = AddressableRemoteUrl + $"catalog_{AddressableCatalogName}.hash",
+            Uri = AddressableRemoteFullUrl + $"catalog_{AddressableCatalogName}.hash",
             Timeout = 3
         }).Then(_ =>
         {
@@ -426,10 +475,13 @@ public class Context : SingletonMonoBehavior<Context>
         FontManager.UpdateSceneTexts();
     }
 
-    public static void Vibrate()
+    public static void Haptic(HapticTypes type, bool menu)
     {
-        // TODO: Haptic engine
-        // Handheld.Vibrate();
+        if (!Application.isEditor && Application.platform == RuntimePlatform.IPhonePlayer)
+        {
+            if (!(menu ? Player.Settings.MenuTapticFeedback : Player.Settings.HitTapticFeedback)) return;
+            MMVibrationManager.Haptic(type);
+        }
     }
 
     public static void SetAutoRotation(bool autoRotation)
@@ -594,14 +646,7 @@ public class ContextEditor : Editor
 
             if (GUILayout.Button("Make API work/not work"))
             {
-                if (Context.ServicesUrl == "https://services.cytoid.io")
-                {
-                    Context.ServicesUrl = "https://servicessss.cytoid.io";
-                }
-                else
-                {
-                    Context.ServicesUrl = "https://services.cytoid.io";
-                }
+                Context.MockApiUrl = Context.MockApiUrl == null ? "https://servicessss.cytoid.io" : null;
             }
 
             if (GUILayout.Button("Reward Overlay"))

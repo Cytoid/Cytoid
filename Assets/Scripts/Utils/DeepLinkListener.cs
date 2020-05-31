@@ -35,14 +35,17 @@ public class DeepLinkListener : SingletonMonoBehavior<DeepLinkListener>
 
     public void URLOpened(string url)
     {
-        using (var javaClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+        if (!Application.isEditor && Application.platform == RuntimePlatform.Android)
         {
-            using (var activityClass = javaClass.GetStatic<AndroidJavaObject>("currentActivity"))
+            using (var javaClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
             {
-                activityClass.Call<string>("consumeDeepLink");
+                using (var activityClass = javaClass.GetStatic<AndroidJavaObject>("currentActivity"))
+                {
+                    activityClass.Call<string>("consumeDeepLink");
+                }
             }
         }
-        Debug.LogError($"URL received: {url}");
+        Debug.Log($"URL received: {url}");
         OnDeepLinkReceived.Invoke(url);
     }
     

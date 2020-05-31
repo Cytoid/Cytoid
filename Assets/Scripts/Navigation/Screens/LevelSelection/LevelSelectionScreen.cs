@@ -6,7 +6,7 @@ using Proyecto26;
 using UniRx.Async;
 using UnityEngine.UI;
 
-public class LevelSelectionScreen : Screen
+public class LevelSelectionScreen : Screen, ScreenChangeListener
 {
     private static float savedScrollPosition = -1;
     public static Content SavedContent;
@@ -145,12 +145,15 @@ public class LevelSelectionScreen : Screen
 
     public void RefillLevels(LevelSort sort, bool asc, string query = "", List<Func<Level, bool>> filters = null)
     {
-        var levels = new List<Level>(Context.LevelManager.LoadedLocalLevels.Values);
-        levels.AddRange(Context.Library.Levels.Values.Select(it => it.Level.ToLevel(LevelType.Official)));
-        
-        // Remove duplicates
-        levels = levels.GroupBy(it => it.Id).Select(it => it.First()).ToList();
+        var dict = new Dictionary<string, Level>(Context.LevelManager.LoadedLocalLevels);
 
+        foreach (var kv in Context.Library.Levels)
+        {
+            dict[kv.Key] = kv.Value.Level.ToLevel(LevelType.Official);
+        }
+
+        var levels = dict.Values.ToList();
+        
         if (!query.IsNullOrEmptyTrimmed())
         {
             query = query.Trim();
@@ -215,7 +218,7 @@ public class LevelSelectionScreen : Screen
         }
 
         scrollRect.totalCount = levels.Count;
-        scrollRect.objectsToFill = levels.ToArray().Cast<object>().ToArray();
+        scrollRect.objectsToFill = levels.Select(it => new LevelView{Level = it}).ToArray().Cast<object>().ToArray();
         scrollRect.RefillCells();
     }
 

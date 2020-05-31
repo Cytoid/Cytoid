@@ -14,7 +14,6 @@ TrueTypeFontImporter:
   - Source Han Sans HW TC
   fallbackFontReferences:
   - {fileID: 12800000, guid: 36ca29d3d00ca994f91976f58f9d4d36, type: 3}
-  - {fileID: 12800000, guid: 0a9230741fb29934696ce39008fef96f, type: 3}
   - {fileID: 12800000, guid: 4a1ce5d9c5e565042b3cb2bbbeaea11e, type: 3}
   customCharacters: 
   fontRenderingMode: 0

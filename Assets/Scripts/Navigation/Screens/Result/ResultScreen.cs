@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using DG.Tweening;
+using MoreMountains.NiceVibrations;
 using Newtonsoft.Json.Linq;
 using Proyecto26;
 using UniRx.Async;
@@ -222,7 +223,8 @@ public class ResultScreen : Screen
         if (isSharing) yield break;
 
         isSharing = true;
-        Context.AudioManager.Get("Navigate1").Play(ignoreDsp: true);
+        Context.Haptic(HapticTypes.SoftImpact, true);
+        Context.AudioManager.Get("Navigate3").Play(ignoreDsp: true);
 
         var levelMeta = Context.SelectedLevel.Meta;
 

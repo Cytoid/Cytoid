@@ -72,8 +72,8 @@ public class EventSelectionScreen : Screen
         SpinnerOverlay.Show();
 
         RestClient.GetArray<EventMeta>(new RequestHelper {
-            Uri = $"{Context.ServicesUrl}/events",
-            Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
+            Uri = $"{Context.ApiUrl}/events",
+            Headers = Context.OnlinePlayer.GetRequestHeaders(),
             EnableDebug = true
         }).Then(data =>
             {
@@ -182,12 +182,24 @@ public class EventSelectionScreen : Screen
                 if (meta.locked)
                 {
                     // TODO
+                    Dialog.Instantiate().Also(it =>
+                    {
+                        it.Message = "TEMP_MESSAGE_NEW_VERSION_REQUIRED".Get();
+                        it.UsePositiveButton = true;
+                        it.UseNegativeButton = false;
+                    }).Open();
                     return;
                 }
                 
                 if (meta.levelId != null)
                 {
-                    return;
+                    Dialog.Instantiate().Also(it =>
+                    {
+                        it.Message = "TEMP_MESSAGE_NEW_VERSION_REQUIRED".Get();
+                        it.UsePositiveButton = true;
+                        it.UseNegativeButton = false;
+                    }).Open();
+                    // TODO
                     /*Context.SelectedLevel = meta.levelId.ToLevel(LevelType.Official);
                     Context.ScreenManager.ChangeScreen(
                         GamePreparationScreen.Id, ScreenTransition.In, 0.4f,

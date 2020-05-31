@@ -149,11 +149,13 @@ public class Dialog : MonoBehaviour
         dialog.Open();
     }
     
-    public static void PromptUnclosable(string message)
+    public static void PromptUnclosable(string message, Action onPositive = default)
     {
         var dialog = Instantiate();
         dialog.Message = message;
-        dialog.UsePositiveButton = false;
+        dialog.UsePositiveButton = onPositive != default;
+        if (onPositive == default) onPositive = () => { };
+        dialog.OnPositiveButtonClicked = _ => onPositive();
         dialog.UseNegativeButton = false;
         dialog.Open();
     }
@@ -163,6 +165,27 @@ public class Dialog : MonoBehaviour
         var dialog = Instantiate();
         dialog.UsePositiveButton = true;
         dialog.UseNegativeButton = false;
+        dialog.Message = message;
+        dialog.Open();
+    }
+    
+    public static void Prompt(string message, Action onPositive = default, Action onNegative = default)
+    {
+        if (onPositive == default) onPositive = () => { };
+        if (onNegative == default) onNegative = () => { };
+        var dialog = Instantiate();
+        dialog.UsePositiveButton = true;
+        dialog.UseNegativeButton = false;
+        dialog.OnPositiveButtonClicked = _ =>
+        {
+            onPositive();
+            dialog.Close();
+        };
+        dialog.OnNegativeButtonClicked = _ =>
+        {
+            onNegative();
+            dialog.Close();
+        };
         dialog.Message = message;
         dialog.Open();
     }

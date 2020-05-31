@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DG.Tweening;
+using MoreMountains.NiceVibrations;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -15,18 +16,22 @@ public class LevelCard : InteractableMonoBehavior
     public Text artist;
     public Text title;
     public Text titleLocalized;
+    public RectTransform ownerRoot;
+    public Avatar ownerAvatar;
+    public Text ownerName;
 
     public bool isStatic;
     public List<DifficultyBall> difficultyBalls = new List<DifficultyBall>();
 
-    private Level level;
+    private LevelView levelView;
+    private Level level => levelView?.Level;
     private bool loadedCover;
     private CancellationTokenSource actionToken;
     private Vector2 pressPosition;
 
     public void ScrollCellContent(object levelObject)
     {
-        SetModel((Level) levelObject);
+        SetModel((LevelView) levelObject);
     }
 
     public void ScrollCellReturn()
@@ -54,6 +59,8 @@ public class LevelCard : InteractableMonoBehavior
         title.text = "";
         titleLocalized.text = "";
         for (var index = 0; index < 3; index++) difficultyBalls[index].gameObject.SetActive(false);
+        ownerRoot.gameObject.SetActive(false);
+        ownerAvatar.Dispose();
         cover.sprite = null;
         cover.DOKill();
         cover.SetAlpha(0);
@@ -67,7 +74,12 @@ public class LevelCard : InteractableMonoBehavior
 
     public void SetModel(Level level)
     {
-        this.level = level;
+        SetModel(new LevelView {Level = level});
+    }
+
+    public void SetModel(LevelView view)
+    {
+        levelView = view;
 
         artist.text = level.Meta.artist;
         title.text = level.Meta.title;
@@ -87,8 +99,22 @@ public class LevelCard : InteractableMonoBehavior
                 difficultyBalls[index].gameObject.SetActive(false);
             }
         }
+        
+        if (levelView.DisplayOwner && level.OnlineLevel?.Owner != null && level.OnlineLevel?.Owner.Uid != Context.OfficialAccountId)
+        {
+            ownerRoot.gameObject.SetActive(true);
+            ownerAvatar.action = AvatarAction.ViewLevels;
+            ownerAvatar.SetModel(level.OnlineLevel.Owner);
+            ownerName.text = level.OnlineLevel.Owner.Uid;
+        }
+        else
+        {
+            ownerRoot.gameObject.SetActive(false);
+            ownerAvatar.Dispose();
+            ownerName.text = "";
+        }
 
-        LayoutFixer.Fix(transform);
+        LayoutFixer.Fix(transform, count: 2);
 
         LoadCover();
     }
@@ -157,10 +183,10 @@ public class LevelCard : InteractableMonoBehavior
                 try
                 {
                     var path = level.Meta.background.path.WithImageCdn().WithSizeParam(
-                        Context.ThumbnailWidth, Context.ThumbnailHeight);
+                        Context.LevelThumbnailWidth, Context.LevelThumbnailHeight);
                     sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.RemoteLevelCoverThumbnail,
                         coverToken.Token, true,
-                        new SpriteAssetOptions(new[] {Context.ThumbnailWidth, Context.ThumbnailHeight}));
+                        new SpriteAssetOptions(new[] {Context.LevelThumbnailWidth, Context.LevelThumbnailHeight}));
                 }
                 catch
                 {
@@ -225,7 +251,6 @@ public class LevelCard : InteractableMonoBehavior
         ignoreNextPointerUp = true;
         OnPointerUp(eventData);
         OnAction();
-        Context.Vibrate();
         actionToken = null;
     }
 
@@ -269,6 +294,7 @@ public class LevelCard : InteractableMonoBehavior
 
             Context.SelectedLevel = level;
             Context.AudioManager.Get("Navigate2").Play();
+            Context.Haptic(HapticTypes.MediumImpact, true);
 
             if (Context.ScreenManager.ActiveScreen is CharacterSelectionScreen)
             {
@@ -292,6 +318,7 @@ public class LevelCard : InteractableMonoBehavior
         if (Context.ScreenManager.ActiveScreenId != LevelSelectionScreen.Id &&
             Context.ScreenManager.ActiveScreenId != CommunityLevelSelectionScreen.Id) return;
 
+        Context.Haptic(HapticTypes.Warning, true);
         var dialog = Dialog.Instantiate();
         dialog.Message = "DIALOG_CONFIRM_DELETE".Get(level.Meta.title);
         dialog.UsePositiveButton = true;
@@ -304,4 +331,10 @@ public class LevelCard : InteractableMonoBehavior
         };
         dialog.Open();
     }
+}
+
+public class LevelView
+{
+    public Level Level;
+    public bool DisplayOwner;
 }

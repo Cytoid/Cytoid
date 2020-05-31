@@ -59,6 +59,15 @@ public static class SettingsFactory
                     SpinnerOverlay.Hide();
                 });
             });
+            Object.Instantiate(provider.select, parent).Apply(element =>
+            {
+                element.SetContent("SETTINGS_SERVER_REGION".Get(), "SETTINGS_SERVER_REGION_DESC".Get(),
+                    () => (int) lp.Settings.CdnRegion, it => lp.Settings.CdnRegion = (CdnRegion) it, new[]
+                    {
+                        ("SETTINGS_SERVER_REGION_INTERNATIONAL".Get(), (int) CdnRegion.International),
+                        ("SETTINGS_SERVER_REGION_MAINLAND_CHINA".Get(), (int) CdnRegion.MainlandChina)
+                    }).SaveSettingsOnChange();
+            });
         }
 
         Object.Instantiate(provider.select, parent).Apply(element =>
@@ -125,9 +134,14 @@ public static class SettingsFactory
 
         if (Application.platform == RuntimePlatform.IPhonePlayer)
         {
-            /*Object.Instantiate(provider.pillRadioGroup, parent)
-                .SetContent("Hit taptic feedback", "Provide taptic feedback when note is cleared",
-                    () => lp.HitTapticFeedback, it => lp.HitTapticFeedback = it);*/
+            Object.Instantiate(provider.pillRadioGroup, parent)
+                .SetContent("SETTINGS_HIT_TAPTIC_FEEDBACK".Get(), "SETTINGS_HIT_TAPTIC_FEEDBACK_DESC".Get(),
+                    () => lp.Settings.HitTapticFeedback, it => lp.Settings.HitTapticFeedback = it)
+                .SaveSettingsOnChange();
+            Object.Instantiate(provider.pillRadioGroup, parent)
+                .SetContent("SETTINGS_MENU_TAPTIC_FEEDBACK".Get(), "SETTINGS_MENU_TAPTIC_FEEDBACK_DESC".Get(),
+                    () => lp.Settings.MenuTapticFeedback, it => lp.Settings.MenuTapticFeedback = it)
+                .SaveSettingsOnChange();
         }
 
         Object.Instantiate(provider.select, parent).Apply(element =>
@@ -391,6 +405,10 @@ public static class SettingsFactory
         Object.Instantiate(provider.pillRadioGroup, parent)
             .SetContent("SETTINGS_DISPLAY_NOTE_IDS".Get(), "SETTINGS_DISPLAY_NOTE_IDS_DESC".Get(),
                 () => lp.Settings.DisplayNoteIds, it => lp.Settings.DisplayNoteIds = it)
+            .SaveSettingsOnChange();
+        Object.Instantiate(provider.pillRadioGroup, parent)
+            .SetContent("SETTINGS_EXPERIMENTAL_NOTE_AR".Get(), "SETTINGS_EXPERIMENTAL_NOTE_AR_DESC".Get(),
+                () => lp.Settings.UseExperimentalNoteAr, it => lp.Settings.UseExperimentalNoteAr = it)
             .SaveSettingsOnChange();
     }
 }

@@ -42,8 +42,8 @@ public class Library
         {
             RestClient.GetArray<LibraryLevel>(new RequestHelper
             {
-                Uri = $"{Context.ServicesUrl}/library?granted=true",
-                Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
+                Uri = $"{Context.ApiUrl}/library?granted=true",
+                Headers = Context.OnlinePlayer.GetRequestHeaders(),
                 EnableDebug = true
             }).Then(data =>
             {

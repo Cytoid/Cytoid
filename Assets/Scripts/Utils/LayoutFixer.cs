@@ -12,10 +12,10 @@ public class LayoutFixer : MonoBehaviour, ScreenPostActiveListener
         Fix(transform, updateTransitionElementDefaultState);
     }
 
-    public static async void Fix(Transform transform, bool updateTransitionElementDefaultState = false)
+    public static async void Fix(Transform transform, bool updateTransitionElementDefaultState = false, int count = 4)
     {
         var children = transform.GetComponentsInChildren<LayoutFixer>().ToList();
-        for (var i = 1; i < 5; i++)
+        for (var i = 1; i < count; i++)
         {
             if (transform == null) return;
             transform.RebuildLayout();

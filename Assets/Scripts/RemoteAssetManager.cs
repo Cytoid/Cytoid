@@ -29,7 +29,7 @@ public class RemoteAssetManager
 
     public async UniTask<GameObject> LoadDownloadedAsset(string assetId)
     {
-        return await Addressables.InstantiateAsync(assetId).Task;
+        return await Addressables.LoadAssetAsync<GameObject>(assetId).Task;
     }
 
     public async UniTask DownloadAssetDialog(

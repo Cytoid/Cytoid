@@ -117,13 +117,12 @@ public class ClassicNoteRenderer : NoteRenderer
     {
         var sizeMultiplier = Note.Model.Override.SizeMultiplier;
 
-       var transformSize = BaseTransformSize * sizeMultiplier;
+        var transformSize = BaseTransformSize * sizeMultiplier;
         
         // Scale entire transform
-        const float minPercentageSize = 0.4f;
-        var timeRequired = 1.367f / Note.Model.speed;
+        var minPercentageSize = Note.Model.initial_scale;
         var timeScaledSize = transformSize * minPercentageSize + transformSize * (1 - minPercentageSize) *
-                             Mathf.Clamp((Game.Time - Note.Model.intro_time) / timeRequired, 0f, 1f);
+                             Mathf.Clamp((Game.Time - Note.Model.intro_time) / (Note.Model.start_time - Note.Model.intro_time), 0f, 1f);
 
         var transform = Note.transform;
         transform.localScale = new Vector3(timeScaledSize, timeScaledSize, transform.localScale.z);

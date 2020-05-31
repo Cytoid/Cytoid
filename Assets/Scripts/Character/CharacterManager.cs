@@ -90,8 +90,8 @@ public class CharacterManager
             // Online
             return RestClient.GetArray<CharacterMeta>(new RequestHelper
             {
-                Uri = $"{Context.ServicesUrl}/characters",
-                Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
+                Uri = $"{Context.ApiUrl}/characters",
+                Headers = Context.OnlinePlayer.GetRequestHeaders(),
                 EnableDebug = true
             }).Then(characters =>
             {

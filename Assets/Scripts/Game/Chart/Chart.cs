@@ -30,6 +30,7 @@ public class Chart
         bool isHorizontallyInverted,
         bool isVerticallyInverted,
         bool useScannerSmoothing,
+        bool useExperimentalNoteAr,
         float approachRateMultiplier,
         float cameraOrthographicSize,
         float horizontalRatio,
@@ -90,12 +91,35 @@ public class Chart
             var page = Model.page_list[note.page_index];
 
             note.direction = page.scan_line_direction;
-            note.speed = note.page_index == 0 ? 1.0f : CalculateNoteSpeed(note);
+            var speed = note.page_index == 0 ? 1.0f : CalculateNoteSpeed(note);
 
             var modSpeed = 1f;
             modSpeed *= approachRateMultiplier;
-            note.speed *= modSpeed;
-            note.speed *= (float) note.approach_rate;
+            speed *= modSpeed;
+            speed *= (float) note.approach_rate;
+
+            switch ((NoteType) note.type)
+            {
+                case NoteType.Click:
+                case NoteType.Hold:
+                case NoteType.LongHold:
+                case NoteType.Flick:
+                case NoteType.CDragHead:
+                    note.initial_scale = useExperimentalNoteAr ? 0.1f : 0.4f;
+                    break;
+                case NoteType.DragHead:
+                case NoteType.DragChild:
+                case NoteType.CDragChild:
+                    note.initial_scale = useExperimentalNoteAr ? 0.4f : 0.7f;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+            
+            if (useExperimentalNoteAr)
+            {
+                speed /= 1.5f;
+            }
 
             note.start_time = ConvertToTime((float) note.tick);
             note.end_time = ConvertToTime((float) (note.tick + note.hold_tick));
@@ -118,9 +142,9 @@ public class Chart
 
             if (note.type == (int) NoteType.DragHead || note.type == (int) NoteType.DragChild || 
                 note.type == (int) NoteType.CDragHead || note.type == (int) NoteType.CDragChild)
-                note.intro_time = note.start_time - 1.175f / note.speed;
+                note.intro_time = note.start_time - 1.175f / speed;
             else
-                note.intro_time = note.start_time - 1.367f / note.speed;
+                note.intro_time = note.start_time - 1.367f / speed;
         }
 
         foreach (var note in Model.note_list)

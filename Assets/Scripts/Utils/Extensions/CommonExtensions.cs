@@ -572,7 +572,7 @@ public static class CommonExtensions
 
     public static string WithImageCdn(this string url)
     {
-        return url.Replace("assets.cytoid.io", "images.cytoid.io");
+        return url.Replace("assets.cytoid.io", "images.cytoid.io").Replace("assets.cytoid.cn", "images.cytoid.cn");
     }
 
     public static void ForEach<T>(this IEnumerable<T> enumerable, Action<T> action)

@@ -29,7 +29,8 @@ public class OnlinePlayer
         {
             RestClient.Post<Session>(new RequestHelper
             {
-                Uri = Context.ServicesUrl + "/session",
+                Uri = Context.ApiUrl + "/session",
+                EnableDebug = true,
                 BodyString = SecuredOperations.WithCaptcha(new
                 {
                     username = Context.Player.Id,
@@ -43,6 +44,11 @@ public class OnlinePlayer
                 }
             ).Then(profile =>
             {
+                if (profile == null)
+                {
+                    reject(new Exception("Invalid profile"));
+                    return;
+                }
                 IsAuthenticated = true;
                 OnAuthenticated.Invoke();
                 resolve(profile);
@@ -76,7 +82,7 @@ public class OnlinePlayer
         {
             RestClient.Get<Session>(new RequestHelper
             {
-                Uri = Context.ServicesUrl + $"/session?captcha={SecuredOperations.GetCaptcha()}",
+                Uri = Context.ApiUrl + $"/session?captcha={SecuredOperations.GetCaptcha()}",
                 Headers = new Dictionary<string, string>
                 {
                     {"Authorization", "JWT " + jwtToken}
@@ -90,6 +96,11 @@ public class OnlinePlayer
                 }
             ).Then(profile =>
             {
+                if (profile == null)
+                {
+                    reject(new Exception("Invalid profile"));
+                    return;
+                }
                 IsAuthenticated = true;
                 OnAuthenticated.Invoke();
                 resolve(profile);
@@ -126,7 +137,7 @@ public class OnlinePlayer
         Context.Library.Clear();
     }
 
-    public Dictionary<string, string> GetAuthorizationHeaders()
+    public Dictionary<string, string> GetRequestHeaders()
     {
         if (Context.Player.Settings.LoginToken == null)
         {
@@ -138,20 +149,21 @@ public class OnlinePlayer
         };
     }
 
-    public IPromise<Profile> FetchProfile(string uid = null)
+    public IPromise<Profile> FetchProfile()
     {
-        if (Context.IsOnline())
+        var uid = Context.Player.Id;
+        if (IsAuthenticating || Context.IsOnline())
         {
             // Online
-            if (uid == null) uid = Context.Player.Id;
             return RestClient.Get<Profile>(new RequestHelper
             {
-                Uri = $"{Context.ServicesUrl}/profile/{uid}",
-                Headers = GetAuthorizationHeaders(),
+                Uri = $"{Context.ApiUrl}/profile/{uid}",
+                Headers = GetRequestHeaders(),
                 EnableDebug = true
             }).Then(profile =>
             {
-                LastProfile = profile;
+                Debug.Log($"Profile: {profile}");
+                LastProfile = profile ?? throw new InvalidOperationException("Profile is null");
                 Context.Database.SetProfile(profile);
                 OnProfileChanged.Invoke(profile);
                 return profile;
@@ -170,8 +182,8 @@ public class OnlinePlayer
         {
             return RestClient.GetArray<RankingEntry>(new RequestHelper
                 {
-                    Uri = $"{Context.ServicesUrl}/levels/{levelId}/charts/{chartType}/records?limit=10",
-                    Headers = GetAuthorizationHeaders(),
+                    Uri = $"{Context.ApiUrl}/levels/{levelId}/charts/{chartType}/records?limit=10",
+                    Headers = GetRequestHeaders(),
                     EnableDebug = true
                 })
                 .Then(data =>
@@ -183,8 +195,8 @@ public class OnlinePlayer
                     return RestClient.GetArray<RankingEntry>(new RequestHelper
                     {
                         Uri =
-                            $"{Context.ServicesUrl}/levels/{levelId}/charts/{chartType}/user_ranking?limit=6",
-                        Headers = GetAuthorizationHeaders(),
+                            $"{Context.ApiUrl}/levels/{levelId}/charts/{chartType}/user_ranking?limit=6",
+                        Headers = GetRequestHeaders(),
                         EnableDebug = true
                     });
                 })
@@ -256,7 +268,7 @@ public class OnlinePlayer
 
         return RestClient.GetArray<RankingEntry>(new RequestHelper
         {
-            Uri = $"{Context.ServicesUrl}/levels/{levelId}/charts/{chartType}/records",
+            Uri = $"{Context.ApiUrl}/levels/{levelId}/charts/{chartType}/records",
             EnableDebug = true,
         }).Then(array => (-1, array.ToList()));
     }
@@ -267,8 +279,8 @@ public class OnlinePlayer
         var top10 = new List<TierRankingEntry>();
         return RestClient.GetArray<TierRankingEntry>(new RequestHelper
         {
-            Uri = $"{Context.ServicesUrl}/seasons/alpha/tiers/{tierId}/records?limit=10",
-            Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
+            Uri = $"{Context.ApiUrl}/seasons/alpha/tiers/{tierId}/records?limit=10",
+            Headers = Context.OnlinePlayer.GetRequestHeaders(),
             EnableDebug = true
         }).Then(data =>
                 {
@@ -279,8 +291,8 @@ public class OnlinePlayer
                     return RestClient.GetArray<TierRankingEntry>(new RequestHelper
                     {
                         Uri =
-                            $"{Context.ServicesUrl}/seasons/alpha/tiers/{tierId}/user_ranking?limit=6",
-                        Headers = GetAuthorizationHeaders(),
+                            $"{Context.ApiUrl}/seasons/alpha/tiers/{tierId}/user_ranking?limit=6",
+                        Headers = GetRequestHeaders(),
                         EnableDebug = true
                     });
                 })

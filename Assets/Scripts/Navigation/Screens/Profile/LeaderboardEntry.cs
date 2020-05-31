@@ -23,10 +23,10 @@ public class LeaderboardEntry : ContainerEntry<Leaderboard.Entry>
     public override void SetModel(Leaderboard.Entry entry)
     {
         Model = entry;
-        background.SetActive(entry.owner.Uid == Context.Player.Id);
-        avatar.SetModel(entry.owner);
+        background.SetActive(entry.Uid == Context.Player.Id);
+        avatar.SetModel(entry);
         rank.text = entry.rank + ".";
-        name.text = entry.owner.Uid;
+        name.text = entry.Uid;
         rating.text = "Rating " + entry.rating.ToString("N2");
     }
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Linq;
+using MoreMountains.NiceVibrations;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.UI;
@@ -166,6 +167,7 @@ public class TierResultScreen : Screen
         // TODO: Refactor with ResultScreen.cs
         
         isSharing = true;
+        Context.Haptic(HapticTypes.SoftImpact, true);
         Context.AudioManager.Get("Navigate1").Play(ignoreDsp: true);
         yield return new WaitForEndOfFrame();
         var screenshot = new Texture2D(UnityEngine.Screen.width, UnityEngine.Screen.height, TextureFormat.RGB24, false);

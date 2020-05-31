@@ -95,11 +95,11 @@ public class OnlineLevel
             if (localLevel.Type == type)
             {
                 Debug.Log($"Online level {Uid} resolved locally");
-                return localLevel;
+                return localLevel.Also(it => it.OnlineLevel = this);
             }
         }
 
-        return Level.FromRemote($"{Context.ServicesUrl}/levels/{Uid}/resources", type, GenerateLevelMeta())
+        return Level.FromRemote($"{Context.ApiUrl}/levels/{Uid}/resources", type, GenerateLevelMeta())
             .Also(it => it.OnlineLevel = this);
     }
 

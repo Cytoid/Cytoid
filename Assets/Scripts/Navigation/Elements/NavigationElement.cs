@@ -1,7 +1,7 @@
 using System;
 using System.Linq.Expressions;
 using System.Threading;
-using DG.Tweening;
+using MoreMountains.NiceVibrations;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -30,7 +30,23 @@ public class NavigationElement : InteractableMonoBehavior, ScreenBecameActiveLis
             await UniTask.WaitUntil(() => Context.ScreenManager.ChangingToScreenId == null,
                 cancellationToken: cancellationSource.Token);
         }
-        if (!string.IsNullOrWhiteSpace(soundName)) Context.AudioManager.Get(soundName).Play(ignoreDsp: true);
+
+        if (!string.IsNullOrWhiteSpace(soundName))
+        {
+            Context.AudioManager.Get(soundName).Play(ignoreDsp: true);
+            switch (soundName)
+            {
+                case "Navigate1":
+                    Context.Haptic(HapticTypes.MediumImpact, true);
+                    break;
+                case "Navigate2":
+                    Context.Haptic(HapticTypes.LightImpact, true);
+                    break;
+                case "Navigate3":
+                    Context.Haptic(HapticTypes.SoftImpact, true);
+                    break;
+            }
+        }
 
         if (navigated) return;
         navigated = true;

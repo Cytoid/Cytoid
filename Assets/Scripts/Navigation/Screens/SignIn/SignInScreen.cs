@@ -51,6 +51,11 @@ public class SignInScreen : Screen
         Context.OnlinePlayer.Authenticate(passwordInput.text)
             .Then(profile =>
             {
+                if (profile == null)
+                {
+                    Toast.Next(Toast.Status.Failure, "TOAST_CHECK_NETWORK_CONNECTION".Get());
+                    return;
+                }
                 Toast.Next(Toast.Status.Success, "TOAST_SUCCESSFULLY_SIGNED_IN".Get());
                 ProfileWidget.Instance.SetSignedIn(profile);
                 Context.AudioManager.Get("ActionSuccess").Play();

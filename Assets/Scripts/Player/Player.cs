@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Polyglot;
 using UniRx.Async;
 using UnityEngine;
 
@@ -15,7 +16,7 @@ public class Player
 
     private readonly LocalPlayerLegacy legacy = new LocalPlayerLegacy();
 
-    public void Initialize()
+    public async void Initialize()
     {
         LoadSettings();
         ValidateData();
@@ -38,11 +39,11 @@ public class Player
             {
                 // TODO: Remove migration... one day
                 ShouldMigrate = true;
-                result = CreateSettingsFromLegacy();
+                result = InitializeSettings();
                 col.Insert(result);
             }
 
-            result.EnsureDefault();
+            result.FillDefault();
             
             Settings = result;
             SaveSettings();
@@ -51,6 +52,7 @@ public class Player
 
     public void SaveSettings()
     {
+        if (Settings == null) throw new InvalidOperationException();
         Context.Database.Let(it =>
         {
             it.DropCollection("settings");
@@ -108,17 +110,15 @@ public class Player
         });
     }
 
-    private LocalPlayerSettings CreateSettingsFromLegacy()
+    private LocalPlayerSettings InitializeSettings()
     {
-        Debug.Log($"Fill color: {legacy.GetFillColor(NoteType.Click, false)}");
-        Debug.Log($"Hitbox size: {legacy.ClickHitboxSize}");
         var settings = new LocalPlayerSettings
         {
             SchemaVersion = 1,
             PlayerId = PlayerPrefs.GetString("Uid"),
             LoginToken = SecuredPlayerPrefs.GetString("JwtToken", null),
             ActiveCharacterId = null,
-            Language = legacy.Language,
+            Language = (int) Localization.Instance.ConvertSystemLanguage(Application.systemLanguage),
             PlayRanked = legacy.PlayRanked,
             EnabledMods = legacy.EnabledMods.ToList(),
             DisplayBoundaries = legacy.ShowBoundaries,
@@ -180,6 +180,26 @@ public class Player
             LocalLevelSortIsAscending = legacy.LocalLevelsSortInAscendingOrder
         };
         return settings;
+    }
+    
+    public bool ShouldOneShot(string key)
+    {
+        if (Settings == null) throw new InvalidOperationException();
+        var used = Settings.PerformedOneShots.Contains(key);
+        if (!used)
+        {
+            Settings.PerformedOneShots.Add(key);
+            SaveSettings();
+            return true;
+        }
+        return false;
+    }
+
+    public void ClearOneShot(string key)
+    {
+        if (Settings == null) throw new InvalidOperationException();
+        Settings.PerformedOneShots.Remove(key);
+        SaveSettings();
     }
 
 }

@@ -5,7 +5,6 @@ using Proyecto26;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
 public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
 {
@@ -15,16 +14,28 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
     }
     
     private DateTimeOffset deepLinkToken = DateTimeOffset.MinValue;
+    private static readonly HashSet<string> DeepLinkDisabledScreenIds = new HashSet<string>
+    {
+        InitializationScreen.Id, ResultScreen.Id, TierBreakScreen.Id, TierResultScreen.Id
+    };
 
     private async void OnDeepLinkReceived(string url)
     {
+        Debug.Log($"Deep link received: {url}");
+        if (!url.StartsWith("cytoid://")) return;
+
         var token = deepLinkToken = DateTimeOffset.Now;
        
         await UniTask.WaitUntil(() => Context.ScreenManager != null &&
                                       Context.ScreenManager.History.Contains(MainMenuScreen.Id));
         if (token != deepLinkToken) return;
-
-        if (!url.StartsWith("cytoid://")) throw new InvalidOperationException();
+        
+        if (DeepLinkDisabledScreenIds.Contains(Context.ScreenManager.ActiveScreenId))
+        {
+            Debug.Log($"Ignoring, current screen: {Context.ScreenManager.ActiveScreenId}");
+            return;
+        }
+        
         url = url.Substring("cytoid://".Length);
 
         if (url.StartsWith("levels/"))
@@ -35,13 +46,13 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
 
             RestClient.Get<OnlineLevel>(new RequestHelper
             {
-                Uri = $"{Context.ServicesUrl}/levels/{id}"
+                Uri = $"{Context.ApiUrl}/levels/{id}"
             }).Then(async level =>
             {
                 try
                 {
                     if (token != deepLinkToken) return;
-
+                    
                     while (Context.ScreenManager.PeekHistory().Let(it => it != null && it != MainMenuScreen.Id))
                     {
                         Context.ScreenManager.PopAndPeekHistory();
@@ -122,18 +133,25 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
             if (loadedLevels.Count > 0)
             {
                 var lastLoadedLevel = loadedLevels.Last();
-                
-                // Switch to that level
-                while (Context.ScreenManager.PeekHistory().Let(it => it != null && it != MainMenuScreen.Id))
+
+                if (Context.ScreenManager.ActiveScreenId != GamePreparationScreen.Id)
                 {
-                    Context.ScreenManager.PopAndPeekHistory();
+                    // Switch to that level
+                    while (Context.ScreenManager.PeekHistory().Let(it => it != null && it != MainMenuScreen.Id))
+                    {
+                        Context.ScreenManager.PopAndPeekHistory();
+                    }
+
+                    Context.ScreenManager.History.Push(LevelSelectionScreen.Id);
+                    Context.ScreenManager.History.Push(GamePreparationScreen.Id);
+
+                    Context.SelectedLevel = lastLoadedLevel;
+                    Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.In);
                 }
-
-                Context.ScreenManager.History.Push(LevelSelectionScreen.Id);
-                Context.ScreenManager.History.Push(GamePreparationScreen.Id);
-
-                Context.SelectedLevel = lastLoadedLevel;
-                Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.In);
+                else
+                {
+                    Context.SelectedLevel = lastLoadedLevel; // Trigger the event and screen will relaod
+                }
             }
         }
     }

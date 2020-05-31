@@ -1,4 +1,5 @@
-﻿using UniRx.Async;
+﻿using MoreMountains.NiceVibrations;
+using UniRx.Async;
 using UnityEngine;
 
 public class DragChildNote : Note
@@ -53,5 +54,14 @@ public class DragChildNote : Note
     public override bool IsAutoEnabled()
     {
         return base.IsAutoEnabled() || Game.State.Mods.Contains(Mod.AutoDrag);
+    }
+    
+    public override void PlayHitSound()
+    {
+        if (Context.AudioManager.IsLoaded("HitSound"))
+        {
+            Context.AudioManager.Get("HitSound").Play();
+        }
+        Context.Haptic(HapticTypes.Selection, false);
     }
 }

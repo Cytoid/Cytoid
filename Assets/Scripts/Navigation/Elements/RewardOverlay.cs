@@ -68,6 +68,8 @@ public class RewardOverlay : SingletonMonoBehavior<RewardOverlay>
                         it.characterDisplay.Load(reward.characterValue.Value.TachieAssetId);
                         break;
                 }
+                
+                Context.AudioManager.Get("Unlock").Play();
 
                 if (!entered)
                 {

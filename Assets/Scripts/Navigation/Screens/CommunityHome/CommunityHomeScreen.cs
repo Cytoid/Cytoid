@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
@@ -7,16 +6,38 @@ using RSG;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.UI;
+using IPromise = RSG.IPromise;
 
 public class CommunityHomeScreen : Screen
 {
     public const string Id = "CommunityHome";
 
-    private static readonly Layout DefaultLayout = new Layout
+    private static Layout DefaultLayout => new Layout
     {
         Sections = new List<Layout.Section>
         {
-            new Layout.Section
+            new Layout.CollectionSection
+            {
+                CollectionIds = new List<string>
+                {
+                    "5e23eb6c017d2e2198d2f7cb",
+                    "5e23eb6c017d2e2198d2f7cd",
+                    "5e23eb6c017d2e2198d2f7d6"
+                },
+                CollectionTitleKeys = new List<string>
+                {
+                    "COMMUNITY_HOME_GETTING_STARTED",
+                    "COMMUNITY_HOME_POWERED_BY_STORYBOARD",
+                    "COMMUNITY_HOME_OCTOPUS_TOURNAMENT"
+                },
+                CollectionSloganKeys = new List<string>
+                {
+                    "COMMUNITY_HOME_GETTING_STARTED_DESC",
+                    "COMMUNITY_HOME_POWERED_BY_STORYBOARD_DESC",
+                    "COMMUNITY_HOME_OCTOPUS_TOURNAMENT_DESC"
+                }
+            },
+            new Layout.LevelSection
             {
                 TitleKey = "COMMUNITY_HOME_NEW_UPLOADS",
                 Query = new OnlineLevelQuery
@@ -26,7 +47,7 @@ public class CommunityHomeScreen : Screen
                     category = "all"
                 }
             },
-            new Layout.Section
+            new Layout.LevelSection
             {
                 TitleKey = "COMMUNITY_HOME_TRENDING_THIS_MONTH",
                 Query = new OnlineLevelQuery
@@ -37,7 +58,7 @@ public class CommunityHomeScreen : Screen
                     time = "month"
                 }
             },
-            new Layout.Section
+            new Layout.LevelSection
             {
                 TitleKey = "COMMUNITY_HOME_BEST_OF_CYTOID",
                 Query = new OnlineLevelQuery
@@ -53,13 +74,16 @@ public class CommunityHomeScreen : Screen
     public static Content LoadedContent;
     private static float lastScrollPosition;
 
-    public GameObject sectionPrefab;
+    public GameObject levelSectionPrefab;
     public GameObject levelCardPrefab;
-
+    public GameObject collectionSectionPrefab;
+    public GameObject collectionCardPrefab;
+    
     public ScrollRect scrollRect;
     public CanvasGroup contentHolder;
     public Transform sectionHolder;
     public InputField searchInputField;
+    public InputField ownerInputField;
 
     public override string GetId() => Id;
 
@@ -67,7 +91,8 @@ public class CommunityHomeScreen : Screen
     {
         base.OnScreenInitialized();
         
-        searchInputField.onEndEdit.AddListener(SearchLevels);
+        searchInputField.onEndEdit.AddListener(_ => SearchLevels());
+        ownerInputField.onEndEdit.AddListener(_ => SearchLevels());
     }
 
     public override void OnScreenBecameActive()
@@ -96,23 +121,50 @@ public class CommunityHomeScreen : Screen
     {
         SpinnerOverlay.Show();
         
-        var content = new Content();
-        var promises = new List<RSG.IPromise<OnlineLevel[]>>();
-        foreach (var section in DefaultLayout.Sections)
+        var content = new Content {Layout = DefaultLayout};
+        var promises = new List<IPromise>();
+        foreach (var section in content.Layout.Sections)
         {
-            promises.Add( RestClient.GetArray<OnlineLevel>(new RequestHelper
+            switch (section)
             {
-                Uri = section.Query.BuildUri(section.PreviewSize),
-                Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
-                EnableDebug = true
-            }));
+                case Layout.LevelSection levelSection:
+                    promises.Add(RestClient.GetArray<OnlineLevel>(new RequestHelper
+                    {
+                        Uri = levelSection.Query.BuildUri(levelSection.PreviewSize),
+                        Headers = Context.OnlinePlayer.GetRequestHeaders(),
+                        EnableDebug = true
+                    }).Then(data =>
+                    {
+                        levelSection.Levels = data.ToList();
+                    }));
+                    break;
+                case Layout.CollectionSection collectionSection:
+                {
+                    var collectionPromises = new List<RSG.IPromise<CollectionMeta>>();
+                    foreach (var collectionId in collectionSection.CollectionIds) {
+                    
+                        collectionPromises.Add( RestClient.Get<CollectionMeta>(new RequestHelper {
+                            Uri = $"{Context.ApiUrl}/collections/{collectionId}",
+                            Headers = Context.OnlinePlayer.GetRequestHeaders(),
+                            EnableDebug = true
+                        }));
+                    }
+                    promises.Add(Promise<CollectionMeta>.All(collectionPromises).Then(data =>
+                    {
+                        collectionSection.Collections = data.ToList()
+                            .Zip(collectionSection.CollectionIds, (meta, id) => meta.Also(it => it.id = id))
+                            .Zip(collectionSection.CollectionTitleKeys, (meta, title) => meta.Also(it => it.title = title.Get()))
+                            .Zip(collectionSection.CollectionSloganKeys, (meta, slogan) => meta.Also(it => it.slogan = slogan.Get()))
+                            .ToList();
+                    }));
+                    break;
+                }
+            }
         }
 
-        Promise<OnlineLevel[]>.All(promises)
-            .Then(payload =>
+        Promise.All(promises)
+            .Then(() =>
             {
-                content.SectionOnlineLevels = payload.Select(it => it.ToList()).ToList();
-                content.Layout = DefaultLayout;
                 LoadedContent = content;
                 OnContentLoaded(LoadedContent);
             })
@@ -128,29 +180,48 @@ public class CommunityHomeScreen : Screen
     {
         foreach (Transform child in sectionHolder.transform) Destroy(child.gameObject);
 
-        for (var index = 0; index < content.SectionOnlineLevels.Count; index++)
+        foreach (var section in content.Layout.Sections)
         {
-            var onlineLevels = content.SectionOnlineLevels[index];
-            var section = content.Layout.Sections[index];
-            var sectionGameObject = Instantiate(sectionPrefab, sectionHolder.transform);
-            var sectionBehavior = sectionGameObject.GetComponent<CommunityHomeSection>();
-            sectionBehavior.titleText.text = section.TitleKey.Get();
-            foreach (var onlineLevel in onlineLevels)
+            switch (section)
             {
-                var levelCardGameObject = Instantiate(levelCardPrefab, sectionBehavior.levelCardHolder.transform);
-                var levelCard = levelCardGameObject.GetComponent<LevelCard>();
-                levelCard.SetModel(onlineLevel.ToLevel(LevelType.Community));
-            }
-            sectionBehavior.viewMoreButton.onPointerClick.AddListener(_ =>
-            {
-                CommunityLevelSelectionScreen.LoadedContent = new CommunityLevelSelectionScreen.Content
+                case Layout.LevelSection levelSection:
                 {
-                    Query = section.Query.JsonDeepCopy(),
-                    OnlineLevels = null // Signal reload
-                };
-                Context.ScreenManager.ChangeScreen(CommunityLevelSelectionScreen.Id, ScreenTransition.In, 0.4f,
-                    transitionFocus: ((RectTransform) sectionBehavior.viewMoreButton.transform).GetScreenSpaceCenter());
-            });
+                    var sectionGameObject = Instantiate(levelSectionPrefab, sectionHolder.transform);
+                    var sectionBehavior = sectionGameObject.GetComponent<CommunityHomeLevelSection>();
+                    sectionBehavior.titleText.text = levelSection.TitleKey.Get();
+                    foreach (var onlineLevel in levelSection.Levels)
+                    {
+                        var levelCardGameObject = Instantiate(levelCardPrefab, sectionBehavior.levelCardHolder.transform);
+                        var levelCard = levelCardGameObject.GetComponent<LevelCard>();
+                        levelCard.SetModel(new LevelView{Level = onlineLevel.ToLevel(LevelType.Community), DisplayOwner = true});
+                    }
+                    sectionBehavior.viewMoreButton.onPointerClick.AddListener(_ =>
+                    {
+                        CommunityLevelSelectionScreen.LoadedContent = new CommunityLevelSelectionScreen.Content
+                        {
+                            Query = levelSection.Query.JsonDeepCopy(),
+                            OnlineLevels = null // Signal reload
+                        };
+                        Context.ScreenManager.ChangeScreen(CommunityLevelSelectionScreen.Id, ScreenTransition.In, 0.4f,
+                            transitionFocus: ((RectTransform) sectionBehavior.viewMoreButton.transform).GetScreenSpaceCenter());
+                    });
+                    break;
+                }
+                case Layout.CollectionSection collectionSection:
+                {
+                    var sectionGameObject = Instantiate(collectionSectionPrefab, sectionHolder.transform);
+                    var sectionBehavior = sectionGameObject.GetComponent<CommunityHomeCollectionSection>();
+                    foreach (var collection in collectionSection.Collections)
+                    {
+                        var collectionGameObject = Instantiate(collectionCardPrefab, sectionBehavior.collectionCardHolder.transform);
+                        var collectionCard = collectionGameObject.GetComponent<CollectionCard>();
+                        collectionCard.SetModel(collection);
+                        collectionCard.titleOverride = collection.title;
+                        collectionCard.sloganOverride = collection.slogan;
+                    }
+                    break;
+                }
+            }
         }
 
         LayoutFixer.Fix(contentHolder.transform);
@@ -158,9 +229,11 @@ public class CommunityHomeScreen : Screen
         contentHolder.DOFade(1, 0.4f).SetEase(Ease.OutCubic);
     }
 
-    public void SearchLevels(string query)
+    public void SearchLevels()
     {
-        if (query.IsNullOrEmptyTrimmed()) return;
+        var query = searchInputField.text;
+        var owner = ownerInputField.text;
+        if (query.IsNullOrEmptyTrimmed() && owner.IsNullOrEmptyTrimmed()) return;
         
         CommunityLevelSelectionScreen.LoadedContent = new CommunityLevelSelectionScreen.Content
         {
@@ -170,7 +243,8 @@ public class CommunityHomeScreen : Screen
                 order = "desc",
                 category = "all",
                 time = "all",
-                search = query
+                search = query,
+                owner = owner,
             },
             OnlineLevels = null // Signal reload
         };
@@ -184,8 +258,10 @@ public class CommunityHomeScreen : Screen
         {
             Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalLevelCoverThumbnail);
             Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.RemoteLevelCoverThumbnail);
+            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.CollectionCoverThumbnail);
             
             searchInputField.SetTextWithoutNotify("");
+            ownerInputField.SetTextWithoutNotify("");
             LoadedContent = null;
             lastScrollPosition = default;
             
@@ -199,15 +275,28 @@ public class CommunityHomeScreen : Screen
 
         public class Section
         {
+        }
+
+        public class LevelSection : Section
+        {
             public string TitleKey;
             public int PreviewSize = 6;
             public OnlineLevelQuery Query;
+            public List<OnlineLevel> Levels;
         }
+
+        public class CollectionSection : Section
+        {
+            public List<string> CollectionIds;
+            public List<CollectionMeta> Collections;
+            public List<string> CollectionTitleKeys { get; set; }
+            public List<string> CollectionSloganKeys { get; set; }
+        }
+        
     }
 
     public class Content
     {
         public Layout Layout;
-        public List<List<OnlineLevel>> SectionOnlineLevels;
     }
 }

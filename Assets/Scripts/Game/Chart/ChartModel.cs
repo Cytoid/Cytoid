@@ -96,7 +96,7 @@ public class ChartModel
         public Vector3 rotation;
         public Vector3 end_position;
         public float holdlength;
-        public float speed;
+        public float initial_scale = 0.4f;
         public float intro_time;
         public int direction;
         public float tint;
@@ -160,7 +160,6 @@ public class ChartModel
             position = note.position;
             end_position = note.end_position;
             holdlength = note.holdlength;
-            speed = note.speed;
             intro_time = note.intro_time;
             direction = note.direction;
             rotation = note.rotation;

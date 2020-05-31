@@ -1,4 +1,5 @@
 ﻿using System;
+using MoreMountains.NiceVibrations;
 using UniRx.Async;
 using UnityEngine;
 
@@ -82,12 +83,13 @@ public abstract class Note : MonoBehaviour
         }
     }
 
-    public void PlayHitSound()
+    public virtual void PlayHitSound()
     {
         if (Context.AudioManager.IsLoaded("HitSound"))
         {
             Context.AudioManager.Get("HitSound").Play();
         }
+        Context.Haptic(HapticTypes.LightImpact, false);
     }
 
     protected virtual void OnGameUpdate()

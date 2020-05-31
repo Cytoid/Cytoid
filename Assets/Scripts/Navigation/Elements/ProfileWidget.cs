@@ -191,8 +191,10 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
         if (avatarImage.sprite == null)
         {
             spinner.IsSpinning = true;
+            var url = profile.User.AvatarUrl?.WithSizeParam(256, 256) ?? profile.User.Avatar.LargeUrl;
+            print("Avatar URL: " + url);
             var sprite = await Context.AssetMemory.LoadAsset<Sprite>(
-                profile.User.AvatarUrl?.WithSizeParam(256, 256) ?? profile.User.Avatar.LargeUrl, 
+                url, 
                 AssetTag.PlayerAvatar,
                 allowFileCache: true,
                 useFileCache: Context.IsOffline()

@@ -15,7 +15,7 @@ public class InitializationScreen : Screen
 
     public override async void OnScreenBecameActive()
     {
-        versionText.text = "INIT_VERSION".Get(Context.Version.ToUpper());
+        versionText.text = "INIT_VERSION".Get(Context.VersionName.ToUpper());
         
         TranslucentCover.DarkMode();
         TranslucentCover.Show(0.5f, 2f);

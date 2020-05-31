@@ -71,7 +71,7 @@ public class TrainingSelectionScreen : Screen
     public void OnContentLoaded(Content content)
     {
         scrollRect.totalCount = content.Levels.Count;
-        scrollRect.objectsToFill = content.Levels.ToArray().Cast<object>().ToArray();
+        scrollRect.objectsToFill = content.Levels.Select(it => new LevelView{Level = it}).ToArray().Cast<object>().ToArray();
         scrollRect.RefillCells();
         if (lastScrollPosition > 0)
         {
@@ -100,7 +100,7 @@ public class TrainingSelectionScreen : Screen
         var builtInLevelsToUnpack = new List<string>();
         if (Context.IsOnline())
         {
-            RestClient.Get<TrainingData>(Context.ServicesUrl + "/training")
+            RestClient.Get<TrainingData>(Context.ApiUrl + "/training")
                 .Then(data =>
                 {
                     // Save to DB

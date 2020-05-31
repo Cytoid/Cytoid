@@ -3,29 +3,32 @@ using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Polyglot;
 using UnityEngine;
 
 [Serializable]
 public class LocalPlayerSettings
 {
 
-    public void EnsureDefault()
+    public void FillDefault()
     {
         var dummy = new LocalPlayerSettings();
-        NoteRingColors = LeftJoin(dummy.NoteRingColors, dummy.NoteRingColors);
-        NoteFillColors = LeftJoin(dummy.NoteFillColors, dummy.NoteFillColors);
-        NoteFillColorsAlt = LeftJoin(dummy.NoteFillColorsAlt, dummy.NoteFillColorsAlt);
+        NoteRingColors = RightJoin(NoteRingColors, dummy.NoteRingColors);
+        NoteFillColors = RightJoin(NoteFillColors, dummy.NoteFillColors);
+        NoteFillColorsAlt = RightJoin(NoteFillColorsAlt, dummy.NoteFillColorsAlt);
     }
 
-    private Dictionary<TK, TV> LeftJoin<TK, TV>(Dictionary<TK, TV> from, Dictionary<TK, TV> to)
+    private Dictionary<TK, TV> RightJoin<TK, TV>(Dictionary<TK, TV> from, Dictionary<TK, TV> to)
     {
         var dummy = new Dictionary<TK, TV>(to);
         from.ToList().ForEach(x => dummy[x.Key] = x.Value);
         return dummy;
     }
-
+    
     [JsonProperty("schema_version")] public int SchemaVersion { get; set; }
     
+    [JsonProperty("cdn_region")] public CdnRegion CdnRegion { get; set; } = CdnRegion.International;
+
     [JsonProperty("player_id")] public string PlayerId { get; set; }
     
     [JsonProperty("login_token")] public string LoginToken { get; set; }
@@ -110,6 +113,7 @@ public class LocalPlayerSettings
     [JsonProperty("sound_effects_volume")] public float SoundEffectsVolume { get; set; } = 1f; // 0~1
     [JsonProperty("hit_sound")] public string HitSound { get; set; } = "none";
     [JsonProperty("hit_taptic_feedback")] public bool HitTapticFeedback { get; set; } = true;
+    [JsonProperty("menu_taptic_feedback")] public bool MenuTapticFeedback { get; set; } = true;
 
     [JsonProperty("display_storyboard_effects")]
     public bool DisplayStoryboardEffects { get; set; } = true;
@@ -132,9 +136,97 @@ public class LocalPlayerSettings
     [JsonProperty("android_dsp_buffer_size")]
     public int AndroidDspBufferSize { get; set; } = -1;
 
+    [JsonProperty("use_experimental_note_ar")] public bool UseExperimentalNoteAr { get; set; } = true;
+
     [JsonProperty("local_level_sort_is_ascending")]
     public bool LocalLevelSortIsAscending { get; set; } = false;
     
+    [JsonProperty("performed_one_shots")]
+    public HashSet<string> PerformedOneShots { get; set; } = new HashSet<string>();
+
+}
+
+public enum CdnRegion
+{
+    International,
+    MainlandChina
+}
+
+[Serializable]
+public class RegionInfo
+{
+    public string countryCode;
+    public string ip;
+}
+
+public static class CdnRegionExtensions
+{
+    
+    public static string GetApiUrl(this CdnRegion region)
+    {
+        switch (region)
+        {
+            case CdnRegion.International:
+                return "https://services.cytoid.io";
+            case CdnRegion.MainlandChina:
+                return "https://api.cytoid.cn";
+            default:
+                throw new ArgumentOutOfRangeException(nameof(region), region, null);
+        }
+    }
+    
+    public static string GetWebsiteUrl(this CdnRegion region)
+    {
+        switch (region)
+        {
+            case CdnRegion.International:
+                return "https://cytoid.io";
+            case CdnRegion.MainlandChina:
+                return "https://cytoid.cn";;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(region), region, null);
+        }
+    }
+    
+    public static string GetAddressableRemoteBaseUrl(this CdnRegion region)
+    {
+        switch (region)
+        {
+            case CdnRegion.International:
+                return "https://artifacts.cytoid.io";
+            case CdnRegion.MainlandChina:
+                return "https://artifacts.cytoid.cn";
+            default:
+                throw new ArgumentOutOfRangeException(nameof(region), region, null);
+        }
+    }
+    
+    public static string GetStoreUrl(this CdnRegion region)
+    {
+        switch (region)
+        {
+            case CdnRegion.International:
+                if (Application.platform == RuntimePlatform.IPhonePlayer)
+                {
+                    return "https://apps.apple.com/us/app/cytoid/id1266582726";
+                }
+                else
+                {
+                    return "https://play.google.com/store/apps/details?id=me.tigerhix.cytoid";
+                }
+            case CdnRegion.MainlandChina:
+                if (Application.platform == RuntimePlatform.IPhonePlayer)
+                {
+                    return "https://apps.apple.com/us/app/cytoid/id1266582726";
+                }
+                else
+                {
+                    return "https://www.taptap.com/app/158749";
+                }
+            default:
+                throw new ArgumentOutOfRangeException(nameof(region), region, null);
+        }
+    }
 }
 
 public enum GraphicsQuality

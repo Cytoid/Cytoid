@@ -5,10 +5,9 @@ using System.Collections.Generic;
 public class Leaderboard
 {
     [Serializable]
-    public class Entry
+    public class Entry : OnlineUser
     {
         public int rank;
         public float rating;
-        public OnlineUser owner;
     }
 }

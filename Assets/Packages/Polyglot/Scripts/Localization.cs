@@ -265,6 +265,7 @@ namespace Polyglot
                     return Language.Thai;
                 case SystemLanguage.Turkish:
                     return Language.Turkish;
+                case SystemLanguage.Chinese:
                 case SystemLanguage.ChineseSimplified:
                     return Language.Simplified_Chinese;
                 case SystemLanguage.ChineseTraditional:
@@ -273,6 +274,8 @@ namespace Polyglot
                     return Language.Vietnamese;
                 case SystemLanguage.Indonesian:
                     return Language.Indonesian;
+                case SystemLanguage.Ukrainian:
+                    return Language.Ukrainian;
                 /*case SystemLanguage.Afrikaans:
                     return Language.Afrikaans;
                     break;

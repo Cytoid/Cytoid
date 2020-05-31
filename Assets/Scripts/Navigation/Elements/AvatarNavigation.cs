@@ -1,4 +1,5 @@
 using DG.Tweening;
+using MoreMountains.NiceVibrations;
 using UnityEngine.EventSystems;
 
 public class AvatarNavigation : InteractableMonoBehavior
@@ -8,7 +9,7 @@ public class AvatarNavigation : InteractableMonoBehavior
         base.OnPointerClick(eventData);
         if (!Context.OnlinePlayer.IsAuthenticating)
         {
-            // MMVibrationManager.Haptic(HapticTypes.Selection);
+            Context.Haptic(HapticTypes.SoftImpact, true);
             Context.AudioManager.Get("Navigate1").Play(ignoreDsp: true);
             Context.ScreenManager.ChangeScreen(
                 Context.OnlinePlayer.IsAuthenticated ? ProfileScreen.Id : SignInScreen.Id, ScreenTransition.Out);

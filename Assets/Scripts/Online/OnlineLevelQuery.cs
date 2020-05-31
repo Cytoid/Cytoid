@@ -8,21 +8,22 @@ public class OnlineLevelQuery
     public string category;
     public string time;
     public string search;
+    public string owner;
 
     public string BuildUri(int limit = -1, int page = 0)
     {
         string uri;
-        if (search.IsNullOrEmptyTrimmed())
+        if (!search.IsNullOrEmptyTrimmed() || (sort != "creation_date" && sort != "modification_date" && sort != "duration" && sort != "difficulty"))
         {
-            uri = $"{Context.ApiUrl}/levels?" +
-                $"sort={sort}&order={order}" +
-                $"&date_start={ConvertTimeSpanToDateStart(time)}&page={page}";
+            uri = $"{Context.ApiUrl}/search/levels?search={search}&" +
+                  $"sort={sort}&order={order}" +
+                  $"&date_start={ConvertTimeSpanToDateStart(time)}&owner={owner}&page={page}";
         }
         else
         {
-            uri = $"{Context.ServicesUrl}/search/levels?search={search}&" +
-                $"sort={sort}&order={order}" +
-                $"&date_start={ConvertTimeSpanToDateStart(time)}&page={page}";
+            uri = $"{Context.ApiUrl}/levels?search={search}&" +
+                  $"sort={sort}&order={order}" +
+                  $"&date_start={ConvertTimeSpanToDateStart(time)}&owner={owner}&page={page}";
         }
         if (category == "featured")
         {

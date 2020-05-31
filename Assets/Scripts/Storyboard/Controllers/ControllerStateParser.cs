@@ -46,11 +46,11 @@ namespace Cytoid.Storyboard.Controllers
             if (fillColors.Count > 0)
             {
                 state.NoteFillColors = new List<Color>();
-                for (var i = 0; i < 10; i++)
+                for (var i = 0; i < 12; i++)
                 {
                     if (i >= fillColors.Count)
                     {
-                        state.NoteFillColors.Add(null);
+                        state.NoteFillColors.Add(new Color {R=0, G=0, B=0, A=0});
                         continue;
                     }
 

@@ -301,7 +301,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         public override void Stop()
         {
             isPlaying = false;
-            controller.Stop();
+            controller?.Stop();
         }
 
         public override async void Unload()

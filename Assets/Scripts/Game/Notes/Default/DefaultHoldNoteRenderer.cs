@@ -116,8 +116,7 @@ public class DefaultHoldNoteRenderer : DefaultNoteRenderer
         }
         
         // Scale the entire transform
-        var timeRequired = 1.367f / Note.Model.speed;
-        var timeScale = Mathf.Clamp((Game.Time - Note.Model.intro_time) / timeRequired, 0f, 1f);
+        var timeScale = Mathf.Clamp((Game.Time - Note.Model.intro_time) / (Note.Model.start_time - Note.Model.intro_time), 0f, 1f);
         
         const float minPercentageLineSize = 0.0f;
         var timeScaledLineSize = minPercentageLineSize + (1 - minPercentageLineSize) * timeScale;

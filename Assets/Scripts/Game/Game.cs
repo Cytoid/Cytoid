@@ -188,6 +188,7 @@ public class Game : MonoBehaviour
             mods.Contains(Mod.FlipX) || mods.Contains(Mod.FlipAll),
             mods.Contains(Mod.FlipY) || mods.Contains(Mod.FlipAll),
             true,
+            Context.Player.Settings.UseExperimentalNoteAr,
             mods.Contains(Mod.Fast) ? 1.5f : (mods.Contains(Mod.Slow) ? 0.75f : 1),
             camera.orthographicSize,
             0.8f + (5 - Context.Player.Settings.HorizontalMargin - 1) * 0.02f,

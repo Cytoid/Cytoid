@@ -148,14 +148,15 @@ public class LevelManager
         {
             RestClient.Get<OnlineLevel>(new RequestHelper
             {
-                Uri = $"{Context.ServicesUrl}/levels/{levelId}",
-                Headers = Context.OnlinePlayer.GetAuthorizationHeaders()
+                Uri = $"{Context.ApiUrl}/levels/{levelId}",
+                Headers = Context.OnlinePlayer.GetRequestHeaders()
             }).Then(it =>
             {
                 var remoteMeta = it.GenerateLevelMeta();
                 if (updateLocal && LoadedLocalLevels.ContainsKey(levelId))
                 {
                     var localLevel = LoadedLocalLevels[levelId];
+                    localLevel.OnlineLevel = it;
                     if (UpdateLevelMeta(localLevel, remoteMeta))
                     {
                         Debug.Log($"Level meta updated for {localLevel.Id}");
@@ -423,8 +424,8 @@ public class LevelManager
                             continue;
                         }
 
-                        var croppedTexture = TextureScaler.FitCrop(coverTexture, Context.ThumbnailWidth,
-                            Context.ThumbnailHeight);
+                        var croppedTexture = TextureScaler.FitCrop(coverTexture, Context.LevelThumbnailWidth,
+                            Context.LevelThumbnailHeight);
                         var bytes = croppedTexture.EncodeToJPG();
                         Object.Destroy(coverTexture);
                         Object.Destroy(croppedTexture);
@@ -608,8 +609,8 @@ public class LevelManager
         };
         RestClient.Get<OnlineLevel>(req = new RequestHelper
         {
-            Uri = $"{Context.ServicesUrl}/levels/{level.Id}",
-            Headers = Context.OnlinePlayer.GetAuthorizationHeaders()
+            Uri = $"{Context.ApiUrl}/levels/{level.Id}",
+            Headers = Context.OnlinePlayer.GetRequestHeaders()
         }).Then(it =>
         {
             if (aborted)
@@ -624,7 +625,7 @@ public class LevelManager
             return RestClient.Post<OnlineLevelResources>(req = new RequestHelper
             {
                 Uri = level.PackagePath,
-                Headers = Context.OnlinePlayer.GetAuthorizationHeaders(),
+                Headers = Context.OnlinePlayer.GetRequestHeaders(),
                 BodyString = SecuredOperations.WithCaptcha(new { }).ToString(),
                 EnableDebug = true
             });

@@ -1,10 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using LiteDB;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Polyglot;
 using UnityEngine;
+using JsonReader = Newtonsoft.Json.JsonReader;
+using JsonSerializer = Newtonsoft.Json.JsonSerializer;
+using JsonWriter = Newtonsoft.Json.JsonWriter;
 
 [Serializable]
 public class LocalPlayerSettings
@@ -24,22 +28,23 @@ public class LocalPlayerSettings
         from.ToList().ForEach(x => dummy[x.Key] = x.Value);
         return dummy;
     }
+
+    public ObjectId Id { get; set; }
     
     [JsonProperty("schema_version")] public int SchemaVersion { get; set; }
-    
+
     [JsonProperty("cdn_region")] public CdnRegion CdnRegion { get; set; } = CdnRegion.International;
 
     [JsonProperty("player_id")] public string PlayerId { get; set; }
-    
+
     [JsonProperty("login_token")] public string LoginToken { get; set; }
-    
+
     [JsonProperty("character_id")] public string ActiveCharacterId { get; set; }
 
     [JsonProperty("language")] public int Language { get; set; } = 0;
     [JsonProperty("play_ranked")] public bool PlayRanked { get; set; } = true;
 
-    [JsonProperty("enabled_mods")]
-    public List<Mod> EnabledMods { get; set; } = new List<Mod>();
+    [JsonProperty("enabled_mods")] public List<Mod> EnabledMods { get; set; } = new List<Mod>();
 
     [JsonProperty("display_boundaries")] public bool DisplayBoundaries { get; set; } = false;
 
@@ -100,9 +105,10 @@ public class LocalPlayerSettings
         {NoteType.CDragHead, "#39E59E".ToColor()},
     };
 
-    [JsonProperty("use_fill_color_for_drag_child_nodes")] public bool UseFillColorForDragChildNodes = true;
+    [JsonProperty("use_fill_color_for_drag_child_nodes")]
+    public bool UseFillColorForDragChildNodes { get; set; } = true;
 
-    [JsonProperty("hold_hit_sound_timing")]
+[JsonProperty("hold_hit_sound_timing")]
     public HoldHitSoundTiming HoldHitSoundTiming { get; set; } = HoldHitSoundTiming.Both;
 
     [JsonProperty("note_size")] public float NoteSize { get; set; } = 0; // -0.5~0.5
@@ -111,7 +117,7 @@ public class LocalPlayerSettings
     [JsonProperty("cover_opacity")] public float CoverOpacity { get; set; } = 0.15f; // 0~1
     [JsonProperty("music_volume")] public float MusicVolume { get; set; } = 0.85f; // 0~1
     [JsonProperty("sound_effects_volume")] public float SoundEffectsVolume { get; set; } = 1f; // 0~1
-    [JsonProperty("hit_sound")] public string HitSound { get; set; } = "none";
+    [JsonProperty("hit_sound")] public string HitSound { get; set; } = "click1";
     [JsonProperty("hit_taptic_feedback")] public bool HitTapticFeedback { get; set; } = true;
     [JsonProperty("menu_taptic_feedback")] public bool MenuTapticFeedback { get; set; } = true;
 
@@ -182,7 +188,7 @@ public static class CdnRegionExtensions
             case CdnRegion.International:
                 return "https://cytoid.io";
             case CdnRegion.MainlandChina:
-                return "https://cytoid.cn";;
+                return "https://cytoid.io";
             default:
                 throw new ArgumentOutOfRangeException(nameof(region), region, null);
         }

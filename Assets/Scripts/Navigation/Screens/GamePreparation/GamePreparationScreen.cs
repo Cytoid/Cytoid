@@ -1,5 +1,6 @@
 using System;
 using DG.Tweening;
+using MoreMountains.NiceVibrations;
 using Newtonsoft.Json;
 using UniRx.Async;
 using UnityEngine;
@@ -75,9 +76,6 @@ public class GamePreparationScreen : Screen
         });
 
         startButton.interactableMonoBehavior.onPointerClick.AddListener(_ => OnStartButton());
-        
-        Context.LevelManager.OnLevelMetaUpdated.AddListener(OnLevelMetaUpdated);
-        Context.OnlinePlayer.OnLevelBestPerformanceUpdated.AddListener(OnLevelBestPerformanceUpdated);
     }
 
     public override void OnScreenBecameActive()
@@ -119,6 +117,7 @@ public class GamePreparationScreen : Screen
                 if (it.version > Level.Meta.version)
                 {
                     // Ask the user to update
+                    Context.Haptic(HapticTypes.Warning, true);
                     var dialog = Dialog.Instantiate();
                     dialog.Message = "DIALOG_LEVEL_OUTDATED".Get();
                     dialog.UsePositiveButton = true;
@@ -141,6 +140,8 @@ public class GamePreparationScreen : Screen
         UpdateTopMenu();
         UpdateStartButton();
 
+        Context.LevelManager.OnLevelMetaUpdated.AddListener(OnLevelMetaUpdated);
+        Context.OnlinePlayer.OnLevelBestPerformanceUpdated.AddListener(OnLevelBestPerformanceUpdated);
         Context.OnSelectedLevelChanged.AddListener(OnSelectedLevelChanged);
     }
 
@@ -320,6 +321,7 @@ public class GamePreparationScreen : Screen
 
     public void OnLevelBestPerformanceUpdated(string levelId)
     {
+        Debug.Log($"OnLevelBestPerformanceUpdated: {levelId}");
         if (levelId != Level.Id) return;
         if (!Level.IsLocal) Level.Record = Context.Database.GetLevelRecord(levelId) ?? Level.Record;
         LoadLevelPerformance();
@@ -366,6 +368,7 @@ public class GamePreparationScreen : Screen
 
     public async void OnStartButton()
     {
+        Context.Haptic(HapticTypes.SoftImpact, true);
         if (Level.IsLocal)
         {
             Context.SelectedGameMode = 

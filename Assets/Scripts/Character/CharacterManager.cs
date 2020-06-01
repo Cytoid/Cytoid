@@ -98,8 +98,8 @@ public class CharacterManager
                 // Save to DB
                 Context.Database.Let(it =>
                 {
-                    it.DropCollection("characters");
                     var col = it.GetCollection<CharacterMeta>("characters");
+                    col.DeleteMany(x => true);
                     col.Insert(characters);
                 });
                 

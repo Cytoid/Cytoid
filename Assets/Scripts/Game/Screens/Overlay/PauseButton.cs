@@ -1,5 +1,6 @@
 using System;
 using DG.Tweening;
+using MoreMountains.NiceVibrations;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -8,7 +9,7 @@ public class PauseButton : InteractableMonoBehavior
     public Game game;
 
     [GetComponent] public TransitionElement transitionElement;
-    [FormerlySerializedAs("interactableMonoBehavior")] [GetComponent] public InteractableMonoBehavior interactableMonoBehavior;
+    [GetComponent] public InteractableMonoBehavior interactableMonoBehavior;
     public CanvasGroup canvasGroup;
 
     public float normalOpacity = 0.3f;
@@ -52,6 +53,7 @@ public class PauseButton : InteractableMonoBehavior
                     else
                     {
                         Unhighlight();
+                        Context.Haptic(HapticTypes.LightImpact, true);
                         game.Pause();
                     }
                 });

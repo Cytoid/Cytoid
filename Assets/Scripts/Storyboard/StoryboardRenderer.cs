@@ -29,6 +29,8 @@ namespace Cytoid.Storyboard
         public readonly Dictionary<Type, List<StoryboardComponentRenderer>> TypedComponentRenderers =
             new Dictionary<Type, List<StoryboardComponentRenderer>>();
         
+        public readonly Dictionary<string, int> SpritePathRefCount = new Dictionary<string, int>();
+        
         public StoryboardConstants Constants { get; } = new StoryboardConstants();
         
         public class StoryboardConstants
@@ -171,6 +173,7 @@ namespace Cytoid.Storyboard
             ComponentRenderers.Values.ForEach(it => it.Dispose());
             ComponentRenderers.Clear();
             TypedComponentRenderers.Clear();
+            SpritePathRefCount.Clear();
             Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.Storyboard);
             Clear();
         }

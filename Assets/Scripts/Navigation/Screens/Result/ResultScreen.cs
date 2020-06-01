@@ -1,13 +1,7 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Linq.Expressions;
-using DG.Tweening;
 using MoreMountains.NiceVibrations;
-using Newtonsoft.Json.Linq;
-using Proyecto26;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.UI;
@@ -68,12 +62,14 @@ public class ResultScreen : Screen
         nextButton.StartPulsing();
         nextButton.interactableMonoBehavior.onPointerClick.SetListener(_ =>
         {
+            Context.Haptic(HapticTypes.SoftImpact, true);
             nextButton.StopPulsing();
             Done();
         });
         retryButton.State = CircleButtonState.Retry;
         retryButton.interactableMonoBehavior.onPointerClick.SetListener(_ =>
         {
+            Context.Haptic(HapticTypes.SoftImpact, true);
             retryButton.StopPulsing();
             Retry();
         });
@@ -299,6 +295,7 @@ public class ResultScreen : Screen
                     }
                 }
 
+                Context.Haptic(HapticTypes.Failure, true);
                 var dialog = Dialog.Instantiate();
                 dialog.Message = "DIALOG_RETRY_SYNCHRONIZE_PERFORMANCE".Get();
                 dialog.UseProgress = false;

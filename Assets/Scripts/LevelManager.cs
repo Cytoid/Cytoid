@@ -136,6 +136,9 @@ public class LevelManager
         }
 
         var level = LoadedLocalLevels[id];
+        level.Record.AddedDate = DateTimeOffset.MinValue;
+        level.SaveRecord();
+        
         Directory.Delete(Path.GetDirectoryName(level.Path) ?? throw new InvalidOperationException(), true);
         LoadedLocalLevels.Remove(level.Id);
         loadedPaths.Remove(level.Path);
@@ -383,7 +386,7 @@ public class LevelManager
                     {
                         record.AddedDate = info.LastWriteTimeUtc;
                     } 
-                    else if (type == LevelType.Official)
+                    else if (type == LevelType.Library)
                     {
                         // Check if in library
                         if (Context.Library.Levels.ContainsKey(level.Id))

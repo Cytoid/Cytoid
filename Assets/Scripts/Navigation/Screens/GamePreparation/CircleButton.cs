@@ -8,8 +8,8 @@ public class CircleButton : MonoBehaviour, ScreenInitializedListener, ScreenBeca
 {
     [GetComponentInChildren] public GradientMeshEffect gradient;
     [GetComponentInChildren] public Text text;
-    
-    [FormerlySerializedAs("interactableMonoBehavior")] [GetComponent] public InteractableMonoBehavior interactableMonoBehavior;
+
+    [GetComponent] public InteractableMonoBehavior interactableMonoBehavior;
     [GetComponent] public PulseElement pulseElement;
     public ScheduledPulse scheduledPulse;
     

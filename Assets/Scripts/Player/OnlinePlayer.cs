@@ -238,7 +238,8 @@ public class OnlinePlayer
                         // Replace local performance only if higher or equal score
                         var record = Context.Database.GetLevelRecord(levelId);
                         if (record == null || !record.BestPerformances.ContainsKey(chartType) ||
-                            record.BestPerformances[chartType].Score < userEntry.score)
+                            record.BestPerformances[chartType].Score < userEntry.score ||
+                            (record.BestPerformances[chartType].Score == userEntry.score && record.BestPerformances[chartType].Accuracy < userEntry.accuracy))
                         {
                             if (record == null) record = new LevelRecord
                             {
@@ -259,6 +260,7 @@ public class OnlinePlayer
                             }
                             
                             OnLevelBestPerformanceUpdated.Invoke(levelId);
+                            Debug.Log("Updating: " + levelId);
                         }
                     }
 

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
 using JetBrains.Annotations;
+using MoreMountains.NiceVibrations;
 using Newtonsoft.Json;
 using Proyecto26;
 using UniRx;
@@ -108,7 +109,8 @@ public class TierSelectionScreen : Screen
             RestClient.Get(new RequestHelper
             {
                 Uri = $"{Context.ApiUrl}/seasons/alpha",
-                Headers = Context.OnlinePlayer.GetRequestHeaders()
+                Headers = Context.OnlinePlayer.GetRequestHeaders(),
+                Timeout = 5,
             }).Then(res =>
             {
                 print("TierSelection: " + res.Text);
@@ -340,8 +342,6 @@ public class TierSelectionScreen : Screen
 
     private async void LoadPreview()
     {
-        asyncPreviewToken = DateTime.Now;
-        
         var lastStage = SelectedTier.Meta.parsedStages.Last();
         string path;
         if (lastStage.IsLocal)
@@ -359,7 +359,7 @@ public class TierSelectionScreen : Screen
         lastPreviewPath = path;
 
         // Load
-        var token = asyncPreviewToken;
+        var token = asyncPreviewToken = DateTime.Now;
         
         previewAudioSource.DOKill();
         previewAudioSource.DOFade(0, 0.5f).SetEase(Ease.Linear);
@@ -369,19 +369,17 @@ public class TierSelectionScreen : Screen
         {
             return;
         }
-            
+
         var audioClip = await Context.AssetMemory.LoadAsset<AudioClip>(path, AssetTag.PreviewMusic, allowFileCache: true);
 
         if (asyncPreviewToken != token)
         {
             return;
         }
+
+        if (State != ScreenState.Active) return;
         
-        if (State == ScreenState.Active)
-        {
-            previewAudioSource.clip = audioClip;
-        }
-        
+        previewAudioSource.clip = audioClip;
         previewAudioSource.volume = 0;
         previewAudioSource.DOKill();
         previewAudioSource.DOFade(Context.Player.Settings.MusicVolume, 0.5f).SetEase(Ease.Linear);
@@ -403,6 +401,7 @@ public class TierSelectionScreen : Screen
     
     public async void OnStartButton()
     {
+        Context.Haptic(HapticTypes.SoftImpact, true);
         if (SelectedTier.StagesValid)
         {
             lastScrollPosition = scrollRect.verticalNormalizedPosition;

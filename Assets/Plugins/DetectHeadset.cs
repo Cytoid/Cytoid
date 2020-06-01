@@ -4,8 +4,10 @@ using UnityEngine;
 
 public class DetectHeadset {
 
+#if UNITY_IOS && !UNITY_EDITOR
 	[DllImport ("__Internal")]
 	private static extern bool _Detect();
+#endif
 
 	public static bool Detect() {
 		try

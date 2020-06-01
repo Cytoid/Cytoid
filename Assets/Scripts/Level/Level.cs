@@ -52,7 +52,7 @@ public class Level
 }
 
 public enum LevelType {
-    Community, Official, Tier, Training
+    Community, Library, Event, Tier, Training
 }
 
 public static class LevelTypeExtensions {
@@ -62,8 +62,10 @@ public static class LevelTypeExtensions {
         {
             case LevelType.Community:
                 return Context.UserDataPath;
-            case LevelType.Official:
-                return Path.Combine(Application.temporaryCachePath, "Levels");
+            case LevelType.Library:
+                return Path.Combine(Application.persistentDataPath, "Library");
+            case LevelType.Event:
+                return Path.Combine(Application.temporaryCachePath, "Events");
             case LevelType.Tier:
                 return Path.Combine(Application.temporaryCachePath, "Tiers");
             case LevelType.Training:

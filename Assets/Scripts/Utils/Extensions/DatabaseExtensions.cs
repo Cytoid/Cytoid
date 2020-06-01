@@ -29,8 +29,8 @@ public static class DatabaseExtensions
     
     public static void SetProfile(this LiteDatabase db, Profile profile)
     {
-        db.DropCollection("profile");
         var col = db.GetCollection<Profile>("profile");
+        col.DeleteMany(x => true);
         col.Insert(profile);
     }
     

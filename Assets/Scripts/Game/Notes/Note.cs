@@ -191,7 +191,7 @@ public abstract class Note : MonoBehaviour
 
     public virtual bool ShouldMiss()
     {
-        return TimeUntilStart < -MissThreshold;
+        return Game.Time - (Model.start_time + JudgmentOffset) > MissThreshold;
     }
 
     protected virtual async void AwaitAndDestroy()

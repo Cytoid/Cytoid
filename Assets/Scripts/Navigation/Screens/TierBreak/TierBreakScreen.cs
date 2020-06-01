@@ -1,5 +1,6 @@
 using System;
 using System.Linq.Expressions;
+using MoreMountains.NiceVibrations;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.UI;
@@ -103,6 +104,7 @@ public class TierBreakScreen : Screen
         nextStageButton.State = tierState.IsFailed ? CircleButtonState.GoBack : (tierState.IsCompleted ? CircleButtonState.Finish : CircleButtonState.NextStage);
         nextStageButton.interactableMonoBehavior.onPointerClick.SetListener(_ =>
         {
+            Context.Haptic(HapticTypes.SoftImpact, true);
             nextStageButton.StopPulsing();
             if (tierState.IsFailed)
             {
@@ -117,6 +119,7 @@ public class TierBreakScreen : Screen
         retryButton.State = CircleButtonState.Retry;
         retryButton.interactableMonoBehavior.onPointerClick.SetListener(_ =>
         {
+            Context.Haptic(HapticTypes.SoftImpact, true);
             retryButton.StopPulsing();
             Retry();
         });

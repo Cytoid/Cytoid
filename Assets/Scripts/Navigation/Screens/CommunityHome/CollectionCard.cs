@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DG.Tweening;
+using MoreMountains.NiceVibrations;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -123,7 +124,8 @@ public class CollectionCard : InteractableMonoBehavior
                 var path = collection.cover.ThumbnailUrl.WithImageCdn().WithSizeParam(
                     Context.CollectionThumbnailWidth, Context.CollectionThumbnailHeight);
                 sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.CollectionCoverThumbnail,
-                    coverToken.Token, true);
+                    coverToken.Token, true,
+                    new SpriteAssetOptions(new[] {Context.CollectionThumbnailWidth, Context.CollectionThumbnailHeight}));
             }
             catch
             {
@@ -207,6 +209,7 @@ public class CollectionCard : InteractableMonoBehavior
             }
 
             Context.AudioManager.Get("Navigate2").Play();
+            Context.Haptic(HapticTypes.MediumImpact, true);
 
             CollectionDetailsScreen.LoadedContent = new CollectionDetailsScreen.Content {Id = collection.id, TitleOverride = titleOverride, SloganOverride = sloganOverride};
             Context.ScreenManager.ChangeScreen(CollectionDetailsScreen.Id, ScreenTransition.In, 0.4f,

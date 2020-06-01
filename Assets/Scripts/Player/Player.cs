@@ -16,7 +16,7 @@ public class Player
 
     private readonly LocalPlayerLegacy legacy = new LocalPlayerLegacy();
 
-    public async void Initialize()
+    public void Initialize()
     {
         LoadSettings();
         ValidateData();
@@ -55,59 +55,70 @@ public class Player
         if (Settings == null) throw new InvalidOperationException();
         Context.Database.Let(it =>
         {
-            it.DropCollection("settings");
-            it.GetCollection<LocalPlayerSettings>("settings").Insert(Settings);
+            var col = it.GetCollection<LocalPlayerSettings>("settings");
+            col.DeleteMany(x => true);
+            col.Insert(Settings);
         });
     }
 
     public async UniTask Migrate()
     {
         await UniTask.DelayFrame(30);
-        Context.Database.Let(it =>
+        try
         {
-            foreach (var level in Context.LevelManager.LoadedLocalLevels.Values)
+            Context.Database.Let(it =>
             {
-                var record = new LevelRecord
+                foreach (var level in Context.LevelManager.LoadedLocalLevels.Values)
                 {
-                    LevelId = level.Id,
-                    RelativeNoteOffset = legacy.GetLevelNoteOffset(level.Id),
-                    AddedDate = legacy.GetAddedDate(level.Id).Let(time => time == default ? DateTimeOffset.MinValue : new DateTimeOffset(time)),
-                    LastPlayedDate = legacy.GetLastPlayedDate(level.Id).Let(time => time == default ? DateTimeOffset.MinValue : new DateTimeOffset(time)),
-                    BestPerformances = new Dictionary<string, LevelRecord.Performance>(),
-                    BestPracticePerformances = new Dictionary<string, LevelRecord.Performance>(),
-                    PlayCounts = new Dictionary<string, int>(),
-                };
-                foreach (var chart in level.Meta.charts)
-                {
-                    record.PlayCounts[chart.type] = legacy.GetPlayCount(level.Id, chart.type);
-                    
-                    if (legacy.HasPerformance(level.Id, chart.type, true))
+                    var record = new LevelRecord
                     {
-                        var bestPerformance = legacy.GetBestPerformance(level.Id, chart.type, true).Let(p =>
-                            new LevelRecord.Performance
-                            {
-                                Score = p.Score,
-                                Accuracy = p.Accuracy / 100.0,
-                            });
-                        record.BestPerformances[chart.type] = bestPerformance;
+                        LevelId = level.Id,
+                        RelativeNoteOffset = legacy.GetLevelNoteOffset(level.Id),
+                        AddedDate = legacy.GetAddedDate(level.Id).Let(time =>
+                            time == default ? DateTimeOffset.MinValue : new DateTimeOffset(time)),
+                        LastPlayedDate = legacy.GetLastPlayedDate(level.Id).Let(time =>
+                            time == default ? DateTimeOffset.MinValue : new DateTimeOffset(time)),
+                        BestPerformances = new Dictionary<string, LevelRecord.Performance>(),
+                        BestPracticePerformances = new Dictionary<string, LevelRecord.Performance>(),
+                        PlayCounts = new Dictionary<string, int>(),
+                    };
+                    foreach (var chart in level.Meta.charts)
+                    {
+                        record.PlayCounts[chart.type] = legacy.GetPlayCount(level.Id, chart.type);
+
+                        if (legacy.HasPerformance(level.Id, chart.type, true))
+                        {
+                            var bestPerformance = legacy.GetBestPerformance(level.Id, chart.type, true).Let(p =>
+                                new LevelRecord.Performance
+                                {
+                                    Score = p.Score,
+                                    Accuracy = p.Accuracy / 100.0,
+                                });
+                            record.BestPerformances[chart.type] = bestPerformance;
+                        }
+
+                        if (legacy.HasPerformance(level.Id, chart.type, false))
+                        {
+                            var bestPracticePerformance = legacy.GetBestPerformance(level.Id, chart.type, false).Let(
+                                p =>
+                                    new LevelRecord.Performance
+                                    {
+                                        Score = p.Score,
+                                        Accuracy = p.Accuracy / 100.0,
+                                    });
+                            record.BestPracticePerformances[chart.type] = bestPracticePerformance;
+                        }
                     }
 
-                    if (legacy.HasPerformance(level.Id, chart.type, false))
-                    {
-                        var bestPracticePerformance = legacy.GetBestPerformance(level.Id, chart.type, false).Let(p =>
-                            new LevelRecord.Performance
-                            {
-                                Score = p.Score,
-                                Accuracy = p.Accuracy / 100.0,
-                            });
-                        record.BestPracticePerformances[chart.type] = bestPracticePerformance;
-                    }
+                    Context.Database.SetLevelRecord(record, true);
+                    level.Record = record;
                 }
-
-                Context.Database.SetLevelRecord(record, true);
-                level.Record = record;
-            }
-        });
+            });
+        }
+        catch (Exception e)
+        {
+            Debug.LogError(e);
+        }
     }
 
     private LocalPlayerSettings InitializeSettings()
@@ -121,8 +132,8 @@ public class Player
             Language = (int) Localization.Instance.ConvertSystemLanguage(Application.systemLanguage),
             PlayRanked = legacy.PlayRanked,
             EnabledMods = legacy.EnabledMods.ToList(),
-            DisplayBoundaries = legacy.ShowBoundaries,
-            DisplayEarlyLateIndicators = legacy.DisplayEarlyLateIndicators,
+            DisplayBoundaries = true,
+            DisplayEarlyLateIndicators = true,
             HitboxSizes = new Dictionary<NoteType, int>
             {
                 {NoteType.Click, legacy.ClickHitboxSize},
@@ -354,7 +365,7 @@ public class LocalPlayerLegacy
     
     public bool DisplayProfiler
     {
-        get => PlayerPrefsExtensions.GetBool("profiler", true);
+        get => PlayerPrefsExtensions.GetBool("profiler", false);
         set
         {
             PlayerPrefsExtensions.SetBool("profiler", value);

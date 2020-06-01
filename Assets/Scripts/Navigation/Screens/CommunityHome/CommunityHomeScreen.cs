@@ -170,7 +170,7 @@ public class CommunityHomeScreen : Screen
             })
             .Catch(error =>
             {
-                Toast.Next(Toast.Status.Failure, "TOAST_CHECK_NETWORK_CONNECTION".Get());
+                Dialog.PromptGoBack("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
                 Debug.LogError(error);
             })
             .Finally(() => SpinnerOverlay.Hide());

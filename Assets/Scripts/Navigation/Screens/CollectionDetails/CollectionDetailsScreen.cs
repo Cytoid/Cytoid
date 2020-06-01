@@ -90,9 +90,7 @@ public class CollectionDetailsScreen : Screen
         sloganText.text = content.SloganOverride ?? collection.slogan;
         sloganText.transform.parent.RebuildLayout();
         scrollRect.totalCount = collection.levels.Count;
-        scrollRect.objectsToFill = collection.levels.Select(it => new LevelView{ Level = it.ToLevel(
-            content.Collection.owner.Id == Context.OfficialAccountId ? LevelType.Official : LevelType.Community    
-        ), DisplayOwner = true}).ToArray().Cast<object>().ToArray();
+        scrollRect.objectsToFill = collection.levels.Select(it => new LevelView{ Level = it.ToLevel(content.Type), DisplayOwner = true}).ToArray().Cast<object>().ToArray();
         scrollRect.RefillCells();
         if (lastScrollPosition > 0)
         {
@@ -182,6 +180,7 @@ public class CollectionDetailsScreen : Screen
         public string Id;
         public string TitleOverride;
         public string SloganOverride;
+        public LevelType Type = LevelType.Community;
         public CollectionMeta Collection;
     }
     

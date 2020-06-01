@@ -182,7 +182,7 @@ public class CharacterSelectionScreen : Screen
         nameText.text = meta.Name;
         nameGradient.SetGradient(character.nameGradient.GetGradient());
         descriptionText.text = meta.Description;
-        levelCard.SetModel(meta.Level.ToLevel(LevelType.Official));
+        levelCard.SetModel(meta.Level.ToLevel(LevelType.Community)); // TODO: Change this to library once ready
         illustratorText.text = meta.Illustrator.Name;
         illustratorProfileButton.onPointerClick.SetListener(_ => Application.OpenURL(meta.Illustrator.Url));
         if (meta.CharacterDesigner != null && !meta.CharacterDesigner.Name.IsNullOrEmptyTrimmed())

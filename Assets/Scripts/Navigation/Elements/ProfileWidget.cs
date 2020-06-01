@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using ICSharpCode.SharpZipLib.Zip;
+using MoreMountains.NiceVibrations;
 using Proyecto26;
 using UniRx.Async;
 using UnityEngine;
@@ -132,6 +133,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
                 Context.OnlinePlayer.IsAuthenticated = false;
                 if (error.IsNetworkError)
                 {
+                    Context.Haptic(HapticTypes.Warning, true);
                     var dialog = Dialog.Instantiate();
                     dialog.Message = "DIALOG_USE_OFFLINE_MODE".Get();
                     dialog.UseProgress = false;

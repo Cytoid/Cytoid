@@ -4,7 +4,7 @@ using UnityEngine;
 public class HoldNote : Note
 {
     public bool IsHolding => HoldingFingers.Count > 0;
-    public float HoldingStartTime  { get; protected set; }
+    public float HoldingStartTime { get; protected set; } = float.MaxValue;
     public float HeldDuration  { get; protected set; }
     public float HoldProgress { get; protected set; }
     public List<int> HoldingFingers { get; } = new List<int>(2);
@@ -23,8 +23,15 @@ public class HoldNote : Note
         base.OnGameUpdate();
         if (IsHolding)
         {
-            HeldDuration = Game.Time - HoldingStartTime;
-            HoldProgress = (Game.Time - Model.start_time) / Model.Duration;
+            if (Game.Time >= Model.start_time + JudgmentOffset)
+            {
+                HeldDuration = Game.Time - Mathf.Max(Model.start_time + JudgmentOffset, HoldingStartTime);
+            }
+            else
+            {
+                HeldDuration = 0;
+            }
+            HoldProgress = (Game.Time - (Model.start_time + JudgmentOffset)) / Model.Duration;
             
             if (!playedHitSoundAtBegin && HoldProgress >= 0 && Context.Player.Settings.HoldHitSoundTiming.Let(it => it == HoldHitSoundTiming.Begin || it == HoldHitSoundTiming.Both))
             {
@@ -33,10 +40,10 @@ public class HoldNote : Note
             }
 
             // Already completed?
-            if (Game.Time >= Model.end_time)
+            if (Game.Time >= Model.end_time + JudgmentOffset)
             {
                 HoldingFingers.Clear();
-                if (Game.Time > Model.start_time && Game.State.IsPlaying)
+                if (Game.Time > Model.start_time + JudgmentOffset && Game.State.IsPlaying)
                 {
                     Clear(IsAutoEnabled() ? NoteGrade.Perfect : CalculateGrade());
                 }
@@ -75,9 +82,9 @@ public class HoldNote : Note
             HoldingFingers.Remove(finger);
         }
 
-        if (HoldingFingers.Count == 0 && Game.Time > Model.start_time)
+        if (HoldingFingers.Count == 0 && Game.Time > Model.start_time + JudgmentOffset)
         {
-            if (Game.Time > Model.start_time && Game.State.IsPlaying)
+            if (Game.Time > Model.start_time + JudgmentOffset && Game.State.IsPlaying)
             {
                 Clear(IsAutoEnabled() ? NoteGrade.Perfect : CalculateGrade());
             }
@@ -88,6 +95,7 @@ public class HoldNote : Note
     {
         var grade = NoteGrade.Miss;
         var rankedGrade = NoteGrade.Miss;
+        // print($"HeldDuration: {HeldDuration}, ModelDuration: {Model.Duration}, HoldingStartTime: {HoldingStartTime}, ModelStartTime: {Model.start_time}");
         if (HeldDuration > Model.Duration - 0.05f) grade = NoteGrade.Perfect;
         else if (HeldDuration > Model.Duration * 0.7f) grade = NoteGrade.Great;
         else if (HeldDuration > Model.Duration * 0.5f) grade = NoteGrade.Good;
@@ -95,9 +103,9 @@ public class HoldNote : Note
 
         if (Game.State.Mode != GameMode.Practice)
         {
-            if (HoldingStartTime > Model.start_time)
+            if (HoldingStartTime != float.MaxValue && Mathf.Max(HoldingStartTime, Model.start_time + JudgmentOffset) > Model.start_time + JudgmentOffset)
             {
-                var lateBy = HoldingStartTime - Model.start_time;
+                var lateBy = HoldingStartTime - (Model.start_time + JudgmentOffset);
                 if (lateBy < 0.200f) rankedGrade = NoteGrade.Bad;
                 if (lateBy < 0.150f) rankedGrade = NoteGrade.Good;
                 if (lateBy < 0.070f) rankedGrade = NoteGrade.Great;

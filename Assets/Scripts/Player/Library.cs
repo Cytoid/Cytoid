@@ -50,9 +50,9 @@ public class Library
                 var libraryLevels = data.ToList();
                 Debug.Log($"Fetched {libraryLevels.Count} library levels");
                 libraryLevels.Sort((a, b) => DateTimeOffset.Compare(a.Date, b.Date));
-
-                Context.Database.DropCollection("library");
+                
                 var col = Context.Database.GetCollection<LibraryLevel>("library");
+                col.DeleteMany(x => true);
                 col.InsertBulk(libraryLevels);
                 
                 OnLibraryFetched.Invoke();

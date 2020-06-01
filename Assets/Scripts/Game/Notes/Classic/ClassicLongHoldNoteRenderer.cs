@@ -47,7 +47,7 @@ public class ClassicLongHoldNoteRenderer : ClassicHoldNoteRenderer
     protected override void UpdateComponentStates()
     {
         base.UpdateComponentStates();
-        if (!Note.IsCleared && Game.Time >= Note.Model.intro_time && Game.Time <= Note.Model.end_time + Note.MissThreshold)
+        if (!Note.IsCleared && Game.Time >= Note.Model.intro_time + Note.JudgmentOffset && Game.Time <= Note.Model.end_time + Note.MissThreshold + Note.JudgmentOffset)
         {
             Line2.enabled = true;
             CompletedLine2.enabled = true;
@@ -77,7 +77,7 @@ public class ClassicLongHoldNoteRenderer : ClassicHoldNoteRenderer
                 
                 if (HoldNote.IsHolding)
                 {
-                    if (Note.Game.Time > Note.Model.start_time)
+                    if (Note.Game.Time > Note.Model.start_time + Note.JudgmentOffset)
                     {
                         SpriteRenderer topLine, bottomLine;
                         if (CompletedLine.flipY)

@@ -56,7 +56,7 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
     protected override void UpdateComponentStates()
     {
         base.UpdateComponentStates();
-        if (!Note.IsCleared && Game.Time >= Note.Model.intro_time && Game.Time <= Note.Model.end_time + Note.MissThreshold)
+        if (!Note.IsCleared && Game.Time >= Note.Model.intro_time + Note.JudgmentOffset && Game.Time <= Note.Model.end_time + Note.MissThreshold + Note.JudgmentOffset)
         {
             Line.enabled = true;
             CompletedLine.enabled = true;
@@ -94,7 +94,7 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
 
                 if (HoldNote.IsHolding)
                 {
-                    if (Note.Game.Time > Note.Model.start_time)
+                    if (Note.Game.Time > Note.Model.start_time + Note.JudgmentOffset)
                     {
                         ProgressRing.fillColor = Fill.color;
                         ProgressRing.maxCutoff = Mathf.Min(1, 1.333f * HoldNote.HoldProgress);
@@ -114,7 +114,7 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
                     {
                         if (HoldNote.IsHolding)
                         {
-                            if (Note.Game.Time > Note.Model.start_time)
+                            if (Note.Game.Time > Note.Model.start_time + Note.JudgmentOffset)
                             {
                                 CompletedLine.size = new Vector2(1, Note.Model.holdlength * HoldNote.HoldProgress);
                             }

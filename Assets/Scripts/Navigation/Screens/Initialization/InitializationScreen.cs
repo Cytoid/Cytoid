@@ -30,7 +30,7 @@ public class InitializationScreen : Screen
         
         Context.LevelManager.OnLevelLoadProgress.AddListener(OnLevelLoadProgress);
         await Context.LevelManager.LoadLevelsOfType(LevelType.Community);
-        await Context.LevelManager.LoadLevelsOfType(LevelType.Official);
+        await Context.LevelManager.LoadLevelsOfType(LevelType.Library);
         Context.LevelManager.OnLevelLoadProgress.RemoveListener(OnLevelLoadProgress);
 
         if (Context.Player.ShouldMigrate)

@@ -59,6 +59,10 @@ namespace Cytoid.Storyboard.Sprites
 
                 LoadPath = "file://" + MainRenderer.Game.Level.Path + spritePath;
                 Image.sprite = await Context.AssetMemory.LoadAsset<UnityEngine.Sprite>(LoadPath, AssetTag.Storyboard);
+
+                if (!MainRenderer.SpritePathRefCount.ContainsKey(LoadPath))
+                    MainRenderer.SpritePathRefCount[LoadPath] = 0;
+                MainRenderer.SpritePathRefCount[LoadPath]++;
             }
         }
 
@@ -72,7 +76,14 @@ namespace Cytoid.Storyboard.Sprites
 
         public override void Dispose()
         {
-            Context.AssetMemory.DisposeAsset(LoadPath, AssetTag.Storyboard);
+            if (MainRenderer.SpritePathRefCount.ContainsKey(LoadPath))
+            {
+                MainRenderer.SpritePathRefCount[LoadPath]--;
+                if (MainRenderer.SpritePathRefCount[LoadPath] == 0)
+                {
+                    Context.AssetMemory.DisposeAsset(LoadPath, AssetTag.Storyboard);
+                }
+            }
             Destroy(Image.gameObject);
             Image = null;
         }

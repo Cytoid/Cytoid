@@ -25,7 +25,7 @@ public class MainMenuScreen : Screen
     public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
-        aboutButton.onPointerClick.AddListener(it => Dialog.PromptAlert($"<b>Cytoid {Context.VersionName}</b>\nThank you for playing!"));
+        aboutButton.onPointerClick.AddListener(it => Dialog.PromptAlert($"TEMP_MESSAGE_2.0_BETA_CREDITS".Get(Context.VersionName)));
     }
 
     public override void OnScreenBecameActive()
@@ -36,7 +36,7 @@ public class MainMenuScreen : Screen
         rightOverlayImage.SetAlpha(Context.CharacterManager.GetActiveCharacterAsset().mainMenuRightOverlayAlpha);
         
         freePlayText.text = "MAIN_LEVELS_LOADED".Get(Context.LevelManager.LoadedLocalLevels.Count(it => 
-            it.Value.Type == LevelType.Community || it.Value.Type == LevelType.Official));
+            it.Value.Type == LevelType.Community || it.Value.Type == LevelType.Library));
         freePlayText.transform.RebuildLayout();
         ProfileWidget.Instance.Enter();
 

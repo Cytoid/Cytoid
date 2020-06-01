@@ -175,17 +175,6 @@ public static class SettingsFactory
                 () => lp.Settings.HeadsetNoteOffset, it => lp.Settings.HeadsetNoteOffset = it,
                 "SETTINGS_UNIT_SECONDS".Get(), 0.ToString())
             .SaveSettingsOnChange();
-        
-        var input = Object.Instantiate(provider.input, parent);
-        input.SetContent("SETTINGS_JUDGMENT_OFFSET".Get(), "SETTINGS_JUDGMENT_OFFSET_DESC".Get(),
-                () => lp.Settings.JudgmentOffset, it =>
-                {
-                    it = Mathf.Clamp(it, -0.5f, 0.5f);
-                    lp.Settings.JudgmentOffset = it;
-                    input.inputField.text = it.ToString(CultureInfo.InvariantCulture);
-                },
-                "SETTINGS_UNIT_SECONDS".Get(), 0.ToString())
-            .SaveSettingsOnChange();
     }
 
     public static void InstantiateGameplaySettings(Transform parent)
@@ -406,6 +395,18 @@ public static class SettingsFactory
             .SetContent("SETTINGS_DISPLAY_NOTE_IDS".Get(), "SETTINGS_DISPLAY_NOTE_IDS_DESC".Get(),
                 () => lp.Settings.DisplayNoteIds, it => lp.Settings.DisplayNoteIds = it)
             .SaveSettingsOnChange();
+        
+        var input = Object.Instantiate(provider.input, parent);
+        input.SetContent("SETTINGS_JUDGMENT_OFFSET".Get(), "SETTINGS_JUDGMENT_OFFSET_DESC".Get(),
+                () => lp.Settings.JudgmentOffset, it =>
+                {
+                    it = Mathf.Clamp(it, -0.5f, 0.5f);
+                    lp.Settings.JudgmentOffset = it;
+                    input.inputField.text = it.ToString(CultureInfo.InvariantCulture);
+                },
+                "SETTINGS_UNIT_SECONDS".Get(), 0.ToString())
+            .SaveSettingsOnChange();
+        
         Object.Instantiate(provider.pillRadioGroup, parent)
             .SetContent("SETTINGS_EXPERIMENTAL_NOTE_AR".Get(), "SETTINGS_EXPERIMENTAL_NOTE_AR_DESC".Get(),
                 () => lp.Settings.UseExperimentalNoteAr, it => lp.Settings.UseExperimentalNoteAr = it)

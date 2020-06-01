@@ -31,7 +31,6 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
         }
 
         DontDestroyOnLoad(gameObject);
-        
         IntroloopPlayer.Instance.SetMixerGroup(audioMixerGroup);
         Context.PostSceneChanged.AddListener(PostSceneChanged);
         Context.CharacterManager.OnActiveCharacterSet.AddListener(asset =>

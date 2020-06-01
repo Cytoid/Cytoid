@@ -38,20 +38,20 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         void InstantiateOptions() {
             var lp = Context.Player;
             sortByRadioGroup.SetContent("LEVEL_SELECT_SORT_BY".Get(), null, () => lp.Settings.LocalLevelSort,
-                it => lp.Settings.LocalLevelSort = it, new []
+                it => lp.Settings.LocalLevelSort = it, new[]
                 {
                     ("LEVEL_SELECT_SORT_BY_ADDED_DATE".Get(), LevelSort.AddedDate),
                     ("LEVEL_SELECT_SORT_BY_PLAYED_DATE".Get(), LevelSort.LastPlayedDate),
                     ("LEVEL_SELECT_SORT_BY_DIFFICULTY".Get(), LevelSort.Difficulty),
                     ("LEVEL_SELECT_SORT_BY_TITLE".Get(), LevelSort.Title)
-                });
+                }).SaveSettingsOnChange();
             sortByRadioGroup.radioGroup.onSelect.AddListener(value => RefillLevels());
             sortOrderRadioGroup.SetContent("LEVEL_SELECT_SORT_ORDER".Get(), null, () => lp.Settings.LocalLevelSortIsAscending,
                 it => lp.Settings.LocalLevelSortIsAscending = it, new []
                 {
                     ("LEVEL_SELECT_SORT_ORDER_ASC".Get(), true),
                     ("LEVEL_SELECT_SORT_ORDER_DESC".Get(), false)
-                });
+                }).SaveSettingsOnChange();
             sortOrderRadioGroup.radioGroup.onSelect.AddListener(value => RefillLevels());
             searchInputField.onEndEdit.AddListener(value =>
             {
@@ -127,7 +127,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         switch (category)
         {
             case 1:
-                filters.Add(level => level.Type == LevelType.Official);
+                filters.Add(level => level.Type == LevelType.Library);
                 break;
             case 2:
                 filters.Add(level => level.Type == LevelType.Community);
@@ -149,7 +149,7 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
 
         foreach (var kv in Context.Library.Levels)
         {
-            dict[kv.Key] = kv.Value.Level.ToLevel(LevelType.Official);
+            dict[kv.Key] = kv.Value.Level.ToLevel(LevelType.Library);
         }
 
         var levels = dict.Values.ToList();

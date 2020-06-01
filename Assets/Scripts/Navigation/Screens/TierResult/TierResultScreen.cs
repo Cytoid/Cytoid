@@ -69,12 +69,14 @@ public class TierResultScreen : Screen
         nextButton.StartPulsing();
         nextButton.interactableMonoBehavior.onPointerClick.SetListener(_ =>
         {
+            Context.Haptic(HapticTypes.SoftImpact, true);
             nextButton.StopPulsing();
             Done();
         });
         retryButton.State = CircleButtonState.Retry;
         retryButton.interactableMonoBehavior.onPointerClick.SetListener(_ =>
         {
+            Context.Haptic(HapticTypes.SoftImpact, true);
             retryButton.StopPulsing();
             Retry();
         });
@@ -273,6 +275,7 @@ public class TierResultScreen : Screen
                     }
                 }
 
+                Context.Haptic(HapticTypes.Failure, true);
                 var dialog = Dialog.Instantiate();
                 dialog.Message = "DIALOG_RETRY_SYNCHRONIZE_TIER_PERFORMANCE".Get();
                 dialog.UseProgress = false;

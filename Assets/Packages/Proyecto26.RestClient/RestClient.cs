@@ -4,6 +4,7 @@
 using System;
 using UnityEngine.Networking;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Proyecto26
 {
@@ -43,6 +44,21 @@ namespace Proyecto26
         #endregion
 
         #region Callbacks
+        
+        // EDIT: Cytoid
+        private static void SetupCytoidOptions(RequestHelper options)
+        {
+            options.RetryCallback = (exception, _) =>
+            {
+                Debug.Log($"Exception: {exception.StatusCode}, response: {exception.Response}");
+                if (exception.StatusCode < 500 && exception.Response != null)
+                {
+                    options.Retries = 0;
+                }
+            };
+            options.Retries = 3;
+            options.RetrySecondsDelay = 1f;
+        }
 
         /// <summary>
         /// Create an HTTP request with the specified options and callback.
@@ -82,6 +98,7 @@ namespace Proyecto26
         /// <param name="callback">A callback function that is executed when the request is finished.</param>
         public static void Get(RequestHelper options, Action<RequestException, ResponseHelper> callback)
         {
+            SetupCytoidOptions(options); // EDIT: Cytoid
             options.Method = UnityWebRequest.kHttpVerbGET;
             Request(options, callback);
         }
@@ -105,6 +122,7 @@ namespace Proyecto26
         /// <typeparam name="T">The element type of the response.</typeparam>
         public static void Get<T>(RequestHelper options, Action<RequestException, ResponseHelper, T> callback)
         {
+            SetupCytoidOptions(options); // EDIT: Cytoid
             options.Method = UnityWebRequest.kHttpVerbGET;
             Request(options, callback);
         }
@@ -128,6 +146,7 @@ namespace Proyecto26
         /// <typeparam name="T">The element type of the array.</typeparam>
         public static void GetArray<T>(RequestHelper options, Action<RequestException, ResponseHelper, T[]> callback)
         {
+            SetupCytoidOptions(options); // EDIT: Cytoid
             options.Method = UnityWebRequest.kHttpVerbGET;
             StaticCoroutine.StartCoroutine(HttpBase.DefaultUnityWebRequest<T>(options, callback));
         }

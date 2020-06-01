@@ -19,7 +19,7 @@ using UnityEngine.SceneManagement;
 
 public class Context : SingletonMonoBehavior<Context>
 {
-    public const string VersionName = "2.0 Beta 1";
+    public const string VersionName = "2.0.0 Beta 1";
     public const string VersionString = "2.0.0";
     
     public static string MockApiUrl;
@@ -185,6 +185,7 @@ public class Context : SingletonMonoBehavior<Context>
         catch (Exception e)
         {
             Debug.LogError(e);
+            Haptic(HapticTypes.Failure, true);
             Dialog.Instantiate().Also(it =>
             {
                 it.UseNegativeButton = false;
@@ -347,6 +348,7 @@ public class Context : SingletonMonoBehavior<Context>
         if (Application.identifier == "me.tigerhix.cytoid")
         {
             var resolved = false;
+            var startTime = DateTimeOffset.Now;
 
             RestClient.Get<RegionInfo>(new RequestHelper
             {
@@ -370,8 +372,12 @@ public class Context : SingletonMonoBehavior<Context>
                     Debug.LogWarning(x);
                     Player.ClearOneShot("Detect Server CDN");
                 }).Finally(() => resolved = true);
-            });
-            await UniTask.WaitUntil(() => resolved);
+            }).Finally(() => resolved = true);
+            await UniTask.WaitUntil(() => resolved || DateTimeOffset.Now - startTime > TimeSpan.FromSeconds(10));
+            if (!resolved)
+            {
+                Player.Settings.CdnRegion = CdnRegion.MainlandChina;
+            }
         } 
         else if (Application.identifier == "me.tigerhix.cytoid.cn")
         {
@@ -387,22 +393,29 @@ public class Context : SingletonMonoBehavior<Context>
         Debug.Log("Initializing addressables");
         
         var proceed = false;
+        var startTime = DateTimeOffset.Now;
         RestClient.Get(new RequestHelper
         {
             Uri = AddressableRemoteFullUrl + $"catalog_{AddressableCatalogName}.hash",
-            Timeout = 3
+            Timeout = 5
         }).Then(_ =>
         {
             Debug.Log("Fetching catalog from artifact server");
         }).CatchRequestError(it =>
         {
+            Fail(it);
+        }).Finally(() => proceed = true);
+        await UniTask.WaitUntil(() => proceed || DateTimeOffset.Now - startTime > TimeSpan.FromSeconds(10));
+        if (!proceed) Fail(new Exception("Timed out"));
+
+        void Fail(Exception exception)
+        {
             TextDataProvider.ForceFailRemote = true;
-            Debug.LogWarning(it);
+            Debug.LogWarning(exception);
             Debug.LogWarning("Cannot connect to artifact server. Aborting catalog update.");
             Toast.Next(Toast.Status.Failure, "TOAST_COULD_NOT_CONNECT_TO_SERVER_ENTERING_OFFLINE_MODE".Get());
             SetOffline(true);
-        }).Finally(() => proceed = true);
-        await UniTask.WaitUntil(() => proceed);
+        }
         
         await Addressables.InitializeAsync().Task;
         timer.Time();

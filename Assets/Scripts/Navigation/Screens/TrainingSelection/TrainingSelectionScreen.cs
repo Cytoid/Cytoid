@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using LiteDB;
 using Newtonsoft.Json;
 using Proyecto26;
 using UniRx.Async;
@@ -106,8 +107,9 @@ public class TrainingSelectionScreen : Screen
                     // Save to DB
                     Context.Database.Let(it =>
                     {
-                        it.DropCollection("training");
-                        it.GetCollection<TrainingData>("training").Insert(data);
+                        var col = it.GetCollection<TrainingData>("training");
+                        col.DeleteMany(x => true);
+                        col.Insert(data);
                     });
                     
                     foreach (var onlineLevel in data.Levels)
@@ -243,6 +245,7 @@ public class TrainingSelectionScreen : Screen
     [Serializable]
     private class TrainingData
     {
+        public ObjectId Id { get; set; }
         [JsonProperty("levels")] public List<OnlineLevel> Levels { get; set; }
     }
 }

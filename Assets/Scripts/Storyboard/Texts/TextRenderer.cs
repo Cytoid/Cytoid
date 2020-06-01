@@ -60,7 +60,6 @@ namespace Cytoid.Storyboard.Texts
 
         public override void Dispose()
         {
-            Debug.Log("Text disposed!!");
             Destroy(Text.gameObject);
             Text = null;
         }

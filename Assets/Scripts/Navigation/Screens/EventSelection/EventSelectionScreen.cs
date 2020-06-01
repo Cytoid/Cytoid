@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
+using MoreMountains.NiceVibrations;
 using Proyecto26;
 using UniRx.Async;
 using UnityEngine;
@@ -67,9 +68,10 @@ public class EventSelectionScreen : Screen
         lastSelectedIndex = selectedIndex;
     }
 
-    public void LoadContent()
+    public async void LoadContent()
     {
         SpinnerOverlay.Show();
+        await Context.LevelManager.LoadLevelsOfType(LevelType.Event);
 
         RestClient.GetArray<EventMeta>(new RequestHelper {
             Uri = $"{Context.ApiUrl}/events",
@@ -181,6 +183,7 @@ public class EventSelectionScreen : Screen
             {
                 if (meta.locked)
                 {
+                    Context.Haptic(HapticTypes.Failure, true);
                     // TODO
                     Dialog.Instantiate().Also(it =>
                     {
@@ -190,26 +193,31 @@ public class EventSelectionScreen : Screen
                     }).Open();
                     return;
                 }
-                
+                Context.Haptic(HapticTypes.SoftImpact, true);
                 if (meta.levelId != null)
                 {
-                    Dialog.Instantiate().Also(it =>
+                    SpinnerOverlay.Show();
+
+                    RestClient.Get<OnlineLevel>(new RequestHelper
                     {
-                        it.Message = "TEMP_MESSAGE_NEW_VERSION_REQUIRED".Get();
-                        it.UsePositiveButton = true;
-                        it.UseNegativeButton = false;
-                    }).Open();
-                    // TODO
-                    /*Context.SelectedLevel = meta.levelId.ToLevel(LevelType.Official);
-                    Context.ScreenManager.ChangeScreen(
-                        GamePreparationScreen.Id, ScreenTransition.In, 0.4f,
-                        transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter()
-                    );*/
+                        Uri = $"{Context.ApiUrl}/levels/{meta.levelId}"
+                    }).Then(level =>
+                    {
+                        Context.SelectedLevel = level.ToLevel(LevelType.Event);
+                        Context.ScreenManager.ChangeScreen(
+                            GamePreparationScreen.Id, ScreenTransition.In, 0.4f,
+                            transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter()
+                        );
+                    }).CatchRequestError(error =>
+                    {
+                        Debug.LogError(error);
+                        Dialog.PromptAlert("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
+                    }).Finally(() => SpinnerOverlay.Hide());
                 } 
                 else if (meta.collectionId != null)
                 {
                     CollectionDetailsScreen.LoadedContent = new CollectionDetailsScreen.Content
-                        {Id = meta.collectionId};
+                        {Id = meta.collectionId, Type = LevelType.Event};
                     Context.ScreenManager.ChangeScreen(
                         CollectionDetailsScreen.Id, ScreenTransition.In, 0.4f,
                         transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter()
@@ -244,6 +252,7 @@ public class EventSelectionScreen : Screen
             logoImage.sprite = null;
             if (to is MainMenuScreen)
             {
+                Context.LevelManager.UnloadLevelsOfType(LevelType.Event);
                 Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.EventCover);
                 Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.EventLogo);
                 Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.RemoteLevelCoverThumbnail);

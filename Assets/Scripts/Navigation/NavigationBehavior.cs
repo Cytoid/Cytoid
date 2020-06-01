@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MoreMountains.NiceVibrations;
 using Proyecto26;
 using UniRx.Async;
 using UnityEngine;
@@ -82,6 +83,7 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
                 catch (Exception e)
                 {
                     Debug.LogError(e);
+                    Dialog.PromptAlert("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
                 }
             }).CatchRequestError(error =>
             {
@@ -92,6 +94,7 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
                         throw error;
                     }
                 }
+                Context.Haptic(HapticTypes.Failure, true);
                 Dialog.Instantiate().Also(it =>
                 {
                     it.Message = "DIALOG_COULD_NOT_OPEN_LEVEL_X".Get(id);

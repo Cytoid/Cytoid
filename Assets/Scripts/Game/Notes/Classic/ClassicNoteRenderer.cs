@@ -167,7 +167,7 @@ public class ClassicNoteRenderer : NoteRenderer
     public override void OnClear(NoteGrade grade)
     {
         base.OnClear(grade);
-        Game.effectController.PlayClearEffect(this, grade, Note.TimeUntilEnd);
+        Game.effectController.PlayClearEffect(this, grade, Note.TimeUntilEnd + Note.JudgmentOffset);
     }
 
     public override void Cleanup()

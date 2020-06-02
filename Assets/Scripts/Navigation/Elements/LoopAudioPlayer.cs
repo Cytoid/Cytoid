@@ -51,11 +51,14 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
     {
         var previousMaxVolume = maxVolume;
         maxVolume = Context.Player.Settings.MusicVolume;
-        if (maxVolume == 0) maxVolume = float.MinValue;
+        if (maxVolume == 0) maxVolume = 0.000001f;
         audioMixerGroup.audioMixer.GetFloat("MasterVolume", out var currentMixerGroupVolume);
+        if (PrintDebugMessages) print($"LoopAudioPlayer: Current mixer group volume is {currentMixerGroupVolume}");
         var currentVolume = ConvertTo01Volume(currentMixerGroupVolume);
         var currentVolumePercentage = Mathf.Clamp01(currentVolume / previousMaxVolume);
-        audioMixerGroup.audioMixer.SetFloat("MasterVolume", ConvertToMixerGroupVolume(currentVolumePercentage * maxVolume));
+        var mixerGroupVolume = ConvertToMixerGroupVolume(currentVolumePercentage * maxVolume);
+        audioMixerGroup.audioMixer.SetFloat("MasterVolume", mixerGroupVolume);
+        if (PrintDebugMessages) print($"LoopAudioPlayer: Mixer group volume set to {mixerGroupVolume}");
     }
 
     private static float ConvertToMixerGroupVolume(float f)

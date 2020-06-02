@@ -109,6 +109,7 @@ public class Dialog : MonoBehaviour
 
     public virtual void Open()
     {
+        if (IsOpened) return;
         IsOpened = true;
         canvasGroup.blocksRaycasts = true;
         Context.SetMajorCanvasBlockRaycasts(false);
@@ -118,6 +119,7 @@ public class Dialog : MonoBehaviour
 
     public virtual void Close(bool willDestroy = true)
     {
+        if (!IsOpened) return;
         IsOpened = false;
         canvasGroup.blocksRaycasts = false;
         Context.SetMajorCanvasBlockRaycasts(true);

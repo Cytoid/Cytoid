@@ -31,6 +31,7 @@ public class MainMenuScreen : Screen
     public override void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
+        StartupLogger.Instance.Dispose();
 
         upperLeftOverlayImage.SetAlpha(Context.CharacterManager.GetActiveCharacterAsset().mainMenuUpperLeftOverlayAlpha);
         rightOverlayImage.SetAlpha(Context.CharacterManager.GetActiveCharacterAsset().mainMenuRightOverlayAlpha);
@@ -90,7 +91,15 @@ public class MainMenuScreen : Screen
                 }
             }).CatchRequestError(Debug.LogError);
         }
-        
     }
 
+    public override void OnScreenUpdate()
+    {
+        base.OnScreenUpdate();
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Application.Quit();
+        }
+    }
+    
 }

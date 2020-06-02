@@ -728,6 +728,21 @@ public class LevelManager
         dialog.onUpdate.AddListener(it =>
         {
             if (!downloading) return;
+            if (req.Request == null)
+            {
+                // Download was cancelled due to Unity
+                Debug.LogError("UWR download failed");
+                try
+                {
+                    onDownloadFailed();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(e);
+                }
+                dialog.Close();
+                return;
+            }
             if (totalSize > 0)
             {
                 downloadedSize = req.DownloadedBytes;
@@ -746,6 +761,8 @@ public class LevelManager
             {
                 aborted = true;
                 req?.Abort();
+
+                dialog.Close();
             };
         }
 

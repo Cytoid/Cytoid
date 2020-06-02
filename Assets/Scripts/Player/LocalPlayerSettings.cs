@@ -144,6 +144,8 @@ public class LocalPlayerSettings
 
     [JsonProperty("use_experimental_note_ar")] public bool UseExperimentalNoteAr { get; set; } = true;
 
+    [JsonProperty("use_developer_console")] public bool UseDeveloperConsole { get; set; } = true;
+
     [JsonProperty("local_level_sort_is_ascending")]
     public bool LocalLevelSortIsAscending { get; set; } = false;
     
@@ -188,7 +190,7 @@ public static class CdnRegionExtensions
             case CdnRegion.International:
                 return "https://cytoid.io";
             case CdnRegion.MainlandChina:
-                return "https://cytoid.io";
+                return "https://cytoid.cn";
             default:
                 throw new ArgumentOutOfRangeException(nameof(region), region, null);
         }
@@ -239,7 +241,8 @@ public enum GraphicsQuality
 {
     Low,
     Medium,
-    High
+    High,
+    Ultra
 }
 
 public class HashSetConverter<TEnum> : JsonConverter where TEnum : Enum

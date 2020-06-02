@@ -13,6 +13,8 @@ GameObject:
   - component: {fileID: 1610847395866861272}
   - component: {fileID: 4429216544690857113}
   - component: {fileID: 2205265939525267318}
+  - component: {fileID: -338263411322709069}
+  - component: {fileID: 23760371385689949}
   m_Layer: 5
   m_Name: PillRadioGroupPreferenceElement
   m_TagString: Untagged
@@ -94,6 +96,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   title: {fileID: 1610847397580252780}
   description: {fileID: 1610847396792637993}
+  saveSettingsOnChange: 0
   radioGroup: {fileID: 993003229734465873}
 --- !u!114 &2205265939525267318
 MonoBehaviour:
@@ -107,6 +110,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 31f6a0ba801343f3a4a9d3fb3a8022d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!223 &-338263411322709069
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1610847395866861270}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_TargetDisplay: 0
+--- !u!114 &23760371385689949
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1610847395866861270}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &1610847396669320713
 GameObject:
   m_ObjectHideFlags: 0

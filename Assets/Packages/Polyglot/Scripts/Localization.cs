@@ -66,7 +66,7 @@ namespace Polyglot
         [SerializeField]
         private List<Language> supportedLanguages = null;
 
-        public List<Language> SupportedLanguages{ get { return supportedLanguages; }}
+        public List<Language> SupportedLanguages { get { return supportedLanguages; }}
 
         [Tooltip("The currently selected language of the game.\nThis will also be the default when you start the game for the first time.")]
         [SerializeField]

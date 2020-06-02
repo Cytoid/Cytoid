@@ -19,7 +19,7 @@
 //  limitations under the License.
 //
 
-﻿//
+ //
 //  Log.cs
 //
 //  Lunar Unity Mobile Console

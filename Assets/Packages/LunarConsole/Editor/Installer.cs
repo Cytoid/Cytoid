@@ -19,7 +19,7 @@
 //  limitations under the License.
 //
 
-﻿using UnityEngine;
+ using UnityEngine;
 using UnityEditor;
 
 using System.Collections;

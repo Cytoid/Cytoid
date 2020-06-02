@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7854026637845850983}
   - component: {fileID: 7854026637845850982}
   - component: {fileID: 2125349029915184985}
+  - component: {fileID: -1221408574592293972}
   m_Layer: 5
   m_Name: TierPerformanceSmall
   m_TagString: Untagged
@@ -94,6 +95,27 @@ MonoBehaviour:
   completion: {fileID: 7854026638035837297}
   completionGradient: {fileID: 7854026638035837303}
   accuracy: {fileID: 7854026637960816191}
+--- !u!223 &-1221408574592293972
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7854026637845850980}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_TargetDisplay: 0
 --- !u!1 &7854026637960816188
 GameObject:
   m_ObjectHideFlags: 0

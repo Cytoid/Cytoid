@@ -20,7 +20,7 @@
 //
 
 #define LUNAR_CONSOLE_ENABLED
-#define LUNAR_CONSOLE_FREE
+#define LUNAR_CONSOLE_FULL
 
 #if UNITY_IOS || UNITY_IPHONE || UNITY_ANDROID || UNITY_EDITOR
 #define LUNAR_CONSOLE_PLATFORM_SUPPORTED
@@ -1496,6 +1496,7 @@ namespace LunarConsolePlugin
             #if LUNAR_CONSOLE_ENABLED
             if (s_instance != null)
             {
+                Debug.Log("Setting Lunar Console to: ${enabled}");
                 s_instance.SetConsoleInstanceEnabled(enabled);
             }
             #endif // LUNAR_CONSOLE_ENABLED

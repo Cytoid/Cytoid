@@ -49,6 +49,7 @@ namespace Proyecto26
                         break;
                     }
                 }
+                options.Request = null;
             }
             while (retries <= options.Retries);
         }

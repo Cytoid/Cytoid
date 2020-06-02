@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using LeTai.Asset.TranslucentImage;
+using LunarConsolePlugin;
 using Polyglot;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -77,7 +78,7 @@ public static class SettingsFactory
                 {
                     lp.Settings.MusicVolume = it;
                     // Special handling
-                    // TODO: Event?
+                    // TODO: Others?
                     if (Context.ScreenManager.ActiveScreen is GamePreparationScreen gamePreparationScreen)
                     {
                         gamePreparationScreen.previewAudioSource.volume = it;
@@ -151,7 +152,8 @@ public static class SettingsFactory
                     {
                         ("SETTINGS_QUALITY_LOW".Get(), GraphicsQuality.Low), 
                         ("SETTINGS_QUALITY_MEDIUM".Get(), GraphicsQuality.Medium), 
-                        ("SETTINGS_QUALITY_HIGH".Get(), GraphicsQuality.High)
+                        ("SETTINGS_QUALITY_HIGH".Get(), GraphicsQuality.High),
+                        ("SETTINGS_QUALITY_ULTRA".Get(), GraphicsQuality.Ultra)
                     }).SaveSettingsOnChange();
                 element.caretSelect.onSelect.AddListener((_, quality) =>
                 {
@@ -395,6 +397,23 @@ public static class SettingsFactory
             .SetContent("SETTINGS_DISPLAY_NOTE_IDS".Get(), "SETTINGS_DISPLAY_NOTE_IDS_DESC".Get(),
                 () => lp.Settings.DisplayNoteIds, it => lp.Settings.DisplayNoteIds = it)
             .SaveSettingsOnChange();
+        Object.Instantiate(provider.pillRadioGroup, parent)
+            .SetContent("SETTINGS_DEVELOPER_CONSOLE".Get(), "SETTINGS_DEVELOPER_CONSOLE_DESC".Get(),
+                () => lp.Settings.UseDeveloperConsole, it =>
+                {
+                    lp.Settings.UseDeveloperConsole = it;
+                    LunarConsole.SetConsoleEnabled(it);
+                    if (!it)
+                    {
+                        Dialog.PromptAlert("DIALOG_DISABLE_DEVELOPER_CONSOLE_WARNING".Get());
+                    }
+                })
+            .SaveSettingsOnChange();
+
+        Object.Instantiate(provider.pillRadioGroup, parent)
+            .SetContent("SETTINGS_EXPERIMENTAL_NOTE_AR".Get(), "SETTINGS_EXPERIMENTAL_NOTE_AR_DESC".Get(),
+                () => lp.Settings.UseExperimentalNoteAr, it => lp.Settings.UseExperimentalNoteAr = it)
+            .SaveSettingsOnChange();
         
         var input = Object.Instantiate(provider.input, parent);
         input.SetContent("SETTINGS_JUDGMENT_OFFSET".Get(), "SETTINGS_JUDGMENT_OFFSET_DESC".Get(),
@@ -405,11 +424,6 @@ public static class SettingsFactory
                     input.inputField.text = it.ToString(CultureInfo.InvariantCulture);
                 },
                 "SETTINGS_UNIT_SECONDS".Get(), 0.ToString())
-            .SaveSettingsOnChange();
-        
-        Object.Instantiate(provider.pillRadioGroup, parent)
-            .SetContent("SETTINGS_EXPERIMENTAL_NOTE_AR".Get(), "SETTINGS_EXPERIMENTAL_NOTE_AR_DESC".Get(),
-                () => lp.Settings.UseExperimentalNoteAr, it => lp.Settings.UseExperimentalNoteAr = it)
             .SaveSettingsOnChange();
     }
 }

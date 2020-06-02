@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using DG.Tweening;
 using LiteDB;
+using LunarConsolePlugin;
 using MoreMountains.NiceVibrations;
 using Newtonsoft.Json;
 using Polyglot;
@@ -19,13 +20,13 @@ using UnityEngine.SceneManagement;
 
 public class Context : SingletonMonoBehavior<Context>
 {
-    public const string VersionName = "2.0.0 Beta 1";
+    public const string VersionName = "2.0.0 Beta 1.1";
     public const string VersionString = "2.0.0";
     
     public static string MockApiUrl;
 
     public static string ApiUrl => MockApiUrl ?? Player.Settings.CdnRegion.GetApiUrl();
-    public static string WebsiteUrl =>  Player.Settings.CdnRegion.GetWebsiteUrl();
+    public static string WebsiteUrl => Player.Settings.CdnRegion.GetWebsiteUrl();
     public static string AddressableRemoteBaseUrl => Player.Settings.CdnRegion.GetAddressableRemoteBaseUrl();
     public static string StoreUrl => Player.Settings.CdnRegion.GetStoreUrl();
     
@@ -139,8 +140,46 @@ public class Context : SingletonMonoBehavior<Context>
 
     private async void InitializeApplication()
     {
-        Debug.Log($"Package name: {Application.identifier}");
+        UserDataPath = Application.persistentDataPath;
+
+        if (Application.platform == RuntimePlatform.Android)
+        {
+            var dir = GetAndroidStoragePath();
+            if (dir == null)
+            {
+                Application.Quit();
+                return;
+            }
+
+            UserDataPath = dir + "/Cytoid";
+            // Create an empty folder if it doesn't already exist
+            Directory.CreateDirectory(UserDataPath);
+            try
+            {
+                File.Create(UserDataPath + "/.nomedia").Dispose();
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("Cannot create or overwrite .nomedia file. Is it read-only?");
+                Debug.LogWarning(e);
+            }
+        }
+        else if (Application.platform == RuntimePlatform.IPhonePlayer)
+        {
+            // iOS 13 fix
+            iOSTemporaryInboxPath = UserDataPath
+                .Replace("Documents/", "")
+                .Replace("Documents", "") + "/tmp/me.tigerhix.cytoid-Inbox/";
+        }
+        print("User data path: " + UserDataPath);
         
+#if UNITY_EDITOR
+        Application.runInBackground = true;
+#endif
+        
+        if (SceneManager.GetActiveScene().name == "Navigation") StartupLogger.Instance.Initialize();
+        Debug.Log($"Package name: {Application.identifier}");
+
         Application.lowMemory += OnLowMemory;
         Application.targetFrameRate = 120;
         Input.gyro.enabled = true;
@@ -226,43 +265,6 @@ public class Context : SingletonMonoBehavior<Context>
         InitialWidth = UnityEngine.Screen.width;
         InitialHeight = UnityEngine.Screen.height;
         UpdateGraphicsQuality();
-        
-        UserDataPath = Application.persistentDataPath;
-
-        if (Application.platform == RuntimePlatform.Android)
-        {
-            var dir = GetAndroidStoragePath();
-            if (dir == null)
-            {
-                Application.Quit();
-                return;
-            }
-
-            UserDataPath = dir + "/Cytoid";
-            // Create an empty folder if it doesn't already exist
-            Directory.CreateDirectory(UserDataPath);
-            try
-            {
-                File.Create(UserDataPath + "/.nomedia").Dispose();
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning("Cannot create or overwrite .nomedia file. Is it read-only?");
-                Debug.LogWarning(e);
-            }
-        }
-        else if (Application.platform == RuntimePlatform.IPhonePlayer)
-        {
-            // iOS 13 fix
-            iOSTemporaryInboxPath = UserDataPath
-                .Replace("Documents/", "")
-                .Replace("Documents", "") + "/tmp/me.tigerhix.cytoid-Inbox/";
-        }
-        print("User data path: " + UserDataPath);
-        
-#if UNITY_EDITOR
-        Application.runInBackground = true;
-#endif
 
         SelectedMods = new HashSet<Mod>(Player.Settings.EnabledMods);
 
@@ -337,6 +339,8 @@ public class Context : SingletonMonoBehavior<Context>
 
         IsInitialized = true;
         OnApplicationInitialized.Invoke();
+        
+        LunarConsole.SetConsoleEnabled(Player.Settings.UseDeveloperConsole);
     }
 
     public async UniTask DetectServerCdn()
@@ -561,6 +565,7 @@ public class Context : SingletonMonoBehavior<Context>
         {
             switch (Player.Settings.GraphicsQuality)
             {
+                case GraphicsQuality.Ultra:
                 case GraphicsQuality.High:
                     UnityEngine.Screen.SetResolution(InitialWidth, InitialHeight, true);
                     QualitySettings.masterTextureLimit = 0;
@@ -577,7 +582,7 @@ public class Context : SingletonMonoBehavior<Context>
                     break;
             }
 
-            MainTranslucentImage.Static = Player.Settings.GraphicsQuality != GraphicsQuality.High;
+            MainTranslucentImage.Static = Player.Settings.GraphicsQuality != GraphicsQuality.Ultra;
             if (ScreenManager != null && ScreenManager.ActiveScreenId != null)
             {
                 if (MainTranslucentImage.Instance != null)
@@ -614,6 +619,16 @@ public class Context : SingletonMonoBehavior<Context>
     {
         Context.offline = offline;
         OnOfflineModeToggled.Invoke(offline);
+    }
+
+    private void OnApplicationFocus(bool hasFocus)
+    {
+        if (!hasFocus) Database.Checkpoint();
+    }
+
+    private void OnApplicationPause(bool pauseStatus)
+    {
+        if (pauseStatus) Database.Checkpoint();
     }
 }
 

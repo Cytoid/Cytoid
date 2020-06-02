@@ -104,6 +104,7 @@ GameObject:
   - component: {fileID: 7854026637845850983}
   - component: {fileID: 7854026637845850982}
   - component: {fileID: 3461236076992189713}
+  - component: {fileID: 9018366020589964034}
   m_Layer: 5
   m_Name: PerformanceSmall
   m_TagString: Untagged
@@ -188,6 +189,27 @@ MonoBehaviour:
   gradeGradient: {fileID: 7854026638035837303}
   score: {fileID: 7854026637794291807}
   accuracy: {fileID: 7854026637960816191}
+--- !u!223 &9018366020589964034
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7854026637845850980}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_TargetDisplay: 0
 --- !u!1 &7854026637960816188
 GameObject:
   m_ObjectHideFlags: 0

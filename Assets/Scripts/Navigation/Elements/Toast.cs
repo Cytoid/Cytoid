@@ -53,11 +53,13 @@ public class Toast : SingletonMonoBehavior<Toast>
 
     public static void Enqueue(Status status, string message, float duration = 3f, bool transitive = false)
     {
+        if (Instance == null) return;
         Instance.queue.Enqueue(new Entry {Status = status, Message = message, Duration = duration, Transitive = transitive});
     }
     
     public static void Next(Status status, string message, float duration = 3f, bool transitive = false)
     {
+        if (Instance == null) return;
         Instance.queue.Clear();
         Enqueue(status, message, duration, transitive);
     }

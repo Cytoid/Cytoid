@@ -26,17 +26,27 @@ public class Player
     {
         var col = Context.Database.GetCollection<LevelRecord>("level_records");
         col.DeleteMany(it => it.LevelId == null);
+
+        if (!Localization.Instance.SupportedLanguages.Contains((Language) Settings.Language))
+        {
+            Settings.Language = (int) Language.English;
+        }
     }
     
     public void LoadSettings()
     {
         Context.Database.Let(it =>
         {
+            if (!it.CollectionExists("settings"))
+            {
+                Debug.LogWarning("Cannot find 'settings' collections");
+            }
             var col = it.GetCollection<LocalPlayerSettings>("settings");
             var result = col.FindOne(x => true);
 
             if (result == null)
             {
+                Debug.LogWarning("First time startup. Initializing settings...");
                 // TODO: Remove migration... one day
                 ShouldMigrate = true;
                 result = InitializeSettings();
@@ -129,7 +139,8 @@ public class Player
             PlayerId = PlayerPrefs.GetString("Uid"),
             LoginToken = SecuredPlayerPrefs.GetString("JwtToken", null),
             ActiveCharacterId = null,
-            Language = (int) Localization.Instance.ConvertSystemLanguage(Application.systemLanguage),
+            Language = (int) Localization.Instance.ConvertSystemLanguage(Application.systemLanguage)
+                .Let(it => Localization.Instance.SupportedLanguages.Contains(it) ? it : Language.English),
             PlayRanked = legacy.PlayRanked,
             EnabledMods = legacy.EnabledMods.ToList(),
             DisplayBoundaries = true,
@@ -180,7 +191,7 @@ public class Player
             HitSound = legacy.HitSound,
             HitTapticFeedback = legacy.HitTapticFeedback,
             DisplayStoryboardEffects = legacy.UseStoryboardEffects,
-            GraphicsQuality = Enum.TryParse<GraphicsQuality>(legacy.GraphicsQuality, out var result) ? result : (Application.platform == RuntimePlatform.IPhonePlayer ? GraphicsQuality.High : GraphicsQuality.Medium),
+            GraphicsQuality = GetDefaultGraphicsQuality(),
             BaseNoteOffset = legacy.BaseNoteOffset,
             HeadsetNoteOffset = legacy.HeadsetNoteOffset,
             ClearEffectsSize = legacy.ClearFXSize,
@@ -191,6 +202,30 @@ public class Player
             LocalLevelSortIsAscending = legacy.LocalLevelsSortInAscendingOrder
         };
         return settings;
+    }
+
+    private GraphicsQuality GetDefaultGraphicsQuality()
+    {
+        if (Application.platform == RuntimePlatform.IPhonePlayer)
+        {
+#if UNITY_IOS
+            if (UnityEngine.iOS.Device.generation >= UnityEngine.iOS.DeviceGeneration.iPhone7)
+            {
+                return GraphicsQuality.Ultra;
+            }
+            if (UnityEngine.iOS.Device.generation >= UnityEngine.iOS.DeviceGeneration.iPhone5S)
+            {
+                return GraphicsQuality.High;
+            }
+            return GraphicsQuality.Medium;
+#endif
+        }
+
+        if (Application.platform == RuntimePlatform.Android)
+        {
+            return GraphicsQuality.Medium;
+        }
+        return GraphicsQuality.Ultra;
     }
     
     public bool ShouldOneShot(string key)
@@ -217,11 +252,6 @@ public class Player
 
 public class LocalPlayerLegacy
 {
-    public int Language
-    {
-        get => PlayerPrefs.GetInt("Language", 0);
-        set => PlayerPrefs.SetInt("Language", value);
-    }
     
     public bool PlayRanked
     {

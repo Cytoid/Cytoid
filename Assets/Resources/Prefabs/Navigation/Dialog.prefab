@@ -580,6 +580,7 @@ MonoBehaviour:
   enterOnScreenBecomeActiveDelay: 0
   leaveOnScreenBecomeInactive: 0
   leaveOnScreenBecomeInactiveDelay: 0
+  useEditorStateAsDefault: 0
   disableRaycasts: 0
   actOnOtherGameObjects: 0
   printDebugInfo: 0
@@ -851,6 +852,7 @@ MonoBehaviour:
   enterOnScreenBecomeActiveDelay: 0
   leaveOnScreenBecomeInactive: 0
   leaveOnScreenBecomeInactiveDelay: 0
+  useEditorStateAsDefault: 0
   disableRaycasts: 0
   actOnOtherGameObjects: 0
   printDebugInfo: 0
@@ -1083,6 +1085,7 @@ GameObject:
   - component: {fileID: 9134242189496004650}
   - component: {fileID: 9134242189496004693}
   - component: {fileID: 4985724538233576805}
+  - component: {fileID: 3776403276979634182}
   m_Layer: 5
   m_Name: GameObject
   m_TagString: Untagged
@@ -1150,6 +1153,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_HorizontalFit: 2
   m_VerticalFit: 2
+--- !u!223 &3776403276979634182
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9134242189496004651}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_TargetDisplay: 0
 --- !u!1 &9134242189503120847
 GameObject:
   m_ObjectHideFlags: 0
@@ -1314,6 +1338,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   initialAlpha: 0.6
   finalSize: 1.6
+  overrideFinalSizeY: 0
+  finalSizeY: -1
   duration: 0.8
   overlay: 0
   ease: 9
@@ -1366,6 +1392,8 @@ GameObject:
   m_Component:
   - component: {fileID: 9134242189820343664}
   - component: {fileID: 9134242189820343666}
+  - component: {fileID: 295740788804268780}
+  - component: {fileID: 8987499680897316337}
   m_Layer: 5
   m_Name: GameObject (1)
   m_TagString: Untagged
@@ -1405,6 +1433,44 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!223 &295740788804268780
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9134242189820343665}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_TargetDisplay: 0
+--- !u!114 &8987499680897316337
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9134242189820343665}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &9134242190085622629
 GameObject:
   m_ObjectHideFlags: 0
@@ -1663,6 +1729,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   initialAlpha: 0.6
   finalSize: 1.6
+  overrideFinalSizeY: 0
+  finalSizeY: -1
   duration: 0.8
   overlay: 0
   ease: 9
@@ -1718,6 +1786,7 @@ GameObject:
   - component: {fileID: 9134242190318533153}
   - component: {fileID: 9134242190318533158}
   - component: {fileID: 9134242190318533159}
+  - component: {fileID: 6504866536954046061}
   m_Layer: 5
   m_Name: Dialog (1)
   m_TagString: Untagged
@@ -1790,8 +1859,8 @@ CanvasGroup:
   m_GameObject: {fileID: 9134242190318533157}
   m_Enabled: 1
   m_Alpha: 1
-  m_Interactable: 1
-  m_BlocksRaycasts: 1
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
 --- !u!114 &9134242190318533159
 MonoBehaviour:
@@ -1834,6 +1903,28 @@ MonoBehaviour:
   enterOnScreenBecomeActiveDelay: 0
   leaveOnScreenBecomeInactive: 0
   leaveOnScreenBecomeInactiveDelay: 0
+  useEditorStateAsDefault: 0
   disableRaycasts: 0
   actOnOtherGameObjects: 0
   printDebugInfo: 0
+--- !u!223 &6504866536954046061
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9134242190318533157}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_AdditionalShaderChannelsFlag: 7
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_TargetDisplay: 0

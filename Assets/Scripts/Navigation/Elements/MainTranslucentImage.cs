@@ -3,6 +3,7 @@ using DG.Tweening;
 using LeTai.Asset.TranslucentImage;
 using UniRx.Async;
 using UnityEngine;
+using UnityEngine.UI;
 
 /**
  * TODO: Yeah one day I will refactor this.
@@ -11,10 +12,13 @@ public class MainTranslucentImage : SingletonMonoBehavior<MainTranslucentImage>,
 {
     public Camera uiCamera;
     public static ParallaxElement ParallaxElement => ParallaxHolder.Instance.Target;
+    public TranslucentImageSource translucentImageSource;
     [GetComponent] public TranslucentImage translucentImage;
+    public Image background;
     public bool hiddenOnStart = true;
 
     public static bool Static = false;
+    private bool useOpaqueBackground;
 
     private void Start()
     {
@@ -33,6 +37,7 @@ public class MainTranslucentImage : SingletonMonoBehavior<MainTranslucentImage>,
 
     public void Initialize()
     {
+        background.enabled = false;
         translucentImage.color = Color.black;
         translucentImage.DOKill();
         translucentImage.DOFade(1, 2f).SetEase(Ease.OutCubic);
@@ -48,10 +53,27 @@ public class MainTranslucentImage : SingletonMonoBehavior<MainTranslucentImage>,
     {
         TranslucentImageSource.WillUpdate = true;
     }
+
+    public void SetUseOpaqueBackground(bool useOpaqueBackground)
+    {
+        this.useOpaqueBackground = useOpaqueBackground;
+        if (this.useOpaqueBackground)
+        {
+            background.enabled = true;
+            translucentImageSource.enabled = false;
+            translucentImage.enabled = false;
+        }
+        else
+        {
+            background.enabled = false;
+            translucentImageSource.enabled = true;
+            translucentImage.enabled = true;
+        }
+    }
     
     private void Update()
     {
-        if (Context.ScreenManager == null || Context.ScreenManager.ActiveScreenId == null) return;
+        if (useOpaqueBackground || Context.ScreenManager == null || Context.ScreenManager.ActiveScreenId == null) return;
         var activeScreenId = Context.ScreenManager.ActiveScreenId;
         if (!Static && !BlockedScreenIds.Contains(activeScreenId) && activeScreenId != MainMenuScreen.Id)
         {
@@ -63,30 +85,58 @@ public class MainTranslucentImage : SingletonMonoBehavior<MainTranslucentImage>,
     {
         WillUpdateTranslucentImage();
         if (from != null && BlockedScreenIds.Contains(from.GetId())) {
+            if (useOpaqueBackground)
+            {
+                background.enabled = false;
+            }
             uiCamera.gameObject.SetActive(true);
             ParallaxElement.gameObject.SetActive(true);
         }
         if (to is ResultScreen || to is TierBreakScreen || to is TierResultScreen)
         {
+            if (useOpaqueBackground)
+            {
+                background.enabled = true;
+                background.color = background.color.WithAlpha(0.7f);
+            }
+            else
+            {
+                translucentImage.color = Color.black;
+            }
             uiCamera.gameObject.SetActive(true);
             ParallaxElement.gameObject.SetActive(false);
-            translucentImage.color = Color.black;
         }
         else if (to is MainMenuScreen)
         {
+            if (useOpaqueBackground)
+            {
+                background.enabled = false;
+            }
+            else
+            {
+                translucentImage.color = Color.black;
+                translucentImage.DOKill();
+                translucentImage.DOFade(0, 0.4f).SetEase(Ease.OutCubic);
+            }
             uiCamera.gameObject.SetActive(true);
             ParallaxElement.Enabled = true;
-            translucentImage.color = Color.black;
-            translucentImage.DOKill();
-            translucentImage.DOFade(0, 0.4f).SetEase(Ease.OutCubic);
             ParallaxElement.gameObject.SetActive(true);
             DOTween.To(() => ParallaxElement.ScaleMultiplier, v => ParallaxElement.ScaleMultiplier = v,
                 ParallaxElement.CurrentScale, 0.4f).SetEase(Ease.OutCubic);
         }
-        else {
-            translucentImage.color = Color.black;
-            translucentImage.DOKill();
-            translucentImage.DOFade(1, 0.4f);
+        else
+        {
+            if (useOpaqueBackground)
+            {
+                background.enabled = true;
+                background.color = background.color.WithAlpha(1f);
+            }
+            else
+            {
+                translucentImage.color = Color.black;
+                translucentImage.DOKill();
+                translucentImage.DOFade(1, 0.4f);
+            }
             if (Static)
             {
                 uiCamera.gameObject.SetActive(true);
@@ -108,8 +158,15 @@ public class MainTranslucentImage : SingletonMonoBehavior<MainTranslucentImage>,
     {
         if (to != null && BlockedScreenIds.Contains(to.GetId()))
         {
-            uiCamera.gameObject.SetActive(false);
-            ParallaxElement.gameObject.SetActive(false);
+            if (useOpaqueBackground)
+            {
+                background.enabled = true;
+            }
+            else
+            {
+                uiCamera.gameObject.SetActive(false);
+                ParallaxElement.gameObject.SetActive(false);
+            }
         }
     }
 }

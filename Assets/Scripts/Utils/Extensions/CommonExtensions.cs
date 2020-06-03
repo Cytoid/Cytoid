@@ -16,6 +16,13 @@ using UnityEngine.UI;
 
 public static class CommonExtensions
 {
+    public static Dictionary<TK, TV> WithOverrides<TK, TV>(this Dictionary<TK, TV> baseDictionary, Dictionary<TK, TV> overrideDictionary)
+    {
+        baseDictionary = new Dictionary<TK, TV>(baseDictionary);
+        overrideDictionary.ToList().ForEach(x => baseDictionary[x.Key] = x.Value);
+        return baseDictionary;
+    }
+    
     public static void SetListener(this UnityEvent unityEvent, UnityAction call)
     {
         unityEvent.RemoveAllListeners();

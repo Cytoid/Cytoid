@@ -1496,7 +1496,6 @@ namespace LunarConsolePlugin
             #if LUNAR_CONSOLE_ENABLED
             if (s_instance != null)
             {
-                Debug.Log("Setting Lunar Console to: ${enabled}");
                 s_instance.SetConsoleInstanceEnabled(enabled);
             }
             #endif // LUNAR_CONSOLE_ENABLED

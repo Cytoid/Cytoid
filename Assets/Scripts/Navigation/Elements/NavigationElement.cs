@@ -27,8 +27,15 @@ public class NavigationElement : InteractableMonoBehavior, ScreenBecameActiveLis
         {
             var cancellationSource = new CancellationTokenSource();
             cancellationSource.CancelAfter(TimeSpan.FromSeconds(1));
-            await UniTask.WaitUntil(() => Context.ScreenManager.ChangingToScreenId == null,
-                cancellationToken: cancellationSource.Token);
+            try
+            {
+                await UniTask.WaitUntil(() => Context.ScreenManager.ChangingToScreenId == null,
+                    cancellationToken: cancellationSource.Token);
+            }
+            catch
+            {
+                return;
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(soundName))

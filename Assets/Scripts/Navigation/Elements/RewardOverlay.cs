@@ -17,6 +17,8 @@ public class RewardOverlay : SingletonMonoBehavior<RewardOverlay>
 
     private void Start()
     {
+        canvas.enabled = false;
+        canvasGroup.enabled = false;
         canvas.overrideSorting = true;
         canvas.sortingOrder = NavigationSortingOrder.RewardOverlay;
         canvasGroup.alpha = 0;
@@ -28,6 +30,10 @@ public class RewardOverlay : SingletonMonoBehavior<RewardOverlay>
 
     private async UniTask Enter()
     {
+        canvas.enabled = true;
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = NavigationSortingOrder.RewardOverlay;
+        canvasGroup.enabled = true;
         canvasGroup.blocksRaycasts = true;
         canvasGroup.interactable = true;
         canvasGroup.DOKill();
@@ -44,6 +50,8 @@ public class RewardOverlay : SingletonMonoBehavior<RewardOverlay>
         canvasGroup.DOFade(0, 0.4f).SetEase(Ease.OutCubic);
         Context.SetMajorCanvasBlockRaycasts(true);
         await UniTask.Delay(TimeSpan.FromSeconds(0.4f));
+        canvas.enabled = false;
+        canvasGroup.enabled = false;
     }
 
     public static void Show(List<OnlinePlayerStateChange.Reward> rewards)

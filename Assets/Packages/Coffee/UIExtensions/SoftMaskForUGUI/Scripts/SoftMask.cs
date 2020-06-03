@@ -414,6 +414,7 @@ namespace Coffee.UIExtensions
 				if (canvas.renderMode == RenderMode.WorldSpace)
 				{
 					var cam = canvas.worldCamera;
+					if (cam == null) continue; // EDIT: Cytoid
 					Matrix4x4 nowsVP = cam.projectionMatrix * cam.worldToCameraMatrix;
 
 #if UNITY_2018_1_OR_NEWER

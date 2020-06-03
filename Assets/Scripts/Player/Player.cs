@@ -52,10 +52,9 @@ public class Player
                 result = InitializeSettings();
                 col.Insert(result);
             }
-
-            result.FillDefault();
             
             Settings = result;
+            FillDefault();
             SaveSettings();
         });
     }
@@ -69,6 +68,22 @@ public class Player
             col.DeleteMany(x => true);
             col.Insert(Settings);
         });
+    }
+
+    private void FillDefault()
+    {
+        var dummy = new LocalPlayerSettings();
+        Settings.NoteRingColors = dummy.NoteRingColors.WithOverrides(Settings.NoteRingColors);
+        Settings.NoteFillColors = dummy.NoteRingColors.WithOverrides(Settings.NoteFillColors);
+        Settings.NoteFillColorsAlt = dummy.NoteRingColors.WithOverrides(Settings.NoteFillColorsAlt);
+        if (ShouldOneShot("Reset Graphics Quality"))
+        {
+            Settings.GraphicsQuality = GetDefaultGraphicsQuality();
+        }
+        if (ShouldOneShot("Enable/Disable Menu Transitions Based On Graphics Quality"))
+        {
+            Settings.UseMenuTransitions = Settings.GraphicsQuality >= GraphicsQuality.High;
+        }
     }
 
     public async UniTask Migrate()
@@ -209,20 +224,26 @@ public class Player
         if (Application.platform == RuntimePlatform.IPhonePlayer)
         {
 #if UNITY_IOS
-            if (UnityEngine.iOS.Device.generation >= UnityEngine.iOS.DeviceGeneration.iPhone7)
+            if (UnityEngine.iOS.Device.generation >= UnityEngine.iOS.DeviceGeneration.iPadPro2Gen)
             {
                 return GraphicsQuality.Ultra;
             }
-            if (UnityEngine.iOS.Device.generation >= UnityEngine.iOS.DeviceGeneration.iPhone5S)
+            if (UnityEngine.iOS.Device.generation >= UnityEngine.iOS.DeviceGeneration.iPhone7)
             {
                 return GraphicsQuality.High;
             }
-            return GraphicsQuality.Medium;
+            if (UnityEngine.iOS.Device.generation >= UnityEngine.iOS.DeviceGeneration.iPhone5S)
+            {
+                return GraphicsQuality.Medium;
+            }
+            return GraphicsQuality.Low;
 #endif
         }
-
         if (Application.platform == RuntimePlatform.Android)
         {
+            var freq = SystemInfo.processorFrequency;
+            Debug.Log("Processor count: " + SystemInfo.processorCount);
+            Debug.Log("Processor frequency: ");
             return GraphicsQuality.Medium;
         }
         return GraphicsQuality.Ultra;

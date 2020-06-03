@@ -10,6 +10,8 @@ public class OpaqueOverlay : SingletonMonoBehavior<OpaqueOverlay>
     
     private void Start()
     {
+        canvas.enabled = false;
+        canvasGroup.enabled = false;
         canvas.overrideSorting = true;
         canvas.sortingOrder = NavigationSortingOrder.OpaqueOverlay;
         canvasGroup.alpha = 0;
@@ -21,6 +23,10 @@ public class OpaqueOverlay : SingletonMonoBehavior<OpaqueOverlay>
     {
         Instance.Apply(it =>
         {
+            it.canvas.enabled = true;
+            it.canvas.overrideSorting = true;
+            it.canvas.sortingOrder = NavigationSortingOrder.OpaqueOverlay;
+            it.canvasGroup.enabled = true;
             it.canvasGroup.blocksRaycasts = true;
             it.canvasGroup.interactable = true;
             it.canvasGroup.DOKill();
@@ -44,9 +50,11 @@ public class OpaqueOverlay : SingletonMonoBehavior<OpaqueOverlay>
             it.canvasGroup.DOFade(0, duration).SetEase(Ease.OutCubic);
             Context.SetMajorCanvasBlockRaycasts(true);
         });
+        await UniTask.Delay(TimeSpan.FromSeconds(duration));
+        Instance.canvas.enabled = false;
+        Instance.canvasGroup.enabled = false;
         if (onFullyHidden != null)
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(duration));
             onFullyHidden();
         }
     }

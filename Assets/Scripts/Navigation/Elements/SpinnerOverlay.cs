@@ -13,6 +13,8 @@ public class SpinnerOverlay : SingletonMonoBehavior<SpinnerOverlay>
     
     private void Start()
     {
+        canvas.enabled = false;
+        canvasGroup.enabled = false;
         canvas.overrideSorting = true;
         canvas.sortingOrder = NavigationSortingOrder.SpinnerOverlay;
         canvasGroup.alpha = 0;
@@ -26,6 +28,10 @@ public class SpinnerOverlay : SingletonMonoBehavior<SpinnerOverlay>
     {
         Instance.Apply(it =>
         {
+            it.canvas.enabled = true;
+            it.canvas.overrideSorting = true;
+            it.canvas.sortingOrder = NavigationSortingOrder.SpinnerOverlay;
+            it.canvasGroup.enabled = true;
             it.message.text = "";
             it.canvasGroup.blocksRaycasts = true;
             it.canvasGroup.interactable = true;
@@ -50,9 +56,11 @@ public class SpinnerOverlay : SingletonMonoBehavior<SpinnerOverlay>
             it.canvasGroup.DOFade(0, 0.2f).SetEase(Ease.OutCubic);
             Context.SetMajorCanvasBlockRaycasts(true);
         });
+        await UniTask.Delay(TimeSpan.FromSeconds(0.2f));
+        Instance.canvas.enabled = false;
+        Instance.canvasGroup.enabled = false;
         if (onFullyHidden != null)
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(0.2f));
             onFullyHidden();
         }
     }

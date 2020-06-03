@@ -86,8 +86,8 @@ public class GameConfig
             if (type == NoteType.CDragHead) eqType = NoteType.CDragChild;
             NoteRingColors[type] = new[]
             {
-                chart.Model.ring_color?.ToColor() ?? lp.Settings.NoteRingColors[eqType],
-                chart.Model.ring_color?.ToColor() ?? lp.Settings.NoteRingColors[eqType]
+                chart.Model.ring_color?.ToColor() ?? lp.Settings.NoteRingColors[NoteType.Click],
+                chart.Model.ring_color?.ToColor() ?? lp.Settings.NoteRingColors[NoteType.Click]
             };
             NoteFillColors[type] = new[]
             {

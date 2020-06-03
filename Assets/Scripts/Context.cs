@@ -20,7 +20,7 @@ using UnityEngine.SceneManagement;
 
 public class Context : SingletonMonoBehavior<Context>
 {
-    public const string VersionName = "2.0.0 Beta 1.1";
+    public const string VersionName = "2.0.0 Beta 1.2";
     public const string VersionString = "2.0.0";
     
     public static string MockApiUrl;
@@ -453,7 +453,7 @@ public class Context : SingletonMonoBehavior<Context>
             // Wait until character is loaded
             await CharacterManager.SetSelectedCharacterActive();
 
-            MainTranslucentImage.Instance.WillUpdateTranslucentImage();
+            UpdateGraphicsQuality();
 
             // Restore history
             ScreenManager.History = new Stack<string>(navigationScreenHistory);
@@ -561,35 +561,36 @@ public class Context : SingletonMonoBehavior<Context>
 
     public static void UpdateGraphicsQuality()
     {
-        if (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
+        switch (Player.Settings.GraphicsQuality)
         {
-            switch (Player.Settings.GraphicsQuality)
-            {
-                case GraphicsQuality.Ultra:
-                case GraphicsQuality.High:
-                    UnityEngine.Screen.SetResolution(InitialWidth, InitialHeight, true);
-                    QualitySettings.masterTextureLimit = 0;
-                    break;
-                case GraphicsQuality.Medium:
-                    UnityEngine.Screen.SetResolution((int) (InitialWidth * 0.7f),
-                        (int) (InitialHeight * 0.7f), true);
-                    QualitySettings.masterTextureLimit = 0;
-                    break;
-                case GraphicsQuality.Low:
-                    UnityEngine.Screen.SetResolution((int) (InitialWidth * 0.5f),
-                        (int) (InitialHeight * 0.5f), true);
-                    QualitySettings.masterTextureLimit = 1;
-                    break;
-            }
-
-            MainTranslucentImage.Static = Player.Settings.GraphicsQuality != GraphicsQuality.Ultra;
-            if (ScreenManager != null && ScreenManager.ActiveScreenId != null)
-            {
-                if (MainTranslucentImage.Instance != null)
-                    MainTranslucentImage.Instance.WillUpdateTranslucentImage();
-            }
+            case GraphicsQuality.Ultra:
+            case GraphicsQuality.High:
+                UnityEngine.Screen.SetResolution(InitialWidth, InitialHeight, true);
+                QualitySettings.masterTextureLimit = 0;
+                break;
+            case GraphicsQuality.Medium:
+                UnityEngine.Screen.SetResolution((int) (InitialWidth * 0.7f),
+                    (int) (InitialHeight * 0.7f), true);
+                QualitySettings.masterTextureLimit = 0;
+                break;
+            case GraphicsQuality.Low:
+                UnityEngine.Screen.SetResolution((int) (InitialWidth * 0.5f),
+                    (int) (InitialHeight * 0.5f), true);
+                QualitySettings.masterTextureLimit = 1;
+                break;
+            case GraphicsQuality.VeryLow:
+                UnityEngine.Screen.SetResolution((int) (InitialWidth * 0.3f),
+                    (int) (InitialHeight * 0.3f), true);
+                QualitySettings.masterTextureLimit = 1;
+                break;
         }
-        // TODO: Windows
+
+        if (MainTranslucentImage.Instance != null)
+        {
+            MainTranslucentImage.Instance.WillUpdateTranslucentImage();
+            MainTranslucentImage.Instance.SetUseOpaqueBackground(Player.Settings.GraphicsQuality <= GraphicsQuality.Medium);
+            MainTranslucentImage.Static = Player.Settings.GraphicsQuality != GraphicsQuality.Ultra;
+        }
     }
 
     public static void SetMajorCanvasBlockRaycasts(bool blocksRaycasts)
@@ -609,6 +610,11 @@ public class Context : SingletonMonoBehavior<Context>
             ProfileWidget.Instance.canvasGroup.blocksRaycasts = blocksRaycasts;
             ProfileWidget.Instance.canvasGroup.interactable = blocksRaycasts;
         }
+    }
+
+    public static bool ShouldDisableMenuTransitions()
+    {
+        return SceneManager.GetActiveScene().name == "Navigation" && !Player.Settings.UseMenuTransitions;
     }
 
     public static bool IsOffline() => offline;

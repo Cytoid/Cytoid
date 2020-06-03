@@ -14,21 +14,6 @@ using JsonWriter = Newtonsoft.Json.JsonWriter;
 public class LocalPlayerSettings
 {
 
-    public void FillDefault()
-    {
-        var dummy = new LocalPlayerSettings();
-        NoteRingColors = RightJoin(NoteRingColors, dummy.NoteRingColors);
-        NoteFillColors = RightJoin(NoteFillColors, dummy.NoteFillColors);
-        NoteFillColorsAlt = RightJoin(NoteFillColorsAlt, dummy.NoteFillColorsAlt);
-    }
-
-    private Dictionary<TK, TV> RightJoin<TK, TV>(Dictionary<TK, TV> from, Dictionary<TK, TV> to)
-    {
-        var dummy = new Dictionary<TK, TV>(to);
-        from.ToList().ForEach(x => dummy[x.Key] = x.Value);
-        return dummy;
-    }
-
     public ObjectId Id { get; set; }
     
     [JsonProperty("schema_version")] public int SchemaVersion { get; set; }
@@ -148,6 +133,8 @@ public class LocalPlayerSettings
 
     [JsonProperty("local_level_sort_is_ascending")]
     public bool LocalLevelSortIsAscending { get; set; } = false;
+
+    [JsonProperty("use_menu_transitions")] public bool UseMenuTransitions { get; set; } = true;
     
     [JsonProperty("performed_one_shots")]
     public HashSet<string> PerformedOneShots { get; set; } = new HashSet<string>();
@@ -239,6 +226,7 @@ public static class CdnRegionExtensions
 
 public enum GraphicsQuality
 {
+    VeryLow,
     Low,
     Medium,
     High,

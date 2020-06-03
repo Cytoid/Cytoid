@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
@@ -95,7 +96,7 @@ public class CommunityHomeScreen : Screen
         ownerInputField.onEndEdit.AddListener(_ => SearchLevels());
     }
 
-    public override void OnScreenBecameActive()
+    public override async void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
 
@@ -103,10 +104,10 @@ public class CommunityHomeScreen : Screen
         if (LoadedContent != null)
         {
             OnContentLoaded(LoadedContent);
-            scrollRect.verticalNormalizedPosition = lastScrollPosition;
         }
         else
         {
+            lastScrollPosition = default;
             LoadContent();
         }
     }
@@ -114,6 +115,7 @@ public class CommunityHomeScreen : Screen
     public override void OnScreenBecameInactive()
     {
         base.OnScreenBecameInactive();
+        print("Setting location to " + scrollRect.verticalNormalizedPosition);
         lastScrollPosition = scrollRect.verticalNormalizedPosition;
     }
 
@@ -226,6 +228,11 @@ public class CommunityHomeScreen : Screen
 
         LayoutFixer.Fix(contentHolder.transform);
         await UniTask.DelayFrame(0);
+        if (Context.ShouldDisableMenuTransitions())
+        {
+            await UniTask.DelayFrame(2); // Scroll position not set fix
+        }
+        if (lastScrollPosition != default) scrollRect.verticalNormalizedPosition = lastScrollPosition;
         contentHolder.DOFade(1, 0.4f).SetEase(Ease.OutCubic);
     }
 

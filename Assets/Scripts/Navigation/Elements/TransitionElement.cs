@@ -360,8 +360,6 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
             Leave(false);
         }
     }
-    
-    
 
     public void OnScreenDestroyed() => Expression.Empty();
 }

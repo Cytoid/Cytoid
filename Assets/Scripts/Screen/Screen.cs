@@ -14,6 +14,10 @@ public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveLi
     public Canvas Canvas { get; set; }
     public RectTransform RectTransform { get; set; }
     public CanvasGroup CanvasGroup { get; set; }
+    public GraphicRaycaster GraphicRaycaster { get; set; }
+    public List<Canvas> ChildrenCanvases { get; set; }
+    public List<CanvasGroup> ChildrenCanvasGroups { get; set; }
+    public List<GraphicRaycaster> ChildrenGraphicRaycasters { get; set; }
     
     private ScreenState state = ScreenState.Destroyed;
 
@@ -79,6 +83,10 @@ public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveLi
     {
         Canvas = GetComponent<Canvas>();
         CanvasGroup = GetComponent<CanvasGroup>();
+        GraphicRaycaster = GetComponent<GraphicRaycaster>();
+        ChildrenCanvases = GetComponentsInChildren<Canvas>().ToList();
+        ChildrenCanvasGroups = GetComponentsInChildren<CanvasGroup>().ToList();
+        ChildrenGraphicRaycasters = GetComponentsInChildren<GraphicRaycaster>().ToList();
         RectTransform = GetComponent<RectTransform>();
         Context.OnLanguageChanged.AddListener(() => rebuiltLayoutGroups = false);
         if (Context.ScreenManager == null) await UniTask.WaitUntil(() => Context.ScreenManager != null);

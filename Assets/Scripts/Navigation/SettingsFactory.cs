@@ -150,6 +150,7 @@ public static class SettingsFactory
                 element.SetContent("SETTINGS_GRAPHICS_QUALITY".Get(), "SETTINGS_GRAPHICS_QUALITY_DESC".Get(),
                     () => lp.Settings.GraphicsQuality, it => lp.Settings.GraphicsQuality = it, new []
                     {
+                        ("SETTINGS_QUALITY_VERY_LOW".Get(), GraphicsQuality.VeryLow),
                         ("SETTINGS_QUALITY_LOW".Get(), GraphicsQuality.Low), 
                         ("SETTINGS_QUALITY_MEDIUM".Get(), GraphicsQuality.Medium), 
                         ("SETTINGS_QUALITY_HIGH".Get(), GraphicsQuality.High),
@@ -160,7 +161,12 @@ public static class SettingsFactory
                     Context.UpdateGraphicsQuality();
                 });
             });
-            
+        
+        Object.Instantiate(provider.pillRadioGroup, parent)
+            .SetContent("SETTINGS_USE_MENU_TRANSITIONS".Get(), "SETTINGS_USE_MENU_TRANSITIONS_DESC".Get(),
+                () => lp.Settings.UseMenuTransitions, it => lp.Settings.UseMenuTransitions = it)
+            .SaveSettingsOnChange();
+        
         Object.Instantiate(provider.pillRadioGroup, parent)
             .SetContent("SETTINGS_STORYBOARD_EFFECTS".Get(), "SETTINGS_STORYBOARD_EFFECTS_DESC".Get(),
                 () => lp.Settings.DisplayStoryboardEffects, it => lp.Settings.DisplayStoryboardEffects = it)

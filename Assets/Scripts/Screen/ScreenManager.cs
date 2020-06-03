@@ -7,6 +7,7 @@ using LeTai.Asset.TranslucentImage;
 using UniRx.Async;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class ScreenManager : SingletonMonoBehavior<ScreenManager>
 {
@@ -154,12 +155,34 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         var lastScreen = ActiveScreen;
         var newScreen = createdScreens.Find(it => it.GetId() == targetScreenId);
 
-        if (newScreen == null) newScreen = CreateScreen(targetScreenId);
-        else newScreen.gameObject.SetActive(true);
+        var newScreenWasCreated = false;
+        if (newScreen == null)
+        {
+            newScreen = CreateScreen(targetScreenId);
+            newScreenWasCreated = true;
+        }
+        
+        var disableTransitions = Context.ShouldDisableMenuTransitions();
 
         if (lastScreen != null)
         {
+            if (disableTransitions)
+            {
+                OpaqueOverlay.Show(duration);
+                try
+                {
+                    await UniTask.Delay(TimeSpan.FromSeconds(duration),
+                        cancellationToken: (screenChangeCancellationTokenSource = new CancellationTokenSource()).Token);
+                }
+                catch
+                {
+                    ChangingToScreenId = null;
+                    return;
+                }
+                lastScreen.CanvasGroup.alpha = 0;
+            }
             lastScreen.State = ScreenState.Inactive;
+
             if (currentScreenTransitionDelay > 0)
             {
                 try
@@ -173,48 +196,67 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
                     return;
                 }
             }
-
-            lastScreen.CanvasGroup.DOFade(0, duration);
-
-            if (transition != ScreenTransition.None)
+            
+            if (!disableTransitions)
             {
-                switch (transition)
-                {
-                    case ScreenTransition.In:
-                        if (transitionFocus.HasValue && transitionFocus != Vector2.zero)
-                        {
-                            var difference =
-                                new Vector2(Context.ReferenceWidth / 2f, Context.ReferenceHeight / 2f) -
-                                transitionFocus.Value;
-                            lastScreen.RectTransform.DOLocalMove(difference * 2f, duration);
-                        }
+                lastScreen.CanvasGroup.DOFade(0, duration);
 
-                        lastScreen.RectTransform.DOScale(2f, duration);
-                        break;
-                    case ScreenTransition.Out:
-                        lastScreen.RectTransform.DOScale(0.5f, duration);
-                        break;
-                    case ScreenTransition.Left:
-                        lastScreen.RectTransform.DOLocalMove(new Vector3(Context.ReferenceWidth, 0), duration);
-                        break;
-                    case ScreenTransition.Right:
-                        lastScreen.RectTransform.DOLocalMove(new Vector3(-Context.ReferenceWidth, 0), duration);
-                        break;
-                    case ScreenTransition.Up:
-                        lastScreen.RectTransform.DOLocalMove(new Vector3(0, -Context.ReferenceHeight), duration);
-                        break;
-                    case ScreenTransition.Down:
-                        lastScreen.RectTransform.DOLocalMove(new Vector3(0, Context.ReferenceHeight), duration);
-                        break;
-                    case ScreenTransition.Fade:
-                        break;
+                if (transition != ScreenTransition.None)
+                {
+                    switch (transition)
+                    {
+                        case ScreenTransition.In:
+                            if (transitionFocus.HasValue && transitionFocus != Vector2.zero)
+                            {
+                                var difference =
+                                    new Vector2(Context.ReferenceWidth / 2f, Context.ReferenceHeight / 2f) -
+                                    transitionFocus.Value;
+                                lastScreen.RectTransform.DOLocalMove(difference * 2f, duration);
+                            }
+
+                            lastScreen.RectTransform.DOScale(2f, duration);
+                            break;
+                        case ScreenTransition.Out:
+                            lastScreen.RectTransform.DOScale(0.5f, duration);
+                            break;
+                        case ScreenTransition.Left:
+                            lastScreen.RectTransform.DOLocalMove(new Vector3(Context.ReferenceWidth, 0), duration);
+                            break;
+                        case ScreenTransition.Right:
+                            lastScreen.RectTransform.DOLocalMove(new Vector3(-Context.ReferenceWidth, 0), duration);
+                            break;
+                        case ScreenTransition.Up:
+                            lastScreen.RectTransform.DOLocalMove(new Vector3(0, -Context.ReferenceHeight), duration);
+                            break;
+                        case ScreenTransition.Down:
+                            lastScreen.RectTransform.DOLocalMove(new Vector3(0, Context.ReferenceHeight), duration);
+                            break;
+                        case ScreenTransition.Fade:
+                            break;
+                    }
                 }
             }
         }
 
+        if (!newScreenWasCreated)
+        {
+            if (DoNotActivateGameObjects)
+            {
+                if (!newScreen.gameObject.activeSelf) newScreen.gameObject.SetActive(true);
+                newScreen.ChildrenCanvases.ForEach(it => it.enabled = true);
+                newScreen.ChildrenCanvasGroups.ForEach(it => it.enabled = true);
+                newScreen.ChildrenGraphicRaycasters.ForEach(it => it.enabled = true);
+            }
+            else
+            {
+                newScreen.gameObject.SetActive(true);
+            }
+        }
+        
         foreach (var listener in screenChangeListeners) listener.OnScreenChangeStarted(lastScreen, newScreen);
 
         ActiveScreenId = newScreen.GetId();
+        newScreen.CanvasGroup.alpha = 0;
         newScreen.State = ScreenState.Active;
         var blocksRaycasts = newScreen.CanvasGroup.blocksRaycasts;
         newScreen.CanvasGroup.blocksRaycasts = blocksRaycasts; // Special handling
@@ -234,40 +276,63 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         }
 
         newScreen.CanvasGroup.blocksRaycasts = blocksRaycasts; // Special handling
-        newScreen.CanvasGroup.alpha = 0f;
-        newScreen.CanvasGroup.DOFade(1f, duration);
-        newScreen.RectTransform.DOLocalMove(Vector3.zero, duration);
 
-        if (transition != ScreenTransition.None)
+        if (disableTransitions)
         {
-            switch (transition)
+            newScreen.CanvasGroup.alpha = 1f;
+            /*try
             {
-                case ScreenTransition.In:
-                    newScreen.RectTransform.localScale = new Vector3(0.5f, 0.5f);
-                    newScreen.RectTransform.DOScale(1f, duration);
-                    break;
-                case ScreenTransition.Out:
-                    newScreen.RectTransform.localScale = new Vector3(2, 2);
-                    newScreen.RectTransform.DOScale(1f, duration);
-                    break;
-                case ScreenTransition.Left:
-                    newScreen.RectTransform.localPosition = new Vector3(-Context.ReferenceWidth, 0);
-                    newScreen.RectTransform.localScale = new Vector3(1, 1);
-                    break;
-                case ScreenTransition.Right:
-                    newScreen.RectTransform.localPosition = new Vector3(Context.ReferenceWidth, 0);
-                    newScreen.RectTransform.localScale = new Vector3(1, 1);
-                    break;
-                case ScreenTransition.Up:
-                    newScreen.RectTransform.localPosition = new Vector3(0, Context.ReferenceHeight);
-                    newScreen.RectTransform.localScale = new Vector3(1, 1);
-                    break;
-                case ScreenTransition.Down:
-                    newScreen.RectTransform.localPosition = new Vector3(0, -Context.ReferenceHeight);
-                    newScreen.RectTransform.localScale = new Vector3(1, 1);
-                    break;
-                case ScreenTransition.Fade:
-                    break;
+                await UniTask.Delay(TimeSpan.FromSeconds(duration),
+                    cancellationToken: (screenChangeCancellationTokenSource = new CancellationTokenSource()).Token);
+                await UniTask.DelayFrame(4,
+                    cancellationToken: (screenChangeCancellationTokenSource = new CancellationTokenSource()).Token); // UI rebuild
+            }
+            catch
+            {
+                ChangingToScreenId = null;
+                return;
+            }*/
+            newScreen.RectTransform.localPosition = Vector3.zero;
+            newScreen.RectTransform.localScale = new Vector3(1, 1);
+            OpaqueOverlay.Hide(duration);
+        }
+        else
+        {
+            newScreen.CanvasGroup.alpha = 0f;
+            newScreen.CanvasGroup.DOFade(1f, duration);
+            newScreen.RectTransform.DOLocalMove(Vector3.zero, duration);
+
+            if (transition != ScreenTransition.None)
+            {
+                switch (transition)
+                {
+                    case ScreenTransition.In:
+                        newScreen.RectTransform.localScale = new Vector3(0.5f, 0.5f);
+                        newScreen.RectTransform.DOScale(1f, duration);
+                        break;
+                    case ScreenTransition.Out:
+                        newScreen.RectTransform.localScale = new Vector3(2, 2);
+                        newScreen.RectTransform.DOScale(1f, duration);
+                        break;
+                    case ScreenTransition.Left:
+                        newScreen.RectTransform.localPosition = new Vector3(-Context.ReferenceWidth, 0);
+                        newScreen.RectTransform.localScale = new Vector3(1, 1);
+                        break;
+                    case ScreenTransition.Right:
+                        newScreen.RectTransform.localPosition = new Vector3(Context.ReferenceWidth, 0);
+                        newScreen.RectTransform.localScale = new Vector3(1, 1);
+                        break;
+                    case ScreenTransition.Up:
+                        newScreen.RectTransform.localPosition = new Vector3(0, Context.ReferenceHeight);
+                        newScreen.RectTransform.localScale = new Vector3(1, 1);
+                        break;
+                    case ScreenTransition.Down:
+                        newScreen.RectTransform.localPosition = new Vector3(0, -Context.ReferenceHeight);
+                        newScreen.RectTransform.localScale = new Vector3(1, 1);
+                        break;
+                    case ScreenTransition.Fade:
+                        break;
+                }
             }
         }
 
@@ -277,7 +342,17 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
 
             if (lastScreen != null)
             {
-                lastScreen.gameObject.SetActive(false);
+                if (DoNotActivateGameObjects)
+                {
+                    lastScreen.ChildrenCanvases.ForEach(it => it.enabled = false);
+                    lastScreen.ChildrenCanvasGroups.ForEach(it => it.enabled = false);
+                    lastScreen.ChildrenGraphicRaycasters.ForEach(it => it.enabled = false);
+                }
+                else
+                {
+                    lastScreen.gameObject.SetActive(false);
+                }
+
                 if (willDestroy) DestroyScreen(lastScreen.GetId());
             }
 
@@ -305,4 +380,6 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
     {
         screenChangeListeners.Remove(listener);
     }
+
+    public static bool DoNotActivateGameObjects => SceneManager.GetActiveScene().name == "Navigation";
 }

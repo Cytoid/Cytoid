@@ -14,11 +14,14 @@ public class Toast : SingletonMonoBehavior<Toast>
     public Text text;
     public Text stubText;
 
+    [GetComponent] public Canvas canvas;
     public CanvasGroup canvasGroup;
     public CanvasGroup successIcon;
     public CanvasGroup spinnerIcon;
     public CanvasGroup failureIcon;
 
+    [GetComponent] public FollowStub followStub;
+    
     private Dictionary<Status, CanvasGroup> icons = new Dictionary<Status, CanvasGroup>();
     private Queue<Entry> queue = new Queue<Entry>();
     private Entry currentEntry;
@@ -29,6 +32,7 @@ public class Toast : SingletonMonoBehavior<Toast>
         icons[Status.Loading] = spinnerIcon;
         icons[Status.Failure] = failureIcon;
 
+        canvas.sortingOrder = NavigationSortingOrder.Toast;
         canvasGroup.alpha = 0;
         text.text = "";
         stubText.text = "";
@@ -39,6 +43,8 @@ public class Toast : SingletonMonoBehavior<Toast>
         successIcon.alpha = 0;
         spinnerIcon.alpha = 0;
         failureIcon.alpha = 0;
+
+        followStub.enabled = false;
 
         var spinnerRectTransform = (RectTransform) spinnerIcon.transform;
         spinnerRectTransform.localRotation = Quaternion.identity;
@@ -72,6 +78,7 @@ public class Toast : SingletonMonoBehavior<Toast>
             
             if (queue.Count == 0)
             {
+                followStub.enabled = true;
                 if (!Mathf.Approximately(canvasGroup.alpha, 0))
                 {
                     canvasGroup.DOFade(0, 0.2f).SetEase(Ease.OutCubic).OnComplete(() =>
@@ -82,8 +89,12 @@ public class Toast : SingletonMonoBehavior<Toast>
                     });
                 }
                 await UniTask.DelayFrame(0);
+                if (this == null) return;
+                followStub.enabled = false;
                 continue;
             }
+            
+            followStub.enabled = true;
 
             currentEntry = queue.Dequeue();
 
@@ -102,8 +113,7 @@ public class Toast : SingletonMonoBehavior<Toast>
                     print("Fading " + otherIcon.name);
                     otherIcon.DOFade(0, 0.2f).SetEase(Ease.OutCubic);
                 }
-
-
+            
             if (!currentEntry.Transitive)
             {
                 // Hide message
@@ -132,6 +142,9 @@ public class Toast : SingletonMonoBehavior<Toast>
 
             // Stall
             if (currentEntry.Duration > 0) await UniTask.Delay(TimeSpan.FromSeconds(currentEntry.Duration));
+            
+            if (this == null) return;
+            followStub.enabled = false;
         }
     }
 

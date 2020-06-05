@@ -39,6 +39,15 @@ namespace Proyecto26
                         {
                             options.RetryCallback(CreateException(request), retries);
                         }
+                        // EDIT: Cytoid
+                        if (options.Retries == 0)
+                        {
+                            var err = CreateException(request);
+                            DebugLog(options.EnableDebug, $"Error: {err}, Url: {options.Uri}, Body: {(request.uploadHandler != null ? Encoding.UTF8.GetString(request.uploadHandler.data) : "null")}, Response: {response.Text}", true);
+                            callback(err, response);
+                            break;
+                        }
+                        // End of EDIT
                         DebugLog(options.EnableDebug, string.Format("Retry Request\nUrl: {0}\nMethod: {1}", options.Uri, options.Method), false);
                     }
                     else

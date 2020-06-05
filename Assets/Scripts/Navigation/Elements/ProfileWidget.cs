@@ -324,7 +324,7 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
         }
         
         lastProfile = profile;
-        LayoutFixer.Fix(layoutGroup.transform);
+        if (layoutGroup != null) LayoutFixer.Fix(layoutGroup.transform);
     }
 
 }

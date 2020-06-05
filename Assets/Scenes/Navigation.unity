@@ -991,7 +991,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 744.2162, y: 0}
+  m_AnchoredPosition: {x: 667.02704, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &28758797
@@ -1039,7 +1039,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: "\u8C31\u5E08"
+  m_Text: CHARTER
 --- !u!222 &28758799
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -17294,7 +17294,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 800.2162, y: 0}
+  m_AnchoredPosition: {x: 652.32434, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &332403721
@@ -17342,7 +17342,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: "\u66F2\u7ED8"
+  m_Text: COVER ARTIST
 --- !u!222 &332403723
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -21801,7 +21801,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 660.5405, y: 0}
+  m_AnchoredPosition: {x: 569.08105, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &436221362
@@ -21849,7 +21849,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: "\u6545\u4E8B\u677F\u5236\u4F5C"
+  m_Text: STORYBOARDER
 --- !u!222 &436221364
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -33589,7 +33589,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 996.32434, y: 0}
+  m_AnchoredPosition: {x: 926.27026, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &675080652
@@ -33667,7 +33667,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: "\u4E0A\u4F20\u8005"
+  m_Text: UPLOADER
 --- !u!222 &675080656
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -40579,7 +40579,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 800.2162, y: 0}
+  m_AnchoredPosition: {x: 756.7568, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &819262857
@@ -40657,7 +40657,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: "\u66F2\u5E08"
+  m_Text: ARTIST
 --- !u!222 &819262861
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -54798,7 +54798,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 744.2162, y: 0}
+  m_AnchoredPosition: {x: 676.1081, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &1069043952
@@ -54846,7 +54846,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: "\u7248\u672C"
+  m_Text: VERSION
 --- !u!222 &1069043954
 CanvasRenderer:
   m_ObjectHideFlags: 0

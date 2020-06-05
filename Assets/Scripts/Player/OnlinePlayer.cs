@@ -38,6 +38,7 @@ public class OnlinePlayer
                 }).ToString()
             }).Then(session =>
                 {
+                    Context.Player.Settings.PlayerId = session.user.Uid;
                     Context.Player.Settings.LoginToken = session.token;
                     Context.Player.SaveSettings();
                     return FetchProfile();
@@ -46,23 +47,20 @@ public class OnlinePlayer
             {
                 if (profile == null)
                 {
-                    reject(new Exception("Invalid profile"));
+                    reject(new RequestException("Profile not found", true, false, 404, null));
                     return;
                 }
                 IsAuthenticated = true;
                 OnAuthenticated.Invoke();
                 resolve(profile);
-            }).Catch(result =>
+            }).CatchRequestError(result =>
             {
                 IsAuthenticated = false;
                 Debug.LogError(result);
-                if (result is RequestException requestException)
+                if (result.IsHttpError)
                 {
-                    if (requestException.IsHttpError)
-                    {
-                        Context.Player.Settings.LoginToken = null;
-                        Context.Player.SaveSettings();
-                    }
+                    Context.Player.Settings.LoginToken = null;
+                    Context.Player.SaveSettings();
                 }
                 reject(result);
             }).Finally(() => IsAuthenticating = false);
@@ -90,6 +88,7 @@ public class OnlinePlayer
                 EnableDebug = true
             }).Then(session =>
                 {
+                    Context.Player.Settings.PlayerId = session.user.Uid;
                     Context.Player.Settings.LoginToken = session.token;
                     Context.Player.SaveSettings();
                     return FetchProfile();
@@ -98,23 +97,20 @@ public class OnlinePlayer
             {
                 if (profile == null)
                 {
-                    reject(new Exception("Invalid profile"));
+                    reject(new RequestException("Profile not found", true, false, 404, null));
                     return;
                 }
                 IsAuthenticated = true;
                 OnAuthenticated.Invoke();
                 resolve(profile);
-            }).Catch(result =>
+            }).CatchRequestError(result =>
             {
                 IsAuthenticated = false; 
                 Debug.LogError(result);
-                if (result is RequestException requestException)
+                if (!result.IsNetworkError)
                 {
-                    if (!requestException.IsNetworkError)
-                    {
-                        Context.Player.Settings.LoginToken = null;
-                        Context.Player.SaveSettings();
-                    }
+                    Context.Player.Settings.LoginToken = null;
+                    Context.Player.SaveSettings();
                 }
                 reject(result);
             }).Finally(() => IsAuthenticating = false);
@@ -167,6 +163,10 @@ public class OnlinePlayer
                 Context.Database.SetProfile(profile);
                 OnProfileChanged.Invoke(profile);
                 return profile;
+            }).CatchRequestError(error =>
+            {
+                Debug.LogError(error);
+                return null;
             });
         }
         

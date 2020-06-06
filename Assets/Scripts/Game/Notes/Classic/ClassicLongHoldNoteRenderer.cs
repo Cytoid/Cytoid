@@ -5,7 +5,6 @@ public class ClassicLongHoldNoteRenderer : ClassicHoldNoteRenderer
 {
     public SpriteRenderer Line2;
     public SpriteRenderer CompletedLine2;
-
     private float orthographicSize;
 
     public ClassicLongHoldNoteRenderer(LongHoldNote holdNote) : base(holdNote) => Expression.Empty();
@@ -26,10 +25,9 @@ public class ClassicLongHoldNoteRenderer : ClassicHoldNoteRenderer
         ProgressRing = Object.Instantiate(provider.progressRingPrefab, Note.transform, false)
             .GetComponent<ProgressRing>();
         Triangle = Object.Instantiate(provider.trianglePrefab, Game.contentParent.transform).GetComponent<MeshTriangle>();
+        Triangle.gameObject.SetActive(false);
         ProgressRing.maxCutoff = 0;
         ProgressRing.fillCutoff = 0;
-        ProgressRing.gameObject.GetComponent<SpriteRenderer>().material.renderQueue =
-            3000 + Note.Model.id; // TODO: Magic number
         CompletedLine.size = new Vector2(1, 0);
         CompletedLine2.size = new Vector2(1, 0);
         SpriteMask = Note.transform.GetComponentInChildren<SpriteMask>();
@@ -39,6 +37,8 @@ public class ClassicLongHoldNoteRenderer : ClassicHoldNoteRenderer
     {
         base.OnNoteLoaded();
 
+        ProgressRing.gameObject.GetComponent<SpriteRenderer>().material.renderQueue =
+            3000 + Note.Model.id; // TODO: Magic number
         CompletedLine2.size = new Vector2(1, 0);
         Line.size = new Vector2(1, orthographicSize * 4);
         Line2.size = new Vector2(1, orthographicSize * 4);
@@ -119,9 +119,9 @@ public class ClassicLongHoldNoteRenderer : ClassicHoldNoteRenderer
         Line2.transform.SetLocalScaleX(Line.transform.localScale.x);
     }
 
-    public override void Cleanup()
+    public override void Dispose()
     {
-        base.Cleanup();
+        base.Dispose();
         Object.Destroy(Line2.gameObject);
         Object.Destroy(CompletedLine2.gameObject);
     }

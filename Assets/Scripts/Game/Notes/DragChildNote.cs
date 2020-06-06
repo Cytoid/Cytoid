@@ -45,10 +45,16 @@ public class DragChildNote : Note
         return grade;
     }
 
-    protected override async void AwaitAndDestroy()
+    public override async void Collect()
     {
-        await UniTask.WaitUntil(() => Game.Time >= Model.start_time);
-        Destroy();
+        bool CanCollect() => Game.Time >= Model.start_time;
+        if (CanCollect())
+        {
+            base.Collect();
+            return;
+        }
+        await UniTask.WaitUntil(CanCollect);
+        base.Collect();
     }
         
     public override bool IsAutoEnabled()

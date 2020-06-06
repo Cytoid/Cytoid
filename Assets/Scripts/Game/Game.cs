@@ -28,7 +28,6 @@ public class Game : MonoBehaviour
     
     public Difficulty Difficulty { get; protected set; }
     public Chart Chart { get; protected set; }
-    public SortedDictionary<int, Note> Notes { get; } = new SortedDictionary<int, Note>();
 
     public Cytoid.Storyboard.Storyboard Storyboard { get; protected set; }
     
@@ -44,6 +43,10 @@ public class Game : MonoBehaviour
     public float UnpauseCountdown { get; protected set; }
     
     public bool ResynchronizeChartOnNextFrame { get; set; }
+    
+    public ObjectPool ObjectPool { get; set; }
+
+    public SortedDictionary<int, Note> SpawnedNotes => ObjectPool.SpawnedNotes;
 
     public string EditorDefaultLevelDirectory = "yy.badapple";
     public float EditorMusicInitialPosition;
@@ -76,7 +79,7 @@ public class Game : MonoBehaviour
     public GameEvent onGameDisposed = new GameEvent();
     public GameEvent onTopBoundaryBounded = new GameEvent();
     public GameEvent onBottomBoundaryBounded = new GameEvent();
-
+    
     protected virtual void Awake()
     {
         Renderer = new GameRenderer(this);
@@ -262,6 +265,10 @@ public class Game : MonoBehaviour
         // Update last played time
         Level.Record.LastPlayedDate = DateTimeOffset.UtcNow;
         Level.SaveRecord();
+        
+        // Instantiate note pool
+        ObjectPool = new ObjectPool(this);
+        ObjectPool.Initialize();
 
         IsLoaded = true;
         onGameLoaded.Invoke(this);
@@ -400,15 +407,15 @@ public class Game : MonoBehaviour
                         var id = Chart.CurrentNoteId;
                         while (notes[id].next_id > 0)
                         {
-                            SpawnDragLine(notes[id], notes[notes[id].next_id]);
+                            ObjectPool.SpawnDragLine(notes[id], notes[notes[id].next_id]);
                             id = notes[id].next_id;
                         }
 
-                        SpawnNote(notes[Chart.CurrentNoteId]);
+                        ObjectPool.SpawnNote(notes[Chart.CurrentNoteId]);
                         Chart.CurrentNoteId++;
                         break;
                     default:
-                        SpawnNote(notes[Chart.CurrentNoteId]);
+                        ObjectPool.SpawnNote(notes[Chart.CurrentNoteId]);
                         Chart.CurrentNoteId++;
                         break;
                 }
@@ -418,53 +425,7 @@ public class Game : MonoBehaviour
         onGameLateUpdate.Invoke(this);
     }
 
-    public virtual void SpawnNote(ChartModel.Note model)
-    {
-        var provider = GameObjectProvider.Instance;
-        Note note;
-        
-        switch ((NoteType) model.type)
-        {
-            case NoteType.Click:
-                note = Instantiate(provider.clickNotePrefab, contentParent.transform).GetComponent<Note>();
-                break;
-            case NoteType.Hold:
-                note = Instantiate(provider.holdNotePrefab, contentParent.transform).GetComponent<Note>();
-                break;
-            case NoteType.LongHold:
-                note = Instantiate(provider.longHoldNotePrefab, contentParent.transform).GetComponent<Note>();
-                break;
-            case NoteType.DragHead:
-                note = Instantiate(provider.dragHeadNotePrefab, contentParent.transform).GetComponent<Note>();
-                break;
-            case NoteType.CDragHead:
-                note = Instantiate(provider.cDragChildNotePrefab, contentParent.transform).GetComponent<Note>();
-                break;
-            case NoteType.DragChild:
-            case NoteType.CDragChild:
-                note = Instantiate(provider.dragChildNotePrefab, contentParent.transform).GetComponent<Note>();
-                break;
-            case NoteType.Flick:
-                note = Instantiate(provider.flickNotePrefab, contentParent.transform).GetComponent<Note>();
-                break;
-            default:
-                note = Instantiate(provider.clickNotePrefab, contentParent.transform).GetComponent<Note>();
-                break;
-        }
-        
-        // Debug.Log($"Note {model.id} is spawned as {((NoteType) model.type).ToString()}");
-        note.SetData(this, model.id);
-        note.gameObject.SetLayerRecursively(LayerMask.NameToLayer("Content"));
-        Notes[model.id] = note;
-    }
-
-    public virtual void SpawnDragLine(ChartModel.Note from, ChartModel.Note to)
-    {
-        var dragLineView = Instantiate(GameObjectProvider.Instance.dragLinePrefab, contentParent.transform)
-            .GetComponent<DragLineElement>();
-        dragLineView.gameObject.SetLayerRecursively(LayerMask.NameToLayer("Content"));
-        dragLineView.SetData(this, from, to);
-    }
+    
 
     protected virtual void OnApplicationPause(bool willPause)
     {
@@ -652,7 +613,8 @@ public class Game : MonoBehaviour
     public virtual void Dispose()
     {
         inputController.DisableInput();
-
+        ObjectPool.Dispose();
+        
         onGameDisposed.Invoke(this);
     }
 

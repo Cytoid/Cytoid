@@ -56,11 +56,11 @@ namespace Cytoid.Storyboard.Sprites
         public override void Update(NoteControllerState fromState, NoteControllerState toState)
         {
             base.Update(fromState, toState);
-            if (noteGameObject == null && MainRenderer.Game.Notes.ContainsKey(Note.id))
+            if (noteGameObject == null && MainRenderer.Game.SpawnedNotes.ContainsKey(Note.id))
             {
-                noteGameObject = MainRenderer.Game.Notes[Note.id].gameObject;
+                noteGameObject = MainRenderer.Game.SpawnedNotes[Note.id].gameObject;
             }
-            if (noteGameObject != null && !MainRenderer.Game.Notes.ContainsKey(Note.id))
+            if (noteGameObject != null && !MainRenderer.Game.SpawnedNotes.ContainsKey(Note.id))
             {
                 noteGameObject = null;
             }

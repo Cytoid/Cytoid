@@ -34,6 +34,11 @@ public class NoteRenderer
 
     public CircleCollider2D GetCollider() => Collider;
 
-    public virtual void Cleanup() => Expression.Empty();
+    public virtual void OnCollect()
+    {
+        Collider.enabled = false;
+    }
+    
+    public virtual void Dispose() => Expression.Empty();
     
 }

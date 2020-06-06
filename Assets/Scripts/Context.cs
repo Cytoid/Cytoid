@@ -20,7 +20,7 @@ using UnityEngine.SceneManagement;
 
 public class Context : SingletonMonoBehavior<Context>
 {
-    public const string VersionName = "2.0.0 Beta 1.2";
+    public const string VersionName = "2.0.0 Beta 1.3";
     public const string VersionString = "2.0.0";
     
     public static string MockApiUrl;
@@ -220,6 +220,7 @@ public class Context : SingletonMonoBehavior<Context>
                     Connection = Application.isEditor ? ConnectionType.Shared : ConnectionType.Direct
                 }
             );
+            Database.Checkpoint();
         }
         catch (Exception e)
         {
@@ -490,6 +491,7 @@ public class Context : SingletonMonoBehavior<Context>
         }
 
         FontManager.UpdateSceneTexts();
+        Database.Checkpoint();
     }
 
     public static void Haptic(HapticTypes type, bool menu)

@@ -3,13 +3,14 @@ using UnityEngine;
 
 public class HoldNote : Note
 {
-    public bool IsHolding => HoldingFingers.Count > 0;
     public float HoldingStartTime { get; protected set; } = float.MaxValue;
     public float HeldDuration  { get; protected set; }
     public float HoldProgress { get; protected set; }
     public List<int> HoldingFingers { get; } = new List<int>(2);
 
     private bool playedHitSoundAtBegin;
+    
+    public bool IsHolding => HoldingFingers.Count > 0;
 
     protected override NoteRenderer CreateRenderer()
     {
@@ -18,9 +19,19 @@ public class HoldNote : Note
             : new DefaultHoldNoteRenderer(this);
     }
 
-    protected override void OnGameUpdate()
+    public override void Collect()
     {
-        base.OnGameUpdate();
+        HoldingStartTime = float.MaxValue;
+        HeldDuration = default;
+        HoldProgress = default;
+        HoldingFingers.Clear();
+        playedHitSoundAtBegin = false;
+        base.Collect();
+    }
+
+    protected override void OnGameUpdate(Game _)
+    {
+        base.OnGameUpdate(_);
         if (IsHolding)
         {
             if (Game.Time >= Model.start_time + JudgmentOffset)

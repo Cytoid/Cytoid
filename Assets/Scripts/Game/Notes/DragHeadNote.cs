@@ -27,36 +27,36 @@ public class DragHeadNote : Note
 
     public bool IsCDrag => Model.type == (int) NoteType.CDragHead;
 
-    public override void SetData(Game game, int noteId)
+    public override void SetData(int noteId)
     {
-        base.SetData(game, noteId);
+        base.SetData(noteId);
         FromNoteModel = Model;
         ToNoteModel = Model.next_id > 0 ? Chart.note_map[Model.next_id] : Model;
         StartToNoteModel = ToNoteModel;
-        EndNoteModel = FromNoteModel.GetDragEndNote(game.Chart.Model);
+        EndNoteModel = FromNoteModel.GetDragEndNote(Game.Chart.Model);
     }
 
-    protected override void OnGameUpdate()
+    protected override void OnGameUpdate(Game _)
     {
-        base.OnGameUpdate();
+        base.OnGameUpdate(_);
         if (Game.Time < Model.start_time)
         {
             OriginalPosition = transform.localPosition;
         }
     }
 
-    protected override void OnGameLateUpdate()
+    protected override void OnGameLateUpdate(Game _)
     {
-        base.OnGameLateUpdate();
+        base.OnGameLateUpdate(_);
 
         transform.localEulerAngles = FromNoteModel.rotation;
 
-        if (Game.Notes.ContainsKey(FromNoteModel.id))
+        if (Game.SpawnedNotes.ContainsKey(FromNoteModel.id))
         {
             if (!hasFromNote)
             {
                 hasFromNote = true;
-                fromNote = Game.Notes[FromNoteModel.id];
+                fromNote = Game.SpawnedNotes[FromNoteModel.id];
             }
         }
         else
@@ -67,12 +67,12 @@ public class DragHeadNote : Note
                 fromNote = null;
             }
         }
-        if (Game.Notes.ContainsKey(ToNoteModel.id))
+        if (Game.SpawnedNotes.ContainsKey(ToNoteModel.id))
         {
             if (!hasToNote)
             {
                 hasToNote = true;
-                toNote = Game.Notes[ToNoteModel.id];
+                toNote = Game.SpawnedNotes[ToNoteModel.id];
             }
         }
         else
@@ -115,7 +115,7 @@ public class DragHeadNote : Note
             if (ToNoteModel == EndNoteModel)
             {
                 // Last note does not exist?
-                if (!Game.Notes.ContainsKey(ToNoteModel.id))
+                if (!Game.SpawnedNotes.ContainsKey(ToNoteModel.id))
                 {
                     // Clear this
                     if (!IsCleared && ShouldMiss())
@@ -126,7 +126,7 @@ public class DragHeadNote : Note
                 }
 
                 // Last note does exist and is cleared?
-                var lastNote = Game.Notes[ToNoteModel.id];
+                var lastNote = Game.SpawnedNotes[ToNoteModel.id];
                 if (lastNote.IsCleared)
                 {
                     // Clear this
@@ -161,11 +161,32 @@ public class DragHeadNote : Note
         base.OnTouch(screenPos);
     }
 
-    protected override async void AwaitAndDestroy()
+    public override async void Collect()
     {
+        void Collect()
+        {
+            FromNoteModel = default;
+            ToNoteModel = default;
+            StartToNoteModel = default;
+            EndNoteModel = default;
+            OriginalPosition = default;
+            hasFromNote = default;
+            fromNote = default;
+            hasToNote = default;
+            toNote = default;
+        }
+        bool CanCollect() => Game.Time >= EndNoteModel.end_time +
+            (IsCDrag ? NoteType.CDragChild : NoteType.DragChild).GetDefaultMissThreshold();
+        if (CanCollect())
+        {
+            Collect();
+            base.Collect();
+            return;
+        }
         // Don't destroy until the drag is over
-        await UniTask.WaitUntil(() => Game.Time >= EndNoteModel.end_time + (IsCDrag ? NoteType.CDragChild : NoteType.DragChild).GetDefaultMissThreshold());
-        Destroy();
+        await UniTask.WaitUntil(CanCollect);
+        Collect();
+        base.Collect();
     }
 
     public override NoteGrade CalculateGrade()

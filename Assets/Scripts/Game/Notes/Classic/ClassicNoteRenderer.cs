@@ -3,16 +3,15 @@ using Object = UnityEngine.Object;
 
 public class ClassicNoteRenderer : NoteRenderer
 {
+    public readonly SpriteRenderer Fill;
+    public readonly SpriteRenderer Ring;
+    protected readonly bool DisplayNoteId;
+    protected readonly NoteId NoteId;
+    
     protected float SizeMultiplier;
     protected float BaseTransformSize;
     protected Color BaseRingColor;
     protected Color BaseFillColor;
-
-    public readonly SpriteRenderer Ring;
-    public readonly SpriteRenderer Fill;
-
-    protected readonly bool DisplayNoteId;
-    protected readonly NoteId NoteId;
 
     public ClassicNoteRenderer(Note note) : base(note)
     {
@@ -54,6 +53,15 @@ public class ClassicNoteRenderer : NoteRenderer
         // Canvas sorting
         Ring.sortingOrder = (Note.Chart.note_list.Count - Note.Model.id) * 3;
         Fill.sortingOrder = Ring.sortingOrder - 1;
+    }
+
+    public override void OnCollect()
+    {
+        base.OnCollect();
+        SizeMultiplier = default;
+        BaseTransformSize = default;
+        BaseRingColor = default;
+        BaseFillColor = default;
     }
 
     protected override void Render()
@@ -170,9 +178,9 @@ public class ClassicNoteRenderer : NoteRenderer
         Game.effectController.PlayClearEffect(this, grade, Note.TimeUntilEnd + Note.JudgmentOffset);
     }
 
-    public override void Cleanup()
+    public override void Dispose()
     {
-        base.Cleanup();
+        base.Dispose();
         Object.Destroy(Ring);
         Object.Destroy(Fill);
     }

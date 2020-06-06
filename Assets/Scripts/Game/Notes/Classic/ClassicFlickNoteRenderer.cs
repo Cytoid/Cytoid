@@ -2,10 +2,10 @@
 
 public class ClassicFlickNoteRenderer : ClassicNoteRenderer
 {
-    private SpriteRenderer leftArrow;
-    private SpriteRenderer rightArrow;
+    private readonly SpriteRenderer leftArrow;
+    private readonly SpriteRenderer rightArrow;
 
-    private float maxArrowOffset;
+    private readonly float maxArrowOffset;
 
     public ClassicFlickNoteRenderer(FlickNote flickNote) : base(flickNote)
     {

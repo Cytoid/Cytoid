@@ -617,6 +617,9 @@ namespace LunarConsolePlugin
         void OnLogMessageReceived(string message, string stackTrace, LogType type)
         {
             message = m_settings.removeRichTextTags ? StringUtils.RemoveRichTextTags(message) : message;
+            // EDIT: Cytoid
+            if (message.StartsWith("Curl error")) return;
+            // End of EDIT
             m_platform.OnLogMessageReceived(message, stackTrace, type);
         }
 

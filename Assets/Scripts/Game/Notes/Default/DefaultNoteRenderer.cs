@@ -113,9 +113,9 @@ public abstract class DefaultNoteRenderer : NoteRenderer
         Game.effectController.PlayClearEffect(this, grade, Note.TimeUntilEnd);
     }
 
-    public override void Cleanup()
+    public override void Dispose()
     {
-        base.Cleanup();
+        base.Dispose();
         //cleanup db
     }
 

@@ -8,8 +8,9 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
     public SpriteRenderer CompletedLine;
     public ProgressRing ProgressRing;
     public MeshTriangle Triangle;
-
     protected SpriteMask SpriteMask;
+    protected Vector3 InitialProgressRingScale;
+    
     protected float NextHoldEffectTimestamp;
 
     public ClassicHoldNoteRenderer(HoldNote holdNote) : base(holdNote)
@@ -33,6 +34,8 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
         ProgressRing = Object.Instantiate(provider.progressRingPrefab, Note.transform, false)
             .GetComponent<ProgressRing>();
         Triangle = Object.Instantiate(provider.trianglePrefab, Game.contentParent.transform).GetComponent<MeshTriangle>();
+        Triangle.gameObject.SetActive(false);
+        InitialProgressRingScale = ProgressRing.transform.localScale;
         ProgressRing.maxCutoff = 0;
         ProgressRing.fillCutoff = 0;
         CompletedLine.size = new Vector2(1, 0);
@@ -43,14 +46,22 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
     public override void OnNoteLoaded()
     {
         base.OnNoteLoaded();
+        Triangle.gameObject.SetActive(true);
         Triangle.Note = Note;
         // TODO: Magic number
         ProgressRing.gameObject.GetComponent<SpriteRenderer>().material.renderQueue = 3000 + Note.Model.id;
-        var newProgressRingScale = ProgressRing.transform.localScale.x * SizeMultiplier;
-        ProgressRing.transform.SetLocalScaleXY(newProgressRingScale, newProgressRingScale);
+        var newProgressRingScale = InitialProgressRingScale * SizeMultiplier;
+        ProgressRing.transform.SetLocalScaleXY(newProgressRingScale.x, newProgressRingScale.y);
 
         CompletedLine.size = new Vector2(1, 0);
         Line.size = new Vector2(1, 0.21f * Mathf.Floor(Note.Model.holdlength / 0.21f));
+    }
+
+    public override void OnCollect()
+    {
+        base.OnCollect();
+        Triangle.gameObject.SetActive(false);
+        NextHoldEffectTimestamp = default;
     }
 
     protected override void UpdateComponentStates()
@@ -179,9 +190,9 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
         SpriteMask.enabled = false;
     }
 
-    public override void Cleanup()
+    public override void Dispose()
     {
-        base.Cleanup();
+        base.Dispose();
         Object.Destroy(Line.gameObject);
         Object.Destroy(CompletedLine.gameObject);
         Object.Destroy(ProgressRing.gameObject);

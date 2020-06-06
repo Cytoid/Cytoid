@@ -44,6 +44,15 @@ public class FlickNote : Note
         return false;
     }
 
+    public override void Collect()
+    {
+        IsFlicking = default;
+        FlickingStartTime = default;
+        FlickingStartPosition = default;
+        age = default;
+        base.Collect();
+    }
+
     public override NoteGrade CalculateGrade()
     {
         if (ShouldMiss()) return NoteGrade.Miss;
@@ -86,4 +95,5 @@ public class FlickNote : Note
     {
         return base.IsAutoEnabled() || Game.State.Mods.Contains(Mod.AutoFlick);
     }
+    
 }

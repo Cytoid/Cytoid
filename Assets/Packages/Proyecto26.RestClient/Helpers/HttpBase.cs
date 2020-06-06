@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Networking;
 using Proyecto26.Common;
+using UnityEngine.SceneManagement;
 
 namespace Proyecto26
 {
@@ -18,6 +19,7 @@ namespace Proyecto26
                 using (var request = CreateRequest(options))
                 {
                     yield return request.SendWebRequestWithOptions(options);
+                    if (IsInGame()) break;
                     var response = request.CreateWebResponse();
                     if (request.IsValidRequest(options))
                     {
@@ -34,6 +36,7 @@ namespace Proyecto26
                     else if (!options.IsAborted && retries < options.Retries)
                     {
                         yield return new WaitForSeconds(options.RetrySecondsDelay);
+                        if (IsInGame()) break; // EDIT: Cytoid
                         retries++;
                         if(options.RetryCallback != null)
                         {
@@ -100,6 +103,7 @@ namespace Proyecto26
         public static IEnumerator DefaultUnityWebRequest<TResponse>(RequestHelper options, Action<RequestException, ResponseHelper, TResponse> callback)
         {
             return CreateRequestAndRetry(options, (RequestException err, ResponseHelper res) => {
+                if (IsInGame()) return; // EDIT: Cytoid
                 var body = default(TResponse);
                 if (err == null && res.Data != null && options.WillParseBody)
                 {
@@ -117,6 +121,7 @@ namespace Proyecto26
         public static IEnumerator DefaultUnityWebRequest<TResponse>(RequestHelper options, Action<RequestException, ResponseHelper, TResponse[]> callback)
         {
             return CreateRequestAndRetry(options, (RequestException err, ResponseHelper res) => {
+                if (IsInGame()) return; // EDIT: Cytoid
                 var body = default(TResponse[]);
                 if (err == null && res.Data != null && options.WillParseBody)
                 {
@@ -131,6 +136,10 @@ namespace Proyecto26
                 callback(err, res, body);
             });
         }
+        
+        // EDIT: Cytoid
+        private static bool IsInGame() => SceneManager.GetActiveScene().name == "Game";
+        // End of EDIT
 
     }
 }

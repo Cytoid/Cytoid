@@ -91,9 +91,9 @@ public class ClassicDragHeadNoteRenderer : ClassicNoteRenderer
         }
     }
 
-    public override void Cleanup()
+    public override void Dispose()
     {
-        base.Cleanup();
+        base.Dispose();
         Object.Destroy(SpriteMask);
         if (CDragFill != null) Object.Destroy(CDragFill);
     }

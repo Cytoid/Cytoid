@@ -8,8 +8,8 @@ public class InputController : MonoBehaviour
 {
     public Game game;
 
-    public readonly Dictionary<int, FlickNote> FlickingNotes = new Dictionary<int, FlickNote>();
-    public readonly Dictionary<int, HoldNote> HoldingNotes = new Dictionary<int, HoldNote>();
+    public readonly Dictionary<int, FlickNote> FlickingNotes = new Dictionary<int, FlickNote>(); // Finger index to note
+    public readonly Dictionary<int, HoldNote> HoldingNotes = new Dictionary<int, HoldNote>(); // Finger index to note
     public readonly List<Note> TouchableDragNotes = new List<Note>(); // Drag head, Drag child, CDrag child
     public readonly List<HoldNote> TouchableHoldNotes = new List<HoldNote>(); // Hold, Long hold
     public readonly List<Note> TouchableNormalNotes = new List<Note>(); // Click, CDrag head, Hold, Long hold, Flick
@@ -34,6 +34,15 @@ public class InputController : MonoBehaviour
         LeanTouch.OnFingerUp = _ => { };
     }
 
+    public void OnNoteCollected(Note note)
+    {
+        if (note.Type == NoteType.Hold || note.Type == NoteType.LongHold)
+        {
+            // Since you only have 10 fingers, this doesn't need to be optimized
+            HoldingNotes.RemoveAll(it => it == note);
+        }
+    }
+
     public void OnGamePaused(Game game)
     {
         HoldingNotes.Values.ForEach(note =>
@@ -48,9 +57,9 @@ public class InputController : MonoBehaviour
         TouchableNormalNotes.Clear();
         TouchableDragNotes.Clear();
         TouchableHoldNotes.Clear();
-        foreach (var id in game.Notes.Keys)
+        foreach (var id in game.SpawnedNotes.Keys)
         {
-            var note = game.Notes[id];
+            var note = game.SpawnedNotes[id];
             if (!note.HasEmerged || note.IsCleared) continue;
 
             if (note.Type != NoteType.DragHead && note.Type != NoteType.DragChild && note.Type != NoteType.CDragChild)
@@ -173,9 +182,10 @@ public class InputController : MonoBehaviour
         {
             var holdNote = HoldingNotes[finger.Index];
 
-            if (holdNote.IsCleared) // If cleared
+            if (holdNote.IsCleared) // If cleared <-- This should be impossible since the note should have called OnNoteCollected
             {
-                HoldingNotes.Remove(finger.Index);
+                throw new InvalidOperationException();
+                // HoldingNotes.Remove(finger.Index);
             }
             else if (!holdNote.DoesCollide(pos)) // If holding elsewhere
             {

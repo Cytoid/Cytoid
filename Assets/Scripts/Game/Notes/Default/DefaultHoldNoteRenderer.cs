@@ -130,9 +130,9 @@ public class DefaultHoldNoteRenderer : DefaultNoteRenderer
         Line.color = Line.color.WithAlpha(EasedOpacity);
     }
 
-    public override void Cleanup()
+    public override void Dispose()
     {
-        base.Cleanup();
+        base.Dispose();
         Object.Destroy(Line.gameObject);
         Object.Destroy(CompletedLine.gameObject);
         Object.Destroy(ProgressRing.gameObject);

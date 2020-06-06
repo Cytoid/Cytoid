@@ -5,10 +5,11 @@ using UnityEngine;
 
 public abstract class Note : MonoBehaviour
 {
-    public Game Game { get; private set; }
-
+    
     [NonSerialized] public NoteRenderer Renderer;
-
+    public bool IsInitialized { get; private set; }
+    
+    public Game Game { get; private set; }
     public ChartModel.Note Model { get; private set; }
     public ChartModel.Note NextNoteModel { get; private set; }
 
@@ -18,26 +19,33 @@ public abstract class Note : MonoBehaviour
     public ChartModel Chart { get; private set; }
     public ChartModel.Page Page { get; private set; }
     public NoteType Type { get; private set; }
-
-    public bool HasEmerged => Game.Time >= Model.intro_time;
-
+    
     public float MissThreshold { get; set; }
-
-    public float TimeUntilStart => Model.start_time - Game.Time;
-    public float TimeUntilEnd => Model.end_time - Game.Time;
-
+    
     public bool IsCleared { get; private set; }
 
     // For ranked mode: weighted difference between the current timing and the perfect timing
     public float GreatGradeWeight { get; protected set; }
     
     public float JudgmentOffset { get; protected set; }
+    
+    public bool HasEmerged => Game.Time >= Model.intro_time;
+    
+    public float TimeUntilStart => Model.start_time - Game.Time;
+    public float TimeUntilEnd => Model.end_time - Game.Time;
 
-    public virtual void SetData(Game game, int noteId)
+    public void Initialize(Game game)
     {
+        if (IsInitialized) return;
+        IsInitialized = true;
         Game = game;
-        Chart = game.Chart.Model;
-        Model = game.Chart.Model.note_map[noteId];
+        Renderer = CreateRenderer();
+    }
+
+    public virtual void SetData(int noteId)
+    {
+        Chart = Game.Chart.Model;
+        Model = Game.Chart.Model.note_map[noteId];
         if (Model.next_id > 0 && Chart.note_map.ContainsKey(Model.next_id))
         {
             NextNoteModel = Chart.note_map[Model.next_id];
@@ -45,14 +53,37 @@ public abstract class Note : MonoBehaviour
 
         Page = Chart.page_list[Model.page_index];
         Type = (NoteType) Model.type;
-
-        Renderer = CreateRenderer();
+        
         Renderer.OnNoteLoaded();
         MissThreshold = Type.GetDefaultMissThreshold();
         JudgmentOffset = Context.Player.Settings.JudgmentOffset;
         
-        Game.onGameUpdate.AddListener(_ => OnGameUpdate());
-        Game.onGameLateUpdate.AddListener(_ => OnGameLateUpdate());
+        Game.onGameUpdate.AddListener(OnGameUpdate);
+        Game.onGameLateUpdate.AddListener(OnGameLateUpdate);
+    }
+
+    public async void AwaitAndCollect()
+    {
+        await UniTask.DelayFrame(0);
+        Collect();
+    }
+
+    public virtual void Collect()
+    {
+        Renderer.OnCollect();
+        Game.ObjectPool.CollectNote(this);
+        Game.onGameUpdate.RemoveListener(OnGameUpdate);
+        Game.onGameLateUpdate.RemoveListener(OnGameLateUpdate);
+        Model = default;
+        NextNoteModel = default;
+        hasNextNote = default;
+        nextNote = default;
+        Chart = default;
+        Page = default;
+        MissThreshold = default;
+        IsCleared = default;
+        GreatGradeWeight = default;
+        JudgmentOffset = default;
     }
 
     public virtual void Clear(NoteGrade grade)
@@ -63,23 +94,24 @@ public abstract class Note : MonoBehaviour
         Renderer.OnClear(grade);
         Game.State.Judge(this, grade, -TimeUntilEnd, GreatGradeWeight);
 
+        // Hit sound
+        if (grade != NoteGrade.Miss && (!(this is HoldNote) || Context.Player.Settings.HoldHitSoundTiming.Let(it => it == HoldHitSoundTiming.End || it == HoldHitSoundTiming.Both)))
+        {
+            PlayHitSound();
+        }
+        
         if (!(Game is PlayerGame))
         {
             Game.onNoteClear.Invoke(Game, this);
-            AwaitAndDestroy();
+            AwaitAndCollect();
         }
         else
         {
             if (TimeUntilEnd > -5) // Prevent player seeking
             {
                 Game.onNoteClear.Invoke(Game, this);
+                AwaitAndCollect();
             }
-        }
-
-        // Hit sound
-        if (grade != NoteGrade.Miss && (!(this is HoldNote) || Context.Player.Settings.HoldHitSoundTiming.Let(it => it == HoldHitSoundTiming.End || it == HoldHitSoundTiming.Both)))
-        {
-            PlayHitSound();
         }
     }
 
@@ -92,7 +124,7 @@ public abstract class Note : MonoBehaviour
         Context.Haptic(HapticTypes.LightImpact, false);
     }
 
-    protected virtual void OnGameUpdate()
+    protected virtual void OnGameUpdate(Game _)
     {
         // Reset cleared status in player mode
         if (Game is PlayerGame && IsCleared)
@@ -144,16 +176,16 @@ public abstract class Note : MonoBehaviour
         Renderer.OnLateUpdate();
     }
 
-    protected virtual void OnGameLateUpdate()
+    protected virtual void OnGameLateUpdate(Game _)
     {
         if (NextNoteModel != null)
         {
-            if (Game.Notes.ContainsKey(NextNoteModel.id))
+            if (Game.SpawnedNotes.ContainsKey(NextNoteModel.id))
             {
                 if (!hasNextNote)
                 {
                     hasNextNote = true;
-                    nextNote = Game.Notes[NextNoteModel.id];
+                    nextNote = Game.SpawnedNotes[NextNoteModel.id];
                 }
             }
             else
@@ -194,22 +226,15 @@ public abstract class Note : MonoBehaviour
         return Game.Time - (Model.start_time + JudgmentOffset) > MissThreshold;
     }
 
-    protected virtual async void AwaitAndDestroy()
+    public void OnDestroy()
     {
-        await UniTask.DelayFrame(0);
-        Destroy();
+        Dispose();
     }
 
-    protected virtual void Destroy()
+    public void Dispose()
     {
-        if (gameObject == null) return;
         Destroy(gameObject);
-        Renderer.Cleanup();
-    }
-
-    protected void OnDestroy()
-    {
-        Game.Notes.Remove(Model.id);
+        Renderer.Dispose();
     }
 
     public virtual void OnTouch(Vector2 screenPos)

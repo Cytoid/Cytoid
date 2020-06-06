@@ -2,7 +2,7 @@
 
 public class ClassicDragChildNoteRenderer : ClassicNoteRenderer
 {
-    protected SpriteMask SpriteMask;
+    protected readonly SpriteMask SpriteMask;
         
     public ClassicDragChildNoteRenderer(DragChildNote dragChildNote) : base(dragChildNote)
     {

@@ -15,6 +15,8 @@ public class Game : MonoBehaviour
 {
     public new Camera camera;
     public GameObject contentParent;
+    public GameObject levelInfoParent;
+    public GameObject modHolderParent;
     public EffectController effectController;
     public InputController inputController;
 
@@ -43,7 +45,9 @@ public class Game : MonoBehaviour
     public float UnpauseCountdown { get; protected set; }
     
     public bool ResynchronizeChartOnNextFrame { get; set; }
-    
+
+    public int ContentLayer { get; private set; }
+
     public ObjectPool ObjectPool { get; set; }
 
     public SortedDictionary<int, Note> SpawnedNotes => ObjectPool.SpawnedNotes;
@@ -82,6 +86,7 @@ public class Game : MonoBehaviour
     
     protected virtual void Awake()
     {
+        ContentLayer = LayerMask.NameToLayer("Content");
         Renderer = new GameRenderer(this);
         
 #if !UNITY_EDITOR
@@ -96,11 +101,29 @@ public class Game : MonoBehaviour
     protected virtual async void Start()
     {
         await UniTask.WaitUntil(() => Context.IsInitialized);
-        await Initialize();
+        try
+        {
+            await Initialize();
+        }
+        catch (Exception e)
+        {
+            // Not editor
+            if (Context.SelectedGameMode != GameMode.Unspecified)
+            {
+                Context.GameErrorState = new GameErrorState {Message = "DIALOG_LEVEL_LOAD_ERROR".Get(), Exception = e};
+                
+                var sceneLoader = new SceneLoader("Navigation");
+                sceneLoader.Load();
+                Context.ScreenManager.ChangeScreen(OverlayScreen.Id, ScreenTransition.None, 0.4f, 1,
+                    onFinished: screen => sceneLoader.Activate());
+            }
+        }
     }
 
     public async UniTask Initialize(bool startAutomatically = true)
     {
+        ObjectPool = new ObjectPool(this);
+
         // Decide game mode
         var mode = Context.SelectedGameMode;
         if (mode == GameMode.Unspecified)
@@ -199,6 +222,10 @@ public class Game : MonoBehaviour
             verticalOffset
         );
         ChartLength = Chart.Model.note_list.Max(it => it.end_time);
+        foreach (var type in (NoteType[]) Enum.GetValues(typeof(NoteType)))
+        {
+            ObjectPool.UpdateNoteObjectCount(type, Chart.MaxSamePageNoteCountByType[type] * 3);
+        }
         
         // Load audio
         print("Loading audio");
@@ -266,13 +293,13 @@ public class Game : MonoBehaviour
         Level.Record.LastPlayedDate = DateTimeOffset.UtcNow;
         Level.SaveRecord();
         
-        // Instantiate note pool
-        ObjectPool = new ObjectPool(this);
+        // Initialize note pool
         ObjectPool.Initialize();
 
         IsLoaded = true;
         onGameLoaded.Invoke(this);
-        
+
+        levelInfoParent.transform.RebuildLayout();
         Context.ScreenManager.ChangeScreen(OverlayScreen.Id, ScreenTransition.None);
         
         if (startAutomatically)
@@ -302,6 +329,8 @@ public class Game : MonoBehaviour
         GameStartedOrResumedTimestamp = UnityEngine.Time.realtimeSinceStartup;
         State.IsStarted = true;
         State.IsPlaying = true;
+        LayoutStaticizer.Staticize(levelInfoParent.transform);
+        LayoutStaticizer.Staticize(modHolderParent.transform);
         onGameStarted.Invoke(this);
 
         if (Application.isEditor && EditorImmediatelyComplete)
@@ -399,7 +428,7 @@ public class Game : MonoBehaviour
             }
 
             var notes = Chart.Model.note_map;
-            while (Chart.CurrentNoteId < notes.Count && notes[Chart.CurrentNoteId].start_time - 2.0f < Time)
+            while (Chart.CurrentNoteId < notes.Count && notes[Chart.CurrentNoteId].intro_time - 1f < Time)
                 switch ((NoteType) notes[Chart.CurrentNoteId].type)
                 {
                     case NoteType.DragHead:

@@ -368,6 +368,7 @@ public class GamePreparationScreen : Screen
 
     public async void OnStartButton()
     {
+        if (Level == null) return;
         Context.Haptic(HapticTypes.SoftImpact, true);
         if (Level.IsLocal)
         {

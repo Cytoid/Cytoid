@@ -20,7 +20,7 @@ using UnityEngine.SceneManagement;
 
 public class Context : SingletonMonoBehavior<Context>
 {
-    public const string VersionName = "2.0.0 Beta 1.3";
+    public const string VersionName = "2.0.0 Beta 1.4";
     public const string VersionString = "2.0.0";
     
     public static string MockApiUrl;
@@ -107,6 +107,8 @@ public class Context : SingletonMonoBehavior<Context>
 
     public static readonly Player Player = new Player();
     public static readonly OnlinePlayer OnlinePlayer = new OnlinePlayer();
+
+    public static GameErrorState GameErrorState;
 
     private static bool offline;
     private static Level selectedLevel;
@@ -212,6 +214,7 @@ public class Context : SingletonMonoBehavior<Context>
 
         try
         {
+            var timer = new BenchmarkTimer("LiteDB");
             Database = new LiteDatabase(
                 new ConnectionString
                 {
@@ -220,6 +223,7 @@ public class Context : SingletonMonoBehavior<Context>
                     Connection = Application.isEditor ? ConnectionType.Shared : ConnectionType.Direct
                 }
             );
+            timer.Time();
             Database.Checkpoint();
         }
         catch (Exception e)
@@ -458,7 +462,7 @@ public class Context : SingletonMonoBehavior<Context>
 
             // Restore history
             ScreenManager.History = new Stack<string>(navigationScreenHistory);
-
+            
             if (TierState != null)
             {
                 if (TierState.CurrentStage.IsCompleted)
@@ -487,6 +491,13 @@ public class Context : SingletonMonoBehavior<Context>
                     // Show game preparation screen
                     ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.None);
                 }
+            }
+            
+            if (GameErrorState != null)
+            {
+                Dialog.PromptAlert(GameErrorState.Message);
+                Debug.LogError(GameErrorState.Exception);
+                GameErrorState = null;
             }
         }
 
@@ -642,6 +653,12 @@ public class Context : SingletonMonoBehavior<Context>
 
 public class OfflineModeToggleEvent : UnityEvent<bool>
 {
+}
+
+public class GameErrorState
+{
+    public string Message;
+    public Exception Exception;
 }
 
 #if UNITY_EDITOR

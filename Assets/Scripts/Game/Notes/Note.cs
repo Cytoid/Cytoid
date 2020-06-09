@@ -234,7 +234,7 @@ public abstract class Note : MonoBehaviour
     public void Dispose()
     {
         Destroy(gameObject);
-        Renderer.Dispose();
+        Renderer?.Dispose();
     }
 
     public virtual void OnTouch(Vector2 screenPos)

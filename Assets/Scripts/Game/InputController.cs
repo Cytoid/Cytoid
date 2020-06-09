@@ -41,6 +41,11 @@ public class InputController : MonoBehaviour
             // Since you only have 10 fingers, this doesn't need to be optimized
             HoldingNotes.RemoveAll(it => it == note);
         }
+        if (note.Type == NoteType.Flick)
+        {
+            // Since you only have 10 fingers, this doesn't need to be optimized
+            FlickingNotes.RemoveAll(it => it == note);
+        }
     }
 
     public void OnGamePaused(Game game)

@@ -8,10 +8,9 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
     public SpriteRenderer CompletedLine;
     public ProgressRing ProgressRing;
     public MeshTriangle Triangle;
+    public ParticleSystem HoldFx;
     protected SpriteMask SpriteMask;
     protected Vector3 InitialProgressRingScale;
-    
-    protected float NextHoldEffectTimestamp;
 
     public ClassicHoldNoteRenderer(HoldNote holdNote) : base(holdNote)
     {
@@ -35,6 +34,8 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
             .GetComponent<ProgressRing>();
         Triangle = Object.Instantiate(provider.trianglePrefab, Game.contentParent.transform).GetComponent<MeshTriangle>();
         Triangle.gameObject.SetActive(false);
+        HoldFx = Object.Instantiate(Game.effectController.holdFx, Note.transform, false);
+        HoldFx.transform.DeltaZ(-0.001f);
         InitialProgressRingScale = ProgressRing.transform.localScale;
         ProgressRing.maxCutoff = 0;
         ProgressRing.fillCutoff = 0;
@@ -48,8 +49,10 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
         base.OnNoteLoaded();
         Triangle.gameObject.SetActive(true);
         Triangle.Note = Note;
-        // TODO: Magic number
-        ProgressRing.gameObject.GetComponent<SpriteRenderer>().material.renderQueue = 3000 + Note.Model.id;
+        ProgressRing.spriteRenderer.enabled = true;
+        ProgressRing.spriteRenderer.material.renderQueue = 3000 + Note.Model.id; // TODO: Magic number
+        var mainModule = HoldFx.main;
+        mainModule.startColor = BaseFillColor;
         var newProgressRingScale = InitialProgressRingScale * SizeMultiplier;
         ProgressRing.transform.SetLocalScaleXY(newProgressRingScale.x, newProgressRingScale.y);
 
@@ -60,8 +63,10 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
     public override void OnCollect()
     {
         base.OnCollect();
+        ProgressRing.Reset();
+        Triangle.Reset();
         Triangle.gameObject.SetActive(false);
-        NextHoldEffectTimestamp = default;
+        HoldFx.Stop();
     }
 
     protected override void UpdateComponentStates()
@@ -83,7 +88,11 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
                     break;
             }
             SpriteMask.enabled = true;
-            Triangle.isShowing = HoldNote.IsHolding && Game.Time >= Note.Model.start_time;
+            if (HoldNote.IsHolding && Game.Time >= Note.Model.start_time)
+            {
+                ProgressRing.OnUpdate();
+                Triangle.OnUpdate();
+            }
             if (Game.State.Mods.Contains(Mod.HideNotes))
             {
                 Line.enabled = false;
@@ -111,10 +120,11 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
                         ProgressRing.maxCutoff = Mathf.Min(1, 1.333f * HoldNote.HoldProgress);
                         ProgressRing.fillCutoff = Mathf.Min(1, HoldNote.HoldProgress);
                         
-                        if (Time.realtimeSinceStartup >= NextHoldEffectTimestamp && Game.State.IsPlaying)
+                        if (Game.State.IsPlaying && !HoldFx.isPlaying)
                         {
-                            NextHoldEffectTimestamp = Time.realtimeSinceStartup + 1f / 8f;
-                            Game.effectController.PlayClassicHoldEffect(this);
+                            var emission = HoldFx.emission;
+                            emission.enabled = true;
+                            HoldFx.Play();
                         }
                     }
                 }
@@ -148,7 +158,19 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
             Triangle.enabled = false;
             Triangle.Reset();
             SpriteMask.enabled = false;
+            if (HoldFx.isPlaying)
+            {
+                var emission = HoldFx.emission;
+                emission.enabled = false;
+            }
         }
+    }
+
+    protected override void UpdateColors()
+    {
+        base.UpdateColors();
+        var mainModule = HoldFx.main;
+        mainModule.startColor = Fill.color;
     }
 
     protected override void UpdateComponentOpacity()

@@ -31,6 +31,7 @@ public class MainMenuScreen : Screen
     public override void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
+        WebViewOverlay.Show();
         StartupLogger.Instance.Dispose();
 
         upperLeftOverlayImage.SetAlpha(Context.CharacterManager.GetActiveCharacterAsset().mainMenuUpperLeftOverlayAlpha);

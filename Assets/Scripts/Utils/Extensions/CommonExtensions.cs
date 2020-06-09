@@ -628,6 +628,27 @@ public static class CommonExtensions
         position = new Vector3(position.x, position.y, z);
         transform.position = position;
     }
+    
+    public static void DeltaX(this Transform transform, float dx)
+    {
+        var position = transform.position;
+        position = new Vector3(position.x + dx, position.y, position.z);
+        transform.position = position;
+    }
+
+    public static void DeltaY(this Transform transform, float dy)
+    {
+        var position = transform.position;
+        position = new Vector3(position.x, position.y + dy, position.z);
+        transform.position = position;
+    }
+
+    public static void DeltaZ(this Transform transform, float dz)
+    {
+        var position = transform.position;
+        position = new Vector3(position.x, position.y, position.z + dz);
+        transform.position = position;
+    }
 
     public static void SetLocalScale(this Transform transform, float xyz)
     {

@@ -401,6 +401,7 @@ public class TierSelectionScreen : Screen
     
     public async void OnStartButton()
     {
+        if (SelectedTier == null) return;
         Context.Haptic(HapticTypes.SoftImpact, true);
         if (SelectedTier.StagesValid)
         {

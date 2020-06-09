@@ -1,75 +1,120 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 public class ObjectPool
 {
     
-    private static readonly Dictionary<Type, int> InitialNoteObjectCount = new Dictionary<Type, int>
+    private readonly Dictionary<NoteType, int> initialNoteObjectCount = new Dictionary<NoteType, int>
     {
-        {typeof(ClickNote), 24},
-        {typeof(HoldNote), 12},
-        {typeof(LongHoldNote), 6},
-        {typeof(FlickNote), 12},
-        {typeof(DragHeadNote), 12},
-        {typeof(DragChildNote), 48},
+        {NoteType.Click, 24},
+        {NoteType.Hold, 12},
+        {NoteType.LongHold, 6},
+        {NoteType.Flick, 12},
+        {NoteType.DragHead, 12},
+        {NoteType.DragChild, 48},
+        {NoteType.CDragHead, 12},
+        {NoteType.CDragChild, 48}
     };
-    private const int InitialDragLineObjectCount = 48;
+    private int initialDragLineObjectCount = 48;
 
     public readonly SortedDictionary<int, Note> SpawnedNotes = new SortedDictionary<int, Note>(); // Currently on-screen
-    private readonly Dictionary<Type, Queue<Note>> pooledNotes = new Dictionary<Type, Queue<Note>>(); // All note objects ever allocated
-    private readonly Queue<DragLineElement> pooledDragLines = new Queue<DragLineElement>();
+    
+    private readonly Dictionary<NoteType, NotePoolItem> notePoolItems = new Dictionary<NoteType, NotePoolItem>();
+    private readonly DragLinePoolItem dragLinePoolItem = new DragLinePoolItem();
+    private readonly Dictionary<EffectController.Effect, PrefabPoolItem> effectPoolItems = new Dictionary<EffectController.Effect, PrefabPoolItem>();
     
     public Game Game { get; }
-
-    private readonly int contentLayer = LayerMask.NameToLayer("Content");
     
     public ObjectPool(Game game)
     {
         Game = game;
-        foreach (var type in (NoteType[]) Enum.GetValues(typeof(NoteType))) pooledNotes[ToGameType(type)] = new Queue<Note>();
+        foreach (var type in (NoteType[]) Enum.GetValues(typeof(NoteType)))
+        {
+            notePoolItems[type] = new NotePoolItem();
+        }
+        foreach (var effect in (EffectController.Effect[]) Enum.GetValues(typeof(EffectController.Effect)))
+        {
+            effectPoolItems[effect] = new PrefabPoolItem();
+        }
+    }
+
+    public void UpdateNoteObjectCount(NoteType type, int count)
+    {
+        initialNoteObjectCount[type] = count;
     }
 
     public void Initialize()
     {
+        initialDragLineObjectCount = initialNoteObjectCount[NoteType.DragHead] 
+                                     + initialNoteObjectCount[NoteType.DragChild]
+                                     + initialNoteObjectCount[NoteType.CDragHead] 
+                                     + initialNoteObjectCount[NoteType.CDragChild];
         var timer = new BenchmarkTimer("Game ObjectPool");
-        foreach (var type in InitialNoteObjectCount.Keys)
+        foreach (var type in initialNoteObjectCount.Keys)
         {
-            for (var i = 0; i < InitialNoteObjectCount[type]; i++)
+            for (var i = 0; i < initialNoteObjectCount[type]; i++)
             {
-                var note = InstantiateNoteObject(type);
-                note.Initialize(Game);
-                note.gameObject.SetActive(false);
-                pooledNotes[type].Enqueue(note);
+                Collect(notePoolItems[type], Instantiate(notePoolItems[type], new NoteInstantiateProvider {Type = type}));
             }
         }
         timer.Time("Notes");
-        for (var i = 0; i < InitialDragLineObjectCount; i++)
+        for (var i = 0; i < initialDragLineObjectCount; i++)
         {
-            var dragLine = InstantiateDragLine();
-            dragLine.Initialize(Game);
-            dragLine.gameObject.SetActive(false);
-            pooledDragLines.Enqueue(dragLine);
+            Collect(dragLinePoolItem, Instantiate(dragLinePoolItem, new PoolItemInstantiateProvider()));
         }
         timer.Time("DragLines");
+        var chart = Game.Chart;
+        var map = new Dictionary<EffectController.Effect, int>
+        {
+            {
+                EffectController.Effect.Clear,
+                chart.MaxSamePageNonDragTypeNoteCount * 2
+            },
+            {
+                EffectController.Effect.ClearDrag, 
+                chart.MaxSamePageDragTypeNoteCount * 2
+            },
+            {
+                EffectController.Effect.Miss,
+                chart.MaxSamePageNoteCount * 2
+            },
+            {
+                EffectController.Effect.Hold, 
+                chart.MaxSamePageHoldTypeNoteCount * 16 * 2
+            }
+        };
+        foreach (var pair in map)
+        {
+            var effect = pair.Key;
+            var count = pair.Value;
+            Debug.Log($"{effect} => {count}");
+            for (var i = 0; i < count; i++)
+            {
+                Collect(effectPoolItems[effect], Instantiate(
+                    effectPoolItems[effect], new ParticleSystemInstantiateProvider
+                    {
+                        Prefab = Game.effectController.GetPrefab(effect),
+                        Parent = Game.effectController.EffectParentTransform
+                    }));
+            }
+        }
+        timer.Time("Effects");
         timer.Time();
     }
 
     public void Dispose()
     {
         SpawnedNotes.Values.ForEach(it => it.Dispose());
-        pooledNotes.Values.ForEach(it => it.ForEach(x => x.Dispose()));
-        pooledDragLines.ForEach(it => it.Dispose());
+        notePoolItems.Values.ForEach(it => it.Dispose());
+        dragLinePoolItem.Dispose();
     }
     
     public Note SpawnNote(ChartModel.Note model)
     {
-        var note = GetPooledNoteOrInstantiate((NoteType) model.type);
-        note.gameObject.SetActive(true);
-        note.Initialize(Game);
-        note.SetData(model.id);
-        note.gameObject.SetLayerRecursively(contentLayer);
+        var note = Spawn(notePoolItems[(NoteType) model.type], new NoteInstantiateProvider{Type = (NoteType) model.type}, new NoteSpawnProvider{Model = model});
         SpawnedNotes[model.id] = note;
         return note;
     }
@@ -78,93 +123,233 @@ public class ObjectPool
     {
         if (!SpawnedNotes.ContainsKey(note.Model.id)) throw new ArgumentOutOfRangeException();
         Game.inputController.OnNoteCollected(note);
-        note.gameObject.SetActive(false);
+        Collect(notePoolItems[note.Type], note);
         SpawnedNotes.Remove(note.Model.id);
-        pooledNotes[note.GetType()].Enqueue(note);
-    }
-
-    public Note GetPooledNoteOrInstantiate(NoteType type)
-    {
-        var gameType = ToGameType(type);
-        var queue = pooledNotes[gameType];
-        return queue.Count == 0 ? InstantiateNoteObject(gameType) : pooledNotes[gameType].Dequeue();
-    }
-
-    private Note InstantiateNoteObject(Type gameType)
-    {
-        var provider = GameObjectProvider.Instance;
-        Note note;
-        if (gameType == typeof(ClickNote)) note = Object.Instantiate(provider.clickNotePrefab, Game.contentParent.transform).GetComponent<Note>();
-        else if (gameType == typeof(HoldNote)) note = Object.Instantiate(provider.holdNotePrefab, Game.contentParent.transform).GetComponent<Note>();
-        else if (gameType == typeof(LongHoldNote)) note = Object.Instantiate(provider.longHoldNotePrefab, Game.contentParent.transform).GetComponent<Note>();
-        else if (gameType == typeof(FlickNote)) note = Object.Instantiate(provider.flickNotePrefab, Game.contentParent.transform).GetComponent<Note>();
-        else if (gameType == typeof(DragHeadNote))  note = Object.Instantiate(provider.dragHeadNotePrefab, Game.contentParent.transform).GetComponent<Note>();
-        else if (gameType == typeof(DragChildNote)) note = Object.Instantiate(provider.dragChildNotePrefab, Game.contentParent.transform).GetComponent<Note>();
-        else throw new ArgumentOutOfRangeException();
-        return note;
     }
 
     public DragLineElement SpawnDragLine(ChartModel.Note from, ChartModel.Note to)
     {
-        var dragLine = GetPooledDragLineOrInstantiate();
-        dragLine.gameObject.SetActive(true);
-        dragLine.SetData(from, to);
-        return dragLine;
+        return Spawn(dragLinePoolItem, new PoolItemInstantiateProvider(),
+            new DragLineSpawnProvider {From = from, To = to});
     }
 
-    public void CollectDragLine(DragLineElement dragLine)
+    public void CollectDragLine(DragLineElement element)
     {
-        dragLine.gameObject.SetActive(false);
-        pooledDragLines.Enqueue(dragLine);
+        Collect(dragLinePoolItem, element);
     }
 
-    public DragLineElement GetPooledDragLineOrInstantiate()
+    public ParticleSystem SpawnEffect(EffectController.Effect effect, Vector3 position, Transform parent = default)
     {
-        return pooledDragLines.Count == 0 ? InstantiateDragLine() : pooledDragLines.Dequeue();
+        return Spawn(effectPoolItems[effect],
+            new ParticleSystemInstantiateProvider
+            {
+                Prefab = Game.effectController.GetPrefab(effect), Parent = Game.effectController.EffectParentTransform
+            },
+            new ParticleSystemSpawnProvider
+            {
+                Position = position,
+                Parent = parent
+            });
     }
 
-    public DragLineElement InstantiateDragLine()
+    public void CollectEffect(EffectController.Effect effect, ParticleSystem particle)
     {
-        var dragLine = Object.Instantiate(GameObjectProvider.Instance.dragLinePrefab, Game.contentParent.transform)
-            .GetComponent<DragLineElement>();
-        dragLine.gameObject.SetLayerRecursively(contentLayer);
-        return dragLine;
+        Collect(effectPoolItems[effect], particle);
+    }
+
+    private T Instantiate<T, TI, TS>(PoolItem<T, TI, TS> poolItem, TI instantiateArguments)
+        where TI : PoolItemInstantiateProvider
+        where TS : PoolItemSpawnProvider
+    {
+        // Debug.Log("Instantiating " + typeof(T).Name);
+        return poolItem.OnInstantiate(Game, instantiateArguments);
+    }
+
+    private T Spawn<T, TI, TS>(PoolItem<T, TI, TS> poolItem, TI instantiateArguments, TS spawnArguments)
+        where TI : PoolItemInstantiateProvider
+        where TS : PoolItemSpawnProvider
+    {
+        var obj = poolItem.PooledItems.Count == 0 ? Instantiate(poolItem, instantiateArguments) : poolItem.PooledItems.Dequeue();
+        poolItem.OnSpawn(Game, obj, spawnArguments);
+        return obj;
+    }
+
+    private void Collect<T, TI, TS>(PoolItem<T, TI, TS> poolItem, T obj)
+        where TI : PoolItemInstantiateProvider
+        where TS : PoolItemSpawnProvider
+    {
+        poolItem.OnCollect(Game, obj);
+        poolItem.PooledItems.Enqueue(obj);
+    }
+
+    public class PoolItemInstantiateProvider
+    {
     }
     
-    private static NoteType ToNoteType<T>() where T : Note
+    public class PoolItemSpawnProvider
     {
-        if (typeof(T) == typeof(ClickNote)) return NoteType.Click;
-        if (typeof(T) == typeof(DragHeadNote)) return NoteType.DragHead;
-        if (typeof(T) == typeof(DragChildNote)) return NoteType.DragChild;
-        if (typeof(T) == typeof(FlickNote)) return NoteType.Flick;
-        if (typeof(T) == typeof(HoldNote)) return NoteType.Hold;
-        if (typeof(T) == typeof(LongHoldNote)) return NoteType.LongHold;
-        throw new ArgumentOutOfRangeException();
     }
-    
-    private static Type ToGameType(NoteType type)
+
+    public abstract class PoolItem<T, TI, TS> where TI : PoolItemInstantiateProvider where TS : PoolItemSpawnProvider
     {
-        switch (type)
+        public readonly Queue<T> PooledItems = new Queue<T>();
+
+        public abstract T OnInstantiate(Game game, TI arguments);
+
+        public abstract void OnSpawn(Game game, T item, TS arguments);
+
+        public abstract void OnCollect(Game game, T item);
+
+        public abstract void Dispose();
+
+    }
+
+    public class NoteInstantiateProvider : PoolItemInstantiateProvider
+    {
+        public NoteType Type;
+    }
+
+    public class NoteSpawnProvider : PoolItemSpawnProvider
+    {
+        public ChartModel.Note Model;
+    }
+
+    public class NotePoolItem : PoolItem<Note, NoteInstantiateProvider, NoteSpawnProvider>
+    {
+        public override Note OnInstantiate(Game game, NoteInstantiateProvider arguments)
         {
-            case NoteType.Click:
-                return typeof(ClickNote);
-            case NoteType.Hold:
-                return typeof(HoldNote);
-            case NoteType.LongHold:
-                return typeof(LongHoldNote);
-            case NoteType.DragHead:
-                return typeof(DragHeadNote);
-            case NoteType.DragChild:
-                return typeof(DragChildNote);
-            case NoteType.Flick:
-                return typeof(FlickNote);
-            case NoteType.CDragHead:
-                return typeof(DragHeadNote);
-            case NoteType.CDragChild:
-                return typeof(DragChildNote);
-            default:
-                throw new ArgumentOutOfRangeException(nameof(type), type, null);
+            var provider = GameObjectProvider.Instance;
+            var type = arguments.Type;
+            Note note;
+            switch (type)
+            {
+                case NoteType.Click:
+                    note = Object.Instantiate(provider.clickNotePrefab, game.contentParent.transform).GetComponent<Note>();
+                    break;
+                case NoteType.CDragHead:
+                    note = Object.Instantiate(provider.cDragHeadNotePrefab, game.contentParent.transform).GetComponent<Note>();
+                    break;
+                case NoteType.Hold:
+                    note = Object.Instantiate(provider.holdNotePrefab, game.contentParent.transform).GetComponent<Note>();
+                    break;
+                case NoteType.LongHold:
+                    note = Object.Instantiate(provider.longHoldNotePrefab, game.contentParent.transform).GetComponent<Note>();
+                    break;
+                case NoteType.Flick:
+                    note = Object.Instantiate(provider.flickNotePrefab, game.contentParent.transform).GetComponent<Note>();
+                    break;
+                case NoteType.DragHead:
+                    note = Object.Instantiate(provider.dragHeadNotePrefab, game.contentParent.transform).GetComponent<Note>();
+                    break;
+                case NoteType.DragChild:
+                case NoteType.CDragChild:
+                    note = Object.Instantiate(provider.dragChildNotePrefab, game.contentParent.transform).GetComponent<Note>();
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+            return note;
+        }
+
+        public override void OnSpawn(Game game, Note note, NoteSpawnProvider arguments)
+        {
+            note.gameObject.SetActive(true);
+            note.Initialize(game);
+            note.SetData(arguments.Model.id);
+            note.gameObject.SetLayerRecursively(game.ContentLayer);
+        }
+
+        public override void OnCollect(Game game, Note note)
+        {
+            note.gameObject.SetActive(false);
+        }
+
+        public override void Dispose()
+        {
+            PooledItems.ForEach(it => it.Dispose());
+        }
+    }
+
+    public class DragLineSpawnProvider : PoolItemSpawnProvider
+    {
+        public ChartModel.Note From;
+        public ChartModel.Note To;
+    }
+
+    public class DragLinePoolItem : PoolItem<DragLineElement, PoolItemInstantiateProvider, DragLineSpawnProvider>
+    {
+        public override DragLineElement OnInstantiate(Game game, PoolItemInstantiateProvider arguments)
+        {
+            var dragLine = Object.Instantiate(GameObjectProvider.Instance.dragLinePrefab, game.contentParent.transform)
+                .GetComponent<DragLineElement>();
+            dragLine.gameObject.SetLayerRecursively(game.ContentLayer);
+            return dragLine;
+        }
+
+        public override void OnSpawn(Game game, DragLineElement dragLine, DragLineSpawnProvider arguments)
+        {
+            dragLine.gameObject.SetActive(true);
+            dragLine.Initialize(game);
+            dragLine.SetData(arguments.From, arguments.To);
+        }
+
+        public override void OnCollect(Game game, DragLineElement dragLine)
+        {
+            dragLine.gameObject.SetActive(false);
+        }
+        
+        public override void Dispose()
+        {
+            PooledItems.ForEach(it => it.Dispose());
         }
     }
     
+    public class ParticleSystemInstantiateProvider : PoolItemInstantiateProvider
+    {
+        public ParticleSystem Prefab;
+        public Transform Parent;
+    }
+    
+    public class ParticleSystemSpawnProvider : PoolItemSpawnProvider
+    {
+        public Transform Parent;
+        public Vector3 Position;
+    }
+
+    public class PrefabPoolItem : PoolItem<ParticleSystem, ParticleSystemInstantiateProvider, ParticleSystemSpawnProvider>
+    {
+        public override ParticleSystem OnInstantiate(Game game, ParticleSystemInstantiateProvider arguments)
+        {
+            return Object.Instantiate(arguments.Prefab, arguments.Parent, true);
+        }
+
+        public override void OnSpawn(Game game, ParticleSystem particle, ParticleSystemSpawnProvider arguments)
+        {
+            particle.gameObject.SetActive(true);
+            if (arguments.Parent != default)
+            {
+                var transform = particle.transform;
+                transform.SetParent(arguments.Parent);
+                transform.localPosition = arguments.Position;
+            }
+            else
+            {
+                particle.transform.position = arguments.Position;
+            }
+            // Play() is controlled by the caller
+        }
+
+        public override void OnCollect(Game game, ParticleSystem particle)
+        {
+            particle.Stop();
+            particle.gameObject.SetActive(false);
+        }
+
+        public override void Dispose()
+        {
+            PooledItems.ForEach(Object.Destroy);
+        }
+    }
+
 }
+

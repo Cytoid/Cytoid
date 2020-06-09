@@ -4,7 +4,6 @@ using UnityEngine;
 public class MeshTriangle : MonoBehaviour
 {
     [NonSerialized] public Note Note;
-    public bool isShowing;
 
     private Mesh mesh;
     private Scanner scanner;
@@ -12,7 +11,6 @@ public class MeshTriangle : MonoBehaviour
 
     private void OnEnable()
     {
-        isShowing = false;
         mesh = gameObject.GetComponent<MeshFilter>().mesh;
         mesh.vertices = new[]
         {
@@ -48,47 +46,28 @@ public class MeshTriangle : MonoBehaviour
         mesh.triangles = new[] {0, 1, 2};
     }
 
-    private void Update()
+    public void OnUpdate()
     {
-        if (isShowing)
+        var orthographicSize = mainCamera.orthographicSize;
+        var scannerPosition = scanner.transform.position;
+        var notePosition = Note.transform.position;
+        mesh.vertices = new[]
         {
-            var orthographicSize = mainCamera.orthographicSize;
-            var scannerPosition = scanner.transform.position;
-            var notePosition = Note.transform.position;
-            mesh.vertices = new[]
-            {
-                notePosition,
-                new Vector3(-orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height,
-                    scannerPosition.y),
-                new Vector3(orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height,
-                    scannerPosition.y)
-            };
+            notePosition,
+            new Vector3(-orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height,
+                scannerPosition.y),
+            new Vector3(orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height,
+                scannerPosition.y)
+        };
 
-            mesh.uv = new[]
-            {
-                (Vector2) notePosition,
-                new Vector2(-orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height,
-                    scannerPosition.y),
-                new Vector2(orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height,
-                    scannerPosition.y)
-            };
-            mesh.triangles = new[] {0, 1, 2};
-        }
-        else
+        mesh.uv = new[]
         {
-            mesh.vertices = new[]
-            {
-                new Vector3(),
-                new Vector3(),
-                new Vector3()
-            };
-            mesh.uv = new[]
-            {
-                new Vector2(),
-                new Vector2(),
-                new Vector2()
-            };
-            mesh.triangles = new[] {0, 1, 2};
-        }
+            (Vector2) notePosition,
+            new Vector2(-orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height,
+                scannerPosition.y),
+            new Vector2(orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height,
+                scannerPosition.y)
+        };
+        mesh.triangles = new[] {0, 1, 2};
     }
 }

@@ -35,13 +35,12 @@ public class DragLineElement : MonoBehaviour
         Destroy(gameObject);
     }
 
-    public async void SetData(ChartModel.Note fromNoteModel, ChartModel.Note toNoteModel)
+    public void SetData(ChartModel.Note fromNoteModel, ChartModel.Note toNoteModel)
     {
         this.fromNoteModel = fromNoteModel;
         this.toNoteModel = toNoteModel;
         spriteRenderer.material.SetFloat("_End", 0.0f);
         spriteRenderer.material.SetFloat("_Start", 0.0f);
-        await UniTask.DelayFrame(0);
         UpdateTransform();
         spriteRenderer.sortingOrder = fromNoteModel.id;
         Game.onGameUpdate.AddListener(OnGameUpdate);

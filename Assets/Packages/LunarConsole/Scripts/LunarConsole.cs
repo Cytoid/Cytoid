@@ -619,6 +619,7 @@ namespace LunarConsolePlugin
             message = m_settings.removeRichTextTags ? StringUtils.RemoveRichTextTags(message) : message;
             // EDIT: Cytoid
             if (message.StartsWith("Curl error")) return;
+            if (message.StartsWith("Null Reference")) message = "[N] " + stackTrace;
             // End of EDIT
             m_platform.OnLogMessageReceived(message, stackTrace, type);
         }

@@ -1,4 +1,5 @@
 ﻿using System;
+using UniRx.Async;
 using UnityEngine;
 
 public class EffectController : MonoBehaviour
@@ -13,11 +14,28 @@ public class EffectController : MonoBehaviour
     public ParticleSystem missFx;
     public ParticleSystem holdFx;
 
+    public Transform EffectParentTransform { get; private set; }
+    
     private float clearEffectSizeMultiplier;
 
     private void Awake()
     {
+        EffectParentTransform = effectParent.transform;
+        // game.onGameUpdate.AddListener(_ => OnGameUpdate());
         game.onGameLoaded.AddListener(_ => OnGameLoaded());
+    }
+
+    public void OnGameUpdate()
+    {
+        var settings = flatFx.settings[1];
+        settings.lifetime = 0.4f / 1;
+        settings.sectorCount = 100;
+        settings.start.innerColor = settings.start.outerColor = game.Config.NoteGradeEffectColors[NoteGrade.Perfect].WithAlpha(1);
+        settings.end.innerColor = settings.end.outerColor = game.Config.NoteGradeEffectColors[NoteGrade.Perfect].WithAlpha(0);
+        settings.end.size = 5f;
+        settings.start.thickness = 1.333f;
+        settings.end.thickness = 0.333f;
+        flatFx.AddEffect(new Vector2(0, 0), 1);
     }
 
     public void OnGameLoaded()
@@ -59,32 +77,22 @@ public class EffectController : MonoBehaviour
                 break;
         }
         
+        var isDragType = noteRenderer.Note.Type == NoteType.DragHead || noteRenderer.Note.Type == NoteType.DragChild || 
+                     noteRenderer.Note.Type == NoteType.CDragChild;
+        
         var settings = flatFx.settings[1];
         settings.lifetime = 0.4f / speed;
-        settings.sectorCount = noteRenderer.Note.Type == NoteType.Flick ? 4 : 100;
+        settings.sectorCount = noteRenderer.Note.Type == NoteType.Flick ? 4 : 24;
         settings.start.innerColor = settings.start.outerColor = color.WithAlpha(1);
         settings.end.innerColor = settings.end.outerColor = color.WithAlpha(0);
-        settings.end.size = (noteRenderer.Note.Type == NoteType.DragHead || noteRenderer.Note.Type == NoteType.DragChild ||
-                             noteRenderer.Note.Type == NoteType.CDragHead || noteRenderer.Note.Type == NoteType.CDragChild
-                                ? 4f
-                                : 5f) * noteRenderer.Game.Config.GlobalNoteSizeMultiplier * (1 + clearEffectSizeMultiplier);
+        settings.end.size = (isDragType ? 4f : 5f) * noteRenderer.Game.Config.GlobalNoteSizeMultiplier * (1 + clearEffectSizeMultiplier);
         settings.start.thickness = 1.333f;
         settings.end.thickness = 0.333f;
         flatFx.AddEffect(at, 1);
-        
-        var isDrag = noteRenderer is ClassicDragChildNoteRenderer || noteRenderer is ClassicDragHeadNoteRenderer;
-        if (noteRenderer is ClassicDragHeadNoteRenderer dragHeadNoteRenderer &&
-            dragHeadNoteRenderer.DragHeadNote.IsCDrag)
-        {
-            isDrag = false;
-        }
-
-        var clearFx = isDrag ? clearDragFx : this.clearFx;
 
         if (grade == NoteGrade.Miss)
         {
-            var fx = Instantiate(missFx, at, Quaternion.identity);
-            fx.transform.SetParent(effectParent.transform, true);
+            var fx = game.ObjectPool.SpawnEffect(Effect.Miss, at);
             fx.Stop();
 
             var mainModule = fx.main;
@@ -92,38 +100,47 @@ public class EffectController : MonoBehaviour
             mainModule.duration /= 0.3f;
             mainModule.startColor = game.Config.NoteGradeEffectColors[grade];
 
-            if (noteRenderer.Note.Type == NoteType.DragHead || noteRenderer.Note.Type == NoteType.DragChild ||
-                noteRenderer.Note.Type == NoteType.CDragHead || noteRenderer.Note.Type == NoteType.CDragChild)
-                fx.transform.localScale = new Vector3(2, 2, 2);
+            if (isDragType) fx.transform.localScale = new Vector3(2, 2, 2);
 
             fx.Play();
-            Destroy(fx.gameObject, fx.main.duration);
+            AwaitAndCollect(Effect.Miss, fx);
         }
         else
         {
-            var fx = Instantiate(clearFx, at, Quaternion.identity);
-            fx.transform.SetParent(effectParent.transform, true);
+            var clearEffect = isDragType ? Effect.ClearDrag : Effect.Clear;
+
+            var fx = game.ObjectPool.SpawnEffect(clearEffect, at);
             fx.Stop();
 
-            if (!isDrag)
+            if (!isDragType)
             {
+                var t = fx.transform.GetChild(0);
+                var early = t.GetChild(0);
+                var late = t.GetChild(1);
                 if (earlyLateIndicator)
                 {
                     if (grade != NoteGrade.Perfect)
                     {
-                        fx.transform.GetChild(0).GetChild(timeUntilEnd > 0 ? 1 : 0).gameObject
-                            .SetActive(false);
+                        t.gameObject.SetActive(true);
+                        if (timeUntilEnd > 0)
+                        {
+                            early.gameObject.SetActive(true);
+                            late.gameObject.SetActive(false);
+                        }
+                        else
+                        {
+                            early.gameObject.SetActive(false);
+                            late.gameObject.SetActive(true);
+                        }
                     }
                     else
                     {
-                        fx.transform.GetChild(0).GetChild(0).gameObject.SetActive(false);
-                        fx.transform.GetChild(0).GetChild(1).gameObject.SetActive(false);
+                        t.gameObject.SetActive(false);
                     }
                 }
                 else
                 {
-                    fx.transform.GetChild(0).GetChild(0).gameObject.SetActive(false);
-                    fx.transform.GetChild(0).GetChild(1).gameObject.SetActive(false);
+                    t.gameObject.SetActive(false);
                 }
             }
 
@@ -132,31 +149,51 @@ public class EffectController : MonoBehaviour
             mainModule.duration /= speed;
             mainModule.startColor = color.WithAlpha(1);
 
-            if (noteRenderer.Note.Type == NoteType.DragHead || noteRenderer.Note.Type == NoteType.DragChild ||
-                noteRenderer.Note.Type == NoteType.CDragHead || noteRenderer.Note.Type == NoteType.CDragChild)
-                fx.transform.localScale = new Vector3(3f, 3f, 3f);
+            if (isDragType) fx.transform.localScale = new Vector3(3f, 3f, 3f);
 
             fx.Play();
-            Destroy(fx.gameObject, fx.main.duration);
+            AwaitAndCollect(clearEffect, fx);
         }
     }
 
     public void PlayClassicHoldEffect(ClassicNoteRenderer noteRenderer)
     {
-        var fx = Instantiate(holdFx, noteRenderer.Note.transform);
-
-        var fxTransform = fx.transform;
-        fxTransform.SetParent(effectParent.transform, true);
-        var newPos = fxTransform.position;
-        newPos.z -= 0.2f;
-        fxTransform.position = newPos;
-
+        var fx = game.ObjectPool.SpawnEffect(Effect.Hold, new Vector3(0, 0, -0.2f), noteRenderer.Note.gameObject.transform);
         fx.Stop();
 
         var mainModule = fx.main;
         mainModule.startColor = noteRenderer.Fill.color;
 
         fx.Play();
-        Destroy(fx.gameObject, fx.main.duration);
+        AwaitAndCollect(Effect.Hold, fx);
+    }
+    
+    private async void AwaitAndCollect(Effect effect, ParticleSystem particle)
+    {
+        await UniTask.Delay(TimeSpan.FromSeconds(particle.main.duration));
+        if (this == null) return;
+        game.ObjectPool.CollectEffect(effect, particle);
+    }
+
+    public ParticleSystem GetPrefab(Effect effect)
+    {
+        switch (effect)
+        {
+            case Effect.Clear:
+                return clearFx;
+            case Effect.ClearDrag:
+                return clearDragFx;
+            case Effect.Miss:
+                return missFx;
+            case Effect.Hold:
+                return holdFx;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(effect), effect, null);
+        }
+    }
+    
+    public enum Effect
+    {
+        Clear, ClearDrag, Miss, Hold
     }
 }

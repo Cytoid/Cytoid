@@ -7,10 +7,10 @@ public class ProgressRing : MonoBehaviour
     [Range(0, 1)] public float fillCutoff;
     public Color fillColor;
 
-    private SpriteRenderer spriteRenderer;
+    public SpriteRenderer spriteRenderer;
     private int fillCutoffId, fillColorId, maxCutoffId;
 
-    private void Start()
+    private void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         maxCutoffId = Shader.PropertyToID("_MaxCutoff");
@@ -18,7 +18,7 @@ public class ProgressRing : MonoBehaviour
         fillCutoffId = Shader.PropertyToID("_FillCutoff");
     }
 
-    private void Update()
+    public void OnUpdate()
     {
         spriteRenderer.enabled = true;
         fillCutoff = Mathf.Min(fillCutoff, maxCutoff);

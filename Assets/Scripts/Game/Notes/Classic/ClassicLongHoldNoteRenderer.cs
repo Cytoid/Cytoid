@@ -26,6 +26,9 @@ public class ClassicLongHoldNoteRenderer : ClassicHoldNoteRenderer
             .GetComponent<ProgressRing>();
         Triangle = Object.Instantiate(provider.trianglePrefab, Game.contentParent.transform).GetComponent<MeshTriangle>();
         Triangle.gameObject.SetActive(false);
+        HoldFx = Object.Instantiate(Game.effectController.holdFx, Note.transform, false);
+        HoldFx.transform.DeltaZ(-0.001f);
+        InitialProgressRingScale = ProgressRing.transform.localScale;
         ProgressRing.maxCutoff = 0;
         ProgressRing.fillCutoff = 0;
         CompletedLine.size = new Vector2(1, 0);
@@ -37,8 +40,7 @@ public class ClassicLongHoldNoteRenderer : ClassicHoldNoteRenderer
     {
         base.OnNoteLoaded();
 
-        ProgressRing.gameObject.GetComponent<SpriteRenderer>().material.renderQueue =
-            3000 + Note.Model.id; // TODO: Magic number
+        ProgressRing.spriteRenderer.material.renderQueue = 3000 + Note.Model.id; // TODO: Magic number
         CompletedLine2.size = new Vector2(1, 0);
         Line.size = new Vector2(1, orthographicSize * 4);
         Line2.size = new Vector2(1, orthographicSize * 4);

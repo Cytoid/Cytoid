@@ -74,14 +74,16 @@ public class InteractableMonoBehavior : MonoBehaviour, IPointerEnterHandler, IPo
     {
         while (Application.isPlaying) {
             var localPointerPos = GetLocalPointerPos();
+            if (localPointerPos == Vector2.positiveInfinity) continue;
             OnPointerMove(localPointerPos);
             yield return null;
         }
     }
 
-    public Vector2 GetLocalPointerPos()
+    private Vector2 GetLocalPointerPos()
     {
         if (raycaster == null) raycaster = GetComponentInParent<GraphicRaycaster>();
+        if (Input.mousePosition.x > 1000000000) return Vector2.positiveInfinity; // Seems like a random glitch in Unity to return infinite values for Input.mousePosition
         RectTransformUtility.ScreenPointToLocalPointInRectangle(transform as RectTransform, Input.mousePosition,
             raycaster.eventCamera, out var localPos);
         return localPos;

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools"
           package="me.tigerhix.cytoid" android:installLocation="preferExternal">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -9,14 +10,16 @@
 
     <application
             android:allowBackup="true"
-            android:icon="@mipmap/android_app_icon"
             android:label="Cytoid"
-            android:supportsRtl="true">
+            android:supportsRtl="true"
+            android:theme="@style/CytoidThemeSelector.Translucent"
+            tools:replace="android:theme,android:label" >
         <activity
                 android:name="me.tigerhix.cytoid.CytoidPluginActivity"
                 android:screenOrientation="sensorLandscape"
                 android:configChanges="fontScale|keyboard|keyboardHidden|locale|mnc|mcc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|touchscreen"
-                android:label="Cytoid" >
+                android:label="Cytoid"
+                android:hardwareAccelerated="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

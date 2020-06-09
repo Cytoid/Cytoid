@@ -7,4 +7,5 @@ public static class NavigationSortingOrder
     public const int OpaqueOverlay = 100;
     public const int RewardOverlay = 101;
     public const int Toast = 200;
+    public const int WebViewOverlay = 250;
 }

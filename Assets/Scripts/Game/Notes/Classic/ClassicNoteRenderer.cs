@@ -26,7 +26,6 @@ public class ClassicNoteRenderer : NoteRenderer
         {
             DisplayNoteId = true;
             NoteId = Object.Instantiate(GameObjectProvider.Instance.noteIdPrefab, Note.transform);
-            NoteId.SetModel(note.Model);
             NoteId.Visible = Game.Config.DisplayNoteIds || (Game is PlayerGame playerGame && !playerGame.HideInterface);
             NoteId.gameObject.SetActive(false);
         }
@@ -53,6 +52,11 @@ public class ClassicNoteRenderer : NoteRenderer
         // Canvas sorting
         Ring.sortingOrder = (Note.Chart.note_list.Count - Note.Model.id) * 3;
         Fill.sortingOrder = Ring.sortingOrder - 1;
+
+        if (DisplayNoteId)
+        {
+            NoteId.SetModel(Note.Model);
+        }
     }
 
     public override void OnCollect()

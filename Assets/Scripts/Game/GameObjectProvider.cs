@@ -5,7 +5,7 @@ public class GameObjectProvider : SingletonMonoBehavior<GameObjectProvider>
 {
      public GameObject clickNotePrefab;
      public GameObject dragChildNotePrefab;
-     public GameObject cDragChildNotePrefab;
+     public GameObject cDragHeadNotePrefab;
      public GameObject dragHeadNotePrefab;
      public GameObject dragLinePrefab;
      public GameObject flickNotePrefab;

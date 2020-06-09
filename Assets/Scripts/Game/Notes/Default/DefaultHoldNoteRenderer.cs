@@ -64,7 +64,11 @@ public class DefaultHoldNoteRenderer : DefaultNoteRenderer
             CompletedLine.transform.SetLocalScaleX(Line.transform.localScale.x);
             ProgressRing.enabled = true;
             Triangle.enabled = true;
-            Triangle.isShowing = HoldNote.IsHolding && Game.Time >= Note.Model.start_time;
+            if (HoldNote.IsHolding && Game.Time >= Note.Model.start_time)
+            {
+                ProgressRing.OnUpdate();
+                Triangle.OnUpdate();
+            }
             if (Game.State.Mods.Contains(Mod.HideNotes))
             {
                 Line.enabled = false;

@@ -169,7 +169,7 @@ PlayerSettings:
     iPhone: me.tigerhix.cytoid
   buildNumber:
     iPhone: 15
-  AndroidBundleVersionCode: 82
+  AndroidBundleVersionCode: 84
   AndroidMinSdkVersion: 16
   AndroidTargetSdkVersion: 28
   AndroidPreferredInstallLocation: 1

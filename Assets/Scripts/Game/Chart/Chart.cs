@@ -25,6 +25,12 @@ public class Chart
     public bool IsVerticallyInverted { get; }
     public bool UseScannerSmoothing { get; set; }
 
+    public Dictionary<NoteType, int> MaxSamePageNoteCountByType { get; } = new Dictionary<NoteType, int>();
+    public int MaxSamePageNoteCount { get; }
+    public int MaxSamePageNonDragTypeNoteCount { get; }
+    public int MaxSamePageDragTypeNoteCount { get; }
+    public int MaxSamePageHoldTypeNoteCount { get; }
+
     public Chart(
         string text,
         bool isHorizontallyInverted,
@@ -84,12 +90,32 @@ public class Chart
             if (isVerticallyInverted) page.scan_line_direction = page.scan_line_direction == 1 ? -1 : 1;
         }
 
+        var pageNoteCountsByType = new Dictionary<NoteType, int[]>();
+        foreach (var type in (NoteType[]) Enum.GetValues(typeof(NoteType)))
+        {
+            pageNoteCountsByType[type] = new int[Model.page_list.Count];
+        }
+
+        var pageNoteCounts = new int[Model.page_list.Count];
+        var pageDragTypeNoteCounts = new int[Model.page_list.Count];
+        var pageNonDragTypeNoteCounts = new int[Model.page_list.Count];
+        var pageHoldTypeNoteCounts = new int[Model.page_list.Count];
         for (var i = 0; i < Model.note_list.Count; i++)
         {
             var note = Model.note_list[i];
+            var type = (NoteType) note.type;
             Model.note_map[note.id] = note;
             var page = Model.page_list[note.page_index];
+            pageNoteCountsByType[(NoteType) note.type][note.page_index]++;
+            pageNoteCounts[note.page_index]++;
+            
+            var isDragType = type == NoteType.DragHead || type == NoteType.DragChild || type == NoteType.CDragChild;
+            var isHoldType = type == NoteType.Hold || type == NoteType.LongHold;
 
+            if (isDragType) pageDragTypeNoteCounts[note.page_index]++;
+            else pageNonDragTypeNoteCounts[note.page_index]++;
+            if (isHoldType) pageHoldTypeNoteCounts[note.page_index]++;
+            
             note.direction = page.scan_line_direction;
             var speed = note.page_index == 0 ? 1.0f : CalculateNoteSpeed(note);
 
@@ -98,7 +124,7 @@ public class Chart
             speed *= modSpeed;
             speed *= (float) note.approach_rate;
 
-            switch ((NoteType) note.type)
+            switch (type)
             {
                 case NoteType.Click:
                 case NoteType.Hold:
@@ -146,6 +172,14 @@ public class Chart
             else
                 note.intro_time = note.start_time - 1.367f / speed;
         }
+
+        foreach (var type in (NoteType[]) Enum.GetValues(typeof(NoteType)))
+        {
+            MaxSamePageNoteCountByType[type] = pageNoteCountsByType[type].Max();
+        }
+        MaxSamePageDragTypeNoteCount = pageDragTypeNoteCounts.Max();
+        MaxSamePageNonDragTypeNoteCount = pageNonDragTypeNoteCounts.Max();
+        MaxSamePageHoldTypeNoteCount = pageHoldTypeNoteCounts.Max();
 
         foreach (var note in Model.note_list)
             switch ((NoteType) note.type)

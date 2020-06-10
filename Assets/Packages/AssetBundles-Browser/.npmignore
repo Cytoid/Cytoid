@@ -1,0 +1,8 @@
+artifacts/**
+build/**
+Documentation/ApiDocs/**
+.npmrc
+.npmignore
+.gitignore
+QAReport.md
+QAReport.md.meta

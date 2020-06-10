@@ -95,6 +95,7 @@ public class Player
             {
                 foreach (var level in Context.LevelManager.LoadedLocalLevels.Values)
                 {
+                    if (level.Id == null) continue;
                     var record = new LevelRecord
                     {
                         LevelId = level.Id,

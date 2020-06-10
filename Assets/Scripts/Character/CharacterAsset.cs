@@ -4,17 +4,21 @@ using UnityEngine;
 public class CharacterAsset : MonoBehaviour
 {
     public GradientMeshEffect nameGradient;
-    public GameObject tachiePrefab; // Don't delete this! This holds a reference to tachie prefab so that it is downloaded when this asset is downloaded.
-    public IntroloopAudio musicAudio;
+     public IntroloopAudio musicAudio;
     public ParallaxElement parallaxPrefab;
     public bool mirrorLayout;
 
     public float mainMenuUpperLeftOverlayAlpha = 0.7f;
     public float mainMenuRightOverlayAlpha = 1f;
     
-    public static string GetTachieAssetId(string characterAssetId)
+    public static string GetMainBundleId(string id)
     {
-        return characterAssetId + "Tachie";
+        return "character_" + id.ToLower();
+    }
+    
+    public static string GetTachieBundleId(string id)
+    {
+        return "character_" + id.ToLower() + "_tachie";
     }
 }
 

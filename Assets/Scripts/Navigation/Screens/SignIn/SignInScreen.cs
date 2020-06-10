@@ -20,7 +20,7 @@ public class SignInScreen : Screen
     {
         base.OnScreenInitialized();
         uidInput.text = Context.Player.Id;
-        signUpButton.onPointerClick.SetListener(_ => Application.OpenURL("https://cytoid.io/session/signup"));
+        signUpButton.onPointerClick.SetListener(_ => Application.OpenURL($"{Context.WebsiteUrl}/session/signup"));
     }
 
     public override void OnScreenBecameActive()

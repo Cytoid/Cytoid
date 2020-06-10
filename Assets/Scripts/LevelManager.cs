@@ -304,6 +304,12 @@ public class LevelManager
 
     public async UniTask<List<Level>> LoadFromMetadataFiles(LevelType type, List<string> jsonPaths, bool forceReload = false)
     {
+        var lowMemory = false;
+        Application.lowMemory += OnLowMemory;
+        void OnLowMemory()
+        {
+            lowMemory = true;
+        }
         var results = new List<Level>();
         int index;
         for (index = 0; index < jsonPaths.Count; index++)
@@ -407,6 +413,14 @@ public class LevelManager
                 {
                     var thumbnailPath = "file://" + level.Path + level.Meta.background.path;
 
+                    if (lowMemory)
+                    {
+                        // Give up
+                        Debug.LogWarning($"Low memory!");
+                        Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {jsonPath}");
+                        continue;
+                    }
+
                     using (var request = UnityWebRequest.Get(thumbnailPath))
                     {
                         await request.SendWebRequest();
@@ -414,7 +428,7 @@ public class LevelManager
                         {
                             Debug.LogWarning(request.error);
                             Debug.LogWarning($"Cannot get background texture from {thumbnailPath}");
-                            Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count}: {meta.id} ({path})");
+                            Debug.LogWarning($"Skipped generating thumbnail for {index + 1}/{jsonPaths.Count}: {meta.id} ({path})");
                             continue;
                         }
 
@@ -423,12 +437,32 @@ public class LevelManager
                         {
                             Debug.LogWarning(request.error);
                             Debug.LogWarning($"Cannot get background texture from {thumbnailPath}");
-                            Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count}: {meta.id} ({path})");
+                            Debug.LogWarning($"Skipped generating thumbnail for {index + 1}/{jsonPaths.Count}: {meta.id} ({path})");
+                            continue;
+                        }
+                        
+                        if (lowMemory)
+                        {
+                            // Give up
+                            Object.Destroy(coverTexture);
+                            Debug.LogWarning($"Low memory!");
+                            Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {jsonPath}");
                             continue;
                         }
 
                         var croppedTexture = TextureScaler.FitCrop(coverTexture, Context.LevelThumbnailWidth,
                             Context.LevelThumbnailHeight);
+                        
+                        if (lowMemory)
+                        {
+                            // Give up
+                            Object.Destroy(coverTexture);
+                            Object.Destroy(croppedTexture);
+                            Debug.LogWarning($"Low memory!");
+                            Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {jsonPath}");
+                            continue;
+                        }
+                        
                         var bytes = croppedTexture.EncodeToJPG();
                         Object.Destroy(coverTexture);
                         Object.Destroy(croppedTexture);
@@ -446,7 +480,7 @@ public class LevelManager
                         {
                             Debug.LogWarning(e);
                             Debug.LogWarning($"Could not write to {level.Path + CoverThumbnailFilename}");
-                            Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {jsonPath}");
+                            Debug.LogWarning($"Skipped generating thumbnail for {index + 1}/{jsonPaths.Count} from {jsonPath}");
                         }
                     }
 
@@ -465,6 +499,8 @@ public class LevelManager
             timer.Time();
         }
 
+        Application.lowMemory -= OnLowMemory;
+        
         return results;
     }
 

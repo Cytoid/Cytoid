@@ -240,7 +240,7 @@ public class ResultScreen : Screen
         var shareText = $"#cytoid [Lv.{diff}] {levelMeta.artist} - {levelMeta.title} / Charter: {levelMeta.charter}";
         if (uploadRecordSuccess)
         {
-            shareText += $"\nhttps://cytoid.io/levels/{levelMeta.id}";
+            shareText += $"\n{Context.WebsiteUrl}/levels/{levelMeta.id}";
         }
 
         new NativeShare()

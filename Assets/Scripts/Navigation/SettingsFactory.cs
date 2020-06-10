@@ -13,7 +13,7 @@ public static class SettingsFactory
     public static void InstantiateGeneralSettings(Transform parent, bool more = false)
     {
         var lp = Context.Player;
-        var provider = PreferenceElementProvider.Instance;
+        var provider = NavigationUiElementProvider.Instance;
 
         if (more)
         {
@@ -188,7 +188,7 @@ public static class SettingsFactory
     public static void InstantiateGameplaySettings(Transform parent)
     {
         var lp = Context.Player;
-        var provider = PreferenceElementProvider.Instance;
+        var provider = NavigationUiElementProvider.Instance;
         
         Object.Instantiate(provider.pillRadioGroup, parent)
             .SetContent("SETTINGS_EARLY_LATE_INDICATORS".Get(), "SETTINGS_EARLY_LATE_INDICATORS_DESC".Get(),
@@ -243,7 +243,7 @@ public static class SettingsFactory
     public static void InstantiateVisualSettings(Transform parent)
     {
         var lp = Context.Player;
-        var provider = PreferenceElementProvider.Instance;
+        var provider = NavigationUiElementProvider.Instance;
 
         Object.Instantiate(provider.select, parent)
             .SetContent("SETTINGS_NOTE_SIZE".Get(), "SETTINGS_NOTE_SIZE_DESC".Get(),
@@ -359,7 +359,7 @@ public static class SettingsFactory
     public static void InstantiateAdvancedSettings(Transform parent)
     {
         var lp = Context.Player;
-        var provider = PreferenceElementProvider.Instance;
+        var provider = NavigationUiElementProvider.Instance;
 
         if (Application.platform == RuntimePlatform.Android)
         {

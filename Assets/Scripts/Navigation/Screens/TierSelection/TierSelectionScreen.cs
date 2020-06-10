@@ -513,7 +513,7 @@ public class TierSelectionScreen : Screen
         initializedSettingsTab = true;
         
         var lp = Context.Player;
-        var provider = PreferenceElementProvider.Instance;
+        var provider = NavigationUiElementProvider.Instance;
 
         foreach (var (stringKey, index) in new[] {("1ST", 0), ("2ND", 1), ("3RD", 2)})
         {

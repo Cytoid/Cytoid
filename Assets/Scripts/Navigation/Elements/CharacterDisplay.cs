@@ -15,24 +15,36 @@ public class CharacterDisplay : MonoBehaviour, ScreenBecameActiveListener, Scree
 
     public bool IsLoaded { get; private set; }
 
-    private GameObject loadedTachie;
+    private string loadedBundleId;
+    private AssetBundle loadedAssetBundle;
+    private GameObject loadedGameObject;
     private RectTransform rectTransform;
     private DateTime asyncLoadToken;
     private bool isLoading;
 
-    public async UniTask Load(string tachieAssetId)
+    public async UniTask Load(string tachieBundleId)
     {
         if (isLoading) await UniTask.WaitUntil(() => !isLoading);
 
         isLoading = true;
         Unload();
         
-        print("CharacterDisplay: Loaded " + tachieAssetId);
+        print("CharacterDisplay: Loaded " + tachieBundleId);
         var token = asyncLoadToken = DateTime.Now;
-        loadedTachie = await Context.RemoteAssetManager.LoadAsset(tachieAssetId);
+        var ab = await Context.BundleManager.LoadBundle(tachieBundleId, false, false);
         if (token != asyncLoadToken) return;
+        
+        // Instantiate the GameObject
+        var loader = ab.LoadAssetAsync<GameObject>("Tachie");
+        await loader;
+        if (token != asyncLoadToken) return;
+
+        loadedBundleId = tachieBundleId;
+        loadedAssetBundle = ab;
+        loadedGameObject = Instantiate((GameObject) loader.asset);
+        
         IsLoaded = true;
-        var t = (RectTransform) loadedTachie.transform;
+        var t = (RectTransform) loadedGameObject.transform;
         t.SetParent(transform);
         t.anchoredPosition = Vector3.zero;
         t.localScale = Vector3.one;
@@ -48,18 +60,20 @@ public class CharacterDisplay : MonoBehaviour, ScreenBecameActiveListener, Scree
             transitionElement.Leave(false, true);
             transitionElement.Enter();
         }
-        loadedTachie.GetComponent<AnimatedCharacter>()?.OnEnter();
+        loadedGameObject.GetComponent<AnimatedCharacter>()?.OnEnter();
     }
 
     public void Unload()
     {
-        if (loadedTachie != null)
+        if (loadedAssetBundle != null)
         {
             IsLoaded = false;
             print("CharacterDisplay: Unloaded");
-            Destroy(loadedTachie.gameObject);
-            Context.RemoteAssetManager.Release(loadedTachie);
-            loadedTachie = null;
+            Destroy(loadedGameObject);
+            Context.BundleManager.Release(loadedBundleId);
+            loadedGameObject = null;
+            loadedBundleId = null;
+            loadedAssetBundle = null;
             if (rectTransform != null)
             {
                 Destroy(rectTransform.gameObject);
@@ -77,7 +91,7 @@ public class CharacterDisplay : MonoBehaviour, ScreenBecameActiveListener, Scree
     {
         if (loadOnScreenBecameActive && loadActiveCharacter)
         {
-            Load(CharacterAsset.GetTachieAssetId(Context.CharacterManager.ActiveCharacterAssetId));
+            Load(CharacterAsset.GetTachieBundleId(Context.CharacterManager.SelectedCharacterId));
         }
     }
 

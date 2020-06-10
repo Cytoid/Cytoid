@@ -64,7 +64,7 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
                     viewMoreButton.onPointerClick.SetListener(_ =>
                     {
                         Application.OpenURL(
-                            $"https://cytoid.io/levels/{levelId}"); // TODO: Jump to selected difficulty?
+                            $"{Context.WebsiteUrl}/levels/{levelId}"); // TODO: Jump to selected difficulty?
                     });
                 }
 

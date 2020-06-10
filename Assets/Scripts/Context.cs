@@ -13,37 +13,34 @@ using Tayx.Graphy;
 using UniRx.Async;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using UnityEngine.Events;
-using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.SceneManagement;
 
 public class Context : SingletonMonoBehavior<Context>
 {
-    public const string VersionName = "2.0.0 Beta 1.4";
+    public const string VersionName = "2.0.0 Beta 2.0";
     public const string VersionString = "2.0.0";
     
     public static string MockApiUrl;
 
     public static string ApiUrl => MockApiUrl ?? Player.Settings.CdnRegion.GetApiUrl();
     public static string WebsiteUrl => Player.Settings.CdnRegion.GetWebsiteUrl();
-    public static string AddressableRemoteBaseUrl => Player.Settings.CdnRegion.GetAddressableRemoteBaseUrl();
+    public static string BundleRemoteBaseUrl => Player.Settings.CdnRegion.GetBundleRemoteBaseUrl();
     public static string StoreUrl => Player.Settings.CdnRegion.GetStoreUrl();
     
-    public static string AddressableRemoteFullUrl
+    public static string BundleRemoteFullUrl
     {
         get
         {
 #if UNITY_ANDROID
-                return $"{AddressableRemoteBaseUrl}/addressables/Android/";
+                return $"{BundleRemoteBaseUrl}/bundles/Android/";
 #elif UNITY_IOS
-                return $"{AddressableRemoteBaseUrl}/addressables/iOS/";
+                return $"{AddressableRemoteBaseUrl}/bundles/iOS/";
 #else
                 throw new InvalidOperationException();
 #endif
         }
     }
-    public const string AddressableCatalogName = "2.0b";
     
     public const string OfficialAccountId = "cytoid";
 
@@ -82,7 +79,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static readonly FontManager FontManager = new FontManager();
     public static readonly LevelManager LevelManager = new LevelManager();
     public static readonly CharacterManager CharacterManager = new CharacterManager();
-    public static readonly RemoteAssetManager RemoteAssetManager = new RemoteAssetManager();
+    public static readonly BundleManager BundleManager = new BundleManager();
     public static readonly AssetMemory AssetMemory = new AssetMemory();
     
     public static LiteDatabase Database;
@@ -279,18 +276,19 @@ public class Context : SingletonMonoBehavior<Context>
         OnLanguageChanged.AddListener(FontManager.UpdateSceneTexts);
         Localization.Instance.SelectLanguage((Language) Player.Settings.Language);
         OnLanguageChanged.Invoke();
+        
+        await BundleManager.Initialize();
 
         switch (SceneManager.GetActiveScene().name)
         {
             case "Navigation":
-                await InitializeAddressables();
                 Debug.Log("Initializing character asset");
                 var timer = new BenchmarkTimer("Character");
-                if (await CharacterManager.SetActiveCharacter(CharacterManager.SelectedCharacterAssetId) == null)
+                if (await CharacterManager.SetActiveCharacter(CharacterManager.SelectedCharacterId) == null)
                 {
                     // Reset to default
-                    CharacterManager.SelectedCharacterAssetId = null;
-                    await CharacterManager.SetActiveCharacter(CharacterManager.SelectedCharacterAssetId);
+                    CharacterManager.SelectedCharacterId = null;
+                    await CharacterManager.SetActiveCharacter(CharacterManager.SelectedCharacterId);
                 }
                 timer.Time();
                 await UniTask.WaitUntil(() => ScreenManager != null);
@@ -396,42 +394,6 @@ public class Context : SingletonMonoBehavior<Context>
         Debug.Log($"Detected: {Player.Settings.CdnRegion}");
     }
 
-    public async UniTask InitializeAddressables()
-    {
-        var timer = new BenchmarkTimer("Addressables");
-        Debug.Log("Initializing addressables");
-        
-        var proceed = false;
-        var startTime = DateTimeOffset.Now;
-        RestClient.Get(new RequestHelper
-        {
-            Uri = AddressableRemoteFullUrl + $"catalog_{AddressableCatalogName}.hash",
-            Timeout = 5
-        }).Then(_ =>
-        {
-            Debug.Log("Fetching catalog from artifact server");
-        }).CatchRequestError(it =>
-        {
-            Fail(it);
-        }).Finally(() => proceed = true);
-        await UniTask.WaitUntil(() => proceed || DateTimeOffset.Now - startTime > TimeSpan.FromSeconds(10));
-        if (!proceed) Fail(new Exception("Timed out"));
-
-        void Fail(Exception exception)
-        {
-            TextDataProvider.ForceFailRemote = true;
-            Debug.LogWarning(exception);
-            Debug.LogWarning("Cannot connect to artifact server. Aborting catalog update.");
-            Toast.Next(Toast.Status.Failure, "TOAST_COULD_NOT_CONNECT_TO_SERVER_ENTERING_OFFLINE_MODE".Get());
-            SetOffline(true);
-        }
-        
-        await Addressables.InitializeAsync().Task;
-        timer.Time();
-
-        TextDataProvider.ForceFailRemote = false;
-    }
-
     public static void OnPreSceneChanged(string prev, string next)
     {
         if (prev == "Navigation" && next == "Game")
@@ -448,6 +410,7 @@ public class Context : SingletonMonoBehavior<Context>
         {
             OnlinePlayer.IsAuthenticating = false;
             CharacterManager.UnloadActiveCharacter();
+            BundleManager.ReleaseAll();
         }
 
         if (prev == "Game" && next == "Navigation")
@@ -674,12 +637,24 @@ public class ContextEditor : Editor
         {
             if (Context.AssetMemory != null)
             {
-                GUILayout.Label("Asset memory usage:");
+                GUILayout.Label("Asset memory usage:", new GUIStyle().Also(it => it.fontStyle = FontStyle.Bold));
                 foreach (AssetTag tag in Enum.GetValues(typeof(AssetTag)))
                 {
                     GUILayout.Label(
                         $"{tag}: {Context.AssetMemory.CountTagUsage(tag)}/{(Context.AssetMemory.GetTagLimit(tag) > 0 ? Context.AssetMemory.GetTagLimit(tag).ToString() : "∞")}");
                 }
+                GUILayout.Label("");
+            }
+            
+            if (Context.BundleManager != null)
+            {
+                
+                GUILayout.Label("Loaded bundles:", new GUIStyle().Also(it => it.fontStyle = FontStyle.Bold));
+                foreach (var pair in Context.BundleManager.LoadedBundles)
+                {
+                    GUILayout.Label($"{pair.Key}: {pair.Value.RefCount}");
+                }
+                GUILayout.Label("");
             }
 
             if (GUILayout.Button("Unload unused assets"))

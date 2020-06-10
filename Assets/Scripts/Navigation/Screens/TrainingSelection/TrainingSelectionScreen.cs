@@ -31,7 +31,7 @@ public class TrainingSelectionScreen : Screen
     public override async void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
-        characterDisplay.Load("KaedeTachie");
+        characterDisplay.Load(CharacterAsset.GetTachieBundleId("Kaede"));
 
         if (LoadedContent != null)
         {

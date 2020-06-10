@@ -183,7 +183,7 @@ public static class CdnRegionExtensions
         }
     }
     
-    public static string GetAddressableRemoteBaseUrl(this CdnRegion region)
+    public static string GetBundleRemoteBaseUrl(this CdnRegion region)
     {
         switch (region)
         {

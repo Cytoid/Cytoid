@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using Proyecto26;
 using UniRx.Async;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
 
 public class CharacterSelectionScreen : Screen
@@ -80,22 +78,26 @@ public class CharacterSelectionScreen : Screen
         var downloadsRequired = 0;
         foreach (var meta in characters)
         {
-            if (!await Context.RemoteAssetManager.IsCached(meta.AssetId))
+            if (!Context.BundleManager.IsUpToDate(CharacterAsset.GetMainBundleId(meta.AssetId)))
             {
                 downloadsRequired++;
             }
         }
         print($"Number of downloads required: {downloadsRequired}");
 
-        await Context.RemoteAssetManager.UpdateCatalog();
+        if (!await Context.BundleManager.DownloadAndSaveCatalog())
+        {
+            Dialog.PromptGoBack("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
+            return;
+        }
 
         availableCharacters.Clear();
 
         var downloaded = 0;
         foreach (var meta in characters)
         {
-            var (success, locallyResolved) = await Context.CharacterManager.DownloadCharacterAssetDialog(meta.AssetId);
-            if (!locallyResolved)
+            var (success, locallyResolved) = await Context.CharacterManager.DownloadCharacterAssetDialog(CharacterAsset.GetMainBundleId(meta.AssetId));
+            if (success && !locallyResolved)
             {
                 downloaded++;
                 print("Downloaded " + meta.AssetId);
@@ -114,7 +116,7 @@ public class CharacterSelectionScreen : Screen
         if (downloaded > downloadsRequired)
         {
             // Update was performed, which requires player to restart the game
-            // Why? Too lazy to figure out Addressable stuff...
+            // Why? Too lazy to figure out dynamic reloads...
             Dialog.PromptUnclosable("DIALOG_RESTART_REQUIRED".Get());
             return;
         }
@@ -146,7 +148,7 @@ public class CharacterSelectionScreen : Screen
 
         selectedIndex =
             availableCharacters.FindIndex(it =>
-                it.AssetId == Context.CharacterManager.SelectedCharacterAssetId);
+                it.AssetId == Context.CharacterManager.SelectedCharacterId);
         if (selectedIndex < 0) selectedIndex = 0; // Reset to default
         LoadCharacter(availableCharacters[selectedIndex]);
         
@@ -157,7 +159,7 @@ public class CharacterSelectionScreen : Screen
     {
         ParallaxHolder.WillDelaySet = true;
 
-        var isNewCharacter = Context.CharacterManager.ActiveCharacterAssetId != meta.AssetId;
+        var isNewCharacter = Context.CharacterManager.ActiveCharacterBundleId != meta.AssetId;
         if (isNewCharacter)
         {
             SpinnerOverlay.Show();
@@ -198,7 +200,7 @@ public class CharacterSelectionScreen : Screen
         }
 
         infoCard.transform.RebuildLayout();
-        await characterDisplay.Load(CharacterAsset.GetTachieAssetId(meta.AssetId));
+        await characterDisplay.Load(CharacterAsset.GetTachieBundleId(meta.AssetId));
 
         infoCard.Enter();
         characterTransitionElement.Leave(false, true);

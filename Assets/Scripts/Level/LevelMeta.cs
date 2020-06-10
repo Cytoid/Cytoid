@@ -113,7 +113,7 @@ public class LevelMeta : IComparable<LevelMeta>
 
     public bool Validate()
     {
-        if (id == null) return false;
+        if (id.IsNullOrEmptyTrimmed()) return false;
         
         // Convert difficulty
         if (schema_version == 1)

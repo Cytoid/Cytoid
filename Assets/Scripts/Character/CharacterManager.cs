@@ -11,7 +11,7 @@ public class CharacterManager
 {
     public ActiveCharacterSetEvent OnActiveCharacterSet = new ActiveCharacterSetEvent();
 
-    public string SelectedCharacterAssetId
+    public string SelectedCharacterId
     {
         get => Context.Player.Settings.ActiveCharacterId ?? "Sayaka";
         set
@@ -21,38 +21,51 @@ public class CharacterManager
         }
     }
 
-    public string ActiveCharacterAssetId { get; private set; }
+    public string ActiveCharacterBundleId { get; private set; }
+    private AssetBundle activeCharacterAssetBundle;
     private GameObject activeCharacterGameObject;
 
     public CharacterAsset GetActiveCharacterAsset() => activeCharacterGameObject.GetComponent<CharacterAsset>();
 
-    public async UniTask<CharacterAsset> SetActiveCharacter(string assetId)
+    public async UniTask<CharacterAsset> SetActiveCharacter(string id)
     {
-        if (assetId == null) throw new ArgumentNullException();
-        if (ActiveCharacterAssetId == assetId) return activeCharacterGameObject.GetComponent<CharacterAsset>();
+        if (id == null) throw new ArgumentNullException();
+        var bundleId = "character_" + id.ToLower();
+        if (ActiveCharacterBundleId == bundleId) return activeCharacterGameObject.GetComponent<CharacterAsset>();
 
-        if (!await Context.RemoteAssetManager.Exists(assetId))
+        if (!Context.BundleManager.IsCached(bundleId))
         {
-            Debug.LogWarning($"Asset {assetId} does not exist");
+            Debug.LogWarning($"Character {bundleId} is not cached");
             //return null;
         }
         
-        var characterGameObject = await Context.RemoteAssetManager.LoadDownloadedAsset(assetId);
-        if (characterGameObject == null)
+        var characterBundle = await Context.BundleManager.LoadCachedBundle(bundleId);
+        if (characterBundle == null)
         {
-            Debug.LogWarning($"Downloaded asset {assetId} does not exist");
+            Debug.LogWarning($"Downloaded asset {bundleId} does not exist");
             return null;
         }
 
-        if (activeCharacterGameObject != null)
+        if (activeCharacterAssetBundle != null)
         {
             // Delay the release to allow LoopAudioPlayer to transition between character songs
             var currentGameObject = activeCharacterGameObject;
-            Run.After(2.0f, () => Context.RemoteAssetManager.Release(currentGameObject));
+            var currentBundleId = ActiveCharacterBundleId;
+            Run.After(2.0f, () =>
+            {
+                UnityEngine.Object.Destroy(currentGameObject);
+                Context.BundleManager.Release(currentBundleId);
+            });
         }
 
-        activeCharacterGameObject = characterGameObject;
-        ActiveCharacterAssetId = SelectedCharacterAssetId = assetId;
+        activeCharacterAssetBundle = characterBundle;
+        SelectedCharacterId = id;
+        ActiveCharacterBundleId = bundleId;
+        
+        // Instantiate the GameObject
+        var loader = activeCharacterAssetBundle.LoadAssetAsync<GameObject>("Character");
+        await loader;
+        activeCharacterGameObject = UnityEngine.Object.Instantiate((GameObject) loader.asset);
 
         var characterAsset = activeCharacterGameObject.GetComponent<CharacterAsset>();
         OnActiveCharacterSet.Invoke(characterAsset);
@@ -61,22 +74,24 @@ public class CharacterManager
 
     public async UniTask<bool> SetSelectedCharacterActive()
     {
-        if (SelectedCharacterAssetId == ActiveCharacterAssetId) return true;
-        return await SetActiveCharacter(SelectedCharacterAssetId) != null;
+        if (CharacterAsset.GetMainBundleId(SelectedCharacterId) == ActiveCharacterBundleId) return true;
+        return await SetActiveCharacter(SelectedCharacterId) != null;
     }
 
     public void UnloadActiveCharacter()
     {
-        Context.RemoteAssetManager.Release(activeCharacterGameObject);
+        UnityEngine.Object.Destroy(activeCharacterGameObject);
+        Context.BundleManager.Release(ActiveCharacterBundleId);
         activeCharacterGameObject = null;
-        ActiveCharacterAssetId = null;
+        activeCharacterAssetBundle = null;
+        ActiveCharacterBundleId = null;
     }
 
     public async UniTask<(bool, bool)> DownloadCharacterAssetDialog(string assetId)
     {
         var success = true;
         var locallyResolved = false;
-        await Context.RemoteAssetManager.DownloadAssetDialog(assetId,
+        await Context.BundleManager.LoadBundle(assetId, false, true, true, false,
             onDownloadAborted: () => success = false,
             onDownloadFailed: () => success = false,
             onLocallyResolved: () => locallyResolved = true);

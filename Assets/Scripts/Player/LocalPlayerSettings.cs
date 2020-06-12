@@ -127,7 +127,7 @@ public class LocalPlayerSettings
     [JsonProperty("android_dsp_buffer_size")]
     public int AndroidDspBufferSize { get; set; } = -1;
 
-    [JsonProperty("use_experimental_note_ar")] public bool UseExperimentalNoteAr { get; set; } = true;
+    [JsonProperty("use_experimental_note_ar")] public bool UseExperimentalNoteAr { get; set; } = false;
 
     [JsonProperty("use_developer_console")] public bool UseDeveloperConsole { get; set; } = true;
 
@@ -144,7 +144,8 @@ public class LocalPlayerSettings
 public enum CdnRegion
 {
     International,
-    MainlandChina
+    MainlandChina,
+    Debug
 }
 
 [Serializable]
@@ -165,6 +166,8 @@ public static class CdnRegionExtensions
                 return "https://services.cytoid.io";
             case CdnRegion.MainlandChina:
                 return "https://api.cytoid.cn";
+            case CdnRegion.Debug:
+                return "http://dorm.neoto.xin:4000";
             default:
                 throw new ArgumentOutOfRangeException(nameof(region), region, null);
         }
@@ -175,6 +178,7 @@ public static class CdnRegionExtensions
         switch (region)
         {
             case CdnRegion.International:
+            case CdnRegion.Debug:
                 return "https://cytoid.io";
             case CdnRegion.MainlandChina:
                 return "https://cytoid.cn";
@@ -188,6 +192,7 @@ public static class CdnRegionExtensions
         switch (region)
         {
             case CdnRegion.International:
+            case CdnRegion.Debug:
                 return "https://artifacts.cytoid.io";
             case CdnRegion.MainlandChina:
                 return "https://artifacts.cytoid.cn";
@@ -201,6 +206,7 @@ public static class CdnRegionExtensions
         switch (region)
         {
             case CdnRegion.International:
+            case CdnRegion.Debug:
                 if (Application.platform == RuntimePlatform.IPhonePlayer)
                 {
                     return "https://apps.apple.com/us/app/cytoid/id1266582726";

@@ -629,6 +629,20 @@ public static class CommonExtensions
         transform.position = position;
     }
     
+    public static void SetAnchoredX(this RectTransform transform, float x)
+    {
+        var position = transform.anchoredPosition;
+        position = new Vector2(x, position.y);
+        transform.anchoredPosition = position;
+    }
+
+    public static void SetAnchoredY(this RectTransform transform, float y)
+    {
+        var position = transform.anchoredPosition;
+        position = new Vector2(position.x, y);
+        transform.anchoredPosition = position;
+    }
+    
     public static void DeltaX(this Transform transform, float dx)
     {
         var position = transform.position;

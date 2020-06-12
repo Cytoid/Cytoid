@@ -13,32 +13,17 @@ public class ProfileScreen : Screen, ScreenChangeListener
 
     public UpperOverlay upperOverlay;
     public ContentTabs contentTabs;
-    public InteractableMonoBehavior playerAvatar;
-    public TransitionElement characterTransitionElement;
     public LeaderboardContainer leaderboard;
     public RadioGroup leaderboardModeSelect;
     public ScrollRect leaderboardScrollRect;
     public InteractableMonoBehavior signOutButton;
     public InteractableMonoBehavior toggleOfflineButton;
 
-    public Image avatarImage;
-    public Image levelProgressImage;
-    public Text uidText;
-    public Text ratingText;
-    public Text levelText;
-    public Text expText;
-    public Text totalRankedPlaysText;
-    public Text totalClearedNotesText;
-    public Text highestMaxComboText;
-    public Text avgRankedAccuracyText;
-    public Text totalRankedScoreText;
-    public Text totalPlayTimeText;
+    public ProfileTab profileTab;
 
     public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
-        playerAvatar.onPointerClick.AddListener(_ =>
-            Application.OpenURL(Context.WebsiteUrl + "/profile/" + Context.OnlinePlayer.LastProfile.User.Uid));
         signOutButton.onPointerClick.AddListener(_ =>
         {
             Context.OnlinePlayer.Deauthenticate();
@@ -55,11 +40,11 @@ public class ProfileScreen : Screen, ScreenChangeListener
 
             if (index == 0)
             {
-                characterTransitionElement.Enter();
+                profileTab.transitionElement.Enter();
             }
             else
             {
-                characterTransitionElement.Leave(false);
+                profileTab.transitionElement.Leave(false);
             }
 
             if (index == 1)
@@ -74,33 +59,24 @@ public class ProfileScreen : Screen, ScreenChangeListener
 
     public override void OnScreenBecameActive()
     {
-        characterTransitionElement.enterDuration = 1.2f;
-        characterTransitionElement.enterDelay = 0.4f;
+        
         base.OnScreenBecameActive();
-        
-        characterTransitionElement.onEnterStarted.SetListener(() =>
+        SpinnerOverlay.Show();
+        profileTab.transitionElement.Leave(false, true);
+        RestClient.Get<FullProfile>(new RequestHelper
         {
-            characterTransitionElement.enterDuration = 0.4f;
-            characterTransitionElement.enterDelay = 0;
-        });
-
-        var profile = Context.OnlinePlayer.LastProfile;
-        avatarImage.sprite = ProfileWidget.Instance.avatarImage.sprite;
-        levelProgressImage.fillAmount = (profile.Exp.TotalExp - profile.Exp.CurrentLevelExp)
-                                        / (profile.Exp.NextLevelExp - profile.Exp.CurrentLevelExp);
-        uidText.text = profile.User.Uid;
-        ratingText.text = $"{"PROFILE_WIDGET_RATING".Get()} {profile.Rating:0.00}";
-        levelText.text = $"{"PROFILE_WIDGET_LEVEL".Get()} {profile.Exp.CurrentLevel}";
-        expText.text = $"{"PROFILE_WIDGET_EXP".Get()} {profile.Exp.TotalExp}/{profile.Exp.NextLevelExp}";
-        totalRankedPlaysText.text = profile.Activities.TotalRankedPlays.ToString("N0");
-        totalClearedNotesText.text = profile.Activities.ClearedNotes.ToString("N0");
-        highestMaxComboText.text = profile.Activities.MaxCombo.ToString("N0");
-        avgRankedAccuracyText.text = ((profile.Activities.AverageRankedAccuracy ?? 0) * 100).ToString("0.00") + "%";
-        totalRankedScoreText.text = (profile.Activities.TotalRankedScore ?? 0).ToString("N0");
-        totalPlayTimeText.text = TimeSpan.FromSeconds(profile.Activities.TotalPlayTime)
-            .Let(it => it.ToString(it.Days > 0 ? @"d\d\ h\h\ m\m\ s\s" : @"h\h\ m\m\ s\s"));
-        LayoutFixer.Fix(ratingText.transform.parent.transform);
-        
+            Uri = $"{Context.ApiUrl}/profile/{Context.Player.Id}/details",
+            Headers = Context.OnlinePlayer.GetRequestHeaders(),
+            EnableDebug = true
+        }).Then(data =>
+        {
+            profileTab.SetModel(data);
+            profileTab.transitionElement.Enter();
+        }).CatchRequestError(error =>
+        {
+            Debug.LogError(error);
+            Dialog.PromptGoBack("Fuck.");
+        }).Finally(() => SpinnerOverlay.Hide());
         toggleOfflineButton.GetComponentInChildren<Text>().text = Context.IsOnline() ? "OFFLINE_GO_OFFLINE".Get() : "OFFLINE_GO_ONLINE".Get();
     }
 

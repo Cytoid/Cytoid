@@ -16,7 +16,7 @@ public class FontManager
     public Font ExtraLightJpFont;
     public Font ExtraBoldJpFont;
 
-    private bool loaded;
+    public bool Loaded { get; private set; }
 
     public void LoadFonts()
     {
@@ -28,12 +28,12 @@ public class FontManager
         BoldJpFont = Resources.Load<Font>("Fonts/Nunito-Bold-JP");
         ExtraLightJpFont = Resources.Load<Font>("Fonts/Nunito-ExtraLight-JP");
         ExtraBoldJpFont = Resources.Load<Font>("Fonts/Nunito-ExtraBold-JP");
-        loaded = true;
+        Loaded = true;
     }
 
     public async void UpdateSceneTexts()
     {
-        if (!loaded) await UniTask.WaitUntil(() => loaded = true);
+        if (!Loaded) await UniTask.WaitUntil(() => Loaded = true);
 
         foreach (var gameObject in SceneManager.GetActiveScene().GetRootGameObjects())
         {
@@ -44,7 +44,7 @@ public class FontManager
     public async void UpdateText(Text text)
     {
         if (text.font == null) return;
-        if (!loaded) await UniTask.WaitUntil(() => loaded = true);
+        if (!Loaded) await UniTask.WaitUntil(() => Loaded = true);
         switch (Localization.Instance.SelectedLanguage)
         {
             case Language.Japanese:

@@ -86,6 +86,8 @@ public class CommunityHomeScreen : Screen
     public InputField searchInputField;
     public InputField ownerInputField;
 
+    private bool isContentLoaded;
+
     public override string GetId() => Id;
 
     public override void OnScreenInitialized()
@@ -180,6 +182,17 @@ public class CommunityHomeScreen : Screen
 
     public async void OnContentLoaded(Content content)
     {
+        if (isContentLoaded)
+        {
+            contentHolder.DOFade(1, 0.4f).SetEase(Ease.OutCubic);
+            
+            // Reload the covers
+            sectionHolder.GetComponentsInChildren<LevelCard>().ForEach(it => it.LoadCover());
+            sectionHolder.GetComponentsInChildren<CollectionCard>().ForEach(it => it.LoadCover());
+            return;
+        }
+        isContentLoaded = true;
+        
         foreach (Transform child in sectionHolder.transform) Destroy(child.gameObject);
 
         foreach (var section in content.Layout.Sections)
@@ -189,7 +202,7 @@ public class CommunityHomeScreen : Screen
                 case Layout.LevelSection levelSection:
                 {
                     var sectionGameObject = Instantiate(levelSectionPrefab, sectionHolder.transform);
-                    var sectionBehavior = sectionGameObject.GetComponent<CommunityHomeLevelSection>();
+                    var sectionBehavior = sectionGameObject.GetComponent<LevelSection>();
                     sectionBehavior.titleText.text = levelSection.TitleKey.Get();
                     foreach (var onlineLevel in levelSection.Levels)
                     {
@@ -212,7 +225,7 @@ public class CommunityHomeScreen : Screen
                 case Layout.CollectionSection collectionSection:
                 {
                     var sectionGameObject = Instantiate(collectionSectionPrefab, sectionHolder.transform);
-                    var sectionBehavior = sectionGameObject.GetComponent<CommunityHomeCollectionSection>();
+                    var sectionBehavior = sectionGameObject.GetComponent<CollectionSection>();
                     foreach (var collection in collectionSection.Collections)
                     {
                         var collectionGameObject = Instantiate(collectionCardPrefab, sectionBehavior.collectionCardHolder.transform);
@@ -227,11 +240,7 @@ public class CommunityHomeScreen : Screen
         }
 
         LayoutFixer.Fix(contentHolder.transform);
-        await UniTask.DelayFrame(0);
-        if (Context.ShouldDisableMenuTransitions())
-        {
-            await UniTask.DelayFrame(2); // Scroll position not set fix
-        }
+        await UniTask.DelayFrame(3); // Scroll position not set fix
         if (lastScrollPosition != default) scrollRect.verticalNormalizedPosition = lastScrollPosition;
         contentHolder.DOFade(1, 0.4f).SetEase(Ease.OutCubic);
     }
@@ -269,6 +278,7 @@ public class CommunityHomeScreen : Screen
             
             searchInputField.SetTextWithoutNotify("");
             ownerInputField.SetTextWithoutNotify("");
+            isContentLoaded = false;
             LoadedContent = null;
             lastScrollPosition = default;
             

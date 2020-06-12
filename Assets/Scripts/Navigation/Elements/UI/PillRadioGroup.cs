@@ -22,7 +22,8 @@ public class PillRadioGroup : RadioGroup
             var label = labels[i];
             var value = values[i];
             var child = Instantiate(NavigationUiElementProvider.Instance.pillRadioButton, transform, false);
-            child.GetComponent<RectTransform>().SetWidth(labels.Count > 2 ? 128 : 192);
+            // Set its parent (PulseElement) instead
+            child.transform.parent.GetComponent<RectTransform>().SetWidth(labels.Count > 2 ? 128 : 192);
             var pillRadioButton = child.GetComponent<PillRadioButton>();
             pillRadioButton.label.text = label;
             pillRadioButton.value = value;

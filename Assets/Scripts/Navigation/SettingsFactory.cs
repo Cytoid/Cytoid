@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using LeTai.Asset.TranslucentImage;
 using LunarConsolePlugin;
 using Polyglot;
@@ -62,12 +64,17 @@ public static class SettingsFactory
             });
             Object.Instantiate(provider.select, parent).Apply(element =>
             {
+                var labels = new List<(string, int)>
+                {
+                    ("SETTINGS_SERVER_REGION_INTERNATIONAL".Get(), (int) CdnRegion.International),
+                    ("SETTINGS_SERVER_REGION_MAINLAND_CHINA".Get(), (int) CdnRegion.MainlandChina)
+                };
+                if (Context.Player.ShouldEnableDebug())
+                {
+                    labels.Add(("Debug", (int) CdnRegion.Debug));
+                }
                 element.SetContent("SETTINGS_SERVER_REGION".Get(), "SETTINGS_SERVER_REGION_DESC".Get(),
-                    () => (int) lp.Settings.CdnRegion, it => lp.Settings.CdnRegion = (CdnRegion) it, new[]
-                    {
-                        ("SETTINGS_SERVER_REGION_INTERNATIONAL".Get(), (int) CdnRegion.International),
-                        ("SETTINGS_SERVER_REGION_MAINLAND_CHINA".Get(), (int) CdnRegion.MainlandChina)
-                    }).SaveSettingsOnChange();
+                    () => (int) lp.Settings.CdnRegion, it => lp.Settings.CdnRegion = (CdnRegion) it, labels.ToArray()).SaveSettingsOnChange();
             });
         }
 

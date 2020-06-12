@@ -22,6 +22,11 @@ public class Player
         ValidateData();
     }
 
+    public bool ShouldEnableDebug()
+    {
+        return Id == "tigerhix" || Id == "neo";
+    }
+
     public void ValidateData()
     {
         var col = Context.Database.GetCollection<LevelRecord>("level_records");

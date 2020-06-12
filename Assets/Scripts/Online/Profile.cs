@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 
 [Serializable]
@@ -43,4 +44,33 @@ public class Profile
         [JsonProperty("totalRankedScore")] public long? TotalRankedScore { get; set; }
         [JsonProperty("totalPlayTime")] public long TotalPlayTime { get; set; }
     }
+
+}
+
+[Serializable]
+public class FullProfile : Profile
+{
+    [JsonProperty("timeSeries")] public List<TimeSeriesData> TimeSeries { get; set; }
+    [JsonProperty("lastActive")] public DateTime? LastActive { get; set; }
+    [JsonProperty("levelCount")] public int LevelCount { get; set; }
+    [JsonProperty("levels")] public List<OnlineLevel> Levels { get; set; }
+    [JsonProperty("featuredLevelCount")] public int FeaturedLevelCount { get; set; }
+    [JsonProperty("featuredLevels")] public List<OnlineLevel> FeaturedLevels { get; set; }
+    [JsonProperty("collectionCount")] public int CollectionCount { get; set; }
+    [JsonProperty("collections")] public List<CollectionMeta> Collections { get; set; }
+    [JsonProperty("recentRecords")] public List<OnlineRecord> RecentRecords { get; set; }
+    [JsonProperty("tier")] public TierMeta Tier { get; set; }
+
+    [Serializable]
+    public class TimeSeriesData
+    {
+        [JsonProperty("count")] public int Count { get; set; }
+        [JsonProperty("rating")] public double Rating { get; set; }
+        [JsonProperty("accuracy")] public double Accuracy { get; set; }
+        [JsonProperty("cumulativeRating")] public double CumulativeRating { get; set; }
+        [JsonProperty("cumulativeAccuracy")] public double CumulativeAccuracy { get; set; }
+        [JsonProperty("year")] public string Year { get; set; }
+        [JsonProperty("week")] public string Week { get; set; }
+    }
+
 }

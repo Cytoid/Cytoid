@@ -11,6 +11,7 @@ public class Avatar : InteractableMonoBehavior
     public Image avatarBackground;
     public SpinnerElement avatarSpinner;
     public Image avatarImage;
+    public bool highQuality;
 
     public AvatarAction action = AvatarAction.OpenProfile;
 
@@ -67,7 +68,16 @@ public class Avatar : InteractableMonoBehavior
 
         var token = asyncRequestToken;
         
-        var url = user.AvatarUrl?.WithSizeParam(64, 64) ?? user.Avatar.SmallUrl;
+        string url;
+        if (highQuality)
+        {
+            url = user.AvatarUrl?.WithSizeParam(256, 256) ?? user.Avatar.LargeUrl;
+        }
+        else
+        {
+            url = user.AvatarUrl?.WithSizeParam(64, 64) ?? user.Avatar.SmallUrl;
+        }
+            
         var sprite = await Context.AssetMemory.LoadAsset<Sprite>(
             url, 
             AssetTag.Avatar,

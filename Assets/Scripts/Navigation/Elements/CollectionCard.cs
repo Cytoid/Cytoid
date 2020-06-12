@@ -77,6 +77,11 @@ public class CollectionCard : InteractableMonoBehavior
 
     public async void LoadCover()
     {
+        if (loadedCover && cover.sprite != null && cover.sprite.texture != null)
+        {
+            // If sprite was loaded and the texture is not destroyed
+            return;
+        }
         loadedCover = false;
         cover.DOKill();
         cover.SetAlpha(0);

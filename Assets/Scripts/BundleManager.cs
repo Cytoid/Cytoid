@@ -34,14 +34,25 @@ public class BundleManager
         var request = UnityWebRequest.Get(path);
         using (request)
         {
-            await request.SendWebRequest();
-            var text = Encoding.UTF8.GetString(request.downloadHandler.data);
-            Catalog = new BundleCatalog(JObject.Parse(text));
-
             var valid = true;
-            foreach (var bundle in BuiltInBundles)
+            try
             {
-                if (!Catalog.ContainsEntry(bundle)) valid = false;
+                await request.SendWebRequest();
+                if (request.isHttpError || request.isNetworkError)
+                {
+                    throw new Exception(request.error);
+                }
+                var text = Encoding.UTF8.GetString(request.downloadHandler.data);
+                Catalog = new BundleCatalog(JObject.Parse(text));
+                foreach (var bundle in BuiltInBundles)
+                {
+                    if (!Catalog.ContainsEntry(bundle)) valid = false;
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning(e);
+                valid = false;
             }
 
             if (!valid)
@@ -50,7 +61,7 @@ public class BundleManager
                 using (var request2 = UnityWebRequest.Get(BuiltInCatalogPath))
                 {
                     await request2.SendWebRequest();
-                    text = Encoding.UTF8.GetString(request2.downloadHandler.data);
+                    var text = Encoding.UTF8.GetString(request2.downloadHandler.data);
                     Catalog = new BundleCatalog(JObject.Parse(text));
                 }
             }
@@ -298,7 +309,7 @@ public class BundleManager
 
     public void ReleaseAll()
     {
-        LoadedBundles.Keys.ForEach(it => Release(it, true));
+        new List<string>(LoadedBundles.Keys).ForEach(it => Release(it, true));
     }
 
     public class Entry

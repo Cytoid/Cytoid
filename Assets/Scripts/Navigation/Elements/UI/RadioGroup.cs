@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UniRx.Async;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -27,11 +28,14 @@ public class RadioGroup : MonoBehaviour
         Initialize();
     }
 
-    public virtual void Initialize()
+    public virtual async void Initialize()
     {
         if (RadioButtons.Count == 0) RadioButtons = GetComponentsInChildren<RadioButton>().ToList();
         RadioButtons.ForEach(it => it.radioGroup = this);
         value = defaultValue;
+
+        if (!Context.FontManager.Loaded) await UniTask.WaitUntil(() => Context.FontManager.Loaded);
+        
         RadioButtons.ForEach(it => it.Unselect());
         if (RadioButtons.Any(it => it.value == value))
         {

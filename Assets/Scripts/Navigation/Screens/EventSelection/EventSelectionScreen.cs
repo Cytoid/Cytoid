@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using DG.Tweening;
 using MoreMountains.NiceVibrations;
 using Proyecto26;
@@ -11,12 +12,6 @@ using UnityEngine.UI;
 
 public class EventSelectionScreen : Screen
 {
-    public const string Id = "EventSelection";
-    public static Content LoadedContent;
-    private static int lastSelectedIndex = -1;
-    
-    public override string GetId() => Id;
-
     public Image coverImage;
     public Image logoImage;
 
@@ -29,10 +24,6 @@ public class EventSelectionScreen : Screen
     public InteractableMonoBehavior previousButton;
     public InteractableMonoBehavior nextButton;
 
-    private List<EventMeta> events;
-    private int selectedIndex;
-    private DateTimeOffset loadToken;
-
     public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
@@ -43,68 +34,48 @@ public class EventSelectionScreen : Screen
 
     public override void OnScreenBecameActive()
     {
-        base.OnScreenBecameActive();
-        
         coverImage.color = Color.black;
         logoImage.color = Color.white.WithAlpha(0);
-
-        if (LoadedContent != null)
-        {
-            if (lastSelectedIndex >= 0)
-            {
-                selectedIndex = lastSelectedIndex;
-            }
-            OnContentLoaded(LoadedContent);
-        }
-        else
-        {
-            LoadContent();
-        }
+        
+        base.OnScreenBecameActive();
     }
 
-    public override void OnScreenBecameInactive()
-    {
-        base.OnScreenBecameInactive();
-        lastSelectedIndex = selectedIndex;
-    }
-
-    public async void LoadContent()
+    protected override async void LoadPayload(ScreenLoadPromise promise)
     {
         SpinnerOverlay.Show();
         await Context.LevelManager.LoadLevelsOfType(LevelType.Event);
 
-        RestClient.GetArray<EventMeta>(new RequestHelper {
-            Uri = $"{Context.ApiUrl}/events",
-            Headers = Context.OnlinePlayer.GetRequestHeaders(),
-            EnableDebug = true
-        }).Then(data =>
+        RestClient.GetArray<EventMeta>(new RequestHelper
             {
-                SpinnerOverlay.Hide();
-
-                LoadedContent = new Content {Events = data.ToList()};
-                OnContentLoaded(LoadedContent);
+                Uri = $"{Context.ApiUrl}/events",
+                Headers = Context.OnlinePlayer.GetRequestHeaders(),
+                EnableDebug = true
+            }).Then(data =>
+            {
+                if (data.Length == 0)
+                {
+                    Dialog.PromptGoBack("DIALOG_EVENTS_NOT_AVAILABLE".Get());
+                    promise.Reject();
+                    return;
+                }
+                IntentPayload.Events = data.ToList();
+                promise.Resolve(IntentPayload);
             })
             .CatchRequestError(error =>
             {
                 Debug.LogError(error);
                 Dialog.PromptGoBack("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
-                SpinnerOverlay.Hide();
-            });
+                
+                promise.Reject();
+            })
+            .Finally(() => SpinnerOverlay.Hide());
     }
 
-    public async void OnContentLoaded(Content content)
+    protected override void Render()
     {
-        events = content.Events;
-
-        if (events.Count == 0)
-        {
-            Dialog.PromptGoBack("DIALOG_EVENTS_NOT_AVAILABLE".Get());
-            return;
-        }
-        
         previousButton.onPointerClick.RemoveAllListeners();
         nextButton.onPointerClick.RemoveAllListeners();
-        if (events.Count == 1)
+        if (LoadedPayload.Events.Count == 1)
         {
             previousButton.scaleOnClick = false;
             nextButton.scaleOnClick = false;
@@ -120,15 +91,20 @@ public class EventSelectionScreen : Screen
             previousButton.onPointerClick.AddListener(_ => PreviousEvent());
             nextButton.onPointerClick.AddListener(_ => NextEvent());
         }
+        base.Render();
+    }
 
-        if (selectedIndex < 0 || selectedIndex >= content.Events.Count) selectedIndex = 0;
-        LoadEvent(content.Events[selectedIndex]);
+    protected override void OnRendered()
+    {
+        base.OnRendered();
+        
+        if (LoadedPayload.SelectedIndex < 0 || LoadedPayload.SelectedIndex >= LoadedPayload.Events.Count) LoadedPayload.SelectedIndex = 0;
+        LoadEvent(LoadedPayload.Events[LoadedPayload.SelectedIndex]);
     }
 
     public void LoadEvent(EventMeta meta)
     {
-        var token = loadToken = DateTimeOffset.Now;
-        async void LoadCover()
+        async UniTask LoadCover(CancellationToken token)
         {
             Assert.IsNotNull(meta.cover);
             
@@ -137,19 +113,25 @@ public class EventSelectionScreen : Screen
             {
                 coverImage.DOKill();
                 coverImage.DOColor(Color.black, 0.4f);
-                tasks.Add(UniTask.Delay(TimeSpan.FromSeconds(0.4f)));
+                tasks.Add(UniTask.Delay(TimeSpan.FromSeconds(0.4f), cancellationToken: token));
             }
-            var downloadTask = Context.AssetMemory.LoadAsset<Sprite>(meta.cover.OriginalUrl, AssetTag.EventCover, allowFileCache: true);
+            var downloadTask = Context.AssetMemory.LoadAsset<Sprite>(meta.cover.OriginalUrl, AssetTag.EventCover, allowFileCache: true, cancellationToken: token);
             tasks.Add(downloadTask);
 
-            await UniTask.WhenAll(tasks);
-            if (token != loadToken) return;
+            try
+            {
+                await UniTask.WhenAll(tasks);
+            }
+            catch
+            {
+                return;
+            }
 
             coverImage.sprite = downloadTask.Result;
             coverImage.FitSpriteAspectRatio();
             coverImage.DOColor(Color.white, 2f).SetDelay(0.8f);
         }
-        async void LoadLogo()
+        async UniTask LoadLogo(CancellationToken token)
         {
             Assert.IsNotNull(meta.logo);
             
@@ -158,23 +140,29 @@ public class EventSelectionScreen : Screen
             {
                 logoImage.DOKill();
                 logoImage.DOFade(0, 0.4f);
-                tasks.Add(UniTask.Delay(TimeSpan.FromSeconds(0.4f)));
+                tasks.Add(UniTask.Delay(TimeSpan.FromSeconds(0.4f), cancellationToken: token));
             }
-            var downloadTask = Context.AssetMemory.LoadAsset<Sprite>(meta.logo.OriginalUrl, AssetTag.EventLogo, allowFileCache: true);
+            var downloadTask = Context.AssetMemory.LoadAsset<Sprite>(meta.logo.OriginalUrl, AssetTag.EventLogo, allowFileCache: true, cancellationToken: token);
             tasks.Add(downloadTask);
 
-            await UniTask.WhenAll(tasks);
-            if (token != loadToken) return;
+            try
+            {
+                await UniTask.WhenAll(tasks);
+            }
+            catch
+            {
+                return;
+            }
 
             logoImage.sprite = downloadTask.Result;
             logoImage.DOFade(1, 0.8f).SetDelay(0.4f);
         }
-        LoadCover();
-        LoadLogo();
+        AddTask(LoadCover);
+        AddTask(LoadLogo);
         
         infoBanner.Leave(onComplete: () =>
         {
-            viewDetailsButton.onPointerClick.SetListener(_ => Application.OpenURL($"{Context.WebsiteUrl}/posts/cytoidfes-2020"));
+            viewDetailsButton.onPointerClick.SetListener(_ => Application.OpenURL($"{Context.WebsiteUrl}/posts/{meta.uid}"));
             const string dateFormat = "yyyy/MM/dd HH:mm";
             durationText.text = (meta.startDate.HasValue ? meta.startDate.Value.LocalDateTime.ToString(dateFormat) : "")
                                 + "~"
@@ -216,11 +204,11 @@ public class EventSelectionScreen : Screen
                 } 
                 else if (meta.collectionId != null)
                 {
-                    CollectionDetailsScreen.LoadedContent = new CollectionDetailsScreen.Content
-                        {Id = meta.collectionId, Type = LevelType.Event};
                     Context.ScreenManager.ChangeScreen(
                         CollectionDetailsScreen.Id, ScreenTransition.In, 0.4f,
-                        transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter()
+                        transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter(),
+                        payload: new CollectionDetailsScreen.Payload
+                            {CollectionId = meta.collectionId, Type = LevelType.Event}
                     );
                 }
             });
@@ -231,14 +219,14 @@ public class EventSelectionScreen : Screen
 
     private void NextEvent()
     {
-        selectedIndex = (selectedIndex + 1).Mod(events.Count);
-        LoadEvent(events[selectedIndex]);
+        LoadedPayload.SelectedIndex = (LoadedPayload.SelectedIndex + 1).Mod(LoadedPayload.Events.Count);
+        LoadEvent(LoadedPayload.Events[LoadedPayload.SelectedIndex]);
     }
 
     private void PreviousEvent()
     {
-        selectedIndex = (selectedIndex - 1).Mod(events.Count);
-        LoadEvent(events[selectedIndex]);
+        LoadedPayload.SelectedIndex = (LoadedPayload.SelectedIndex - 1).Mod(LoadedPayload.Events.Count);
+        LoadEvent(LoadedPayload.Events[LoadedPayload.SelectedIndex]);
     }
 
     public override void OnScreenChangeFinished(Screen from, Screen to)
@@ -257,15 +245,26 @@ public class EventSelectionScreen : Screen
                 Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.EventLogo);
                 Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.RemoteLevelCoverThumbnail);
 
-                LoadedContent = null;
-                loadToken = DateTimeOffset.MinValue;
+                LoadedPayload = null;
             }
         }
     }
 
-    public class Content
+    public class Payload : ScreenPayload
     {
         public List<EventMeta> Events;
+        public int SelectedIndex;
     }
+    
+    public new Payload IntentPayload => (Payload) base.IntentPayload;
+    public new Payload LoadedPayload
+    {
+        get => (Payload) base.LoadedPayload;
+        set => base.LoadedPayload = value;
+    }
+    public override ScreenPayload GetDefaultPayload() => new Payload();
+    
+    public const string Id = "EventSelection";
+    public override string GetId() => Id;
 
 }

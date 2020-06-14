@@ -4,6 +4,8 @@ public class CollectionCuratorSourceButton : InteractableMonoBehavior
 {
     protected void Awake()
     {
-        onPointerClick.AddListener(_ => Application.OpenURL($"{Context.WebsiteUrl}/profile/{CollectionDetailsScreen.LoadedContent.Collection.owner.Uid}"));
+        onPointerClick.AddListener(_ => 
+            Application.OpenURL($"{Context.WebsiteUrl}/profile/{this.GetScreenParent<CollectionDetailsScreen>().LoadedPayload.Collection.owner.Uid}")
+        );
     }
 }

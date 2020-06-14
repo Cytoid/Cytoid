@@ -59,13 +59,12 @@ public class ProfileScreen : Screen, ScreenChangeListener
 
     public override void OnScreenBecameActive()
     {
-        
         base.OnScreenBecameActive();
         SpinnerOverlay.Show();
         profileTab.transitionElement.Leave(false, true);
         RestClient.Get<FullProfile>(new RequestHelper
         {
-            Uri = $"{Context.ApiUrl}/profile/{Context.Player.Id}/details",
+            Uri = "http://localhost:3000", //$"{Context.ApiUrl}/profile/{Context.Player.Id}/details",
             Headers = Context.OnlinePlayer.GetRequestHeaders(),
             EnableDebug = true
         }).Then(data =>

@@ -45,6 +45,12 @@ public class CatalogGenerator
         File.WriteAllText(dir + "/catalog.json", json.ToString());
         File.Copy(dir + "/catalog.json", "Assets/StreamingAssets/catalog.json", true);
         Debug.Log($"Catalog generated for {PlatformName} and copied to StreamingAssets.");
+
+        foreach (var bundle in BundleManager.BuiltInBundles)
+        {
+            File.Copy(dir + "/" + bundle, "Assets/StreamingAssets/Bundles/" + bundle, true);
+        }
+        Debug.Log("Copied built-in bundles to StreamingAssets.");
     }
     
     private static RuntimePlatform Platform 

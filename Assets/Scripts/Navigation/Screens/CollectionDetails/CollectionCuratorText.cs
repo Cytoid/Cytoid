@@ -7,9 +7,10 @@ public class CollectionCuratorText : MonoBehaviour, ScreenInitializedListener
 
     public void OnScreenInitialized()
     {
-        this.GetScreenParent<CollectionDetailsScreen>().onContentLoaded.AddListener(() =>
+        var screen = this.GetScreenParent<CollectionDetailsScreen>();
+        screen.onScreenPayloadLoaded.AddListener(() =>
         {
-            text.text = CollectionDetailsScreen.LoadedContent.Collection.owner.Uid;
+            text.text = screen.LoadedPayload.Collection.owner.Uid;
         });
     }
     

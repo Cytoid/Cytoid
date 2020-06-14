@@ -51,7 +51,7 @@ public class Context : SingletonMonoBehavior<Context>
     public const int LevelThumbnailHeight = 360;
     
     public const int CollectionThumbnailWidth = 576;
-    public const int CollectionThumbnailHeight = 192;
+    public const int CollectionThumbnailHeight = 216;
 
     public static int AndroidVersionCode = -1;
 
@@ -81,8 +81,14 @@ public class Context : SingletonMonoBehavior<Context>
     public static readonly CharacterManager CharacterManager = new CharacterManager();
     public static readonly BundleManager BundleManager = new BundleManager();
     public static readonly AssetMemory AssetMemory = new AssetMemory();
-    
-    public static LiteDatabase Database;
+
+    public static LiteDatabase Database
+    {
+        get => database ?? (database = CreateDatabase());
+        private set => database = value;
+    }
+
+    private static LiteDatabase database;
 
     public static Level SelectedLevel
     {
@@ -110,7 +116,7 @@ public class Context : SingletonMonoBehavior<Context>
     private static bool offline;
     private static Level selectedLevel;
     private static GraphyManager graphyManager;
-    private static Stack<string> navigationScreenHistory = new Stack<string>();
+    private static Stack<Intent> navigationScreenHistory = new Stack<Intent>();
 
     protected override void Awake()
     {
@@ -130,6 +136,11 @@ public class Context : SingletonMonoBehavior<Context>
     private static void OnLowMemory()
     {
         Resources.UnloadUnusedAssets();
+        AssetMemory.DisposeAllAssets();
+        if (SceneManager.GetActiveScene().name == "Navigation")
+        {
+            Dialog.PromptAlert("DIALOG_LOW_MEMORY".Get());
+        }
     }
 
     private void OnApplicationQuit()
@@ -212,16 +223,9 @@ public class Context : SingletonMonoBehavior<Context>
         try
         {
             var timer = new BenchmarkTimer("LiteDB");
-            Database = new LiteDatabase(
-                new ConnectionString
-                {
-                    Filename = Path.Combine(Application.persistentDataPath, "Cytoid.db"),
-                    // Password = SecuredConstants.DbSecret,
-                    Connection = Application.isEditor ? ConnectionType.Shared : ConnectionType.Direct
-                }
-            );
-            timer.Time();
+            Database = CreateDatabase();
             Database.Checkpoint();
+            timer.Time();
         }
         catch (Exception e)
         {
@@ -400,7 +404,7 @@ public class Context : SingletonMonoBehavior<Context>
         {
             Input.gyro.enabled = false;
             // Save history
-            navigationScreenHistory = new Stack<string>(ScreenManager.History);
+            navigationScreenHistory = new Stack<Intent>(ScreenManager.History);
         }
     }
 
@@ -424,7 +428,7 @@ public class Context : SingletonMonoBehavior<Context>
             UpdateGraphicsQuality();
 
             // Restore history
-            ScreenManager.History = new Stack<string>(navigationScreenHistory);
+            ScreenManager.History = new Stack<Intent>(navigationScreenHistory);
             
             if (TierState != null)
             {
@@ -605,12 +609,34 @@ public class Context : SingletonMonoBehavior<Context>
 
     private void OnApplicationFocus(bool hasFocus)
     {
-        if (!hasFocus) Database.Checkpoint();
+        if (!hasFocus && Database != null)
+        {
+            Database.Checkpoint();
+            Database.Dispose();
+            Database = null;
+        }
     }
 
     private void OnApplicationPause(bool pauseStatus)
     {
-        if (pauseStatus) Database.Checkpoint();
+        if (pauseStatus && Database != null)
+        {
+            Database.Checkpoint();
+            Database.Dispose();
+            Database = null;
+        }
+    }
+
+    private static LiteDatabase CreateDatabase()
+    {
+        return new LiteDatabase(
+            new ConnectionString
+            {
+                Filename = Path.Combine(Application.persistentDataPath, "Cytoid.db"),
+                // Password = SecuredConstants.DbSecret,
+                Connection = Application.isEditor ? ConnectionType.Shared : ConnectionType.Direct
+            }
+        );
     }
 }
 

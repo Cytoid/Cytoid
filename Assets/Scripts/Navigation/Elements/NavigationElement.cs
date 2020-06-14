@@ -17,6 +17,7 @@ public class NavigationElement : InteractableMonoBehavior, ScreenBecameActiveLis
     public Vector2 transitionFocus;
     public string soundName = "Navigate1";
     public bool addToHistory = true;
+    public bool currentScreenNotAddedToHistory = false;
     
     private bool navigated;
 
@@ -58,7 +59,7 @@ public class NavigationElement : InteractableMonoBehavior, ScreenBecameActiveLis
         if (navigated) return;
         navigated = true;
         Context.ScreenManager.ChangeScreen(
-            navigateToLastScreen ? Context.ScreenManager.PopAndPeekHistory() : targetScreenId, transition,
+            navigateToLastScreen ? (currentScreenNotAddedToHistory ? Context.ScreenManager.PeekHistory() : Context.ScreenManager.PopAndPeekHistory()) : new Intent(targetScreenId, null), transition,
             duration, currentScreenDelay, newScreenDelay, transitionFocus, OnScreenChanged, addTargetScreenToHistory: addToHistory && !navigateToLastScreen);
     }
 

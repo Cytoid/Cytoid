@@ -28,7 +28,7 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
         var token = deepLinkToken = DateTimeOffset.Now;
        
         await UniTask.WaitUntil(() => Context.ScreenManager != null &&
-                                      Context.ScreenManager.History.Contains(MainMenuScreen.Id));
+                                      Context.ScreenManager.History.Any(it => it.ScreenId == MainMenuScreen.Id));
         if (token != deepLinkToken) return;
         
         if (DeepLinkDisabledScreenIds.Contains(Context.ScreenManager.ActiveScreenId))
@@ -54,7 +54,13 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
                 {
                     if (token != deepLinkToken) return;
                     
-                    while (Context.ScreenManager.PeekHistory().Let(it => it != null && it != MainMenuScreen.Id))
+                    foreach (var tag in (AssetTag[]) Enum.GetValues(typeof(AssetTag)))
+                    {
+                        if (tag == AssetTag.PlayerAvatar) continue;
+                        Context.AssetMemory.DisposeTaggedCacheAssets(tag);
+                    }
+                    
+                    while (Context.ScreenManager.PeekHistory().Let(it => it != null && it.ScreenId != MainMenuScreen.Id))
                     {
                         Context.ScreenManager.PopAndPeekHistory();
                     }
@@ -65,14 +71,14 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
                         var localLevel = Context.LevelManager.LoadedLocalLevels[level.Uid];
                         Debug.Log($"Online level {level.Uid} resolved locally");
 
-                        Context.ScreenManager.History.Push(LevelSelectionScreen.Id);
-                        Context.ScreenManager.History.Push(GamePreparationScreen.Id);
+                        Context.ScreenManager.History.Push(new Intent(LevelSelectionScreen.Id, null));
+                        Context.ScreenManager.History.Push(new Intent(GamePreparationScreen.Id, null));
                         Context.SelectedLevel = localLevel;
                     }
                     else
                     {
-                        Context.ScreenManager.History.Push(CommunityHomeScreen.Id);
-                        Context.ScreenManager.History.Push(GamePreparationScreen.Id);
+                        Context.ScreenManager.History.Push(new Intent(CommunityHomeScreen.Id, null));
+                        Context.ScreenManager.History.Push(new Intent(GamePreparationScreen.Id, null));
                         Context.SelectedLevel = level.ToLevel(LevelType.Community);
                     }
 
@@ -118,7 +124,7 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
         // Resuming?
         if (!pauseStatus)
         {
-            if (!Context.ScreenManager.History.Contains(MainMenuScreen.Id)) return;
+            if (Context.ScreenManager.History.All(it => it.ScreenId != MainMenuScreen.Id)) return;
             
             // Install levels
             SpinnerOverlay.Show();
@@ -140,13 +146,13 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
                 if (Context.ScreenManager.ActiveScreenId != GamePreparationScreen.Id)
                 {
                     // Switch to that level
-                    while (Context.ScreenManager.PeekHistory().Let(it => it != null && it != MainMenuScreen.Id))
+                    while (Context.ScreenManager.PeekHistory().Let(it => it != null && it.ScreenId != MainMenuScreen.Id))
                     {
                         Context.ScreenManager.PopAndPeekHistory();
                     }
 
-                    Context.ScreenManager.History.Push(LevelSelectionScreen.Id);
-                    Context.ScreenManager.History.Push(GamePreparationScreen.Id);
+                    Context.ScreenManager.History.Push(new Intent(LevelSelectionScreen.Id, null));
+                    Context.ScreenManager.History.Push(new Intent(GamePreparationScreen.Id, null));
 
                     Context.SelectedLevel = lastLoadedLevel;
                     Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.In);

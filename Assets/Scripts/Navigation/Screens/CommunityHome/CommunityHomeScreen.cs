@@ -11,8 +11,7 @@ using IPromise = RSG.IPromise;
 
 public class CommunityHomeScreen : Screen
 {
-    public const string Id = "CommunityHome";
-
+    
     private static Layout DefaultLayout => new Layout
     {
         Sections = new List<Layout.Section>
@@ -72,9 +71,6 @@ public class CommunityHomeScreen : Screen
         }
     };
 
-    public static Content LoadedContent;
-    private static float lastScrollPosition;
-
     public GameObject levelSectionPrefab;
     public GameObject levelCardPrefab;
     public GameObject collectionSectionPrefab;
@@ -86,10 +82,6 @@ public class CommunityHomeScreen : Screen
     public InputField searchInputField;
     public InputField ownerInputField;
 
-    private bool isContentLoaded;
-
-    public override string GetId() => Id;
-
     public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
@@ -98,36 +90,25 @@ public class CommunityHomeScreen : Screen
         ownerInputField.onEndEdit.AddListener(_ => SearchLevels());
     }
 
-    public override async void OnScreenBecameActive()
+    public override void OnScreenBecameActive()
     {
-        base.OnScreenBecameActive();
-
         contentHolder.alpha = 0;
-        if (LoadedContent != null)
-        {
-            OnContentLoaded(LoadedContent);
-        }
-        else
-        {
-            lastScrollPosition = default;
-            LoadContent();
-        }
+        
+        base.OnScreenBecameActive();
     }
     
     public override void OnScreenBecameInactive()
     {
         base.OnScreenBecameInactive();
-        print("Setting location to " + scrollRect.verticalNormalizedPosition);
-        lastScrollPosition = scrollRect.verticalNormalizedPosition;
+        LoadedPayload.ScrollPosition = scrollRect.verticalNormalizedPosition;
     }
 
-    public void LoadContent()
+    protected override void LoadPayload(ScreenLoadPromise promise)
     {
         SpinnerOverlay.Show();
-        
-        var content = new Content {Layout = DefaultLayout};
+
         var promises = new List<IPromise>();
-        foreach (var section in content.Layout.Sections)
+        foreach (var section in IntentPayload.Layout.Sections)
         {
             switch (section)
             {
@@ -169,33 +150,22 @@ public class CommunityHomeScreen : Screen
         Promise.All(promises)
             .Then(() =>
             {
-                LoadedContent = content;
-                OnContentLoaded(LoadedContent);
+                promise.Resolve(IntentPayload);
             })
             .Catch(error =>
             {
                 Dialog.PromptGoBack("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
                 Debug.LogError(error);
+                promise.Reject();
             })
             .Finally(() => SpinnerOverlay.Hide());
     }
 
-    public async void OnContentLoaded(Content content)
+    protected override void Render()
     {
-        if (isContentLoaded)
-        {
-            contentHolder.DOFade(1, 0.4f).SetEase(Ease.OutCubic);
-            
-            // Reload the covers
-            sectionHolder.GetComponentsInChildren<LevelCard>().ForEach(it => it.LoadCover());
-            sectionHolder.GetComponentsInChildren<CollectionCard>().ForEach(it => it.LoadCover());
-            return;
-        }
-        isContentLoaded = true;
-        
         foreach (Transform child in sectionHolder.transform) Destroy(child.gameObject);
 
-        foreach (var section in content.Layout.Sections)
+        foreach (var section in LoadedPayload.Layout.Sections)
         {
             switch (section)
             {
@@ -210,15 +180,13 @@ public class CommunityHomeScreen : Screen
                         var levelCard = levelCardGameObject.GetComponent<LevelCard>();
                         levelCard.SetModel(new LevelView{Level = onlineLevel.ToLevel(LevelType.Community), DisplayOwner = true});
                     }
+                    sectionBehavior.viewMoreButton.GetComponentInChildren<Text>().text =
+                        "COMMUNITY_HOME_VIEW_ALL".Get();
                     sectionBehavior.viewMoreButton.onPointerClick.AddListener(_ =>
                     {
-                        CommunityLevelSelectionScreen.LoadedContent = new CommunityLevelSelectionScreen.Content
-                        {
-                            Query = levelSection.Query.JsonDeepCopy(),
-                            OnlineLevels = null // Signal reload
-                        };
                         Context.ScreenManager.ChangeScreen(CommunityLevelSelectionScreen.Id, ScreenTransition.In, 0.4f,
-                            transitionFocus: ((RectTransform) sectionBehavior.viewMoreButton.transform).GetScreenSpaceCenter());
+                            transitionFocus: ((RectTransform) sectionBehavior.viewMoreButton.transform).GetScreenSpaceCenter(),
+                            payload: new CommunityLevelSelectionScreen.Payload {Query = levelSection.Query.JsonDeepCopy()});
                     });
                     break;
                 }
@@ -240,9 +208,21 @@ public class CommunityHomeScreen : Screen
         }
 
         LayoutFixer.Fix(contentHolder.transform);
+        base.Render();
+    }
+
+    protected override async void OnRendered()
+    {
+        base.OnRendered();
+        
         await UniTask.DelayFrame(3); // Scroll position not set fix
-        if (lastScrollPosition != default) scrollRect.verticalNormalizedPosition = lastScrollPosition;
+        if (LoadedPayload.ScrollPosition > 0) scrollRect.verticalNormalizedPosition = LoadedPayload.ScrollPosition;
+        
         contentHolder.DOFade(1, 0.4f).SetEase(Ease.OutCubic);
+            
+        // Reload the covers
+        sectionHolder.GetComponentsInChildren<LevelCard>().ForEach(it => it.LoadCover());
+        sectionHolder.GetComponentsInChildren<CollectionCard>().ForEach(it => it.LoadCover());
     }
 
     public void SearchLevels()
@@ -250,21 +230,19 @@ public class CommunityHomeScreen : Screen
         var query = searchInputField.text;
         var owner = ownerInputField.text;
         if (query.IsNullOrEmptyTrimmed() && owner.IsNullOrEmptyTrimmed()) return;
-        
-        CommunityLevelSelectionScreen.LoadedContent = new CommunityLevelSelectionScreen.Content
-        {
-            Query = new OnlineLevelQuery
+        Context.ScreenManager.ChangeScreen(CommunityLevelSelectionScreen.Id, ScreenTransition.In,
+            payload: new CommunityLevelSelectionScreen.Payload
             {
-                sort = "creation_date",
-                order = "desc",
-                category = "all",
-                time = "all",
-                search = query,
-                owner = owner,
-            },
-            OnlineLevels = null // Signal reload
-        };
-        Context.ScreenManager.ChangeScreen(CommunityLevelSelectionScreen.Id, ScreenTransition.In);
+                Query = new OnlineLevelQuery
+                {
+                    sort = "creation_date",
+                    order = "desc",
+                    category = "all",
+                    time = "all",
+                    search = query,
+                    owner = owner,
+                }
+            });
     }
 
     public override void OnScreenChangeFinished(Screen from, Screen to)
@@ -278,9 +256,7 @@ public class CommunityHomeScreen : Screen
             
             searchInputField.SetTextWithoutNotify("");
             ownerInputField.SetTextWithoutNotify("");
-            isContentLoaded = false;
-            LoadedContent = null;
-            lastScrollPosition = default;
+            LoadedPayload = null;
             
             foreach (Transform child in sectionHolder) Destroy(child.gameObject);
         }
@@ -312,8 +288,22 @@ public class CommunityHomeScreen : Screen
         
     }
 
-    public class Content
+    public class Payload : ScreenPayload
     {
         public Layout Layout;
+        public float ScrollPosition;
     }
+    
+    public new Payload IntentPayload => (Payload) base.IntentPayload;
+    public new Payload LoadedPayload
+    {
+        get => (Payload) base.LoadedPayload;
+        set => base.LoadedPayload = value;
+    }
+
+    public override ScreenPayload GetDefaultPayload() => new Payload {Layout = DefaultLayout};
+
+    public const string Id = "CommunityHome";
+
+    public override string GetId() => Id;
 }

@@ -29,30 +29,27 @@ public class Avatar : InteractableMonoBehavior
                     Application.OpenURL($"{Context.WebsiteUrl}/profile/{owner.Uid}");
                     break;
                 case AvatarAction.ViewLevels:
-                    CommunityLevelSelectionScreen.LoadedContent = new CommunityLevelSelectionScreen.Content
-                    {
-                        Query = new OnlineLevelQuery
+                    var screen = Context.ScreenManager.GetScreen<CommunityLevelSelectionScreen>();
+                    var payload =
+                        new CommunityLevelSelectionScreen.Payload
                         {
-                            sort = "creation_date",
-                            order = "desc",
-                            category = "all",
-                            owner = owner.Uid
-                        },
-                        OnlineLevels = null // Signal reload
-                    };
-                    if (Context.ScreenManager.ActiveScreenId != CommunityLevelSelectionScreen.Id)
+                            Query = new OnlineLevelQuery
+                            {
+                                sort = "creation_date",
+                                order = "desc",
+                                category = "all",
+                                owner = owner.Uid
+                            }
+                        };
+                    if (screen.State != ScreenState.Active)
                     {
-                        while (Context.ScreenManager.PeekHistory().Let(it => it != null && it != MainMenuScreen.Id))
-                        {
-                            Context.ScreenManager.PopAndPeekHistory();
-                        }
-                        Context.ScreenManager.History.Push(CommunityHomeScreen.Id);
-                        Context.ScreenManager.History.Push(CommunityLevelSelectionScreen.Id);
-                        Context.ScreenManager.ChangeScreen(CommunityLevelSelectionScreen.Id, ScreenTransition.In);
+                        Context.ScreenManager.ChangeScreen(CommunityLevelSelectionScreen.Id, ScreenTransition.In,
+                            payload: payload);
                     }
                     else
                     {
-                        ((CommunityLevelSelectionScreen) Context.ScreenManager.ActiveScreen).LoadContent();
+                        screen.LoadedPayload = payload;
+                        screen.LoadLevels();
                     }
                     break;
             }

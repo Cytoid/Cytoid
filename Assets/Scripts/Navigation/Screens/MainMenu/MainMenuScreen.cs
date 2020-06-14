@@ -31,6 +31,13 @@ public class MainMenuScreen : Screen
     public override void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
+
+        foreach (var tag in (AssetTag[]) Enum.GetValues(typeof(AssetTag)))
+        {
+            if (tag == AssetTag.PlayerAvatar) continue;
+            Context.AssetMemory.DisposeTaggedCacheAssets(tag);
+        }
+        
         //WebViewOverlay.Show();
         StartupLogger.Instance.Dispose();
 

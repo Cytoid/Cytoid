@@ -19,7 +19,7 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
     public List<Screen> createdScreens;
 
     public Screen ActiveScreen => createdScreens.Find(it => it.GetId() == ActiveScreenId);
-    public Stack<string> History { get; set; } = new Stack<string>();
+    public Stack<Intent> History { get; set; } = new Stack<Intent>();
 
     public string ActiveScreenId { get; protected set; }
     public string ChangingToScreenId { get; protected set; }
@@ -73,12 +73,12 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         return (T) createdScreens.Find(it => it.GetType() == typeof(T));
     }
     
-    public string PeekHistory()
+    public Intent PeekHistory()
     {
         return History.Count > 1 ? History.Peek() : null;
     }
 
-    public string PopAndPeekHistory()
+    public Intent PopAndPeekHistory()
     {
         return History.Count > 1 ? History.Also(it => it.Pop()).Peek() : null;
     }
@@ -115,6 +115,22 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         screenChangeCancellationTokenSource?.Cancel();
     }
 
+    public void ChangeScreen(
+        Intent intent,
+        ScreenTransition transition,
+        float duration = 0.4f,
+        float currentScreenTransitionDelay = 0f,
+        float newScreenTransitionDelay = 0f,
+        Vector2? transitionFocus = null,
+        Action<Screen> onFinished = null,
+        bool willDestroy = false,
+        bool addTargetScreenToHistory = true
+    )
+    { 
+        ChangeScreen(intent.ScreenId, transition, duration, currentScreenTransitionDelay, newScreenTransitionDelay,
+            transitionFocus, onFinished, willDestroy, addTargetScreenToHistory, intent.Payload);
+    }
+
     public async void ChangeScreen(
         string targetScreenId,
         ScreenTransition transition,
@@ -124,7 +140,8 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         Vector2? transitionFocus = null,
         Action<Screen> onFinished = null,
         bool willDestroy = false,
-        bool addTargetScreenToHistory = true
+        bool addTargetScreenToHistory = true,
+        ScreenPayload payload = default
     )
     {
         if (ChangingToScreenId != null)
@@ -255,6 +272,7 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         
         foreach (var listener in screenChangeListeners) listener.OnScreenChangeStarted(lastScreen, newScreen);
 
+        newScreen.IntentPayload = payload;
         ActiveScreenId = newScreen.GetId();
         newScreen.CanvasGroup.alpha = 0;
         newScreen.State = ScreenState.Active;
@@ -364,10 +382,10 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         if (duration > 0) Run.After(duration, Action);
         else Action();
         
-        if (addTargetScreenToHistory && (History.Count == 0 || History.Peek() != newScreen.GetId()))
+        if (addTargetScreenToHistory && (History.Count == 0 || History.Peek().ScreenId != newScreen.GetId()))
         {
             print($"Adding {newScreen.GetId()} to history");
-            History.Push(newScreen.GetId());
+            History.Push(new Intent(newScreen.GetId(), payload));
         }
     }
 
@@ -382,4 +400,17 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
     }
 
     public static bool DoNotActivateGameObjects => SceneManager.GetActiveScene().name == "Navigation";
+}
+
+public class Intent
+{
+    public string ScreenId { get; }
+    public ScreenPayload Payload { get; }
+
+    public Intent(string screenId, ScreenPayload payload)
+    {
+        ScreenId = screenId;
+        Payload = payload;
+    }
+
 }

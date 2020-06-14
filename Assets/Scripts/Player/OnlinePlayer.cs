@@ -125,7 +125,7 @@ public class OnlinePlayer
         IsAuthenticating = false;
         IsAuthenticated = false;
 
-        EventSelectionScreen.LoadedContent = null;
+        Context.ScreenManager.GetScreen<EventSelectionScreen>().LoadedPayload = null;
         TierSelectionScreen.LoadedContent = null;
         
         // Drop user information in DB

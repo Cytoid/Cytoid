@@ -6,10 +6,6 @@ using UnityEngine.UI;
 
 public class CharacterSelectionScreen : Screen
 {
-    public const string Id = "CharacterSelection";
-
-    public override string GetId() => Id;
-
     public TransitionElement infoCard;
     public Text nameText;
     public GradientMeshEffect nameGradient;
@@ -26,9 +22,6 @@ public class CharacterSelectionScreen : Screen
     public InteractableMonoBehavior nextButton;
     public InteractableMonoBehavior illustratorProfileButton;
     public InteractableMonoBehavior characterDesignerProfileButton;
-
-    private List<CharacterMeta> availableCharacters = new List<CharacterMeta>();
-    private int selectedIndex;
 
     public override void OnScreenInitialized()
     {
@@ -48,22 +41,80 @@ public class CharacterSelectionScreen : Screen
             it.enterDuration = 0.4f;
         });
         base.OnScreenBecameActive();
+    }
 
+    protected override void LoadPayload(ScreenLoadPromise promise)
+    {
         SpinnerOverlay.Show();
-
         Context.CharacterManager.GetAvailableCharactersMeta()
-            .Then(characters =>
+            .Then(async characters =>
             {
                 if (characters.Count == 0)
                 {
                     // TODO: This should not happen! We have Sayaka
                     Dialog.PromptGoBack("DIALOG_OFFLINE_FEATURE_NOT_AVAILABLE".Get());
+                    promise.Reject();
                     return;
                 }
-                DownloadAvailableCharacters(characters);
+                
+                var downloadsRequired = 0;
+                foreach (var meta in characters)
+                {
+                    if (!Context.BundleManager.IsUpToDate(CharacterAsset.GetMainBundleId(meta.AssetId)))
+                    {
+                        downloadsRequired++;
+                    }
+                }
+                print($"Number of downloads required: {downloadsRequired}");
+
+                if (!await Context.BundleManager.DownloadAndSaveCatalog())
+                {
+                    Dialog.PromptGoBack("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
+                    promise.Reject();
+                    return;
+                }
+
+                var downloaded = 0;
+                foreach (var meta in characters)
+                {
+                    var (success, locallyResolved) = await Context.CharacterManager.DownloadCharacterAssetDialog(CharacterAsset.GetMainBundleId(meta.AssetId));
+                    if (success && !locallyResolved)
+                    {
+                        downloaded++;
+                        print("Downloaded " + meta.AssetId);
+                    }
+                    if (!success)
+                    {
+                        Toast.Next(Toast.Status.Failure, "CHARACTER_FAILED_TO_DOWNLOAD".Get());
+                    }
+                    else
+                    {
+                        IntentPayload.OwnedCharacters.Add(meta);
+                    }
+                }
+                print($"Number of downloads: {downloaded}");
+
+                if (downloaded > downloadsRequired)
+                {
+                    // Update was performed, which requires player to restart the game
+                    // Why? Too lazy to figure out dynamic reloads...
+                    Dialog.PromptUnclosable("DIALOG_RESTART_REQUIRED".Get());
+                    promise.Reject();
+                    return;
+                }
+
+                if (IntentPayload.OwnedCharacters.Count == 0)
+                {
+                    Dialog.PromptGoBack("DIALOG_OFFLINE_FEATURE_NOT_AVAILABLE".Get());
+                    promise.Reject();
+                    return;
+                }
+
+                promise.Resolve(IntentPayload);
             })
             .CatchRequestError(error =>
             {
+                promise.Reject();
                 if (!error.IsNetworkError)
                 {
                     throw error;
@@ -73,63 +124,11 @@ public class CharacterSelectionScreen : Screen
             .Finally(() => SpinnerOverlay.Hide());
     }
 
-    public async void DownloadAvailableCharacters(List<CharacterMeta> characters)
+    protected override void Render()
     {
-        var downloadsRequired = 0;
-        foreach (var meta in characters)
-        {
-            if (!Context.BundleManager.IsUpToDate(CharacterAsset.GetMainBundleId(meta.AssetId)))
-            {
-                downloadsRequired++;
-            }
-        }
-        print($"Number of downloads required: {downloadsRequired}");
-
-        if (!await Context.BundleManager.DownloadAndSaveCatalog())
-        {
-            Dialog.PromptGoBack("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
-            return;
-        }
-
-        availableCharacters.Clear();
-
-        var downloaded = 0;
-        foreach (var meta in characters)
-        {
-            var (success, locallyResolved) = await Context.CharacterManager.DownloadCharacterAssetDialog(CharacterAsset.GetMainBundleId(meta.AssetId));
-            if (success && !locallyResolved)
-            {
-                downloaded++;
-                print("Downloaded " + meta.AssetId);
-            }
-            if (!success)
-            {
-                Toast.Next(Toast.Status.Failure, "CHARACTER_FAILED_TO_DOWNLOAD".Get());
-            }
-            else
-            {
-                availableCharacters.Add(meta);
-            }
-        }
-        print($"Number of downloads: {downloaded}");
-
-        if (downloaded > downloadsRequired)
-        {
-            // Update was performed, which requires player to restart the game
-            // Why? Too lazy to figure out dynamic reloads...
-            Dialog.PromptUnclosable("DIALOG_RESTART_REQUIRED".Get());
-            return;
-        }
-
-        if (availableCharacters.Count == 0)
-        {
-            Dialog.PromptGoBack("DIALOG_OFFLINE_FEATURE_NOT_AVAILABLE".Get());
-            return;
-        }
-
         previousButton.onPointerClick.RemoveAllListeners();
         nextButton.onPointerClick.RemoveAllListeners();
-        if (availableCharacters.Count == 1)
+        if (LoadedPayload.OwnedCharacters.Count == 1)
         {
             previousButton.scaleOnClick = false;
             nextButton.scaleOnClick = false;
@@ -146,13 +145,18 @@ public class CharacterSelectionScreen : Screen
             nextButton.onPointerClick.AddListener(_ => NextCharacter());
         }
 
-        selectedIndex =
-            availableCharacters.FindIndex(it =>
-                it.AssetId == Context.CharacterManager.SelectedCharacterId);
-        if (selectedIndex < 0) selectedIndex = 0; // Reset to default
-        LoadCharacter(availableCharacters[selectedIndex]);
+        base.Render();
+    }
+
+    protected override void OnRendered()
+    {
+        base.OnRendered();
         
-        Dialog.PromptAlert("ALPHA_CHARACTER_WARNING".Get());
+        LoadedPayload.SelectedIndex =
+            LoadedPayload.OwnedCharacters.FindIndex(it =>
+                it.AssetId == Context.CharacterManager.SelectedCharacterId);
+        if (LoadedPayload.SelectedIndex < 0) LoadedPayload.SelectedIndex = 0; // Reset to default
+        LoadCharacter(LoadedPayload.OwnedCharacters[LoadedPayload.SelectedIndex]);
     }
 
     public async void LoadCharacter(CharacterMeta meta)
@@ -184,7 +188,7 @@ public class CharacterSelectionScreen : Screen
         nameText.text = meta.Name;
         nameGradient.SetGradient(character.nameGradient.GetGradient());
         descriptionText.text = meta.Description;
-        levelCard.SetModel(meta.Level.ToLevel(LevelType.Community)); // TODO: Change this to library once ready
+        levelCard.SetModel(meta.Level.ToLevel(LevelType.Library));
         illustratorText.text = meta.Illustrator.Name;
         illustratorProfileButton.onPointerClick.SetListener(_ => Application.OpenURL(meta.Illustrator.Url));
         if (meta.CharacterDesigner != null && !meta.CharacterDesigner.Name.IsNullOrEmptyTrimmed())
@@ -219,13 +223,33 @@ public class CharacterSelectionScreen : Screen
 
     private void NextCharacter()
     {
-        selectedIndex = (selectedIndex + 1).Mod(availableCharacters.Count);
-        LoadCharacter(availableCharacters[selectedIndex]);
+        LoadedPayload.SelectedIndex = (LoadedPayload.SelectedIndex + 1).Mod(LoadedPayload.OwnedCharacters.Count);
+        LoadCharacter(LoadedPayload.OwnedCharacters[LoadedPayload.SelectedIndex]);
     }
 
     private void PreviousCharacter()
     {
-        selectedIndex = (selectedIndex - 1).Mod(availableCharacters.Count);
-        LoadCharacter(availableCharacters[selectedIndex]);
+        LoadedPayload.SelectedIndex = (LoadedPayload.SelectedIndex - 1).Mod(LoadedPayload.OwnedCharacters.Count);
+        LoadCharacter(LoadedPayload.OwnedCharacters[LoadedPayload.SelectedIndex]);
     }
+    
+    public class Payload : ScreenPayload
+    {
+        public readonly List<CharacterMeta> OwnedCharacters = new List<CharacterMeta>();
+        public int SelectedIndex;
+    }
+    
+    public new Payload IntentPayload => (Payload) base.IntentPayload;
+    public new Payload LoadedPayload
+    {
+        get => (Payload) base.LoadedPayload;
+        set => base.LoadedPayload = value;
+    }
+    
+    public override ScreenPayload GetDefaultPayload() => new Payload();
+    
+    public const string Id = "CharacterSelection";
+
+    public override string GetId() => Id;
+    
 }

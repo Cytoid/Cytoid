@@ -19,7 +19,7 @@ public class BundleManager
     private static string BuiltInCatalogPath => Application.streamingAssetsPath + "/catalog.json";
     private static string CachedCatalogPath => Application.temporaryCachePath + "/catalog.json";
     
-    private static List<string> BuiltInBundles = new List<string>
+    public static readonly List<string> BuiltInBundles = new List<string>
     {
         "character_sayaka",
         "character_sayaka_tachie",

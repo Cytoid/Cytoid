@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using DG.Tweening;
 using MoreMountains.NiceVibrations;
@@ -14,6 +13,7 @@ public class RecordCard : InteractableMonoBehavior
     
     public Image cover;
     public Text title;
+    public Text date;
     public RectTransform ownerRoot;
     public Avatar ownerAvatar;
     public Text ownerName;
@@ -68,6 +68,7 @@ public class RecordCard : InteractableMonoBehavior
         recordView = view;
 
         title.text = record.chart.level.Title;
+        date.text = record.date.ToLocalTime().Date.Humanize();
         difficultyBall.SetModel(Difficulty.Parse(record.chart.type), record.chart.difficulty);
         performanceWidget.SetModel(new LevelRecord.Performance{Score = record.score, Accuracy = record.accuracy});
 
@@ -140,9 +141,9 @@ public class RecordCard : InteractableMonoBehavior
             try
             {
                 const int width = 576;
-                const int height = 192;
+                const int height = 216;
                 var path = record.chart.level.Cover.ThumbnailUrl.WithImageCdn().WithSizeParam(width, height);
-                sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.CollectionCoverThumbnail,
+                sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.RecordCoverThumbnail,
                     coverToken.Token, true,
                     new SpriteAssetOptions(new[] {width, height}));
             }

@@ -216,9 +216,9 @@ public class CollectionCard : InteractableMonoBehavior
             Context.AudioManager.Get("Navigate2").Play();
             Context.Haptic(HapticTypes.MediumImpact, true);
 
-            CollectionDetailsScreen.LoadedContent = new CollectionDetailsScreen.Content {Id = collection.id, TitleOverride = titleOverride, SloganOverride = sloganOverride};
             Context.ScreenManager.ChangeScreen(CollectionDetailsScreen.Id, ScreenTransition.In, 0.4f,
-                transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter());
+                transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter(),
+                payload: new CollectionDetailsScreen.Payload {CollectionId = collection.id, TitleOverride = titleOverride, SloganOverride = sloganOverride});
         }
     }
 

@@ -15,6 +15,7 @@ public class AssetMemory
     {
         {AssetTag.LocalLevelCoverThumbnail, 24},
         {AssetTag.RemoteLevelCoverThumbnail, 24},
+        {AssetTag.RecordCoverThumbnail, 12},
         {AssetTag.PlayerAvatar, 1},
         {AssetTag.Avatar, 100},
         {AssetTag.GameCover, 1},
@@ -399,6 +400,7 @@ public enum AssetTag
     LocalLevelCoverThumbnail,
     RemoteLevelCoverThumbnail,
     CollectionCoverThumbnail,
+    RecordCoverThumbnail,
     GameCover,
     TierCover,
     CharacterThumbnail,
@@ -419,7 +421,7 @@ public class AssetOptions
 
 public class SpriteAssetOptions : AssetOptions
 {
-    public int[] FitCropSize;
+    public int[] FitCropSize { get; }
 
     public SpriteAssetOptions(int[] fitCropSize)
     {

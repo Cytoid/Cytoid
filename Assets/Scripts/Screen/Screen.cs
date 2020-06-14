@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
 using UniRx.Async;
 using UnityEditor;
 using UnityEngine;
@@ -70,6 +71,12 @@ public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveLi
         }
     }
     
+    public ScreenPayload IntentPayload { get; set; }
+    public ScreenPayload LoadedPayload { get; set; }
+    public virtual ScreenPayload GetDefaultPayload() => null;
+    public bool Rendered { get; private set; }
+    private List<CancellationTokenSource> ScreenTasks { get; } = new List<CancellationTokenSource>();
+
     [HideInInspector] public UnityEvent onScreenInitialized = new UnityEvent();
     [HideInInspector] public UnityEvent onScreenBecameActive = new UnityEvent();
     [HideInInspector] public UnityEvent onScreenPostActive = new UnityEvent();
@@ -78,6 +85,7 @@ public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveLi
     [HideInInspector] public UnityEvent onScreenBecameInactive = new UnityEvent();
     [HideInInspector] public UnityEvent onScreenLeaveCompleted = new UnityEvent();
     [HideInInspector] public UnityEvent onScreenDestroyed = new UnityEvent();
+    [HideInInspector] public UnityEvent onScreenPayloadLoaded = new UnityEvent();
 
     protected virtual async void Awake()
     {
@@ -195,10 +203,64 @@ public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveLi
         onScreenInitialized.Invoke();
     }
 
-    public virtual void OnScreenBecameActive()
+    public virtual async void OnScreenBecameActive()
     {
         CanvasGroup.blocksRaycasts = true;
         onScreenBecameActive.Invoke();
+
+        if (IntentPayload == null) IntentPayload = GetDefaultPayload();
+        if (LoadedPayload == IntentPayload)
+        {
+            Debug.Log($"{GetId()}: Loaded payload identical to intent payload. Skipping loading.");
+            if (!Rendered) Render();
+            if (Rendered) OnRendered();
+        }
+        else
+        {
+            var promise = new ScreenLoadPromise();
+            LoadPayload(promise);
+            await promise;
+            Debug.Log($"{GetId()}: Loaded intent payload.");
+            LoadedPayload = promise.Result;
+            if (LoadedPayload != null && State == ScreenState.Active)
+            {
+                onScreenPayloadLoaded.Invoke();
+                Rendered = false;
+                Render();
+                if (Rendered) OnRendered();
+            }
+        }
+    }
+
+    /**
+     * Perform actions on IntentPayload and resolves the promise with it.
+     */
+    protected virtual void LoadPayload(ScreenLoadPromise promise)
+    {
+        promise.Resolve(IntentPayload);
+    }
+
+    /**
+     * Draw layout, setup listeners, etc. Should be non-async (in the way that player cannot perform other actions meanwhile).
+     */
+    protected virtual void Render()
+    {
+        Rendered = true;
+        Debug.Log($"{GetId()}: Rendered.");
+    }
+
+    /**
+     * Perform only actions that are required every time screen becomes active.
+     */
+    protected virtual void OnRendered()
+    {
+    }
+
+    protected void AddTask(Func<CancellationToken, UniTask> func)
+    {
+        var cts = new CancellationTokenSource();
+        ScreenTasks.Add(cts);
+        func(cts.Token);
     }
 
     public virtual void OnScreenUpdate()
@@ -210,6 +272,9 @@ public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveLi
     {
         CanvasGroup.blocksRaycasts = false;
         onScreenBecameInactive.Invoke();
+        
+        ScreenTasks.ForEach(it => it.Cancel());
+        ScreenTasks.Clear();
     }
 
     public virtual void OnScreenDestroyed()
@@ -315,4 +380,14 @@ public static class ScreenExtensions
     {
         return (T) monoBehaviour.gameObject.GetScreenParent();
     }
+}
+
+[Serializable]
+public class ScreenPayload
+{
+}
+
+public class ScreenLoadPromise : PromiseTask<ScreenPayload>
+{
+    
 }

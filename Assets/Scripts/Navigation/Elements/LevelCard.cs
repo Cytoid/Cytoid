@@ -10,8 +10,6 @@ using UnityEngine.UI;
 
 public class LevelCard : InteractableMonoBehavior
 {
-    public static bool DoNotLoadCover = false;
-    
     public Image cover;
     public Text artist;
     public Text title;
@@ -29,8 +27,11 @@ public class LevelCard : InteractableMonoBehavior
     private CancellationTokenSource actionToken;
     private Vector2 pressPosition;
 
+    private Screen screenParent;
+
     public void ScrollCellContent(object levelObject)
     {
+        screenParent = this.GetScreenParent();
         SetModel((LevelView) levelObject);
     }
 
@@ -46,6 +47,9 @@ public class LevelCard : InteractableMonoBehavior
         cover.sprite = null;
         cover.DOKill();
         cover.SetAlpha(0);
+        
+        screenParent?.onScreenBecameActive.AddListener(OnScreenBecameActive);
+        screenParent = null;
     }
 
     private void Awake()
@@ -70,6 +74,13 @@ public class LevelCard : InteractableMonoBehavior
     {
         actionToken?.Cancel();
         coverToken?.Cancel();
+        screenParent?.onScreenBecameActive.RemoveListener(OnScreenBecameActive);
+    }
+
+    private void OnScreenBecameActive()
+    {
+        // Texture could be collected, so we try to load again
+        if (loadedCover) LoadCover();
     }
 
     public void SetModel(Level level)
@@ -116,6 +127,7 @@ public class LevelCard : InteractableMonoBehavior
 
         LayoutFixer.Fix(transform, count: 2);
 
+        loadedCover = false;
         LoadCover();
     }
 
@@ -123,7 +135,8 @@ public class LevelCard : InteractableMonoBehavior
 
     public async void LoadCover()
     {
-        loadedCover = false;
+        if (loadedCover && cover.sprite != null && cover.sprite.texture != null) return;
+        
         cover.DOKill();
         cover.SetAlpha(0);
 
@@ -133,7 +146,7 @@ public class LevelCard : InteractableMonoBehavior
             coverToken = null;
         }
         
-        if (DoNotLoadCover)
+        /*if (DoNotLoadCover)
         {
             coverToken = new CancellationTokenSource();
             try
@@ -144,7 +157,7 @@ public class LevelCard : InteractableMonoBehavior
             {
                 return;
             }
-        }
+        }*/
 
         if (!((RectTransform) transform).IsVisible())
         {
@@ -153,7 +166,7 @@ public class LevelCard : InteractableMonoBehavior
             {
                 await UniTask.WaitUntil(() => ((RectTransform) transform).IsVisible(),
                     cancellationToken: coverToken.Token);
-                await UniTask.DelayFrame(0);
+                await UniTask.DelayFrame(10, cancellationToken: coverToken.Token);
             }
             catch
             {
@@ -165,6 +178,7 @@ public class LevelCard : InteractableMonoBehavior
         Sprite sprite = null;
         try
         {
+            DebugGUI.Log("LevelCard: Loading " + level.Id);
             if (level.IsLocal)
             {
                 var path = "file://" + level.Path + LevelManager.CoverThumbnailFilename;
@@ -295,17 +309,6 @@ public class LevelCard : InteractableMonoBehavior
             Context.SelectedLevel = level;
             Context.AudioManager.Get("Navigate2").Play();
             Context.Haptic(HapticTypes.MediumImpact, true);
-
-            if (Context.ScreenManager.ActiveScreen is CharacterSelectionScreen)
-            {
-                while (Context.ScreenManager.PeekHistory().Let(it => it != null && it != MainMenuScreen.Id))
-                {
-                    Context.ScreenManager.PopAndPeekHistory();
-                }
-
-                Context.ScreenManager.History.Push(LevelSelectionScreen.Id);
-                // TODO: Switch to official category
-            }
 
             Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.In, 0.4f,
                 transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter());

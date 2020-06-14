@@ -16,6 +16,52 @@ using UnityEngine.UI;
 
 public static class CommonExtensions
 {
+    /**
+     * Credits:
+     * https://stackoverflow.com/a/1248/2706176
+     */
+    public static string Humanize(this DateTime date)
+    {
+        const int second = 1;
+        const int minute = 60 * second;
+        const int hour = 60 * minute;
+        const int day = 24 * hour;
+        const int month = 30 * day;
+
+        var ts = new TimeSpan(DateTime.UtcNow.Ticks - date.Ticks);
+        var delta = Math.Abs(ts.TotalSeconds);
+
+        if (delta < 1 * minute)
+            return ts.Seconds == 1 ? "RELATIVE_TIME_SECOND_AGO_X".Get(ts.Seconds) : "RELATIVE_TIME_SECONDS_AGO_X".Get(ts.Seconds);
+
+        if (delta < 2 * minute)
+            return "RELATIVE_TIME_MINUTE_AGO_X".Get(ts.Minutes);
+
+        if (delta < 45 * minute)
+            return "RELATIVE_TIME_MINUTES_AGO_X".Get(ts.Minutes);
+
+        if (delta < 90 * minute)
+            return "RELATIVE_TIME_HOUR_AGO_X".Get(ts.Hours);
+
+        if (delta < 24 * hour)
+            return "RELATIVE_TIME_HOURS_AGO_X".Get(ts.Hours);
+
+        if (delta < 48 * hour)
+            return "RELATIVE_TIME_DAY_AGO_X".Get(ts.Days);
+
+        if (delta < 30 * day)
+            return "RELATIVE_TIME_DAYS_AGO_X".Get(ts.Days);
+
+        if (delta < 12 * month)
+        {
+            var months = Convert.ToInt32(Math.Floor((double)ts.Days / 30));
+            return months == 1 ? "RELATIVE_TIME_MONTH_AGO_X".Get(months) : "RELATIVE_TIME_MONTHS_AGO_X".Get(months);
+        }
+
+        var years = Convert.ToInt32(Math.Floor((double)ts.Days / 365));
+        return years == 1 ? "RELATIVE_TIME_YEAR_AGO_X".Get(years) : "RELATIVE_TIME_YEARS_AGO_X".Get(years);
+    }
+    
     public static Dictionary<TK, TV> WithOverrides<TK, TV>(this Dictionary<TK, TV> baseDictionary, Dictionary<TK, TV> overrideDictionary)
     {
         baseDictionary = new Dictionary<TK, TV>(baseDictionary);
@@ -151,6 +197,14 @@ public static class CommonExtensions
     {
         return Enumerable.Range(0, int.MaxValue)
             .Zip(source, (index, it) => (selector(it), index, it)).Min().Item3;
+    }
+    
+    public static TSource MaxBy<TSource, TMin>(
+        this IEnumerable<TSource> source,
+        Func<TSource, TMin> selector)
+    {
+        return Enumerable.Range(0, int.MaxValue)
+            .Zip(source, (index, it) => (selector(it), index, it)).Max().Item3;
     }
 
     public static void SetLayerRecursively(this GameObject go, int layerNumber)

@@ -1,17 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json;
-using Proyecto26;
-using UniRx.Async;
 using UnityEngine.UI;
 
-public class LevelSelectionScreen : Screen, ScreenChangeListener
+public class LevelSelectionScreen : Screen
 {
-    private static float savedScrollPosition = -1;
-    public static Content SavedContent;
-    
-    public const string Id = "LevelSelection";
 
     public TransitionElement levelGrid;
     public LoopVerticalScrollRect scrollRect;
@@ -23,19 +16,16 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
     public ToggleRadioGroupPreferenceElement sortOrderRadioGroup;
     public InputField searchInputField;
 
-    public override string GetId() => Id;
-
-    public override async void OnScreenInitialized()
+    public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
-
-        categorySelect.onSelect.AddListener((index, canvasGroup) => RefillLevels());
+        
         Context.Library.OnLibraryLoaded.AddListener(() =>
         {
             if (State == ScreenState.Active) RefillLevels();
         });
         
-        void InstantiateOptions() {
+        void SetupOptions() {
             var lp = Context.Player;
             sortByRadioGroup.SetContent("LEVEL_SELECT_SORT_BY".Get(), null, () => lp.Settings.LocalLevelSort,
                 it => lp.Settings.LocalLevelSort = it, new[]
@@ -43,7 +33,8 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
                     ("LEVEL_SELECT_SORT_BY_ADDED_DATE".Get(), LevelSort.AddedDate),
                     ("LEVEL_SELECT_SORT_BY_PLAYED_DATE".Get(), LevelSort.LastPlayedDate),
                     ("LEVEL_SELECT_SORT_BY_DIFFICULTY".Get(), LevelSort.Difficulty),
-                    ("LEVEL_SELECT_SORT_BY_TITLE".Get(), LevelSort.Title)
+                    ("LEVEL_SELECT_SORT_BY_TITLE".Get(), LevelSort.Title),
+                    ("LEVEL_SELECT_SORT_BY_PLAY_COUNT".Get(), LevelSort.PlayCount),
                 }).SaveSettingsOnChange();
             sortByRadioGroup.radioGroup.onSelect.AddListener(value => RefillLevels());
             sortOrderRadioGroup.SetContent("LEVEL_SELECT_SORT_ORDER".Get(), null, () => lp.Settings.LocalLevelSortIsAscending,
@@ -60,8 +51,8 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
             });
         }
         
-        InstantiateOptions();
-        Context.OnLanguageChanged.AddListener(InstantiateOptions);
+        SetupOptions();
+        Context.OnLanguageChanged.AddListener(SetupOptions);
 
         Context.LevelManager.OnLevelDeleted.AddListener(_ =>
         {
@@ -70,35 +61,11 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         });
     }
 
-    public override async void OnScreenBecameActive()
-    {
-        base.OnScreenBecameActive();
-        
-        if (savedScrollPosition > 0)
-        {
-            LevelCard.DoNotLoadCover = true;
-            RefillLevels();
-            scrollRect.SetVerticalNormalizedPositionFix(savedScrollPosition);
-            
-            await UniTask.DelayFrame(5);
-            LevelCard.DoNotLoadCover = false;
-        }
-        else
-        {
-            RefillLevels();
-        }
-
-        if (SavedContent != null)
-        {
-            categorySelect.Select(SavedContent.CategoryIndex);
-        }
-    }
-
     public override void OnScreenBecameInactive()
     {
         base.OnScreenBecameInactive();
-        LevelCard.DoNotLoadCover = false;
-        savedScrollPosition = scrollRect.verticalNormalizedPosition;
+        LoadedPayload.ScrollPosition = scrollRect.verticalNormalizedPosition;
+        LoadedPayload.CategoryIndex = categorySelect.SelectedIndex;
     }
 
     public override void OnScreenDestroyed()
@@ -108,14 +75,21 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         Destroy(scrollRect);
     }
 
-    public void RefillLevels(bool saveScrollPosition = false)
+    protected override void Render()
     {
-        print("Refilling levels");
-
-        if (saveScrollPosition)
+        if (LoadedPayload.ScrollPosition > 0) scrollRect.SetVerticalNormalizedPositionFix(LoadedPayload.ScrollPosition);
+        categorySelect.Select(LoadedPayload.CategoryIndex);
+        RefillLevels();
+        categorySelect.onSelect.AddListener((index, canvasGroup) =>
         {
-            savedScrollPosition = scrollRect.verticalNormalizedPosition;
-        }
+            RefillLevels();
+        });
+        base.Render();
+    }
+
+    public void RefillLevels(bool keepScrollPosition = false)
+    {
+        var scrollPosition = scrollRect.verticalNormalizedPosition;
 
         // Sort with selected method
         Enum.TryParse(sortByRadioGroup.radioGroup.Value, out LevelSort sort);
@@ -137,9 +111,9 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
 
         RefillLevels(sort, asc, query, filters);
 
-        if (saveScrollPosition)
+        if (keepScrollPosition)
         {
-            scrollRect.SetVerticalNormalizedPositionFix(savedScrollPosition);
+            scrollRect.SetVerticalNormalizedPositionFix(scrollPosition);
         }
     }
 
@@ -215,6 +189,9 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
             case LevelSort.LastPlayedDate:
                 levels.Sort((a, b) => a.Record.LastPlayedDate.CompareTo(b.Record.LastPlayedDate) * (asc ? 1 : -1));
                 break;
+            case LevelSort.PlayCount:
+                levels.Sort((a, b) => a.Record.PlayCounts.Values.Sum().CompareTo(b.Record.PlayCounts.Values.Sum()) * (asc ? 1 : -1));
+                break;
         }
 
         scrollRect.totalCount = levels.Count;
@@ -231,13 +208,6 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
             // Clear search query
             searchInputField.SetTextWithoutNotify("");
         }
-        if (from == this)
-        {
-            SavedContent = new Content
-            {
-                CategoryIndex = categorySelect.SelectedIndex
-            };
-        }
     }
 
     public override void OnScreenChangeFinished(Screen from, Screen to)
@@ -246,19 +216,32 @@ public class LevelSelectionScreen : Screen, ScreenChangeListener
         if (from == this)
         {
             Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalLevelCoverThumbnail);
-            scrollRect.ClearCells();
             if (to is MainMenuScreen)
             {
                 levelGrid.Leave();
-                savedScrollPosition = default;
+                LoadedPayload = null;
             }
         }
     }
 
-    public class Content
+    public class Payload : ScreenPayload
     {
         public int CategoryIndex;
+        public List<Level> Levels;
+        public float ScrollPosition;
     }
+    
+    public new Payload IntentPayload => (Payload) base.IntentPayload;
+    public new Payload LoadedPayload
+    {
+        get => (Payload) base.LoadedPayload;
+        set => base.LoadedPayload = value;
+    }
+
+    public override ScreenPayload GetDefaultPayload() => new Payload();
+    
+    public const string Id = "LevelSelection";
+    public override string GetId() => Id;
 
 }
 

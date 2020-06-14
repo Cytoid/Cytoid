@@ -12,7 +12,8 @@ public class AvatarNavigation : InteractableMonoBehavior
             Context.Haptic(HapticTypes.SoftImpact, true);
             Context.AudioManager.Get("Navigate1").Play(ignoreDsp: true);
             Context.ScreenManager.ChangeScreen(
-                Context.OnlinePlayer.IsAuthenticated ? ProfileScreen.Id : SignInScreen.Id, ScreenTransition.Out);
+                Context.OnlinePlayer.IsAuthenticated ? ProfileScreen.Id : SignInScreen.Id, ScreenTransition.Out,
+                addTargetScreenToHistory: false);
         }
         else
         {

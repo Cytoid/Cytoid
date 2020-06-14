@@ -1,18 +1,11 @@
-using System;
 using System.Linq;
 using DG.Tweening;
 using Proyecto26;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.UI;
 
 public class CollectionDetailsScreen : Screen
 {
-    public static Content LoadedContent;
-    private static float lastScrollPosition = -1;
-
-    public const string Id = "CollectionDetails";
-
     public TransitionElement icons;
     
     public LoopVerticalScrollRect scrollRect;
@@ -22,13 +15,7 @@ public class CollectionDetailsScreen : Screen
     public Text titleText;
     public Text sloganText;
 
-    [HideInInspector] public UnityEvent onContentLoaded = new UnityEvent();
-
-    private DateTimeOffset loadToken;
-    
-    public override string GetId() => Id;
-
-    public override async void OnScreenInitialized()
+    public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
         coverImage.sprite = null;
@@ -36,28 +23,7 @@ public class CollectionDetailsScreen : Screen
         sloganText.text = "";
     }
 
-    public override async void OnScreenBecameActive()
-    {
-        base.OnScreenBecameActive();
-
-        if (LoadedContent != null)
-        {
-            if (LoadedContent.Collection != null)
-            {
-                OnContentLoaded(LoadedContent);
-            }
-            else
-            {
-                LoadContent();
-            }
-        }
-        else
-        {
-            LoadContent();
-        }
-    }
-
-    public override async void OnScreenEnterCompleted()
+    public override void OnScreenEnterCompleted()
     {
         base.OnScreenEnterCompleted();
         var canvasRectTransform = Canvas.GetComponent<RectTransform>();
@@ -73,7 +39,7 @@ public class CollectionDetailsScreen : Screen
     public override void OnScreenBecameInactive()
     {
         base.OnScreenBecameInactive();
-        lastScrollPosition = scrollRect.verticalNormalizedPosition;
+        LoadedPayload.ScrollPosition = scrollRect.verticalNormalizedPosition;
     }
 
     public override void OnScreenDestroyed()
@@ -83,18 +49,18 @@ public class CollectionDetailsScreen : Screen
         Destroy(scrollRect);
     }
 
-    public void OnContentLoaded(Content content)
+    protected override void Render()
     {
-        var collection = content.Collection;
-        titleText.text = content.TitleOverride ?? collection.title;
-        sloganText.text = content.SloganOverride ?? collection.slogan;
+        var collection = LoadedPayload.Collection;
+        titleText.text = LoadedPayload.TitleOverride ?? collection.title;
+        sloganText.text = LoadedPayload.SloganOverride ?? collection.slogan;
         sloganText.transform.parent.RebuildLayout();
         scrollRect.totalCount = collection.levels.Count;
-        scrollRect.objectsToFill = collection.levels.Select(it => new LevelView{ Level = it.ToLevel(content.Type), DisplayOwner = true}).ToArray().Cast<object>().ToArray();
+        scrollRect.objectsToFill = collection.levels.Select(it => new LevelView{ Level = it.ToLevel(LoadedPayload.Type), DisplayOwner = true}).ToArray().Cast<object>().ToArray();
         scrollRect.RefillCells();
-        if (lastScrollPosition > 0)
+        if (LoadedPayload.ScrollPosition > 0)
         {
-            scrollRect.SetVerticalNormalizedPositionFix(lastScrollPosition);
+            scrollRect.SetVerticalNormalizedPositionFix(LoadedPayload.ScrollPosition);
         }
         scrollRect.GetComponent<TransitionElement>()
             .Let(it =>
@@ -103,20 +69,66 @@ public class CollectionDetailsScreen : Screen
                 it.Enter();
             });
 
-        if (content.Collection.owner.Uid != Context.OfficialAccountId)
+        icons.Leave(false, true);
+        if (LoadedPayload.Collection.owner.Uid != Context.OfficialAccountId)
         {
             icons.Enter();
         }
         
-        if (coverImage.sprite == null)
-        {
-            var token = loadToken = DateTimeOffset.Now;
+        base.Render();
+    }
 
-            async void LoadCover()
+    protected override void LoadPayload(ScreenLoadPromise promise)
+    {
+        coverImage.color = Color.black;
+
+        if (IntentPayload.Collection != null)
+        {
+            promise.Resolve(IntentPayload);
+            return;
+        }
+        
+        SpinnerOverlay.Show();
+        RestClient.Get<CollectionMeta>(new RequestHelper
             {
-                var sprite = await Context.AssetMemory.LoadAsset<Sprite>(content.Collection.cover.CoverUrl,
-                    AssetTag.CollectionCover, allowFileCache: true);
-                if (token != loadToken) return;
+                Uri = $"{Context.ApiUrl}/collections/{IntentPayload.CollectionId}",
+                Headers = Context.OnlinePlayer.GetRequestHeaders(),
+                EnableDebug = true
+            })
+            .Then(meta =>
+            {
+                IntentPayload.Collection = meta;
+
+                promise.Resolve(IntentPayload);
+            })
+            .CatchRequestError(error =>
+            {
+                Debug.LogError(error);
+                Dialog.PromptGoBack("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
+
+                promise.Reject();
+            })
+            .Finally(() => SpinnerOverlay.Hide());
+    }
+
+    protected override void OnRendered()
+    {
+        base.OnRendered();
+
+        if (coverImage.sprite == null || coverImage.sprite.texture == null)
+        {
+            AddTask(async token =>
+            {
+                Sprite sprite;
+                try
+                {
+                    sprite = await Context.AssetMemory.LoadAsset<Sprite>(LoadedPayload.Collection.cover.CoverUrl,
+                        AssetTag.CollectionCover, allowFileCache: true, cancellationToken: token);
+                }
+                catch
+                {
+                    return;
+                }
 
                 if (sprite != null)
                 {
@@ -124,64 +136,29 @@ public class CollectionDetailsScreen : Screen
                     coverImage.FitSpriteAspectRatio();
                     coverImage.DOColor(new Color(0.2f, 0.2f, 0.2f, 1), 0.4f);
                 }
-            }
-
-            LoadCover();
-        }
-        
-        onContentLoaded.Invoke();
-    }
-
-    public void LoadContent()
-    {
-        coverImage.color = Color.black;
-        
-        SpinnerOverlay.Show();
-
-        RestClient.Get<CollectionMeta>(new RequestHelper {
-            Uri = $"{Context.ApiUrl}/collections/{LoadedContent.Id}",
-            Headers = Context.OnlinePlayer.GetRequestHeaders(),
-            EnableDebug = true
-        })
-            .Then(meta =>
-            {
-                SpinnerOverlay.Hide();
-
-                LoadedContent.Collection = meta;
-                OnContentLoaded(LoadedContent);
-            })
-            .CatchRequestError(error =>
-            {
-                Debug.LogError(error);
-                Dialog.PromptGoBack("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
-                SpinnerOverlay.Hide();
             });
-    }
-
-    public override void OnScreenChangeFinished(Screen from, Screen to)
-    {
-        base.OnScreenChangeFinished(from, to);
-        if (from == this)
-        {
-            scrollRect.ClearCells();
-            if (!(to is ProfileScreen || to is GamePreparationScreen))
-            {
-                coverImage.sprite = null;
-                LoadedContent = null;
-                lastScrollPosition = default;
-                loadToken = DateTimeOffset.MinValue;
-                Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.CollectionCover);
-            }
         }
     }
 
-    public class Content
+    public class Payload : ScreenPayload
     {
-        public string Id;
+        public string CollectionId;
+        public CollectionMeta Collection;
         public string TitleOverride;
         public string SloganOverride;
         public LevelType Type = LevelType.Community;
-        public CollectionMeta Collection;
+        
+        public float ScrollPosition;
     }
+    
+    public new Payload IntentPayload => (Payload) base.IntentPayload;
+    public new Payload LoadedPayload
+    {
+        get => (Payload) base.LoadedPayload;
+        set => base.LoadedPayload = value;
+    }
+    
+    public const string Id = "CollectionDetails";
+    public override string GetId() => Id;
     
 }

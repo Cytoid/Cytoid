@@ -52,7 +52,7 @@ public class Level
 }
 
 public enum LevelType {
-    Community, Library, Event, Tier, Training
+    User, Tier
 }
 
 public static class LevelTypeExtensions {
@@ -60,16 +60,10 @@ public static class LevelTypeExtensions {
     {
         switch (type)
         {
-            case LevelType.Community:
+            case LevelType.User:
                 return Context.UserDataPath;
-            case LevelType.Library:
-                return Path.Combine(Application.persistentDataPath, "Library");
-            case LevelType.Event:
-                return Path.Combine(Application.temporaryCachePath, "Events");
             case LevelType.Tier:
                 return Path.Combine(Application.temporaryCachePath, "Tiers");
-            case LevelType.Training:
-                return Path.Combine(Application.temporaryCachePath, "Training");
             default:
                 throw new ArgumentOutOfRangeException(nameof(type), type, null);
         }

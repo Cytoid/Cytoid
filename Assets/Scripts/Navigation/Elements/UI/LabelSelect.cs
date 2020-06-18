@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq.Expressions;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Events;
@@ -10,10 +9,11 @@ public class LabelSelect : MonoBehaviour, ScreenBecameActiveListener
     
     public List<CanvasGroup> labels;
     public bool rememberIndex;
+    public bool selectOnScreenBecameActive = true;
 
     public LabelSelectEvent onSelect = new LabelSelectEvent();
 
-    public int SelectedIndex { get; private set; } = -1;
+    public int SelectedIndex { get; protected set; } = -1;
 
     private void Awake()
     {
@@ -55,6 +55,7 @@ public class LabelSelect : MonoBehaviour, ScreenBecameActiveListener
 
     public void OnScreenBecameActive()
     {
+        if (!selectOnScreenBecameActive) return;
         if (!rememberIndex)
         {
             SelectedIndex = -1;

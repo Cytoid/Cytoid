@@ -69,7 +69,8 @@ public class RadioGroup : MonoBehaviour
 
         this.value = value;
         if (selected != null) selected.Unselect();
-        selected = RadioButtons.First(it => it.value == value);
+        selected = RadioButtons.FirstOrDefault(it => it.value == value);
+        if (selected == default) selected = RadioButtons.First(); // Default to first value
         selected.Select(false);
         if (notify)
         {

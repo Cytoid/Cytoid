@@ -26,7 +26,7 @@ public class SignInScreen : Screen
     public override void OnScreenBecameActive()
     {
         base.OnScreenBecameActive();
-        characterDisplay.Load("SayakaTachie");
+        characterDisplay.Load(CharacterAsset.GetTachieBundleId("Sayaka"));
     }
 
     public async UniTask SignIn()

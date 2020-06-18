@@ -20,7 +20,7 @@ public static class CommonExtensions
      * Credits:
      * https://stackoverflow.com/a/1248/2706176
      */
-    public static string Humanize(this DateTime date)
+    public static string Humanize(this DateTime localDate)
     {
         const int second = 1;
         const int minute = 60 * second;
@@ -28,7 +28,7 @@ public static class CommonExtensions
         const int day = 24 * hour;
         const int month = 30 * day;
 
-        var ts = new TimeSpan(DateTime.UtcNow.Ticks - date.Ticks);
+        var ts = new TimeSpan(DateTime.Now.Ticks - localDate.Ticks);
         var delta = Math.Abs(ts.TotalSeconds);
 
         if (delta < 1 * minute)

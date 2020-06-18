@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Proyecto26;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -16,8 +15,20 @@ public class BundleManager
 
     public Dictionary<string, Entry> LoadedBundles { get; } = new Dictionary<string, Entry>();
 
-    private static string BuiltInCatalogPath => Application.streamingAssetsPath + "/catalog.json";
-    private static string CachedCatalogPath => Application.temporaryCachePath + "/catalog.json";
+    private static string BuiltInCatalogPath => BuiltInBundlesBasePath + "catalog.json";
+    private static string BuiltInBundlesBasePath {
+        get
+        {
+#if UNITY_ANDROID
+            return Application.streamingAssetsPath + "/Android/Bundles/";
+#elif UNITY_IOS
+            return "file://" + Application.streamingAssetsPath + "/iOS/Bundles/";
+#else
+            throw new InvalidOperationException();
+#endif
+        }
+    }
+    private static string CachedCatalogPath => Application.temporaryCachePath + "/cached_catalog.json";
     
     public static readonly List<string> BuiltInBundles = new List<string>
     {
@@ -119,7 +130,7 @@ public class BundleManager
     public bool IsUpToDate(string bundleId)
     {
         if (!Catalog.ContainsEntry(bundleId)) return false;
-        return Caching.IsVersionCached(bundleId, Hash128.Parse(Catalog.GetEntry(bundleId).hash));
+        return Caching.IsVersionCached(bundleId, (int) Catalog.GetEntry(bundleId).version);
     }
 
     public async UniTask<AssetBundle> LoadCachedBundle(string bundleId)
@@ -130,12 +141,24 @@ public class BundleManager
             return LoadedBundles[bundleId].AssetBundle;
         }
         Debug.Log($"[BundleManager] Requested cached bundle {bundleId}");
+        Debug.Log($"[BundleManager] Version: {Catalog.GetEntry(bundleId).version}");
         if (!IsCached(bundleId)) return null;
-        var list = new List<Hash128>();
-        Caching.GetCachedVersions(bundleId, list);
-        var catalogHash = Hash128.Parse(Catalog.GetEntry(bundleId).hash);
-        var hash = list.Contains(catalogHash) ? catalogHash : list.Last();
-        using (var request = UnityWebRequestAssetBundle.GetAssetBundle(bundleId, hash))
+        UnityWebRequest request;
+        if (IsUpToDate(bundleId))
+        {
+            Debug.Log($"[BundleManager] Cached bundle matches version");
+            // Use latest version
+            request = UnityWebRequestAssetBundle.GetAssetBundle(bundleId, Catalog.GetEntry(bundleId).version, 0U);
+        }
+        else
+        {
+            Debug.Log($"[BundleManager] Cached bundle does not match version. Using any...");
+            // Use any existing version
+            var list = new List<Hash128>();
+            Caching.GetCachedVersions(bundleId, list);
+            request = UnityWebRequestAssetBundle.GetAssetBundle(bundleId, list.Last());
+        }
+        using (request)
         {
             await request.SendWebRequest();
             if (request.isNetworkError || request.isHttpError)
@@ -171,6 +194,13 @@ public class BundleManager
         {
             Debug.Log($"[BundleManager] Requested StreamingAssets bundle {bundleId}");
         }
+        Debug.Log($"[BundleManager] Version: {Catalog.GetEntry(bundleId).version}");
+
+        if (!Catalog.ContainsEntry(bundleId))
+        {
+            Debug.LogError($"[BundleManager] {bundleId} does not exist in the catalog!");
+            return null;
+        }
 
         if (onLocallyResolved == default) onLocallyResolved = () => { };
         if (onDownloadSucceeded == default) onDownloadSucceeded = () => { };
@@ -182,19 +212,15 @@ public class BundleManager
             Debug.Log($"[BundleManager] Bundle is cached");
             
             if (IsUpToDate(bundleId)) {
-                Debug.Log($"[BundleManager] Bundle is up to date");
+                Debug.Log($"[BundleManager] Cached bundle matches version");
                 onLocallyResolved();
 
                 if (!instantiate) return null;
                 return await LoadCachedBundle(bundleId);
             }
-
-            var localVersions = new List<Hash128>();
-            Caching.GetCachedVersions(bundleId, localVersions);
-            Debug.Log($"[BundleManager] Local hash {localVersions.Last()}, remote hash {Catalog.GetEntry(bundleId).hash}");
         }
 
-        var downloadUrl = loadFromStreamingAssets ? Application.streamingAssetsPath + "/Bundles/" + bundleId : Context.BundleRemoteFullUrl + bundleId;
+        var downloadUrl = loadFromStreamingAssets ? BuiltInBundlesBasePath + bundleId : Context.BundleRemoteFullUrl + bundleId;
         Debug.Log($"[BundleManager] URL: {downloadUrl}");
         
         // Check download size
@@ -218,7 +244,7 @@ public class BundleManager
         }
 
         Dialog dialog = null;
-        var request = UnityWebRequestAssetBundle.GetAssetBundle(downloadUrl, Hash128.Parse(Catalog.GetEntry(bundleId).hash));
+        var request = UnityWebRequestAssetBundle.GetAssetBundle(downloadUrl, Catalog.GetEntry(bundleId).version, 0U);
         var aborted = false;
         if (showDialog)
         {
@@ -344,7 +370,7 @@ public class BundleCatalog
     [Serializable]
     public class Entry
     {
-        public string hash;
+        public uint version;
     }
     
 }

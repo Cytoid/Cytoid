@@ -86,6 +86,7 @@ public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveLi
     [HideInInspector] public UnityEvent onScreenLeaveCompleted = new UnityEvent();
     [HideInInspector] public UnityEvent onScreenDestroyed = new UnityEvent();
     [HideInInspector] public UnityEvent onScreenPayloadLoaded = new UnityEvent();
+    [HideInInspector] public UnityEvent onScreenRendered = new UnityEvent();
 
     protected virtual async void Awake()
     {
@@ -217,6 +218,7 @@ public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveLi
         }
         else
         {
+            LoadedPayload = null;
             var promise = new ScreenLoadPromise();
             LoadPayload(promise);
             await promise;
@@ -254,9 +256,10 @@ public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveLi
      */
     protected virtual void OnRendered()
     {
+        onScreenRendered.Invoke();
     }
 
-    protected void AddTask(Func<CancellationToken, UniTask> func)
+    public void AddTask(Func<CancellationToken, UniTask> func)
     {
         var cts = new CancellationTokenSource();
         ScreenTasks.Add(cts);

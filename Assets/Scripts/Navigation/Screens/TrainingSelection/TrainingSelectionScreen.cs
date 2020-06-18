@@ -95,8 +95,6 @@ public class TrainingSelectionScreen : Screen
         // If offline: load from static list
         // Then for any not found in path & data built in, extract from StreamingAssets folder
 
-        await Context.LevelManager.LoadLevelsOfType(LevelType.Training);
-
         var levels = new List<Level>();
         var builtInLevelsToUnpack = new List<string>();
         if (Context.IsOnline())
@@ -114,9 +112,9 @@ public class TrainingSelectionScreen : Screen
                     
                     foreach (var onlineLevel in data.Levels)
                     {
-                        if (onlineLevel.HasLocal(LevelType.Training) || !BuiltInData.TrainingModeLevelUids.Contains(onlineLevel.Uid))
+                        if (onlineLevel.HasLocal(LevelType.User) || !BuiltInData.TrainingModeLevelUids.Contains(onlineLevel.Uid))
                         {
-                            levels.Add(onlineLevel.ToLevel(LevelType.Training));
+                            levels.Add(onlineLevel.ToLevel(LevelType.User));
                         }
                         else
                         {
@@ -142,7 +140,7 @@ public class TrainingSelectionScreen : Screen
             foreach (var uid in levelUids)
             {
                 if (Context.LevelManager.LoadedLocalLevels.ContainsKey(uid)
-                    && Context.LevelManager.LoadedLocalLevels[uid].Type == LevelType.Training)
+                    && Context.LevelManager.LoadedLocalLevels[uid].Type == LevelType.User)
                 {
                     levels.Add(Context.LevelManager.LoadedLocalLevels[uid]);
                 }
@@ -204,11 +202,11 @@ public class TrainingSelectionScreen : Screen
                 Toast.Next(Toast.Status.Loading, "TOAST_INITIALIZING_TRAINING_MODE".Get());
 
                 Context.LevelManager.OnLevelInstallProgress.AddListener(SpinnerOverlay.OnLevelInstallProgress);
-                var jsonPaths = await Context.LevelManager.InstallLevels(packagePaths, LevelType.Training);
+                var jsonPaths = await Context.LevelManager.InstallLevels(packagePaths, LevelType.User);
                 Context.LevelManager.OnLevelInstallProgress.RemoveListener(SpinnerOverlay.OnLevelInstallProgress);
             
                 Context.LevelManager.OnLevelLoadProgress.AddListener(SpinnerOverlay.OnLevelLoadProgress);
-                var loadedLevels =  await Context.LevelManager.LoadFromMetadataFiles(LevelType.Training, jsonPaths);
+                var loadedLevels =  await Context.LevelManager.LoadFromMetadataFiles(LevelType.User, jsonPaths);
                 Context.LevelManager.OnLevelLoadProgress.RemoveListener(SpinnerOverlay.OnLevelLoadProgress);
 
                 levels.AddRange(loadedLevels);
@@ -232,7 +230,6 @@ public class TrainingSelectionScreen : Screen
             {
                 LoadedContent = null;
                 lastScrollPosition = default;
-                Context.LevelManager.UnloadLevelsOfType(LevelType.Training);
             }
         }
     }

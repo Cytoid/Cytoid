@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -88,7 +89,6 @@ public class Game : MonoBehaviour
     {
         ContentLayer = LayerMask.NameToLayer("Content");
         Renderer = new GameRenderer(this);
-        
 #if !UNITY_EDITOR
         EditorMusicInitialPosition = 0;
         EditorGameMode = GameMode.Unspecified;
@@ -107,6 +107,7 @@ public class Game : MonoBehaviour
         }
         catch (Exception e)
         {
+            Debug.LogError(e);
             // Not editor
             if (Context.SelectedGameMode != GameMode.Unspecified)
             {
@@ -165,7 +166,7 @@ public class Game : MonoBehaviour
             if (Context.SelectedLevel == null && Application.isEditor)
             {
                 // Load test level
-                await Context.LevelManager.LoadFromMetadataFiles(LevelType.Community, new List<string> {
+                await Context.LevelManager.LoadFromMetadataFiles(LevelType.User, new List<string> {
                     $"{Context.UserDataPath}/{EditorDefaultLevelDirectory}/level.json"
                 });
                 Context.SelectedLevel = Context.LevelManager.LoadedLocalLevels.Values.First();
@@ -297,10 +298,10 @@ public class Game : MonoBehaviour
         ObjectPool.Initialize();
 
         IsLoaded = true;
+        Context.ScreenManager.ChangeScreen(OverlayScreen.Id, ScreenTransition.None);
         onGameLoaded.Invoke(this);
 
         levelInfoParent.transform.RebuildLayout();
-        Context.ScreenManager.ChangeScreen(OverlayScreen.Id, ScreenTransition.None);
         
         if (startAutomatically)
         {
@@ -311,9 +312,7 @@ public class Game : MonoBehaviour
     protected async virtual void StartGame()
     {
         await UniTask.WhenAll(BeforeStartTasks);
-        
-        Context.ScreenManager.ChangeScreen(OverlayScreen.Id, ScreenTransition.None);
-        
+
         MusicStartedTimestamp = Music.PlayScheduled(AudioTrackIndex.Reserved1, 1.0f);
 
         await UniTask.WaitUntil(

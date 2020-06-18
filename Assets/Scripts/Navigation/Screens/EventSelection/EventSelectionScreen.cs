@@ -43,7 +43,7 @@ public class EventSelectionScreen : Screen
     protected override async void LoadPayload(ScreenLoadPromise promise)
     {
         SpinnerOverlay.Show();
-        await Context.LevelManager.LoadLevelsOfType(LevelType.Event);
+        await Context.LevelManager.LoadLevelsOfType(LevelType.User);
 
         RestClient.GetArray<EventMeta>(new RequestHelper
             {
@@ -191,10 +191,10 @@ public class EventSelectionScreen : Screen
                         Uri = $"{Context.ApiUrl}/levels/{meta.levelId}"
                     }).Then(level =>
                     {
-                        Context.SelectedLevel = level.ToLevel(LevelType.Event);
                         Context.ScreenManager.ChangeScreen(
                             GamePreparationScreen.Id, ScreenTransition.In, 0.4f,
-                            transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter()
+                            transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter(),
+                            payload: new GamePreparationScreen.Payload {Level = level.ToLevel(LevelType.User)}
                         );
                     }).CatchRequestError(error =>
                     {
@@ -208,7 +208,7 @@ public class EventSelectionScreen : Screen
                         CollectionDetailsScreen.Id, ScreenTransition.In, 0.4f,
                         transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter(),
                         payload: new CollectionDetailsScreen.Payload
-                            {CollectionId = meta.collectionId, Type = LevelType.Event}
+                            {CollectionId = meta.collectionId, Type = LevelType.User}
                     );
                 }
             });
@@ -240,7 +240,6 @@ public class EventSelectionScreen : Screen
             logoImage.sprite = null;
             if (to is MainMenuScreen)
             {
-                Context.LevelManager.UnloadLevelsOfType(LevelType.Event);
                 Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.EventCover);
                 Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.EventLogo);
                 Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.RemoteLevelCoverThumbnail);

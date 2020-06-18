@@ -33,9 +33,9 @@ public class Context : SingletonMonoBehavior<Context>
         get
         {
 #if UNITY_ANDROID
-                return $"{BundleRemoteBaseUrl}/bundles/Android/";
+                return $"{BundleRemoteBaseUrl}/platforms/Android/";
 #elif UNITY_IOS
-                return $"{AddressableRemoteBaseUrl}/bundles/iOS/";
+                return $"{BundleRemoteBaseUrl}/platforms/iOS/";
 #else
                 throw new InvalidOperationException();
 #endif
@@ -135,10 +135,15 @@ public class Context : SingletonMonoBehavior<Context>
 
     private static void OnLowMemory()
     {
+        // TODO: Work on this
         Resources.UnloadUnusedAssets();
+        return;
         AssetMemory.DisposeAllAssets();
         if (SceneManager.GetActiveScene().name == "Navigation")
         {
+            AudioManager.Get("ActionError").Play(ignoreDsp: true);
+            ScreenManager.History.Clear();
+            ScreenManager.ChangeScreen(MainMenuScreen.Id, ScreenTransition.In);
             Dialog.PromptAlert("DIALOG_LOW_MEMORY".Get());
         }
     }
@@ -310,7 +315,7 @@ public class Context : SingletonMonoBehavior<Context>
                 if (false)
                 {
                     // Load f.fff
-                    await LevelManager.LoadFromMetadataFiles(LevelType.Community,
+                    await LevelManager.LoadFromMetadataFiles(LevelType.User,
                         new List<string> {UserDataPath + "/f.fff/level.json"});
                     SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
                     SelectedDifficulty = Difficulty.Parse(SelectedLevel.Meta.charts[0].type);
@@ -320,7 +325,7 @@ public class Context : SingletonMonoBehavior<Context>
                 if (false)
                 {
                     // Load result
-                    await LevelManager.LoadFromMetadataFiles(LevelType.Community, new List<string>
+                    await LevelManager.LoadFromMetadataFiles(LevelType.User, new List<string>
                         {UserDataPath + "/fizzest.sentimental.crisis/level.json"});
                     SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
                     SelectedDifficulty =
@@ -434,15 +439,16 @@ public class Context : SingletonMonoBehavior<Context>
             {
                 if (TierState.CurrentStage.IsCompleted)
                 {
-                    // Show tier result screen
+                    // Show tier break screen
                     ScreenManager.ChangeScreen(TierBreakScreen.Id, ScreenTransition.None,
                         addTargetScreenToHistory: false);
                 }
                 else
                 {
                     TierState = null;
+                    OnlinePlayer.LastFullProfile = null; // Allow full profile to update
                     // Show tier selection screen
-                    ScreenManager.ChangeScreen(TierSelectionScreen.Id, ScreenTransition.None);
+                    ScreenManager.ChangeScreen(ScreenManager.PeekHistory(), ScreenTransition.None, addTargetScreenToHistory: false);
                 }
             }
             else if (GameState != null)
@@ -450,20 +456,25 @@ public class Context : SingletonMonoBehavior<Context>
                 var usedAuto =  GameState.Mods.Contains(Mod.Auto) || GameState.Mods.Contains(Mod.AutoDrag) || GameState.Mods.Contains(Mod.AutoHold) || GameState.Mods.Contains(Mod.AutoFlick);
                 if (GameState.IsCompleted && (GameState.Mode == GameMode.Standard || GameState.Mode == GameMode.Practice) && !usedAuto)
                 {
+                    OnlinePlayer.LastFullProfile = null; // Allow full profile to update
                     // Show result screen
                     ScreenManager.ChangeScreen(ResultScreen.Id, ScreenTransition.None, addTargetScreenToHistory: false);
                 }
                 else
                 {
                     // Show game preparation screen
-                    ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.None);
+                    ScreenManager.ChangeScreen(ScreenManager.PeekHistory(), ScreenTransition.None, addTargetScreenToHistory: false);
                 }
+            }
+            else
+            {
+                // There must have been an error, show last screen
+                ScreenManager.ChangeScreen(ScreenManager.PeekHistory(), ScreenTransition.None, addTargetScreenToHistory: false);
             }
             
             if (GameErrorState != null)
             {
                 Dialog.PromptAlert(GameErrorState.Message);
-                Debug.LogError(GameErrorState.Exception);
                 GameErrorState = null;
             }
         }
@@ -661,6 +672,16 @@ public class ContextEditor : Editor
 
         if (Application.isPlaying)
         {
+            if (Context.ScreenManager != null)
+            {
+                GUILayout.Label("Screen history:", new GUIStyle().Also(it => it.fontStyle = FontStyle.Bold));
+                foreach (var intent in Context.ScreenManager.History)
+                {
+                    GUILayout.Label(intent.ScreenId);
+                }
+                GUILayout.Label("");
+            }
+            
             if (Context.AssetMemory != null)
             {
                 GUILayout.Label("Asset memory usage:", new GUIStyle().Also(it => it.fontStyle = FontStyle.Bold));

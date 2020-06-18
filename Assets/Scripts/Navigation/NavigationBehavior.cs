@@ -64,6 +64,8 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
                     {
                         Context.ScreenManager.PopAndPeekHistory();
                     }
+                    
+                    await UniTask.WaitUntil(() => !Context.ScreenManager.IsChangingScreen);
 
                     // Resolve level
                     if (Context.LevelManager.LoadedLocalLevels.ContainsKey(level.Uid))
@@ -72,19 +74,15 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
                         Debug.Log($"Online level {level.Uid} resolved locally");
 
                         Context.ScreenManager.History.Push(new Intent(LevelSelectionScreen.Id, null));
-                        Context.ScreenManager.History.Push(new Intent(GamePreparationScreen.Id, null));
-                        Context.SelectedLevel = localLevel;
+                        Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.In,
+                            payload: new GamePreparationScreen.Payload {Level = localLevel});
                     }
                     else
                     {
                         Context.ScreenManager.History.Push(new Intent(CommunityHomeScreen.Id, null));
-                        Context.ScreenManager.History.Push(new Intent(GamePreparationScreen.Id, null));
-                        Context.SelectedLevel = level.ToLevel(LevelType.Community);
+                        Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.In,
+                            payload: new GamePreparationScreen.Payload {Level = level.ToLevel(LevelType.User)});
                     }
-
-                    await UniTask.WaitUntil(() => !Context.ScreenManager.IsChangingScreen);
-
-                    Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.In);
                 }
                 catch (Exception e)
                 {
@@ -134,7 +132,7 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
             Context.LevelManager.OnLevelInstallProgress.RemoveListener(SpinnerOverlay.OnLevelInstallProgress);
             
             Context.LevelManager.OnLevelLoadProgress.AddListener(SpinnerOverlay.OnLevelLoadProgress);
-            var loadedLevels = await Context.LevelManager.LoadFromMetadataFiles(LevelType.Community, loadedLevelJsonFiles, true);
+            var loadedLevels = await Context.LevelManager.LoadFromMetadataFiles(LevelType.User, loadedLevelJsonFiles, true);
             Context.LevelManager.OnLevelLoadProgress.RemoveListener(SpinnerOverlay.OnLevelLoadProgress);
 
             SpinnerOverlay.Hide();
@@ -152,10 +150,9 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
                     }
 
                     Context.ScreenManager.History.Push(new Intent(LevelSelectionScreen.Id, null));
-                    Context.ScreenManager.History.Push(new Intent(GamePreparationScreen.Id, null));
 
-                    Context.SelectedLevel = lastLoadedLevel;
-                    Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.In);
+                    Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.In,
+                        payload: new GamePreparationScreen.Payload {Level = lastLoadedLevel});
                 }
                 else
                 {

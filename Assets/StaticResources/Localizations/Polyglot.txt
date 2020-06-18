@@ -73,6 +73,7 @@ TOAST_INITIALIZING_TRAINING_MODE		Initializing training mode. This may take a wh
 TOAST_TIER_FAILED		Tier failed...		Tier fallida...	Tier Fehlgeschlagen.		Falha no Tier.		Ранг провален.										段位考核失败...	段位過關失敗。	응 망했어	Tier nesplněn...									Ang Tier ay di' naipasa...			Випробування провалено...
 TOAST_OFFICIAL_LIBRARY_SYNCHRONIZED		Official library synchronized.							Официальная библиотека синхронизирована.									公式データを同期しました。	官方关卡库已同步。	線上關卡資料庫同步成功！		Oficiální knihovna synchronizována.												Офіційна бібліотека синхронізована.
 TOAST_COULD_NOT_CONNECT_TO_SERVER_ENTERING_OFFLINE_MODE		Could not connect to server. Entering offline mode.							Не удалось подключиться к серверу. Переключение в офлайн-режим									サーバへ接続できませんでした。オフラインモードへ移行します。	无法连接到服务器。已自动进入离线模式。	無法與伺服器連接，將自動切換至離線模式。		Nelze se připojit k serveru. Přecházím do režimu offline.												Не вдалося підключитися до сервера. Перехід в оффлайн-режим...
+TOAST_FAILED_TO_UPDATE_PROFILE_CHARACTER		Failed to update profile character.																	更新资料页角色失败。			Aktualizace profilové postavy selhala.												
 																																		
 DIALOG_TIER_TIMED_OUT		Timed out. Tier failed.		Caducado. Tier fallida.	Zeit ist um,Tier Fehlgeschlagen.		O tempo encerrou. Falha no Tier.		Время вышло. Ранг провален.										休息时间超时。段位考核失败。		시간 초과. 티어 업로드 실패	Čas vypršel. Tier nesplněn.												Час вийшов. Випробування провалено.
 DIALOG_RATE_THIS_LEVEL		Rate this level!		Califique este nivel!	Bewerte dieses Level!		Avalie esse nível!	Avalie esse nível!	Оцените этот уровень!									このレベルを評価しよう！	给关卡打个分吧！	評分一下吧！	이 채보를 평가해주세요!	Ohodnotit tuto úroveň!								Hãy đánh giá level!	Markahan ang lebel	Beri nilai level ini!	打分啊111111	Оцініть цей рівень!
@@ -98,8 +99,8 @@ DIALOG_UPDATE_AVAILABLE_X_Y		An update is available.\n\nLatest version: {0}\nCur
 DIALOG_TUTORIAL_OFFSET_CALIBRATION		<b>You just downloaded your first community level!</b>\nPlease note that you may have to adjust the note offset for community levels. Calibration mode can be entered in the Settings menu.							<b>Вы скачали свой первый уровень, созданный сообществом!</b>\nНапоминаем, что, возможно, Вам придётся настроить оффсет для таких уровней. В режим калибровки можно зайти через меню настроек.										<b>你刚刚下载了你的第一个社区关卡！</b>\n有的社区关卡需要手动校正谱面偏移。可以在设置菜单中进入校正模式。			<b>Právě jste stáhl(a) svoji první komunitní úroveň!</b>\nPamatujte prosím, že pro komunitní úrovně musíte upravit offset not. Do režimu kalibrace lze vstoupit z menu nastavení.												
 DIALOG_DISABLE_DEVELOPER_CONSOLE_WARNING		<b>Warning: If you disable the developer console, you will NOT be able to report any bugs to us.</b> If you have encountered a bug, please enable developer console first and reproduce it before filing for a bug report.																	<b>警告：关闭开发人员控制台之后，\n你将无法向我们汇报 Bug。</b>\n遇到有 Bug 的情况下，\n请先开启开发人员控制台，然后复现你的问题，再截图错误信息向我们进行反馈。			<b>Varování: Pokud zakážete vývojářskou konzoli, nebudete nám moci hlásit bugy.</b> Pokud jste nalezli bug, povolte prosím nejprve vývojářskou konzoli a bug reprodukujte před napsáním bug reportu.												
 DIALOG_LEVEL_LOAD_ERROR		This level could be loaded.																	关卡加载失败。			Tato úroveň nemohla být načtena.												
-																																		
-																																		
+DIALOG_LOW_MEMORY		Your device is running out of memory.\nSome resources may not display correctly.																	你的设备内存不足。\n部分资源可能无法正常显示。			Vaše zařízení má přeplněnu paměť RAM.\nNěkteré elementy se nemusí zobrazit správně.												
+DIALOG_TIPS_MAIN_MENU_SHORTCUT		<b>Tips:</b>\nNavigated too deep? Long press the Back button to head back to the main menu instantly!																	<b>提示：</b>\n长按返回按钮可以直接返回到主菜单。															
 																																		
 PROFILE_WIDGET_NOT_SIGNED_IN		Not signed in		No ha iniciado sesión	Noch Nicht Angemeldet		Não está logado	Não está logado	Вход не выполнен									サインインしていません	未登录	尚未登入	로그인 안됨	Nepřihlášen(a)								Chưa đăng nhập	Di' pa signed-in	Belum Masuk	未阿格王朔	
 PROFILE_WIDGET_SIGNING_IN		Signing in...		Ingresando...	Anmelden...		Logando...	A realizar login...	Вход...									サインイン中…	登录中...	登入中...	로그인 중...	Přihlašování...								Đang đăng nhập...			阿格王朔中...	
@@ -121,17 +122,17 @@ PROFILE_HIGHEST_MAX_COMBO		HIGHEST MAX COMBO		MAYOR COMBO MÁXIMO	HÖCHSTE MAXIM
 PROFILE_AVG_RANKED_ACCURACY	Not necessarily required to translate "ranked"	AVG RANKED ACCURACY		PRECISIÓN PROMEDIO IGUALADA	DURCHSCHNITTLICHE RANKED GENAUIGKEIT		PRECISÃO RANQUEADA MÉDIA	PRECISÃO RANQUEADA MÉDIA	СР. РАНГОВАЯ ТОЧНОСТЬ									平均Rate上昇率	平均精准度	平均準確度	평균 정확도	PRŮM. RANKOVANÁ PŘESNOST								Độ chính xác TB trong xếp hạng	Average na ranked accuracy	Akurasi ranked rata - rata.	平均踢中	ТОЧНІСТЬ
 PROFILE_TOTAL_RANKED_SCORE	Not necessarily required to translate "ranked"	TOTAL RANKED SCORE		PUNTUACIÓN IGUALADA TOTAL	INSGESAMTE BEWERTETE PUNKTZAHL		PONTUAÇÃO RANQUEADA TOTAL	PONTUAÇÃO RANQUEADA TOTAL	ОБЩИЙ СЧЁТ									合計ランクモードスコア	总分数	總分數	총 점수	TOTÁLNÍ RANKOVANÉ SKÓRE								Điểm xếp hạng tổng cộng	Kabuuan ng ranked score	Total nilai ranked.	踢分	ЗАГАЛЬНИЙ РАХУНОК
 PROFILE_TOTAL_PLAY_TIME		TOTAL PLAY TIME		TIEMPO TOTAL JUGADO	INSGESAMTE SPIELZEIT		TEMPO JOGADO TOTAL	TEMPO JOGADO TOTAL	ОБЩЕЕ ВРЕМЯ В ИГРЕ									合計プレイ時間	总游玩时间	總遊玩時間	총 플레이 시간	TOTÁLNÍ HRANÝ ČAS								Tổng thời gian chơi	Kabuuan na oras ng paglaro	Total waktu bermain.	啊wee改时间	НАГРАНО ГОДИН
-PROFILE_STATUS_ONLINE		Online																	在线															
-PROFILE_STATUS_OFFLINE		Offline																	离线															
-PROFILE_STATUS_LAST_SEEN_X		Last seen {0}																	最后上线 {0}															
-PROFILE_CHART_AVG_RATING		Avg. Rating																	平均 Rating															
-PROFILE_CHART_AVG_ACCURACY		Avg. Accuracy																	平均精确度															
-PROFILE_CHART_PLAYS		Plays																	游玩次数															
-PROFILE_RECENT_PLAYS		Recent plays																	最新纪录															
-PROFILE_UPLOADED_LEVELS		Uploaded levels																	上传关卡															
-PROFILE_VIEW_ALL_X		View all {0}																	查看全部 {0}															
-PROFILE_VIEW_FEATURED_X		View {0} featured																	查看精选 {0}															
-PROFILE_COLLECTIONS		Collections																	合集															
+PROFILE_STATUS_ONLINE		Online																	在线			Online												
+PROFILE_STATUS_OFFLINE		Offline																	离线			Offline												
+PROFILE_STATUS_LAST_SEEN_X		Last seen {0}																	最后上线 {0}			Naposledy viděn(a) {0}												
+PROFILE_CHART_AVG_RATING		Avg. Rating																	平均 Rating			Prům. hodnocení												
+PROFILE_CHART_AVG_ACCURACY		Avg. Accuracy																	平均精确度			Prům. přesnost												
+PROFILE_CHART_PLAYS		Plays																	游玩次数			Počet her 												
+PROFILE_RECENT_PLAYS		Recent plays																	最新纪录			Nedávno hrané												
+PROFILE_UPLOADED_LEVELS		Uploaded levels																	上传关卡			Nahrané úrovně												
+PROFILE_VIEW_ALL_X		View all {0}																	查看全部 {0}			Zobrazit všech {0}												
+PROFILE_VIEW_FEATURED_X		View {0} featured																	查看精选 {0}			Zobrazit {0} doporučených												
+PROFILE_COLLECTIONS		Collections																	合集			Kolekce												
 																																		
 LEADERBOARD_TOP		Top		Top	Top		Top	Topo	Топ									トップ	榜首排行	世界	리더보드	Top								Đầu bảng	Mga Nasataas	Top	椰叶	Топ
 LEADERBOARD_ME		Me		Yo	Ich		Eu	Eu	Я									自分	我的排名	我的	나	Já								Tôi	Ako	Me	dd	Я
@@ -261,6 +262,7 @@ LEVEL_SELECT_SORT_BY_ADDED_DATE		Added date		Fecha agregada	 Hinzugefügt am		Da
 LEVEL_SELECT_SORT_BY_PLAYED_DATE		Played date		Fecha jugada	Zuletzt gespielt		Data em que foi jogado	Data em que foi jogado	Дате последней игры									プレイ順	上次游玩日期	遊玩日期	최근 플레이	Datum hraní								Thời gian chơi	Petsa na inilaro	Tanggal dimainkan		
 LEVEL_SELECT_SORT_BY_DIFFICULTY		Difficulty		Dificultad	Schwierigkeit		Dificuldade	Dificuldade	Сложности									難易度順	难度	難度	난이도	Obtížnost								Độ khó	Ang kahirapan	Tingkat Kesulitan		
 LEVEL_SELECT_SORT_BY_TITLE		Title		Titulo	Titel		Título	Título	Заголовкам									曲名	歌名	樂曲名稱	이름	Název								Tên	Pamagat	Judul		
+LEVEL_SELECT_SORT_BY_PLAY_COUNT		Play count																	游玩次数															
 LEVEL_SELECT_SORT_ORDER		SORT ORDER		ORDEN DE CLASIFICACIÓN	SORTIEREN (NACH)		ORDEM DE CLASSIFICAÇÂO	ORDEM DE CLASSIFICAÇÂO	ПОРЯДОК СОРТИРОВКИ									ソート…	顺序	排序模式	정리 순서	SMĚR ŘAZENÍ								Trình tự sắp xếp	Pagkakasunud-sunod	URUTAN SORT		
 LEVEL_SELECT_SORT_ORDER_ASC		Ascending		Ascendiente	Aufsteigend		Crescente	Crescente	По возрастанию									昇順	升序	升冪	오름	Vzestupně								Từ dưới lên	Pataas	Naik		
 LEVEL_SELECT_SORT_ORDER_DESC		Descending		Descendiente	Absteigend		Decrescente	Decrescente	По убыванию									降順	降序	降冪	내림	Sestupně								Từ trên xuống	Pababa	Turun		
@@ -514,18 +516,18 @@ COLLECTION_INFO_CURATOR		CURATOR					Curador		КУРАТОР										收藏家	
 																																		
 																																		
 																																		
-RELATIVE_TIME_SECOND_AGO_X		{0} second ago																	{0} 秒前															
-RELATIVE_TIME_SECONDS_AGO_X		{0} seconds ago																	{0} 秒前															
-RELATIVE_TIME_MINUTE_AGO_X		{0} minute ago																	{0} 分钟前															
-RELATIVE_TIME_MINUTES_AGO_X		{0} minutes ago																	{0} 分钟前															
-RELATIVE_TIME_HOUR_AGO_X		{0} hour ago																	{0} 小时前															
-RELATIVE_TIME_HOURS_AGO_X		{0} hours ago																	{0} 小时前															
-RELATIVE_TIME_DAY_AGO_X		{0} day ago																	{0} 天前															
-RELATIVE_TIME_DAYS_AGO_X		{0} days ago																	{0} 天前															
-RELATIVE_TIME_MONTH_AGO_X		{0} month ago																	{0} 月前															
-RELATIVE_TIME_MONTHS_AGO_X		{0} months ago																	{0} 月前															
-RELATIVE_TIME_YEAR_AGO_X		{0} year ago																	{0} 年前															
-RELATIVE_TIME_YEARS_AGO_X		{0} years ago																	{0} 年前															
+RELATIVE_TIME_SECOND_AGO_X		{0} second ago																	{0} 秒前			před {0} sekundou												
+RELATIVE_TIME_SECONDS_AGO_X		{0} seconds ago																	{0} 秒前			před {0} sekundami												
+RELATIVE_TIME_MINUTE_AGO_X		{0} minute ago																	{0} 分钟前			před {0} minutou												
+RELATIVE_TIME_MINUTES_AGO_X		{0} minutes ago																	{0} 分钟前			před {0} minutami												
+RELATIVE_TIME_HOUR_AGO_X		{0} hour ago																	{0} 小时前			před {0} hodinou												
+RELATIVE_TIME_HOURS_AGO_X		{0} hours ago																	{0} 小时前			před {0} hodinami												
+RELATIVE_TIME_DAY_AGO_X		{0} day ago																	{0} 天前			před {0} dnem												
+RELATIVE_TIME_DAYS_AGO_X		{0} days ago																	{0} 天前			před {0} dny												
+RELATIVE_TIME_MONTH_AGO_X		{0} month ago																	{0} 月前			před {0} měsícem												
+RELATIVE_TIME_MONTHS_AGO_X		{0} months ago																	{0} 月前			před {0} měsíci												
+RELATIVE_TIME_YEAR_AGO_X		{0} year ago																	{0} 年前			před {0} rokem												
+RELATIVE_TIME_YEARS_AGO_X		{0} years ago																	{0} 年前			před {0} roky												
 																																		
 																																		
 																																		

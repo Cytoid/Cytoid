@@ -64,8 +64,11 @@ public class LevelSelectionScreen : Screen
     public override void OnScreenBecameInactive()
     {
         base.OnScreenBecameInactive();
-        LoadedPayload.ScrollPosition = scrollRect.verticalNormalizedPosition;
-        LoadedPayload.CategoryIndex = categorySelect.SelectedIndex;
+        if (LoadedPayload != null)
+        {
+            LoadedPayload.ScrollPosition = scrollRect.verticalNormalizedPosition;
+            LoadedPayload.CategoryIndex = categorySelect.SelectedIndex;
+        }
     }
 
     public override void OnScreenDestroyed()
@@ -101,10 +104,10 @@ public class LevelSelectionScreen : Screen
         switch (category)
         {
             case 1:
-                filters.Add(level => level.Type == LevelType.Library);
+                filters.Add(level => Context.Library.Levels.ContainsKey(level.Id));
                 break;
             case 2:
-                filters.Add(level => level.Type == LevelType.Community);
+                filters.Add(level => !Context.Library.Levels.ContainsKey(level.Id));
                 break;
         }
         var query = searchInputField.text.Trim();
@@ -120,10 +123,10 @@ public class LevelSelectionScreen : Screen
     public void RefillLevels(LevelSort sort, bool asc, string query = "", List<Func<Level, bool>> filters = null)
     {
         var dict = new Dictionary<string, Level>(Context.LevelManager.LoadedLocalLevels);
-
+        foreach (var id in BuiltInData.TrainingModeLevelUids) dict.Remove(id);
         foreach (var kv in Context.Library.Levels)
         {
-            dict[kv.Key] = kv.Value.Level.ToLevel(LevelType.Library);
+            dict[kv.Key] = kv.Value.Level.ToLevel(LevelType.User);
         }
 
         var levels = dict.Values.ToList();
@@ -215,10 +218,13 @@ public class LevelSelectionScreen : Screen
         base.OnScreenChangeFinished(from, to);
         if (from == this)
         {
-            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalLevelCoverThumbnail);
+            if (to is GamePreparationScreen) {
+                Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalLevelCoverThumbnail);
+            }
             if (to is MainMenuScreen)
             {
                 levelGrid.Leave();
+                scrollRect.ClearCells();
                 LoadedPayload = null;
             }
         }
@@ -227,7 +233,6 @@ public class LevelSelectionScreen : Screen
     public class Payload : ScreenPayload
     {
         public int CategoryIndex;
-        public List<Level> Levels;
         public float ScrollPosition;
     }
     

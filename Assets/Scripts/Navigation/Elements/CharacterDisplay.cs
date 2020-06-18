@@ -32,12 +32,20 @@ public class CharacterDisplay : MonoBehaviour, ScreenBecameActiveListener, Scree
         print("CharacterDisplay: Loaded " + tachieBundleId);
         var token = asyncLoadToken = DateTime.Now;
         var ab = await Context.BundleManager.LoadBundle(tachieBundleId, false, false);
-        if (token != asyncLoadToken) return;
+        if (token != asyncLoadToken)
+        {
+            isLoading = false;
+            return;
+        }
         
         // Instantiate the GameObject
         var loader = ab.LoadAssetAsync<GameObject>("Tachie");
         await loader;
-        if (token != asyncLoadToken) return;
+        if (token != asyncLoadToken)
+        {
+            isLoading = false;
+            return;
+        }
 
         loadedBundleId = tachieBundleId;
         loadedAssetBundle = ab;
@@ -65,6 +73,7 @@ public class CharacterDisplay : MonoBehaviour, ScreenBecameActiveListener, Scree
 
     public void Unload()
     {
+        asyncLoadToken = DateTime.Now;
         if (loadedAssetBundle != null)
         {
             IsLoaded = false;

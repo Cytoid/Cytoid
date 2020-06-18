@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class CommunityLevelSelectionScreen : Screen
+public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
 {
     public LoopVerticalScrollRect scrollRect;
 
@@ -30,13 +30,13 @@ public class CommunityLevelSelectionScreen : Screen
         {
             actionTabs.Close();
             LoadedPayload.Query.search = value.Trim();
-            LoadLevels();
+            LoadLevels(true);
         });
         ownerInputField.onEndEdit.AddListener(value =>
         {
             actionTabs.Close();
-            LoadedPayload.Query.owner = value.Trim();
-            LoadLevels();
+            LoadedPayload.Query.owner = value.Trim().ToLower();
+            LoadLevels(true);
         });
 
         Context.LevelManager.OnLevelDeleted.AddListener(_ =>
@@ -55,10 +55,20 @@ public class CommunityLevelSelectionScreen : Screen
         Context.OnLanguageChanged.AddListener(SetupOptions);
     }
 
+    public override void OnScreenBecameActive()
+    {
+        nextLoadMore = DateTimeOffset.MaxValue;
+        if (LoadedPayload != null && LoadedPayload.CanLoadMore)
+        {
+            nextLoadMore = DateTimeOffset.Now + TimeSpan.FromSeconds(1);
+        }
+        base.OnScreenBecameActive();
+    }
+
     public override void OnScreenBecameInactive()
     {
         base.OnScreenBecameInactive();
-        LoadedPayload.ScrollPosition = scrollRect.verticalNormalizedPosition;
+        if (LoadedPayload != null) LoadedPayload.ScrollPosition = scrollRect.verticalNormalizedPosition;
     }
 
     public override void OnScreenDestroyed()
@@ -74,7 +84,7 @@ public class CommunityLevelSelectionScreen : Screen
             () => "creation_date", it =>
             {
                 LoadedPayload.Query.sort = it;
-                LoadLevels();
+                LoadLevels(true);
             },
             new []
             {
@@ -88,7 +98,7 @@ public class CommunityLevelSelectionScreen : Screen
         orderRadioGroup.SetContent(null, null,
             () => "desc", it => {
                 LoadedPayload.Query.order = it;
-                LoadLevels();
+                LoadLevels(true);
             },
             new[]
             {
@@ -98,7 +108,7 @@ public class CommunityLevelSelectionScreen : Screen
         categoryRadioGroup.SetContent(null, null,
             () => "category", it => {
                 LoadedPayload.Query.category = it;
-                LoadLevels();
+                LoadLevels(true);
             },
             new[]
             {
@@ -108,7 +118,7 @@ public class CommunityLevelSelectionScreen : Screen
         timeRadioGroup.SetContent(null, null,
             () => "all", it => {
                 LoadedPayload.Query.time = it;
-                LoadLevels();
+                LoadLevels(true);
             },
             new[]
             {
@@ -121,7 +131,7 @@ public class CommunityLevelSelectionScreen : Screen
         sortRadioGroup.transform.parent.RebuildLayout();
     }
 
-    protected override void Render()
+    private void UpdateComponents()
     {
         sortRadioGroup.radioGroup.Select(LoadedPayload.Query.sort, false);
         orderRadioGroup.radioGroup.Select(LoadedPayload.Query.order, false);
@@ -147,6 +157,11 @@ public class CommunityLevelSelectionScreen : Screen
             }
             titleText.text = text;
         }
+    }
+
+    protected override void Render()
+    {
+        UpdateComponents();
         
         scrollRect.ClearCells();
         RenderLevels();
@@ -160,7 +175,7 @@ public class CommunityLevelSelectionScreen : Screen
 
         if (!LoadedPayload.IsLastPageLoaded)
         {
-            LoadLevels();
+            LoadLevels(false);
         }
         else
         {
@@ -168,8 +183,18 @@ public class CommunityLevelSelectionScreen : Screen
         }
     }
 
-    public void LoadLevels()
+    public void LoadLevels(bool reset)
     {
+        if (reset)
+        {
+            UpdateComponents();
+            LoadedPayload.Levels.Clear();
+            LoadedPayload.LastPage = 0;
+            LoadedPayload.IsLastPageLoaded = false;
+            LoadedPayload.CanLoadMore = false;
+            LoadedPayload.ScrollPosition = 0;
+        }
+        
         const int pageSize = 12;
         
         SpinnerOverlay.Show();
@@ -189,7 +214,11 @@ public class CommunityLevelSelectionScreen : Screen
             LoadedPayload.Levels.AddRange(entries.ToList());
             LoadedPayload.IsLastPageLoaded = true;
             LoadedPayload.CanLoadMore = entries.Length == pageSize;
-
+            
+            if (reset)
+            {
+                scrollRect.ClearCells();
+            }
             RenderLevels();
         }).Catch(error =>
         {
@@ -207,7 +236,7 @@ public class CommunityLevelSelectionScreen : Screen
         LoadedPayload.LastPage++;
         LoadedPayload.IsLastPageLoaded = false;
         LoadedPayload.CanLoadMore = false;
-        LoadLevels();
+        LoadLevels(false);
     }
 
     private void RenderLevels()
@@ -215,22 +244,34 @@ public class CommunityLevelSelectionScreen : Screen
         var append = scrollRect.totalCount > 0;
         scrollRect.totalCount = LoadedPayload.Levels.Count;
         scrollRect.objectsToFill =
-            LoadedPayload.Levels.Select(it => new LevelView{Level = it.ToLevel(LevelType.Community), DisplayOwner = true}).Cast<object>().ToArray();
+            LoadedPayload.Levels.Select(it => new LevelView{Level = it.ToLevel(LevelType.User), DisplayOwner = true}).Cast<object>().ToArray();
         if (append) scrollRect.RefreshCells();
         else scrollRect.RefillCells();
+
+        nextLoadMore = DateTimeOffset.Now + TimeSpan.FromSeconds(1);
     }
 
-    private DateTimeOffset lastLoadMore = DateTimeOffset.MinValue;
+    private DateTimeOffset nextLoadMore = DateTimeOffset.MaxValue;
     
     public override void OnScreenUpdate()
     {
         base.OnScreenUpdate();
         if (LoadedPayload != null && LoadedPayload.CanLoadMore 
                                   && scrollRect.content.anchoredPosition.y - scrollRect.content.sizeDelta.y > 128 
-                                  && DateTimeOffset.Now - lastLoadMore > TimeSpan.FromSeconds(1))
+                                  && DateTimeOffset.Now >= nextLoadMore)
         {
-            lastLoadMore = DateTimeOffset.Now;
+            nextLoadMore = DateTimeOffset.Now + TimeSpan.FromSeconds(1);
             LoadMoreLevels();
+        }
+    }
+    
+    public override void OnScreenChangeFinished(Screen from, Screen to)
+    {
+        base.OnScreenChangeFinished(from, to);
+        if (from == this && to is CommunityHomeScreen)
+        {
+            scrollRect.ClearCells();
+            LoadedPayload = null;
         }
     }
 

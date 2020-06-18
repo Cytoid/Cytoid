@@ -16,6 +16,8 @@ public class OnlinePlayer
         new LevelBestPerformanceUpdatedEvent();
 
     public Profile LastProfile { get; set; }
+    
+    public FullProfile LastFullProfile { get; set; }
 
     public bool IsAuthenticated { get; set; }
 
@@ -122,6 +124,7 @@ public class OnlinePlayer
         Context.Player.Settings.LoginToken = null;
         Context.Player.SaveSettings();
         LastProfile = null;
+        LastFullProfile = null;
         IsAuthenticating = false;
         IsAuthenticated = false;
 

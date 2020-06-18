@@ -314,6 +314,7 @@ namespace UnityEngine.UI
         {
             if (Application.isPlaying)
             {
+                //Debug.Log("LoopScrollRect: Cleared cells");
                 itemTypeStart = 0;
                 itemTypeEnd = 0;
                 totalCount = 0;
@@ -453,7 +454,7 @@ namespace UnityEngine.UI
         {
             if (!Application.isPlaying || prefabSource == null)
                 return;
-            
+
             StopMovement();
             itemTypeEnd = reverseDirection ? offset : totalCount - offset;
             itemTypeStart = itemTypeEnd;
@@ -494,6 +495,7 @@ namespace UnityEngine.UI
         {
             if (!Application.isPlaying || prefabSource == null)
                 return;
+            //Debug.Log("LoopScrollRect: Refilled cells");
 
             StopMovement();
             itemTypeStart = reverseDirection ? totalCount - offset : offset;

@@ -1,18 +1,15 @@
 using System;
-using System.Linq.Expressions;
 using Proyecto26;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ProfileScreen : Screen, ScreenChangeListener
+public class ProfileScreen : Screen
 {
-    public const string Id = "Profile";
-
-    public override string GetId() => Id;
 
     public UpperOverlay upperOverlay;
     public ContentTabs contentTabs;
+    public Transform topRightColumn;
     public LeaderboardContainer leaderboard;
     public RadioGroup leaderboardModeSelect;
     public ScrollRect leaderboardScrollRect;
@@ -34,19 +31,10 @@ public class ProfileScreen : Screen, ScreenChangeListener
             ProfileWidget.Instance.SetSignedOut();
             Context.ScreenManager.GetScreen<SignInScreen>().passwordInput.text = "";
         });
+        contentTabs.selectOnScreenBecameActive = false;
         contentTabs.onTabSelect.AddListener((index, tab) =>
         {
             upperOverlay.contentRect = contentTabs.viewportContents[index];
-
-            if (index == 0)
-            {
-                profileTab.transitionElement.Enter();
-            }
-            else
-            {
-                profileTab.transitionElement.Leave(false);
-            }
-
             if (index == 1)
             {
                 if (Context.IsOnline()) UpdateLeaderboard(leaderboardModeSelect.Value);
@@ -59,24 +47,36 @@ public class ProfileScreen : Screen, ScreenChangeListener
 
     public override void OnScreenBecameActive()
     {
+        profileTab.characterTransitionElement.Leave(false, true);
+        profileTab.changeCharacterButton.gameObject.SetActive(false);
+        contentTabs.UnselectAll();
+        contentTabs.gameObject.SetActive(false);
+        topRightColumn.gameObject.SetActive(false);
         base.OnScreenBecameActive();
-        SpinnerOverlay.Show();
-        profileTab.transitionElement.Leave(false, true);
-        RestClient.Get<FullProfile>(new RequestHelper
+    }
+
+    public override void OnScreenBecameInactive()
+    {
+        base.OnScreenBecameInactive();
+        if (LoadedPayload != null)
         {
-            Uri = "http://localhost:3000", //$"{Context.ApiUrl}/profile/{Context.Player.Id}/details",
-            Headers = Context.OnlinePlayer.GetRequestHeaders(),
-            EnableDebug = true
-        }).Then(data =>
-        {
-            profileTab.SetModel(data);
-            profileTab.transitionElement.Enter();
-        }).CatchRequestError(error =>
-        {
-            Debug.LogError(error);
-            Dialog.PromptGoBack("Fuck.");
-        }).Finally(() => SpinnerOverlay.Hide());
-        toggleOfflineButton.GetComponentInChildren<Text>().text = Context.IsOnline() ? "OFFLINE_GO_OFFLINE".Get() : "OFFLINE_GO_ONLINE".Get();
+            LoadedPayload.TabIndex = contentTabs.SelectedIndex;
+            print($"Location: {profileTab.scrollRect.verticalNormalizedPosition}");
+            LoadedPayload.ProfileScrollPosition = profileTab.scrollRect.verticalNormalizedPosition;
+            LoadedPayload.LeaderboardScrollPosition = leaderboardScrollRect.verticalNormalizedPosition;
+        }
+    }
+
+    public override void OnScreenUpdate()
+    {
+        base.OnScreenUpdate();
+        var dy = profileTab.characterPaddingReference.GetScreenSpaceRect().min.y - 64;
+        dy = Math.Max(0, dy);
+        dy /= UnityEngine.Screen.height;
+        var canvasHeight = 1920f / UnityEngine.Screen.width * UnityEngine.Screen.height;
+        dy *= canvasHeight;
+        profileTab.characterTransitionElement.rectTransform.SetAnchoredY(dy);
+        profileTab.changeCharacterButton.SetAnchoredY(64 + dy);
     }
 
     public void ToggleOffline()
@@ -106,7 +106,6 @@ public class ProfileScreen : Screen, ScreenChangeListener
         ClearLeaderboard();
 
         SpinnerOverlay.Show();
-        
         var uri = Context.ApiUrl + "/leaderboard?limit=50";
         if (mode == "me") uri += "&user=" + Context.Player.Id;
         RestClient.GetArray<Leaderboard.Entry>(new RequestHelper
@@ -114,7 +113,9 @@ public class ProfileScreen : Screen, ScreenChangeListener
             Uri = uri,
             Headers = Context.OnlinePlayer.GetRequestHeaders(),
             EnableDebug = true
-        }).Then(async data =>
+        }).Then(SetData).CatchRequestError(Debug.LogError).Finally(() => SpinnerOverlay.Hide());
+
+        async void SetData(Leaderboard.Entry[] data)
         {
             try
             {
@@ -129,20 +130,109 @@ public class ProfileScreen : Screen, ScreenChangeListener
                             .CenterOnItem(meEntry.transform as RectTransform);
                     }
                 }
+                await UniTask.DelayFrame(2);
+                if (LoadedPayload.LeaderboardScrollPosition != 0) leaderboardScrollRect.verticalNormalizedPosition = LoadedPayload.LeaderboardScrollPosition;
             }
             catch (Exception e)
             {
                 Debug.LogError(e);
             }
-        }).CatchRequestError(Debug.LogError).Finally(() => SpinnerOverlay.Hide());
+        }
     }
 
     public override void OnScreenChangeFinished(Screen from, Screen to)
     {
         base.OnScreenChangeFinished(from, to);
-        if (from == this)
+        if (from == this && to is MainMenuScreen)
         {
             ClearLeaderboard();
         }
     }
+
+    protected override void LoadPayload(ScreenLoadPromise promise)
+    {
+        IntentPayload.IsPlayer = IntentPayload.Id == Context.OnlinePlayer.LastProfile?.User.Id;
+        if (IntentPayload.Profile != null)
+        {
+            promise.Resolve(IntentPayload);
+            return;
+        }
+        if (IntentPayload.IsPlayer)
+        {
+            if (Context.OnlinePlayer.LastFullProfile != null)
+            {
+                IntentPayload.Profile = Context.OnlinePlayer.LastFullProfile;
+                promise.Resolve(IntentPayload);
+                return;
+            }
+        }
+        
+        SpinnerOverlay.Show();
+        RestClient.Get<FullProfile>(new RequestHelper
+        {
+            Uri = $"{Context.ApiUrl}/profile/{IntentPayload.Id}/details",
+            Headers = Context.OnlinePlayer.GetRequestHeaders(),
+            EnableDebug = true
+        }).Then(data =>
+        {
+            if (IntentPayload.IsPlayer) Context.OnlinePlayer.LastFullProfile = data;
+            IntentPayload.Profile = data;
+            promise.Resolve(IntentPayload);
+        }).CatchRequestError(error =>
+        {
+            Debug.LogError(error);
+            Dialog.PromptGoBack("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
+        }).Finally(() => SpinnerOverlay.Hide());
+    }
+
+    protected override void Render()
+    {
+        profileTab.SetModel(LoadedPayload.Profile);
+        base.Render();
+    }
+
+    protected override async void OnRendered()
+    {
+        base.OnRendered();
+        
+        toggleOfflineButton.GetComponentInChildren<Text>().text = Context.IsOnline() ? "OFFLINE_GO_OFFLINE".Get() : "OFFLINE_GO_ONLINE".Get();
+        LayoutFixer.Fix(toggleOfflineButton.transform);
+        profileTab.characterTransitionElement.Enter();
+        profileTab.changeCharacterButton.gameObject.SetActive(LoadedPayload.IsPlayer);
+        contentTabs.gameObject.SetActive(LoadedPayload.IsPlayer);
+        topRightColumn.gameObject.SetActive(LoadedPayload.IsPlayer);
+        // Always use local character if local player
+        if (LoadedPayload.Profile.User.Uid == Context.Player.Id)
+        {
+            profileTab.characterDisplay.Load(CharacterAsset.GetTachieBundleId(Context.CharacterManager.SelectedCharacterId));
+        }
+        else
+        {
+            profileTab.characterDisplay.Load(CharacterAsset.GetTachieBundleId(LoadedPayload.Profile.Character.AssetId));
+        }
+        contentTabs.Select(LoadedPayload.TabIndex);
+        await UniTask.DelayFrame(2);
+        if (LoadedPayload.ProfileScrollPosition != 0) profileTab.scrollRect.verticalNormalizedPosition = LoadedPayload.ProfileScrollPosition;
+    }
+
+    public class Payload : ScreenPayload
+    {
+        public string Id;
+        public bool IsPlayer;
+        public int TabIndex;
+        public FullProfile Profile;
+        public float ProfileScrollPosition;
+        public float LeaderboardScrollPosition;
+    }
+    
+    public new Payload IntentPayload => (Payload) base.IntentPayload;
+    public new Payload LoadedPayload
+    {
+        get => (Payload) base.LoadedPayload;
+        set => base.LoadedPayload = value;
+    }
+
+    public const string Id = "Profile";
+
+    public override string GetId() => Id;
 }

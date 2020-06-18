@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using DG.Tweening;
 using MoreMountains.NiceVibrations;
@@ -218,7 +217,12 @@ public class CollectionCard : InteractableMonoBehavior
 
             Context.ScreenManager.ChangeScreen(CollectionDetailsScreen.Id, ScreenTransition.In, 0.4f,
                 transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter(),
-                payload: new CollectionDetailsScreen.Payload {CollectionId = collection.id, TitleOverride = titleOverride, SloganOverride = sloganOverride});
+                payload: new CollectionDetailsScreen.Payload
+                    {
+                        CollectionId = collection.id,
+                        TitleOverride = !titleOverride.IsNullOrEmptyTrimmed() ? titleOverride : null, 
+                        SloganOverride = !sloganOverride.IsNullOrEmptyTrimmed() ? sloganOverride : null, 
+                    });
         }
     }
 

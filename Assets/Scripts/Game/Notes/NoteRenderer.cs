@@ -36,7 +36,10 @@ public class NoteRenderer
 
     public virtual void OnCollect()
     {
-        Collider.enabled = false;
+        if (Collider != null)
+        {
+            Collider.enabled = false;
+        }
     }
     
     public virtual void Dispose() => Expression.Empty();

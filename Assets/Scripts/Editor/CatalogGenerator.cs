@@ -21,36 +21,63 @@ public class CatalogGenerator
         AssetBundle.UnloadAllAssetBundles(true);
     }
     
-    [MenuItem("Cytoid/Generate AssetBundle Catalog")]
+    [MenuItem("Cytoid/Build All AssetBundles")]
     static void GenerateCatalog()
     {
-        var json = new JObject();
-        var dir = $"AssetBundles/{PlatformName}";
         AssetBundle.UnloadAllAssetBundles(true);
-        var manifestAb = AssetBundle.LoadFromFile(dir + $"/{PlatformName}");
-        var rootManifest = (AssetBundleManifest) manifestAb.LoadAsset("AssetBundleManifest");
-        foreach (var name in rootManifest.GetAllAssetBundles())
+        var platforms = new[] {("Android", BuildTarget.Android)};//, "iOS"};
+        foreach (var (platformName, buildTarget) in platforms)
         {
-            /*Debug.Log(name);
-            var ab = AssetBundle.LoadFromFile(dir + $"/{name}");
-            foreach (var asset in ab.GetAllAssetNames())
+            var dir = $"AssetBundles/{platformName}";
+            BuildPipeline.BuildAssetBundles(dir, BuildAssetBundleOptions.StrictMode, buildTarget);
+            if (!File.Exists("AssetBundles/versions.json"))
             {
-                Debug.Log($"\t{asset}");
-            }*/
-            var hash = rootManifest.GetAssetBundleHash(name);
-            var jObj = new JObject {["hash"] = hash.ToString()};
-            json[name] = jObj;
-        }
-        manifestAb.Unload(false);
-        File.WriteAllText(dir + "/catalog.json", json.ToString());
-        File.Copy(dir + "/catalog.json", "Assets/StreamingAssets/catalog.json", true);
-        Debug.Log($"Catalog generated for {PlatformName} and copied to StreamingAssets.");
+                File.WriteAllText("AssetBundles/versions.json", "{}");
+            }
 
-        foreach (var bundle in BundleManager.BuiltInBundles)
-        {
-            File.Copy(dir + "/" + bundle, "Assets/StreamingAssets/Bundles/" + bundle, true);
+            var versions = JObject.Parse(File.ReadAllText("AssetBundles/versions.json"));
+            
+            // Post-process
+            var json = new JObject();
+            var manifestAb = AssetBundle.LoadFromFile(dir + $"/{platformName}");
+            var rootManifest = (AssetBundleManifest) manifestAb.LoadAsset("AssetBundleManifest");
+            foreach (var name in rootManifest.GetAllAssetBundles())
+            {
+                var ab = AssetBundle.LoadFromFile(dir + $"/{name}");
+                foreach (var asset in ab.GetAllAssetNames())
+                {
+                    Debug.Log($"\t{asset}");
+                }
+
+                var version = versions[name]?.Value<int>() ?? 1;
+                var jObj = new JObject {["version"] = version};
+                json[name] = jObj;
+            }
+            File.WriteAllText("AssetBundles/versions.json", versions.ToString());
+
+            manifestAb.Unload(false);
+            Directory.CreateDirectory($"Assets/StreamingAssets/{platformName}/Bundles/");
+            File.WriteAllText(dir + "/catalog.json", json.ToString());
+            Debug.Log($"Catalog generated for {platformName}.");
+            
+            // Don't include non built-ins
+            var stripped = new JObject();
+            foreach (var bundle in BundleManager.BuiltInBundles)
+            {
+                stripped[bundle] = json[bundle];
+            }
+
+            File.WriteAllText($"Assets/StreamingAssets/{platformName}/Bundles/catalog.json", stripped.ToString());
+            Debug.Log($"Stripped catalog generated for {platformName} and moved to StreamingAssets.");
+
+            foreach (var bundle in BundleManager.BuiltInBundles)
+            {
+                File.Copy(dir + "/" + bundle, $"Assets/StreamingAssets/{platformName}/Bundles/" + bundle, true);
+            }
+
+            Debug.Log("Copied built-in bundles to StreamingAssets.");
+            Debug.Log($"Completed building for target {platformName}");
         }
-        Debug.Log("Copied built-in bundles to StreamingAssets.");
     }
     
     private static RuntimePlatform Platform 

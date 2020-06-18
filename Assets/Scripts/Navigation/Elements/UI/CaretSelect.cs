@@ -70,7 +70,9 @@ public class CaretSelect : MonoBehaviour
     
     public void Select(string value, bool anim = true, bool notify = true)
     {
-        Select(values.FindIndex(it => it == value), anim, notify);
+        var index = values.FindIndex(it => it == value);
+        if (index == -1) index = 0; // Default to first value
+        Select(index, anim, notify);
     }
 
 }

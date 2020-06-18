@@ -100,7 +100,7 @@ public class CommunityHomeScreen : Screen
     public override void OnScreenBecameInactive()
     {
         base.OnScreenBecameInactive();
-        LoadedPayload.ScrollPosition = scrollRect.verticalNormalizedPosition;
+        if (LoadedPayload != null) LoadedPayload.ScrollPosition = scrollRect.verticalNormalizedPosition;
     }
 
     protected override void LoadPayload(ScreenLoadPromise promise)
@@ -178,7 +178,7 @@ public class CommunityHomeScreen : Screen
                     {
                         var levelCardGameObject = Instantiate(levelCardPrefab, sectionBehavior.levelCardHolder.transform);
                         var levelCard = levelCardGameObject.GetComponent<LevelCard>();
-                        levelCard.SetModel(new LevelView{Level = onlineLevel.ToLevel(LevelType.Community), DisplayOwner = true});
+                        levelCard.SetModel(new LevelView{Level = onlineLevel.ToLevel(LevelType.User), DisplayOwner = true});
                     }
                     sectionBehavior.viewMoreButton.GetComponentInChildren<Text>().text =
                         "COMMUNITY_HOME_VIEW_ALL".Get();
@@ -219,16 +219,12 @@ public class CommunityHomeScreen : Screen
         if (LoadedPayload.ScrollPosition > 0) scrollRect.verticalNormalizedPosition = LoadedPayload.ScrollPosition;
         
         contentHolder.DOFade(1, 0.4f).SetEase(Ease.OutCubic);
-            
-        // Reload the covers
-        sectionHolder.GetComponentsInChildren<LevelCard>().ForEach(it => it.LoadCover());
-        sectionHolder.GetComponentsInChildren<CollectionCard>().ForEach(it => it.LoadCover());
     }
 
     public void SearchLevels()
     {
         var query = searchInputField.text;
-        var owner = ownerInputField.text;
+        var owner = ownerInputField.text.ToLower();
         if (query.IsNullOrEmptyTrimmed() && owner.IsNullOrEmptyTrimmed()) return;
         Context.ScreenManager.ChangeScreen(CommunityLevelSelectionScreen.Id, ScreenTransition.In,
             payload: new CommunityLevelSelectionScreen.Payload

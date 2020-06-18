@@ -51,7 +51,7 @@ public class Profile
 public class FullProfile : Profile
 {
     [JsonProperty("timeSeries")] public List<TimeSeriesData> TimeSeries { get; set; }
-    [JsonProperty("lastActive")] public DateTime? LastActive { get; set; }
+    [JsonProperty("lastActive")] public DateTimeOffset? LastActive { get; set; }
     [JsonProperty("levelCount")] public int LevelCount { get; set; }
     [JsonProperty("levels")] public List<OnlineLevel> Levels { get; set; }
     [JsonProperty("featuredLevelCount")] public int FeaturedLevelCount { get; set; }
@@ -60,6 +60,7 @@ public class FullProfile : Profile
     [JsonProperty("collections")] public List<CollectionMeta> Collections { get; set; }
     [JsonProperty("recentRecords")] public List<OnlineRecord> RecentRecords { get; set; }
     [JsonProperty("tier")] public TierMeta Tier { get; set; }
+    [JsonProperty("character")] public CharacterMeta Character { get; set; }
 
     [Serializable]
     public class TimeSeriesData

@@ -66,14 +66,14 @@ public class RewardOverlay : SingletonMonoBehavior<RewardOverlay>
                     case OnlinePlayerStateChange.Reward.RewardType.Level:
                         it.message.text = "REWARD_LEVEL_ADDED_TO_LIBRARY".Get();
                         it.levelCard.gameObject.SetActive(true);
-                        it.levelCard.SetModel(reward.onlineLevelValue.Value.ToLevel(LevelType.Library));
+                        it.levelCard.SetModel(reward.onlineLevelValue.Value.ToLevel(LevelType.User));
                         break;
                     case OnlinePlayerStateChange.Reward.RewardType.Character:
                         it.message.text = "REWARD_CHARACTER_UNLOCKED".Get();
                         it.characterName.gameObject.SetActive(true);
                         it.characterName.text = reward.characterValue.Value.Name;
                         it.characterDisplay.gameObject.SetActive(true);
-                        it.characterDisplay.Load(reward.characterValue.Value.TachieAssetId);
+                        it.characterDisplay.Load(CharacterAsset.GetTachieBundleId(reward.characterValue.Value.AssetId));
                         break;
                 }
                 

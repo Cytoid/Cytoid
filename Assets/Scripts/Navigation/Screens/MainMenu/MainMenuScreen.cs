@@ -1,9 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using LeTai.Asset.TranslucentImage;
-using Newtonsoft.Json;
-using Polyglot;
 using Proyecto26;
 using UnityEngine;
 using UnityEngine.UI;
@@ -32,12 +28,6 @@ public class MainMenuScreen : Screen
     {
         base.OnScreenBecameActive();
 
-        foreach (var tag in (AssetTag[]) Enum.GetValues(typeof(AssetTag)))
-        {
-            if (tag == AssetTag.PlayerAvatar) continue;
-            Context.AssetMemory.DisposeTaggedCacheAssets(tag);
-        }
-        
         //WebViewOverlay.Show();
         StartupLogger.Instance.Dispose();
 
@@ -45,7 +35,7 @@ public class MainMenuScreen : Screen
         rightOverlayImage.SetAlpha(Context.CharacterManager.GetActiveCharacterAsset().mainMenuRightOverlayAlpha);
         
         freePlayText.text = "MAIN_LEVELS_LOADED".Get(Context.LevelManager.LoadedLocalLevels.Count(it => 
-            it.Value.Type == LevelType.Community || it.Value.Type == LevelType.Library));
+            it.Value.Type == LevelType.User));
         freePlayText.transform.RebuildLayout();
         ProfileWidget.Instance.Enter();
 
@@ -109,5 +99,17 @@ public class MainMenuScreen : Screen
             Application.Quit();
         }
     }
-    
+
+    public override void OnScreenChangeFinished(Screen from, Screen to)
+    {
+        base.OnScreenChangeFinished(from, to);
+        if (to == this)
+        {
+            foreach (var assetTag in (AssetTag[]) Enum.GetValues(typeof(AssetTag)))
+            {
+                if (assetTag == AssetTag.PlayerAvatar) continue;
+                Context.AssetMemory.DisposeTaggedCacheAssets(assetTag);
+            }
+        }
+    }
 }

@@ -24,7 +24,7 @@ public class ModSpan : MonoBehaviour
         }
     }
 
-    public async void UpdateMods(HashSet<Mod> mods)
+    public void UpdateMods(HashSet<Mod> mods)
     {
         foreach (Transform child in layoutGroup.transform)
         {

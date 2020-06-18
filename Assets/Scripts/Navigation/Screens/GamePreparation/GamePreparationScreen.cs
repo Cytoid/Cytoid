@@ -8,7 +8,6 @@ using UnityEngine.UI;
 
 public class GamePreparationScreen : Screen
 {
-    public const string Id = "GamePreparation";
     public const bool PrintDebugMessages = true;
     
     public AudioSource previewAudioSource;
@@ -42,12 +41,13 @@ public class GamePreparationScreen : Screen
     public Transform advancedSettingsHolder;
     
     private bool initializedSettingsTab;
-    
-    public Level Level { get; set; }
-
-    public override string GetId() => Id;
-
     private bool willCalibrate;
+
+    public Level Level
+    {
+        get => LoadedPayload.Level;
+        private set => LoadedPayload.Level = value;
+    }
 
     public override void OnScreenInitialized()
     {
@@ -89,10 +89,21 @@ public class GamePreparationScreen : Screen
         }
 
         ProfileWidget.Instance.Enter();
+        
+        Context.LevelManager.OnLevelMetaUpdated.AddListener(OnLevelMetaUpdated);
+        Context.OnlinePlayer.OnLevelBestPerformanceUpdated.AddListener(OnLevelBestPerformanceUpdated);
+        Context.OnSelectedLevelChanged.AddListener(OnSelectedLevelChanged);
+    }
 
-        var needReload = Level != Context.SelectedLevel;
-        Level = Context.SelectedLevel;
+    protected override void LoadPayload(ScreenLoadPromise promise)
+    {
+        promise.Resolve(IntentPayload);
+    }
 
+    protected override void Render()
+    {
+        Context.SelectedLevel = Level;
+        
         if (PrintDebugMessages)
         {
             Debug.Log($"Id: {Level.Id}, Type: {Level.Type}");
@@ -131,18 +142,21 @@ public class GamePreparationScreen : Screen
                 }
             });
         }
-
-        LoadLevelPerformance();
-        LoadCover(needReload);
-        LoadPreview(needReload);
-        LoadOwner();
         
+        LoadLevelPerformance();
+        LoadOwner();
         UpdateTopMenu();
         UpdateStartButton();
+        
+        base.Render();
+    }
 
-        Context.LevelManager.OnLevelMetaUpdated.AddListener(OnLevelMetaUpdated);
-        Context.OnlinePlayer.OnLevelBestPerformanceUpdated.AddListener(OnLevelBestPerformanceUpdated);
-        Context.OnSelectedLevelChanged.AddListener(OnSelectedLevelChanged);
+    protected override void OnRendered()
+    {
+        base.OnRendered();
+        
+        LoadCover(true);
+        LoadPreview(true);
     }
 
     private void OnSelectedLevelChanged(Level anotherLevel)
@@ -160,10 +174,10 @@ public class GamePreparationScreen : Screen
 
     private void LoadOwner()
     {
-        if (Level.Type == LevelType.Community && Level.OnlineLevel?.Owner != null)
+        if (Level.Type == LevelType.User && Level.OnlineLevel?.Owner != null)
         {
             ownerRoot.gameObject.SetActive(true);
-            ownerAvatar.action = AvatarAction.ViewLevels;
+            ownerAvatar.action = AvatarAction.OpenProfile;
             ownerAvatar.SetModel(Level.OnlineLevel.Owner);
             ownerName.text = Level.OnlineLevel.Owner.Uid;
         }
@@ -337,7 +351,6 @@ public class GamePreparationScreen : Screen
     public override void OnScreenBecameInactive()
     {
         base.OnScreenBecameInactive();
-        Level = null;
         ownerRoot.gameObject.SetActive(false);
         ownerAvatar.Dispose();
         Context.LevelManager.OnLevelMetaUpdated.RemoveListener(OnLevelMetaUpdated);
@@ -431,7 +444,7 @@ public class GamePreparationScreen : Screen
                 Context.SelectedLevel = level;
                 Toast.Enqueue(Toast.Status.Success, "TOAST_SUCCESSFULLY_DOWNLOADED_LEVEL".Get());
 
-                if (Level.Type == LevelType.Community && Context.Player.ShouldOneShot("Community Level Offset Calibration"))
+                if (Level.Type == LevelType.User && Context.Player.ShouldOneShot("Community Level Offset Calibration"))
                 {
                     Dialog.Prompt("DIALOG_TUTORIAL_OFFSET_CALIBRATION".Get());
                 }
@@ -481,5 +494,20 @@ public class GamePreparationScreen : Screen
         foreach (Transform child in visualSettingsHolder) Destroy(child.gameObject);
         foreach (Transform child in advancedSettingsHolder) Destroy(child.gameObject);
     }
+    
+    public class Payload : ScreenPayload
+    {
+        public Level Level;
+    }
+    
+    public new Payload IntentPayload => (Payload) base.IntentPayload;
+    public new Payload LoadedPayload
+    {
+        get => (Payload) base.LoadedPayload;
+        set => base.LoadedPayload = value;
+    }
+    
+    public const string Id = "GamePreparation";
+    public override string GetId() => Id;
 
 }

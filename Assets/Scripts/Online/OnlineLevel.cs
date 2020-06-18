@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 [Serializable]
@@ -111,12 +109,12 @@ public class OnlineLevel
         meta.id = Uid;
         meta.title = Title;
         meta.title_localized = Metadata.LocalizedTitle;
-        meta.artist = Metadata.Artist.Name;
-        meta.artist_localized = Metadata.Artist.LocalizedName;
-        meta.artist_source = Metadata.Artist.Url;
-        meta.illustrator = Metadata.Illustrator.Name;
-        meta.illustrator_source = Metadata.Illustrator.Url;
-        meta.charter = Metadata.Charter.Name;
+        meta.artist = Metadata.Artist?.Name;
+        meta.artist_localized = Metadata.Artist?.LocalizedName;
+        meta.artist_source = Metadata.Artist?.Url;
+        meta.illustrator = Metadata.Illustrator?.Name;
+        meta.illustrator_source = Metadata.Illustrator?.Url;
+        meta.charter = Metadata.Charter?.Name;
         meta.charts = Charts.Select(onlineChart => new LevelMeta.ChartSection
         {
             type = onlineChart.Type, name = onlineChart.Name, difficulty = onlineChart.Difficulty

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DG.Tweening;
-using LeTai.Asset.TranslucentImage;
 using UniRx.Async;
 using UnityEditor;
 using UnityEngine;
@@ -152,8 +151,8 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
 
         if (ActiveScreen != null && targetScreenId == ActiveScreen.GetId())
         {
-            print("Warning: Attempted to change to the same screen! Ignoring.");
-            return;
+            transition = ScreenTransition.None;
+            newScreenTransitionDelay = duration / 2f;
         }
 
         if (ChangingToScreenId == targetScreenId)
@@ -272,13 +271,6 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         
         foreach (var listener in screenChangeListeners) listener.OnScreenChangeStarted(lastScreen, newScreen);
 
-        newScreen.IntentPayload = payload;
-        ActiveScreenId = newScreen.GetId();
-        newScreen.CanvasGroup.alpha = 0;
-        newScreen.State = ScreenState.Active;
-        var blocksRaycasts = newScreen.CanvasGroup.blocksRaycasts;
-        newScreen.CanvasGroup.blocksRaycasts = blocksRaycasts; // Special handling
-
         if (newScreenTransitionDelay > 0)
         {
             try
@@ -292,7 +284,13 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
                 return;
             }
         }
-
+        
+        if (payload == null) payload = newScreen.GetDefaultPayload();
+        newScreen.IntentPayload = payload;
+        ActiveScreenId = newScreen.GetId();
+        newScreen.CanvasGroup.alpha = 0;
+        newScreen.State = ScreenState.Active;
+        var blocksRaycasts = newScreen.CanvasGroup.blocksRaycasts;
         newScreen.CanvasGroup.blocksRaycasts = blocksRaycasts; // Special handling
 
         if (disableTransitions)
@@ -358,7 +356,7 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         {
             ChangingToScreenId = null;
 
-            if (lastScreen != null)
+            if (lastScreen != null && lastScreen != newScreen)
             {
                 if (DoNotActivateGameObjects)
                 {
@@ -382,7 +380,7 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         if (duration > 0) Run.After(duration, Action);
         else Action();
         
-        if (addTargetScreenToHistory && (History.Count == 0 || History.Peek().ScreenId != newScreen.GetId()))
+        if (addTargetScreenToHistory)
         {
             print($"Adding {newScreen.GetId()} to history");
             History.Push(new Intent(newScreen.GetId(), payload));

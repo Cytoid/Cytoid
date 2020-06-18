@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using DG.Tweening;
+using MoreMountains.NiceVibrations;
 using Proyecto26;
 using UniRx.Async;
 using UnityEngine;
@@ -23,9 +25,22 @@ public class Avatar : InteractableMonoBehavior
         avatarSpinner.bypassOnClickHitboxCheck = false;
         avatarSpinner.onPointerClick.AddListener(_ =>
         {
+            Context.Haptic(HapticTypes.SoftImpact, true);
+            Context.AudioManager.Get("Navigate1").Play(ignoreDsp: true);
             switch (action)
             {
                 case AvatarAction.OpenProfile:
+                    if (Context.IsOffline())
+                    {
+                        Dialog.PromptAlert("DIALOG_OFFLINE_FEATURE_NOT_AVAILABLE".Get());
+                    }
+                    else
+                    {
+                        Context.ScreenManager.ChangeScreen(ProfileScreen.Id, ScreenTransition.In,
+                            payload: new ProfileScreen.Payload {Id = owner.Id});
+                    }
+                    break;
+                case AvatarAction.OpenExternalProfile:
                     Application.OpenURL($"{Context.WebsiteUrl}/profile/{owner.Uid}");
                     break;
                 case AvatarAction.ViewLevels:
@@ -48,8 +63,15 @@ public class Avatar : InteractableMonoBehavior
                     }
                     else
                     {
-                        screen.LoadedPayload = payload;
-                        screen.LoadLevels();
+                        // In-place modification
+                        screen.LoadedPayload.Query = payload.Query;
+                        screen.LoadedPayload.Levels = new List<OnlineLevel>();
+                        screen.LoadedPayload.LastPage = 0;
+                        screen.LoadedPayload.IsLastPageLoaded = false;
+                        screen.LoadedPayload.CanLoadMore = true;
+                        screen.LoadedPayload.ScrollPosition = 0;
+                        
+                        screen.LoadLevels(true);
                     }
                     break;
             }
@@ -58,6 +80,7 @@ public class Avatar : InteractableMonoBehavior
 
     public async void SetModel(OnlineUser user)
     {
+        Dispose();
         owner = user;
         avatarSpinner.IsSpinning = true;
         
@@ -66,20 +89,21 @@ public class Avatar : InteractableMonoBehavior
         var token = asyncRequestToken;
         
         string url;
+        var size = highQuality ? 256 : 64;
         if (highQuality)
         {
-            url = user.AvatarUrl?.WithSizeParam(256, 256) ?? user.Avatar.LargeUrl;
+            url = user.AvatarUrl?.WithSizeParam(size, size) ?? user.Avatar.LargeUrl;
         }
         else
         {
-            url = user.AvatarUrl?.WithSizeParam(64, 64) ?? user.Avatar.SmallUrl;
+            url = user.AvatarUrl?.WithSizeParam(size, size) ?? user.Avatar.SmallUrl;
         }
             
         var sprite = await Context.AssetMemory.LoadAsset<Sprite>(
             url, 
             AssetTag.Avatar,
             allowFileCache: true,
-            options: new SpriteAssetOptions(new []{ 64, 64 })
+            options: new SpriteAssetOptions(new []{ size, size })
         );
 
         if (token != asyncRequestToken)
@@ -122,5 +146,5 @@ public class Avatar : InteractableMonoBehavior
 
 public enum AvatarAction
 {
-    OpenProfile, ViewLevels
+    OpenProfile, OpenExternalProfile, ViewLevels
 }

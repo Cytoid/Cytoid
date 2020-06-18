@@ -168,7 +168,7 @@ PlayerSettings:
     Standalone: com.Company.ProductName
     iPhone: me.tigerhix.cytoid
   buildNumber:
-    iPhone: 15
+    iPhone: 20
   AndroidBundleVersionCode: 85
   AndroidMinSdkVersion: 16
   AndroidTargetSdkVersion: 28
@@ -180,7 +180,7 @@ PlayerSettings:
   ForceInternetPermission: 1
   ForceSDCardPermission: 1
   CreateWallpaper: 0
-  APKExpansionFiles: 0
+  APKExpansionFiles: 1
   keepLoadedShadersAlive: 0
   StripUnusedMeshComponents: 1
   VertexChannelCompressionMask: 4054
@@ -260,12 +260,12 @@ PlayerSettings:
   clonedFromGUID: 5f34be1353de5cf4398729fda238591b
   templatePackageId: com.unity.template.2d@2.3.2
   templateDefaultScene: Assets/Scenes/SampleScene.unity
-  AndroidTargetArchitectures: 1
+  AndroidTargetArchitectures: 3
   AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 0}
   AndroidKeystoreName: C:/Cytoid/debug.keystore
   AndroidKeyaliasName: androiddebugkey
-  AndroidBuildApkPerCpuArchitecture: 0
+  AndroidBuildApkPerCpuArchitecture: 1
   AndroidTVCompatibility: 0
   AndroidIsGame: 1
   AndroidEnableTango: 0
@@ -749,8 +749,9 @@ PlayerSettings:
     29: CT_TPS
   platformArchitecture: {}
   scriptingBackend:
+    Android: 1
+  il2cppCompilerConfiguration:
     Android: 0
-  il2cppCompilerConfiguration: {}
   managedStrippingLevel: {}
   incrementalIl2cppBuild: {}
   allowUnsafeCode: 0

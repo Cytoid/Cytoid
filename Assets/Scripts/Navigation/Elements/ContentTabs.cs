@@ -19,6 +19,7 @@ public class ContentTabs : LabelSelect
             if (index == newIndex)
             {
                 viewportContents[index].anchoredPosition = new Vector2(viewportContents[index].anchoredPosition.x, 0);
+                tab.enterDelay = 0.2f;
                 tab.Enter(false);
                 tab.canvasGroup.blocksRaycasts = true;
             }
@@ -29,6 +30,17 @@ public class ContentTabs : LabelSelect
             }
         }
         onTabSelect.Invoke(newIndex, tabs[newIndex]);
+    }
+
+    public void UnselectAll()
+    {
+        SelectedIndex = -1;
+        for (var index = 0; index < tabs.Count; index++)
+        {
+            var tab = tabs[index];
+            tab.Leave(false, true);
+            tab.canvasGroup.blocksRaycasts = false;
+        }
     }
     
 }

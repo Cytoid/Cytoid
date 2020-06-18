@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using DG.Tweening;
 using UniRx.Async;
@@ -15,6 +16,9 @@ public class PausedScreen : Screen
     public InteractableMonoBehavior retryButton;
     public InteractableMonoBehavior continueButton;
 
+    private Action action;
+    private bool invokedAction;
+
     public override string GetId() => Id;
 
     public override void OnScreenInitialized()
@@ -23,18 +27,49 @@ public class PausedScreen : Screen
         overlay.gameObject.SetActive(true);
         goBackButton.onPointerClick.AddListener(_ =>
         {
-            game.Abort();
-            overlay.DOFade(1, 0.8f);
+            action = Action.Abort;
+            OnAction();
         });
         retryButton.onPointerClick.AddListener(_ =>
         {
-            game.Retry();
-            overlay.DOFade(1, 0.8f);
+            action = Action.Retry;
+            OnAction();
         });
         continueButton.onPointerClick.AddListener(_ =>
         {
-            game.WillUnpause();
+            action = Action.Resume;
+            OnAction();
         });
     }
-    
+
+    public override void OnScreenBecameActive()
+    {
+        base.OnScreenBecameActive();
+        invokedAction = false;
+    }
+
+    private void OnAction()
+    {
+        if (invokedAction) return;
+        invokedAction = true;
+        switch (action)
+        {
+            case Action.Abort:
+                game.Abort();
+                overlay.DOFade(1, 0.8f);
+                break;
+            case Action.Retry:
+                game.Retry();
+                overlay.DOFade(1, 0.8f);
+                break;
+            case Action.Resume:
+                game.WillUnpause();
+                break;
+        }
+    }
+
+    private enum Action
+    {
+        Abort, Retry, Resume
+    }
 }

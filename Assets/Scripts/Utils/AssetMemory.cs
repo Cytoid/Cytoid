@@ -13,8 +13,8 @@ public class AssetMemory
 {
     private static readonly Dictionary<AssetTag, int> TagLimits = new Dictionary<AssetTag, int>
     {
-        {AssetTag.LocalLevelCoverThumbnail, 24},
-        {AssetTag.RemoteLevelCoverThumbnail, 24},
+        {AssetTag.LocalLevelCoverThumbnail, 30},
+        {AssetTag.RemoteLevelCoverThumbnail, 30},
         {AssetTag.RecordCoverThumbnail, 12},
         {AssetTag.PlayerAvatar, 1},
         {AssetTag.Avatar, 100},

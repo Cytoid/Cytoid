@@ -311,10 +311,10 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
             {
                 rating.text += $" <color=#9BC53D>(+{Math.Round(rtDifference, 2)})</color>";
             } 
-            else if (rtDifference <= -0.01)
+            /*else if (rtDifference <= -0.01)
             {
                 rating.text += $" <color=#E55934>({Math.Round(rtDifference, 2)})</color>";
-            }
+            }*/
 
             var levelDifference = profile.Exp.CurrentLevel - lastProfile.Exp.CurrentLevel;
             if (levelDifference > 0)

@@ -1,3 +1,4 @@
+using UniRx.Async;
 using UnityEngine;
 
 public class SingletonMonoBehavior<T> : MonoBehaviour where T : MonoBehaviour
@@ -10,8 +11,14 @@ public class SingletonMonoBehavior<T> : MonoBehaviour where T : MonoBehaviour
         set => instance = value;
     }
 
-    protected virtual void Awake()
+    protected virtual async void Awake()
     {
+        if (instance != null)
+        {
+            // Wait until it is null
+            await UniTask.WaitUntil(() => instance == null);
+            if (this == null) return;
+        }
         instance = this as T;
     }
 

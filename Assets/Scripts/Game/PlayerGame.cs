@@ -40,7 +40,7 @@ public class PlayerGame : Game
 
         if (Context.LevelManager.LoadedLocalLevels.Count == 0)
         {
-            await Context.LevelManager.LoadFromMetadataFiles(LevelType.Community,
+            await Context.LevelManager.LoadFromMetadataFiles(LevelType.User,
                 new List<string> {path});
         }
         var level = Context.LevelManager.LoadedLocalLevels.First().Value;

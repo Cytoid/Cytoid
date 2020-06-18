@@ -39,7 +39,7 @@ public class CollectionDetailsScreen : Screen
     public override void OnScreenBecameInactive()
     {
         base.OnScreenBecameInactive();
-        LoadedPayload.ScrollPosition = scrollRect.verticalNormalizedPosition;
+        if (LoadedPayload != null) LoadedPayload.ScrollPosition = scrollRect.verticalNormalizedPosition;
     }
 
     public override void OnScreenDestroyed()
@@ -62,22 +62,10 @@ public class CollectionDetailsScreen : Screen
         {
             scrollRect.SetVerticalNormalizedPositionFix(LoadedPayload.ScrollPosition);
         }
-        scrollRect.GetComponent<TransitionElement>()
-            .Let(it =>
-            {
-                it.Leave(false, true);
-                it.Enter();
-            });
 
-        icons.Leave(false, true);
-        if (LoadedPayload.Collection.owner.Uid != Context.OfficialAccountId)
-        {
-            icons.Enter();
-        }
-        
         base.Render();
     }
-
+    
     protected override void LoadPayload(ScreenLoadPromise promise)
     {
         coverImage.color = Color.black;
@@ -115,6 +103,19 @@ public class CollectionDetailsScreen : Screen
     {
         base.OnRendered();
 
+        scrollRect.GetComponent<TransitionElement>()
+            .Let(it =>
+            {
+                it.Leave(false, true);
+                it.Enter();
+            });
+
+        icons.Leave(false, true);
+        if (LoadedPayload.Collection.owner.Uid != Context.OfficialAccountId)
+        {
+            icons.Enter();
+        }
+        
         if (coverImage.sprite == null || coverImage.sprite.texture == null)
         {
             AddTask(async token =>
@@ -146,7 +147,7 @@ public class CollectionDetailsScreen : Screen
         public CollectionMeta Collection;
         public string TitleOverride;
         public string SloganOverride;
-        public LevelType Type = LevelType.Community;
+        public LevelType Type = LevelType.User;
         
         public float ScrollPosition;
     }

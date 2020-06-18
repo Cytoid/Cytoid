@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Proyecto26;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.UI;
@@ -57,6 +58,13 @@ public class CharacterSelectionScreen : Screen
                     return;
                 }
                 
+                if (!await Context.BundleManager.DownloadAndSaveCatalog())
+                {
+                    Dialog.PromptGoBack("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
+                    promise.Reject();
+                    return;
+                }
+                
                 var downloadsRequired = 0;
                 foreach (var meta in characters)
                 {
@@ -66,13 +74,6 @@ public class CharacterSelectionScreen : Screen
                     }
                 }
                 print($"Number of downloads required: {downloadsRequired}");
-
-                if (!await Context.BundleManager.DownloadAndSaveCatalog())
-                {
-                    Dialog.PromptGoBack("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
-                    promise.Reject();
-                    return;
-                }
 
                 var downloaded = 0;
                 foreach (var meta in characters)
@@ -188,7 +189,7 @@ public class CharacterSelectionScreen : Screen
         nameText.text = meta.Name;
         nameGradient.SetGradient(character.nameGradient.GetGradient());
         descriptionText.text = meta.Description;
-        levelCard.SetModel(meta.Level.ToLevel(LevelType.Library));
+        levelCard.SetModel(meta.Level.ToLevel(LevelType.User));
         illustratorText.text = meta.Illustrator.Name;
         illustratorProfileButton.onPointerClick.SetListener(_ => Application.OpenURL(meta.Illustrator.Url));
         if (meta.CharacterDesigner != null && !meta.CharacterDesigner.Name.IsNullOrEmptyTrimmed())
@@ -215,8 +216,35 @@ public class CharacterSelectionScreen : Screen
             it.enterDelay = 0.4f;
             it.enterDuration = 0.8f;
         });
-        SpinnerOverlay.Hide();
-        TranslucentCover.Hide();
+
+        if (Context.IsOffline())
+        {
+            SpinnerOverlay.Hide();
+            TranslucentCover.Hide();
+        }
+        else
+        {
+            RestClient.Post(new RequestHelper
+                {
+                    Uri = $"{Context.ApiUrl}/profile/{Context.Player.Id}/character",
+                    Headers = Context.OnlinePlayer.GetRequestHeaders(),
+                    EnableDebug = true,
+                    Body = new CharacterPostData
+                    {
+                        characterId = meta.Id
+                    }
+                })
+                .CatchRequestError(error =>
+                {
+                    Debug.LogError(error);
+                    Toast.Next(Toast.Status.Failure, "TOAST_FAILED_TO_UPDATE_PROFILE_CHARACTER".Get());
+                })
+                .Finally(() =>
+                {
+                    SpinnerOverlay.Hide();
+                    TranslucentCover.Hide();
+                });
+        }
 
         ParallaxHolder.WillDelaySet = false;
     }
@@ -231,6 +259,12 @@ public class CharacterSelectionScreen : Screen
     {
         LoadedPayload.SelectedIndex = (LoadedPayload.SelectedIndex - 1).Mod(LoadedPayload.OwnedCharacters.Count);
         LoadCharacter(LoadedPayload.OwnedCharacters[LoadedPayload.SelectedIndex]);
+    }
+    
+    [Serializable]
+    class CharacterPostData
+    {
+        public string characterId;
     }
     
     public class Payload : ScreenPayload

@@ -319,9 +319,9 @@ public class ResultScreen : Screen
 
     public void Done()
     {
-        TranslucentCover.Hide();
-        Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.Out, willDestroy: true,
-            onFinished: screen => Resources.UnloadUnusedAssets());
+        Context.ScreenManager.ChangeScreen(Context.ScreenManager.PeekHistory(), ScreenTransition.Out, willDestroy: true,
+            onFinished: screen => Resources.UnloadUnusedAssets(),
+            addTargetScreenToHistory: false);
         Context.AudioManager.Get("LevelStart").Play();
     }
 
@@ -348,4 +348,13 @@ public class ResultScreen : Screen
         lowerRightColumn.Enter();
     }
 
+    public override void OnScreenChangeStarted(Screen from, Screen to)
+    {
+        base.OnScreenChangeStarted(from, to);
+        if (from == this)
+        {
+            TranslucentCover.Hide();
+        }
+    }
+    
 }

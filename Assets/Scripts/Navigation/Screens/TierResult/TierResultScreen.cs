@@ -192,10 +192,9 @@ public class TierResultScreen : Screen
 
     public void Done()
     {
-        TranslucentCover.Hide();
-        
-        Context.ScreenManager.ChangeScreen(TierSelectionScreen.Id, ScreenTransition.Out, willDestroy: true,
-            onFinished: screen => Resources.UnloadUnusedAssets());
+        Context.ScreenManager.ChangeScreen(Context.ScreenManager.PeekHistory(), ScreenTransition.Out, willDestroy: true,
+            onFinished: screen => Resources.UnloadUnusedAssets(),
+            addTargetScreenToHistory: false);
         Context.AudioManager.Get("LevelStart").Play();
     }
 
@@ -294,6 +293,15 @@ public class TierResultScreen : Screen
                 };
                 dialog.Open();
             });
+    }
+    
+    public override void OnScreenChangeStarted(Screen from, Screen to)
+    {
+        base.OnScreenChangeStarted(from, to);
+        if (from == this)
+        {
+            TranslucentCover.Hide();
+        }
     }
     
     public override void OnScreenChangeFinished(Screen from, Screen to)

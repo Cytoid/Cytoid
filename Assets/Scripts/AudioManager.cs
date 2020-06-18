@@ -37,7 +37,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         {
             NativeAudio.Initialize(new NativeAudio.InitializationOptions
             {
-                androidAudioTrackCount = 7
+                androidAudioTrackCount = 2
             });
             Debug.Log("Native Audio initialized");
         }

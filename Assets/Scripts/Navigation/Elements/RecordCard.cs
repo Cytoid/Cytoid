@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using DG.Tweening;
 using MoreMountains.NiceVibrations;
+using Proyecto26;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -68,7 +69,7 @@ public class RecordCard : InteractableMonoBehavior
         recordView = view;
 
         title.text = record.chart.level.Title;
-        date.text = record.date.ToLocalTime().Date.Humanize();
+        date.text = record.date.LocalDateTime.Humanize();
         difficultyBall.SetModel(Difficulty.Parse(record.chart.type), record.chart.difficulty);
         performanceWidget.SetModel(new LevelRecord.Performance{Score = record.score, Accuracy = record.accuracy});
 
@@ -77,7 +78,7 @@ public class RecordCard : InteractableMonoBehavior
             if (recordView.DisplayOwner && recordView.Record.owner != null)
             {
                 ownerRoot.gameObject.SetActive(true);
-                ownerAvatar.action = AvatarAction.ViewLevels;
+                ownerAvatar.action = AvatarAction.OpenProfile;
                 ownerAvatar.SetModel(recordView.Record.owner);
                 ownerName.text = recordView.Record.owner.Uid;
             }
@@ -230,11 +231,26 @@ public class RecordCard : InteractableMonoBehavior
 
             Context.AudioManager.Get("Navigate2").Play();
             Context.Haptic(HapticTypes.MediumImpact, true);
-
-            /*
-            CollectionDetailsScreen.LoadedContent = new CollectionDetailsScreen.Content {Id = collection.id, TitleOverride = titleOverride, SloganOverride = sloganOverride};
-            Context.ScreenManager.ChangeScreen(CollectionDetailsScreen.Id, ScreenTransition.In, 0.4f,
-                transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter());*/
+            
+            // Get full meta
+            SpinnerOverlay.Show();
+            RestClient.Get<OnlineLevel>(new RequestHelper
+                {
+                    Uri = $"{Context.ApiUrl}/levels/{record.chart.level.Uid}",
+                    Headers = Context.OnlinePlayer.GetRequestHeaders()
+                })
+                .Then(it =>
+                {
+                    Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.In, 0.4f,
+                        transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter(),
+                        payload: new GamePreparationScreen.Payload {Level = it.ToLevel(LevelType.User)});
+                })
+                .CatchRequestError(error =>
+                {
+                    Debug.LogError(error);
+                    Dialog.PromptAlert("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
+                })
+                .Finally(() => SpinnerOverlay.Hide());
         }
     }
 

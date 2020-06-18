@@ -88,7 +88,7 @@ public class LevelManager
             return new List<string>();
         }
 
-        return await InstallLevels(levelFiles, LevelType.Community);
+        return await InstallLevels(levelFiles, LevelType.User);
     }
 
     public async UniTask<List<string>> InstallLevels(List<string> packagePaths, LevelType type)
@@ -357,7 +357,7 @@ public class LevelManager
 
                 if (LoadedLocalLevels.ContainsKey(meta.id))
                 {
-                    if (LoadedLocalLevels[meta.id].Type != LevelType.Community && type == LevelType.Community)
+                    if (LoadedLocalLevels[meta.id].Type != LevelType.User && type == LevelType.User)
                     {
                         Debug.LogWarning($"Community level cannot override non-community level");
                         Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {path}");
@@ -388,17 +388,11 @@ public class LevelManager
 
                 if (record.AddedDate == DateTimeOffset.MinValue)
                 {
-                    if (type == LevelType.Community)
+                    if (type == LevelType.User)
                     {
-                        record.AddedDate = info.LastWriteTimeUtc;
-                    } 
-                    else if (type == LevelType.Library)
-                    {
-                        // Check if in library
-                        if (Context.Library.Levels.ContainsKey(level.Id))
-                        {
-                            record.AddedDate = Context.Library.Levels[level.Id].Date;
-                        }
+                        record.AddedDate = Context.Library.Levels.ContainsKey(level.Id) 
+                            ? Context.Library.Levels[level.Id].Date 
+                            : info.LastWriteTimeUtc;
                     }
                 }
 

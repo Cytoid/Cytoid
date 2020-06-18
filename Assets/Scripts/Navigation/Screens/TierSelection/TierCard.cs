@@ -69,7 +69,7 @@ public class TierCard : MonoBehaviour
             characterRoot.gameObject.SetActive(tier.Meta.character != null);
             if (tier.Meta.character != null)
             {
-                characterDisplay.Load(tier.Meta.character.TachieAssetId);
+                characterDisplay.Load(CharacterAsset.GetTachieBundleId(tier.Meta.character.AssetId));
                 characterDisplay.canvasGroup.alpha = 0;
             }
 

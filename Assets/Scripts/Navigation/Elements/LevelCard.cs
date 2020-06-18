@@ -28,10 +28,17 @@ public class LevelCard : InteractableMonoBehavior
     private Vector2 pressPosition;
 
     private Screen screenParent;
+    private bool addedScreenListeners;
 
     public void ScrollCellContent(object levelObject)
     {
         screenParent = this.GetScreenParent();
+        if (!addedScreenListeners)
+        {
+            addedScreenListeners = true;
+            screenParent.onScreenRendered.AddListener(OnScreenRendered);
+            screenParent.onScreenBecameInactive.AddListener(OnScreenBecameInactive);
+        }
         SetModel((LevelView) levelObject);
     }
 
@@ -47,14 +54,26 @@ public class LevelCard : InteractableMonoBehavior
         cover.sprite = null;
         cover.DOKill();
         cover.SetAlpha(0);
-        
-        screenParent?.onScreenBecameActive.AddListener(OnScreenBecameActive);
+
+        if (addedScreenListeners)
+        {
+            addedScreenListeners = false;
+            screenParent.onScreenRendered.RemoveListener(OnScreenRendered);
+            screenParent.onScreenBecameInactive.RemoveListener(OnScreenBecameInactive);
+        }
         screenParent = null;
     }
 
     private void Awake()
     {
         Unload();
+        screenParent = this.GetScreenParent();
+        if (screenParent != null && !addedScreenListeners)
+        {
+            addedScreenListeners = true;
+            screenParent.onScreenRendered.AddListener(OnScreenRendered);
+            screenParent.onScreenBecameInactive.AddListener(OnScreenBecameInactive);
+        }
     }
 
     public void Unload()
@@ -74,13 +93,24 @@ public class LevelCard : InteractableMonoBehavior
     {
         actionToken?.Cancel();
         coverToken?.Cancel();
-        screenParent?.onScreenBecameActive.RemoveListener(OnScreenBecameActive);
+        if (addedScreenListeners)
+        {
+            addedScreenListeners = false;
+            screenParent.onScreenRendered.RemoveListener(OnScreenRendered);
+            screenParent.onScreenBecameInactive.RemoveListener(OnScreenBecameInactive);
+        }
     }
 
-    private void OnScreenBecameActive()
+    private void OnScreenRendered()
     {
-        // Texture could be collected, so we try to load again
-        if (loadedCover) LoadCover();
+        // Texture could be collected, or we didn't load at all, so let's try to load again
+        LoadCover();
+    }
+
+    private void OnScreenBecameInactive()
+    {
+        actionToken?.Cancel();
+        coverToken?.Cancel();
     }
 
     public void SetModel(Level level)
@@ -114,7 +144,7 @@ public class LevelCard : InteractableMonoBehavior
         if (levelView.DisplayOwner && level.OnlineLevel?.Owner != null && level.OnlineLevel?.Owner.Uid != Context.OfficialAccountId)
         {
             ownerRoot.gameObject.SetActive(true);
-            ownerAvatar.action = AvatarAction.ViewLevels;
+            ownerAvatar.action = AvatarAction.OpenProfile;
             ownerAvatar.SetModel(level.OnlineLevel.Owner);
             ownerName.text = level.OnlineLevel.Owner.Uid;
         }
@@ -134,7 +164,7 @@ public class LevelCard : InteractableMonoBehavior
     private CancellationTokenSource coverToken;
 
     public async void LoadCover()
-    {
+    { 
         if (loadedCover && cover.sprite != null && cover.sprite.texture != null) return;
         
         cover.DOKill();
@@ -164,21 +194,32 @@ public class LevelCard : InteractableMonoBehavior
             coverToken = new CancellationTokenSource();
             try
             {
-                await UniTask.WaitUntil(() => ((RectTransform) transform).IsVisible(),
-                    cancellationToken: coverToken.Token);
-                await UniTask.DelayFrame(10, cancellationToken: coverToken.Token);
+                await UniTask.WaitUntil(() => transform == null || ((RectTransform) transform).IsVisible(), cancellationToken: coverToken.Token);
             }
-            catch
+            catch (OperationCanceledException)
             {
                 return;
             }
+
+            if (transform == null) return;
+        }
+        
+        coverToken = new CancellationTokenSource();
+        try
+        {
+            await UniTask.DelayFrame(5, cancellationToken: coverToken.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
         }
 
         coverToken = new CancellationTokenSource();
         Sprite sprite = null;
         try
         {
-            DebugGUI.Log("LevelCard: Loading " + level.Id);
+            // Debug.Log($"LevelCard {GetHashCode()}: Loading " + level.Id);
+            // DebugGUI.Log($"LevelCard {GetHashCode()}: Loading " + level.Id);
             if (level.IsLocal)
             {
                 var path = "file://" + level.Path + LevelManager.CoverThumbnailFilename;
@@ -306,12 +347,12 @@ public class LevelCard : InteractableMonoBehavior
                 return;
             }
 
-            Context.SelectedLevel = level;
             Context.AudioManager.Get("Navigate2").Play();
             Context.Haptic(HapticTypes.MediumImpact, true);
 
             Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.In, 0.4f,
-                transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter());
+                transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter(),
+                payload: new GamePreparationScreen.Payload {Level = level});
         }
     }
 

@@ -15,7 +15,7 @@ public static class MockData
         }
     };
 
-    public static Level CommunityLevel => Level.FromLocal(Context.UserDataPath + "/f/", LevelType.Community, new LevelMeta
+    public static Level CommunityLevel => Level.FromLocal(Context.UserDataPath + "/f/", LevelType.User, new LevelMeta
     {
         version = 1,
         schema_version = 2,
@@ -126,8 +126,7 @@ public static class MockData
                     character = new CharacterMeta
                     {
                         Name = "まふまふ",
-                        AssetId = "Mafu",
-                        TachieAssetId = "MafuTachie"
+                        AssetId = "Mafu"
                     }
                 }
             },

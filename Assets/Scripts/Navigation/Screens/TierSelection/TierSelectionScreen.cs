@@ -206,12 +206,12 @@ public class TierSelectionScreen : Screen
             it.Leave(false, true);
             it.Enter();
         });
-        LayoutFixer.Fix(scrollRect.content);
+        LayoutFixer.Fix(scrollRect.content, count: 6);
 
         if (lastScrollPosition > 0)
         {
             await UniTask.DelayFrame(5);
-            LayoutFixer.Fix(scrollRect.content);
+            LayoutFixer.Fix(scrollRect.content, count: 6);
             scrollRect.SetVerticalNormalizedPositionFix(lastScrollPosition);
         }
         StartCoroutine(SnapCoroutine());

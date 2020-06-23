@@ -13,8 +13,12 @@ public class ClassicNoteRenderer : NoteRenderer
     protected Color BaseRingColor;
     protected Color BaseFillColor;
 
+    protected bool UseExperimentalAnimations { get; }
+
     public ClassicNoteRenderer(Note note) : base(note)
     {
+        UseExperimentalAnimations = Context.Player.Settings.UseExperimentalNoteAnimations;
+        
         Ring = Note.transform.Find("NoteRing").GetComponent<SpriteRenderer>();
         Fill = Note.transform.Find("NoteFill").GetComponent<SpriteRenderer>();
 

@@ -53,18 +53,22 @@ public class CharacterSelectionScreen : Screen
                 if (characters.Count == 0)
                 {
                     // TODO: This should not happen! We have Sayaka
+                    SpinnerOverlay.Hide();
                     Dialog.PromptGoBack("DIALOG_OFFLINE_FEATURE_NOT_AVAILABLE".Get());
                     promise.Reject();
                     return;
                 }
-                
+
                 if (!await Context.BundleManager.DownloadAndSaveCatalog())
                 {
+                    SpinnerOverlay.Hide();
                     Dialog.PromptGoBack("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
                     promise.Reject();
                     return;
                 }
                 
+                SpinnerOverlay.Hide();
+
                 var downloadsRequired = 0;
                 foreach (var meta in characters)
                 {
@@ -73,17 +77,21 @@ public class CharacterSelectionScreen : Screen
                         downloadsRequired++;
                     }
                 }
+
                 print($"Number of downloads required: {downloadsRequired}");
 
                 var downloaded = 0;
                 foreach (var meta in characters)
                 {
-                    var (success, locallyResolved) = await Context.CharacterManager.DownloadCharacterAssetDialog(CharacterAsset.GetMainBundleId(meta.AssetId));
+                    var (success, locallyResolved) =
+                        await Context.CharacterManager.DownloadCharacterAssetDialog(
+                            CharacterAsset.GetMainBundleId(meta.AssetId));
                     if (success && !locallyResolved)
                     {
                         downloaded++;
                         print("Downloaded " + meta.AssetId);
                     }
+
                     if (!success)
                     {
                         Toast.Next(Toast.Status.Failure, "CHARACTER_FAILED_TO_DOWNLOAD".Get());
@@ -93,6 +101,7 @@ public class CharacterSelectionScreen : Screen
                         IntentPayload.OwnedCharacters.Add(meta);
                     }
                 }
+
                 print($"Number of downloads: {downloaded}");
 
                 if (downloaded > downloadsRequired)
@@ -115,14 +124,15 @@ public class CharacterSelectionScreen : Screen
             })
             .CatchRequestError(error =>
             {
+                SpinnerOverlay.Hide();
                 promise.Reject();
                 if (!error.IsNetworkError)
                 {
                     throw error;
                 }
+
                 Dialog.PromptGoBack("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
-            })
-            .Finally(() => SpinnerOverlay.Hide());
+            });
     }
 
     protected override void Render()
@@ -168,8 +178,6 @@ public class CharacterSelectionScreen : Screen
         if (isNewCharacter)
         {
             SpinnerOverlay.Show();
-            TranslucentCover.DarkMode();
-            TranslucentCover.Show(1, 0.4f);
 
             infoCard.Leave(false);
             characterTransitionElement.Leave(false);
@@ -206,6 +214,7 @@ public class CharacterSelectionScreen : Screen
 
         infoCard.transform.RebuildLayout();
         await characterDisplay.Load(CharacterAsset.GetTachieBundleId(meta.AssetId));
+        NavigationBackdrop.Instance.UpdateBlur();
 
         infoCard.Enter();
         characterTransitionElement.Leave(false, true);
@@ -220,7 +229,6 @@ public class CharacterSelectionScreen : Screen
         if (Context.IsOffline())
         {
             SpinnerOverlay.Hide();
-            TranslucentCover.Hide();
         }
         else
         {
@@ -242,7 +250,6 @@ public class CharacterSelectionScreen : Screen
                 .Finally(() =>
                 {
                     SpinnerOverlay.Hide();
-                    TranslucentCover.Hide();
                 });
         }
 

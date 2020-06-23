@@ -27,7 +27,7 @@ public class LocalPlayerSettings
     [JsonProperty("character_id")] public string ActiveCharacterId { get; set; }
 
     [JsonProperty("language")] public int Language { get; set; } = 0;
-    [JsonProperty("play_ranked")] public bool PlayRanked { get; set; } = true;
+    [JsonProperty("play_ranked")] public bool PlayRanked { get; set; } = false;
 
     [JsonProperty("enabled_mods")] public List<Mod> EnabledMods { get; set; } = new List<Mod>();
 
@@ -128,6 +128,7 @@ public class LocalPlayerSettings
     public int AndroidDspBufferSize { get; set; } = -1;
 
     [JsonProperty("use_experimental_note_ar")] public bool UseExperimentalNoteAr { get; set; } = false;
+    [JsonProperty("use_experimental_note_animations")] public bool UseExperimentalNoteAnimations { get; set; } = false;
 
     [JsonProperty("use_developer_console")] public bool UseDeveloperConsole { get; set; } = true;
 

@@ -143,9 +143,9 @@ public class RecordCard : InteractableMonoBehavior
             {
                 const int width = 576;
                 const int height = 216;
-                var path = record.chart.level.Cover.ThumbnailUrl.WithImageCdn().WithSizeParam(width, height);
+                var path = record.chart.level.Cover.ThumbnailUrl;
                 sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.RecordCoverThumbnail,
-                    coverToken.Token, true,
+                    coverToken.Token,
                     new SpriteAssetOptions(new[] {width, height}));
             }
             catch

@@ -79,8 +79,8 @@ public class Player
     {
         var dummy = new LocalPlayerSettings();
         Settings.NoteRingColors = dummy.NoteRingColors.WithOverrides(Settings.NoteRingColors);
-        Settings.NoteFillColors = dummy.NoteRingColors.WithOverrides(Settings.NoteFillColors);
-        Settings.NoteFillColorsAlt = dummy.NoteRingColors.WithOverrides(Settings.NoteFillColorsAlt);
+        Settings.NoteFillColors = dummy.NoteFillColors.WithOverrides(Settings.NoteFillColors);
+        Settings.NoteFillColorsAlt = dummy.NoteFillColorsAlt.WithOverrides(Settings.NoteFillColorsAlt);
         if (ShouldOneShot("Reset Graphics Quality"))
         {
             Settings.GraphicsQuality = GetDefaultGraphicsQuality();

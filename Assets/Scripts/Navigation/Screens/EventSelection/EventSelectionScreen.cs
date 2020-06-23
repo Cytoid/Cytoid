@@ -115,7 +115,7 @@ public class EventSelectionScreen : Screen
                 coverImage.DOColor(Color.black, 0.4f);
                 tasks.Add(UniTask.Delay(TimeSpan.FromSeconds(0.4f), cancellationToken: token));
             }
-            var downloadTask = Context.AssetMemory.LoadAsset<Sprite>(meta.cover.OriginalUrl, AssetTag.EventCover, allowFileCache: true, cancellationToken: token);
+            var downloadTask = Context.AssetMemory.LoadAsset<Sprite>(meta.cover.OriginalUrl, AssetTag.EventCover, cancellationToken: token);
             tasks.Add(downloadTask);
 
             try
@@ -142,7 +142,7 @@ public class EventSelectionScreen : Screen
                 logoImage.DOFade(0, 0.4f);
                 tasks.Add(UniTask.Delay(TimeSpan.FromSeconds(0.4f), cancellationToken: token));
             }
-            var downloadTask = Context.AssetMemory.LoadAsset<Sprite>(meta.logo.OriginalUrl, AssetTag.EventLogo, allowFileCache: true, cancellationToken: token);
+            var downloadTask = Context.AssetMemory.LoadAsset<Sprite>(meta.logo.OriginalUrl, AssetTag.EventLogo, cancellationToken: token);
             tasks.Add(downloadTask);
 
             try

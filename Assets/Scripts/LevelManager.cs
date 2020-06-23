@@ -576,7 +576,7 @@ public class LevelManager
 
         if (updated)
         {
-            File.WriteAllText($"{level.Path}/level.json", JsonConvert.SerializeObject(local));
+            File.WriteAllText($"{level.Path.Replace("file://", "")}/level.json", JsonConvert.SerializeObject(local));
         }
 
         return updated;

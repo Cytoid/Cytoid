@@ -17,8 +17,6 @@ public class InitializationScreen : Screen
     {
         versionText.text = "INIT_VERSION".Get(Context.VersionName.ToUpper());
         
-        TranslucentCover.DarkMode();
-        TranslucentCover.Show(0.5f, 2f);
         spinnerElement.IsSpinning = true;
         statusText.text = "";
 
@@ -44,12 +42,9 @@ public class InitializationScreen : Screen
         statusText.DOFade(0, 1.4f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutFlash);
         detectionArea.onPointerDown.AddListener(_ =>
         {
-            TranslucentCover.Hide(0.2f);
             Context.AudioManager.Get("LevelStart").Play();
             Context.ScreenManager.ChangeScreen(MainMenuScreen.Id, ScreenTransition.In);
         });
-        
-        MainTranslucentImage.Instance.Initialize();
     }
 
     private void OnLevelInstallProgress(string fileName, int current, int total)

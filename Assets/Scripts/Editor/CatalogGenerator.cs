@@ -25,7 +25,7 @@ public class CatalogGenerator
     static void GenerateCatalog()
     {
         AssetBundle.UnloadAllAssetBundles(true);
-        var platforms = new[] {("Android", BuildTarget.Android)};//, "iOS"};
+        var platforms = new[] {("iOS", BuildTarget.iOS)};//new[] {("Android", BuildTarget.Android)};//, "iOS"};
         foreach (var (platformName, buildTarget) in platforms)
         {
             var dir = $"AssetBundles/{platformName}";

@@ -87,22 +87,13 @@ public class Avatar : InteractableMonoBehavior
         asyncRequestToken = DateTime.Now;
 
         var token = asyncRequestToken;
-        
-        string url;
+
         var size = highQuality ? 256 : 64;
-        if (highQuality)
-        {
-            url = user.AvatarUrl?.WithSizeParam(size, size) ?? user.Avatar.LargeUrl;
-        }
-        else
-        {
-            url = user.AvatarUrl?.WithSizeParam(size, size) ?? user.Avatar.SmallUrl;
-        }
+        var url = highQuality ? user.Avatar.LargeUrl : user.Avatar.SmallUrl;
             
         var sprite = await Context.AssetMemory.LoadAsset<Sprite>(
             url, 
             AssetTag.Avatar,
-            allowFileCache: true,
             options: new SpriteAssetOptions(new []{ size, size })
         );
 

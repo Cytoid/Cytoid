@@ -40,7 +40,7 @@ public class BundleManager
     public async UniTask Initialize()
     {
         var cachedCatalog = File.Exists(CachedCatalogPath);
-        var path = cachedCatalog ? CachedCatalogPath : BuiltInCatalogPath;
+        var path = cachedCatalog ? "file://" + CachedCatalogPath : BuiltInCatalogPath;
         Debug.Log($"[BundleManager] Reading catalog from {path}");
         var request = UnityWebRequest.Get(path);
         using (request)
@@ -115,7 +115,7 @@ public class BundleManager
         var remoteCatalog = await GetRemoteCatalog();
         if (remoteCatalog == null) return false;
         Catalog = remoteCatalog;
-        File.WriteAllText(CachedCatalogPath, JsonConvert.SerializeObject(remoteCatalog.JObject));
+        File.WriteAllText(CachedCatalogPath.Replace("file://", ""), JsonConvert.SerializeObject(remoteCatalog.JObject));
         return true;
     }
 

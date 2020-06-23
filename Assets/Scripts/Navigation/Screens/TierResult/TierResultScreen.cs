@@ -139,8 +139,6 @@ public class TierResultScreen : Screen
 
         shareButton.onPointerClick.SetListener(_ => StartCoroutine(Share()));
 
-        await Resources.UnloadUnusedAssets();
-        
         gradientPane.SetModel(tierState.Tier);
         for (var index = 0; index < Math.Min(tierState.Tier.Meta.parsedStages.Count, 3); index++)
         {
@@ -193,7 +191,6 @@ public class TierResultScreen : Screen
     public void Done()
     {
         Context.ScreenManager.ChangeScreen(Context.ScreenManager.PeekHistory(), ScreenTransition.Out, willDestroy: true,
-            onFinished: screen => Resources.UnloadUnusedAssets(),
             addTargetScreenToHistory: false);
         Context.AudioManager.Get("LevelStart").Play();
     }
@@ -212,7 +209,7 @@ public class TierResultScreen : Screen
         var sceneLoader = new SceneLoader("Game");
         sceneLoader.Load();
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
-        TranslucentCover.Hide();
+        NavigationBackdrop.Instance.FadeBrightness(0, 0.8f);
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
         sceneLoader.Activate();
     }
@@ -298,9 +295,13 @@ public class TierResultScreen : Screen
     public override void OnScreenChangeStarted(Screen from, Screen to)
     {
         base.OnScreenChangeStarted(from, to);
-        if (from == this)
+        if (from == this && to != null)
         {
-            TranslucentCover.Hide();
+            NavigationBackdrop.Instance.FadeBrightness(0, onComplete: () =>
+            {
+                TranslucentCover.Clear();
+                NavigationBackdrop.Instance.FadeBrightness(1);
+            });
         }
     }
     

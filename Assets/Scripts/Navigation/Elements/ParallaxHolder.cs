@@ -16,12 +16,23 @@ public class ParallaxHolder : SingletonMonoBehavior<ParallaxHolder>
         {
             if (WillDelaySet) await UniTask.Delay(TimeSpan.FromSeconds(0.4f));
             Load(it.parallaxPrefab);
-            if (MainTranslucentImage.Static)
-            {
-                MainTranslucentImage.Instance.uiCamera.gameObject.SetActive(true);
-                MainTranslucentImage.ParallaxElement.gameObject.SetActive(true);
-            }
         });
+    }
+
+    private void Update()
+    {
+        if (Target != null)
+        {
+            var shouldActive = NavigationBackdrop.Instance.ShouldParallaxActive;
+            if (shouldActive && !Target.gameObject.activeInHierarchy)
+            {
+                Target.gameObject.SetActive(true);
+            } 
+            else if (!shouldActive && Target.gameObject.activeInHierarchy)
+            {
+                Target.gameObject.SetActive(false);
+            }
+        }
     }
 
     public void Load(ParallaxElement parallax)
@@ -38,4 +49,5 @@ public class ParallaxHolder : SingletonMonoBehavior<ParallaxHolder>
             Destroy(Target.gameObject);
         }
     }
+
 }

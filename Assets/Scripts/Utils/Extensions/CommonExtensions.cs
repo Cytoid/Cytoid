@@ -413,9 +413,9 @@ public static class CommonExtensions
         return new Color(color.r, color.g, color.b, alpha);
     }
 
-    public static void SetAlpha(this Image image, float alpha)
+    public static void SetAlpha(this Graphic graphic, float alpha)
     {
-        image.color = image.color.WithAlpha(alpha);
+        graphic.color = graphic.color.WithAlpha(alpha);
     }
 
     private static readonly Dictionary<string, Color> ColorLookup = new Dictionary<string, Color>();
@@ -619,21 +619,6 @@ public static class CommonExtensions
         }
 
         return url.Substring(0, url.Length - 1);
-    }
-
-    public static string WithSquareSizeParam(this string url, int size = 256)
-    {
-        return WithParam(url, new[] {("size", size)});
-    }
-
-    public static string WithSizeParam(this string url, int width = -1, int height = -1)
-    {
-        return WithParam(url, new[] {("w", width.ToString()), ("h", height.ToString()), ("rt", "fill")});
-    }
-
-    public static string WithImageCdn(this string url)
-    {
-        return url.Replace("assets.cytoid.io", "images.cytoid.io").Replace("assets.cytoid.cn", "images.cytoid.cn");
     }
 
     public static void ForEach<T>(this IEnumerable<T> enumerable, Action<T> action)

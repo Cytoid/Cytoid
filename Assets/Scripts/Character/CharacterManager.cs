@@ -36,7 +36,7 @@ public class CharacterManager
         if (!Context.BundleManager.IsCached(bundleId))
         {
             Debug.LogWarning($"Character {bundleId} is not cached");
-            //return null;
+            return null;
         }
         
         var characterBundle = await Context.BundleManager.LoadCachedBundle(bundleId);

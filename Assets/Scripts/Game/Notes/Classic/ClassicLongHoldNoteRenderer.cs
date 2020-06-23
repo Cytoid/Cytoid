@@ -27,6 +27,7 @@ public class ClassicLongHoldNoteRenderer : ClassicHoldNoteRenderer
         Triangle = Object.Instantiate(provider.trianglePrefab, Game.contentParent.transform).GetComponent<MeshTriangle>();
         Triangle.gameObject.SetActive(false);
         HoldFx = Object.Instantiate(Game.effectController.holdFx, Note.transform, false);
+        HoldFx.transform.SetLocalScale(HoldFx.transform.localScale.x * (1 + Context.Player.Settings.ClearEffectsSize));
         HoldFx.transform.DeltaZ(-0.001f);
         InitialProgressRingScale = ProgressRing.transform.localScale;
         ProgressRing.maxCutoff = 0;
@@ -110,7 +111,21 @@ public class ClassicLongHoldNoteRenderer : ClassicHoldNoteRenderer
     protected override void UpdateComponentOpacity()
     {
         base.UpdateComponentOpacity();
-        Line2.color = Line2.color.WithAlpha(EasedOpacity);
+        if (UseExperimentalAnimations)
+        {
+            if (HoldNote.IsHolding && Note.Game.Time > Note.Model.start_time + Note.JudgmentOffset)
+            {
+                Line2.color = Line2.color.WithAlpha(0.5f + HoldNote.HoldProgress * 0.5f);
+            }
+            else
+            {
+                Line2.color = Line2.color.WithAlpha(EasedOpacity * 0.5f);
+            }
+        }
+        else
+        {
+            Line2.color = Line2.color.WithAlpha(EasedOpacity);
+        }
         CompletedLine2.color = CompletedLine2.color.WithAlpha(EasedOpacity);
     }
 

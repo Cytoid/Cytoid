@@ -269,8 +269,8 @@ public class ProfileTab : MonoBehaviour
                 {
                     it.MaxAutoValue = false;
                     it.MinAutoValue = false;
-                    it.Max = Mathf.CeilToInt((float) allData.MaxBy(x => x.CumulativeRating).CumulativeRating);
-                    it.Min = (int) allData.MinBy(x => x.CumulativeRating).CumulativeRating;
+                    it.Max = allData.Count == 0 ? 16 : Mathf.CeilToInt((float) allData.MaxBy(x => x.CumulativeRating).CumulativeRating);
+                    it.Min = allData.Count == 0 ? 0 : (int) allData.MinBy(x => x.CumulativeRating).CumulativeRating;
                 });
                 chart.AxisConfig.VerticalAxisConfig.ValueFormatterConfig.ValueDecimalPlaces = 2;
                 break;
@@ -279,8 +279,8 @@ public class ProfileTab : MonoBehaviour
                 {
                     it.MaxAutoValue = false;
                     it.MinAutoValue = false;
-                    it.Max = Mathf.CeilToInt((float) allData.MaxBy(x => x.CumulativeAccuracy).CumulativeAccuracy * 100);
-                    it.Min = (int) (allData.MinBy(x => x.CumulativeAccuracy).CumulativeAccuracy * 100);
+                    it.Max = allData.Count == 0 ? 100 : Mathf.CeilToInt((float) allData.MaxBy(x => x.CumulativeAccuracy).CumulativeAccuracy * 100);
+                    it.Min = allData.Count == 0 ? 0 : (int) (allData.MinBy(x => x.CumulativeAccuracy).CumulativeAccuracy * 100);
                 });
                 chart.AxisConfig.VerticalAxisConfig.ValueFormatterConfig.ValueDecimalPlaces = 2;
                 break;

@@ -238,12 +238,12 @@ public class GamePreparationScreen : Screen
             }
             else
             {
-                path = Level.Meta.background.path.WithImageCdn().WithSizeParam(1280, 800);
+                path = Level.Meta.background.path;
             }
 
             var token = asyncCoverToken;
 
-            var sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.GameCover, allowFileCache: true);
+            var sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.GameCover);
 
             if (asyncCoverToken != token)
             {
@@ -282,7 +282,7 @@ public class GamePreparationScreen : Screen
             // Load
             var token = asyncPreviewToken;
             
-            var audioClip = await Context.AssetMemory.LoadAsset<AudioClip>(path, AssetTag.PreviewMusic, allowFileCache: true);
+            var audioClip = await Context.AssetMemory.LoadAsset<AudioClip>(path, AssetTag.PreviewMusic);
 
             if (asyncPreviewToken != token)
             {

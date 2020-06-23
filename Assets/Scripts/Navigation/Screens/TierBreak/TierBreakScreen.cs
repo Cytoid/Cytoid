@@ -45,9 +45,8 @@ public class TierBreakScreen : Screen
         Context.GameState = null;
 
         // Load translucent cover
-        TranslucentCover.LightMode();
         var path = "file://" + gameState.Level.Path + gameState.Level.Meta.background.path;
-        TranslucentCover.SetSprite(await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.GameCover));
+        TranslucentCover.Set(await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.GameCover));
      
         // Update performance info
         scoreText.text = Mathf.FloorToInt((float) gameState.Score).ToString("D6");
@@ -136,9 +135,11 @@ public class TierBreakScreen : Screen
         
         criterionEntryHolder.transform.RebuildLayout();
 
-        await Resources.UnloadUnusedAssets();
-
-        TranslucentCover.Show(0.9f);
+        NavigationBackdrop.Instance.Apply(it =>
+        {
+            it.IsBlurred = true;
+            it.FadeBrightness(1, 0.8f);
+        });
         ProfileWidget.Instance.Enter();
 
         if (tierState.IsFailed)
@@ -224,7 +225,7 @@ public class TierBreakScreen : Screen
         var sceneLoader = new SceneLoader("Game");
         sceneLoader.Load();
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
-        TranslucentCover.Hide();
+        NavigationBackdrop.Instance.FadeBrightness(0, 0.8f);
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
         sceneLoader.Activate();
     }
@@ -241,7 +242,7 @@ public class TierBreakScreen : Screen
         var sceneLoader = new SceneLoader("Game");
         sceneLoader.Load();
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
-        TranslucentCover.Hide();
+        NavigationBackdrop.Instance.FadeBrightness(0, 0.8f);
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
         
         Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.GameCover);
@@ -251,11 +252,14 @@ public class TierBreakScreen : Screen
     
     public void GoBack()
     {
-        TranslucentCover.Hide();
+        NavigationBackdrop.Instance.FadeBrightness(0, onComplete: () =>
+        {
+            TranslucentCover.Clear();
+            NavigationBackdrop.Instance.FadeBrightness(1);
+        });
 
         Context.TierState = null;
-        Context.ScreenManager.ChangeScreen(TierSelectionScreen.Id, ScreenTransition.Out, willDestroy: true,
-            onFinished: screen => Resources.UnloadUnusedAssets());
+        Context.ScreenManager.ChangeScreen(TierSelectionScreen.Id, ScreenTransition.Out, willDestroy: true);
         Context.AudioManager.Get("LevelStart").Play();
     }
     

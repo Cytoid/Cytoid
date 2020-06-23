@@ -125,10 +125,9 @@ public class CollectionCard : InteractableMonoBehavior
         {
             try
             {
-                var path = collection.cover.ThumbnailUrl.WithImageCdn().WithSizeParam(
-                    Context.CollectionThumbnailWidth, Context.CollectionThumbnailHeight);
+                var path = collection.cover.ThumbnailUrl;
                 sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.CollectionCoverThumbnail,
-                    coverToken.Token, true,
+                    coverToken.Token,
                     new SpriteAssetOptions(new[] {Context.CollectionThumbnailWidth, Context.CollectionThumbnailHeight}));
             }
             catch

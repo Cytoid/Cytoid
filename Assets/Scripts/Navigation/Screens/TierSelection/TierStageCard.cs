@@ -72,7 +72,7 @@ public class TierStageCard : InteractableMonoBehavior
             {
                 var path = level.OnlineLevel.Cover.StripeUrl;
                 sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.RemoteLevelCoverThumbnail,
-                    coverToken.Token, true, new SpriteAssetOptions(new []{ Context.LevelThumbnailWidth, Context.LevelThumbnailHeight }));
+                    coverToken.Token, new SpriteAssetOptions(new []{ Context.LevelThumbnailWidth, Context.LevelThumbnailHeight }));
             }
         }
         catch

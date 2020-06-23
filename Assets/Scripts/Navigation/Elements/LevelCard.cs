@@ -194,7 +194,7 @@ public class LevelCard : InteractableMonoBehavior
             coverToken = new CancellationTokenSource();
             try
             {
-                await UniTask.WaitUntil(() => transform == null || ((RectTransform) transform).IsVisible(), cancellationToken: coverToken.Token);
+                await UniTask.WaitUntil(() => this == null || transform == null || ((RectTransform) transform).IsVisible(), cancellationToken: coverToken.Token);
             }
             catch (OperationCanceledException)
             {
@@ -207,7 +207,7 @@ public class LevelCard : InteractableMonoBehavior
         coverToken = new CancellationTokenSource();
         try
         {
-            await UniTask.DelayFrame(5, cancellationToken: coverToken.Token);
+            await UniTask.DelayFrame(0, cancellationToken: coverToken.Token);
         }
         catch (OperationCanceledException)
         {
@@ -220,13 +220,28 @@ public class LevelCard : InteractableMonoBehavior
         {
             // Debug.Log($"LevelCard {GetHashCode()}: Loading " + level.Id);
             // DebugGUI.Log($"LevelCard {GetHashCode()}: Loading " + level.Id);
+            var width = 576;
+            var height = 360;
+            if (Context.Player.Settings.GraphicsQuality <= GraphicsQuality.Medium)
+            {
+                if (Context.Player.Settings.GraphicsQuality <= GraphicsQuality.Low)
+                {
+                    width = 288;
+                    height = 180;
+                }
+                else
+                {
+                    width = 432;
+                    height = 270;
+                }
+            }
             if (level.IsLocal)
             {
                 var path = "file://" + level.Path + LevelManager.CoverThumbnailFilename;
                 try
                 {
                     sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.LocalLevelCoverThumbnail,
-                        coverToken.Token);
+                        coverToken.Token, options: new SpriteAssetOptions(new[] {width, height}));
                 }
                 catch
                 {
@@ -237,11 +252,10 @@ public class LevelCard : InteractableMonoBehavior
             {
                 try
                 {
-                    var path = level.Meta.background.path.WithImageCdn().WithSizeParam(
-                        Context.LevelThumbnailWidth, Context.LevelThumbnailHeight);
+                    var path = level.Meta.background.path;
                     sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.RemoteLevelCoverThumbnail,
-                        coverToken.Token, true,
-                        new SpriteAssetOptions(new[] {Context.LevelThumbnailWidth, Context.LevelThumbnailHeight}));
+                        coverToken.Token,
+                        new SpriteAssetOptions(new[] {width, height}));
                 }
                 catch
                 {

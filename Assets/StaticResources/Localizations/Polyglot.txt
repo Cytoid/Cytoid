@@ -100,7 +100,7 @@ DIALOG_TUTORIAL_OFFSET_CALIBRATION		<b>You just downloaded your first community 
 DIALOG_DISABLE_DEVELOPER_CONSOLE_WARNING		<b>Warning: If you disable the developer console, you will NOT be able to report any bugs to us.</b> If you have encountered a bug, please enable developer console first and reproduce it before filing for a bug report.																	<b>警告：关闭开发人员控制台之后，\n你将无法向我们汇报 Bug。</b>\n遇到有 Bug 的情况下，\n请先开启开发人员控制台，然后复现你的问题，再截图错误信息向我们进行反馈。			<b>Varování: Pokud zakážete vývojářskou konzoli, nebudete nám moci hlásit bugy.</b> Pokud jste nalezli bug, povolte prosím nejprve vývojářskou konzoli a bug reprodukujte před napsáním bug reportu.												
 DIALOG_LEVEL_LOAD_ERROR		This level could be loaded.																	关卡加载失败。			Tato úroveň nemohla být načtena.												
 DIALOG_LOW_MEMORY		Your device is running out of memory.\nSome resources may not display correctly.																	你的设备内存不足。\n部分资源可能无法正常显示。			Vaše zařízení má přeplněnu paměť RAM.\nNěkteré elementy se nemusí zobrazit správně.												
-DIALOG_TIPS_MAIN_MENU_SHORTCUT		<b>Tips:</b>\nNavigated too deep? Long press the Back button to head back to the main menu instantly!																	<b>提示：</b>\n长按返回按钮可以直接返回到主菜单。															
+DIALOG_TIPS_MAIN_MENU_SHORTCUT		<b>Tips:</b>\nNavigated too deep? Long press the Back button to head back to the main menu instantly!																	<b>提示：</b>\n长按返回按钮可以直接返回到主菜单。			<b>Tip:</b>\nDostali jste se v menu příliš hluboko? Stiskněte dlouze tlačítko zpět pro okamžitý návrat do hlavního menu!												
 																																		
 PROFILE_WIDGET_NOT_SIGNED_IN		Not signed in		No ha iniciado sesión	Noch Nicht Angemeldet		Não está logado	Não está logado	Вход не выполнен									サインインしていません	未登录	尚未登入	로그인 안됨	Nepřihlášen(a)								Chưa đăng nhập	Di' pa signed-in	Belum Masuk	未阿格王朔	
 PROFILE_WIDGET_SIGNING_IN		Signing in...		Ingresando...	Anmelden...		Logando...	A realizar login...	Вход...									サインイン中…	登录中...	登入中...	로그인 중...	Přihlašování...								Đang đăng nhập...			阿格王朔中...	
@@ -248,6 +248,7 @@ SETTINGS_MENU_TAPTIC_FEEDBACK		Menu taptic feedback							Отдача в мен
 SETTINGS_MENU_TAPTIC_FEEDBACK_DESC		Enable taptic feedback in menus							Включает отдачу в меню										在菜单提供震动反馈			Povolit haptickou odezvu v menu												
 SETTINGS_EXPERIMENTAL_NOTE_AR		Experimental note AR							Экспериментальное появление нот										实验性 Note AR			Experimentální AR												
 SETTINGS_EXPERIMENTAL_NOTE_AR_DESC		Notes fade in earlier and smaller							Ноты появляются раньше и меньше										Note 更早淡入且淡入时更小			Noty se objevují dříve a menší												
+SETTINGS_EXPERIMENTAL_NOTE_ANIMATIONS		Experimental note animations																	实验性 Note 动画															
 SETTINGS_DEVELOPER_CONSOLE		Development console							Консоль разработчика										开发人员控制台			Vývojářská konzole												
 SETTINGS_DEVELOPER_CONSOLE_DESC		Toggle console visibility							Включает видимость консоли										切换控制台显示			Přepíná viditelnost vývojářské konzole												
 SETTINGS_USE_MENU_TRANSITIONS		Menu transitions							Переходы в меню										菜单过渡动画			Přechody menu												

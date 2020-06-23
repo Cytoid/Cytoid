@@ -428,6 +428,11 @@ public static class SettingsFactory
                 () => lp.Settings.UseExperimentalNoteAr, it => lp.Settings.UseExperimentalNoteAr = it)
             .SaveSettingsOnChange();
         
+        Object.Instantiate(provider.pillRadioGroup, parent)
+            .SetContent("SETTINGS_EXPERIMENTAL_NOTE_ANIMATIONS".Get(), "",
+                () => lp.Settings.UseExperimentalNoteAnimations, it => lp.Settings.UseExperimentalNoteAnimations = it)
+            .SaveSettingsOnChange();
+        
         var input = Object.Instantiate(provider.input, parent);
         input.SetContent("SETTINGS_JUDGMENT_OFFSET".Get(), "SETTINGS_JUDGMENT_OFFSET_DESC".Get(),
                 () => lp.Settings.JudgmentOffset, it =>

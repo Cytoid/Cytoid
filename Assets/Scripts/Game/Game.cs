@@ -453,8 +453,6 @@ public class Game : MonoBehaviour
         onGameLateUpdate.Invoke(this);
     }
 
-    
-
     protected virtual void OnApplicationPause(bool willPause)
     {
         if (IsLoaded && State.IsStarted && willPause)
@@ -640,6 +638,9 @@ public class Game : MonoBehaviour
 
     public virtual void Dispose()
     {
+        onGameUpdate.RemoveAllListeners();
+        onGameLateUpdate.RemoveAllListeners();
+        
         inputController.DisableInput();
         ObjectPool.Dispose();
         

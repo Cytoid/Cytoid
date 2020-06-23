@@ -13,7 +13,6 @@ public class ParallaxElement : MonoBehaviour, ScreenChangeListener
 
     public bool Enabled { get; set; } = true;
     public float CurrentScale { get; private set; } = 1f;
-    public float ScaleMultiplier { get; set; } = 1f;
     
     public int width = 1920;
     public int height = 1080;
@@ -69,7 +68,7 @@ public class ParallaxElement : MonoBehaviour, ScreenChangeListener
             var ratio = currentScreenSize.x / currentScreenSize.y;
             CurrentScale = minScale + (maxScale - minScale) * ((ratio - minRatio) / (maxRatio - minRatio));
         }
-        transform.SetLocalScale(CurrentScale * ScaleMultiplier);
+        transform.SetLocalScale(CurrentScale);
     }
 
     private Vector2 gyroPos;

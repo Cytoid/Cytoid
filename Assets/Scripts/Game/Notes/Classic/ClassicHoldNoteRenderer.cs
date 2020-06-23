@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using DG.Tweening;
+using UnityEngine;
 
 public class ClassicHoldNoteRenderer : ClassicNoteRenderer
 {
@@ -35,6 +36,7 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
         Triangle = Object.Instantiate(provider.trianglePrefab, Game.contentParent.transform).GetComponent<MeshTriangle>();
         Triangle.gameObject.SetActive(false);
         HoldFx = Object.Instantiate(Game.effectController.holdFx, Note.transform, false);
+        HoldFx.transform.SetLocalScale(HoldFx.transform.localScale.x * (1 + Context.Player.Settings.ClearEffectsSize));
         HoldFx.transform.DeltaZ(-0.001f);
         InitialProgressRingScale = ProgressRing.transform.localScale;
         ProgressRing.maxCutoff = 0;
@@ -119,6 +121,13 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
                         ProgressRing.fillColor = Fill.color;
                         ProgressRing.maxCutoff = Mathf.Min(1, 1.333f * HoldNote.HoldProgress);
                         ProgressRing.fillCutoff = Mathf.Min(1, HoldNote.HoldProgress);
+
+                        if (UseExperimentalAnimations)
+                        {
+                            Ring.transform.DOScale(BaseTransformSize * 0.85f, 0.2f);
+                            Fill.transform.DOScale(BaseTransformSize * 0.85f, 0.2f);
+                            SpriteMask.transform.DOScale(BaseTransformSize * 0.85f, 0.2f);
+                        }
                         
                         if (Game.State.IsPlaying && !HoldFx.isPlaying)
                         {
@@ -176,11 +185,27 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
     protected override void UpdateComponentOpacity()
     {
         base.UpdateComponentOpacity();
-        Line.color = Line.color.WithAlpha(EasedOpacity);
+        if (UseExperimentalAnimations)
+        {
+            if (HoldNote.IsHolding && Note.Game.Time > Note.Model.start_time + Note.JudgmentOffset)
+            {
+                Line.color = Line.color.WithAlpha(0.5f + HoldNote.HoldProgress * 0.5f);
+            }
+            else
+            {
+                Line.color = Line.color.WithAlpha(EasedOpacity * 0.5f);
+            }
+        }
+        else
+        {
+            Line.color = Line.color.WithAlpha(EasedOpacity);
+        }
     }
 
     protected override void UpdateTransformScale()
     {
+        if (Game.Time > Note.Model.start_time) return; // Already scaled to maximum
+        
         // Scale the entire transform
         var timeScale = Mathf.Clamp((Game.Time - Note.Model.intro_time) / (Note.Model.start_time - Note.Model.intro_time), 0f, 1f);
         

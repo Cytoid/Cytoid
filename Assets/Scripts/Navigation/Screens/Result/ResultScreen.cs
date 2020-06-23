@@ -75,9 +75,13 @@ public class ResultScreen : Screen
         });
 
         // Load translucent cover
-        TranslucentCover.LightMode();
         var path = "file://" + Context.SelectedLevel.Path + Context.SelectedLevel.Meta.background.path;
-        TranslucentCover.SetSprite(await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.GameCover));
+        TranslucentCover.Set(await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.GameCover));
+        NavigationBackdrop.Instance.Apply(it =>
+        {
+            it.IsBlurred = true;
+            it.FadeBrightness(1, 0.8f);
+        });
 
         // Update performance info
         scoreText.text = Mathf.FloorToInt((float) gameState.Score).ToString("D6");
@@ -151,7 +155,7 @@ public class ResultScreen : Screen
             }
             else if (performance.Score == historicBest.Score && performance.Accuracy > historicBest.Accuracy)
             {
-                newBestText.text = $"+{(Mathf.FloorToInt((float) (performance.Accuracy - historicBest.Accuracy) * 100 * 100) / 100f):0.00}";
+                newBestText.text = $"+{(Mathf.FloorToInt((float) (performance.Accuracy - historicBest.Accuracy) * 100 * 100) / 100f):0.00}%";
                 bestPerformances[gameState.Difficulty.Id] = performance;
             }
             else
@@ -163,9 +167,6 @@ public class ResultScreen : Screen
 
         shareButton.onPointerClick.SetListener(_ => StartCoroutine(Share()));
 
-        await Resources.UnloadUnusedAssets();
-        
-        TranslucentCover.Show(0.9f);
         ProfileWidget.Instance.Enter();
         upperRightColumn.Enter();
         
@@ -320,7 +321,6 @@ public class ResultScreen : Screen
     public void Done()
     {
         Context.ScreenManager.ChangeScreen(Context.ScreenManager.PeekHistory(), ScreenTransition.Out, willDestroy: true,
-            onFinished: screen => Resources.UnloadUnusedAssets(),
             addTargetScreenToHistory: false);
         Context.AudioManager.Get("LevelStart").Play();
     }
@@ -337,7 +337,7 @@ public class ResultScreen : Screen
         var sceneLoader = new SceneLoader("Game");
         sceneLoader.Load();
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
-        TranslucentCover.Hide();
+        NavigationBackdrop.Instance.FadeBrightness(0, 0.8f);
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
         sceneLoader.Activate();
     }
@@ -353,7 +353,11 @@ public class ResultScreen : Screen
         base.OnScreenChangeStarted(from, to);
         if (from == this)
         {
-            TranslucentCover.Hide();
+            NavigationBackdrop.Instance.FadeBrightness(0, onComplete: () =>
+            {
+                TranslucentCover.Clear();
+                NavigationBackdrop.Instance.FadeBrightness(1);
+            });
         }
     }
     

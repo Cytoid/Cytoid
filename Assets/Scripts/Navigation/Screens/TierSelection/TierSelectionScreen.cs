@@ -322,8 +322,7 @@ public class TierSelectionScreen : Screen
         }
         else
         {
-            sprite = await Context.AssetMemory.LoadAsset<Sprite>(lastStage.OnlineLevel.Cover.CoverUrl,
-                AssetTag.TierCover, allowFileCache: true);
+            sprite = await Context.AssetMemory.LoadAsset<Sprite>(lastStage.OnlineLevel.Cover.CoverUrl, AssetTag.TierCover);
         }
 
         if (token != asyncCoverToken)
@@ -370,7 +369,7 @@ public class TierSelectionScreen : Screen
             return;
         }
 
-        var audioClip = await Context.AssetMemory.LoadAsset<AudioClip>(path, AssetTag.PreviewMusic, allowFileCache: true);
+        var audioClip = await Context.AssetMemory.LoadAsset<AudioClip>(path, AssetTag.PreviewMusic);
 
         if (asyncPreviewToken != token)
         {

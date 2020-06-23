@@ -124,7 +124,7 @@ public class CollectionDetailsScreen : Screen
                 try
                 {
                     sprite = await Context.AssetMemory.LoadAsset<Sprite>(LoadedPayload.Collection.cover.CoverUrl,
-                        AssetTag.CollectionCover, allowFileCache: true, cancellationToken: token);
+                        AssetTag.CollectionCover, cancellationToken: token);
                 }
                 catch
                 {

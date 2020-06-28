@@ -20,7 +20,19 @@ public class SignInScreen : Screen
     {
         base.OnScreenInitialized();
         uidInput.text = Context.Player.Id;
-        signUpButton.onPointerClick.SetListener(_ => Application.OpenURL($"{Context.WebsiteUrl}/session/signup"));
+        signUpButton.onPointerClick.SetListener(_ =>
+        {
+            if (Context.Distribution == Distribution.China)
+            {
+                // TODO: Remove this
+                Dialog.PromptAlert("<b>提示：</b>\n如果注册中遇到任何问题，请查看论坛置顶的故障合集贴。", 
+                    () => Application.OpenURL($"{Context.WebsiteUrl}/session/signup"));
+            }
+            else
+            {
+                Application.OpenURL($"{Context.WebsiteUrl}/session/signup");
+            }
+        });
     }
 
     public override void OnScreenBecameActive()
@@ -73,6 +85,9 @@ public class SignInScreen : Screen
                     {
                         case 401:
                             Toast.Next(Toast.Status.Failure, "TOAST_INCORRECT_ID_OR_PASSWORD".Get());
+                            break;
+                        case 403:
+                            Toast.Next(Toast.Status.Failure, "TOAST_LIKELY_INCORRECT_SYSTEM_TIME".Get());
                             break;
                         case 404:
                             Toast.Next(Toast.Status.Failure, "TOAST_ID_NOT_FOUND".Get());

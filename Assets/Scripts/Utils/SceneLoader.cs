@@ -6,30 +6,33 @@ using UnityEngine.SceneManagement;
 
 public class SceneLoader
 {
-    public readonly string CurrentScene;
-    public string Scene;
-    public AsyncOperation AsyncOperation;
+    private readonly string currentScene;
+    private readonly string scene;
+    private AsyncOperation asyncOperation;
+    public bool IsLoaded { get; private set; }
 
     public SceneLoader(string scene)
     {
-        CurrentScene = SceneManager.GetActiveScene().name;
-        Scene = scene;
+        currentScene = SceneManager.GetActiveScene().name;
+        this.scene = scene;
     }
 
     public async UniTask Load()
     {
-        Context.PreSceneChanged.Invoke(CurrentScene, Scene);
-        AsyncOperation = SceneManager.LoadSceneAsync(Scene);
-        AsyncOperation.allowSceneActivation = false;
-        await AsyncOperation;
+        Context.PreSceneChanged.Invoke(currentScene, scene);
+        asyncOperation = SceneManager.LoadSceneAsync(scene);
+        asyncOperation.allowSceneActivation = false;
+        await UniTask.WaitUntil(() => asyncOperation.progress == 0.9f); // Kudos to Unity devs, best API design ever
+        IsLoaded = true;
     }
 
     public async void Activate()
     {
-        if (AsyncOperation == null) await UniTask.WaitUntil(() => AsyncOperation != null);
-        AsyncOperation.allowSceneActivation = true;
-        await UniTask.WaitUntil(() => AsyncOperation.isDone);
-        Context.PostSceneChanged.Invoke(CurrentScene, Scene);
+        Debug.Log($"[SceneLoader] Changing scene from {currentScene} to {scene}");
+        if (asyncOperation == null) await UniTask.WaitUntil(() => asyncOperation != null);
+        asyncOperation.allowSceneActivation = true;
+        await UniTask.WaitUntil(() => asyncOperation.isDone);
+        Context.PostSceneChanged.Invoke(currentScene, scene);
     }
 }
 

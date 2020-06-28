@@ -113,6 +113,10 @@ public class LevelSelectionScreen : Screen
         var query = searchInputField.text.Trim();
 
         RefillLevels(sort, asc, query, filters);
+        if (scrollRect.totalCount == 0 && Context.Player.ShouldOneShot("Tips: No Community Levels Yet"))
+        {
+            Dialog.PromptAlert("DIALOG_TIPS_NO_COMMUNITY_LEVELS_YET".Get());
+        }
 
         if (keepScrollPosition)
         {

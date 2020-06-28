@@ -22,7 +22,15 @@ public class LevelCard : InteractableMonoBehavior
     public List<DifficultyBall> difficultyBalls = new List<DifficultyBall>();
 
     private LevelView levelView;
-    private Level level => levelView?.Level;
+    private Level level
+    {
+        get => levelView?.Level;
+        set
+        {
+            if (levelView == null) throw new InvalidOperationException();
+            levelView.Level = value;
+        }
+    }
     private bool loadedCover;
     private CancellationTokenSource actionToken;
     private Vector2 pressPosition;
@@ -201,7 +209,7 @@ public class LevelCard : InteractableMonoBehavior
                 return;
             }
 
-            if (transform == null) return;
+            if (this == null || transform == null) return;
         }
         
         coverToken = new CancellationTokenSource();
@@ -235,6 +243,13 @@ public class LevelCard : InteractableMonoBehavior
                     height = 270;
                 }
             }
+            
+            // It's possible that this level now has a local version
+            if (!level.IsLocal && level.OnlineLevel.HasLocal(LevelType.User))
+            {
+                level = level.OnlineLevel.ToLevel(LevelType.User);
+            }
+
             if (level.IsLocal)
             {
                 var path = "file://" + level.Path + LevelManager.CoverThumbnailFilename;
@@ -252,7 +267,7 @@ public class LevelCard : InteractableMonoBehavior
             {
                 try
                 {
-                    var path = level.Meta.background.path;
+                    var path = level.OnlineLevel.Cover.ThumbnailUrl;
                     sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.RemoteLevelCoverThumbnail,
                         coverToken.Token,
                         new SpriteAssetOptions(new[] {width, height}));
@@ -275,6 +290,8 @@ public class LevelCard : InteractableMonoBehavior
 
             return;
         }
+        
+        if (this == null || transform == null) return;
 
         if (sprite != null)
         {

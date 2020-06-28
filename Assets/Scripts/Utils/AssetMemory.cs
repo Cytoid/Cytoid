@@ -96,22 +96,23 @@ public class AssetMemory
         }
 
         // Currently loading
-        if (isLoading.Contains(variantPath))
+        if (isLoading.Contains(path))
         {
-            if (PrintDebugMessages) Debug.Log($"AssetMemory: Already loading {variantPath}. Waiting...");
-            await UniTask.WaitUntil(() => !isLoading.Contains(variantPath), cancellationToken: cancellationToken);
-            if (PrintDebugMessages) Debug.Log($"AssetMemory: Wait {variantPath} complete.");
+            if (PrintDebugMessages) Debug.Log($"AssetMemory: Already loading {path}. Waiting...");
+            await UniTask.WaitUntil(() => !isLoading.Contains(path), cancellationToken: cancellationToken);
+            if (PrintDebugMessages) Debug.Log($"AssetMemory: Wait {path} complete.");
             
             return await LoadAsset<T>(path, tag, cancellationToken, options);
         }
 
         CheckIfExceedTagLimit(tag);
 
-        if (PrintDebugMessages) Debug.Log($"AssetMemory: Started loading {variantPath}.");
-        isLoading.Add(variantPath);
+        if (PrintDebugMessages) Debug.Log($"AssetMemory: Started loading {path} with variant {suffix}.");
+        isLoading.Add(path);
 
         var time = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-
+        var loadPath = path;
+        
         // Cache remote
         if (!path.StartsWith("file://"))
         {
@@ -128,7 +129,7 @@ public class AssetMemory
                         await request.SendWebRequest();
                         if (cancellationToken != default && cancellationToken.IsCancellationRequested)
                         {
-                            isLoading.Remove(variantPath);
+                            isLoading.Remove(path);
                             return default;
                         }
 
@@ -148,7 +149,7 @@ public class AssetMemory
                                     Debug.LogError(request.error);
                                 }
                             }
-                            isLoading.Remove(variantPath);
+                            isLoading.Remove(path);
                             return default;
                         }
                        
@@ -157,20 +158,20 @@ public class AssetMemory
                 }
                 else
                 {
-                    isLoading.Remove(variantPath);
+                    isLoading.Remove(path);
                     return default;
                 }
             }
 
             if (PrintDebugMessages) Debug.Log($"AssetMemory: Cached at {cachePath}");
-            path = "file://" + cachePath;
+            loadPath = "file://" + cachePath;
         }
 
         T asset = default;
         if (typeof(T) == typeof(Sprite))
         {
             // Fit crop
-            var loadPath = variantExists ? variantPath : path;
+            loadPath = variantExists ? variantPath : loadPath;
             
             using (var request = UnityWebRequest.Get(loadPath))
             {
@@ -178,7 +179,7 @@ public class AssetMemory
 
                 if (cancellationToken != default && cancellationToken.IsCancellationRequested)
                 {
-                    isLoading.Remove(variantPath);
+                    isLoading.Remove(path);
                     return default;
                 }
 
@@ -190,7 +191,7 @@ public class AssetMemory
                         Debug.LogError(
                             $"AssetMemory: Failed to load {loadPath}");
                         Debug.LogError(request.error);
-                        isLoading.Remove(variantPath);
+                        isLoading.Remove(path);
                         return default;
                     }
                 }
@@ -198,7 +199,7 @@ public class AssetMemory
                 var bytes = request.downloadHandler.data;
                 if (bytes == null)
                 {
-                    isLoading.Remove(variantPath);
+                    isLoading.Remove(path);
                     return default;
                 }
 
@@ -222,21 +223,31 @@ public class AssetMemory
                         texture = croppedTexture;
                         bytes = texture.EncodeToJPG();
 
+                        var completed = false;
                         async void Task()
                         {
                             await UniTask.SwitchToThreadPool();
-                            File.WriteAllBytes(variantPath.Substring("file://".Length), bytes);
+                            var cleanPath = variantPath.Substring("file://".Length);
+                            Directory.CreateDirectory(Path.GetDirectoryName(cleanPath));
+                            File.WriteAllBytes(cleanPath, bytes);
+                            completed = true;
                         }
                         Task();
+                        await UniTask.WaitUntil(() => completed);
                     }
                     else
                     {
+                        var completed = false;
                         async void Task()
                         {
                             await UniTask.SwitchToThreadPool();
-                            File.Copy(loadPath.Substring("file://".Length), variantPath.Substring("file://".Length));
+                            var cleanPath = variantPath.Substring("file://".Length);
+                            Directory.CreateDirectory(Path.GetDirectoryName(cleanPath));
+                            File.Copy(loadPath.Substring("file://".Length), cleanPath);
+                            completed = true;
                         }
                         Task();
+                        await UniTask.WaitUntil(() => completed);
                     }
                 }
 
@@ -252,14 +263,14 @@ public class AssetMemory
             
             if (cancellationToken != default && cancellationToken.IsCancellationRequested)
             {
-                isLoading.Remove(variantPath);
+                isLoading.Remove(path);
                 loader.Unload();
                 return default;
             }
             
             if (loader.Error != null)
             {
-                isLoading.Remove(variantPath);
+                isLoading.Remove(path);
                 Debug.LogError($"AssetMemory: Failed to download audio from {variantPath}");
                 Debug.LogError(loader.Error);
                 return default;
@@ -275,7 +286,7 @@ public class AssetMemory
         time = DateTimeOffset.Now.ToUnixTimeMilliseconds() - time;
         if (PrintDebugMessages) Debug.Log($"AssetMemory: Loaded {variantPath} in {time}ms");
 
-        isLoading.Remove(variantPath);
+        isLoading.Remove(path);
         return asset;
     }
 

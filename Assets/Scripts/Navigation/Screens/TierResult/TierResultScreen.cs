@@ -197,6 +197,7 @@ public class TierResultScreen : Screen
 
     public async void Retry()
     {
+        if (State == ScreenState.Inactive) return;
         State = ScreenState.Inactive;
 
         ProfileWidget.Instance.FadeOut();
@@ -211,6 +212,7 @@ public class TierResultScreen : Screen
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
         NavigationBackdrop.Instance.FadeBrightness(0, 0.8f);
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
+        if (!sceneLoader.IsLoaded) await UniTask.WaitUntil(() => sceneLoader.IsLoaded);
         sceneLoader.Activate();
     }
 
@@ -233,12 +235,12 @@ public class TierResultScreen : Screen
                     rankingsTab.UpdateTierRankings(tierState.Tier.Id);
                     Context.OnlinePlayer.FetchProfile();
 
-                    if (stateChange.rewards.Count > 0)
+                    if (stateChange.rewards != null && stateChange.rewards.Count > 0)
                     {
                         RewardOverlay.Show(stateChange.rewards);
 
                         if (stateChange.rewards.Any(
-                            it => it.Type == OnlinePlayerStateChange.Reward.RewardType.Character))
+                            it => it.Type == OnlinePlayerStateChange.Reward.RewardType.Level))
                         {
                             Context.Library.Fetch();
                         }

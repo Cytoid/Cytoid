@@ -140,6 +140,29 @@ public class GamePreparationScreen : Screen
                     };
                     dialog.Open();
                 }
+            }).CatchRequestError(error =>
+            {
+                if (error.IsHttpError)
+                {
+                    switch (error.StatusCode)
+                    {
+                        case 403:
+                        case 404:
+                            if (State == ScreenState.Active)
+                            {
+                                Dialog.PromptGoBack("DIALOG_COULD_NOT_ACCESS_LEVEL".Get());
+                            }
+                            break;
+                        case 451:
+                            if (State == ScreenState.Active)
+                            {
+                                Dialog.PromptGoBack("DIALOG_LEVEL_NO_LONGER_AVAILABLE".Get());
+                            }
+                            break;
+                    }
+                }
+                Debug.LogError($"Could not fetch level {Level.Id} meta");
+                Debug.LogError(error);
             });
         }
         
@@ -381,10 +404,20 @@ public class GamePreparationScreen : Screen
 
     public async void OnStartButton()
     {
-        if (Level == null) return;
+        if (Level == null || State == ScreenState.Inactive) return;
         Context.Haptic(HapticTypes.SoftImpact, true);
         if (Level.IsLocal)
         {
+            if (Context.OnlinePlayer.LastProfile != null && Context.OnlinePlayer.LastProfile.Rating + 5 <
+                Level.Meta.GetDifficultyLevel(Context.SelectedDifficulty.Id))
+            {
+                if (Context.Player.ShouldOneShot("Tips: Difficulty Warning"))
+                {
+                    Dialog.PromptAlert("DIALOG_TIPS_DIFFICULTY_WARNING".Get());
+                    return;
+                }
+            }
+            
             Context.SelectedGameMode = 
                 willCalibrate ? GameMode.Calibration : 
                     Context.Player.Settings.PlayRanked ? GameMode.Standard : GameMode.Practice;
@@ -407,6 +440,7 @@ public class GamePreparationScreen : Screen
             cover.mask.DOFade(1, 0.8f);
 
             await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
+            if (!sceneLoader.IsLoaded) await UniTask.WaitUntil(() => sceneLoader.IsLoaded);
 
             sceneLoader.Activate();
         }
@@ -446,7 +480,7 @@ public class GamePreparationScreen : Screen
 
                 if (Level.Type == LevelType.User && Context.Player.ShouldOneShot("Community Level Offset Calibration"))
                 {
-                    Dialog.Prompt("DIALOG_TUTORIAL_OFFSET_CALIBRATION".Get());
+                    Dialog.PromptAlert("DIALOG_TUTORIAL_OFFSET_CALIBRATION".Get());
                 }
                 
                 UpdateTopMenu();

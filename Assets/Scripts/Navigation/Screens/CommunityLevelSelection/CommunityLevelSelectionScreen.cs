@@ -29,6 +29,10 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
         searchInputField.onEndEdit.AddListener(value =>
         {
             actionTabs.Close();
+            if (LoadedPayload.Query.search.IsNullOrEmptyTrimmed() && !value.IsNullOrEmptyTrimmed())
+            {
+                LoadedPayload.Query.sort = "relevance"; // Reset to relevance
+            }
             LoadedPayload.Query.search = value.Trim();
             LoadLevels(true);
         });
@@ -88,6 +92,7 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
             },
             new []
             {
+                ("COMMUNITY_SELECT_SORT_BY_RELEVANCE".Get(), "relevance"),
                 ("COMMUNITY_SELECT_SORT_BY_UPLOADED_DATE".Get(), "creation_date"),
                 ("COMMUNITY_SELECT_SORT_BY_MODIFIED_DATE".Get(), "modification_date"),
                 ("COMMUNITY_SELECT_SORT_BY_RATING".Get(), "rating"),
@@ -106,7 +111,7 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
                 ("COMMUNITY_SELECT_SORT_ORDER_DESC".Get(), "desc")
             });
         categoryRadioGroup.SetContent(null, null,
-            () => "category", it => {
+            () => "all", it => {
                 LoadedPayload.Query.category = it;
                 LoadLevels(true);
             },
@@ -128,10 +133,10 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
                 ("COMMUNITY_SELECT_TIME_PAST_6_MONTHS".Get(), "halfyear"),
                 ("COMMUNITY_SELECT_TIME_PAST_YEAR".Get(), "year")
             });
-        sortRadioGroup.transform.parent.RebuildLayout();
+        // sortRadioGroup.transform.parent.RebuildLayout();
     }
 
-    private void UpdateComponents()
+    private async UniTask UpdateComponents()
     {
         sortRadioGroup.radioGroup.Select(LoadedPayload.Query.sort, false);
         orderRadioGroup.radioGroup.Select(LoadedPayload.Query.order, false);
@@ -157,6 +162,20 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
             }
             titleText.text = text;
         }
+
+        sortRadioGroup.radioGroup.GetComponent<VerticalLayoutGroup>().enabled = true;
+        sortRadioGroup.radioGroup.GetComponent<ContentSizeFitter>().enabled = true;
+        sortRadioGroup.GetComponent<VerticalLayoutGroup>().enabled = true;
+        sortRadioGroup.GetComponent<ContentSizeFitter>().enabled = true;
+        sortRadioGroup.radioGroup.transform.GetChild(0).gameObject.SetActive(!LoadedPayload.Query.search.IsNullOrEmptyTrimmed());
+        sortRadioGroup.transform.parent.RebuildLayout();
+
+        await UniTask.DelayFrame(0);
+        
+        sortRadioGroup.radioGroup.GetComponent<VerticalLayoutGroup>().enabled = false;
+        sortRadioGroup.radioGroup.GetComponent<ContentSizeFitter>().enabled = false;
+        sortRadioGroup.GetComponent<VerticalLayoutGroup>().enabled = false;
+        sortRadioGroup.GetComponent<ContentSizeFitter>().enabled = false;
     }
 
     protected override void Render()
@@ -185,6 +204,13 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
 
     public void LoadLevels(bool reset)
     {
+        const int pageSize = 12;
+        
+        SpinnerOverlay.Show();
+
+        var query = LoadedPayload.Query;
+        var uri = query.BuildUri(pageSize, LoadedPayload.LastPage);
+
         if (reset)
         {
             UpdateComponents();
@@ -195,13 +221,6 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
             LoadedPayload.ScrollPosition = 0;
         }
         
-        const int pageSize = 12;
-        
-        SpinnerOverlay.Show();
-
-        var query = LoadedPayload.Query;
-        var uri = query.BuildUri(pageSize, LoadedPayload.LastPage);
-
         RestClient.GetArray<OnlineLevel>(new RequestHelper
         {
             Uri = uri,
@@ -214,6 +233,11 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
             LoadedPayload.Levels.AddRange(entries.ToList());
             LoadedPayload.IsLastPageLoaded = true;
             LoadedPayload.CanLoadMore = entries.Length == pageSize;
+
+            if (LoadedPayload.Levels.Count == 0)
+            {
+                Toast.Next(Toast.Status.Failure, "TOAST_NO_RESULTS_FOUND".Get());
+            }
             
             if (reset)
             {
@@ -296,12 +320,12 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
     {
         Query = new OnlineLevelQuery
         {
-            sort = sortRadioGroup.radioGroup.Value,
-            order = orderRadioGroup.radioGroup.Value,
-            category = categoryRadioGroup.radioGroup.Value,
-            time = timeRadioGroup.radioGroup.Value,
-            search = searchInputField.text,
-            owner = ownerInputField.text
+            sort = "creation_date",
+            order = "desc",
+            category = "all",
+            time = "all",
+            search = "",
+            owner = ""
         }
     };
     

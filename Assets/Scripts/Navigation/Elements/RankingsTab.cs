@@ -49,9 +49,9 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
             {
                 if (token != updateRankingToken) return (-1, null);
                 var (rank, entries) = ret;
-                rankingContainer.SetData(entries);
                 SetRanking(rank);
-
+                
+                rankingContainer.SetData(entries);
                 rankingContainerStatusText.text = "";
                 if (entries.Count == 0)
                 {
@@ -61,13 +61,12 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
                 if (entries.Count > 0)
                 {
                     viewMoreButton.gameObject.SetActive(true);
-                    viewMoreButton.onPointerClick.SetListener(_ =>
-                    {
-                        Application.OpenURL(
-                            $"{Context.WebsiteUrl}/levels/{levelId}"); // TODO: Jump to selected difficulty?
-                    });
                 }
-
+                viewMoreButton.onPointerClick.SetListener(_ =>
+                {
+                    Application.OpenURL(
+                        $"{Context.WebsiteUrl}/levels/{levelId}"); // TODO: Jump to selected difficulty?
+                });
                 return ret;
             })
             .CatchRequestError(error =>
@@ -100,7 +99,7 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
         }
         else rankingText.text = "N/A";
     }
-    
+
     private DateTime updateTierRankingToken;
     
     public IPromise<(int, List<TierRankingEntry>)> UpdateTierRankings(string tierId)

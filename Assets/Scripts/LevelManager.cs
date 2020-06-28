@@ -206,11 +206,33 @@ public class LevelManager
             return false;
         }
 
-        var fileName = Path.GetFileName(packagePath);
-        var zipFileData = File.ReadAllBytes(packagePath);
+        string fileName;
+        try
+        {
+            fileName = Path.GetFileName(packagePath);
+        }
+        catch (Exception error)
+        {
+            Debug.LogError($"Failed to get filename for path {packagePath}.");
+            Debug.LogError(error);
+            return false;
+        }
+        byte[] zipFileData;
+        try
+        {
+            zipFileData = File.ReadAllBytes(packagePath);
+        }
+        catch (Exception error)
+        {
+            Debug.LogError($"Failed to read bytes from {packagePath}.");
+            Debug.LogError(error);
+            return false;
+        }
+       
         using (var fileStream = new MemoryStream())
         {
             ZipFile zipFile;
+            
             try
             {
                 fileStream.Write(zipFileData, 0, zipFileData.Length);
@@ -247,11 +269,10 @@ public class LevelManager
                         var dataBuffer = new byte[bufferSize];
 
                         int readBytes;
-                        while ((readBytes = zippedStream.Read(dataBuffer, 0, bufferSize)) > 0)
+                        while ((readBytes = await zippedStream.ReadAsync(dataBuffer, 0, bufferSize)) > 0)
                         {
                             outputFile.Write(dataBuffer, 0, readBytes);
                             outputFile.Flush();
-                            await UniTask.Yield(); // Prevent blocking main thread
                         }
                     }
                 }
@@ -671,6 +692,7 @@ public class LevelManager
 
             Debug.Log("Asset path: " + res.package);
             // Start download
+            // TODO: Change to HttpClient
             return RestClient.Get(req = new RequestHelper
             {
                 Uri = res.package,

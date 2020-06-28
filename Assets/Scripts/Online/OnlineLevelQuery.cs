@@ -3,20 +3,24 @@ using System;
 [Serializable]
 public class OnlineLevelQuery
 {
-    public string sort;
-    public string order;
-    public string category;
-    public string time;
-    public string search;
-    public string owner;
+    public string sort = "creation_date";
+    public string order = "desc";
+    public string category = "all";
+    public string time = "all";
+    public string search = "";
+    public string owner = "";
 
     public string BuildUri(int limit = -1, int page = 0)
     {
         string uri;
+        if (search.IsNullOrEmptyTrimmed() && sort == "relevance")
+        {
+            sort = "creation_date"; // Reset
+        }
         if (!search.IsNullOrEmptyTrimmed() || (sort != "creation_date" && sort != "modification_date" && sort != "duration" && sort != "difficulty"))
         {
             uri = $"{Context.ApiUrl}/search/levels?search={search}&" +
-                  $"sort={sort}&order={order}" +
+                  $"{(sort != "relevance" ? $"sort={sort}" : "")}&order={order}" +
                   $"&date_start={ConvertTimeSpanToDateStart(time)}&owner={owner}&page={page}";
         }
         else

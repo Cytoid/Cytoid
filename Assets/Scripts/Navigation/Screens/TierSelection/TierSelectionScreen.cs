@@ -400,7 +400,7 @@ public class TierSelectionScreen : Screen
     
     public async void OnStartButton()
     {
-        if (SelectedTier == null) return;
+        if (SelectedTier == null || State == ScreenState.Inactive) return;
         Context.Haptic(HapticTypes.SoftImpact, true);
         if (SelectedTier.StagesValid)
         {
@@ -428,7 +428,7 @@ public class TierSelectionScreen : Screen
             
             var sceneLoader = new SceneLoader("Game");
             sceneLoader.Load();
-
+            await UniTask.WaitUntil(() => sceneLoader.IsLoaded);
             sceneLoader.Activate();
         }
         else

@@ -223,19 +223,19 @@ public class CommunityHomeScreen : Screen
 
     public void SearchLevels()
     {
-        var query = searchInputField.text;
+        var search = searchInputField.text;
         var owner = ownerInputField.text.ToLower();
-        if (query.IsNullOrEmptyTrimmed() && owner.IsNullOrEmptyTrimmed()) return;
+        if (search.IsNullOrEmptyTrimmed() && owner.IsNullOrEmptyTrimmed()) return;
         Context.ScreenManager.ChangeScreen(CommunityLevelSelectionScreen.Id, ScreenTransition.In,
             payload: new CommunityLevelSelectionScreen.Payload
             {
                 Query = new OnlineLevelQuery
                 {
-                    sort = "creation_date",
+                    sort = search != null ? "relevance" : "creation_date",
                     order = "desc",
                     category = "all",
                     time = "all",
-                    search = query,
+                    search = search,
                     owner = owner,
                 }
             });

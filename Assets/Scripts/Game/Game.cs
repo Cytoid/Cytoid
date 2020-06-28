@@ -113,10 +113,15 @@ public class Game : MonoBehaviour
             {
                 Context.GameErrorState = new GameErrorState {Message = "DIALOG_LEVEL_LOAD_ERROR".Get(), Exception = e};
                 
+                await UniTask.Delay(TimeSpan.FromSeconds(3));
+                
                 var sceneLoader = new SceneLoader("Navigation");
                 sceneLoader.Load();
+                var transitioned = false;
                 Context.ScreenManager.ChangeScreen(OverlayScreen.Id, ScreenTransition.None, 0.4f, 1,
-                    onFinished: screen => sceneLoader.Activate());
+                    onFinished: screen => transitioned = true);
+                await UniTask.WaitUntil(() => transitioned && sceneLoader.IsLoaded);
+                sceneLoader.Activate();
             }
         }
     }
@@ -533,7 +538,7 @@ public class Game : MonoBehaviour
         onGameUnpaused.Invoke(this);
     }
 
-    public virtual void Abort()
+    public virtual async void Abort()
     {
         print("Game aborted");
         
@@ -550,11 +555,14 @@ public class Game : MonoBehaviour
         
         var sceneLoader = new SceneLoader("Navigation");
         sceneLoader.Load();
+        var transitioned = false;
         Context.ScreenManager.ChangeScreen(OverlayScreen.Id, ScreenTransition.None, 0.4f, 1,
-            onFinished: screen => sceneLoader.Activate());
+            onFinished: screen => transitioned = true);
+        await UniTask.WaitUntil(() => transitioned && sceneLoader.IsLoaded);
+        sceneLoader.Activate();
     }
 
-    public virtual void Retry()
+    public virtual async void Retry()
     {
         print("Game retried");
         
@@ -567,8 +575,11 @@ public class Game : MonoBehaviour
         
         var sceneLoader = new SceneLoader("Game");
         sceneLoader.Load();
+        var transitioned = false;
         Context.ScreenManager.ChangeScreen(OverlayScreen.Id, ScreenTransition.None, 0.4f, 1,
-            onFinished: screen => sceneLoader.Activate());
+            onFinished: screen => transitioned = true);
+        await UniTask.WaitUntil(() => transitioned && sceneLoader.IsLoaded);
+        sceneLoader.Activate();
     }
     
     public void Fail()
@@ -632,6 +643,7 @@ public class Game : MonoBehaviour
         sceneLoader.Load();
 
         await UniTask.Delay(TimeSpan.FromSeconds(1.5f));
+        if (!sceneLoader.IsLoaded) await UniTask.WaitUntil(() => sceneLoader.IsLoaded);
 
         sceneLoader.Activate();
     }

@@ -35,7 +35,11 @@ public class RatingTab : MonoBehaviour, ScreenInitializedListener
         rateLevelElement.rateButton.onPointerClick.SetListener(_ =>
         {
             var dialog = RateLevelDialog.Instantiate(id, data.rating ?? -1);
-            dialog.onLevelRated.AddListener(rating => OnLevelRatingUpdated(id, rating));
+            dialog.onLevelRated.AddListener(rating =>
+            {
+                print("Updated with " + rating.rating);
+                OnLevelRatingUpdated(id, rating);
+            });
             dialog.Open();
         });
     }

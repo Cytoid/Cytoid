@@ -212,6 +212,7 @@ public class TierBreakScreen : Screen
     
     public async void Retry()
     {
+        if (State == ScreenState.Inactive) return;
         // TODO: Refactor with TierResult?
         State = ScreenState.Inactive;
 
@@ -227,11 +228,13 @@ public class TierBreakScreen : Screen
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
         NavigationBackdrop.Instance.FadeBrightness(0, 0.8f);
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
+        if (!sceneLoader.IsLoaded) await UniTask.WaitUntil(() => sceneLoader.IsLoaded);
         sceneLoader.Activate();
     }
 
     public async void NextStage()
     {
+        if (State == ScreenState.Inactive) return;
         State = ScreenState.Inactive;
 
         ProfileWidget.Instance.FadeOut();
@@ -244,6 +247,7 @@ public class TierBreakScreen : Screen
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
         NavigationBackdrop.Instance.FadeBrightness(0, 0.8f);
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
+        if (!sceneLoader.IsLoaded) await UniTask.WaitUntil(() => sceneLoader.IsLoaded);
         
         Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.GameCover);
         

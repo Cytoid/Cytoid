@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using DG.Tweening;
+using DragonBones;
 using LiteDB;
 using LunarConsolePlugin;
 using MoreMountains.NiceVibrations;
@@ -18,7 +19,7 @@ using UnityEngine.SceneManagement;
 
 public class Context : SingletonMonoBehavior<Context>
 {
-    public const string VersionName = "2.0.0 Beta 2.0";
+    public const string VersionName = "2.0.0 Beta 2.1";
     public const string VersionString = "2.0.0";
     
     public static string MockApiUrl;
@@ -213,17 +214,35 @@ public class Context : SingletonMonoBehavior<Context>
             color => "#" + ColorUtility.ToHtmlStringRGB(color),
             s => s.AsString.ToColor()
         );
-
+        FontManager.LoadFonts();
+        
         if (Application.platform == RuntimePlatform.Android)
         {
             // Get Android version
             using (var version = new AndroidJavaClass("android.os.Build$VERSION")) {
                 AndroidVersionCode = version.GetStatic<int>("SDK_INT");
             }
+            // Try to write to ensure we have write permissions
+            try
+            {
+                var file = UserDataPath + "/test";
+                File.Create(file);
+                File.Delete(file);
+            }
+            catch
+            {
+                Haptic(HapticTypes.Failure, true);
+                Dialog.Instantiate().Also(it =>
+                {
+                    it.UseNegativeButton = false;
+                    it.UsePositiveButton = false;
+                    it.Message =
+                        "DIALOG_CRITICAL_ERROR_COULD_NOT_START_GAME_REASON_X".Get(
+                            "DIALOG_CRITICAL_ERROR_REASON_WRITE_PERMISSION".Get());
+                }).Open();
+                return;
+            }
         }
-        
-        // Initialize fonts
-        FontManager.LoadFonts();
 
         try
         {
@@ -241,8 +260,8 @@ public class Context : SingletonMonoBehavior<Context>
                 it.UseNegativeButton = false;
                 it.UsePositiveButton = false;
                 it.Message =
-                    "DIALOG_CRITICAL_ERROR_COULD_NOT_START_GAME_REASON_X".Get("DIALOG_CRITICAL_ERROR_REASON_DATABASE"
-                        .Get());
+                    "DIALOG_CRITICAL_ERROR_COULD_NOT_START_GAME_REASON_X".Get(
+                        "DIALOG_CRITICAL_ERROR_REASON_DATABASE".Get());
             }).Open();
             return;
         }
@@ -361,7 +380,7 @@ public class Context : SingletonMonoBehavior<Context>
 
         Debug.Log("Detecting server CDN");
 
-        if (Application.identifier == "me.tigerhix.cytoid")
+        if (Distribution == Distribution.Global)
         {
             var resolved = false;
             var startTime = DateTimeOffset.Now;
@@ -395,7 +414,7 @@ public class Context : SingletonMonoBehavior<Context>
                 Player.Settings.CdnRegion = CdnRegion.MainlandChina;
             }
         } 
-        else if (Application.identifier == "me.tigerhix.cytoid.cn")
+        else if (Distribution == Distribution.China)
         {
             Player.Settings.CdnRegion = CdnRegion.MainlandChina;
         }
@@ -660,6 +679,24 @@ public class Context : SingletonMonoBehavior<Context>
             }
         );
     }
+
+    public static Distribution Distribution
+    {
+        get
+        {
+            switch (Application.identifier)
+            {
+                case "me.tigerhix.cytoid": return Distribution.Global;
+                case "me.tigerhix.cytoid.cn": return Distribution.China;
+            }
+            throw new InvalidOperationException();
+        }
+    }
+}
+
+public enum Distribution
+{
+    Global, China
 }
 
 public class OfflineModeToggleEvent : UnityEvent<bool>

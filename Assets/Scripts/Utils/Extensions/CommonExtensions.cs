@@ -37,10 +37,10 @@ public static class CommonExtensions
         if (delta < 2 * minute)
             return "RELATIVE_TIME_MINUTE_AGO_X".Get(ts.Minutes);
 
-        if (delta < 45 * minute)
+        if (delta < 60 * minute)
             return "RELATIVE_TIME_MINUTES_AGO_X".Get(ts.Minutes);
 
-        if (delta < 90 * minute)
+        if (delta < 120 * minute)
             return "RELATIVE_TIME_HOUR_AGO_X".Get(ts.Hours);
 
         if (delta < 24 * hour)
@@ -780,6 +780,7 @@ public static class CommonExtensions
 
     public static void FitSpriteAspectRatio(this Image image)
     {
+        if (image == null || image.sprite == null || image.sprite.texture == null) return;
         var texture = image.sprite.texture;
         image.GetComponent<AspectRatioFitter>().aspectRatio = texture.width * 1.0f / texture.height;
     }

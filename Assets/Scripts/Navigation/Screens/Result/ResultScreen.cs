@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Linq;
 using MoreMountains.NiceVibrations;
 using UniRx.Async;
 using UnityEngine;
@@ -261,13 +262,24 @@ public class ResultScreen : Screen
 
         var uploadRecord = SecuredOperations.MakeRecord(gameState);
         SecuredOperations.UploadRecord(gameState, uploadRecord)
-            .Then(_ =>
+            .Then(stateChange =>
                 {
                     uploadRecordSuccess = true;
                     Toast.Next(Toast.Status.Success, "TOAST_PERFORMANCE_SYNCHRONIZED".Get());
                     EnterControls();
                     rankingsTab.UpdateRankings(gameState.Level.Id, gameState.Difficulty.Id);
                     Context.OnlinePlayer.FetchProfile();
+                    
+                    if (stateChange.rewards != null && stateChange.rewards.Count > 0)
+                    {
+                        RewardOverlay.Show(stateChange.rewards);
+
+                        if (stateChange.rewards.Any(
+                            it => it.Type == OnlinePlayerStateChange.Reward.RewardType.Level))
+                        {
+                            Context.Library.Fetch();
+                        }
+                    }
                 }
             ).CatchRequestError(error =>
             {
@@ -320,6 +332,7 @@ public class ResultScreen : Screen
 
     public void Done()
     {
+        if (State == ScreenState.Inactive) return;
         Context.ScreenManager.ChangeScreen(Context.ScreenManager.PeekHistory(), ScreenTransition.Out, willDestroy: true,
             addTargetScreenToHistory: false);
         Context.AudioManager.Get("LevelStart").Play();
@@ -327,6 +340,7 @@ public class ResultScreen : Screen
 
     public async void Retry()
     {
+        if (State == ScreenState.Inactive) return;
         State = ScreenState.Inactive;
 
         ProfileWidget.Instance.FadeOut();
@@ -339,6 +353,7 @@ public class ResultScreen : Screen
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
         NavigationBackdrop.Instance.FadeBrightness(0, 0.8f);
         await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
+        if (!sceneLoader.IsLoaded) await UniTask.WaitUntil(() => sceneLoader.IsLoaded);
         sceneLoader.Activate();
     }
 
@@ -346,6 +361,11 @@ public class ResultScreen : Screen
     {
         lowerLeftColumn.Enter();
         lowerRightColumn.Enter();
+
+        if (Context.Distribution == Distribution.China && Context.Player.ShouldOneShot("Tips: Calibration"))
+        {
+            Dialog.PromptAlert("<b>提示：</b>\n如果感觉手感不对劲的话，有可能需要设置谱面偏移。可以在准备界面的设置菜单中进入校正模式。");
+        }
     }
 
     public override void OnScreenChangeStarted(Screen from, Screen to)

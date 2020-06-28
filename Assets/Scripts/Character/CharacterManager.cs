@@ -80,6 +80,7 @@ public class CharacterManager
 
     public void UnloadActiveCharacter()
     {
+        if (ActiveCharacterBundleId == null) return;
         UnityEngine.Object.Destroy(activeCharacterGameObject);
         Context.BundleManager.Release(ActiveCharacterBundleId);
         activeCharacterGameObject = null;

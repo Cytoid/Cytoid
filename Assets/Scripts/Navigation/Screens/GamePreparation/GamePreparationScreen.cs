@@ -148,13 +148,13 @@ public class GamePreparationScreen : Screen
                     {
                         case 403:
                         case 404:
-                            if (State == ScreenState.Active)
+                            if (State == ScreenState.Active && !Level.IsLocal)
                             {
                                 Dialog.PromptGoBack("DIALOG_COULD_NOT_ACCESS_LEVEL".Get());
                             }
                             break;
                         case 451:
-                            if (State == ScreenState.Active)
+                            if (State == ScreenState.Active && !Level.IsLocal)
                             {
                                 Dialog.PromptGoBack("DIALOG_LEVEL_NO_LONGER_AVAILABLE".Get());
                             }

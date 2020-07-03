@@ -71,14 +71,14 @@ public class TransitionElement : MonoBehaviour, ScreenListener, ScreenPostActive
         }
     }
 
-    protected void Start()
+    protected async void Start()
     {
         if (!actOnOtherGameObjects && (rectTransform.gameObject != gameObject || canvasGroup.gameObject != gameObject))
         {
             Debug.LogError($"WARNING! TransitionElement {name} rectTransform and canvasGroup not set to self. (rectTransform: {rectTransform.gameObject.name}, canvasGroup: {canvasGroup.gameObject.name})");
         }
     }
-
+    
     public void UseCurrentStateAsDefault()
     {
         specifiedDefault = true;

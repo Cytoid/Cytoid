@@ -597,16 +597,6 @@ public static class CommonExtensions
         return t;
     }
 
-    public static string LowerCaseFirstChar(this string s)
-    {
-        if (char.IsUpper(s[0]))
-        {
-            return s[0] - ('A' - 'a') + s.Substring(1);
-        }
-
-        return s;
-    }
-
     public static string WithParam<T>(this string url, ValueTuple<string, T>[] parameters)
     {
         var sepIndex = url.LastIndexOf("?", StringComparison.Ordinal);

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
@@ -14,6 +15,7 @@ namespace Cytoid.Storyboard.Lines
         {
             ParseObjectState(state, json, baseState);
 
+            state.Pos = new List<LinePosition>();
             json.SelectToken("pos").ToArray().ForEach(it =>
             {
                 var pos = new LinePosition

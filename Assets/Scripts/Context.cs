@@ -19,7 +19,7 @@ using UnityEngine.SceneManagement;
 
 public class Context : SingletonMonoBehavior<Context>
 {
-    public const string VersionName = "2.0.0 Beta 2.1";
+    public const string VersionName = "2.0.0 Beta 3";
     public const string VersionString = "2.0.0";
     
     public static string MockApiUrl;

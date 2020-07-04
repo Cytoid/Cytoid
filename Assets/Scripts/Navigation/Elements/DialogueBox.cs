@@ -4,6 +4,7 @@ using DG.Tweening;
 using UniRx.Async;
 using UnityEngine;
 using UnityEngine.UI;
+using Object = System.Object;
 
 public class DialogueBox : MonoBehaviour
 {
@@ -38,11 +39,7 @@ public class DialogueBox : MonoBehaviour
             canvas.sortingOrder = NavigationSortingOrder.DialogueBox;
             caretImage.DOKill();
             caretImage.SetAlpha(0);
-            caretImage.rectTransform.DOKill();
-            caretImage.rectTransform.SetAnchoredY(15.0f);
             transitionElements.ForEach(it => it.Enter(false));
-            tweenSequences.ForEach(it => it.Kill());
-            tweenSequences.Clear();
         }
         else
         {
@@ -51,10 +48,6 @@ public class DialogueBox : MonoBehaviour
             if (token != displayToken) return;
             caretImage.DOKill();
             caretImage.SetAlpha(0);
-            caretImage.rectTransform.DOKill();
-            caretImage.rectTransform.SetAnchoredY(15.0f);
-            tweenSequences.ForEach(it => it.Kill());
-            tweenSequences.Clear();
             messageText.text = "";
             if (chibiDisplay != null)
             {
@@ -73,44 +66,125 @@ public class DialogueBox : MonoBehaviour
         messageText.text = "";
         if (chibiDisplay != null)
         {
-            chibiDisplay.SetSprite(dialogue.ChibiSprite);
+            chibiDisplay.SetSprite(dialogue.Sprite);
         }
         if (speakerNameText != null)
         {
             speakerNameText.text = dialogue.SpeakerName;
         }
-        caretImage.rectTransform.DOKill();
+
+        caretImage.DOKill();
         caretImage.DOFade(0, 0.4f);
         WillFastForwardDialogue = false;
+        dialogue.Message = dialogue.Message.Replace('/', '\n');
+        var baseDelay = 2;
         foreach (var c in dialogue.Message)
         {
-            messageText.text += c;
-            await UniTask.DelayFrame(2);
-            if (WillFastForwardDialogue) break;
+            var delay = baseDelay;
+            if (c == '^')
+            {
+                if (baseDelay > 0) delay = 20;
+            }
+            else
+            {
+                messageText.text += c;
+            }
+            
+            if (delay > 0) await UniTask.DelayFrame(delay);
+
+            if (WillFastForwardDialogue)
+            {
+                baseDelay = 0;
+            }
         }
         WillFastForwardDialogue = false;
-        messageText.text = dialogue.Message;
-        caretImage.DOFade(1, 0.4f);
-        tweenSequences.ForEach(it => it.Kill());
-        tweenSequences.Clear();
-        tweenSequences.Add(DOTween.Sequence()
-            .Append(caretImage.rectTransform.DOAnchorPosY(39.0f, 0.6f))
-            .Append(caretImage.rectTransform.DOAnchorPosY(15.0f, 0.6f))
-            .SetLoops(-1));
+        if (!dialogue.HasChoices)
+        {
+            caretImage.DOFade(1, 0.4f);
+            
+            tweenSequences.ForEach(it => it.Kill());
+            tweenSequences.Clear();
+            caretImage.rectTransform.SetAnchoredY(15.0f);
+            tweenSequences.Add(DOTween.Sequence()
+                .Append(caretImage.rectTransform.DOAnchorPosY(39.0f, 0.6f))
+                .Append(caretImage.rectTransform.DOAnchorPosY(15.0f, 0.6f))
+                .SetLoops(-1));
+        }
     }
     
 }
 
 public class Dialogue
 {
-    public DialogueBoxPosition Position { get; set; } = DialogueBoxPosition.Bottom;
+    public DialogueBoxPosition Position { get; set; }
     public string Message { get; set; }
     public string SpeakerName { get; set; }
-    public string ChibiSprite { get; set; }
+    public Sprite Sprite { get; set; }
+    public bool HasChoices { get; set; }
 }
 
 public enum DialogueBoxPosition
 {
     Top,
     Bottom
+}
+
+public class DialogueSpriteSet
+{
+
+    public static DialogueSpriteSet Parse(string name)
+    {
+        switch (name)
+        {
+            case "Tira":
+                return new DialogueSpriteSet
+                {
+                    Id = "Tira",
+                    States = new Dictionary<string, State>
+                    {
+                        {"Default", new State {SpriteAddress = "Stories/Characters/Tira/Default"}}
+                    }
+                };
+            case "Nut":
+                return new DialogueSpriteSet
+                {
+                    Id = "Nut",
+                    States = new Dictionary<string, State>
+                    {
+                        {"Default", new State {SpriteAddress = "Stories/Characters/Nut/Default"}}
+                    }
+                };
+        }
+        throw new InvalidOperationException(name);
+    }
+    
+    public string Id { get; set; }
+
+    public Dictionary<string, State> States { get; set; } = new Dictionary<string, State>();
+
+    public class State
+    {
+        public string SpriteAddress { get; set; }
+        public Sprite Sprite { get; set; }
+    }
+
+    public async UniTask Initialize()
+    {
+        foreach (var kv in States)
+        {
+            var state = kv.Value;
+            if (state.SpriteAddress != null)
+            {
+                state.Sprite = (Sprite) await Resources.LoadAsync<Sprite>(state.SpriteAddress);
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        States.ForEach(it =>
+        {
+            if (it.Value.Sprite != null) Resources.UnloadAsset(it.Value.Sprite);
+        });
+    }
 }

@@ -1,34 +1,23 @@
-using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
-using UnityEngine.Assertions;
 using UnityEngine.UI;
 
 public class ChibiDisplay : MonoBehaviour
 {
     public Image image;
-    public List<string> keys;
-    public List<Sprite> sprites;
 
-    private List<Sequence> tweenSequences = new List<Sequence>();
-    
-    private void OnEnable()
-    {
-        Assert.IsTrue(keys.Count == sprites.Count);
-        // Start breathing animation
-    }
+    private readonly List<Sequence> tweenSequences = new List<Sequence>();
 
-    public void SetSprite(string sprite)
+    public void SetSprite(Sprite sprite)
     {
         if (sprite == null)
         {
             image.sprite = null;
             return;
         }
-        var index = keys.FindIndex(it => it == sprite);
-        if (index < 0) index = 0;
-        image.sprite = sprites[index];
+
+        image.sprite = sprite;
         tweenSequences.ForEach(it => it.Kill());
         tweenSequences.Clear();
         image.rectTransform.DOKill();

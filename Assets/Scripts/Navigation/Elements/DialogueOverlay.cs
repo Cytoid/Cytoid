@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DG.Tweening;
+using Ink.Runtime;
 using Newtonsoft.Json;
 using UniRx.Async;
 using UnityEditor;
@@ -16,6 +18,8 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
     public DialogueBox topDialogueBox;
     public DialogueBox bottomDialogueBox;
     public DialogueBox bottomFullDialogueBox;
+    public RectTransform choicesRoot;
+    public SoftButton choiceButtonPrefab;
     
     public bool IsShown { get; private set; }
 
@@ -67,26 +71,81 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
         IsShown = false;
     }
 
-    public static async void Show(List<Dialogue> dialogues)
+    public static async void Show(Story story)
     {
         var instance = Instance;
         if (instance.IsShown) await UniTask.WaitUntil(() => !instance.IsShown);
         await instance.Enter();
+
+        var spriteSets = new Dictionary<string, DialogueSpriteSet>();
+
+        story.globalTags.FindAll(it => it.Trim().StartsWith("SpriteSet:"))
+            .Select(it => it.Substring(it.IndexOf(':') + 1).Trim())
+            .Select(DialogueSpriteSet.Parse)
+            .ForEach(it => spriteSets[it.Id] = it);
+        
+        await spriteSets.Values.Select(it => it.Initialize());
+
+        Sprite currentSprite = null;
+        var currentSpeaker = "";
+        var currentPosition = DialogueBoxPosition.Bottom;
+
+        Dialogue lastDialogue = null;
         DialogueBox lastDialogueBox = null;
-        foreach (var dialogue in dialogues)
+        while (story.canContinue)
         {
-            if (dialogue.Position == DialogueBoxPosition.Top && (dialogue.ChibiSprite != null || dialogue.SpeakerName != null)) throw new InvalidOperationException();
+            var message = story.Continue();
+            var tags = story.currentTags;
+
+            var setSprite = TagValue(tags, "Sprite");
+            if (setSprite != null)
+            {
+                if (setSprite == "null")
+                {
+                    currentSprite = null;
+                }
+                else
+                {
+                    setSprite.Split('/', out var id, out var state);
+
+                    if (!spriteSets.ContainsKey(id)) throw new ArgumentOutOfRangeException();
+                    currentSprite = spriteSets[id].States[state].Sprite;
+                }
+            }
+
+            var setSpeaker = TagValue(tags, "Speaker");
+            if (setSpeaker != null)
+            {
+                currentSpeaker = setSpeaker == "null" ? null : setSpeaker;
+            }
+
+            var setPosition = TagValue(tags, "Position");
+            if (setPosition != null)
+            {
+                currentPosition = (DialogueBoxPosition) Enum.Parse(typeof(DialogueBoxPosition), setPosition);
+            }
+            
+            var dialogue = new Dialogue
+            {
+                Message = message,
+                SpeakerName = currentSpeaker,
+                Sprite = currentSprite,
+                Position = currentPosition,
+                HasChoices = story.currentChoices.Count > 0
+            };
+
             DialogueBox dialogueBox;
             if (dialogue.Position == DialogueBoxPosition.Top) dialogueBox = instance.topDialogueBox;
-            else if (dialogue.ChibiSprite != null) dialogueBox = instance.bottomFullDialogueBox;
+            else if (dialogue.Sprite != null) dialogueBox = instance.bottomFullDialogueBox;
             else dialogueBox = instance.bottomDialogueBox;
 
-            if (lastDialogueBox != null && lastDialogueBox != dialogueBox)
+            if (lastDialogue != null && (lastDialogueBox != dialogueBox || lastDialogue.SpeakerName != dialogue.SpeakerName))
             {
                 await lastDialogueBox.SetDisplayed(false);
                 dialogueBox.messageBox.SetLocalScale(1f);
             }
             await dialogueBox.SetDisplayed(true);
+            lastDialogue = dialogue;
             lastDialogueBox = dialogueBox;
             
             instance.detectionArea.onPointerClick.SetListener(_ =>
@@ -94,20 +153,62 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
                 dialogueBox.WillFastForwardDialogue = true;
             });
             await dialogueBox.ShowDialogue(dialogue);
-            var proceed = false;
-            instance.detectionArea.onPointerDown.SetListener(_ =>
+            
+            if (story.currentChoices.Count > 0)
             {
-                dialogueBox.messageBox.DOScale(0.97f, 0.2f);
-            });
-            instance.detectionArea.onPointerUp.SetListener(_ =>
+                var proceed = false;
+                var buttons = new List<SoftButton>();
+                for (var index = 0; index < story.currentChoices.Count; index++)
+                {
+                    var choice = story.currentChoices[index];
+                    var choiceButton = Instantiate(instance.choiceButtonPrefab, instance.choicesRoot);
+                    var closureIndex = index;
+                    choiceButton.onPointerClick.SetListener(_ =>
+                    {
+                        if (proceed) return;
+                        story.ChooseChoiceIndex(closureIndex);
+                        proceed = true;
+                    });
+                    choiceButton.SetText(choice.text);
+                    buttons.Add(choiceButton);
+                }
+
+                LayoutFixer.Fix(instance.choicesRoot);
+                await UniTask.DelayFrame(4);
+
+                foreach (var button in buttons)
+                {
+                    button.transitionElement.Enter();
+                    await UniTask.Delay(TimeSpan.FromSeconds(0.2f));
+                }
+                
+                await UniTask.WaitUntil(() => proceed);
+
+                buttons.ForEach(it => Destroy(it.gameObject));
+            }
+            else
             {
-                dialogueBox.messageBox.DOScale(1f, 0.2f);
-                proceed = true;
-            });
-            await UniTask.WaitUntil(() => proceed);
+                var proceed = false;
+                instance.detectionArea.onPointerDown.SetListener(_ => { dialogueBox.messageBox.DOScale(0.97f, 0.2f); });
+                instance.detectionArea.onPointerUp.SetListener(_ =>
+                {
+                    dialogueBox.messageBox.DOScale(1f, 0.2f);
+                    proceed = true;
+                });
+                await UniTask.WaitUntil(() => proceed);
+                instance.detectionArea.onPointerDown.RemoveAllListeners();
+                instance.detectionArea.onPointerUp.RemoveAllListeners();
+            }
         }
         if (lastDialogueBox != null) lastDialogueBox.SetDisplayed(false);
         await instance.Leave();
+
+        spriteSets.Values.ForEach(it => it.Dispose());
+
+        string TagValue(List<string> tags, string tag)
+        {
+            return tags.Find(it => it.Trim().StartsWith(tag + ":"))?.Let(it => it.Substring(it.IndexOf(':') + 1).Trim());
+        }
     }
     
 }
@@ -126,44 +227,9 @@ public class DialogueOverlayEditor : Editor
         {
             if (GUILayout.Button("Test"))
             {
-                DialogueOverlay.Show(new List<Dialogue>
-                {
-                    new Dialogue
-                    {
-                        SpeakerName = "Tira",
-                        ChibiSprite = "tira",
-                        Message = "欢迎来到 Cytoid！"
-                    },
-                    new Dialogue
-                    {
-                        Position = DialogueBoxPosition.Top,
-                        Message = "THIS IS A TEST THIS IS A TEST THIS IS A TEST THIS IS A TEST THIS IS A TEST THIS IS A TEST THIS IS A TEST THIS IS A TEST THIS IS A TEST THIS IS A TEST THIS IS A TEST THIS IS A TEST THIS IS A TEST "
-                    },
-                    new Dialogue
-                    {
-                        SpeakerName = "Tira",
-                        ChibiSprite = "tira",
-                        Message = "啦啦啦啦啦！"
-                    },
-                    new Dialogue
-                    {
-                        SpeakerName = "Tira",
-                        ChibiSprite = "tira",
-                        Message = "耶！！！！"
-                    },
-                    new Dialogue
-                    {
-                        Message = "对话第一条"
-                    },
-                    new Dialogue
-                    {
-                        Message = "对话第二条"
-                    },
-                    new Dialogue
-                    {
-                        Message = "对话第三条"
-                    }
-                });
+                var intro = Resources.Load<TextAsset>("Stories/Intro");
+                var story = new Story(intro.text);
+                DialogueOverlay.Show(story);
             }
         }
     }

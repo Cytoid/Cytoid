@@ -85,7 +85,7 @@ public class BundleManager
         // Always cache built in bundles
         foreach (var bundle in BuiltInBundles)
         {
-            if (IsCached(bundle)) continue;
+            if (IsCached(bundle) && IsUpToDate(bundle)) continue;
             await LoadBundle(bundle, true, false);
         }
     }
@@ -152,10 +152,10 @@ public class BundleManager
         }
         else
         {
-            Debug.Log($"[BundleManager] Cached bundle does not match version. Using any...");
             // Use any existing version
             var list = new List<Hash128>();
             Caching.GetCachedVersions(bundleId, list);
+            Debug.Log($"[BundleManager] Cached bundle does not match version. Using {list.Last()}...");
             request = UnityWebRequestAssetBundle.GetAssetBundle(bundleId, list.Last());
         }
         using (request)

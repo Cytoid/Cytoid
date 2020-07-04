@@ -16,6 +16,24 @@ using UnityEngine.UI;
 
 public static class CommonExtensions
 {
+
+    public static void Split(this string str, char separator, out string var1, out string var2)
+    {
+        var array = str.Split(separator);
+        Assert.AreEqual(2, array.Length);
+        var1 = array[0];
+        var2 = array[1];
+    }
+    
+    public static void Split(this string str, char separator, out string var1, out string var2, out string var3)
+    {
+        var array = str.Split(separator);
+        Assert.AreEqual(3, array.Length);
+        var1 = array[0];
+        var2 = array[1];
+        var3 = array[2];
+    }
+    
     /**
      * Credits:
      * https://stackoverflow.com/a/1248/2706176

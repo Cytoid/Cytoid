@@ -1,5 +1,5 @@
 using DG.Tweening;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -31,7 +31,8 @@ public class GameRenderer
         boundaryBottom = GameObjectProvider.Instance.boundaryBottom;
         boundaryTopAnimator = boundaryTop.GetComponentInChildren<Animator>();
         boundaryBottomAnimator = boundaryBottom.GetComponentInChildren<Animator>();
-        if (!Context.Player.Settings.DisplayBoundaries)
+
+        if (!Context.Player.Settings.DisplayBoundaries || Game.State.Mode == GameMode.GlobalCalibration)
         {
             this.ListOf(
                 boundaryTop.GetComponentInChildren<SpriteRenderer>(),
@@ -51,14 +52,17 @@ public class GameRenderer
             Game.onTopBoundaryBounded.AddListener(_ => boundaryTopAnimator.Play("BoundaryBound"));
             Game.onBottomBoundaryBounded.AddListener(_ => boundaryBottomAnimator.Play("BoundaryBound"));
         }
-        
-        // Cover
-        cover = GameObjectProvider.Instance.cover;
-        cover.color = Color.white.WithAlpha(0);
-        var path = "file://" + Game.Level.Path + Game.Level.Meta.background.path;
-        cover.sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.GameCover);
-        cover.FitSpriteAspectRatio();
-        cover.DOFade(Context.Player.Settings.CoverOpacity, 0.8f);
+
+        if (Game.State.Mode != GameMode.GlobalCalibration)
+        {
+            // Cover
+            cover = GameObjectProvider.Instance.cover;
+            cover.color = Color.white.WithAlpha(0);
+            var path = "file://" + Game.Level.Path + Game.Level.Meta.background.path;
+            cover.sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.GameCover);
+            cover.FitSpriteAspectRatio();
+            cover.DOFade(Context.Player.Settings.CoverOpacity, 0.8f);
+        }
     }
 
     public void OnGameCompleted()
@@ -74,7 +78,10 @@ public class GameRenderer
 
     public void OnGameReadyToExit()
     {
-        Context.ScreenManager.ActiveScreen.State = ScreenState.Inactive;
+        if (Context.ScreenManager.ActiveScreen != null)
+        {
+            Context.ScreenManager.ActiveScreen.State = ScreenState.Inactive;
+        }
         cover.DOFade(0, 0.8f);
     }
 

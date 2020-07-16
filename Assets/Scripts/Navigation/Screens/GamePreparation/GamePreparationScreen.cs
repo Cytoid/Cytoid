@@ -2,7 +2,7 @@ using System;
 using DG.Tweening;
 using MoreMountains.NiceVibrations;
 using Newtonsoft.Json;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 

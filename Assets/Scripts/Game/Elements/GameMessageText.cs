@@ -1,117 +1,39 @@
-using System;
 using System.Collections.Generic;
-using DG.Tweening;
-using TMPro;
-using UniRx.Async;
-using UnityEngine;
+using Cysharp.Threading.Tasks;
+using UnityEngine.UI;
 
-public class GameMessageText : MonoBehaviour
+public class GameMessageText : SingletonMonoBehavior<GameMessageText>
 {
 
-    public Game game;
-    public TextMeshProUGUI tmp;
-    
-    public float fadeDuration = 0.4f;
-    public Ease ease = Ease.OutCirc;
-    
-    public GameMessage CurrentMessage { get; protected set; }
+    public Text text;
+    public TransitionElement transitionElement;
 
-    private List<Sequence> sequences = new List<Sequence>();
-    
-    protected void Awake()
+    private readonly Queue<string> messages = new Queue<string>();
+
+    protected override async void Awake()
     {
-        game.onGameSpeedUp.AddListener(_ => Animate(new GameMessage
+        base.Awake();
+        while (this != null)
         {
-            Type = GameMessage.AnimationType.Expand, 
-            Color = Scanner.SpeedUpColor, 
-            TextFunction = () => "GAME_SPEED_UP".Get()
-        }));
-        game.onGameSpeedDown.AddListener(_ => Animate(new GameMessage
-        {
-            Type = GameMessage.AnimationType.Shrink,
-            Color = Scanner.SpeedDownColor,
-            TextFunction = () => "GAME_SLOW_DOWN".Get()
-        }));
-        game.onGameWillUnpause.AddListener(async _ =>
-        {
-            await UniTask.Delay(TimeSpan.FromSeconds(1.4f));
-            Animate(new GameMessage
+            await UniTask.WaitUntil(() => this == null || messages.Count > 0);
+            if (this == null) return;
+
+            if (transitionElement.IsShown)
             {
-                Type = GameMessage.AnimationType.Expand,
-                Color = Color.white,
-                TextFunction = () => "GAME_RESUME_IN_X".Get(Mathf.Max(0.1f, game.UnpauseCountdown).ToString("0.0")),
-                MaxSpacing = 96
-            }, 2.1f);
-        });
-        tmp.color = Color.clear;
-        tmp.text = "";
-    }
+                transitionElement.Leave();
+                await UniTask.WaitUntil(() => !transitionElement.IsInTransition);
+            }
+            var message = messages.Dequeue();
+            text.text = message;
 
-    public async void Animate(GameMessage message, float duration = 1.5f)
-    {
-        CurrentMessage = message;
-        tmp.color = message.Color.WithAlpha(0);
-        tmp.text = message.TextFunction();
-        tmp.characterSpacing = message.Type == GameMessage.AnimationType.Shrink ? message.MaxSpacing : message.MinSpacing;
-
-        sequences.ForEach(it => it.Kill());
-        sequences.Clear();
-        DOTween.Sequence()
-            .Append(
-                DOTween.To(
-                        () => tmp.color,
-                        it => tmp.color = it,
-                        tmp.color.WithAlpha(1),
-                        fadeDuration
-                    )
-                    .SetEase(Ease.OutCubic)
-            )
-            .Append(
-                DOTween.To(
-                        () => tmp.color,
-                        it => tmp.color = it,
-                        tmp.color.WithAlpha(0),
-                        fadeDuration
-                    )
-                    .SetDelay(duration - fadeDuration * 2)
-                    .SetEase(Ease.OutCubic)
-            )
-            .Also(it => sequences.Add(it));
-        DOTween.Sequence()
-            .Append(
-                DOTween.To(
-                        () => tmp.characterSpacing,
-                        it => tmp.characterSpacing = it,
-                        message.Type == GameMessage.AnimationType.Expand ? message.MaxSpacing : message.MinSpacing,
-                        duration
-                    )
-                    .SetEase(ease)
-            )
-            .Also(it => sequences.Add(it));
-
-        await UniTask.Delay(TimeSpan.FromSeconds(duration));
-        CurrentMessage = null;
-    }
-
-    public void Update()
-    {
-        if (CurrentMessage != null)
-        {
-            tmp.text = CurrentMessage.TextFunction();
+            transitionElement.Enter();
+            await UniTask.WaitUntil(() => !transitionElement.IsInTransition);
         }
     }
-}
 
-public class GameMessage
-{
-    public AnimationType Type;
-    public Color Color;
-    public Func<string> TextFunction;
-    public float MaxSpacing = 192f;
-    public float MinSpacing;
-    
-    public enum AnimationType
+    public void Enqueue(string message)
     {
-        Expand, Shrink, None
+        messages.Enqueue(message);
     }
+
 }

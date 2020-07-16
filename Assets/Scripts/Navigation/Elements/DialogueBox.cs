@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using DG.Tweening;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
+using UnityEditor.Animations;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = System.Object;
@@ -66,7 +67,14 @@ public class DialogueBox : MonoBehaviour
         messageText.text = "";
         if (chibiDisplay != null)
         {
-            chibiDisplay.SetSprite(dialogue.Sprite);
+            if (dialogue.AnimatorController != null)
+            {
+                chibiDisplay.SetAnimation(dialogue.AnimatorController, dialogue.AnimationName);
+            }
+            else
+            {
+                chibiDisplay.SetSprite(dialogue.Sprite);
+            }
         }
         if (speakerNameText != null)
         {
@@ -120,6 +128,8 @@ public class Dialogue
     public string Message { get; set; }
     public string SpeakerName { get; set; }
     public Sprite Sprite { get; set; }
+    public RuntimeAnimatorController AnimatorController { get; set; }
+    public string AnimationName { get; set; }
     public bool HasChoices { get; set; }
 }
 
@@ -154,6 +164,15 @@ public class DialogueSpriteSet
                         {"Default", new State {SpriteAddress = "Stories/Characters/Nut/Default"}}
                     }
                 };
+            case "Fujao":
+                return new DialogueSpriteSet
+                {
+                    Id = "Fujao",
+                    States = new Dictionary<string, State>
+                    {
+                        {"Default", new State {SpriteAddress = "Stories/Characters/Fujao/Default"}}
+                    }
+                };
         }
         throw new InvalidOperationException(name);
     }
@@ -186,5 +205,38 @@ public class DialogueSpriteSet
         {
             if (it.Value.Sprite != null) Resources.UnloadAsset(it.Value.Sprite);
         });
+    }
+}
+
+public class DialogueAnimationSet
+{
+    public static DialogueAnimationSet Parse(string name)
+    {
+        switch (name)
+        {
+            case "Sayaka":
+                return new DialogueAnimationSet
+                {
+                    Id = "Sayaka",
+                    ControllerAddress = "Stories/Characters/Sayaka/Controller"
+                };
+        }
+        throw new InvalidOperationException(name);
+    }
+    
+    public string Id { get; set; }
+
+    public string ControllerAddress { get; set; }
+    
+    public RuntimeAnimatorController Controller { get; set; }
+
+    public async UniTask Initialize()
+    {
+        Controller = (RuntimeAnimatorController) await Resources.LoadAsync<RuntimeAnimatorController>(ControllerAddress);
+    }
+
+    public void Dispose()
+    {
+        if (Controller != null) Resources.UnloadAsset(Controller);
     }
 }

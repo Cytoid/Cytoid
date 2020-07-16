@@ -1,5 +1,5 @@
 using System;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class ScheduledPulse : MonoBehaviour, ScreenBecameActiveListener, ScreenBecameInactiveListener, ScreenUpdateListener

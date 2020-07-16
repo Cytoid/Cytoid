@@ -7,7 +7,7 @@ using UnityEngine.EventSystems;
 public class ModPill : InteractableMonoBehavior
 {
     [GetComponent] public CanvasGroup canvasGroup;
-    public PulseElement pulseElement;
+    [GetComponent] public PulseElement pulseElement;
     public Mod mod;
     public List<Mod> modsToDisable;
     public bool isStatic;

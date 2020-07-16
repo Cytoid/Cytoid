@@ -4,9 +4,8 @@ using DG.Tweening;
 using ICSharpCode.SharpZipLib.Zip;
 using MoreMountains.NiceVibrations;
 using Proyecto26;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.Experimental.PlayerLoop;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 

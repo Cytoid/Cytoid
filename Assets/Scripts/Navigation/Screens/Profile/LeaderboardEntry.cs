@@ -25,9 +25,9 @@ public class LeaderboardEntry : ContainerEntry<Leaderboard.Entry>
         Model = entry;
         background.SetActive(entry.Uid == Context.Player.Id);
         avatar.SetModel(entry);
-        rank.text = entry.rank + ".";
+        rank.text = entry.Rank + ".";
         name.text = entry.Uid;
-        rating.text = "Rating " + entry.rating.ToString("N2");
+        rating.text = "Rating " + entry.Rating.ToString("N2");
     }
 
     public override Leaderboard.Entry GetModel() => Model;

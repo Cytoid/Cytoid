@@ -139,6 +139,9 @@ public class LocalPlayerSettings
     
     [JsonProperty("performed_one_shots")]
     public HashSet<string> PerformedOneShots { get; set; } = new HashSet<string>();
+    
+    [JsonProperty("set_triggers")]
+    public HashSet<string> SetTriggers { get; set; } = new HashSet<string>();
 
 }
 

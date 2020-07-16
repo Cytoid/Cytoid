@@ -15,4 +15,7 @@ public class GameObjectProvider : SingletonMonoBehavior<GameObjectProvider>
      public Image cover;
      public GameObject boundaryBottom;
      public GameObject boundaryTop;
+     public BeatPulseVisualizer beatPulseVisualizer;
+     public GameMessageText messageText;
+     public CircleProgressIndicator circleProgressIndicator;
 }

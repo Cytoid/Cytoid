@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using MoreMountains.NiceVibrations;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class DragHeadNote : Note

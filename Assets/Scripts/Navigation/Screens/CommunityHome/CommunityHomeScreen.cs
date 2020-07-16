@@ -4,7 +4,7 @@ using System.Linq;
 using DG.Tweening;
 using Proyecto26;
 using RSG;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 using IPromise = RSG.IPromise;

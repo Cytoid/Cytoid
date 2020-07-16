@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Polyglot;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class Player
@@ -272,6 +272,26 @@ public class Player
     {
         if (Settings == null) throw new InvalidOperationException();
         Settings.PerformedOneShots.Remove(key);
+        SaveSettings();
+    }
+    
+    public bool ShouldTrigger(string key)
+    {
+        if (Settings == null) throw new InvalidOperationException();
+        var set = Settings.SetTriggers.Contains(key);
+        if (set)
+        {
+            Settings.SetTriggers.Remove(key);
+            SaveSettings();
+            return true;
+        }
+        return false;
+    }
+
+    public void SetTrigger(string key)
+    {
+        if (Settings == null) throw new InvalidOperationException();
+        Settings.SetTriggers.Add(key);
         SaveSettings();
     }
 

@@ -4,8 +4,9 @@ using System.Linq;
 using DG.Tweening;
 using Ink.Runtime;
 using Newtonsoft.Json;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -78,20 +79,28 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
         await instance.Enter();
 
         var spriteSets = new Dictionary<string, DialogueSpriteSet>();
+        var animationSets = new Dictionary<string, DialogueAnimationSet>();
 
         story.globalTags.FindAll(it => it.Trim().StartsWith("SpriteSet:"))
             .Select(it => it.Substring(it.IndexOf(':') + 1).Trim())
             .Select(DialogueSpriteSet.Parse)
             .ForEach(it => spriteSets[it.Id] = it);
+        story.globalTags.FindAll(it => it.Trim().StartsWith("AnimationSet:"))
+            .Select(it => it.Substring(it.IndexOf(':') + 1).Trim())
+            .Select(DialogueAnimationSet.Parse)
+            .ForEach(it => animationSets[it.Id] = it);
         
         await spriteSets.Values.Select(it => it.Initialize());
+        await animationSets.Values.Select(it => it.Initialize());
 
         Sprite currentSprite = null;
+        string currentAnimation = null;
         var currentSpeaker = "";
         var currentPosition = DialogueBoxPosition.Bottom;
 
         Dialogue lastDialogue = null;
         DialogueBox lastDialogueBox = null;
+
         while (story.canContinue)
         {
             var message = story.Continue();
@@ -110,6 +119,21 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
 
                     if (!spriteSets.ContainsKey(id)) throw new ArgumentOutOfRangeException();
                     currentSprite = spriteSets[id].States[state].Sprite;
+                    currentAnimation = null;
+                }
+            }
+           
+            var setAnimation = TagValue(tags, "Animation");
+            if (setAnimation != null)
+            {
+                if (setAnimation == "null")
+                {
+                    currentAnimation = null;
+                }
+                else
+                {
+                    currentAnimation = setAnimation;
+                    currentSprite = null;
                 }
             }
 
@@ -124,7 +148,7 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
             {
                 currentPosition = (DialogueBoxPosition) Enum.Parse(typeof(DialogueBoxPosition), setPosition);
             }
-            
+
             var dialogue = new Dialogue
             {
                 Message = message,
@@ -133,10 +157,20 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
                 Position = currentPosition,
                 HasChoices = story.currentChoices.Count > 0
             };
+            
+            // Lookup animation
+            if (currentAnimation != null)
+            {
+                currentAnimation.Split('/', out var id, out var animationName);
+                
+                if (!animationSets.ContainsKey(id)) throw new ArgumentOutOfRangeException();
+                dialogue.AnimatorController = animationSets[id].Controller;
+                dialogue.AnimationName = animationName;
+            }
 
             DialogueBox dialogueBox;
             if (dialogue.Position == DialogueBoxPosition.Top) dialogueBox = instance.topDialogueBox;
-            else if (dialogue.Sprite != null) dialogueBox = instance.bottomFullDialogueBox;
+            else if (dialogue.Sprite != null || dialogue.AnimatorController != null) dialogueBox = instance.bottomFullDialogueBox;
             else dialogueBox = instance.bottomDialogueBox;
 
             if (lastDialogue != null && (lastDialogueBox != dialogueBox || lastDialogue.SpeakerName != dialogue.SpeakerName))
@@ -204,6 +238,7 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
         await instance.Leave();
 
         spriteSets.Values.ForEach(it => it.Dispose());
+        animationSets.Values.ForEach(it => it.Dispose());
 
         string TagValue(List<string> tags, string tag)
         {

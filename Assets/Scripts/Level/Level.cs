@@ -52,7 +52,7 @@ public class Level
 }
 
 public enum LevelType {
-    User, Tier
+    User, Tier, BuiltIn
 }
 
 public static class LevelTypeExtensions {
@@ -64,6 +64,8 @@ public static class LevelTypeExtensions {
                 return Context.UserDataPath;
             case LevelType.Tier:
                 return Path.Combine(Application.temporaryCachePath, "Tiers");
+            case LevelType.BuiltIn:
+                return Path.Combine(Application.temporaryCachePath, "BuiltIn");
             default:
                 throw new ArgumentOutOfRangeException(nameof(type), type, null);
         }

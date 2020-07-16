@@ -3,7 +3,7 @@ using System.Threading;
 using DG.Tweening;
 using MoreMountains.NiceVibrations;
 using Proyecto26;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;

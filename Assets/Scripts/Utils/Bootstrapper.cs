@@ -7,4 +7,5 @@ public class Bootstrapper : MonoBehaviour
     {
         SceneManager.LoadScene("Navigation");
     }
+    
 }    

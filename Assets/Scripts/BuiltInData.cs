@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 public static class BuiltInData
 {
-    public static readonly List<string> TrainingModeLevelUids = new List<string>
+    public static readonly List<string> TrainingModeLevelIds = new List<string>
     {
         "skillmode.space",
         "skillmode.midnight",
@@ -20,4 +20,5 @@ public static class BuiltInData
         "skillmode.antinomia",
         "skillmode.thebigblack"
     };
+    public const string GlobalCalibrationModeLevelId = "teages.offset_guide";
 }

@@ -5,7 +5,7 @@ using System.Linq;
 using LiteDB;
 using Newtonsoft.Json;
 using Proyecto26;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -112,7 +112,7 @@ public class TrainingSelectionScreen : Screen
                     
                     foreach (var onlineLevel in data.Levels)
                     {
-                        if (onlineLevel.HasLocal(LevelType.User) || !BuiltInData.TrainingModeLevelUids.Contains(onlineLevel.Uid))
+                        if (onlineLevel.HasLocal(LevelType.User) || !BuiltInData.TrainingModeLevelIds.Contains(onlineLevel.Uid))
                         {
                             levels.Add(onlineLevel.ToLevel(LevelType.User));
                         }
@@ -135,7 +135,7 @@ public class TrainingSelectionScreen : Screen
             // Load from DB, or use default
             var levelUids =
                 Context.Database.GetCollection<TrainingData>("training").FindOne(x => true)?.Levels
-                    .Select(it => it.Uid) ?? BuiltInData.TrainingModeLevelUids;
+                    .Select(it => it.Uid) ?? BuiltInData.TrainingModeLevelIds;
             
             foreach (var uid in levelUids)
             {
@@ -157,45 +157,7 @@ public class TrainingSelectionScreen : Screen
             print($"Resolved levels: {string.Join(", ", levels.Select(it => it.Id))}");
             print($"Built-in levels to unpack: {string.Join(", ", builtInLevelsToUnpack)}");
             
-            var packagePaths = new List<string>();
-            
-            // Install all missing training levels that are built in
-            foreach (var uid in builtInLevelsToUnpack)
-            {
-                var packagePath = Application.streamingAssetsPath + "/Levels/" + uid + ".cytoidlevel";
-                if (Application.platform == RuntimePlatform.IPhonePlayer) packagePath = "file://" + packagePath;
-                
-                // Copy the file from StreamingAssets to temp directory
-                using (var request = UnityWebRequest.Get(packagePath))
-                {
-                    await request.SendWebRequest();
-
-                    if (request.isNetworkError || request.isHttpError)
-                    {
-                        Debug.LogError(request.error);
-                        Debug.LogError($"Failed to copy level {uid} from StreamingAssets");
-                        continue;
-                    }
-
-                    var bytes = request.downloadHandler.data;
-                    var targetDirectory = $"{Application.temporaryCachePath}/Downloads";
-                    var targetFile = $"{targetDirectory}/{uid}.cytoidlevel";
-
-                    try
-                    {
-                        Directory.CreateDirectory(targetDirectory);
-                        File.WriteAllBytes(targetFile, bytes);
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogError(e);
-                        Debug.LogError($"Failed to copy level {uid} from StreamingAssets to {targetFile}");
-                        continue;
-                    }
-
-                    packagePaths.Add(targetFile);
-                }
-            }
+            var packagePaths = await Context.LevelManager.CopyBuiltInLevelsToDownloads(builtInLevelsToUnpack);
 
             if (packagePaths.Count > 0)
             {

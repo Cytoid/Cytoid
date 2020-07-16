@@ -3,6 +3,7 @@ using DG.Tweening;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.UI.ProceduralImage;
 
@@ -91,6 +92,10 @@ public class Dialog : MonoBehaviour
     protected virtual void Awake()
     {
         canvas.overrideSorting = true;
+        if (SceneManager.GetActiveScene().name == "Game")
+        {
+            canvas.sortingLayerName = "GameOverlay3";
+        }
         canvas.sortingOrder = NavigationSortingOrder.Dialog;
         canvasGroup.alpha = 1;
         canvasGroup.interactable = true;
@@ -129,8 +134,8 @@ public class Dialog : MonoBehaviour
 
     public static Dialog Instantiate()
     {
-        var dialog = Instantiate(NavigationObjectProvider.Instance.dialogPrefab,
-            NavigationObjectProvider.Instance.dialogHolder, false);
+        var dialog = Instantiate(DialogObjectProvider.Instance.dialogPrefab,
+            DialogObjectProvider.Instance.dialogHolder, false);
         dialog.Message = "Hello world!";
         dialog.UsePositiveButton = true;
         dialog.UseNegativeButton = false;

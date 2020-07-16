@@ -1,6 +1,6 @@
 using System;
 using Cytoid.Storyboard.Sprites;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Video;

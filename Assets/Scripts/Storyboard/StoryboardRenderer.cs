@@ -5,7 +5,7 @@ using Cytoid.Storyboard.Controllers;
 using Cytoid.Storyboard.Sprites;
 using Cytoid.Storyboard.Texts;
 using Cytoid.Storyboard.Videos;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using LineRenderer = Cytoid.Storyboard.Sprites.LineRenderer;
 using SpriteRenderer = Cytoid.Storyboard.Sprites.SpriteRenderer;

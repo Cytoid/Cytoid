@@ -1,6 +1,6 @@
 using System;
 using LeTai.Asset.TranslucentImage;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 
 public class ParallaxHolder : SingletonMonoBehavior<ParallaxHolder>
 {

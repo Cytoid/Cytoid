@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using Cytoid.Storyboard;
 using UnityEngine;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
+using Cytoid.Storyboard;
 using UnityEditor;
 using UnityEngine.Events;
 using UnityEngine.Networking;
@@ -70,6 +69,7 @@ public class Game : MonoBehaviour
     public GameEvent onGameStarted = new GameEvent();
     public GameEvent onGameUpdate = new GameEvent();
     public GameEvent onGameLateUpdate = new GameEvent();
+    public NoteJudgeEvent onNoteJudged = new NoteJudgeEvent();
     public GameEvent onGamePaused = new GameEvent();
     public GameEvent onGameWillUnpause = new GameEvent();
     public GameEvent onGameUnpaused = new GameEvent();
@@ -84,6 +84,8 @@ public class Game : MonoBehaviour
     public GameEvent onGameDisposed = new GameEvent();
     public GameEvent onTopBoundaryBounded = new GameEvent();
     public GameEvent onBottomBoundaryBounded = new GameEvent();
+
+    private GlobalCalibrator globalCalibrator;
     
     protected virtual void Awake()
     {
@@ -166,17 +168,59 @@ public class Game : MonoBehaviour
             Level = tierState.Tier.Meta.stages[Context.TierState.CurrentStageIndex].ToLevel(LevelType.Tier);
             Difficulty = Difficulty.Parse(Level.Meta.charts.Last().type);
         }
+        else if (mode == GameMode.GlobalCalibration)
+        {
+            // Load global calibration level
+            async UniTask<Level> GetGlobalCalibrationLevel()
+            {
+                if (Context.LevelManager.LoadedLocalLevels.ContainsKey(BuiltInData.GlobalCalibrationModeLevelId))
+                {
+                    return Context.LevelManager.LoadedLocalLevels[BuiltInData.GlobalCalibrationModeLevelId];
+                }
+                var levels = await Context.LevelManager.LoadFromMetadataFiles(LevelType.BuiltIn, new List<string>
+                {
+                    $"{LevelType.BuiltIn.GetDataPath()}/{BuiltInData.GlobalCalibrationModeLevelId}/level.json"
+                });
+                return levels.Count == 0 ? null : levels.First();
+            }
+
+            Level = await GetGlobalCalibrationLevel();
+
+            if (Level == null)
+            {
+                var paths = await Context.LevelManager.CopyBuiltInLevelsToDownloads(new List<string>
+                    {BuiltInData.GlobalCalibrationModeLevelId});
+                await Context.LevelManager.InstallLevels(paths, LevelType.BuiltIn);
+                Level = await GetGlobalCalibrationLevel();
+            }
+
+            Difficulty = Level.Meta.GetEasiestDifficulty();
+            
+            // Reset audio config
+            if (Application.platform == RuntimePlatform.Android)
+            {
+                var audioConfig = AudioSettings.GetConfiguration();
+                audioConfig.dspBufferSize = Context.Player.Settings.AndroidDspBufferSize = 1024;
+                Context.Player.SaveSettings();
+                AudioSettings.Reset(audioConfig);
+            }
+            
+            // Initialize global calibrator
+            globalCalibrator = new GlobalCalibrator(this);
+        }
         else
         {
             if (Context.SelectedLevel == null && Application.isEditor)
             {
                 // Load test level
-                await Context.LevelManager.LoadFromMetadataFiles(LevelType.User, new List<string> {
+                await Context.LevelManager.LoadFromMetadataFiles(LevelType.User, new List<string>
+                {
                     $"{Context.UserDataPath}/{EditorDefaultLevelDirectory}/level.json"
                 });
                 Context.SelectedLevel = Context.LevelManager.LoadedLocalLevels.Values.First();
                 Context.SelectedDifficulty = Context.SelectedLevel.Meta.GetHardestDifficulty();
             }
+
             Level = Context.SelectedLevel;
             Difficulty = Context.SelectedDifficulty;
         }
@@ -211,8 +255,8 @@ public class Game : MonoBehaviour
         var ratio = UnityEngine.Screen.width * 1.0f / UnityEngine.Screen.height;
         var height = camera.orthographicSize * 2.0f;
         var width = height * ratio;
-        var topRatio = 0.0966666f;
-        var bottomRatio = 0.07f;
+        const float topRatio = 0.0966666f;
+        const float bottomRatio = 0.07f;
         var verticalRatio = 1 - width * (topRatio + bottomRatio) / height + (3 - Context.Player.Settings.VerticalMargin) * 0.05f;
         var verticalOffset = -(width * (topRatio - (topRatio + bottomRatio) / 2.0f));
         Chart = new Chart(
@@ -247,7 +291,7 @@ public class Game : MonoBehaviour
             Debug.LogError(loader.Error);
             throw new Exception($"Failed to download audio from {audioPath}");
         }
-            
+        
         Music = Context.AudioManager.Load("Level", loader.AudioClip, false, false, true);
         MusicLength = Music.Length;
         
@@ -255,7 +299,8 @@ public class Game : MonoBehaviour
         StoryboardPath =
             Level.Path + (chartMeta.storyboard != null ? chartMeta.storyboard.path : "storyboard.json");
 
-        if (File.Exists(StoryboardPath)) {
+        if (File.Exists(StoryboardPath))
+        {
             // Initialize storyboard
             // TODO: Why File.ReadAllText() works but not UnityWebRequest?
             // (UnityWebRequest downloaded text could not be parsed by Newtonsoft.Json)
@@ -286,7 +331,7 @@ public class Game : MonoBehaviour
         Config = new GameConfig(this);
 
         // Touch handlers
-        if (!State.Mods.Contains(Mod.Auto))
+        if (mode != GameMode.GlobalCalibration && !State.Mods.Contains(Mod.Auto))
         {
             inputController.EnableInput();
         }
@@ -303,7 +348,10 @@ public class Game : MonoBehaviour
         ObjectPool.Initialize();
 
         IsLoaded = true;
-        Context.ScreenManager.ChangeScreen(OverlayScreen.Id, ScreenTransition.None);
+        if (mode != GameMode.GlobalCalibration)
+        {
+            Context.ScreenManager.ChangeScreen(OverlayScreen.Id, ScreenTransition.None);
+        }
         onGameLoaded.Invoke(this);
 
         levelInfoParent.transform.RebuildLayout();
@@ -314,15 +362,13 @@ public class Game : MonoBehaviour
         }
     }
 
-    protected async virtual void StartGame()
+    protected virtual async void StartGame()
     {
         await UniTask.WhenAll(BeforeStartTasks);
 
         MusicStartedTimestamp = Music.PlayScheduled(AudioTrackIndex.Reserved1, 1.0f);
 
-        await UniTask.WaitUntil(
-            () => AudioSettings.dspTime >= MusicStartedTimestamp,
-            PlayerLoopTiming.Initialization);
+        await UniTask.Delay(TimeSpan.FromSeconds(1));
 
         if (Application.isEditor && EditorMusicInitialPosition > 0)
         {
@@ -400,58 +446,61 @@ public class Game : MonoBehaviour
             MusicProgress = Time / MusicLength;
             ChartProgress = Time / ChartLength;
 
-            // Process chart elements
-            while (Chart.CurrentEventId < Chart.Model.event_order_list.Count &&
-                   Chart.Model.event_order_list[Chart.CurrentEventId].time < Time)
+            if (!State.IsCompleted)
             {
-                if (Chart.Model.event_order_list[Chart.CurrentEventId].event_list[0].type == 0)
+                // Process chart elements
+                while (Chart.CurrentEventId < Chart.Model.event_order_list.Count &&
+                       Chart.Model.event_order_list[Chart.CurrentEventId].time < Time)
                 {
-                    onGameSpeedUp.Invoke(this);
-                }
-                else
-                {
-                    onGameSpeedDown.Invoke(this);
+                    if (Chart.Model.event_order_list[Chart.CurrentEventId].event_list[0].type == 0)
+                    {
+                        onGameSpeedUp.Invoke(this);
+                    }
+                    else
+                    {
+                        onGameSpeedDown.Invoke(this);
+                    }
+
+                    Chart.CurrentEventId++;
                 }
 
-                Chart.CurrentEventId++;
+                while (Chart.CurrentPageId < Chart.Model.page_list.Count &&
+                       Chart.Model.page_list[Chart.CurrentPageId].end_time <= Time)
+                {
+                    if (Chart.Model.page_list[Chart.CurrentPageId].scan_line_direction == 1)
+                    {
+                        if (!State.IsCompleted) onTopBoundaryBounded.Invoke(this);
+                    }
+                    else
+                    {
+                        if (!State.IsCompleted) onBottomBoundaryBounded.Invoke(this);
+                    }
+
+                    Chart.CurrentPageId++;
+                }
+
+                var notes = Chart.Model.note_map;
+                while (Chart.CurrentNoteId < notes.Count && notes[Chart.CurrentNoteId].intro_time - 1f < Time)
+                    switch ((NoteType) notes[Chart.CurrentNoteId].type)
+                    {
+                        case NoteType.DragHead:
+                        case NoteType.CDragHead:
+                            var id = Chart.CurrentNoteId;
+                            while (notes[id].next_id > 0)
+                            {
+                                ObjectPool.SpawnDragLine(notes[id], notes[notes[id].next_id]);
+                                id = notes[id].next_id;
+                            }
+
+                            ObjectPool.SpawnNote(notes[Chart.CurrentNoteId]);
+                            Chart.CurrentNoteId++;
+                            break;
+                        default:
+                            ObjectPool.SpawnNote(notes[Chart.CurrentNoteId]);
+                            Chart.CurrentNoteId++;
+                            break;
+                    }
             }
-
-            while (Chart.CurrentPageId < Chart.Model.page_list.Count &&
-                   Chart.Model.page_list[Chart.CurrentPageId].end_time <= Time)
-            {
-                if (Chart.Model.page_list[Chart.CurrentPageId].scan_line_direction == 1)
-                {
-                    if (!State.IsCompleted) onTopBoundaryBounded.Invoke(this);
-                }
-                else
-                {
-                    if (!State.IsCompleted) onBottomBoundaryBounded.Invoke(this);
-                }
-
-                Chart.CurrentPageId++;
-            }
-
-            var notes = Chart.Model.note_map;
-            while (Chart.CurrentNoteId < notes.Count && notes[Chart.CurrentNoteId].intro_time - 1f < Time)
-                switch ((NoteType) notes[Chart.CurrentNoteId].type)
-                {
-                    case NoteType.DragHead:
-                    case NoteType.CDragHead:
-                        var id = Chart.CurrentNoteId;
-                        while (notes[id].next_id > 0)
-                        {
-                            ObjectPool.SpawnDragLine(notes[id], notes[notes[id].next_id]);
-                            id = notes[id].next_id;
-                        }
-
-                        ObjectPool.SpawnNote(notes[Chart.CurrentNoteId]);
-                        Chart.CurrentNoteId++;
-                        break;
-                    default:
-                        ObjectPool.SpawnNote(notes[Chart.CurrentNoteId]);
-                        Chart.CurrentNoteId++;
-                        break;
-                }
         }
 
         onGameUpdate.Invoke(this);
@@ -468,6 +517,11 @@ public class Game : MonoBehaviour
 
     public virtual bool Pause()
     {
+        if (State.Mode == GameMode.GlobalCalibration)
+        {
+            globalCalibrator.Restart();
+            return false;
+        }
         if (!IsLoaded || !State.IsPlaying || State.IsCompleted || State.IsFailed) return false;
         print("Game paused");
         
@@ -619,7 +673,7 @@ public class Game : MonoBehaviour
             // Wait for audio to finish
             await UniTask.WaitUntil(() =>
             {
-                volume -= 1 / 180f;
+                volume -= 1 / 60f;
                 if (volume < 1)
                 {
                     Music.Volume = volume;
@@ -631,13 +685,20 @@ public class Game : MonoBehaviour
 
         print("Audio ended");
         Context.AudioManager.Unload("Level");
-        
-        await UniTask.WhenAll(BeforeExitTasks);
-        await Resources.UnloadUnusedAssets();
+
+        try
+        {
+            await UniTask.WhenAll(BeforeExitTasks);
+        }
+        catch (OperationCanceledException)
+        {
+        }
 
         onGameReadyToExit.Invoke(this);
         
+        await Resources.UnloadUnusedAssets();
         Dispose();
+        globalCalibrator?.Dispose();
         
         var sceneLoader = new SceneLoader("Navigation");
         sceneLoader.Load();
@@ -666,6 +727,10 @@ public class GameEvent : UnityEvent<Game>
 }
 
 public class NoteEvent : UnityEvent<Game, Note>
+{
+}
+
+public class NoteJudgeEvent : UnityEvent<Game, Note, JudgeData>
 {
 }
 

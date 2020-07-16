@@ -10,7 +10,7 @@ using Cytoid.Storyboard.Texts;
 using Cytoid.Storyboard.Videos;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace Cytoid.Storyboard

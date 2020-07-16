@@ -1,5 +1,5 @@
 ﻿using System;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class EffectController : MonoBehaviour
@@ -43,6 +43,19 @@ public class EffectController : MonoBehaviour
         clearEffectSizeMultiplier = Context.Player.Settings.ClearEffectsSize;
     }
 
+    public void PlayRippleEffect(Vector3 position)
+    {
+        var settings = flatFx.settings[1];
+        settings.lifetime = 2;
+        settings.sectorCount = 96;
+        settings.start.innerColor = settings.start.outerColor = Color.white.WithAlpha(1);
+        settings.end.innerColor = settings.end.outerColor = Color.white.WithAlpha(0);
+        settings.end.size = 6;
+        settings.start.thickness = 0.666f;
+        settings.end.thickness = 0.111f;
+        flatFx.AddEffect(position, 1);
+    }
+
     public void PlayClearEffect(NoteRenderer noteRenderer, NoteGrade grade, float timeUntilEnd)
     {
         PlayClearEffect(noteRenderer, grade, timeUntilEnd, Context.Player.Settings.DisplayEarlyLateIndicators);
@@ -50,6 +63,11 @@ public class EffectController : MonoBehaviour
 
     public void PlayClearEffect(NoteRenderer noteRenderer, NoteGrade grade, float timeUntilEnd, bool earlyLateIndicator)
     {
+        if (game.State.Mode == GameMode.GlobalCalibration)
+        {
+            return;
+        }
+        
         var color = game.Config.NoteGradeEffectColors[grade];
         var at = noteRenderer.Note.transform.position;
         if (noteRenderer.Note.Type == NoteType.Hold || noteRenderer.Note.Type == NoteType.LongHold)

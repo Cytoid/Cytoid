@@ -1,7 +1,7 @@
 using System;
 using DG.Tweening;
 using Proyecto26;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
@@ -144,8 +144,8 @@ public class RateLevelDialog : Dialog
 
     public static RateLevelDialog Instantiate(string levelId, int userRating = -1)
     {
-        var dialog = Instantiate(NavigationObjectProvider.Instance.rateLevelDialogPrefab,
-            NavigationObjectProvider.Instance.dialogHolder, false);
+        var dialog = Instantiate(DialogObjectProvider.Instance.rateLevelDialogPrefab,
+            DialogObjectProvider.Instance.dialogHolder, false);
         dialog.levelId = levelId;
         dialog.Rating = userRating > 0 ? userRating : 8;
         if (userRating > 0)

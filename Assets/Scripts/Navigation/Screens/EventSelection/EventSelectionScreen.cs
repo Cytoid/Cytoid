@@ -5,7 +5,7 @@ using System.Threading;
 using DG.Tweening;
 using MoreMountains.NiceVibrations;
 using Proyecto26;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.UI;
@@ -115,26 +115,27 @@ public class EventSelectionScreen : Screen
                 coverImage.DOColor(Color.black, 0.4f);
                 tasks.Add(UniTask.Delay(TimeSpan.FromSeconds(0.4f), cancellationToken: token));
             }
-            var downloadTask = Context.AssetMemory.LoadAsset<Sprite>(meta.cover.OriginalUrl, AssetTag.EventCover, cancellationToken: token);
-            tasks.Add(downloadTask);
+            
+            Sprite sprite = null;
+            tasks.Add(Context.AssetMemory.LoadAsset<Sprite>(meta.cover.OriginalUrl, AssetTag.EventCover, cancellationToken: token).ContinueWith(result => sprite = result));
 
             try
             {
-                await UniTask.WhenAll(tasks);
+                await tasks;
             }
-            catch
+            catch (OperationCanceledException)
             {
                 return;
             }
 
-            coverImage.sprite = downloadTask.Result;
+            coverImage.sprite = sprite;
             coverImage.FitSpriteAspectRatio();
             coverImage.DOColor(Color.white, 2f).SetDelay(0.8f);
         }
         async UniTask LoadLogo(CancellationToken token)
         {
             Assert.IsNotNull(meta.logo);
-            
+
             var tasks = new List<UniTask>();
             if (logoImage.sprite != null)
             {
@@ -142,19 +143,20 @@ public class EventSelectionScreen : Screen
                 logoImage.DOFade(0, 0.4f);
                 tasks.Add(UniTask.Delay(TimeSpan.FromSeconds(0.4f), cancellationToken: token));
             }
-            var downloadTask = Context.AssetMemory.LoadAsset<Sprite>(meta.logo.OriginalUrl, AssetTag.EventLogo, cancellationToken: token);
-            tasks.Add(downloadTask);
+
+            Sprite sprite = null;
+            tasks.Add(Context.AssetMemory.LoadAsset<Sprite>(meta.logo.OriginalUrl, AssetTag.EventLogo, cancellationToken: token).ContinueWith(result => sprite = result));
 
             try
             {
-                await UniTask.WhenAll(tasks);
+                await tasks;
             }
-            catch
+            catch (OperationCanceledException)
             {
                 return;
             }
 
-            logoImage.sprite = downloadTask.Result;
+            logoImage.sprite = sprite;
             logoImage.DOFade(1, 0.8f).SetDelay(0.4f);
         }
         AddTask(LoadCover);

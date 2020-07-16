@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using MoreMountains.NiceVibrations;
 using Proyecto26;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -172,24 +172,17 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
     private async void OnOfflineModeToggled(bool offline)
     {
         SpinnerOverlay.Show();
-        var tasks = new List<UniTask>();
         async void Fix(GameObject itGameObject, bool active)
         {
             // Yes, welcome to Unity.
             // Don't change, unless you are absolutely certain what I am (and you are) doing.
             itGameObject.SetActive(active);
             LayoutFixer.Fix(itGameObject.transform);
-            var task = UniTask.DelayFrame(5);
-            tasks.Add(task);
-            await task;
+            await UniTask.DelayFrame(5);
             itGameObject.SetActive(!itGameObject.activeSelf);
-            task = UniTask.DelayFrame(0);
-            tasks.Add(task);
-            await task;
+            await UniTask.DelayFrame(0);
             itGameObject.SetActive(!itGameObject.activeSelf);
-            task = UniTask.DelayFrame(0);
-            tasks.Add(task);
-            await task;
+            await UniTask.DelayFrame(0);
             LayoutFixer.Fix(itGameObject.transform);
             if (active) itGameObject.GetComponent<TransitionElement>()?.Apply(x => x.UseCurrentStateAsDefault());
         }
@@ -213,10 +206,8 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
             });
         }
 
-        await UniTask.WhenAll(tasks);
-        
-        tasks.Clear();
-        
+        await UniTask.DelayFrame(10);
+
         foreach (var gameObject in SceneManager.GetActiveScene().GetRootGameObjects())
         {
             gameObject.GetComponentsInChildren<HiddenIfOfflineElement>(true).ForEach(it =>
@@ -228,7 +219,7 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
             });
         }
         
-        await UniTask.WhenAll(tasks);
+        await UniTask.DelayFrame(10);
 
         foreach (var screen in Context.ScreenManager.createdScreens)
         {

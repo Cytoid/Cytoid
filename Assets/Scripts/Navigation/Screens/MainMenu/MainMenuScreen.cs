@@ -35,7 +35,7 @@ public class MainMenuScreen : Screen
         rightOverlayImage.SetAlpha(Context.CharacterManager.GetActiveCharacterAsset().mainMenuRightOverlayAlpha);
         
         freePlayText.text = "MAIN_LEVELS_LOADED".Get(Context.LevelManager.LoadedLocalLevels.Count(it => 
-            it.Value.Type == LevelType.User));
+            it.Value.Type == LevelType.User && !BuiltInData.TrainingModeLevelIds.Contains(it.Value.Id)));
         freePlayText.transform.RebuildLayout();
         ProfileWidget.Instance.Enter();
 

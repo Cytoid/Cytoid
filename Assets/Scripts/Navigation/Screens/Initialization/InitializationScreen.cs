@@ -1,5 +1,6 @@
 using DG.Tweening;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class InitializationScreen : Screen
@@ -21,7 +22,7 @@ public class InitializationScreen : Screen
         statusText.text = "";
 
         await UniTask.DelayFrame(10);
-        
+
         Context.LevelManager.OnLevelInstallProgress.AddListener(OnLevelInstallProgress);
         await Context.LevelManager.InstallUserCommunityLevels();
         Context.LevelManager.OnLevelInstallProgress.RemoveListener(OnLevelInstallProgress);
@@ -36,6 +37,17 @@ public class InitializationScreen : Screen
             statusText.transform.RebuildLayout();
             await Context.Player.Migrate();
         }
+        
+        // Check region
+        if (Context.Player.ShouldTrigger("Reset Server CDN To CN"))
+        {
+            Debug.Log("Reset server CDN to CN");
+            Context.Player.Settings.CdnRegion = CdnRegion.MainlandChina;
+        }
+        
+        statusText.text = "INIT_CONNECTING_TO_SERVER".Get();
+        await Context.Instance.DetectServerCdn();
+        await Context.Instance.CheckServerCdn();
 
         spinnerElement.gameObject.SetActive(false);
         statusText.text = "INIT_TOUCH_TO_START".Get();

@@ -1,6 +1,6 @@
 using System;
 using Cytoid.Storyboard.Notes;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace Cytoid.Storyboard.Sprites

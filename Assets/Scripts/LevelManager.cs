@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Proyecto26;
 using RSG;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Networking;
@@ -26,6 +26,51 @@ public class LevelManager
 
     public readonly Dictionary<string, Level> LoadedLocalLevels = new Dictionary<string, Level>();
     private readonly HashSet<string> loadedPaths = new HashSet<string>();
+
+    public async UniTask<List<string>> CopyBuiltInLevelsToDownloads(List<string> levelIds)
+    {
+        var packagePaths = new List<string>();
+        
+        // Install all missing training levels that are built in
+        foreach (var uid in levelIds)
+        {
+            var packagePath = Application.streamingAssetsPath + "/Levels/" + uid + ".cytoidlevel";
+            if (Application.platform == RuntimePlatform.IPhonePlayer) packagePath = "file://" + packagePath;
+                
+            // Copy the file from StreamingAssets to temp directory
+            using (var request = UnityWebRequest.Get(packagePath))
+            {
+                await request.SendWebRequest();
+
+                if (request.isNetworkError || request.isHttpError)
+                {
+                    Debug.LogError(request.error);
+                    Debug.LogError($"Failed to copy level {uid} from StreamingAssets");
+                    continue;
+                }
+
+                var bytes = request.downloadHandler.data;
+                var targetDirectory = $"{Application.temporaryCachePath}/Downloads";
+                var targetFile = $"{targetDirectory}/{uid}.cytoidlevel";
+
+                try
+                {
+                    Directory.CreateDirectory(targetDirectory);
+                    File.WriteAllBytes(targetFile, bytes);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(e);
+                    Debug.LogError($"Failed to copy level {uid} from StreamingAssets to {targetFile}");
+                    continue;
+                }
+
+                packagePaths.Add(targetFile);
+            }
+        }
+
+        return packagePaths;
+    }
 
     public async UniTask<List<string>> InstallUserCommunityLevels()
     {
@@ -365,6 +410,13 @@ public class LevelManager
 
                 Debug.Log($"Loading {index + 1}/{jsonPaths.Count} from {path}");
 
+                if (!File.Exists(jsonPath))
+                {
+                    Debug.LogWarning($"level.json not found at {jsonPath}");
+                    Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {path}");
+                    continue;
+                }
+                
                 var meta = JsonConvert.DeserializeObject<LevelMeta>(File.ReadAllText(jsonPath));
 
                 timer.Time("Deserialization");

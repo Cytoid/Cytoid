@@ -11,7 +11,7 @@ using Newtonsoft.Json;
 using Polyglot;
 using Proyecto26;
 using Tayx.Graphy;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
@@ -271,9 +271,6 @@ public class Context : SingletonMonoBehavior<Context>
         
         // Load settings
         Player.Initialize();
-        
-        // Check region
-        await DetectServerCdn();
 
         // Initialize audio
         var audioConfig = AudioSettings.GetConfiguration();
@@ -286,8 +283,8 @@ public class Context : SingletonMonoBehavior<Context>
         else if (Application.platform == RuntimePlatform.Android && Player.Settings.AndroidDspBufferSize > 0)
         {
             audioConfig.dspBufferSize = Player.Settings.AndroidDspBufferSize;
-            AudioSettings.Reset(audioConfig);
         }
+        AudioSettings.Reset(audioConfig);
 
         await UniTask.WaitUntil(() => AudioManager != null);
         AudioManager.Initialize();
@@ -394,9 +391,9 @@ public class Context : SingletonMonoBehavior<Context>
             {
                 Player.Settings.CdnRegion = it.countryCode == "CN" ? CdnRegion.MainlandChina : CdnRegion.International;
                 resolved = true;
-            }).CatchRequestError(it =>
+            }).CatchRequestError(error =>
             {
-                Debug.LogWarning(it);
+                Debug.LogWarning(error);
                 RestClient.Get(new RequestHelper
                 {
                     Uri = "https://api.cytoid.cn/ping",
@@ -407,7 +404,7 @@ public class Context : SingletonMonoBehavior<Context>
                     Debug.LogWarning(x);
                     Player.ClearOneShot("Detect Server CDN");
                 }).Finally(() => resolved = true);
-            }).Finally(() => resolved = true);
+            });
             await UniTask.WaitUntil(() => resolved || DateTimeOffset.Now - startTime > TimeSpan.FromSeconds(10));
             if (!resolved)
             {
@@ -420,6 +417,84 @@ public class Context : SingletonMonoBehavior<Context>
         }
 
         Debug.Log($"Detected: {Player.Settings.CdnRegion}");
+    }
+
+    public async UniTask CheckServerCdn()
+    {
+        void SwitchToOffline()
+        {
+            Toast.Enqueue(Toast.Status.Success, "TOAST_SWITCHED_TO_OFFLINE_MODE".Get());
+            SetOffline(true);
+            OnlinePlayer.FetchProfile().Then(it =>
+            {
+                if (it == null)
+                {
+                    OnlinePlayer.Deauthenticate();
+                }
+                else
+                {
+                    OnlinePlayer.LastProfile = it;
+                    OnlinePlayer.IsAuthenticated = true;
+                }
+            }).Catch(exception => throw new InvalidOperationException()); // Impossible
+        }
+        
+        var resolved = false;
+        var startTime = DateTimeOffset.Now;
+        Debug.Log("Checking server CDN");
+        
+        if (Player.Settings.CdnRegion == CdnRegion.MainlandChina)
+        {
+            RestClient.Get(new RequestHelper
+            {
+                Uri = "https://api.cytoid.cn/ping",
+                Timeout = 5,
+                EnableDebug = true
+            }).Then(_ =>
+            {
+                resolved = true;
+            }).CatchRequestError(error =>
+            {
+                Debug.LogWarning("Could not connect to CN");
+                Debug.LogWarning(error);
+
+                RestClient.Get<RegionInfo>(new RequestHelper
+                {
+                    Uri = "https://services.cytoid.io/ping",
+                    Timeout = 5,
+                    EnableDebug = true
+                }).Then(it =>
+                {
+                    resolved = true;
+                    Player.Settings.CdnRegion = CdnRegion.International;
+                    Dialog.PromptAlert("中国大陆服务器暂不可用。\n已自动切换到国际服务器。");
+                    Player.SetTrigger("Reset Server CDN To CN");
+                }).CatchRequestError(it =>
+                {
+                    Debug.LogWarning("Could not connect to IO");
+                    Debug.LogWarning(it);
+                    SwitchToOffline();
+                }).Finally(() => resolved = true);
+            });
+                
+            await UniTask.WaitUntil(() => resolved || DateTimeOffset.Now - startTime > TimeSpan.FromSeconds(10));
+        } 
+        else if (Player.Settings.CdnRegion == CdnRegion.International)
+        {
+            RestClient.Get<RegionInfo>(new RequestHelper
+            {
+                Uri = "https://services.cytoid.io/ping",
+                Timeout = 5,
+                EnableDebug = true
+            }).CatchRequestError(it =>
+            {
+                Debug.LogWarning("Could not connect to IO");
+                Debug.LogWarning(it);
+                SwitchToOffline();
+            }).Finally(() => resolved = true);
+            
+            await UniTask.WaitUntil(() => resolved || DateTimeOffset.Now - startTime > TimeSpan.FromSeconds(5));
+        }
     }
 
     public static void OnPreSceneChanged(string prev, string next)
@@ -670,14 +745,43 @@ public class Context : SingletonMonoBehavior<Context>
 
     private static LiteDatabase CreateDatabase()
     {
-        return new LiteDatabase(
+        var dbPath = Path.Combine(Application.persistentDataPath, "Cytoid.db");
+        var dbBackupPath = Path.Combine(Application.persistentDataPath, "Cytoid.db.bak");
+        var db = new LiteDatabase(
             new ConnectionString
             {
-                Filename = Path.Combine(Application.persistentDataPath, "Cytoid.db"),
+                Filename = dbPath,
                 // Password = SecuredConstants.DbSecret,
                 Connection = Application.isEditor ? ConnectionType.Shared : ConnectionType.Direct
             }
         );
+        if (db.GetCollection<LocalPlayerSettings>("settings").FindOne(x => true) != null)
+        {
+            // Make a backup
+            File.Copy(dbPath, dbBackupPath, true);
+            Debug.Log("Database backup complete.");
+        }
+        else
+        {
+            // Is there a backup?
+            if (File.Exists(Path.Combine(Application.persistentDataPath, "Cytoid.db.bak")))
+            {
+                db.Dispose();
+                
+                File.Copy(dbBackupPath, dbPath, true);
+                Debug.Log("Database rollback complete.");
+                
+                db = new LiteDatabase(
+                    new ConnectionString
+                    {
+                        Filename = dbPath,
+                        // Password = SecuredConstants.DbSecret,
+                        Connection = Application.isEditor ? ConnectionType.Shared : ConnectionType.Direct
+                    }
+                );
+            }
+        }
+        return db;
     }
 
     public static Distribution Distribution

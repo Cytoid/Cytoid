@@ -2,7 +2,7 @@ using System;
 using System.Linq.Expressions;
 using DG.Tweening;
 using E7.Introloop;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Audio;
 

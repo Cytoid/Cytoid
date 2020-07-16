@@ -113,7 +113,7 @@ public class LevelSelectionScreen : Screen
         var query = searchInputField.text.Trim();
 
         RefillLevels(sort, asc, query, filters);
-        if (scrollRect.totalCount == 0 && Context.Player.ShouldOneShot("Tips: No Community Levels Yet"))
+        if (scrollRect.totalCount == 0 && category == 0 && Context.Player.ShouldOneShot("Tips: No Community Levels Yet"))
         {
             Dialog.PromptAlert("DIALOG_TIPS_NO_COMMUNITY_LEVELS_YET".Get());
         }
@@ -127,7 +127,7 @@ public class LevelSelectionScreen : Screen
     public void RefillLevels(LevelSort sort, bool asc, string query = "", List<Func<Level, bool>> filters = null)
     {
         var dict = new Dictionary<string, Level>(Context.LevelManager.LoadedLocalLevels);
-        foreach (var id in BuiltInData.TrainingModeLevelUids) dict.Remove(id);
+        foreach (var id in BuiltInData.TrainingModeLevelIds) dict.Remove(id);
         foreach (var kv in Context.Library.Levels)
         {
             dict[kv.Key] = kv.Value.Level.ToLevel(LevelType.User);

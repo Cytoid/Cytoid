@@ -1,6 +1,6 @@
 ﻿using System;
 using MoreMountains.NiceVibrations;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public abstract class Note : MonoBehaviour
@@ -93,6 +93,7 @@ public abstract class Note : MonoBehaviour
         IsCleared = true;
         Renderer.OnClear(grade);
         Game.State.Judge(this, grade, -TimeUntilEnd, GreatGradeWeight);
+        Game.onNoteJudged.Invoke(Game, this, new JudgeData(grade, -TimeUntilEnd, GreatGradeWeight));
 
         // Hit sound
         if (grade != NoteGrade.Miss && (!(this is HoldNote) || Context.Player.Settings.HoldHitSoundTiming.Let(it => it == HoldHitSoundTiming.End || it == HoldHitSoundTiming.Both)))

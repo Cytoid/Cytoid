@@ -3,7 +3,7 @@ using System.Collections;
 using System.IO;
 using System.Linq;
 using MoreMountains.NiceVibrations;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 

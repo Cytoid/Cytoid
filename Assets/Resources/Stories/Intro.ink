@@ -1,11 +1,10 @@
-# SpriteSet: Tira
+# AnimationSet: Sayaka
 # SpriteSet: Nut
-你好！# Speaker: Tira # Sprite: Tira/Default
+# SpriteSet: Fujao
+你好！# Speaker: Sayaka # Animation: Sayaka/Default
 这里是一句对话！
-上面测试 # Speaker: null # Sprite: null # Position: Top
-下面测试 # Position: Bottom
-Cytoid 是一个由社区驱动、由玩家运营的，/完全非商业化的音乐游戏。^/那么，我想先问你一个问题。# Position: Bottom # Speaker: Tira # Sprite: Tira/Default
-你是大爸爸吗？
+Cytoid 是一个由社区驱动、由玩家运营的，/完全非商业化的音乐游戏。^/那么，我想先问你一个问题。# Position: Bottom # Speaker: Sayaka # Animation: Sayaka/Happy
+你是大爸爸吗？# Animation: Sayaka/Default
 * [是的]
     哇！你好强！
     -> cont
@@ -16,5 +15,5 @@ Cytoid 是一个由社区驱动、由玩家运营的，/完全非商业化的音
 === cont ===
 ...^^^ # Speaker: 坚果 # Sprite: Nut/Default
 多练可破。
-哇！^说得真有道理！# Speaker: Tira # Sprite: Tira/Default
+哇！^说得真有道理！# Speaker: Sayaka # Animation: Sayaka/Surprised
 -> DONE

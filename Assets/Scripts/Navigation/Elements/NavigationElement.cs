@@ -2,7 +2,7 @@ using System;
 using System.Linq.Expressions;
 using System.Threading;
 using MoreMountains.NiceVibrations;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.EventSystems;
 

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using UniRx.Async;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,6 +7,7 @@ public class ModSpan : MonoBehaviour
 {
     public Game game;
     public LayoutGroup layoutGroup;
+    public TransitionElement parentTransitionElement;
 
     protected void Awake()
     {
@@ -33,7 +34,7 @@ public class ModSpan : MonoBehaviour
             child.gameObject.SetActive(mods.Contains(pill.mod));
         }
         layoutGroup.transform.RebuildLayout();
-        GetComponentInParent<TransitionElement>().UseCurrentStateAsDefault();
+        parentTransitionElement.UseCurrentStateAsDefault();
     }
 
 }

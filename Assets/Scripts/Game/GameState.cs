@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Events;
 
 public sealed class GameState
 {
@@ -22,7 +23,7 @@ public sealed class GameState
     
     public bool IsFailed { get; set; }
     public HashSet<Mod> Mods { get; }
-    public double MaxHealth { get; }
+    public SecuredDouble MaxHealth { get; } = new SecuredDouble();
     public int NoteCount { get; }
 
     public Dictionary<int, NoteJudgement> Judgements { get; private set; } = new Dictionary<int, NoteJudgement>();
@@ -30,13 +31,13 @@ public sealed class GameState
     public int ClearCount { get; private set; }
     public bool ShouldFail { get; private set; }
     
-    public double Score { get; private set; }
-    public double Accuracy { get; private set; }
-    public int Combo { get; private set; }
-    public int MaxCombo { get; private set; }
-    public double Health { get; private set; }
+    public SecuredDouble Score { get; private set; } = new SecuredDouble();
+    public SecuredDouble Accuracy { get; private set; } = new SecuredDouble();
+    public SecuredInt Combo { get; private set; } = new SecuredInt();
+    public SecuredInt MaxCombo { get; private set; } = new SecuredInt();
+    public SecuredDouble Health { get; private set; } = new SecuredDouble();
 
-    public double HealthPercentage => Health / MaxHealth;
+    public double HealthPercentage => Health.Value / MaxHealth;
     
     public bool UseHealthSystem { get; private set; }
     
@@ -333,6 +334,8 @@ public sealed class GameState
         {
             ShouldFail = true;
         }
+        
+        
     }
 
     public bool IsJudged(int noteId) => Judgements[noteId].IsJudged;
@@ -722,9 +725,24 @@ public enum GameMode
     Practice = 2,
     Calibration = 3,
     Tier = 4,
+    GlobalCalibration = 5,
 }
 
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]  
 public class AvailableOnComplete : Attribute
 {
+}
+
+public class JudgeData
+{
+    public NoteGrade Grade { get; }
+    public double Error { get; }
+    public double GreatGradeWeight { get; }
+    
+    public JudgeData(NoteGrade grade, double error, double greatGradeWeight)
+    {
+        Grade = grade;
+        Error = error;
+        GreatGradeWeight = greatGradeWeight;
+    }
 }

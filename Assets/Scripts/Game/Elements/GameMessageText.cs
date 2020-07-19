@@ -31,8 +31,9 @@ public class GameMessageText : SingletonMonoBehavior<GameMessageText>
         }
     }
 
-    public void Enqueue(string message)
+    public void Enqueue(string message, bool clearPrevious = false)
     {
+        if (clearPrevious) messages.Clear();
         messages.Enqueue(message);
     }
 

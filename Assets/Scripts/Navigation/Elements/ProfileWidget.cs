@@ -45,7 +45,8 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
         {
             UpdateRatingAndLevel(profile, Context.ScreenManager.ActiveScreen.GetId() == ResultScreen.Id);
         });
-        await UniTask.WaitUntil(() => Context.ScreenManager.ActiveScreen != null);
+        await UniTask.WaitUntil(() => this == null || Context.ScreenManager.ActiveScreen != null);
+        if (this == null) return;
 
         if (Context.ScreenManager.ActiveScreen.GetId() != MainMenuScreen.Id)
         {

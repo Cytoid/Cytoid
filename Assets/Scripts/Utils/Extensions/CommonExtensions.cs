@@ -33,7 +33,7 @@ public static class CommonExtensions
         var2 = array[1];
         var3 = array[2];
     }
-    
+
     /**
      * Credits:
      * https://stackoverflow.com/a/1248/2706176

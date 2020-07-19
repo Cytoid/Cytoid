@@ -15,7 +15,6 @@ public class Level
     public string Id => Meta.id;
 
     public string Path;
-    public string PackagePath;
 
     private Level()
     {
@@ -26,19 +25,17 @@ public class Level
         return new Level {
             Type = type,
             IsLocal = true,
-            PackagePath = $"{Context.ApiUrl}/levels/{meta.id}/resources",
             Path = path,
             Meta = meta,
             Record = Context.Database.GetLevelRecord(meta.id) ?? new LevelRecord{LevelId = meta.id}
         };
     }
     
-    public static Level FromRemote(string packagePath, LevelType type, LevelMeta meta)
+    public static Level FromRemote(LevelType type, LevelMeta meta)
     {
         return new Level {
             Type = type,
             IsLocal = false,
-            PackagePath = packagePath,
             Meta = meta,
             Record = Context.Database.GetLevelRecord(meta.id) ?? new LevelRecord{LevelId = meta.id}
         };

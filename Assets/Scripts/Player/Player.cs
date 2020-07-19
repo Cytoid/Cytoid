@@ -54,13 +54,19 @@ public class Player
                 Debug.LogWarning("First time startup. Initializing settings...");
                 // TODO: Remove migration... one day
                 ShouldMigrate = true;
-                result = InitializeSettings();
+                Debug.LogWarning("Inserted settings");
+                result = new LocalPlayerSettings(); //InitializeSettings();
+                Debug.LogWarning("Inserted22");
                 col.Insert(result);
+                Debug.LogWarning("Inserted 33");
             }
             
             Settings = result;
+            Debug.LogWarning("Ready to fill default");
             FillDefault();
+            Debug.LogWarning("Ready To save");
             SaveSettings();
+            Debug.LogWarning("Saved");
         });
     }
 
@@ -209,7 +215,7 @@ public class Player
             CoverOpacity = legacy.CoverOpacity,
             MusicVolume = legacy.MusicVolume,
             SoundEffectsVolume = legacy.SoundEffectsVolume,
-            HitSound = legacy.HitSound,
+            HitSound = "none",
             HitTapticFeedback = legacy.HitTapticFeedback,
             DisplayStoryboardEffects = legacy.UseStoryboardEffects,
             GraphicsQuality = GetDefaultGraphicsQuality(),
@@ -259,13 +265,10 @@ public class Player
     {
         if (Settings == null) throw new InvalidOperationException();
         var used = Settings.PerformedOneShots.Contains(key);
-        if (!used)
-        {
-            Settings.PerformedOneShots.Add(key);
-            SaveSettings();
-            return true;
-        }
-        return false;
+        if (used) return false;
+        Settings.PerformedOneShots.Add(key);
+        SaveSettings();
+        return true;
     }
 
     public void ClearOneShot(string key)
@@ -275,17 +278,22 @@ public class Player
         SaveSettings();
     }
     
-    public bool ShouldTrigger(string key)
+    public bool ShouldTrigger(string key, bool clear = true)
     {
         if (Settings == null) throw new InvalidOperationException();
         var set = Settings.SetTriggers.Contains(key);
-        if (set)
+        if (!set) return false;
+        if (clear)
         {
             Settings.SetTriggers.Remove(key);
             SaveSettings();
-            return true;
         }
-        return false;
+        return true;
+    }
+
+    public void ClearTrigger(string key)
+    {
+        ShouldTrigger(key);
     }
 
     public void SetTrigger(string key)
@@ -295,6 +303,11 @@ public class Player
         SaveSettings();
     }
 
+}
+
+public class StringKey
+{
+    public const string FirstLaunch = "First Launch121";
 }
 
 public class LocalPlayerLegacy

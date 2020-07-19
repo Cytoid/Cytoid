@@ -25,7 +25,7 @@ public class CatalogGenerator
     static void GenerateCatalog()
     {
         AssetBundle.UnloadAllAssetBundles(true);
-        var platforms = new[] {("iOS", BuildTarget.iOS)};//new[] {("Android", BuildTarget.Android)};//, "iOS"};
+        var platforms = new[] {(PlatformName, EditorUserBuildSettings.activeBuildTarget)};//new[] {("Android", BuildTarget.Android)};//, "iOS"};
         foreach (var (platformName, buildTarget) in platforms)
         {
             var dir = $"AssetBundles/{platformName}";
@@ -50,6 +50,7 @@ public class CatalogGenerator
                 }
 
                 var version = versions[name]?.Value<int>() ?? 1;
+                versions[name] = version;
                 var jObj = new JObject {["version"] = version};
                 json[name] = jObj;
             }

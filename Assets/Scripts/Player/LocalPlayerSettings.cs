@@ -161,6 +161,11 @@ public class RegionInfo
 
 public static class CdnRegionExtensions
 {
+
+    public static string GetPackageUrl(this CdnRegion region, string levelId)
+    {
+        return $"{region.GetApiUrl()}/levels/{levelId}/resources";
+    }
     
     public static string GetApiUrl(this CdnRegion region)
     {

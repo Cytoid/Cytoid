@@ -208,6 +208,16 @@ public class InputController : MonoBehaviour
             holdNote.UpdateFinger(finger.Index, false);
             HoldingNotes.Remove(finger.Index);
         }
+        if (FlickingNotes.ContainsKey(finger.Index))
+        {
+            var pos = game.camera.orthographic
+                ? game.camera.ScreenToWorldPoint(finger.ScreenPosition)
+                : game.camera.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
+            
+            var flickingNote = FlickingNotes[finger.Index];
+            flickingNote.UpdateFingerPosition(pos);
+            FlickingNotes.Remove(finger.Index);
+        }
     }
     
 }

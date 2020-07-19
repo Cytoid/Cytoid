@@ -81,7 +81,7 @@ namespace Proyecto26
         private static RequestException CreateException(UnityWebRequest request)
         {
             return new RequestException(request.error, request.isHttpError, request.isNetworkError, request.responseCode, 
-                  Application.isEditor ? request.downloadHandler.text : "Response muted");
+                  !request.url.Contains("/levels/packages/") ? request.downloadHandler.text : "Response muted");
         }
 
         private static void DebugLog(bool debugEnabled, object message, bool isError)

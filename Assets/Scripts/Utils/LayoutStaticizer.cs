@@ -17,6 +17,9 @@ public class LayoutStaticizer : MonoBehaviour, ScreenBecameActiveListener
     
     public static void Staticize(Transform transform)
     {
+        var ignore = transform.GetComponent<LayoutStaticizerIgnore>();
+        if (ignore != null) return;
+        
         var gameObject = transform.gameObject;
         foreach (Transform child in gameObject.transform)
         {

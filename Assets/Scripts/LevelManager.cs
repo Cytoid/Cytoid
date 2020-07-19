@@ -662,7 +662,8 @@ public class LevelManager
         Action onDownloadAborted = default,
         Action onDownloadFailed = default,
         Action<Level> onUnpackSucceeded = default,
-        Action onUnpackFailed = default
+        Action onUnpackFailed = default,
+        bool forceInternational = false
     )
     {
         if (!Context.OnlinePlayer.IsAuthenticated)
@@ -715,8 +716,9 @@ public class LevelManager
         };
         RestClient.Get<OnlineLevel>(req = new RequestHelper
         {
-            Uri = $"{Context.ApiUrl}/levels/{level.Id}",
-            Headers = Context.OnlinePlayer.GetRequestHeaders()
+            Uri = $"{(forceInternational ? CdnRegion.International.GetApiUrl() : Context.ApiUrl)}/levels/{level.Id}",
+            Headers = Context.OnlinePlayer.GetRequestHeaders(),
+            EnableDebug = true
         }).Then(it =>
         {
             if (aborted)
@@ -726,11 +728,12 @@ public class LevelManager
 
             totalSize = (ulong) it.Size;
             downloading = true;
-            Debug.Log("Package path: " + level.PackagePath);
+            var packagePath = (forceInternational ? CdnRegion.International : Context.CdnRegion).GetPackageUrl(level.Id);
+            Debug.Log($"Package path: {packagePath}");
             // Get resources
             return RestClient.Post<OnlineLevelResources>(req = new RequestHelper
             {
-                Uri = level.PackagePath,
+                Uri = packagePath,
                 Headers = Context.OnlinePlayer.GetRequestHeaders(),
                 BodyString = SecuredOperations.WithCaptcha(new { }).ToString(),
                 EnableDebug = true
@@ -742,7 +745,7 @@ public class LevelManager
                 throw new OperationCanceledException();
             }
 
-            Debug.Log("Asset path: " + res.package);
+            Debug.Log($"Asset path: {res.package}");
             // Start download
             // TODO: Change to HttpClient
             return RestClient.Get(req = new RequestHelper
@@ -815,14 +818,32 @@ public class LevelManager
             }
             else
             {
-                Debug.LogError(error);
-                try
+                if (!forceInternational 
+                    && error is RequestException requestException
+                    && requestException.StatusCode < 400 && requestException.StatusCode >= 500)
                 {
-                    onDownloadFailed();
+                     DownloadAndUnpackLevelDialog(
+                         level,
+                         allowAbort,
+                         onDownloadSucceeded,
+                         onDownloadAborted,
+                         onDownloadFailed,
+                         onUnpackSucceeded,
+                         onUnpackFailed,
+                         true
+                     );
                 }
-                catch (Exception e)
+                else
                 {
-                    Debug.LogError(e);
+                    Debug.LogError(error);
+                    try
+                    {
+                        onDownloadFailed();
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError(e);
+                    }
                 }
             }
 

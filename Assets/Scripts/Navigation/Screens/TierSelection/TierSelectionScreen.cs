@@ -524,7 +524,7 @@ public class TierSelectionScreen : Screen
                 record = new LevelRecord {LevelId = levelId};
             }
 
-            Instantiate(provider.input, currentTierSettingsHolder)
+            Instantiate(provider.inputPreferenceElement, currentTierSettingsHolder)
                 .SetContent("TIER_SETTINGS_LEVEL_NOTE_OFFSET".Get($"TIER_STAGE_{stringKey}".Get()),
                     "",
                     () => record.RelativeNoteOffset,

@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Assertions;
-using UnityEngine.Events;
 
 public sealed class GameState
 {
@@ -12,6 +10,8 @@ public sealed class GameState
     public Level Level { get; }
     
     public Difficulty Difficulty { get; }
+    
+    public string ChartChecksum { get; }
     
     public int DifficultyLevel { get; }
     
@@ -93,7 +93,8 @@ public sealed class GameState
         DifficultyLevel = Level.Meta.GetDifficultyLevel(Difficulty.Id);
         Mode = mode;
         Mods = new HashSet<Mod>(mods);
-        
+        ChartChecksum = SecuredOperations.CalculateChartChecksum(Level, Difficulty);
+
         NoteCount = game.Chart.Model.note_list.Count;
         game.Chart.Model.note_list.ForEach(it => Judgements[it.id] = new NoteJudgement());
         noteScoreMultiplierFactor = Math.Sqrt(NoteCount) / 3.0;
@@ -141,6 +142,7 @@ public sealed class GameState
         };
         Level = MockData.CommunityLevel;
         Difficulty = Difficulty.Parse(Level.Meta.charts[0].type);
+        ChartChecksum = SecuredOperations.CalculateChartChecksum(Level, Difficulty);
     }
     
     public GameState(GameMode mode, Level level, Difficulty difficulty) : this()
@@ -148,6 +150,7 @@ public sealed class GameState
         Mode = mode;
         Level = level;
         Difficulty = difficulty;
+        ChartChecksum = SecuredOperations.CalculateChartChecksum(Level, Difficulty);
     }
 
     public void FillTestData(int noteCount)
@@ -726,6 +729,8 @@ public enum GameMode
     Calibration = 3,
     Tier = 4,
     GlobalCalibration = 5,
+    BasicTutorial = 6,
+    AdvancedTutorial = 7
 }
 
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]  

@@ -54,11 +54,6 @@ public class MainMenuScreen : Screen
             layout.anchoredPosition = new Vector2(-96, -90);
         }
 
-        if (Context.Distribution == Distribution.China && Context.Player.ShouldOneShot("DSP"))
-        {
-            Dialog.PromptAlert("<b>请留意：</b>\n如果音乐听起来不正常（卡顿、有电流声等），请在进阶设置中将「DSP 缓冲区大小」设置为 1024 或以上。");
-        }
-
         if (Context.Player.ShouldOneShot("2.0b"))
         {
             Dialog.PromptAlert("TEMP_MESSAGE_2.0_BETA".Get());

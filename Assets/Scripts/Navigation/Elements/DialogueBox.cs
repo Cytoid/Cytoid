@@ -2,10 +2,8 @@ using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using Cysharp.Threading.Tasks;
-using UnityEditor.Animations;
 using UnityEngine;
 using UnityEngine.UI;
-using Object = System.Object;
 
 public class DialogueBox : MonoBehaviour
 {
@@ -86,17 +84,26 @@ public class DialogueBox : MonoBehaviour
         WillFastForwardDialogue = false;
         dialogue.Message = dialogue.Message.Replace('/', '\n');
         var baseDelay = 2;
+        var isBold = false;
+        var baseText = "";
         foreach (var c in dialogue.Message)
         {
             var delay = baseDelay;
             if (c == '^')
             {
-                if (baseDelay > 0) delay = 20;
+                if (baseDelay > 0) delay = 10;
+            }
+            else if (c == '†')
+            {
+                isBold = !isBold;
+                baseText += isBold ? "<b>" : "</b>";
             }
             else
             {
-                messageText.text += c;
+                baseText += c;
             }
+
+            messageText.text = baseText + (isBold ? "</b>" : "");
             
             if (delay > 0) await UniTask.DelayFrame(delay);
 

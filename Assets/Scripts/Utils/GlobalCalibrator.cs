@@ -59,10 +59,10 @@ public class GlobalCalibrator
     {
         try
         {
-            messageText.Enqueue("Before we begin,\nlet's first calibrate your device.");
+            messageText.Enqueue("OFFSET_SETUP_WIZARD_1".Get());
             await UniTask.Delay(4000);
 
-            messageText.Enqueue("Listen carefully, and tap the screen on every <b>strong beat</b>.");
+            messageText.Enqueue("OFFSET_SETUP_WIZARD_2".Get());
             LeanTouch.OnFingerDown = OnFingerDown;
             await UniTask.WaitUntil(() => needRetry || calibratedFourMeasures,
                 cancellationToken: cancelSource.Token);
@@ -71,7 +71,7 @@ public class GlobalCalibrator
             if (needRetry)
             {
                 needRetry = false;
-                messageText.Enqueue("You may have tapped too fast or too slow.\nFocus on the rhythm, and tap on the <b>strong beats</b> only.");
+                messageText.Enqueue("OFFSET_SETUP_WIZARD_3".Get());
                 await UniTask.WaitUntil(() => needRetry || calibratedFourMeasures, cancellationToken: cancelSource.Token);
                 if (needRetry)
                 {
@@ -80,7 +80,7 @@ public class GlobalCalibrator
                 }
             }
 
-            messageText.Enqueue("Good! Keep going.");
+            messageText.Enqueue("OFFSET_SETUP_WIZARD_4".Get());
             await UniTask.WaitUntil(() => needRetry || calibrationCompleted, cancellationToken: cancelSource.Token);
             
             if (needRetry)
@@ -150,16 +150,17 @@ public class GlobalCalibrator
 
     private void AskSkipCalibration()
     {
+        if (calibrationCompleted) return;
+        
         LeanTouch.OnFingerDown = _ => { };
         game.Complete();
-        Dialog.Prompt(
-            "It seems like you have trouble calibrating your device.\nDo you want to skip the calibration? You can always come back later in the settings menu.",
-            Skip, Restart
-        );
+        Dialog.Prompt("OFFSET_SETUP_WIZARD_DIALOG_ASK_SKIP".Get(), Skip, Restart);
     }
 
     private void Skip()
     {
+        if (calibrationCompleted) return;
+
         LeanTouch.OnFingerDown = _ => { };
         offsets.Clear();
         Complete();
@@ -167,11 +168,12 @@ public class GlobalCalibrator
 
     private void PromptComplete()
     {
+        if (calibrationCompleted) return;
+
         LeanTouch.OnFingerDown = _ => { };
         calibrationCompleted = true;
         game.Complete();
-        Dialog.PromptAlert(
-            $"You have successfully calibrated your device.\nOffset: {offsets.Average():F3}s",
+        Dialog.PromptAlert("OFFSET_SETUP_WIZARD_DIALOG_COMPLETE".Get($"{offsets.Average():F3}"),
             Complete
         );
     }
@@ -180,10 +182,16 @@ public class GlobalCalibrator
     {
         LeanTouch.OnFingerDown = _ => { };
         calibrationCompleted = true;
-        messageText.Enqueue(string.Empty);
+        messageText.Enqueue(string.Empty, true);
         progressIndicator.Progress = 0;
         progressIndicator.Text = string.Empty;
-        
+
+        if (offsets.Count > 0)
+        {
+            Context.Player.Settings.BaseNoteOffset = (float) Math.Round((decimal) offsets.Average(), 3, MidpointRounding.AwayFromZero);
+            Context.Player.SaveSettings();
+        }
+
         canExitSource.Cancel();
         game.Complete();
     }

@@ -165,11 +165,11 @@ PlayerSettings:
   androidSupportedAspectRatio: 1
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
-    Android: me.tigerhix.cytoid.cn
+    Android: me.tigerhix.cytoid
     Standalone: com.Company.ProductName
     iPhone: me.tigerhix.cytoid
   buildNumber:
-    iPhone: 23
+    iPhone: 88
   AndroidBundleVersionCode: 88
   AndroidMinSdkVersion: 19
   AndroidTargetSdkVersion: 28
@@ -245,7 +245,7 @@ PlayerSettings:
   clonedFromGUID: 5f34be1353de5cf4398729fda238591b
   templatePackageId: com.unity.template.2d@2.3.2
   templateDefaultScene: Assets/Scenes/SampleScene.unity
-  AndroidTargetArchitectures: 3
+  AndroidTargetArchitectures: 1
   AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 0}
   AndroidKeystoreName: C:/Cytoid/debug.keystore
@@ -753,8 +753,8 @@ PlayerSettings:
   webGLWasmStreaming: 0
   scriptingDefineSymbols:
     1: CT_TPS
-    4: ADDRESSABLES_LOG_ALL;CT_TPS
-    7: ADDRESSABLES_LOG_ALL;CT_TPS
+    4: ADDRESSABLES_LOG_ALL;CT_TPS;MOREMOUNTAINS_NICEVIBRATIONS
+    7: ADDRESSABLES_LOG_ALL;CT_TPS;MOREMOUNTAINS_NICEVIBRATIONS
     13: CT_TPS
     14: CT_TPS
     19: CT_TPS

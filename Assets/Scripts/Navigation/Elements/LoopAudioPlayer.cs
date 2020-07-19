@@ -127,7 +127,7 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
             PlayAudio(mainLoopAudio);
             return;
         }
-        if (from is InitializationScreen && to is MainMenuScreen)
+        if ((from == null || from is InitializationScreen) && to is MainMenuScreen)
         {
             PlayAudio(mainLoopAudio, 0);
             return;

@@ -4,8 +4,9 @@ public class NavigationUiElementProvider : SingletonMonoBehavior<NavigationUiEle
 {
     public GameObject pillRadioButton;
     public GameObject toggleRadioButton;
-    public InputPreferenceElement input;
-    public PillRadioGroupPreferenceElement pillRadioGroup;
-    public SelectPreferenceElement select;
-    public ToggleRadioGroupPreferenceElement toggleRadioGroupVertical;
+    public ButtonPreferenceElement buttonPreferenceElement;
+    public InputPreferenceElement inputPreferenceElement;
+    public PillRadioGroupPreferenceElement pillRadioGroupPreferenceElement;
+    public SelectPreferenceElement selectPreferenceElement;
+    public ToggleRadioGroupPreferenceElement toggleRadioGroupPreferenceElement;
 }

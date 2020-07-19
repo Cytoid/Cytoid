@@ -6,7 +6,6 @@ using Ink.Runtime;
 using Newtonsoft.Json;
 using Cysharp.Threading.Tasks;
 using UnityEditor;
-using UnityEditor.Animations;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -100,11 +99,19 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
 
         Dialogue lastDialogue = null;
         DialogueBox lastDialogueBox = null;
+        DialogueHighlightTarget lastHighlightTarget = null;
 
         while (story.canContinue)
         {
             var message = story.Continue();
             var tags = story.currentTags;
+
+            var setHighlight = TagValue(tags, "Highlight");
+            if (setHighlight != null)
+            {
+                lastHighlightTarget = DialogueHighlightTarget.Find(setHighlight);
+                lastHighlightTarget.Highlighted = true;
+            }
 
             var setSprite = TagValue(tags, "Sprite");
             if (setSprite != null)
@@ -203,7 +210,7 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
                         story.ChooseChoiceIndex(closureIndex);
                         proceed = true;
                     });
-                    choiceButton.SetText(choice.text);
+                    choiceButton.Label = choice.text;
                     buttons.Add(choiceButton);
                 }
 
@@ -223,7 +230,7 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
             else
             {
                 var proceed = false;
-                instance.detectionArea.onPointerDown.SetListener(_ => { dialogueBox.messageBox.DOScale(0.97f, 0.2f); });
+                instance.detectionArea.onPointerDown.SetListener(_ => { dialogueBox.messageBox.DOScale(0.95f, 0.2f); });
                 instance.detectionArea.onPointerUp.SetListener(_ =>
                 {
                     dialogueBox.messageBox.DOScale(1f, 0.2f);
@@ -232,6 +239,12 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
                 await UniTask.WaitUntil(() => proceed);
                 instance.detectionArea.onPointerDown.RemoveAllListeners();
                 instance.detectionArea.onPointerUp.RemoveAllListeners();
+            }
+
+            if (lastHighlightTarget != null)
+            {
+                lastHighlightTarget.Highlighted = false;
+                lastHighlightTarget = null;
             }
         }
         if (lastDialogueBox != null) lastDialogueBox.SetDisplayed(false);

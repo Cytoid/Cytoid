@@ -173,15 +173,14 @@ public class Game : MonoBehaviour
             // Load global calibration level
             async UniTask<Level> GetGlobalCalibrationLevel()
             {
-                if (Context.LevelManager.LoadedLocalLevels.ContainsKey(BuiltInData.GlobalCalibrationModeLevelId))
-                {
-                    return Context.LevelManager.LoadedLocalLevels[BuiltInData.GlobalCalibrationModeLevelId];
-                }
                 var levels = await Context.LevelManager.LoadFromMetadataFiles(LevelType.BuiltIn, new List<string>
                 {
                     $"{LevelType.BuiltIn.GetDataPath()}/{BuiltInData.GlobalCalibrationModeLevelId}/level.json"
                 });
-                return levels.Count == 0 ? null : levels.First();
+                if (levels.Count > 0) return levels.First();
+                return Context.LevelManager.LoadedLocalLevels.ContainsKey(BuiltInData.GlobalCalibrationModeLevelId)
+                    ? Context.LevelManager.LoadedLocalLevels[BuiltInData.GlobalCalibrationModeLevelId]
+                    : null;
             }
 
             Level = await GetGlobalCalibrationLevel();
@@ -309,6 +308,7 @@ public class Game : MonoBehaviour
                 var storyboardText = File.ReadAllText(StoryboardPath);
                 Storyboard = new Cytoid.Storyboard.Storyboard(this, storyboardText);
                 await Storyboard.Initialize();
+                print($"Loaded storyboard from {StoryboardPath}");
             }
             catch (Exception e)
             {
@@ -327,6 +327,8 @@ public class Game : MonoBehaviour
         // State & config
         State = new GameState(this, mode, mods);
         Context.GameState = State;
+        
+        if (Application.isEditor) Debug.Log("Chart checksum: " + State.ChartChecksum);
 
         Config = new GameConfig(this);
 
@@ -669,14 +671,15 @@ public class Game : MonoBehaviour
         
         if (!EditorImmediatelyComplete)
         {
-            var volume = 3f;
+            var maxVolume = Music.Volume;
+            var volume = Music.Volume * 3f;
             // Wait for audio to finish
             await UniTask.WaitUntil(() =>
             {
                 volume -= 1 / 60f;
                 if (volume < 1)
                 {
-                    Music.Volume = volume;
+                    Music.Volume = Math.Min(maxVolume, volume);
                 }
 
                 return volume <= 0 || Music.IsFinished();

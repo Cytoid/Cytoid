@@ -235,7 +235,8 @@ public class TierResultScreen : Screen
                     rankingsTab.UpdateTierRankings(tierState.Tier.Id);
                     Context.OnlinePlayer.FetchProfile();
 
-                    if (stateChange.rewards != null && stateChange.rewards.Count > 0)
+                    if (stateChange.rewards != null 
+                        && stateChange.rewards.Any(it => it.Type == OnlinePlayerStateChange.Reward.RewardType.Level || it.Type == OnlinePlayerStateChange.Reward.RewardType.Character))
                     {
                         RewardOverlay.Show(stateChange.rewards);
 

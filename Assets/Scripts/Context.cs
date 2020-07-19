@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using DG.Tweening;
 using DragonBones;
-using LiteDB;
 using LunarConsolePlugin;
 using MoreMountains.NiceVibrations;
 using Newtonsoft.Json;
@@ -12,6 +11,7 @@ using Polyglot;
 using Proyecto26;
 using Tayx.Graphy;
 using Cysharp.Threading.Tasks;
+using UltraLiteDB;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
@@ -21,13 +21,15 @@ public class Context : SingletonMonoBehavior<Context>
 {
     public const string VersionName = "2.0.0 Beta 3";
     public const string VersionString = "2.0.0";
-    
+    public const int VersionCode = 88;
+
     public static string MockApiUrl;
 
-    public static string ApiUrl => MockApiUrl ?? Player.Settings.CdnRegion.GetApiUrl();
-    public static string WebsiteUrl => Player.Settings.CdnRegion.GetWebsiteUrl();
-    public static string BundleRemoteBaseUrl => Player.Settings.CdnRegion.GetBundleRemoteBaseUrl();
-    public static string StoreUrl => Player.Settings.CdnRegion.GetStoreUrl();
+    public static CdnRegion CdnRegion => Player.Settings.CdnRegion;
+    public static string ApiUrl => MockApiUrl ?? CdnRegion.GetApiUrl();
+    public static string WebsiteUrl => CdnRegion.GetWebsiteUrl();
+    public static string BundleRemoteBaseUrl => CdnRegion.GetBundleRemoteBaseUrl();
+    public static string StoreUrl => CdnRegion.GetStoreUrl();
     
     public static string BundleRemoteFullUrl
     {
@@ -83,13 +85,13 @@ public class Context : SingletonMonoBehavior<Context>
     public static readonly BundleManager BundleManager = new BundleManager();
     public static readonly AssetMemory AssetMemory = new AssetMemory();
 
-    public static LiteDatabase Database
+    public static UltraLiteDatabase Database
     {
         get => database ?? (database = CreateDatabase());
         private set => database = value;
     }
 
-    private static LiteDatabase database;
+    private static UltraLiteDatabase database;
 
     public static Level SelectedLevel
     {
@@ -106,6 +108,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static HashSet<Mod> SelectedMods = new HashSet<Mod>();
     public static GameMode SelectedGameMode;
 
+    public static InitializationState InitializationState;
     public static GameState GameState;
     public static TierState TierState;
 
@@ -156,6 +159,8 @@ public class Context : SingletonMonoBehavior<Context>
 
     private async void InitializeApplication()
     {
+        InitializationState = new InitializationState();
+
         UserDataPath = Application.persistentDataPath;
 
         if (Application.platform == RuntimePlatform.Android)
@@ -168,17 +173,6 @@ public class Context : SingletonMonoBehavior<Context>
             }
 
             UserDataPath = dir + "/Cytoid";
-            // Create an empty folder if it doesn't already exist
-            Directory.CreateDirectory(UserDataPath);
-            try
-            {
-                File.Create(UserDataPath + "/.nomedia").Dispose();
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning("Cannot create or overwrite .nomedia file. Is it read-only?");
-                Debug.LogWarning(e);
-            }
         }
         else if (Application.platform == RuntimePlatform.IPhonePlayer)
         {
@@ -225,6 +219,10 @@ public class Context : SingletonMonoBehavior<Context>
             // Try to write to ensure we have write permissions
             try
             {
+                // Create an empty folder if it doesn't already exist
+                Directory.CreateDirectory(UserDataPath);
+                File.Create(UserDataPath + "/.nomedia").Dispose();
+                // Create and delete test file
                 var file = UserDataPath + "/test";
                 File.Create(file);
                 File.Delete(file);
@@ -248,7 +246,7 @@ public class Context : SingletonMonoBehavior<Context>
         {
             var timer = new BenchmarkTimer("LiteDB");
             Database = CreateDatabase();
-            Database.Checkpoint();
+            // Database.Checkpoint();
             timer.Time();
         }
         catch (Exception e)
@@ -304,56 +302,28 @@ public class Context : SingletonMonoBehavior<Context>
         
         await BundleManager.Initialize();
 
+        if (Player.ShouldOneShot(StringKey.FirstLaunch))
+        {
+            Player.SetTrigger(StringKey.FirstLaunch);
+        }
+
         switch (SceneManager.GetActiveScene().name)
         {
             case "Navigation":
-                Debug.Log("Initializing character asset");
-                var timer = new BenchmarkTimer("Character");
-                if (await CharacterManager.SetActiveCharacter(CharacterManager.SelectedCharacterId) == null)
+                if (Player.ShouldTrigger(StringKey.FirstLaunch, false))
                 {
-                    // Reset to default
-                    CharacterManager.SelectedCharacterId = null;
-                    await CharacterManager.SetActiveCharacter(CharacterManager.SelectedCharacterId);
-                }
-                timer.Time();
-                await UniTask.WaitUntil(() => ScreenManager != null);
+                    InitializationState.IsFirstLaunch = true;
+                    InitializationState.FirstLaunchPhase = FirstLaunchPhase.GlobalCalibration;
 
-                if (true)
-                {
-                    ScreenManager.ChangeScreen(InitializationScreen.Id, ScreenTransition.None);
+                    // Global calibration
+                    SelectedGameMode = GameMode.GlobalCalibration;
+                    var sceneLoader = new SceneLoader("Game");
+                    await sceneLoader.Load();
+                    sceneLoader.Activate();
                 }
-
-                if (false)
+                else
                 {
-                    ScreenManager.ChangeScreen(TrainingSelectionScreen.Id, ScreenTransition.None);
-                }
-
-                if (false)
-                {
-                    // Load f.fff
-                    await LevelManager.LoadFromMetadataFiles(LevelType.User,
-                        new List<string> {UserDataPath + "/f.fff/level.json"});
-                    SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
-                    SelectedDifficulty = Difficulty.Parse(SelectedLevel.Meta.charts[0].type);
-                    ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.None);
-                }
-
-                if (false)
-                {
-                    // Load result
-                    await LevelManager.LoadFromMetadataFiles(LevelType.User, new List<string>
-                        {UserDataPath + "/fizzest.sentimental.crisis/level.json"});
-                    SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
-                    SelectedDifficulty =
-                        Difficulty.Parse(LevelManager.LoadedLocalLevels.Values.First().Meta.charts.First().type);
-                
-                    ScreenManager.ChangeScreen(ResultScreen.Id, ScreenTransition.None);
-                }
-
-                if (false)
-                {
-                    // Load result
-                    ScreenManager.ChangeScreen(TierResultScreen.Id, ScreenTransition.None);
+                    await InitializeNavigation();
                 }
                 break;
             case "Game":
@@ -369,6 +339,57 @@ public class Context : SingletonMonoBehavior<Context>
         OnApplicationInitialized.Invoke();
         
         LunarConsole.SetConsoleEnabled(Player.Settings.UseDeveloperConsole);
+    }
+
+    private static async UniTask InitializeNavigation()
+    {
+        InitializationState.IsInitialized = true;
+        
+        Debug.Log("Initializing character asset");
+        var timer = new BenchmarkTimer("Character");
+        if (await CharacterManager.SetActiveCharacter(CharacterManager.SelectedCharacterId) == null)
+        {
+            // Reset to default
+            CharacterManager.SelectedCharacterId = null;
+            await CharacterManager.SetActiveCharacter(CharacterManager.SelectedCharacterId);
+        }
+
+        timer.Time();
+        await UniTask.WaitUntil(() => ScreenManager != null);
+        
+        ScreenManager.ChangeScreen(InitializationScreen.Id, ScreenTransition.None);
+        /*if (false)
+        {
+            ScreenManager.ChangeScreen(TrainingSelectionScreen.Id, ScreenTransition.None);
+        }
+
+        if (false)
+        {
+            // Load f.fff
+            await LevelManager.LoadFromMetadataFiles(LevelType.User,
+                new List<string> {UserDataPath + "/f.fff/level.json"});
+            SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
+            SelectedDifficulty = Difficulty.Parse(SelectedLevel.Meta.charts[0].type);
+            ScreenManager.ChangeScreen("GamePreparation", ScreenTransition.None);
+        }
+
+        if (false)
+        {
+            // Load result
+            await LevelManager.LoadFromMetadataFiles(LevelType.User, new List<string>
+                {UserDataPath + "/fizzest.sentimental.crisis/level.json"});
+            SelectedLevel = LevelManager.LoadedLocalLevels.Values.First();
+            SelectedDifficulty =
+                Difficulty.Parse(LevelManager.LoadedLocalLevels.Values.First().Meta.charts.First().type);
+
+            ScreenManager.ChangeScreen(ResultScreen.Id, ScreenTransition.None);
+        }
+
+        if (false)
+        {
+            // Load result
+            ScreenManager.ChangeScreen(TierResultScreen.Id, ScreenTransition.None);
+        }*/
     }
 
     public async UniTask DetectServerCdn()
@@ -499,93 +520,139 @@ public class Context : SingletonMonoBehavior<Context>
 
     public static void OnPreSceneChanged(string prev, string next)
     {
-        if (prev == "Navigation" && next == "Game")
+        switch (prev)
         {
-            Input.gyro.enabled = false;
-            // Save history
-            navigationScreenHistory = new Stack<Intent>(ScreenManager.History);
+            case "Navigation" when next == "Game":
+                Input.gyro.enabled = false;
+                // Save history
+                navigationScreenHistory = new Stack<Intent>(ScreenManager.History);
+                break;
         }
     }
 
     public static async void OnPostSceneChanged(string prev, string next)
     {
-        if (prev == "Navigation" && next == "Game")
+        switch (prev)
         {
-            OnlinePlayer.IsAuthenticating = false;
-            CharacterManager.UnloadActiveCharacter();
-            BundleManager.ReleaseAll();
-        }
-
-        if (prev == "Game" && next == "Navigation")
-        {
-            Input.gyro.enabled = true;
-            AudioManager.Initialize();
-
-            // Wait until character is loaded
-            await CharacterManager.SetSelectedCharacterActive();
-
-            UpdateGraphicsQuality();
-
-            // Restore history
-            ScreenManager.History = new Stack<Intent>(navigationScreenHistory);
-
-            var gotoResult = false;
-            if (TierState != null)
+            case "Navigation" when next == "Game":
+                OnlinePlayer.IsAuthenticating = false;
+                CharacterManager.UnloadActiveCharacter();
+                BundleManager.ReleaseAll();
+                break;
+            case "Game" when next == "Navigation":
             {
-                if (TierState.CurrentStage.IsCompleted)
+                Input.gyro.enabled = true;
+                AudioManager.Initialize();
+                UpdateGraphicsQuality();
+                
+                if (InitializationState.IsFirstLaunch)
                 {
-                    gotoResult = true;
-                    // Show tier break screen
-                    ScreenManager.ChangeScreen(TierBreakScreen.Id, ScreenTransition.None,
-                        addTargetScreenToHistory: false);
+                    switch (InitializationState.FirstLaunchPhase)
+                    {
+                        case FirstLaunchPhase.GlobalCalibration:
+                            // Proceed to basic tutorial
+                            // TODO
+                            Player.ClearTrigger(StringKey.FirstLaunch);
+                            InitializationState.IsFirstLaunch = false;
+                            await InitializeNavigation();
+                            break;
+                        case FirstLaunchPhase.BasicTutorial:
+                            break;
+                        case FirstLaunchPhase.AdvancedTutorial:
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
                 }
                 else
                 {
-                    TierState = null;
-                    OnlinePlayer.LastFullProfile = null; // Allow full profile to update
-                    // Show tier selection screen
-                    ScreenManager.ChangeScreen(ScreenManager.PeekHistory(), ScreenTransition.None, addTargetScreenToHistory: false);
-                }
-            }
-            else if (GameState != null)
-            {
-                var usedAuto =  GameState.Mods.Contains(Mod.Auto) || GameState.Mods.Contains(Mod.AutoDrag) || GameState.Mods.Contains(Mod.AutoHold) || GameState.Mods.Contains(Mod.AutoFlick);
-                if (GameState.IsCompleted && (GameState.Mode == GameMode.Standard || GameState.Mode == GameMode.Practice) && !usedAuto)
-                {
-                    gotoResult = true;
-                    OnlinePlayer.LastFullProfile = null; // Allow full profile to update
-                    // Show result screen
-                    ScreenManager.ChangeScreen(ResultScreen.Id, ScreenTransition.None, addTargetScreenToHistory: false);
-                }
-                else
-                {
-                    // Show game preparation screen
-                    ScreenManager.ChangeScreen(ScreenManager.PeekHistory(), ScreenTransition.None, addTargetScreenToHistory: false);
-                }
-            }
-            else
-            {
-                // There must have been an error, show last screen
-                ScreenManager.ChangeScreen(ScreenManager.PeekHistory(), ScreenTransition.None, addTargetScreenToHistory: false);
-            }
+                    // Wait until character is loaded
+                    await CharacterManager.SetSelectedCharacterActive();
 
-            if (!gotoResult)
-            {
-                var backdrop = NavigationBackdrop.Instance;
-                backdrop.IsVisible = false;
-                backdrop.IsBlurred = true;
-                backdrop.FadeBrightness(1);
-            }
-            
-            if (GameErrorState != null)
-            {
-                Dialog.PromptAlert(GameErrorState.Message);
-                GameErrorState = null;
+                    // Restore history
+                    ScreenManager.History = new Stack<Intent>(navigationScreenHistory);
+
+                    var gotoResult = false;
+                    var isSpecialGameMode = false;
+                    if (TierState != null)
+                    {
+                        if (TierState.CurrentStage.IsCompleted)
+                        {
+                            gotoResult = true;
+                            // Show tier break screen
+                            ScreenManager.ChangeScreen(TierBreakScreen.Id, ScreenTransition.None,
+                                addTargetScreenToHistory: false);
+                        }
+                        else
+                        {
+                            TierState = null;
+                            OnlinePlayer.LastFullProfile = null; // Allow full profile to update
+                            // Show tier selection screen
+                            ScreenManager.ChangeScreen(ScreenManager.PeekHistory(), ScreenTransition.None,
+                                addTargetScreenToHistory: false);
+                        }
+                    }
+                    else if (GameState != null)
+                    {
+                        if (GameState.Mode == GameMode.GlobalCalibration
+                            || GameState.Mode == GameMode.BasicTutorial
+                            || GameState.Mode == GameMode.AdvancedTutorial)
+                        {
+                            isSpecialGameMode = true;
+                            // Clear history and just go to main menu
+                            ScreenManager.History = new Stack<Intent>();
+                            ScreenManager.ChangeScreen(MainMenuScreen.Id, ScreenTransition.In);
+                        }
+                        else
+                        {
+                            var usedAuto = GameState.Mods.Contains(Mod.Auto) || GameState.Mods.Contains(Mod.AutoDrag) ||
+                                           GameState.Mods.Contains(Mod.AutoHold) ||
+                                           GameState.Mods.Contains(Mod.AutoFlick);
+                            if (GameState.IsCompleted &&
+                                (GameState.Mode == GameMode.Standard || GameState.Mode == GameMode.Practice) &&
+                                !usedAuto)
+                            {
+                                gotoResult = true;
+                                OnlinePlayer.LastFullProfile = null; // Allow full profile to update
+                                // Show result screen
+                                ScreenManager.ChangeScreen(ResultScreen.Id, ScreenTransition.None,
+                                    addTargetScreenToHistory: false);
+                            }
+                            else
+                            {
+                                // Show game preparation screen
+                                ScreenManager.ChangeScreen(ScreenManager.PeekHistory(), ScreenTransition.None,
+                                    addTargetScreenToHistory: false);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // There must have been an error, show last screen
+                        ScreenManager.ChangeScreen(ScreenManager.PeekHistory(), ScreenTransition.None,
+                            addTargetScreenToHistory: false);
+                    }
+
+                    if (!gotoResult && !isSpecialGameMode)
+                    {
+                        var backdrop = NavigationBackdrop.Instance;
+                        backdrop.IsVisible = false;
+                        backdrop.IsBlurred = true;
+                        backdrop.FadeBrightness(1);
+                    }
+
+                    if (GameErrorState != null)
+                    {
+                        Dialog.PromptAlert(GameErrorState.Message);
+                        GameErrorState = null;
+                    }
+                }
+                break;
             }
         }
 
         FontManager.UpdateSceneTexts();
-        Database.Checkpoint();
+        // Database.Checkpoint();
     }
 
     public static void Haptic(HapticTypes type, bool menu)
@@ -727,7 +794,7 @@ public class Context : SingletonMonoBehavior<Context>
     {
         if (!hasFocus && Database != null)
         {
-            Database.Checkpoint();
+            // Database.Checkpoint();
             Database.Dispose();
             Database = null;
         }
@@ -737,25 +804,25 @@ public class Context : SingletonMonoBehavior<Context>
     {
         if (pauseStatus && Database != null)
         {
-            Database.Checkpoint();
+            // Database.Checkpoint();
             Database.Dispose();
             Database = null;
         }
     }
 
-    private static LiteDatabase CreateDatabase()
+    private static UltraLiteDatabase CreateDatabase()
     {
         var dbPath = Path.Combine(Application.persistentDataPath, "Cytoid.db");
         var dbBackupPath = Path.Combine(Application.persistentDataPath, "Cytoid.db.bak");
-        var db = new LiteDatabase(
+        var db = new UltraLiteDatabase(
             new ConnectionString
             {
                 Filename = dbPath,
                 // Password = SecuredConstants.DbSecret,
-                Connection = Application.isEditor ? ConnectionType.Shared : ConnectionType.Direct
+                // Connection = Application.isEditor ? ConnectionType.Shared : ConnectionType.Direct
             }
         );
-        if (db.GetCollection<LocalPlayerSettings>("settings").FindOne(x => true) != null)
+        if (db.GetCollection<LocalPlayerSettings>("settings").FindOne(Query.All()) != null)
         {
             // Make a backup
             File.Copy(dbPath, dbBackupPath, true);
@@ -771,12 +838,12 @@ public class Context : SingletonMonoBehavior<Context>
                 File.Copy(dbBackupPath, dbPath, true);
                 Debug.Log("Database rollback complete.");
                 
-                db = new LiteDatabase(
+                db = new UltraLiteDatabase(
                     new ConnectionString
                     {
                         Filename = dbPath,
                         // Password = SecuredConstants.DbSecret,
-                        Connection = Application.isEditor ? ConnectionType.Shared : ConnectionType.Direct
+                        // Connection = Application.isEditor ? ConnectionType.Shared : ConnectionType.Direct
                     }
                 );
             }

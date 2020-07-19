@@ -46,6 +46,7 @@ public class InitializationScreen : Screen
         }
         
         statusText.text = "INIT_CONNECTING_TO_SERVER".Get();
+        statusText.transform.RebuildLayout();
         await Context.Instance.DetectServerCdn();
         await Context.Instance.CheckServerCdn();
 

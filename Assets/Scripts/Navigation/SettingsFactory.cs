@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using LeTai.Asset.TranslucentImage;
+using Cysharp.Threading.Tasks;
+using Ink.Runtime;
 using LunarConsolePlugin;
 using Polyglot;
 using UnityEngine;
@@ -19,7 +19,7 @@ public static class SettingsFactory
 
         if (more)
         {
-            Object.Instantiate(provider.select, parent).Apply(element =>
+            Object.Instantiate(provider.selectPreferenceElement, parent).Apply(element =>
             {
                 element.SetContent("SETTINGS_LANGUAGE".Get(), "",
                     () => lp.Settings.Language, it => lp.Settings.Language = it, new[]
@@ -62,23 +62,27 @@ public static class SettingsFactory
                     SpinnerOverlay.Hide();
                 });
             });
-            Object.Instantiate(provider.select, parent).Apply(element =>
+            Object.Instantiate(provider.selectPreferenceElement, parent).Apply(element =>
             {
                 var labels = new List<(string, int)>
                 {
                     ("SETTINGS_SERVER_REGION_INTERNATIONAL".Get(), (int) CdnRegion.International),
                     ("SETTINGS_SERVER_REGION_MAINLAND_CHINA".Get(), (int) CdnRegion.MainlandChina)
                 };
-                if (Context.Player.ShouldEnableDebug())
+                if (Application.isEditor || Context.Player.ShouldEnableDebug())
                 {
                     labels.Add(("Debug", (int) CdnRegion.Debug));
                 }
                 element.SetContent("SETTINGS_SERVER_REGION".Get(), "SETTINGS_SERVER_REGION_DESC".Get(),
-                    () => (int) lp.Settings.CdnRegion, it => lp.Settings.CdnRegion = (CdnRegion) it, labels.ToArray()).SaveSettingsOnChange();
+                    () => (int) lp.Settings.CdnRegion, it =>
+                    {
+                        lp.Settings.CdnRegion = (CdnRegion) it;
+                        Context.Player.ClearTrigger("Reset Server CDN To CN");
+                    }, labels.ToArray()).SaveSettingsOnChange();
             });
         }
 
-        Object.Instantiate(provider.select, parent).Apply(element =>
+        Object.Instantiate(provider.selectPreferenceElement, parent).Apply(element =>
         {
             element.SetContent("SETTINGS_MUSIC_VOLUME".Get(), "",
                 () => lp.Settings.MusicVolume, it =>
@@ -109,7 +113,7 @@ public static class SettingsFactory
                 Context.AudioManager.UpdateVolumes();
             });
         });
-        Object.Instantiate(provider.select, parent).Apply(element =>
+        Object.Instantiate(provider.selectPreferenceElement, parent).Apply(element =>
         {
             element.SetContent("SETTINGS_SOUND_EFFECT_VOLUME".Get(), "",
                 () => lp.Settings.SoundEffectsVolume, it => lp.Settings.SoundEffectsVolume = it, new []
@@ -124,13 +128,13 @@ public static class SettingsFactory
             element.caretSelect.onSelect.AddListener((_, value) => Context.AudioManager.UpdateVolumes());
         });
         
-        Object.Instantiate(provider.select, parent).Apply(it =>
+        Object.Instantiate(provider.selectPreferenceElement, parent).Apply(it =>
         {
             it.SetContent("SETTINGS_HIT_SOUND".Get(), "SETTINGS_HIT_SOUND_DESC".Get()).SaveSettingsOnChange();
             it.gameObject.AddComponent<HitSoundSelect>().Load();
         });
         
-        Object.Instantiate(provider.select, parent)
+        Object.Instantiate(provider.selectPreferenceElement, parent)
             .SetContent("SETTINGS_HOLD_HIT_SOUND_TIMING".Get(), "SETTINGS_HOLD_HIT_SOUND_TIMING_DESC".Get(),
                 () => lp.Settings.HoldHitSoundTiming, it => lp.Settings.HoldHitSoundTiming = it, new[]
                 {
@@ -142,17 +146,17 @@ public static class SettingsFactory
 
         if (Application.platform == RuntimePlatform.IPhonePlayer)
         {
-            Object.Instantiate(provider.pillRadioGroup, parent)
+            Object.Instantiate(provider.pillRadioGroupPreferenceElement, parent)
                 .SetContent("SETTINGS_HIT_TAPTIC_FEEDBACK".Get(), "SETTINGS_HIT_TAPTIC_FEEDBACK_DESC".Get(),
                     () => lp.Settings.HitTapticFeedback, it => lp.Settings.HitTapticFeedback = it)
                 .SaveSettingsOnChange();
-            Object.Instantiate(provider.pillRadioGroup, parent)
+            Object.Instantiate(provider.pillRadioGroupPreferenceElement, parent)
                 .SetContent("SETTINGS_MENU_TAPTIC_FEEDBACK".Get(), "SETTINGS_MENU_TAPTIC_FEEDBACK_DESC".Get(),
                     () => lp.Settings.MenuTapticFeedback, it => lp.Settings.MenuTapticFeedback = it)
                 .SaveSettingsOnChange();
         }
 
-        Object.Instantiate(provider.select, parent).Apply(element =>
+        Object.Instantiate(provider.selectPreferenceElement, parent).Apply(element =>
             {
                 element.SetContent("SETTINGS_GRAPHICS_QUALITY".Get(), "SETTINGS_GRAPHICS_QUALITY_DESC".Get(),
                     () => lp.Settings.GraphicsQuality, it => lp.Settings.GraphicsQuality = it, new []
@@ -169,27 +173,74 @@ public static class SettingsFactory
                 });
             });
         
-        Object.Instantiate(provider.pillRadioGroup, parent)
+        Object.Instantiate(provider.pillRadioGroupPreferenceElement, parent)
             .SetContent("SETTINGS_USE_MENU_TRANSITIONS".Get(), "SETTINGS_USE_MENU_TRANSITIONS_DESC".Get(),
                 () => lp.Settings.UseMenuTransitions, it => lp.Settings.UseMenuTransitions = it)
             .SaveSettingsOnChange();
         
-        Object.Instantiate(provider.pillRadioGroup, parent)
+        Object.Instantiate(provider.pillRadioGroupPreferenceElement, parent)
             .SetContent("SETTINGS_STORYBOARD_EFFECTS".Get(), "SETTINGS_STORYBOARD_EFFECTS_DESC".Get(),
                 () => lp.Settings.DisplayStoryboardEffects, it => lp.Settings.DisplayStoryboardEffects = it)
             .SaveSettingsOnChange();
         
-        Object.Instantiate(provider.input, parent)
+        Object.Instantiate(provider.inputPreferenceElement, parent)
             .SetContent("SETTINGS_BASE_NOTE_OFFSET".Get(), "SETTINGS_BASE_NOTE_OFFSET_DESC".Get(),
                 () => lp.Settings.BaseNoteOffset, it => lp.Settings.BaseNoteOffset = it,
                 "SETTINGS_UNIT_SECONDS".Get(), 0.ToString())
             .SaveSettingsOnChange();
-        
-        Object.Instantiate(provider.input, parent)
+
+        Object.Instantiate(provider.inputPreferenceElement, parent)
             .SetContent("SETTINGS_HEADSET_NOTE_OFFSET".Get(), "SETTINGS_HEADSET_NOTE_OFFSET_DESC".Get(),
                 () => lp.Settings.HeadsetNoteOffset, it => lp.Settings.HeadsetNoteOffset = it,
                 "SETTINGS_UNIT_SECONDS".Get(), 0.ToString())
             .SaveSettingsOnChange();
+
+        if (more)
+        {
+            Object.Instantiate(provider.buttonPreferenceElement, parent)
+                .SetContent("SETTINGS_BASE_NOTE_OFFSET_SETUP_WIZARD".Get(), "SETTINGS_BASE_NOTE_OFFSET_SETUP_WIZARD_DESC".Get(),
+                    "SETTINGS_BUTTON_ENTER".Get(),
+                    async () =>
+                    {
+                        Context.ScreenManager.ActiveScreen.State = ScreenState.Inactive;
+
+                        ProfileWidget.Instance.FadeOut();
+                        LoopAudioPlayer.Instance.StopAudio(0.4f);
+
+                        Context.AudioManager.Get("LevelStart").Play();
+                        Context.SelectedGameMode = GameMode.GlobalCalibration;
+
+                        var sceneLoader = new SceneLoader("Game");
+                        sceneLoader.Load();
+                        await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
+                        NavigationBackdrop.Instance.FadeBrightness(0, 0.8f);
+                        await UniTask.Delay(TimeSpan.FromSeconds(0.8f));
+                        if (!sceneLoader.IsLoaded) await UniTask.WaitUntil(() => sceneLoader.IsLoaded);
+                        sceneLoader.Activate();
+                    });
+            Object.Instantiate(provider.buttonPreferenceElement, parent)
+                .SetContent("SETTINGS_BASIC_TUTORIAL".Get(), "SETTINGS_BASIC_TUTORIAL_DESC".Get(),
+                    "SETTINGS_BUTTON_ENTER".Get(),
+                    () =>
+                    {
+                        if (!Context.Player.ShouldEnableDebug())
+                        {
+                            Dialog.PromptAlert("Coming soon.");
+                            return;
+                        }
+
+                        Context.ScreenManager.ChangeScreen(Context.ScreenManager.PopAndPeekHistory(),
+                            ScreenTransition.Out);
+                        
+                        var intro = Resources.Load<TextAsset>("Stories/Intro");
+                        var story = new Story(intro.text);
+                        DialogueOverlay.Show(story);
+                    });
+            Object.Instantiate(provider.buttonPreferenceElement, parent)
+                .SetContent("SETTINGS_ADVANCED_TUTORIAL".Get(), "SETTINGS_ADVANCED_TUTORIAL_DESC".Get(),
+                    "SETTINGS_BUTTON_ENTER".Get(),
+                    () => Dialog.PromptAlert("Coming soon."));
+        }
     }
 
     public static void InstantiateGameplaySettings(Transform parent)
@@ -197,33 +248,33 @@ public static class SettingsFactory
         var lp = Context.Player;
         var provider = NavigationUiElementProvider.Instance;
         
-        Object.Instantiate(provider.pillRadioGroup, parent)
+        Object.Instantiate(provider.pillRadioGroupPreferenceElement, parent)
             .SetContent("SETTINGS_EARLY_LATE_INDICATORS".Get(), "SETTINGS_EARLY_LATE_INDICATORS_DESC".Get(),
                 () => lp.Settings.DisplayEarlyLateIndicators, it => lp.Settings.DisplayEarlyLateIndicators = it)
             .SaveSettingsOnChange();
         
-        Object.Instantiate(provider.pillRadioGroup, parent)
+        Object.Instantiate(provider.pillRadioGroupPreferenceElement, parent)
             .SetContent("SETTINGS_HITBOX_SIZE_CLICK".Get(), "SETTINGS_HITBOX_SIZE_DESC".Get(),
                 () => lp.Settings.HitboxSizes[NoteType.Click], it => lp.Settings.HitboxSizes[NoteType.Click] = it, new []
                 {
                     ("SETTINGS_SIZE_SMALL".Get(), 0), ("SETTINGS_SIZE_MEDIUM".Get(), 1), ("SETTINGS_SIZE_LARGE".Get(), 2)
                 })
             .SaveSettingsOnChange();
-        Object.Instantiate(provider.pillRadioGroup, parent)
+        Object.Instantiate(provider.pillRadioGroupPreferenceElement, parent)
             .SetContent("SETTINGS_HITBOX_SIZE_DRAG".Get(), "",
                 () => lp.Settings.HitboxSizes[NoteType.DragChild], it => lp.Settings.HitboxSizes[NoteType.DragChild] = it, new []
                 {
                     ("SETTINGS_SIZE_SMALL".Get(), 0), ("SETTINGS_SIZE_MEDIUM".Get(), 1), ("SETTINGS_SIZE_LARGE".Get(), 2)
                 })
             .SaveSettingsOnChange();
-        Object.Instantiate(provider.pillRadioGroup, parent)
+        Object.Instantiate(provider.pillRadioGroupPreferenceElement, parent)
             .SetContent("SETTINGS_HITBOX_SIZE_HOLD".Get(), "",
                 () => lp.Settings.HitboxSizes[NoteType.Hold], it => lp.Settings.HitboxSizes[NoteType.Hold] = it, new []
                 {
                     ("SETTINGS_SIZE_SMALL".Get(), 0), ("SETTINGS_SIZE_MEDIUM".Get(), 1), ("SETTINGS_SIZE_LARGE".Get(), 2)
                 })
             .SaveSettingsOnChange();
-        Object.Instantiate(provider.pillRadioGroup, parent)
+        Object.Instantiate(provider.pillRadioGroupPreferenceElement, parent)
             .SetContent("SETTINGS_HITBOX_SIZE_FLICK".Get(), "",
                 () => lp.Settings.HitboxSizes[NoteType.Flick], it => lp.Settings.HitboxSizes[NoteType.Flick] = it, new []
                 {
@@ -231,14 +282,14 @@ public static class SettingsFactory
                 })
             .SaveSettingsOnChange();
         
-        Object.Instantiate(provider.select, parent)
+        Object.Instantiate(provider.selectPreferenceElement, parent)
             .SetContent("SETTINGS_HORIZONTAL_MARGIN".Get(), "SETTINGS_HORIZONTAL_MARGIN_DESC".Get(),
                 () => lp.Settings.HorizontalMargin, it => lp.Settings.HorizontalMargin = it, new[]
                 {
                     ("-4", -1), ("-3", 0), ("-2", 1), ("-1", 2), ("0", 3), ("+1", 4), ("+2", 5), ("+3", 6), ("+4", 7), 
                 })
             .SaveSettingsOnChange();
-        Object.Instantiate(provider.select, parent)
+        Object.Instantiate(provider.selectPreferenceElement, parent)
             .SetContent("SETTINGS_VERTICAL_MARGIN".Get(), "SETTINGS_VERTICAL_MARGIN_DESC".Get(),
                 () => lp.Settings.VerticalMargin, it => lp.Settings.VerticalMargin = it, new[]
                 {
@@ -252,7 +303,7 @@ public static class SettingsFactory
         var lp = Context.Player;
         var provider = NavigationUiElementProvider.Instance;
 
-        Object.Instantiate(provider.select, parent)
+        Object.Instantiate(provider.selectPreferenceElement, parent)
             .SetContent("SETTINGS_NOTE_SIZE".Get(), "SETTINGS_NOTE_SIZE_DESC".Get(),
                 () => lp.Settings.NoteSize, it => lp.Settings.NoteSize = it, new[]
                 {
@@ -260,7 +311,7 @@ public static class SettingsFactory
                     ("110%", 0.1f), ("120%", 0.2f), ("130%", 0.3f), ("140%", 0.4f), ("150%", 0.5f)
                 })
             .SaveSettingsOnChange();
-        Object.Instantiate(provider.select, parent)
+        Object.Instantiate(provider.selectPreferenceElement, parent)
             .SetContent("SETTINGS_CLEAR_FX_SIZE".Get(), "SETTINGS_CLEAR_FX_SIZE_DESC".Get(),
                 () => lp.Settings.ClearEffectsSize, it => lp.Settings.ClearEffectsSize = it, new[]
                 {
@@ -269,11 +320,11 @@ public static class SettingsFactory
                 })
             .SaveSettingsOnChange();
         
-        Object.Instantiate(provider.pillRadioGroup, parent)
+        Object.Instantiate(provider.pillRadioGroupPreferenceElement, parent)
             .SetContent("SETTINGS_SHOW_BOUNDARIES".Get(), "SETTINGS_SHOW_BOUNDARIES_DESC".Get(),
                 () => lp.Settings.DisplayBoundaries, it => lp.Settings.DisplayBoundaries = it)
             .SaveSettingsOnChange();
-        Object.Instantiate(provider.select, parent)
+        Object.Instantiate(provider.selectPreferenceElement, parent)
             .SetContent("SETTINGS_BACKGROUND_OPACITY".Get(), "SETTINGS_BACKGROUND_OPACITY_DESC".Get(),
                 () => lp.Settings.CoverOpacity, it => lp.Settings.CoverOpacity = it,
                 new[]
@@ -286,78 +337,78 @@ public static class SettingsFactory
                     ("100%", 1)
                 })
             .SaveSettingsOnChange();
-        Object.Instantiate(provider.input, parent)
+        Object.Instantiate(provider.inputPreferenceElement, parent)
             .SetContent("SETTINGS_RING_COLOR".Get(), "SETTINGS_RING_COLOR_DESC".Get(),
                 () => lp.Settings.NoteRingColors[NoteType.Click], it => lp.Settings.NoteRingColors[NoteType.Click] = it,
                 "", "#FFFFFF", true)
             .SaveSettingsOnChange();
 
-        Object.Instantiate(provider.input, parent)
+        Object.Instantiate(provider.inputPreferenceElement, parent)
             .SetContent("SETTINGS_FILL_COLOR_CLICK_UP".Get(), "SETTINGS_FILL_COLOR_CLICK_DESC".Get(),
                 () => lp.Settings.NoteFillColors[NoteType.Click], it => lp.Settings.NoteFillColors[NoteType.Click] = it,
                 "", "#35A7FF", true)
             .SaveSettingsOnChange();
-        Object.Instantiate(provider.input, parent)
+        Object.Instantiate(provider.inputPreferenceElement, parent)
             .SetContent("SETTINGS_FILL_COLOR_CLICK_DOWN".Get(), "",
                 () => lp.Settings.NoteFillColorsAlt[NoteType.Click], it => lp.Settings.NoteFillColorsAlt[NoteType.Click] = it,
                 "", "#FF5964", true)
             .SaveSettingsOnChange();
 
-        Object.Instantiate(provider.input, parent)
+        Object.Instantiate(provider.inputPreferenceElement, parent)
             .SetContent("SETTINGS_FILL_COLOR_DRAG_UP".Get(), "SETTINGS_FILL_COLOR_DRAG_DESC".Get(),
                 () => lp.Settings.NoteFillColors[NoteType.DragChild], it => lp.Settings.NoteFillColors[NoteType.DragChild] = it,
                 "", "#39E59E", true)
             .SaveSettingsOnChange();
-        Object.Instantiate(provider.input, parent)
+        Object.Instantiate(provider.inputPreferenceElement, parent)
             .SetContent("SETTINGS_FILL_COLOR_DRAG_DOWN".Get(), "",
                 () => lp.Settings.NoteFillColorsAlt[NoteType.DragChild], it => lp.Settings.NoteFillColorsAlt[NoteType.DragChild] = it,
                 "", "#39E59E", true)
             .SaveSettingsOnChange();
         
-        Object.Instantiate(provider.input, parent)
+        Object.Instantiate(provider.inputPreferenceElement, parent)
             .SetContent("SETTINGS_FILL_COLOR_C_DRAG_UP".Get(), "SETTINGS_FILL_COLOR_C_DRAG_DESC".Get(),
                 () => lp.Settings.NoteFillColors[NoteType.CDragChild], it => lp.Settings.NoteFillColors[NoteType.CDragChild] = it,
                 "", "#39E59E", true)
             .SaveSettingsOnChange();
-        Object.Instantiate(provider.input, parent)
+        Object.Instantiate(provider.inputPreferenceElement, parent)
             .SetContent("SETTINGS_FILL_COLOR_C_DRAG_DOWN".Get(), "",
                 () => lp.Settings.NoteFillColorsAlt[NoteType.CDragChild], it => lp.Settings.NoteFillColorsAlt[NoteType.CDragChild] = it,
                 "", "#39E59E", true)
             .SaveSettingsOnChange();
 
-        Object.Instantiate(provider.input, parent)
+        Object.Instantiate(provider.inputPreferenceElement, parent)
             .SetContent("SETTINGS_FILL_COLOR_HOLD_UP".Get(), "SETTINGS_FILL_COLOR_HOLD_DESC".Get(),
                 () => lp.Settings.NoteFillColors[NoteType.Hold], it => lp.Settings.NoteFillColors[NoteType.Hold] = it,
                 "", "#35A7FF", true)
             .SaveSettingsOnChange();
-        Object.Instantiate(provider.input, parent)
+        Object.Instantiate(provider.inputPreferenceElement, parent)
             .SetContent("SETTINGS_FILL_COLOR_HOLD_DOWN".Get(), "",
                 () => lp.Settings.NoteFillColorsAlt[NoteType.Hold], it => lp.Settings.NoteFillColorsAlt[NoteType.Hold] = it,
                 "", "#FF5964", true)
             .SaveSettingsOnChange();
 
-        Object.Instantiate(provider.input, parent)
+        Object.Instantiate(provider.inputPreferenceElement, parent)
             .SetContent("SETTINGS_FILL_COLOR_LONG_HOLD_UP".Get(), "SETTINGS_FILL_COLOR_LONG_HOLD_DESC".Get(),
                 () => lp.Settings.NoteFillColors[NoteType.LongHold], it => lp.Settings.NoteFillColors[NoteType.LongHold] = it,
                 "", "#F2C85A", true)
             .SaveSettingsOnChange();
-        Object.Instantiate(provider.input, parent)
+        Object.Instantiate(provider.inputPreferenceElement, parent)
             .SetContent("SETTINGS_FILL_COLOR_LONG_HOLD_DOWN".Get(), "",
                 () => lp.Settings.NoteFillColorsAlt[NoteType.LongHold], it => lp.Settings.NoteFillColorsAlt[NoteType.LongHold] = it,
                 "", "#F2C85A", true)
             .SaveSettingsOnChange();
 
-        Object.Instantiate(provider.input, parent)
+        Object.Instantiate(provider.inputPreferenceElement, parent)
             .SetContent("SETTINGS_FILL_COLOR_FLICK_UP".Get(), "SETTINGS_FILL_COLOR_FLICK_DESC".Get(),
                 () => lp.Settings.NoteFillColors[NoteType.Flick], it => lp.Settings.NoteFillColors[NoteType.Flick] = it,
                 "", "#35A7FF", true)
             .SaveSettingsOnChange();
-        Object.Instantiate(provider.input, parent)
+        Object.Instantiate(provider.inputPreferenceElement, parent)
             .SetContent("SETTINGS_FILL_COLOR_FLICK_DOWN".Get(), "",
                 () => lp.Settings.NoteFillColorsAlt[NoteType.Flick], it => lp.Settings.NoteFillColorsAlt[NoteType.Flick] = it,
                 "", "#FF5964", true)
             .SaveSettingsOnChange();
-        Object.Instantiate(provider.pillRadioGroup, parent)
+        Object.Instantiate(provider.pillRadioGroupPreferenceElement, parent)
             .SetContent("SETTINGS_USE_FILL_COLOR_FOR_DRAG_CHILD_NODES".Get(), "SETTINGS_USE_FILL_COLOR_FOR_DRAG_CHILD_NODES_DESC".Get(),
                 () => lp.Settings.UseFillColorForDragChildNodes, it => lp.Settings.UseFillColorForDragChildNodes = it)
             .SaveSettingsOnChange();
@@ -370,7 +421,7 @@ public static class SettingsFactory
 
         if (Application.platform == RuntimePlatform.Android)
         {
-            Object.Instantiate(provider.select, parent).Apply(element =>
+            Object.Instantiate(provider.selectPreferenceElement, parent).Apply(element =>
             {
                 element.SetContent("SETTINGS_DSP_BUFFER_SIZE".Get(), "SETTINGS_DSP_BUFFER_SIZE_DESC".Get(),
                     () => lp.Settings.AndroidDspBufferSize, it => lp.Settings.AndroidDspBufferSize = it, new[]
@@ -388,7 +439,7 @@ public static class SettingsFactory
 
         if (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
         {
-            Object.Instantiate(provider.pillRadioGroup, parent)
+            Object.Instantiate(provider.pillRadioGroupPreferenceElement, parent)
                 .SetContent("SETTINGS_USE_NATIVE_AUDIO".Get(), "SETTINGS_USE_NATIVE_AUDIO_DESC".Get(),
                     () => lp.Settings.UseNativeAudio, it =>
                     {
@@ -398,7 +449,7 @@ public static class SettingsFactory
                 .SaveSettingsOnChange();
         }
 
-        Object.Instantiate(provider.pillRadioGroup, parent)
+        Object.Instantiate(provider.pillRadioGroupPreferenceElement, parent)
             .SetContent("SETTINGS_DISPLAY_PROFILER".Get(), "SETTINGS_DISPLAY_PROFILER_DESC".Get(),
                 () => lp.Settings.DisplayProfiler, it =>
                 {
@@ -406,11 +457,11 @@ public static class SettingsFactory
                     Context.UpdateProfilerDisplay();
                 })
             .SaveSettingsOnChange();
-        Object.Instantiate(provider.pillRadioGroup, parent)
+        Object.Instantiate(provider.pillRadioGroupPreferenceElement, parent)
             .SetContent("SETTINGS_DISPLAY_NOTE_IDS".Get(), "SETTINGS_DISPLAY_NOTE_IDS_DESC".Get(),
                 () => lp.Settings.DisplayNoteIds, it => lp.Settings.DisplayNoteIds = it)
             .SaveSettingsOnChange();
-        Object.Instantiate(provider.pillRadioGroup, parent)
+        Object.Instantiate(provider.pillRadioGroupPreferenceElement, parent)
             .SetContent("SETTINGS_DEVELOPER_CONSOLE".Get(), "SETTINGS_DEVELOPER_CONSOLE_DESC".Get(),
                 () => lp.Settings.UseDeveloperConsole, it =>
                 {
@@ -423,17 +474,17 @@ public static class SettingsFactory
                 })
             .SaveSettingsOnChange();
 
-        Object.Instantiate(provider.pillRadioGroup, parent)
+        Object.Instantiate(provider.pillRadioGroupPreferenceElement, parent)
             .SetContent("SETTINGS_EXPERIMENTAL_NOTE_AR".Get(), "SETTINGS_EXPERIMENTAL_NOTE_AR_DESC".Get(),
                 () => lp.Settings.UseExperimentalNoteAr, it => lp.Settings.UseExperimentalNoteAr = it)
             .SaveSettingsOnChange();
         
-        Object.Instantiate(provider.pillRadioGroup, parent)
+        Object.Instantiate(provider.pillRadioGroupPreferenceElement, parent)
             .SetContent("SETTINGS_EXPERIMENTAL_NOTE_ANIMATIONS".Get(), "",
                 () => lp.Settings.UseExperimentalNoteAnimations, it => lp.Settings.UseExperimentalNoteAnimations = it)
             .SaveSettingsOnChange();
         
-        var input = Object.Instantiate(provider.input, parent);
+        var input = Object.Instantiate(provider.inputPreferenceElement, parent);
         input.SetContent("SETTINGS_JUDGMENT_OFFSET".Get(), "SETTINGS_JUDGMENT_OFFSET_DESC".Get(),
                 () => lp.Settings.JudgmentOffset, it =>
                 {

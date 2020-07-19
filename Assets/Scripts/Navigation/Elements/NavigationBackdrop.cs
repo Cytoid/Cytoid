@@ -225,7 +225,16 @@ public class NavigationBackdrop : SingletonMonoBehavior<NavigationBackdrop>, Scr
 
     public void OnScreenChangeStarted(Screen from, Screen to)
     {
-        if (from == null) return;
+        if (from == null)
+        {
+            if (to is MainMenuScreen)
+            {
+                SetBlurred(false);
+                SetScale(1f);
+                FadeBrightness(1f, 0.2f);
+            }
+            return;
+        }
         if (BlockedScreenIds.Contains(from.GetId()) && !BlockedScreenIds.Contains(to.GetId()))
         {
             SetVisible(true);

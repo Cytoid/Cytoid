@@ -123,7 +123,7 @@ public class ProfileTab : MonoBehaviour
         }
         ratingText.text = $"{"PROFILE_WIDGET_RATING".Get()} {profile.Rating:0.00}";
         levelText.text = $"{"PROFILE_WIDGET_LEVEL".Get()} {profile.Exp.CurrentLevel}";
-        expText.text = $"{"PROFILE_WIDGET_EXP".Get()} {profile.Exp.TotalExp}/{profile.Exp.NextLevelExp}";
+        expText.text = $"{"PROFILE_WIDGET_EXP".Get()} {(int) profile.Exp.TotalExp}/{(int) profile.Exp.NextLevelExp}";
         totalRankedPlaysText.text = profile.Activities.TotalRankedPlays.ToString("N0");
         totalClearedNotesText.text = profile.Activities.ClearedNotes.ToString("N0");
         highestMaxComboText.text = profile.Activities.MaxCombo.ToString("N0");

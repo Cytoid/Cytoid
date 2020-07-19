@@ -5,8 +5,10 @@ public class SoftButton : InteractableMonoBehavior
     public TransitionElement transitionElement;
     public Text text;
 
-    public void SetText(string text)
+    public string Label
     {
-        this.text.text = text;
+        get => text.text;
+        set => text.text = value;
     }
+    
 }

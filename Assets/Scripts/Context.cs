@@ -11,7 +11,7 @@ using Polyglot;
 using Proyecto26;
 using Tayx.Graphy;
 using Cysharp.Threading.Tasks;
-using UltraLiteDB;
+using LiteDB;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
@@ -19,7 +19,7 @@ using UnityEngine.SceneManagement;
 
 public class Context : SingletonMonoBehavior<Context>
 {
-    public const string VersionName = "2.0.0 Beta 3";
+    public const string VersionName = "2.0.0 Beta 3.1";
     public const string VersionString = "2.0.0";
     public const int VersionCode = 88;
 
@@ -85,13 +85,13 @@ public class Context : SingletonMonoBehavior<Context>
     public static readonly BundleManager BundleManager = new BundleManager();
     public static readonly AssetMemory AssetMemory = new AssetMemory();
 
-    public static UltraLiteDatabase Database
+    public static LiteDatabase Database
     {
         get => database ?? (database = CreateDatabase());
         private set => database = value;
     }
 
-    private static UltraLiteDatabase database;
+    private static LiteDatabase database;
 
     public static Level SelectedLevel
     {
@@ -810,16 +810,16 @@ public class Context : SingletonMonoBehavior<Context>
         }
     }
 
-    private static UltraLiteDatabase CreateDatabase()
+    private static LiteDatabase CreateDatabase()
     {
         var dbPath = Path.Combine(Application.persistentDataPath, "Cytoid.db");
         var dbBackupPath = Path.Combine(Application.persistentDataPath, "Cytoid.db.bak");
-        var db = new UltraLiteDatabase(
+        var db = new LiteDatabase(
             new ConnectionString
             {
                 Filename = dbPath,
                 // Password = SecuredConstants.DbSecret,
-                // Connection = Application.isEditor ? ConnectionType.Shared : ConnectionType.Direct
+                Connection = Application.isEditor ? ConnectionType.Shared : ConnectionType.Direct
             }
         );
         if (db.GetCollection<LocalPlayerSettings>("settings").FindOne(Query.All()) != null)
@@ -838,12 +838,12 @@ public class Context : SingletonMonoBehavior<Context>
                 File.Copy(dbBackupPath, dbPath, true);
                 Debug.Log("Database rollback complete.");
                 
-                db = new UltraLiteDatabase(
+                db = new LiteDatabase(
                     new ConnectionString
                     {
                         Filename = dbPath,
                         // Password = SecuredConstants.DbSecret,
-                        // Connection = Application.isEditor ? ConnectionType.Shared : ConnectionType.Direct
+                        Connection = Application.isEditor ? ConnectionType.Shared : ConnectionType.Direct
                     }
                 );
             }

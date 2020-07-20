@@ -169,7 +169,7 @@ PlayerSettings:
     Standalone: com.Company.ProductName
     iPhone: me.tigerhix.cytoid
   buildNumber:
-    iPhone: 88
+    iPhone: 23
   AndroidBundleVersionCode: 88
   AndroidMinSdkVersion: 19
   AndroidTargetSdkVersion: 28
@@ -181,7 +181,7 @@ PlayerSettings:
   ForceInternetPermission: 1
   ForceSDCardPermission: 1
   CreateWallpaper: 0
-  APKExpansionFiles: 0
+  APKExpansionFiles: 1
   keepLoadedShadersAlive: 0
   StripUnusedMeshComponents: 1
   VertexChannelCompressionMask: 4054
@@ -245,12 +245,12 @@ PlayerSettings:
   clonedFromGUID: 5f34be1353de5cf4398729fda238591b
   templatePackageId: com.unity.template.2d@2.3.2
   templateDefaultScene: Assets/Scenes/SampleScene.unity
-  AndroidTargetArchitectures: 1
+  AndroidTargetArchitectures: 3
   AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 0}
   AndroidKeystoreName: C:/Cytoid/debug.keystore
   AndroidKeyaliasName: androiddebugkey
-  AndroidBuildApkPerCpuArchitecture: 0
+  AndroidBuildApkPerCpuArchitecture: 1
   AndroidTVCompatibility: 0
   AndroidIsGame: 1
   AndroidEnableTango: 0
@@ -753,7 +753,7 @@ PlayerSettings:
   webGLWasmStreaming: 0
   scriptingDefineSymbols:
     1: CT_TPS
-    4: ADDRESSABLES_LOG_ALL;CT_TPS;MOREMOUNTAINS_NICEVIBRATIONS
+    4: ADDRESSABLES_LOG_ALL;CT_TPS
     7: ADDRESSABLES_LOG_ALL;CT_TPS;MOREMOUNTAINS_NICEVIBRATIONS
     13: CT_TPS
     14: CT_TPS
@@ -768,13 +768,13 @@ PlayerSettings:
   scriptingBackend:
     Android: 1
   il2cppCompilerConfiguration:
-    Android: 1
+    Android: 2
   managedStrippingLevel: {}
   incrementalIl2cppBuild: {}
-  allowUnsafeCode: 0
+  allowUnsafeCode: 1
   additionalIl2CppArgs: 
   scriptingRuntimeVersion: 1
-  gcIncremental: 0
+  gcIncremental: 1
   gcWBarrierValidation: 0
   apiCompatibilityLevelPerPlatform:
     Android: 3

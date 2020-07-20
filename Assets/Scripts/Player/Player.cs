@@ -54,19 +54,13 @@ public class Player
                 Debug.LogWarning("First time startup. Initializing settings...");
                 // TODO: Remove migration... one day
                 ShouldMigrate = true;
-                Debug.LogWarning("Inserted settings");
-                result = new LocalPlayerSettings(); //InitializeSettings();
-                Debug.LogWarning("Inserted22");
+                result = InitializeSettings();
                 col.Insert(result);
-                Debug.LogWarning("Inserted 33");
             }
             
             Settings = result;
-            Debug.LogWarning("Ready to fill default");
             FillDefault();
-            Debug.LogWarning("Ready To save");
             SaveSettings();
-            Debug.LogWarning("Saved");
         });
     }
 

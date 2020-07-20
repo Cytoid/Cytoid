@@ -93,7 +93,7 @@ public class LocalPlayerSettings
     [JsonProperty("use_fill_color_for_drag_child_nodes")]
     public bool UseFillColorForDragChildNodes { get; set; } = true;
 
-[JsonProperty("hold_hit_sound_timing")]
+    [JsonProperty("hold_hit_sound_timing")]
     public HoldHitSoundTiming HoldHitSoundTiming { get; set; } = HoldHitSoundTiming.Both;
 
     [JsonProperty("note_size")] public float NoteSize { get; set; } = 0; // -0.5~0.5

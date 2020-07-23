@@ -169,7 +169,7 @@ PlayerSettings:
     Standalone: com.Company.ProductName
     iPhone: me.tigerhix.cytoid
   buildNumber:
-    iPhone: 23
+    iPhone: 89
   AndroidBundleVersionCode: 88
   AndroidMinSdkVersion: 19
   AndroidTargetSdkVersion: 28
@@ -511,6 +511,9 @@ PlayerSettings:
   - m_BuildTarget: AndroidPlayer
     m_APIs: 150000000b00000008000000
     m_Automatic: 1
+  - m_BuildTarget: iOSSupport
+    m_APIs: 100000000b00000008000000
+    m_Automatic: 0
   m_BuildTargetVRSettings: []
   openGLRequireES31: 0
   openGLRequireES31AEP: 0
@@ -753,7 +756,7 @@ PlayerSettings:
   webGLWasmStreaming: 0
   scriptingDefineSymbols:
     1: CT_TPS
-    4: ADDRESSABLES_LOG_ALL;CT_TPS
+    4: ADDRESSABLES_LOG_ALL;CT_TPS;MOREMOUNTAINS_NICEVIBRATIONS
     7: ADDRESSABLES_LOG_ALL;CT_TPS;MOREMOUNTAINS_NICEVIBRATIONS
     13: CT_TPS
     14: CT_TPS

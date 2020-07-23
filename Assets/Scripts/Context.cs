@@ -227,8 +227,9 @@ public class Context : SingletonMonoBehavior<Context>
                 File.Create(file);
                 File.Delete(file);
             }
-            catch
+            catch (Exception e)
             {
+                Debug.LogError(e);
                 Haptic(HapticTypes.Failure, true);
                 Dialog.Instantiate().Also(it =>
                 {

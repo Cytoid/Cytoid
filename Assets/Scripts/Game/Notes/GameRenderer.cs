@@ -1,27 +1,30 @@
 using DG.Tweening;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.UI;
 
 public class GameRenderer
 {
     public Game Game { get; }
 
+    public float OpacityMultiplier { get; set; } = 1f;
+
     private Image cover;
     private GameObject boundaryTop;
     private GameObject boundaryBottom;
+    private SpriteRenderer boundaryTopSpriteRenderer;
+    private SpriteRenderer boundaryBottomSpriteRenderer;
     private Animator boundaryTopAnimator;
     private Animator boundaryBottomAnimator;
 
-    public float boundaryOpacity = 0.2f;
+    public const float BoundaryOpacity = 0.2f;
 
     public GameRenderer(Game game)
     {
         Game = game;
         game.onGameLoaded.AddListener(_ => Game.BeforeStartTasks.Add(OnGameBeforeStart()));
         game.onGameCompleted.AddListener(_ => OnGameCompleted());
-        game.onGameReadyToExit.AddListener(_ => OnGameReadyToExit());
+        game.onGameBeforeExit.AddListener(_ => OnGameBeforeExit());
     }
 
     public async UniTask OnGameBeforeStart()
@@ -29,28 +32,26 @@ public class GameRenderer
         // Boundaries
         boundaryTop = GameObjectProvider.Instance.boundaryTop;
         boundaryBottom = GameObjectProvider.Instance.boundaryBottom;
+        boundaryTopSpriteRenderer = boundaryTop.GetComponentInChildren<SpriteRenderer>();
+        boundaryBottomSpriteRenderer = boundaryBottom.GetComponentInChildren<SpriteRenderer>();
         boundaryTopAnimator = boundaryTop.GetComponentInChildren<Animator>();
         boundaryBottomAnimator = boundaryBottom.GetComponentInChildren<Animator>();
 
-        if (!Context.Player.Settings.DisplayBoundaries || Game.State.Mode == GameMode.GlobalCalibration)
+        if (Game.Chart.DisplayBoundaries && Game.State.Mode != GameMode.GlobalCalibration)
         {
-            this.ListOf(
-                boundaryTop.GetComponentInChildren<SpriteRenderer>(),
-                boundaryBottom.GetComponentInChildren<SpriteRenderer>()
-            ).ForEach(it => it.enabled = false);
+            this.ListOf(boundaryTopSpriteRenderer, boundaryBottomSpriteRenderer)
+                .ForEach(it =>
+                {
+                    it.color = it.color.WithAlpha(0);
+                    it.DOFade(BoundaryOpacity, 0.4f);
+                });
+            Game.onTopBoundaryBounded.AddListener(_ => boundaryTopAnimator.Play("BoundaryBound"));
+            Game.onBottomBoundaryBounded.AddListener(_ => boundaryBottomAnimator.Play("BoundaryBound"));
         }
         else
         {
-            this.ListOf(
-                boundaryTop.GetComponentInChildren<SpriteRenderer>(),
-                boundaryBottom.GetComponentInChildren<SpriteRenderer>()
-            ).ForEach(it =>
-            {
-                it.color = it.color.WithAlpha(0);
-                it.DOFade(boundaryOpacity, 0.4f);
-            });
-            Game.onTopBoundaryBounded.AddListener(_ => boundaryTopAnimator.Play("BoundaryBound"));
-            Game.onBottomBoundaryBounded.AddListener(_ => boundaryBottomAnimator.Play("BoundaryBound"));
+            this.ListOf(boundaryTopSpriteRenderer, boundaryBottomSpriteRenderer)
+                .ForEach(it => it.enabled = false);
         }
 
         if (Game.State.Mode != GameMode.GlobalCalibration)
@@ -76,7 +77,7 @@ public class GameRenderer
         });
     }
 
-    public void OnGameReadyToExit()
+    public void OnGameBeforeExit()
     {
         if (Context.ScreenManager.ActiveScreen != null)
         {
@@ -105,6 +106,14 @@ public class GameRenderer
         }
         boundaryTop.transform.position = new Vector3(0, chart.GetBoundaryPosition(false), 0);
         boundaryBottom.transform.position = new Vector3(0, chart.GetBoundaryPosition(true), 0);
+        if (Game.State.IsStarted && Game.State.IsPlaying && !Game.State.IsCompleted)
+        {
+            // Update opacity
+            boundaryTopSpriteRenderer.color =
+                boundaryTopSpriteRenderer.color.WithAlpha(BoundaryOpacity * OpacityMultiplier);
+            boundaryBottomSpriteRenderer.color =
+                boundaryBottomSpriteRenderer.color.WithAlpha(BoundaryOpacity * OpacityMultiplier);
+        }
     }
     
 }

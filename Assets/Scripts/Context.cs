@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using DG.Tweening;
-using DragonBones;
 using LunarConsolePlugin;
 using MoreMountains.NiceVibrations;
 using Newtonsoft.Json;
@@ -19,7 +17,7 @@ using UnityEngine.SceneManagement;
 
 public class Context : SingletonMonoBehavior<Context>
 {
-    public const string VersionName = "2.0.0 Beta 3.1";
+    public const string VersionName = "2.0.0 Beta 4";
     public const string VersionString = "2.0.0";
     public const int VersionCode = 88;
 
@@ -159,6 +157,8 @@ public class Context : SingletonMonoBehavior<Context>
 
     private async void InitializeApplication()
     {
+        LunarConsole.SetConsoleEnabled(true); // Enable startup debug
+        
         InitializationState = new InitializationState();
 
         UserDataPath = Application.persistentDataPath;
@@ -223,7 +223,7 @@ public class Context : SingletonMonoBehavior<Context>
                 Directory.CreateDirectory(UserDataPath);
                 File.Create(UserDataPath + "/.nomedia").Dispose();
                 // Create and delete test file
-                var file = UserDataPath + "/test";
+                var file = UserDataPath + "/" + Path.GetRandomFileName();
                 File.Create(file);
                 File.Delete(file);
             }
@@ -301,7 +301,10 @@ public class Context : SingletonMonoBehavior<Context>
         Localization.Instance.SelectLanguage((Language) Player.Settings.Language);
         OnLanguageChanged.Invoke();
         
+        // TODO: Add standalone support?
+#if UNITY_IOS || UNITY_ANDROID
         await BundleManager.Initialize();
+#endif
 
         if (Player.ShouldOneShot(StringKey.FirstLaunch))
         {
@@ -927,11 +930,6 @@ public class ContextEditor : Editor
             if (GUILayout.Button("Unload unused assets"))
             {
                 Resources.UnloadUnusedAssets();
-            }
-
-            if (GUILayout.Button("Upload test"))
-            {
-                Test.UploadTest();
             }
 
             if (GUILayout.Button("Toggle offline mode"))

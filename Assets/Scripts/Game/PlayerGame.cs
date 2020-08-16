@@ -92,6 +92,7 @@ public class PlayerGame : Game
         }
 
         Storyboard = new Cytoid.Storyboard.Storyboard(this, File.ReadAllText(StoryboardPath));
+        Storyboard.Parse();
         Storyboard.Initialize();
     }
 
@@ -134,6 +135,11 @@ public class PlayerGame : Game
     {
         Music.PlaybackTime = value * MusicLength;
         Storyboard?.Renderer.Clear();
+
+        Chart.Model.note_list.LastOrDefault(it => it.intro_time - 1f < Music.PlaybackTime)?.Apply(it =>
+        {
+            Chart.CurrentNoteId = it.id;
+        });
     }
 
     protected override async void StartGame()
@@ -164,6 +170,8 @@ public class PlayerGame : Game
                 Time = 0;
                 Music.PlaybackTime = 0;
                 Music.Play(AudioTrackIndex.Reserved1);
+
+                Chart.CurrentNoteId = 0;
             }
         }
         Time = Music.PlaybackTime - Config.ChartOffset + Chart.MusicOffset;

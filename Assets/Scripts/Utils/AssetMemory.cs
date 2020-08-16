@@ -13,14 +13,21 @@ public class AssetMemory
 {
     private static readonly Dictionary<AssetTag, int> TagLimits = new Dictionary<AssetTag, int>
     {
+        {AssetTag.Avatar, 100},
+        {AssetTag.PlayerAvatar, 1},
         {AssetTag.LocalLevelCoverThumbnail, 30},
         {AssetTag.RemoteLevelCoverThumbnail, 30},
+        {AssetTag.CollectionCoverThumbnail, 15},
         {AssetTag.RecordCoverThumbnail, 12},
-        {AssetTag.PlayerAvatar, 1},
-        {AssetTag.Avatar, 100},
         {AssetTag.GameCover, 1},
         {AssetTag.TierCover, 1},
-        {AssetTag.PreviewMusic, 1}
+        {AssetTag.CharacterThumbnail, 3},
+        {AssetTag.PreviewMusic, 1},
+        {AssetTag.EventCover, 1},
+        {AssetTag.EventLogo, 1},
+        {AssetTag.Badge, 12},
+        {AssetTag.CollectionCover, 1},
+        {AssetTag.DialogueImage, 1}
     };
 
     private readonly Dictionary<AssetTag, SimplePriorityQueue<Entry>> taggedMemoryCache =
@@ -462,14 +469,15 @@ public enum AssetTag
     PreviewMusic,
     EventCover,
     EventLogo,
-    CollectionCover
+    Badge,
+    CollectionCover,
+    DialogueImage,
 }
 
 public class AssetOptions
 {
     protected AssetOptions()
     {
-            
     }
 }
 

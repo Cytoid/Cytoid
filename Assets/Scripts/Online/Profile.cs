@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 
 [Serializable]
@@ -44,7 +45,7 @@ public class Profile
         [JsonProperty("totalRankedScore")] public long? TotalRankedScore { get; set; }
         [JsonProperty("totalPlayTime")] public long TotalPlayTime { get; set; }
     }
-
+    
 }
 
 [Serializable]
@@ -61,6 +62,8 @@ public class FullProfile : Profile
     [JsonProperty("recentRecords")] public List<OnlineRecord> RecentRecords { get; set; }
     [JsonProperty("tier")] public TierMeta Tier { get; set; }
     [JsonProperty("character")] public CharacterMeta Character { get; set; }
+    
+    [JsonProperty("badges")] public List<Badge> Badges { get; set; }
 
     [Serializable]
     public class TimeSeriesData
@@ -72,6 +75,18 @@ public class FullProfile : Profile
         [JsonProperty("cumulativeAccuracy")] public double CumulativeAccuracy { get; set; }
         [JsonProperty("year")] public string Year { get; set; }
         [JsonProperty("week")] public string Week { get; set; }
+    }
+
+    public List<Badge> GetEventBadges()
+    {
+        var badges = Badges
+            .Where(it => it.type == BadgeType.Event)
+            .ToDictionary(it => it.uid);
+
+        var removals = Badges.Select(it => it.GetBadgeOverrides()).Flatten();
+        removals.ForEach(key => badges.Remove(key));
+
+        return badges.Values.OrderByDescending(it => it.date).ToList();
     }
 
 }

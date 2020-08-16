@@ -13,6 +13,8 @@ public class DragHeadNote : Note
             : new DefaultDragHeadNoteRenderer(this);
     }
 
+    public bool IsCollecting;
+
     // Drag head is constantly moving from drag note to drag note
     public ChartModel.Note FromNoteModel { get; protected set; }
     public ChartModel.Note ToNoteModel { get; protected set; }
@@ -163,6 +165,10 @@ public class DragHeadNote : Note
 
     public override async void Collect()
     {
+        if (IsCollected) return;
+
+        IsCollecting = true;
+        
         void Collect()
         {
             FromNoteModel = default;
@@ -179,12 +185,15 @@ public class DragHeadNote : Note
             (IsCDrag ? NoteType.CDragChild : NoteType.DragChild).GetDefaultMissThreshold();
         if (CanCollect())
         {
+            IsCollecting = false;
             Collect();
             base.Collect();
             return;
         }
         // Don't destroy until the drag is over
-        await UniTask.WaitUntil(CanCollect);
+        await UniTask.WaitUntil(() => IsCollected || CanCollect());
+        
+        IsCollecting = false;
         Collect();
         base.Collect();
     }

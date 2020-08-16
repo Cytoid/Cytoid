@@ -135,6 +135,8 @@ namespace Cytoid.Storyboard
         public string Font;
         public int? Size;
         public string Text;
+        public float? LetterSpacing;
+        public FontWeight? FontWeight;
     }
 
     [Serializable]

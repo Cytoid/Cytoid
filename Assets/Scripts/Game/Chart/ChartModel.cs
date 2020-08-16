@@ -20,6 +20,10 @@ public class ChartModel
     public double opacity = 1.0;
     public string ring_color;
     public string[] fill_colors = new string[12];
+    public bool? display_boundaries;
+    public int? horizontal_margin;
+    public int? vertical_margin;
+    public bool? skip_music_on_completion;
     
     [Serializable]
     public class Page

@@ -10,8 +10,11 @@ namespace Cytoid.Storyboard.Controllers
         {
             if (From.UiOpacity != null)
             {
+                var easedValue = EaseFloat(From.UiOpacity, To.UiOpacity);
+                Game.Renderer.OpacityMultiplier = easedValue;
+                
                 if (Game is PlayerGame playerGame && playerGame.HideInterface) return;
-                Provider.UiCanvasGroup.alpha = EaseFloat(From.UiOpacity, To.UiOpacity);
+                Provider.UiCanvasGroup.alpha = easedValue;
             }
         }
     }

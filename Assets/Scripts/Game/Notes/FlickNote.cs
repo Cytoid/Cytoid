@@ -46,6 +46,8 @@ public class FlickNote : Note
 
     public override void Collect()
     {
+        if (IsCollected) return;
+    
         IsFlicking = default;
         FlickingStartTime = default;
         FlickingStartPosition = default;

@@ -6,6 +6,7 @@ using Cytoid.Storyboard.Sprites;
 using Cytoid.Storyboard.Texts;
 using Cytoid.Storyboard.Videos;
 using Cysharp.Threading.Tasks;
+using Newtonsoft.Json;
 using UnityEngine;
 using LineRenderer = Cytoid.Storyboard.Sprites.LineRenderer;
 using SpriteRenderer = Cytoid.Storyboard.Sprites.SpriteRenderer;
@@ -242,6 +243,31 @@ namespace Cytoid.Storyboard
                 ComponentRenderers[transformedObj.Id] = renderer;
                 TypedComponentRenderers[typeof(TO)].Add(renderer);
                 // Debug.Log($"StoryboardRenderer: Spawned {typeof(TO).Name} with ID {obj.Id}");
+                
+                // Resolve parent
+                StoryboardComponentRenderer parent = null;
+                if (transformedObj.ParentId != null)
+                {
+                    if (!ComponentRenderers.ContainsKey(transformedObj.ParentId))
+                    {
+                        throw new InvalidOperationException($"Storyboard: parent_id \"{transformedObj.ParentId}\" does not exist");
+                    }
+                    parent = ComponentRenderers[transformedObj.ParentId];
+                }
+                else if (transformedObj.TargetId != null)
+                {
+                    if (!ComponentRenderers.ContainsKey(transformedObj.TargetId))
+                    {
+                        throw new InvalidOperationException($"Storyboard: target_id \"{transformedObj.TargetId}\" does not exist");
+                    }
+                    parent = ComponentRenderers[transformedObj.TargetId] as TR ?? throw new InvalidOperationException($"Storyboard: target_id \"{transformedObj.TargetId} does not have type {typeof(TR).Name}");
+                }
+                if (parent != null)
+                {
+                    parent.Children.Add(renderer);
+                    renderer.Parent = parent;
+                }
+                
                 tasks.Add(renderer.Initialize());
             }
 
@@ -252,12 +278,12 @@ namespace Cytoid.Storyboard
         public void OnGameUpdate(Game _)
         {
             var time = Time;
-            if (time < 0 || Game.State.IsCompleted) return;
+            if (time < 0 || Game.State.IsReadyToExit) return;
 
             var updateOrder = new[]
                 {typeof(NoteController), typeof(Text), typeof(Sprite), typeof(Line), typeof(Video), typeof(Controller)};
 
-            var removals = new Dictionary<string, Type>();
+            var renderersToDestroy = new Dictionary<string, Type>();
 
             foreach (var type in updateOrder)
             {
@@ -271,16 +297,23 @@ namespace Cytoid.Storyboard
                     // Destroy?
                     if (fromState.Destroy != null && fromState.Destroy.Value)
                     {
-                        if (Game is PlayerGame)
+                        // Destroy the target as well
+                        if (renderer.Parent != null && renderer.Component.TargetId != null)
                         {
-                            renderer.Clear();
+                            renderersToDestroy[renderer.Parent.Component.Id] = type;
+                            this.ListOf(renderer.Parent).Flatten(it => it.Children).ForEach(it =>
+                            {
+                                renderersToDestroy[it.Component.Id] = type;
+                            });
                         }
                         else
                         {
-                            renderer.Dispose();
-                            removals[renderer.Component.Id] = type;
+                            renderer.Parent?.Children.Remove(renderer);
+                            this.ListOf(renderer).Flatten(it => it.Children).ForEach(it =>
+                            {
+                                renderersToDestroy[it.Component.Id] = type;
+                            });
                         }
-
                         continue;
                     }
 
@@ -288,11 +321,20 @@ namespace Cytoid.Storyboard
                 }
             }
 
-            removals.ForEach(it =>
+            renderersToDestroy.ForEach(it =>
             {
                 var id = it.Key;
                 var type = it.Value;
                 var renderer = ComponentRenderers[id];
+                
+                if (Game is PlayerGame)
+                {
+                    renderer.Clear();
+                }
+                else
+                {
+                    renderer.Dispose();
+                }
                 ComponentRenderers.Remove(id);
                 TypedComponentRenderers[type].Remove(renderer);
             });

@@ -9,6 +9,8 @@ public abstract class Note : MonoBehaviour
     [NonSerialized] public NoteRenderer Renderer;
     public bool IsInitialized { get; private set; }
     
+    public bool IsCollected { get; private set; }
+    
     public Game Game { get; private set; }
     public ChartModel.Note Model { get; private set; }
     public ChartModel.Note NextNoteModel { get; private set; }
@@ -44,6 +46,8 @@ public abstract class Note : MonoBehaviour
 
     public virtual void SetData(int noteId)
     {
+        IsCollected = false;
+    
         Chart = Game.Chart.Model;
         Model = Game.Chart.Model.note_map[noteId];
         if (Model.next_id > 0 && Chart.note_map.ContainsKey(Model.next_id))
@@ -70,6 +74,9 @@ public abstract class Note : MonoBehaviour
 
     public virtual void Collect()
     {
+        if (IsCollected) return;
+        IsCollected = true;
+        
         Renderer.OnCollect();
         Game.ObjectPool.CollectNote(this);
         Game.onGameUpdate.RemoveListener(OnGameUpdate);
@@ -100,20 +107,9 @@ public abstract class Note : MonoBehaviour
         {
             PlayHitSound();
         }
-        
-        if (!(Game is PlayerGame))
-        {
-            Game.onNoteClear.Invoke(Game, this);
-            AwaitAndCollect();
-        }
-        else
-        {
-            if (TimeUntilEnd > -5) // Prevent player seeking
-            {
-                Game.onNoteClear.Invoke(Game, this);
-                AwaitAndCollect();
-            }
-        }
+
+        Game.onNoteClear.Invoke(Game, this);
+        AwaitAndCollect();
     }
 
     public virtual void PlayHitSound()

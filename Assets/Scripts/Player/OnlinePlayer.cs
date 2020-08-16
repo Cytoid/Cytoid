@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
+using Polyglot;
 using Proyecto26;
 using RSG;
 using UnityEngine;
@@ -144,7 +145,8 @@ public class OnlinePlayer
         }
         return new Dictionary<string, string>
         {
-            {"Authorization", "JWT " + Context.Player.Settings.LoginToken}
+            {"Authorization", "JWT " + Context.Player.Settings.LoginToken},
+            {"Accept-Language", ((Language) Context.Player.Settings.Language).GetAcceptLanguageHeaderValue()}
         };
     }
 

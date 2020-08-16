@@ -39,16 +39,16 @@ namespace Cytoid.Storyboard
             Renderer = new StoryboardRenderer(this);
             Config = new StoryboardConfig(this);
             
-            // Parse storyboard file
-
             UnitFloat.Storyboard = this;
-
             RootObject = JObject.Parse(content);
             /*JsonConvert.DefaultSettings = () => new JsonSerializerSettings
             {
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore
             };*/ // Moved to Context.cs
+        }
 
+        public void Parse()
+        {
             if ((bool?) RootObject["compiled"] == true)
             {
                 // Directly load into memory
@@ -124,10 +124,6 @@ namespace Cytoid.Storyboard
                     foreach (var objectToken in (JArray) RootObject["triggers"])
                         Triggers.Add(LoadTrigger(objectToken));
             }
-
-            // Register note clear listener for triggers
-            Game.onNoteClear.AddListener(OnNoteClear);
-            Game.onGameDisposed.AddListener(_ => Dispose());
         }
 
         public void Dispose()
@@ -144,6 +140,9 @@ namespace Cytoid.Storyboard
         public async UniTask Initialize()
         {
             await Renderer.Initialize();
+            // Register note clear listener for triggers
+            Game.onNoteClear.AddListener(OnNoteClear);
+            Game.onGameDisposed.AddListener(_ => Dispose());
             Game.onGameLateUpdate.AddListener(Renderer.OnGameUpdate);
         }
 
@@ -423,6 +422,7 @@ namespace Cytoid.Storyboard
             var targetId = (string) obj.SelectToken("target_id");
             if (targetId != null && obj["id"] != null) throw new ArgumentException("Storyboard: A stage object cannot have both id and target_id");
             var parentId = (string) obj.SelectToken("parent_id");
+            if (targetId != null && parentId != null) throw new ArgumentException("Storyboard: A stage object cannot have both target_id and parent_id");
             
             if (id.Contains("$note")) id = id.Replace("$note", ((int) replacements["note"]).ToString());
             if (targetId != null && targetId.Contains("$note")) targetId = targetId.Replace("$note", ((int) replacements["note"]).ToString());

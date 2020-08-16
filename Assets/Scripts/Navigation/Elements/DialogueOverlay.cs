@@ -11,6 +11,8 @@ using UnityEngine.UI;
 
 public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
 {
+    public static Badge CurrentBadge;
+    
     [GetComponent] public Canvas canvas;
     [GetComponent] public CanvasGroup canvasGroup;
     public InteractableMonoBehavior detectionArea;
@@ -20,6 +22,7 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
     public DialogueBox bottomFullDialogueBox;
     public RectTransform choicesRoot;
     public SoftButton choiceButtonPrefab;
+    public DialogueImage image;
     
     public bool IsShown { get; private set; }
 
@@ -80,37 +83,66 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
         var spriteSets = new Dictionary<string, DialogueSpriteSet>();
         var animationSets = new Dictionary<string, DialogueAnimationSet>();
 
-        story.globalTags.FindAll(it => it.Trim().StartsWith("SpriteSet:"))
-            .Select(it => it.Substring(it.IndexOf(':') + 1).Trim())
-            .Select(DialogueSpriteSet.Parse)
-            .ForEach(it => spriteSets[it.Id] = it);
-        story.globalTags.FindAll(it => it.Trim().StartsWith("AnimationSet:"))
-            .Select(it => it.Substring(it.IndexOf(':') + 1).Trim())
-            .Select(DialogueAnimationSet.Parse)
-            .ForEach(it => animationSets[it.Id] = it);
-        
+        if (story.globalTags != null)
+        {
+            story.globalTags.FindAll(it => it.Trim().StartsWith("SpriteSet:"))
+                .Select(it => it.Substring(it.IndexOf(':') + 1).Trim())
+                .Select(DialogueSpriteSet.Parse)
+                .ForEach(it => spriteSets[it.Id] = it);
+            story.globalTags.FindAll(it => it.Trim().StartsWith("AnimationSet:"))
+                .Select(it => it.Substring(it.IndexOf(':') + 1).Trim())
+                .Select(DialogueAnimationSet.Parse)
+                .ForEach(it => animationSets[it.Id] = it);
+        }
+
         await spriteSets.Values.Select(it => it.Initialize());
         await animationSets.Values.Select(it => it.Initialize());
 
+        Sprite currentImageSprite = null;
+        string currentImageSpritePath = null;
         Sprite currentSprite = null;
         string currentAnimation = null;
         var currentSpeaker = "";
         var currentPosition = DialogueBoxPosition.Bottom;
 
+        var shouldSetImageSprite = false;
         Dialogue lastDialogue = null;
         DialogueBox lastDialogueBox = null;
         DialogueHighlightTarget lastHighlightTarget = null;
 
         while (story.canContinue)
         {
-            var message = story.Continue();
+            var message = ReplacePlaceholders(story.Continue());
             var tags = story.currentTags;
-
+            
             var setHighlight = TagValue(tags, "Highlight");
             if (setHighlight != null)
             {
                 lastHighlightTarget = DialogueHighlightTarget.Find(setHighlight);
                 lastHighlightTarget.Highlighted = true;
+            }
+            
+            var setImage = TagValue(tags, "Image");
+            string imageWidth = null, imageHeight = null, imageRadius = null;
+            if (setImage != null)
+            {
+                if (setImage == "null")
+                {
+                    currentImageSprite = null;
+                }
+                else
+                {
+                    setImage.Split('/', out imageWidth, out imageHeight, out imageRadius, out var imageUrl);
+
+                    imageUrl = ReplacePlaceholders(imageUrl);
+                    
+                    SpinnerOverlay.Show();
+                    currentImageSprite = await Context.AssetMemory.LoadAsset<Sprite>(imageUrl, AssetTag.DialogueImage);
+                    currentImageSpritePath = imageUrl;
+                    SpinnerOverlay.Hide();
+
+                    shouldSetImageSprite = true;
+                }
             }
 
             var setSprite = TagValue(tags, "Sprite");
@@ -119,6 +151,7 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
                 if (setSprite == "null")
                 {
                     currentSprite = null;
+                    DisposeImageSprite();
                 }
                 else
                 {
@@ -185,6 +218,22 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
                 await lastDialogueBox.SetDisplayed(false);
                 dialogueBox.messageBox.SetLocalScale(1f);
             }
+            
+            // Display image
+            if (currentImageSprite != null)
+            {
+                if (shouldSetImageSprite)
+                {
+                    instance.image.SetData(currentImageSprite, int.Parse(imageWidth), int.Parse(imageHeight), int.Parse(imageRadius));
+                    await UniTask.Delay(TimeSpan.FromSeconds(1.5f));
+                    shouldSetImageSprite = false;
+                }
+            }
+            else
+            {
+                instance.image.Clear();
+            }
+            
             await dialogueBox.SetDisplayed(true);
             lastDialogue = dialogue;
             lastDialogueBox = dialogueBox;
@@ -248,8 +297,11 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
             }
         }
         if (lastDialogueBox != null) lastDialogueBox.SetDisplayed(false);
+        
+        instance.image.Clear();
         await instance.Leave();
 
+        DisposeImageSprite();
         spriteSets.Values.ForEach(it => it.Dispose());
         animationSets.Values.ForEach(it => it.Dispose());
 
@@ -257,8 +309,34 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
         {
             return tags.Find(it => it.Trim().StartsWith(tag + ":"))?.Let(it => it.Substring(it.IndexOf(':') + 1).Trim());
         }
+
+        void DisposeImageSprite()
+        {
+            if (currentImageSprite != null)
+            {
+                Context.AssetMemory.DisposeAsset(currentImageSpritePath, AssetTag.DialogueImage);
+                currentImageSprite = null;
+                currentImageSpritePath = null;
+            }
+        }
+
+        string ReplacePlaceholders(string str)
+        {
+            foreach (var (placeholder, function) in PlaceholderFunctions)
+            {
+                str = str.Replace(placeholder, function());
+            }
+            return str;
+        }
     }
     
+    private static readonly Dictionary<string, Func<string>> PlaceholderFunctions = new Dictionary<string, Func<string>>
+    {
+        {"[BADGE_TITLE]", () => CurrentBadge.title},
+        {"[BADGE_DESCRIPTION]", () => CurrentBadge.description},
+        {"[BADGE_IMAGE_URL]", () => CurrentBadge.GetImageUrl()},
+    };
+
 }
 
 
@@ -273,10 +351,26 @@ public class DialogueOverlayEditor : Editor
 
         if (Application.isPlaying)
         {
-            if (GUILayout.Button("Test"))
+            if (GUILayout.Button("Intro"))
             {
                 var intro = Resources.Load<TextAsset>("Stories/Intro");
                 var story = new Story(intro.text);
+                DialogueOverlay.Show(story);
+            }
+            if (GUILayout.Button("Badge"))
+            {
+                DialogueOverlay.CurrentBadge = new Badge
+                {
+                    title = "夏祭：一段",
+                    description = "测试\n你好\n贵阳！\n11111111111",
+                    type = BadgeType.Event,
+                    metadata = new Dictionary<string, object>
+                    {
+                        {"imageUrl", "http://artifacts.cytoid.io/badges/sora1.jpg"}
+                    }
+                };
+                var badge = Resources.Load<TextAsset>("Stories/Badge");
+                var story = new Story(badge.text);
                 DialogueOverlay.Show(story);
             }
         }

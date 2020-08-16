@@ -1,3 +1,4 @@
+using System;
 using Polyglot;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -84,4 +85,27 @@ public class FontManager
         }
     }
     
+}
+
+public enum FontWeight
+{
+    ExtraLight, Regular, Bold, ExtraBold
+}
+
+public static class FontWeightExtensions
+{
+    public static Font GetFont(this FontWeight weight)
+    {
+        switch (weight)
+        {
+            case FontWeight.ExtraLight:
+                return Context.FontManager.ExtraLightFont;
+            case FontWeight.Bold:
+                return Context.FontManager.BoldFont;
+            case FontWeight.ExtraBold:
+                return Context.FontManager.ExtraBoldFont;
+            default:
+                return Context.FontManager.RegularFont;
+        }
+    }
 }

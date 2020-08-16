@@ -47,13 +47,15 @@ public class DragChildNote : Note
 
     public override async void Collect()
     {
+        if (IsCollected) return;
+        
         bool CanCollect() => Game.Time >= Model.start_time;
         if (CanCollect())
         {
             base.Collect();
             return;
         }
-        await UniTask.WaitUntil(CanCollect);
+        await UniTask.WaitUntil(() => IsCollected || CanCollect());
         base.Collect();
     }
         

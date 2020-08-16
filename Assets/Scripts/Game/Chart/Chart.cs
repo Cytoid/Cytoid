@@ -6,20 +6,17 @@ using UnityEngine;
 
 public class Chart
 {
-    private readonly float baseSize;
-    private readonly float horizontalRatio;
-    private readonly float verticalOffset;
-    private readonly float verticalRatio;
-    private readonly float screenRatio;
-    
     public ChartModel Model { get; set; }
     
-    public int CurrentTempoId { get; set; }
     public int CurrentPageId { get; set; }
     public int CurrentNoteId { get; set; }
     public int CurrentEventId { get; set; }
     
     public float MusicOffset { get; }
+    public bool DisplayBoundaries { get; }
+    public int HorizontalMargin { get; }
+    public int VerticalMargin { get; }
+    public bool SkipMusicOnCompletion { get; }
 
     public bool IsHorizontallyInverted { get; }
     public bool IsVerticallyInverted { get; }
@@ -30,6 +27,12 @@ public class Chart
     public int MaxSamePageNonDragTypeNoteCount { get; }
     public int MaxSamePageDragTypeNoteCount { get; }
     public int MaxSamePageHoldTypeNoteCount { get; }
+    
+    private readonly float baseSize;
+    private readonly float horizontalRatio;
+    private readonly float verticalOffset;
+    private readonly float verticalRatio;
+    private readonly float screenRatio;
 
     public Chart(
         string text,
@@ -38,15 +41,15 @@ public class Chart
         bool useScannerSmoothing,
         bool useExperimentalNoteAr,
         float approachRateMultiplier,
-        float cameraOrthographicSize,
-        float horizontalRatio,
-        float verticalRatio,
-        float verticalOffset)
+        float cameraOrthographicSize)
     {
         IsHorizontallyInverted = isHorizontallyInverted;
         IsVerticallyInverted = isVerticallyInverted;
         UseScannerSmoothing = useScannerSmoothing;
-
+        
+        baseSize = cameraOrthographicSize;
+        screenRatio = 1.0f * UnityEngine.Screen.width / UnityEngine.Screen.height;
+        
         Model = new ChartModel();
         try
         {
@@ -58,15 +61,24 @@ public class Chart
             // Legacy format
             Model = FromLegacyChart(text);
         }
-
-        baseSize = cameraOrthographicSize;
-        this.horizontalRatio = horizontalRatio;
-        // verticalOffset = -baseSize * 0.04f;
-        this.verticalRatio = verticalRatio;
-        this.verticalOffset = verticalOffset;
-
-        screenRatio = 1.0f * UnityEngine.Screen.width / UnityEngine.Screen.height;
         
+        // Cytoid chart parameters
+        MusicOffset = (float) Model.music_offset;
+        DisplayBoundaries = Model.display_boundaries ?? Context.Player.Settings.DisplayBoundaries;
+        HorizontalMargin = Model.horizontal_margin ?? Context.Player.Settings.HorizontalMargin;
+        VerticalMargin = Model.vertical_margin ?? Context.Player.Settings.VerticalMargin;
+        SkipMusicOnCompletion = Model.skip_music_on_completion ?? Context.Player.Settings.SkipMusicOnCompletion;
+
+        var height = cameraOrthographicSize * 2.0f;
+        var width = height * screenRatio;
+        
+        const float topRatio = 0.0966666f;
+        const float bottomRatio = 0.07f;
+        
+        horizontalRatio = 0.8f + (5 - HorizontalMargin - 1) * 0.02f;
+        verticalRatio = 1 - width * (topRatio + bottomRatio) / height + (3 - VerticalMargin) * 0.05f;
+        verticalOffset = -(width * (topRatio - (topRatio + bottomRatio) / 2.0f));
+
         // Convert tick to absolute time
         foreach (var eventOrder in Model.event_order_list) eventOrder.time = ConvertToTime(eventOrder.tick);
 
@@ -177,6 +189,7 @@ public class Chart
         {
             MaxSamePageNoteCountByType[type] = pageNoteCountsByType[type].Max();
         }
+        MaxSamePageNoteCount = pageNoteCounts.Max();
         MaxSamePageDragTypeNoteCount = pageDragTypeNoteCounts.Max();
         MaxSamePageNonDragTypeNoteCount = pageNonDragTypeNoteCounts.Max();
         MaxSamePageHoldTypeNoteCount = pageHoldTypeNoteCounts.Max();
@@ -217,28 +230,6 @@ public class Chart
                     note.tint = note.direction == 1 ? 1.00f : 1.30f;
                     break;
             }
-
-        /*foreach (var note in Model.note_list)
-        {
-            if (note.next_id <= 0 || !Model.note_map.ContainsKey(note.next_id)) continue;
-
-            var noteThis = note;
-            var noteNext = Model.note_map[note.next_id];
-
-            if (noteThis.position == noteNext.position)
-                noteThis.rotation = 0;
-            else if (Math.Abs(noteThis.position.y - noteNext.position.y) < 0.000001)
-                noteThis.rotation = noteThis.position.x > noteNext.position.x ? -90 : 90;
-            else if (Math.Abs(noteThis.position.x - noteNext.position.x) < 0.000001)
-                noteThis.rotation = noteThis.position.y > noteNext.position.y ? 180 : 0;
-            else
-                noteThis.rotation =
-                    Mathf.Atan((noteNext.position.x - noteThis.position.x) /
-                               (noteNext.position.y - noteThis.position.y)) / Mathf.PI * 180f +
-                    (noteNext.position.y > noteThis.position.y ? 0 : 180);
-        }*/
-
-        MusicOffset = (float) Model.music_offset;
     }
 
     private float ConvertToTime(float tick)

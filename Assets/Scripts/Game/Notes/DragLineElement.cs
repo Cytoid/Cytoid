@@ -3,12 +3,16 @@ using UnityEngine;
 
 public class DragLineElement : MonoBehaviour
 {
+    private static readonly int MaterialEnd = Shader.PropertyToID("_End");
+    private static readonly int MaterialStart = Shader.PropertyToID("_Start");
+    
     private Game Game { get; set; }
     
     private SpriteRenderer spriteRenderer;
     
-    private ChartModel.Note fromNoteModel;
-    private ChartModel.Note toNoteModel;
+    public bool IsCollected { get; private set; }
+    public ChartModel.Note FromNoteModel { get; private set; }
+    public ChartModel.Note ToNoteModel { get; private set; }
 
     private bool hasFromNote;
     private Note fromNote;
@@ -37,10 +41,12 @@ public class DragLineElement : MonoBehaviour
 
     public void SetData(ChartModel.Note fromNoteModel, ChartModel.Note toNoteModel)
     {
-        this.fromNoteModel = fromNoteModel;
-        this.toNoteModel = toNoteModel;
-        spriteRenderer.material.SetFloat("_End", 0.0f);
-        spriteRenderer.material.SetFloat("_Start", 0.0f);
+        IsCollected = false;
+        
+        FromNoteModel = fromNoteModel;
+        ToNoteModel = toNoteModel;
+        spriteRenderer.material.SetFloat(MaterialEnd, 0.0f);
+        spriteRenderer.material.SetFloat(MaterialStart, 0.0f);
         UpdateTransform();
         spriteRenderer.sortingOrder = fromNoteModel.id;
         Game.onGameUpdate.AddListener(OnGameUpdate);
@@ -48,12 +54,12 @@ public class DragLineElement : MonoBehaviour
 
     private void UpdateTransform()
     {
-        if (Game.SpawnedNotes.ContainsKey(fromNoteModel.id))
+        if (Game.SpawnedNotes.ContainsKey(FromNoteModel.id))
         {
             if (!hasFromNote)
             {
                 hasFromNote = true;
-                fromNote = Game.SpawnedNotes[fromNoteModel.id];
+                fromNote = Game.SpawnedNotes[FromNoteModel.id];
             }
         }
         else
@@ -64,12 +70,12 @@ public class DragLineElement : MonoBehaviour
                 fromNote = null;
             }
         }
-        if (Game.SpawnedNotes.ContainsKey(toNoteModel.id))
+        if (Game.SpawnedNotes.ContainsKey(ToNoteModel.id))
         {
             if (!hasToNote)
             {
                 hasToNote = true;
-                toNote = Game.SpawnedNotes[toNoteModel.id];
+                toNote = Game.SpawnedNotes[ToNoteModel.id];
             }
         }
         else
@@ -81,8 +87,8 @@ public class DragLineElement : MonoBehaviour
             }
         }
 
-        var fromNotePosition = hasFromNote ? (fromNote is DragHeadNote dragHeadNote ? dragHeadNote.OriginalPosition : fromNote.transform.localPosition) : fromNoteModel.position;
-        var toNotePosition = hasToNote ? toNote.transform.localPosition : toNoteModel.position;
+        var fromNotePosition = hasFromNote ? (fromNote is DragHeadNote dragHeadNote ? dragHeadNote.OriginalPosition : fromNote.transform.localPosition) : FromNoteModel.position;
+        var toNotePosition = hasToNote ? toNote.transform.localPosition : ToNoteModel.position;
         
         var transform = this.transform;
         transform.localPosition = fromNotePosition;
@@ -91,7 +97,7 @@ public class DragLineElement : MonoBehaviour
             toNotePosition
         );
         spriteRenderer.material.mainTextureScale = new Vector2(1.0f, length / 0.16f);
-        transform.localEulerAngles = hasFromNote ? fromNote.transform.localEulerAngles : fromNoteModel.rotation;
+        transform.localEulerAngles = hasFromNote ? fromNote.transform.localEulerAngles : FromNoteModel.rotation;
         transform.localScale = new Vector3(1.0f, length / 0.16f);
     }
 
@@ -101,22 +107,15 @@ public class DragLineElement : MonoBehaviour
         
         spriteRenderer.enabled = !Game.State.Mods.Contains(Mod.HideNotes);
 
-        if (Game is PlayerGame)
+        if (outroRatio >= 1)
         {
-            spriteRenderer.enabled = outroRatio < 1;
-        }
-        else
-        {
-            if (outroRatio >= 1)
-            {
-                Collect();
-                return;
-            }
+            Collect();
+            return;
         }
 
-        if (Game.SpawnedNotes.ContainsKey(fromNoteModel.id))
+        if (Game.SpawnedNotes.ContainsKey(FromNoteModel.id))
         {
-            var note = Game.SpawnedNotes[fromNoteModel.id];
+            var note = Game.SpawnedNotes[FromNoteModel.id];
             if (!note.IsCleared)
             {
                 if (note.Renderer is ClassicNoteRenderer classicNoteRenderer)
@@ -134,33 +133,38 @@ public class DragLineElement : MonoBehaviour
         }
 
         var time = Game.Time;
-        introRatio = (fromNoteModel.nextdraglinestoptime - time) /
-                     (fromNoteModel.nextdraglinestoptime - fromNoteModel.nextdraglinestarttime);
-        outroRatio = (time - fromNoteModel.start_time) / (toNoteModel.start_time - fromNoteModel.start_time);
+        introRatio = (FromNoteModel.nextdraglinestoptime - time) /
+                     (FromNoteModel.nextdraglinestoptime - FromNoteModel.nextdraglinestarttime);
+        outroRatio = (time - FromNoteModel.start_time) / (ToNoteModel.start_time - FromNoteModel.start_time);
 
         if (introRatio > 0 && introRatio < 1)
         {
-            spriteRenderer.material.SetFloat("_End", 1.0f - introRatio);
+            spriteRenderer.material.SetFloat(MaterialEnd, 1.0f - introRatio);
         }
         else if (introRatio <= 0)
         {
-            spriteRenderer.material.SetFloat("_End", 1.0f);
+            spriteRenderer.material.SetFloat(MaterialEnd, 1.0f);
         }
         else
         {
-            spriteRenderer.material.SetFloat("_End", 0.0f);
+            spriteRenderer.material.SetFloat(MaterialEnd, 0.0f);
         }
 
         if (outroRatio > 0 && outroRatio < 1)
         {
-            spriteRenderer.material.SetFloat("_Start", outroRatio);
+            spriteRenderer.material.SetFloat(MaterialStart, outroRatio);
         }
     }
 
     public void Collect()
     {
-        fromNoteModel = default;
-        toNoteModel = default;
+        if (IsCollected) return;
+        IsCollected = true;
+        
+        Game.ObjectPool.CollectDragLine(this);
+        Game.onGameUpdate.RemoveListener(OnGameUpdate);
+        FromNoteModel = default;
+        ToNoteModel = default;
         hasFromNote = default;
         fromNote = default;
         hasToNote = default;
@@ -168,7 +172,5 @@ public class DragLineElement : MonoBehaviour
         introRatio = default;
         outroRatio = default;
         length = default;
-        Game.ObjectPool.CollectDragLine(this);
-        Game.onGameUpdate.RemoveListener(OnGameUpdate);
     }
 }

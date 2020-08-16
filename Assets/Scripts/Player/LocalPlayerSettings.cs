@@ -108,6 +108,9 @@ public class LocalPlayerSettings
 
     [JsonProperty("display_storyboard_effects")]
     public bool DisplayStoryboardEffects { get; set; } = true;
+    
+    [JsonProperty("skip_music_on_completion")]
+    public bool SkipMusicOnCompletion { get; set; } = true;
 
     [JsonProperty("graphics_quality")]
     public GraphicsQuality GraphicsQuality { get; set; } =

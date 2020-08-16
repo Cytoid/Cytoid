@@ -152,13 +152,13 @@ public class GamePreparationScreen : Screen
                             {
                                 Dialog.PromptGoBack("DIALOG_COULD_NOT_ACCESS_LEVEL".Get());
                             }
-                            break;
+                            return;
                         case 451:
                             if (State == ScreenState.Active && !Level.IsLocal)
                             {
                                 Dialog.PromptGoBack("DIALOG_LEVEL_NO_LONGER_AVAILABLE".Get());
                             }
-                            break;
+                            return;
                     }
                 }
                 Debug.LogError($"Could not fetch level {Level.Id} meta");

@@ -21,7 +21,7 @@ public class ComboText : MonoBehaviour
         text.text = "";
         text.color = text.color.WithAlpha(0);
         game.onGameLoaded.AddListener(_ => OnGameLoaded());
-        game.onGameReadyToExit.AddListener(_ => OnGameReadyToExit());
+        game.onGameBeforeExit.AddListener(_ => OnGameBeforeExit());
     }
 
     protected void OnGameLoaded()
@@ -58,7 +58,7 @@ public class ComboText : MonoBehaviour
         }
     }
 
-    public void OnGameReadyToExit()
+    public void OnGameBeforeExit()
     {
         exited = true;
         text.DOFade(0, fadeDuration).SetEase(ease);

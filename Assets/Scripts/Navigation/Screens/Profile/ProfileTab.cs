@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using AwesomeCharts;
 using Cysharp.Threading.Tasks;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -49,6 +50,8 @@ public class ProfileTab : MonoBehaviour
     
     public List<Transform> pillRows;
     public Transform sectionParent;
+
+    public BadgeGrid badgeGrid;
 
     public FullProfile Profile { get; private set; }
 
@@ -136,6 +139,16 @@ public class ProfileTab : MonoBehaviour
         UpdateChart(ChartType.AvgRating);
         
         pillRows.ForEach(it => LayoutFixer.Fix(it));
+        var eventBadges = profile.GetEventBadges();
+        if (eventBadges.Any())
+        {
+            badgeGrid.gameObject.SetActive(true);
+            badgeGrid.SetModel(eventBadges);
+        }
+        else
+        {
+            badgeGrid.gameObject.SetActive(false);
+        }
 
         foreach (Transform child in recordSection.recordCardHolder) Destroy(child.gameObject);
         foreach (Transform child in levelSection.levelCardHolder) Destroy(child.gameObject);

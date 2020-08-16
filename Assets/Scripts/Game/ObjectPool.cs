@@ -21,6 +21,7 @@ public class ObjectPool
     private int initialDragLineObjectCount = 48;
 
     public readonly SortedDictionary<int, Note> SpawnedNotes = new SortedDictionary<int, Note>(); // Currently on-screen
+    public readonly SortedDictionary<int, DragLineElement> SpawnedDragLines = new SortedDictionary<int, DragLineElement>();
     
     private readonly Dictionary<NoteType, NotePoolItem> notePoolItems = new Dictionary<NoteType, NotePoolItem>();
     private readonly DragLinePoolItem dragLinePoolItem = new DragLinePoolItem();
@@ -114,6 +115,7 @@ public class ObjectPool
     
     public Note SpawnNote(ChartModel.Note model)
     {
+        if (SpawnedNotes.ContainsKey(model.id)) return SpawnedNotes[model.id];
         var note = Spawn(notePoolItems[(NoteType) model.type], new NoteInstantiateProvider{Type = (NoteType) model.type}, new NoteSpawnProvider{Model = model});
         SpawnedNotes[model.id] = note;
         return note;
@@ -121,7 +123,7 @@ public class ObjectPool
 
     public void CollectNote(Note note)
     {
-        if (!SpawnedNotes.ContainsKey(note.Model.id)) throw new ArgumentOutOfRangeException();
+        if (!SpawnedNotes.ContainsKey(note.Model.id)) return;
         Game.inputController.OnNoteCollected(note);
         Collect(notePoolItems[note.Type], note);
         SpawnedNotes.Remove(note.Model.id);
@@ -129,13 +131,16 @@ public class ObjectPool
 
     public DragLineElement SpawnDragLine(ChartModel.Note from, ChartModel.Note to)
     {
-        return Spawn(dragLinePoolItem, new PoolItemInstantiateProvider(),
+        if (SpawnedDragLines.ContainsKey(from.id)) return SpawnedDragLines[from.id];
+        return SpawnedDragLines[from.id] = Spawn(dragLinePoolItem, new PoolItemInstantiateProvider(),
             new DragLineSpawnProvider {From = from, To = to});
     }
 
     public void CollectDragLine(DragLineElement element)
     {
+        if (!SpawnedDragLines.ContainsKey(element.FromNoteModel.id)) return;
         Collect(dragLinePoolItem, element);
+        SpawnedDragLines.Remove(element.FromNoteModel.id);
     }
 
     public ParticleSystem SpawnEffect(EffectController.Effect effect, Vector3 position, Transform parent = default)

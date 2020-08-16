@@ -16,6 +16,18 @@ using UnityEngine.UI;
 
 public static class CommonExtensions
 {
+    
+    public static void Deconstruct<T1, T2>(this KeyValuePair<T1, T2> tuple, out T1 key, out T2 value)
+    {
+        key = tuple.Key;
+        value = tuple.Value;
+    }
+    
+    public static IEnumerable<T> Flatten<T>(this IEnumerable<T> source, Func<T, IEnumerable<T>> selector)
+    {
+        var list = source.ToList();
+        return list.SelectMany(c => selector(c).Flatten(selector)).Concat(list);
+    }
 
     public static void Split(this string str, char separator, out string var1, out string var2)
     {
@@ -32,6 +44,15 @@ public static class CommonExtensions
         var1 = array[0];
         var2 = array[1];
         var3 = array[2];
+    }
+    
+    public static void Split(this string str, char separator, out string var1, out string var2, out string var3, out string var4)
+    {
+        var array = str.Split(separator);
+        var1 = array[0];
+        var2 = array[1];
+        var3 = array[2];
+        var4 = array[3];
     }
 
     /**
@@ -781,7 +802,7 @@ public static class CommonExtensions
         return HslColor.FromRgbColor(color);
     }
 
-    public static List<T> ListOf<T>(this object self, params T[] objects)
+    public static List<T> ListOf<T>(this object _, params T[] objects)
     {
         return objects.ToList();
     }

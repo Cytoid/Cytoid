@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -7,6 +8,10 @@ namespace Cytoid.Storyboard
     public abstract class StoryboardComponentRenderer
     {
         public Object Component { get; protected set; }
+        
+        public List<StoryboardComponentRenderer> Children = new List<StoryboardComponentRenderer>();
+
+        public StoryboardComponentRenderer Parent;
         
         public abstract Transform Transform { get; }
         
@@ -88,6 +93,9 @@ namespace Cytoid.Storyboard
             UpdateEquivalentTransform();
         }
 
+        /*
+         * TODO: Refactor this? Seems unnecessary since StoryboardRenderer.SpawnObjects does the same job
+         */
         protected T GetTargetRenderer<T>() where T : StoryboardComponentRenderer
         {
             if (Component.TargetId != null)
@@ -196,11 +204,6 @@ namespace Cytoid.Storyboard
         {
             if (Component.ParentId != null)
             {
-                if (!MainRenderer.ComponentRenderers.ContainsKey(Component.ParentId))
-                {
-                    throw new InvalidOperationException($"Storyboard: parent_id \"{Component.ParentId}\" does not exist");
-                }
-
                 var parentRenderer = MainRenderer.ComponentRenderers[Component.ParentId];
                 return IsOnCanvas ? parentRenderer.CanvasTransform : parentRenderer.WorldTransform;
             }

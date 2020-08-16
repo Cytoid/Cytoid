@@ -183,6 +183,11 @@ public static class SettingsFactory
                 () => lp.Settings.DisplayStoryboardEffects, it => lp.Settings.DisplayStoryboardEffects = it)
             .SaveSettingsOnChange();
         
+        Object.Instantiate(provider.pillRadioGroupPreferenceElement, parent)
+            .SetContent("SETTINGS_SKIP_MUSIC_ON_COMPLETION".Get(), "SETTINGS_SKIP_MUSIC_ON_COMPLETION_DESC".Get(),
+                () => lp.Settings.SkipMusicOnCompletion, it => lp.Settings.SkipMusicOnCompletion = it)
+            .SaveSettingsOnChange();
+        
         Object.Instantiate(provider.inputPreferenceElement, parent)
             .SetContent("SETTINGS_BASE_NOTE_OFFSET".Get(), "SETTINGS_BASE_NOTE_OFFSET_DESC".Get(),
                 () => lp.Settings.BaseNoteOffset, it => lp.Settings.BaseNoteOffset = it,
@@ -218,28 +223,6 @@ public static class SettingsFactory
                         if (!sceneLoader.IsLoaded) await UniTask.WaitUntil(() => sceneLoader.IsLoaded);
                         sceneLoader.Activate();
                     });
-            Object.Instantiate(provider.buttonPreferenceElement, parent)
-                .SetContent("SETTINGS_BASIC_TUTORIAL".Get(), "SETTINGS_BASIC_TUTORIAL_DESC".Get(),
-                    "SETTINGS_BUTTON_ENTER".Get(),
-                    () =>
-                    {
-                        if (!Context.Player.ShouldEnableDebug())
-                        {
-                            Dialog.PromptAlert("Coming soon.");
-                            return;
-                        }
-
-                        Context.ScreenManager.ChangeScreen(Context.ScreenManager.PopAndPeekHistory(),
-                            ScreenTransition.Out);
-                        
-                        var intro = Resources.Load<TextAsset>("Stories/Intro");
-                        var story = new Story(intro.text);
-                        DialogueOverlay.Show(story);
-                    });
-            Object.Instantiate(provider.buttonPreferenceElement, parent)
-                .SetContent("SETTINGS_ADVANCED_TUTORIAL".Get(), "SETTINGS_ADVANCED_TUTORIAL_DESC".Get(),
-                    "SETTINGS_BUTTON_ENTER".Get(),
-                    () => Dialog.PromptAlert("Coming soon."));
         }
     }
 

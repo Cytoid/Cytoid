@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Cytoid.Storyboard.Texts
 {
@@ -7,6 +8,7 @@ namespace Cytoid.Storyboard.Texts
     {
         private TextRenderer TextRenderer { get; }
         private UnityEngine.UI.Text Text => TextRenderer.Text;
+        private LetterSpacing LetterSpacing => TextRenderer.LetterSpacing;
         private RectTransform RectTransform => TextRenderer.RectTransform;
         private Canvas Canvas => TextRenderer.Canvas;
         private CanvasGroup CanvasGroup => TextRenderer.CanvasGroup;
@@ -129,6 +131,19 @@ namespace Cytoid.Storyboard.Texts
             {
                 Text.alignment =
                     (TextAnchor) Enum.Parse(typeof(TextAnchor), From.Align, true);
+            }
+            
+            // Letter spacing
+            if (From.LetterSpacing != null)
+            {
+                LetterSpacing.enabled = true;
+                LetterSpacing.Spacing = EaseFloat(From.LetterSpacing, To.LetterSpacing);
+            }
+            
+            // Font weight
+            if (From.FontWeight != null)
+            {
+                Text.font = From.FontWeight.Value.GetFont();
             }
 
             // Layer

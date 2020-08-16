@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.UI;
 using static UnityEngine.Object;
 
 namespace Cytoid.Storyboard.Texts
@@ -9,12 +10,14 @@ namespace Cytoid.Storyboard.Texts
         
         public UnityEngine.UI.Text Text { get; private set; }
         
+        public LetterSpacing LetterSpacing { get; private set; }
+        
         public RectTransform RectTransform { get; private set; }
         
         public Canvas Canvas { get; private set; }
         
         public CanvasGroup CanvasGroup { get; private set; }
-        
+
         public TextRenderer(StoryboardRenderer mainRenderer, Text component) : base(mainRenderer, component)
         {
         }
@@ -29,6 +32,7 @@ namespace Cytoid.Storyboard.Texts
             if (targetRenderer != null)
             {
                 Text = targetRenderer.Text;
+                LetterSpacing = targetRenderer.LetterSpacing;
                 RectTransform = targetRenderer.RectTransform;
                 Canvas = targetRenderer.Canvas;
                 CanvasGroup = targetRenderer.CanvasGroup;
@@ -37,6 +41,8 @@ namespace Cytoid.Storyboard.Texts
             {
                 Text = Instantiate(Provider.TextPrefab, GetParentTransform());
                 RectTransform = Text.rectTransform;
+                LetterSpacing = Text.GetComponent<LetterSpacing>();
+                LetterSpacing.enabled = false;
                 Canvas = Text.GetComponent<Canvas>();
                 Canvas.overrideSorting = true;
                 Canvas.sortingLayerName = "Storyboard1";
@@ -54,6 +60,8 @@ namespace Cytoid.Storyboard.Texts
             Text.fontSize = 20;
             Text.alignment = TextAnchor.MiddleCenter;
             Text.color = UnityEngine.Color.white;
+            LetterSpacing.enabled = false;
+            LetterSpacing.Spacing = 0;
             CanvasGroup.alpha = 0;
             IsTransformActive = false;
         }
@@ -63,6 +71,6 @@ namespace Cytoid.Storyboard.Texts
             Destroy(Text.gameObject);
             Text = null;
         }
-        
+
     }
 }

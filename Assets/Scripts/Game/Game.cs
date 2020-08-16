@@ -75,7 +75,7 @@ public class Game : MonoBehaviour
     public GameEvent onGameUnpaused = new GameEvent();
     public GameEvent onGameFailed = new GameEvent();
     public GameEvent onGameCompleted = new GameEvent();
-    public GameEvent onGameReadyToExit = new GameEvent();
+    public GameEvent onGameBeforeExit = new GameEvent();
     public GameEvent onGameAborted = new GameEvent();
     public GameEvent onGameRetried = new GameEvent();
     public NoteEvent onNoteClear = new NoteEvent();
@@ -251,13 +251,6 @@ public class Game : MonoBehaviour
             mods.Add(Mod.Auto);
         }
         
-        var ratio = UnityEngine.Screen.width * 1.0f / UnityEngine.Screen.height;
-        var height = camera.orthographicSize * 2.0f;
-        var width = height * ratio;
-        const float topRatio = 0.0966666f;
-        const float bottomRatio = 0.07f;
-        var verticalRatio = 1 - width * (topRatio + bottomRatio) / height + (3 - Context.Player.Settings.VerticalMargin) * 0.05f;
-        var verticalOffset = -(width * (topRatio - (topRatio + bottomRatio) / 2.0f));
         Chart = new Chart(
             chartText,
             mods.Contains(Mod.FlipX) || mods.Contains(Mod.FlipAll),
@@ -265,10 +258,7 @@ public class Game : MonoBehaviour
             true,
             Context.Player.Settings.UseExperimentalNoteAr,
             mods.Contains(Mod.Fast) ? 1.5f : (mods.Contains(Mod.Slow) ? 0.75f : 1),
-            camera.orthographicSize,
-            0.8f + (5 - Context.Player.Settings.HorizontalMargin - 1) * 0.02f,
-            verticalRatio,
-            verticalOffset
+            camera.orthographicSize
         );
         ChartLength = Chart.Model.note_list.Max(it => it.end_time);
         foreach (var type in (NoteType[]) Enum.GetValues(typeof(NoteType)))
@@ -307,6 +297,7 @@ public class Game : MonoBehaviour
             {
                 var storyboardText = File.ReadAllText(StoryboardPath);
                 Storyboard = new Cytoid.Storyboard.Storyboard(this, storyboardText);
+                Storyboard.Parse();
                 await Storyboard.Initialize();
                 print($"Loaded storyboard from {StoryboardPath}");
             }
@@ -444,7 +435,11 @@ public class Game : MonoBehaviour
         {
             if (State.ClearCount >= Chart.Model.note_list.Count) Complete();
 
-            SynchronizeMusic();
+            if (!State.IsCompleted || !Music.IsFinished())
+            {
+                SynchronizeMusic();
+            }
+
             MusicProgress = Time / MusicLength;
             ChartProgress = Time / ChartLength;
 
@@ -673,18 +668,29 @@ public class Game : MonoBehaviour
         {
             var maxVolume = Music.Volume;
             var volume = Music.Volume * 3f;
+            
             // Wait for audio to finish
+            var remainingLength = MusicLength - Music.PlaybackTime;
+            var startTime = DateTime.Now;
             await UniTask.WaitUntil(() =>
             {
-                volume -= 1 / 60f;
-                if (volume < 1)
+                if (Chart.SkipMusicOnCompletion)
                 {
-                    Music.Volume = Math.Min(maxVolume, volume);
+                    volume -= 1 / 60f;
+                    if (volume < 1)
+                    {
+                        Music.Volume = Math.Min(maxVolume, volume);
+                    }
+                    return Music.IsFinished() || volume <= 0;
                 }
-
-                return volume <= 0 || Music.IsFinished();
+                else
+                {
+                    return Music.IsFinished() ||
+                           DateTime.Now - startTime > TimeSpan.FromSeconds(remainingLength); // Just as a fail-safe
+                }
             });
         }
+        State.IsReadyToExit = true;
 
         print("Audio ended");
         Context.AudioManager.Unload("Level");
@@ -696,8 +702,8 @@ public class Game : MonoBehaviour
         catch (OperationCanceledException)
         {
         }
-
-        onGameReadyToExit.Invoke(this);
+        
+        onGameBeforeExit.Invoke(this);
         
         await Resources.UnloadUnusedAssets();
         Dispose();

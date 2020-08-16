@@ -20,6 +20,7 @@ public sealed class GameState
     public bool IsPlaying { get; set; }
     
     public bool IsCompleted { get; set; }
+    public bool IsReadyToExit { get; set; }
     
     public bool IsFailed { get; set; }
     public HashSet<Mod> Mods { get; }
@@ -83,7 +84,8 @@ public sealed class GameState
     };
     private static readonly HashSet<Mod> DisallowedCalibrationMods = new HashSet<Mod>
     {
-        Mod.Auto, Mod.AutoDrag, Mod.AutoFlick, Mod.AutoHold
+        Mod.Auto, Mod.AutoDrag, Mod.AutoFlick, Mod.AutoHold,
+        Mod.AP, Mod.FC, Mod.Hard, Mod.ExHard
     };
     
     public GameState(Game game, GameMode mode, HashSet<Mod> mods)
@@ -101,7 +103,7 @@ public sealed class GameState
         
         UseHealthSystem = Mods.Contains(Mod.Hard) || Mods.Contains(Mod.ExHard) || mode == GameMode.Tier;
         MaxHealth = DifficultyLevel * 75;
-        if (MaxHealth < 0) MaxHealth = 1000;
+        if (MaxHealth <= 0) MaxHealth = 1000;
         Health = MaxHealth;
         
         switch (mode)

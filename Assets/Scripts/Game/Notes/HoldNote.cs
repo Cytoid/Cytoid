@@ -21,6 +21,8 @@ public class HoldNote : Note
 
     public override void Collect()
     {
+        if (IsCollected) return;
+        
         HoldingStartTime = float.MaxValue;
         HeldDuration = default;
         HoldProgress = default;

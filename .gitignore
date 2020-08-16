@@ -113,10 +113,8 @@ TPS_cache/
 /Assets/Plugins/UniTask.meta
 /Assets/Plugins/Sirenix/
 /Assets/Plugins/Sirenix.meta
-/Assets/Resources/Stories/Characters/Nut/
-/Assets/Resources/Stories/Characters/Tira/
-/Assets/Resources/Stories/Characters/Nut.meta
-/Assets/Resources/Stories/Characters/Tira.meta
+/Assets/Resources/Stories/Characters
+/Assets/Resources/Stories/Characters.meta
 /Assets/InkLibrary.asset
 /Assets/InkLibrary.asset.meta
 /Assets/InkSettings.asset

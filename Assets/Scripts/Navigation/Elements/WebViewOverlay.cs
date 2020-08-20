@@ -9,6 +9,7 @@ public class WebViewOverlay : SingletonMonoBehavior<WebViewOverlay>
     [GetComponent] public CanvasGroup canvasGroup;
 
     public InteractableMonoBehavior closeButton;
+    public Action onFullyHidden = null;
 
     private void Start()
     {
@@ -22,26 +23,21 @@ public class WebViewOverlay : SingletonMonoBehavior<WebViewOverlay>
         closeButton.onPointerClick.AddListener(_ => Hide());
     }
 
-    private int s = 3;
     private WebViewObject webView => WebViewHolder.Instance.webView;
 
     public void Open(string url)
     {
         webView.SetVisibility(true);
-        var k = "";
-        for (var i = 0; i < s; i++) k += "/";
-        s++;
-        webView.LoadURL($"https://cytoid.github.io/test{k}test.html");
-        webView.EvaluateJS("location.reload()");
+        webView.SetURLPattern(".*artifacts\\.cytoid\\.io.*", "Never!", ".*");
+        webView.LoadURL(url);
     }
 
     public void Close()
     {
-        webView.SetVisibility(false);
         webView.EvaluateJS(@"FadeOut()");
     }
     
-    public static async void Show(float duration = 0.4f, Action onFullyShown = null)
+    public static async void Show(string url, float duration = 0.4f, Action onFullyShown = null, Action onFullyHidden = null)
     {
         Instance.Apply(it =>
         {
@@ -54,13 +50,14 @@ public class WebViewOverlay : SingletonMonoBehavior<WebViewOverlay>
             it.canvasGroup.DOKill();
             it.canvasGroup.DOFade(1, duration).SetEase(Ease.OutCubic);
             Context.SetMajorCanvasBlockRaycasts(false);
-            it.Open("");
+            it.Open(url);
         });
         if (onFullyShown != null)
         {
             await UniTask.Delay(TimeSpan.FromSeconds(duration));
             onFullyShown();
         }
+        Instance.onFullyHidden = onFullyHidden;
     }
 
     public static async void Hide(float duration = 0.4f, Action onFullyHidden = null) {
@@ -76,11 +73,9 @@ public class WebViewOverlay : SingletonMonoBehavior<WebViewOverlay>
         await UniTask.Delay(TimeSpan.FromSeconds(duration));
         Instance.canvas.enabled = false;
         Instance.canvasGroup.enabled = false;
-        if (onFullyHidden != null)
-        {
-            Instance.webView.EvaluateJS("location.reload()"); // Stop any embedded audio/video
-            Instance.webView.SetVisibility(false);
-            onFullyHidden();
-        }
+        Instance.webView.LoadURL("about:blank");
+        Instance.webView.SetVisibility(false);
+        if (onFullyHidden == null) onFullyHidden = Instance.onFullyHidden;
+        onFullyHidden?.Invoke();
     }
 }

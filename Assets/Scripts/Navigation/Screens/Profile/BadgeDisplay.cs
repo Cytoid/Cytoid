@@ -8,8 +8,10 @@ using UnityEngine.UI;
 public class BadgeDisplay : InteractableMonoBehavior
 {
 
-    public Image image;
-
+    [GetComponent] public Image image;
+    [GetComponent] public GraphicRaycaster graphicRaycaster;
+    public bool interactable = true;
+    
     private Badge badge;
     private CancellationTokenSource tokenSource;
 
@@ -20,20 +22,21 @@ public class BadgeDisplay : InteractableMonoBehavior
 
     public void Clear()
     {
-        if (badge == null) return;
         badge = null;
         tokenSource?.Cancel();
         tokenSource = null;
         image.DOKill();
         image.sprite = null;
         image.SetAlpha(0.7f);
+        graphicRaycaster.enabled = false;
     }
 
     public void SetModel(Badge badge)
     {
         this.badge = badge;
         LoadImage();
-        onPointerClick.SetListener(_ =>
+        graphicRaycaster.enabled = interactable;
+        if (interactable) onPointerClick.SetListener(_ =>
         {
             DialogueOverlay.CurrentBadge = badge;
             var story = new Story(Resources.Load<TextAsset>("Stories/Badge").text);

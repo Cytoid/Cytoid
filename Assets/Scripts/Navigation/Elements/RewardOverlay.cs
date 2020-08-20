@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DG.Tweening;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -10,10 +11,11 @@ public class RewardOverlay : SingletonMonoBehavior<RewardOverlay>
     [GetComponent] public Canvas canvas;
     [GetComponent] public CanvasGroup canvasGroup;
     public InteractableMonoBehavior detectionArea;
-    public Text message;
+    public Text topMessage;
     public CharacterDisplay characterDisplay;
-    public Text characterName;
+    public Text bottomMessage;
     public LevelCard levelCard;
+    public BadgeDisplay badgeDisplay;
 
     private void Start()
     {
@@ -24,8 +26,9 @@ public class RewardOverlay : SingletonMonoBehavior<RewardOverlay>
         canvasGroup.alpha = 0;
         canvasGroup.blocksRaycasts = false;
         canvasGroup.interactable = false;
-        message.text = "";
-        characterName.text = "";
+        topMessage.text = "";
+        bottomMessage.text = "";
+        badgeDisplay.gameObject.SetActive(false);
     }
 
     private async UniTask Enter()
@@ -56,27 +59,38 @@ public class RewardOverlay : SingletonMonoBehavior<RewardOverlay>
 
     public static void Show(List<OnlinePlayerStateChange.Reward> rewards)
     {
+        rewards = rewards.OrderBy(it => it.Type).ToList();
         Instance.Apply(async it =>
         {
             var entered = false;
             foreach (var reward in rewards)
             {
+                if (reward.Type == OnlinePlayerStateChange.Reward.RewardType.Badge)
+                {
+                    var badge = reward.badgeValue.Value;
+                    if (badge.type != BadgeType.Event) continue; // Only support event badges at the moment
+                }
+                
                 switch (reward.Type)
                 {
                     case OnlinePlayerStateChange.Reward.RewardType.Level:
-                        it.message.text = "REWARD_LEVEL_ADDED_TO_LIBRARY".Get();
+                        it.topMessage.text = "REWARD_LEVEL_ADDED_TO_LIBRARY".Get();
                         it.levelCard.gameObject.SetActive(true);
                         it.levelCard.SetModel(reward.onlineLevelValue.Value.ToLevel(LevelType.User));
                         break;
                     case OnlinePlayerStateChange.Reward.RewardType.Character:
-                        it.message.text = "REWARD_CHARACTER_UNLOCKED".Get();
-                        it.characterName.gameObject.SetActive(true);
-                        it.characterName.text = reward.characterValue.Value.Name;
+                        it.topMessage.text = "REWARD_CHARACTER_UNLOCKED".Get();
+                        it.bottomMessage.text = reward.characterValue.Value.Name;
                         it.characterDisplay.gameObject.SetActive(true);
                         it.characterDisplay.Load(CharacterAsset.GetTachieBundleId(reward.characterValue.Value.AssetId));
                         break;
+                    case OnlinePlayerStateChange.Reward.RewardType.Badge:
+                        it.topMessage.text = "REWARD_BADGE_UNLOCKED".Get();
+                        it.bottomMessage.text = reward.badgeValue.Value.title;
+                        it.badgeDisplay.gameObject.SetActive(true);
+                        it.badgeDisplay.SetModel(reward.badgeValue.Value);
+                        break;
                 }
-                
                 Context.AudioManager.Get("Unlock").Play();
 
                 if (!entered)
@@ -85,7 +99,7 @@ public class RewardOverlay : SingletonMonoBehavior<RewardOverlay>
                     entered = true;
                 }
 
-                var elements = new List<TransitionElement>{it.message.GetComponent<TransitionElement>()};
+                var elements = new List<TransitionElement>{it.topMessage.GetComponent<TransitionElement>()};
                 switch (reward.Type)
                 {
                     case OnlinePlayerStateChange.Reward.RewardType.Level:
@@ -93,7 +107,11 @@ public class RewardOverlay : SingletonMonoBehavior<RewardOverlay>
                         break;
                     case OnlinePlayerStateChange.Reward.RewardType.Character:
                         elements.Add(it.characterDisplay.GetComponent<TransitionElement>());
-                        elements.Add(it.characterName.GetComponent<TransitionElement>());
+                        elements.Add(it.bottomMessage.GetComponent<TransitionElement>());
+                        break;
+                    case OnlinePlayerStateChange.Reward.RewardType.Badge:
+                        elements.Add(it.badgeDisplay.GetComponent<TransitionElement>());
+                        elements.Add(it.bottomMessage.GetComponent<TransitionElement>());
                         break;
                 }
                 elements.ForEach(x => x.Enter());
@@ -120,11 +138,16 @@ public class RewardOverlay : SingletonMonoBehavior<RewardOverlay>
                     case OnlinePlayerStateChange.Reward.RewardType.Character:
                         it.characterDisplay.Unload();
                         break;
+                    case OnlinePlayerStateChange.Reward.RewardType.Badge:
+                        it.badgeDisplay.Clear();
+                        it.badgeDisplay.gameObject.SetActive(false);
+                        break;
                 }
+                
+                it.topMessage.text = "";
+                it.bottomMessage.text = "";
             }
             await it.Leave();
-            it.message.text = "";
-            it.characterName.text = "";
         });
     }
     

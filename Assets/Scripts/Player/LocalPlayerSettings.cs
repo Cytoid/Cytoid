@@ -145,6 +145,9 @@ public class LocalPlayerSettings
     
     [JsonProperty("set_triggers")]
     public HashSet<string> SetTriggers { get; set; } = new HashSet<string>();
+    
+    [JsonProperty("seen_events")]
+    public HashSet<string> SeenEvents { get; set; } = new HashSet<string>();
 
 }
 

@@ -167,8 +167,13 @@ public sealed class GameState
             Error = 0,
         };
         Combo = MaxCombo = noteCount;
+#if UNITY_EDITOR
+        Score = 1000000;
+        Accuracy = 1.000000;
+#else
         Score = 0;
         Accuracy = 0.000000;
+#endif
     }
 
     public void Judge(Note note, NoteGrade grade, double error, double greatGradeWeight)

@@ -24,6 +24,7 @@ public class StartupLogger : SingletonMonoBehavior<StartupLogger>
         if (isInitialized) return;
         isInitialized = true;
         Application.logMessageReceived += OnLogMessageReceived;
+        DontDestroyOnLoad(gameObject);
     }
 
     public void Dispose()
@@ -33,6 +34,7 @@ public class StartupLogger : SingletonMonoBehavior<StartupLogger>
         Save();
         entries.Clear();
         Application.logMessageReceived -= OnLogMessageReceived;
+        Destroy(this);
     }
 
     private void OnApplicationFocus(bool hasFocus)

@@ -13,7 +13,7 @@ public static class LocalizationExtensions
         switch (language)
         {
             case Language.English:
-                return "en-US";
+                return "en";
             case Language.Czech:
                 return "cs";
             case Language.Spanish:
@@ -33,7 +33,7 @@ public static class LocalizationExtensions
             case Language.Simplified_Chinese:
                 return "zh-CN";
             case Language.Traditional_Chinese:
-                return "zh-HK";
+                return "zh-TW";
             case Language.Japanese:
                 return "ja";
             case Language.Korean:
@@ -41,7 +41,7 @@ public static class LocalizationExtensions
             case Language.Fujaoese:
                 return "zh-CN";
             default:
-                return "en-US";
+                return "en";
         }
     }
     

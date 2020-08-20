@@ -17,6 +17,13 @@ using UnityEngine.UI;
 public static class CommonExtensions
 {
     
+    public static IEnumerable<(TFirst, TSecond)> Zip<TFirst, TSecond>(
+        this IEnumerable<TFirst> first,
+        IEnumerable<TSecond> second)
+    {
+        return first.Zip(second, (a, b) => (a, b));
+    }
+    
     public static void Deconstruct<T1, T2>(this KeyValuePair<T1, T2> tuple, out T1 key, out T2 value)
     {
         key = tuple.Key;
@@ -560,6 +567,25 @@ public static class CommonExtensions
         Debug.Log(JsonConvert.SerializeObject(obj));
     }
 
+    public static IPromise<T> AbortOnScreenBecameInactive<T>(this IPromise<T> promise, Screen screen)
+    {
+        var isAborted = false;
+        void SetAbort() => isAborted = true;
+        screen.onScreenBecameInactive.AddListener(SetAbort);
+        return promise.Then(data =>
+        {
+            if (screen == null || isAborted)
+            {
+                throw new RequestAbortedException();
+            }
+            return data;
+        }).Finally(() =>
+        {
+            if (screen == null) return;
+            screen.onScreenBecameInactive.RemoveListener(SetAbort);
+        });
+    }
+
     public static IPromise<T> CatchRequestError<T>(this IPromise<T> promise, Func<RequestException, T> onRejected)
     {
         return promise.Catch(exception =>
@@ -595,6 +621,11 @@ public static class CommonExtensions
     {
         return promise.Catch(exception =>
         {
+            if (exception is RequestAbortedException)
+            {
+                Debug.Log("Request canceled by promise");
+                return;
+            }
             if (exception is RequestException requestException)
             {
                 onRejected(requestException);

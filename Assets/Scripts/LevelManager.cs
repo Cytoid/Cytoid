@@ -428,7 +428,7 @@ public class LevelManager
                     continue;
                 }
 
-                if (LoadedLocalLevels.ContainsKey(meta.id))
+                if (type != LevelType.Temp && LoadedLocalLevels.ContainsKey(meta.id))
                 {
                     if (LoadedLocalLevels[meta.id].Type != LevelType.User && type == LevelType.User)
                     {
@@ -472,88 +472,97 @@ public class LevelManager
                 level.SaveRecord();
                 timer.Time("LevelRecord");
 
-                LoadedLocalLevels[meta.id] = level;
-                loadedPaths.Add(path);
                 results.Add(level);
 
-                if (!File.Exists(level.Path + CoverThumbnailFilename))
+                if (type != LevelType.Temp)
                 {
-                    var thumbnailPath = "file://" + level.Path + level.Meta.background.path;
+                    LoadedLocalLevels[meta.id] = level;
+                    loadedPaths.Add(path);
 
-                    if (lowMemory)
+                    // Generate thumbnail
+                    if (!File.Exists(level.Path + CoverThumbnailFilename))
                     {
-                        // Give up
-                        Debug.LogWarning($"Low memory!");
-                        Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {jsonPath}");
-                        continue;
-                    }
+                        var thumbnailPath = "file://" + level.Path + level.Meta.background.path;
 
-                    using (var request = UnityWebRequest.Get(thumbnailPath))
-                    {
-                        await request.SendWebRequest();
-                        if (request.isNetworkError || request.isHttpError)
-                        {
-                            Debug.LogWarning(request.error);
-                            Debug.LogWarning($"Cannot get background texture from {thumbnailPath}");
-                            Debug.LogWarning($"Skipped generating thumbnail for {index + 1}/{jsonPaths.Count}: {meta.id} ({path})");
-                            continue;
-                        }
-
-                        var coverTexture = request.downloadHandler.data.ToTexture2D();
-                        if (coverTexture == null)
-                        {
-                            Debug.LogWarning(request.error);
-                            Debug.LogWarning($"Cannot get background texture from {thumbnailPath}");
-                            Debug.LogWarning($"Skipped generating thumbnail for {index + 1}/{jsonPaths.Count}: {meta.id} ({path})");
-                            continue;
-                        }
-                        
                         if (lowMemory)
                         {
                             // Give up
-                            Object.Destroy(coverTexture);
                             Debug.LogWarning($"Low memory!");
                             Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {jsonPath}");
                             continue;
                         }
 
-                        var croppedTexture = TextureScaler.FitCrop(coverTexture, Context.LevelThumbnailWidth,
-                            Context.LevelThumbnailHeight);
-                        
-                        if (lowMemory)
+                        using (var request = UnityWebRequest.Get(thumbnailPath))
                         {
-                            // Give up
+                            await request.SendWebRequest();
+                            if (request.isNetworkError || request.isHttpError)
+                            {
+                                Debug.LogWarning(request.error);
+                                Debug.LogWarning($"Cannot get background texture from {thumbnailPath}");
+                                Debug.LogWarning(
+                                    $"Skipped generating thumbnail for {index + 1}/{jsonPaths.Count}: {meta.id} ({path})");
+                                continue;
+                            }
+
+                            var coverTexture = request.downloadHandler.data.ToTexture2D();
+                            if (coverTexture == null)
+                            {
+                                Debug.LogWarning(request.error);
+                                Debug.LogWarning($"Cannot get background texture from {thumbnailPath}");
+                                Debug.LogWarning(
+                                    $"Skipped generating thumbnail for {index + 1}/{jsonPaths.Count}: {meta.id} ({path})");
+                                continue;
+                            }
+
+                            if (lowMemory)
+                            {
+                                // Give up
+                                Object.Destroy(coverTexture);
+                                Debug.LogWarning($"Low memory!");
+                                Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {jsonPath}");
+                                continue;
+                            }
+
+                            var croppedTexture = TextureScaler.FitCrop(coverTexture, Context.LevelThumbnailWidth,
+                                Context.LevelThumbnailHeight);
+
+                            if (lowMemory)
+                            {
+                                // Give up
+                                Object.Destroy(coverTexture);
+                                Object.Destroy(croppedTexture);
+                                Debug.LogWarning($"Low memory!");
+                                Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {jsonPath}");
+                                continue;
+                            }
+
+                            var bytes = croppedTexture.EncodeToJPG();
                             Object.Destroy(coverTexture);
                             Object.Destroy(croppedTexture);
-                            Debug.LogWarning($"Low memory!");
-                            Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {jsonPath}");
-                            continue;
-                        }
-                        
-                        var bytes = croppedTexture.EncodeToJPG();
-                        Object.Destroy(coverTexture);
-                        Object.Destroy(croppedTexture);
 
-                        await UniTask.DelayFrame(0); // Reduce load to prevent crash
-
-                        try
-                        {
-                            File.WriteAllBytes(level.Path + CoverThumbnailFilename, bytes);
-                            Debug.Log($"Thumbnail generated {index + 1}/{jsonPaths.Count}: {level.Id} ({thumbnailPath})");
-                            
                             await UniTask.DelayFrame(0); // Reduce load to prevent crash
+
+                            try
+                            {
+                                File.WriteAllBytes(level.Path + CoverThumbnailFilename, bytes);
+                                Debug.Log(
+                                    $"Thumbnail generated {index + 1}/{jsonPaths.Count}: {level.Id} ({thumbnailPath})");
+
+                                await UniTask.DelayFrame(0); // Reduce load to prevent crash
+                            }
+                            catch (Exception e)
+                            {
+                                Debug.LogWarning(e);
+                                Debug.LogWarning($"Could not write to {level.Path + CoverThumbnailFilename}");
+                                Debug.LogWarning(
+                                    $"Skipped generating thumbnail for {index + 1}/{jsonPaths.Count} from {jsonPath}");
+                            }
                         }
-                        catch (Exception e)
-                        {
-                            Debug.LogWarning(e);
-                            Debug.LogWarning($"Could not write to {level.Path + CoverThumbnailFilename}");
-                            Debug.LogWarning($"Skipped generating thumbnail for {index + 1}/{jsonPaths.Count} from {jsonPath}");
-                        }
+
+                        timer.Time("Generate thumbnail");
                     }
-
-                    timer.Time("Generate thumbnail");
                 }
-
+                
                 Debug.Log($"Loaded {index + 1}/{jsonPaths.Count}: {meta.id} ");
             }
             catch (Exception e)

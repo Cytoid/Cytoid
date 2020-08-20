@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -29,53 +30,67 @@ public class BundleManager
         }
     }
     private static string CachedCatalogPath => Application.temporaryCachePath + "/cached_catalog.json";
-    
-    public static readonly List<string> BuiltInBundles = new List<string>
-    {
-        "character_sayaka",
-        "character_sayaka_tachie",
-        "character_kaede_tachie"
-    };
 
     public async UniTask Initialize()
     {
-        var cachedCatalog = File.Exists(CachedCatalogPath);
-        var path = cachedCatalog ? "file://" + CachedCatalogPath : BuiltInCatalogPath;
-        Debug.Log($"[BundleManager] Reading catalog from {path}");
-        var request = UnityWebRequest.Get(path);
-        using (request)
+        // Get built-in catalog first
+        BundleCatalog builtInCatalog;
+        using (var request = UnityWebRequest.Get(BuiltInCatalogPath))
         {
-            var valid = true;
-            try
+            await request.SendWebRequest();
+            var text = Encoding.UTF8.GetString(request.downloadHandler.data);
+            builtInCatalog = new BundleCatalog(JObject.Parse(text));
+        }
+        
+        // Then the cached catalog
+        if (File.Exists(CachedCatalogPath))
+        {
+            Debug.Log($"[BundleManager] Reading cached catalog from {CachedCatalogPath}");
+            using (var request = UnityWebRequest.Get("file://" + CachedCatalogPath))
             {
-                await request.SendWebRequest();
-                if (request.isHttpError || request.isNetworkError)
+                var valid = true;
+                try
                 {
-                    throw new Exception(request.error);
-                }
-                var text = Encoding.UTF8.GetString(request.downloadHandler.data);
-                Catalog = new BundleCatalog(JObject.Parse(text));
-                foreach (var bundle in BuiltInBundles)
-                {
-                    if (!Catalog.ContainsEntry(bundle)) valid = false;
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning(e);
-                valid = false;
-            }
-
-            if (!valid)
-            {
-                Debug.Log($"[BundleManager] Invalid cached catalog! Reading from StreamingAssets");
-                using (var request2 = UnityWebRequest.Get(BuiltInCatalogPath))
-                {
-                    await request2.SendWebRequest();
-                    var text = Encoding.UTF8.GetString(request2.downloadHandler.data);
+                    await request.SendWebRequest();
+                    if (request.isHttpError || request.isNetworkError)
+                    {
+                        throw new Exception(request.error);
+                    }
+                    var text = Encoding.UTF8.GetString(request.downloadHandler.data);
                     Catalog = new BundleCatalog(JObject.Parse(text));
+                    foreach (var bundleName in builtInCatalog.GetEntryNames())
+                    {
+                        if (!Catalog.ContainsEntry(bundleName))
+                        {
+                            valid = false;
+                            break;
+                        }
+
+                        var cachedVersion = Catalog.GetEntry(bundleName).version;
+                        var builtInVersion = builtInCatalog.GetEntry(bundleName).version;
+                        if (builtInVersion > cachedVersion)
+                        {
+                            Debug.Log($"[BundleManager] Bumping {bundleName} from {cachedVersion} to {builtInVersion}");
+                            Catalog.SetEntry(bundleName, Catalog.GetEntry(bundleName).JsonDeepCopy().Also(it => it.version = builtInVersion));
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning(e);
+                    valid = false;
+                }
+
+                if (!valid)
+                {
+                    Debug.Log($"[BundleManager] Invalid cached catalog! Using built-in catalog");
+                    Catalog = builtInCatalog;
                 }
             }
+        }
+        else
+        {
+            Catalog = builtInCatalog;
         }
         
         var cachePaths = new List<string>();
@@ -83,10 +98,15 @@ public class BundleManager
         cachePaths.ForEach(it => Debug.Log($"[BundleManager] Cache path: {it}"));
         
         // Always cache built in bundles
-        foreach (var bundle in BuiltInBundles)
+        foreach (var bundle in builtInCatalog.GetEntryNames())
         {
-            if (IsCached(bundle) && IsUpToDate(bundle)) continue;
+            if (IsCached(bundle) && IsUpToDate(bundle))
+            {
+                Debug.Log($"[BundleManager] Built-in bundle {bundle} is cached and up-to-date (version {Catalog.GetEntry(bundle).version})");
+                continue;
+            }
             await LoadBundle(bundle, true, false);
+            Release(bundle);
         }
     }
     
@@ -227,19 +247,35 @@ public class BundleManager
         var totalSize = 0ul;
         if (!loadFromStreamingAssets)
         {
-            using (var headRequest = UnityWebRequest.Head(downloadUrl))
+            if (!Application.isEditor || !Context.Instance.editorUseLocalAssetBundles)
             {
-                await headRequest.SendWebRequest();
-
-                if (headRequest.isNetworkError || headRequest.isHttpError)
+                try
                 {
-                    Debug.LogError(headRequest.error);
+                    using (var headRequest = UnityWebRequest.Head(downloadUrl))
+                    {
+                        await headRequest.SendWebRequest();
+
+                        if (headRequest.isNetworkError || headRequest.isHttpError)
+                        {
+                            Debug.LogError(headRequest.error);
+                            onDownloadFailed();
+                            return null;
+                        }
+
+                        totalSize = ulong.Parse(headRequest.GetResponseHeader("Content-Length"));
+                        Debug.Log($"[BundleManager] Download size: {totalSize.ToHumanReadableFileSize()}");
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(e);
                     onDownloadFailed();
                     return null;
                 }
-
-                totalSize = ulong.Parse(headRequest.GetResponseHeader("Content-Length"));
-                Debug.Log($"[BundleManager] Download size: {totalSize.ToHumanReadableFileSize()}");
+            }
+            else
+            {
+                totalSize = 99999999;
             }
         }
 
@@ -312,7 +348,6 @@ public class BundleManager
             ab.GetAllAssetNames().ForEach(Debug.Log);
             LoadedBundles[bundleId] = new Entry {Id = bundleId, AssetBundle = ab, RefCount = 1};
             return ab;
-
         }
     }
 
@@ -360,6 +395,16 @@ public class BundleCatalog
     public Entry GetEntry(string id)
     {
         return JObject[id] == null ? null : JObject[id].ToObject<Entry>();
+    }
+
+    public void SetEntry(string id, Entry entry)
+    {
+        JObject[id] = JObject.FromObject(entry);
+    }
+
+    public List<string> GetEntryNames()
+    {
+        return JObject.Properties().Select(p => p.Name).ToList();
     }
 
     public bool ContainsEntry(string id)

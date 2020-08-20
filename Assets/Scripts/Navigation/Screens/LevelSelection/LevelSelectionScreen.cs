@@ -128,9 +128,9 @@ public class LevelSelectionScreen : Screen
     {
         var dict = new Dictionary<string, Level>(Context.LevelManager.LoadedLocalLevels);
         foreach (var id in BuiltInData.TrainingModeLevelIds) dict.Remove(id);
-        foreach (var kv in Context.Library.Levels)
+        foreach (var (id, level) in Context.Library.Levels)
         {
-            dict[kv.Key] = kv.Value.Level.ToLevel(LevelType.User);
+            dict[id] = level.Level.ToLevel(LevelType.User);
         }
 
         var levels = dict.Values.ToList();

@@ -17,4 +17,6 @@ public class EventMeta
     public string collectionId;
     [CanBeNull] public OnlineImageAsset cover;
     [CanBeNull] public OnlineImageAsset logo;
+
+    public string url;
 }

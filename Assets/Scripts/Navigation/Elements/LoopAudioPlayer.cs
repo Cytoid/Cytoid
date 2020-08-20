@@ -13,11 +13,12 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
     public IntroloopAudio defaultLoopAudio;
     public IntroloopAudio resultLoopAudio;
     public AudioMixerGroup audioMixerGroup;
-    
-    private float maxVolume = 1f;
-    private IntroloopAudio mainLoopAudio;
-    private IntroloopAudio playingAudio;
-    private bool isFadedOut;
+
+    public float MaxVolume { get; private set; } = 1f;
+    public IntroloopAudio MainLoopAudio { get; private set; }
+    public IntroloopAudio PlayingAudio { get; private set; }
+    public bool IsFadedOut { get; private set; }
+
     private DateTime asyncToken;
 
     protected override void Awake()
@@ -37,7 +38,7 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
         {
             SetMainAudio(asset.musicAudio != null ? asset.musicAudio : defaultLoopAudio);
         });
-        
+
         Context.OnApplicationInitialized.AddListener(Initialize);
     }
 
@@ -49,14 +50,14 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
 
     public void UpdateMaxVolume()
     {
-        var previousMaxVolume = maxVolume;
-        maxVolume = Context.Player.Settings.MusicVolume;
-        if (maxVolume == 0) maxVolume = 0.000001f;
+        var previousMaxVolume = MaxVolume;
+        MaxVolume = Context.Player.Settings.MusicVolume;
+        if (MaxVolume == 0) MaxVolume = 0.000001f;
         audioMixerGroup.audioMixer.GetFloat("MasterVolume", out var currentMixerGroupVolume);
         if (PrintDebugMessages) print($"LoopAudioPlayer: Current mixer group volume is {currentMixerGroupVolume}");
         var currentVolume = ConvertTo01Volume(currentMixerGroupVolume);
         var currentVolumePercentage = Mathf.Clamp01(currentVolume / previousMaxVolume);
-        var mixerGroupVolume = ConvertToMixerGroupVolume(currentVolumePercentage * maxVolume);
+        var mixerGroupVolume = ConvertToMixerGroupVolume(currentVolumePercentage * MaxVolume);
         audioMixerGroup.audioMixer.SetFloat("MasterVolume", mixerGroupVolume);
         if (PrintDebugMessages) print($"LoopAudioPlayer: Mixer group volume set to {mixerGroupVolume}");
     }
@@ -72,26 +73,39 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
         return Mathf.Exp(f / 20);
     }
 
-    public void PlayAudio(IntroloopAudio audio, float fadeInDuration = 0.5f, float crossfadeDuration = 0.5f)
+    public void PlayAudio(IntroloopAudio audio, float fadeInDuration = 0.5f, float crossfadeDuration = 0.5f, bool forceReplay = false)
     {
-        if (playingAudio == audio) return;
-        var duration = playingAudio != null ? crossfadeDuration : fadeInDuration;
+        if (PlayingAudio == audio && !forceReplay) return;
+        var duration = PlayingAudio != null ? crossfadeDuration : fadeInDuration;
+        if (PlayingAudio == audio && forceReplay)
+        {
+            IntroloopPlayer.Instance.Stop();
+            IntroloopPlayer.Instance.Play(audio, duration);
+            return;
+        }
         if (PrintDebugMessages) print("LoopAudioPlayer: Played audio " + audio.name);
-        playingAudio = audio;
+        PlayingAudio = audio;
         IntroloopPlayer.Instance.Play(audio, duration);
     }
 
     public void StopAudio(float fadeOutDuration = 0.5f)
     {
-        if (playingAudio == null) return;
-        if (PrintDebugMessages) print("LoopAudioPlayer: Stopped audio " + playingAudio.name);
-        playingAudio = null;
-        IntroloopPlayer.Instance.Stop(fadeOutDuration);
+        if (PlayingAudio == null) return;
+        if (PrintDebugMessages) print("LoopAudioPlayer: Stopped audio " + PlayingAudio.name);
+        PlayingAudio = null;
+        if (fadeOutDuration > 0)
+        {
+            IntroloopPlayer.Instance.Stop(fadeOutDuration);
+        }
+        else
+        {
+            IntroloopPlayer.Instance.Stop();
+        }
     }
     
     public void FadeOutLoopPlayer(float duration = 1f)
     {
-        isFadedOut = true;
+        IsFadedOut = true;
         audioMixerGroup.audioMixer.DOKill();
         if (duration == 0) audioMixerGroup.audioMixer.SetFloat("MasterVolume", -80f);
         else audioMixerGroup.audioMixer.DOSetFloat("MasterVolume", -80f, duration).SetEase(Ease.Linear);
@@ -99,18 +113,18 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
 
     public void FadeInLoopPlayer(float duration = 1f)
     {
-        isFadedOut = false;
+        IsFadedOut = false;
         audioMixerGroup.audioMixer.DOKill();
-        if (duration == 0) audioMixerGroup.audioMixer.SetFloat("MasterVolume", ConvertToMixerGroupVolume(maxVolume));
-        else audioMixerGroup.audioMixer.DOSetFloat("MasterVolume", ConvertToMixerGroupVolume(maxVolume), duration).SetEase(Ease.Linear);
+        if (duration == 0) audioMixerGroup.audioMixer.SetFloat("MasterVolume", ConvertToMixerGroupVolume(MaxVolume));
+        else audioMixerGroup.audioMixer.DOSetFloat("MasterVolume", ConvertToMixerGroupVolume(MaxVolume), duration).SetEase(Ease.Linear);
     }
 
     public void SetMainAudio(IntroloopAudio audio)
     {
-        mainLoopAudio = audio;
-        if (playingAudio != null)
+        MainLoopAudio = audio;
+        if (PlayingAudio != null)
         {
-            PlayAudio(mainLoopAudio, 1f);
+            PlayAudio(MainLoopAudio, 1f);
         }
     }
 
@@ -124,12 +138,12 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
         if ((from is GamePreparationScreen || from is TierSelectionScreen) && to != null)
         {
             FadeInLoopPlayer();
-            PlayAudio(mainLoopAudio);
+            PlayAudio(MainLoopAudio);
             return;
         }
         if ((from == null || from is InitializationScreen) && to is MainMenuScreen)
         {
-            PlayAudio(mainLoopAudio, 0);
+            PlayAudio(MainLoopAudio, 0);
             return;
         }
         if (to is ResultScreen || to is TierBreakScreen)

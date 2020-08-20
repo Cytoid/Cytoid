@@ -19,7 +19,7 @@ public abstract class Screen : MonoBehaviour, ScreenListener, ScreenPostActiveLi
     public List<Canvas> ChildrenCanvases { get; set; }
     public List<CanvasGroup> ChildrenCanvasGroups { get; set; }
     public List<GraphicRaycaster> ChildrenGraphicRaycasters { get; set; }
-    
+
     private ScreenState state = ScreenState.Destroyed;
 
     private bool rebuiltLayoutGroups;

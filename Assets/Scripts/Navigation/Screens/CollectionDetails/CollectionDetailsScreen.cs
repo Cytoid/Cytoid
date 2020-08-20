@@ -139,6 +139,10 @@ public class CollectionDetailsScreen : Screen
                 }
             });
         }
+        else
+        {
+            coverImage.DOColor(new Color(0.2f, 0.2f, 0.2f, 1), 0.4f);
+        }
     }
 
     public class Payload : ScreenPayload

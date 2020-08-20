@@ -30,7 +30,7 @@ public class OnlinePlayerStateChange
         
         public enum RewardType
         {
-            Level, Character, Badge
+            Character, Level, Badge
         }
     }
 }

@@ -456,6 +456,9 @@ public static class SettingsFactory
                     }
                 })
             .SaveSettingsOnChange();
+        Object.Instantiate(provider.buttonPreferenceElement, parent)
+            .SetContent("", "",
+                "SETTINGS_BUTTON_ENTER".Get(), LunarConsole.Show);
 
         Object.Instantiate(provider.pillRadioGroupPreferenceElement, parent)
             .SetContent("SETTINGS_EXPERIMENTAL_NOTE_AR".Get(), "SETTINGS_EXPERIMENTAL_NOTE_AR_DESC".Get(),

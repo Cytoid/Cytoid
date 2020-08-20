@@ -3,7 +3,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.unity3d.player"
     xmlns:tools="http://schemas.android.com/tools">
-    <application android:requestLegacyExternalStorage="true">
+    <application>
+    <!--<application android:requestLegacyExternalStorage="true">-->
 
         <activity android:name="me.tigerhix.cytoid.CytoidPluginActivity"
                   android:screenOrientation="sensorLandscape"

@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using DG.Tweening;
 using Proyecto26;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,11 +8,12 @@ using UnityEngine.UI;
 public class MainMenuScreen : Screen
 {
     public const string Id = "MainMenu";
-    public static bool DisplayedAnnouncement = false;
+    public static bool CheckedAnnouncement = false;
     
     public RectTransform layout;
     public Text freePlayText;
     public InteractableMonoBehavior aboutButton;
+    public CanvasGroup eventNotificationGroup;
 
     public Image upperLeftOverlayImage;
     public Image rightOverlayImage;
@@ -29,7 +31,10 @@ public class MainMenuScreen : Screen
         base.OnScreenBecameActive();
 
         //WebViewOverlay.Show();
-        StartupLogger.Instance.Dispose();
+        if (StartupLogger.Instance != null)
+        {
+            StartupLogger.Instance.Dispose();
+        }
 
         upperLeftOverlayImage.SetAlpha(Context.CharacterManager.GetActiveCharacterAsset().mainMenuUpperLeftOverlayAlpha);
         rightOverlayImage.SetAlpha(Context.CharacterManager.GetActiveCharacterAsset().mainMenuRightOverlayAlpha);
@@ -37,6 +42,9 @@ public class MainMenuScreen : Screen
         freePlayText.text = "MAIN_LEVELS_LOADED".Get(Context.LevelManager.LoadedLocalLevels.Count(it => 
             it.Value.Type == LevelType.User && !BuiltInData.TrainingModeLevelIds.Contains(it.Value.Id)));
         freePlayText.transform.RebuildLayout();
+
+        eventNotificationGroup.alpha = 0;
+        
         ProfileWidget.Instance.Enter();
 
         if (Context.CharacterManager.GetActiveCharacterAsset().mirrorLayout)
@@ -60,7 +68,7 @@ public class MainMenuScreen : Screen
         }
         
         // Check announcement
-        if (!DisplayedAnnouncement && Context.IsOnline())
+        if (!CheckedAnnouncement && Context.IsOnline())
         {
             RestClient.Get<Announcement>(new RequestHelper
             {
@@ -69,7 +77,7 @@ public class MainMenuScreen : Screen
                 EnableDebug = true
             }).Then(it =>
             {
-                DisplayedAnnouncement = true;
+                CheckedAnnouncement = true;
                 if (it.message != null)
                 {
                     Dialog.PromptAlert(it.message);
@@ -88,6 +96,32 @@ public class MainMenuScreen : Screen
                     Dialog.Prompt("DIALOG_UPDATE_AVAILABLE_X_Y".Get(currentVersion, localVersion), () => Application.OpenURL(Context.StoreUrl));
                 }
             }).CatchRequestError(Debug.LogError);
+        }
+        
+        // Check new events
+        if (Context.IsOnline() && Context.OnlinePlayer.IsAuthenticated)
+        {
+            RestClient.GetArray<EventMeta>(new RequestHelper
+            {
+                Uri = $"{Context.ApiUrl}/events",
+                Headers = Context.OnlinePlayer.GetRequestHeaders(),
+                EnableDebug = true
+            }).AbortOnScreenBecameInactive(this).Then(events =>
+            {
+                var hasUnseenEvent = false;
+                foreach (var meta in events)
+                {
+                    if (Context.Player.Settings.SeenEvents.Contains(meta.uid))
+                    {
+                        continue;
+                    }
+                    hasUnseenEvent = true;
+                }
+                if (hasUnseenEvent)
+                {
+                    eventNotificationGroup.DOFade(1, 0.4f);
+                }
+            }).CatchRequestError(Debug.LogWarning);
         }
     }
 

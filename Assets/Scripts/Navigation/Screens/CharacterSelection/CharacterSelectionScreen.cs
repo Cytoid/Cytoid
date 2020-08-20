@@ -50,77 +50,87 @@ public class CharacterSelectionScreen : Screen
         Context.CharacterManager.GetAvailableCharactersMeta()
             .Then(async characters =>
             {
-                if (characters.Count == 0)
+                try
                 {
-                    // TODO: This should not happen! We have Sayaka
-                    SpinnerOverlay.Hide();
-                    Dialog.PromptGoBack("DIALOG_OFFLINE_FEATURE_NOT_AVAILABLE".Get());
-                    promise.Reject();
-                    return;
-                }
+                    if (characters.Count == 0)
+                    {
+                        // TODO: This should not happen! We have Sayaka
+                        SpinnerOverlay.Hide();
+                        Dialog.PromptGoBack("DIALOG_OFFLINE_FEATURE_NOT_AVAILABLE".Get());
+                        promise.Reject();
+                        return;
+                    }
 
-                if (!await Context.BundleManager.DownloadAndSaveCatalog())
+                    if (!await Context.BundleManager.DownloadAndSaveCatalog())
+                    {
+                        SpinnerOverlay.Hide();
+                        Dialog.PromptGoBack("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
+                        promise.Reject();
+                        return;
+                    }
+
+                    SpinnerOverlay.Hide();
+
+                    var downloadsRequired = 0;
+                    foreach (var meta in characters)
+                    {
+                        if (!Context.BundleManager.IsUpToDate(CharacterAsset.GetMainBundleId(meta.AssetId)))
+                        {
+                            downloadsRequired++;
+                        }
+                    }
+
+                    print($"Number of downloads required: {downloadsRequired}");
+
+                    var downloaded = 0;
+                    foreach (var meta in characters)
+                    {
+                        var (success, locallyResolved) =
+                            await Context.CharacterManager.DownloadCharacterAssetDialog(
+                                CharacterAsset.GetMainBundleId(meta.AssetId));
+                        if (success && !locallyResolved)
+                        {
+                            downloaded++;
+                            print("Downloaded " + meta.AssetId);
+                        }
+
+                        if (!success)
+                        {
+                            Toast.Next(Toast.Status.Failure, "CHARACTER_FAILED_TO_DOWNLOAD".Get());
+                        }
+                        else
+                        {
+                            IntentPayload.OwnedCharacters.Add(meta);
+                        }
+                    }
+
+                    print($"Number of downloads: {downloaded}");
+
+                    if (downloaded > downloadsRequired)
+                    {
+                        // Update was performed, which requires player to restart the game
+                        // Why? Too lazy to figure out dynamic reloads...
+                        Dialog.PromptUnclosable("DIALOG_RESTART_REQUIRED".Get());
+                        promise.Reject();
+                        return;
+                    }
+
+                    if (IntentPayload.OwnedCharacters.Count == 0)
+                    {
+                        Dialog.PromptGoBack("DIALOG_OFFLINE_FEATURE_NOT_AVAILABLE".Get());
+                        promise.Reject();
+                        return;
+                    }
+
+                    promise.Resolve(IntentPayload);
+                }
+                catch (Exception e)
                 {
+                    Debug.LogError(e);
                     SpinnerOverlay.Hide();
                     Dialog.PromptGoBack("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
                     promise.Reject();
-                    return;
                 }
-                
-                SpinnerOverlay.Hide();
-
-                var downloadsRequired = 0;
-                foreach (var meta in characters)
-                {
-                    if (!Context.BundleManager.IsUpToDate(CharacterAsset.GetMainBundleId(meta.AssetId)))
-                    {
-                        downloadsRequired++;
-                    }
-                }
-
-                print($"Number of downloads required: {downloadsRequired}");
-
-                var downloaded = 0;
-                foreach (var meta in characters)
-                {
-                    var (success, locallyResolved) =
-                        await Context.CharacterManager.DownloadCharacterAssetDialog(
-                            CharacterAsset.GetMainBundleId(meta.AssetId));
-                    if (success && !locallyResolved)
-                    {
-                        downloaded++;
-                        print("Downloaded " + meta.AssetId);
-                    }
-
-                    if (!success)
-                    {
-                        Toast.Next(Toast.Status.Failure, "CHARACTER_FAILED_TO_DOWNLOAD".Get());
-                    }
-                    else
-                    {
-                        IntentPayload.OwnedCharacters.Add(meta);
-                    }
-                }
-
-                print($"Number of downloads: {downloaded}");
-
-                if (downloaded > downloadsRequired)
-                {
-                    // Update was performed, which requires player to restart the game
-                    // Why? Too lazy to figure out dynamic reloads...
-                    Dialog.PromptUnclosable("DIALOG_RESTART_REQUIRED".Get());
-                    promise.Reject();
-                    return;
-                }
-
-                if (IntentPayload.OwnedCharacters.Count == 0)
-                {
-                    Dialog.PromptGoBack("DIALOG_OFFLINE_FEATURE_NOT_AVAILABLE".Get());
-                    promise.Reject();
-                    return;
-                }
-
-                promise.Resolve(IntentPayload);
             })
             .CatchRequestError(error =>
             {

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class WebViewHolder : SingletonMonoBehavior<WebViewHolder>
@@ -32,6 +33,15 @@ public class WebViewHolder : SingletonMonoBehavior<WebViewHolder>
             hooked: (msg) =>
             {
                 Debug.Log(string.Format("CallOnHooked[{0}]", msg));
+                try
+                {
+                    var uri = new Uri(msg);
+                    Application.OpenURL(msg);
+                }
+                catch
+                {
+                    // Ignored
+                }
             },
             ld: (msg) =>
             {

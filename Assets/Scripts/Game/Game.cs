@@ -173,7 +173,7 @@ public class Game : MonoBehaviour
             // Load global calibration level
             async UniTask<Level> GetGlobalCalibrationLevel()
             {
-                var levels = await Context.LevelManager.LoadFromMetadataFiles(LevelType.BuiltIn, new List<string>
+                var levels = await Context.LevelManager.LoadFromMetadataFiles(LevelType.Temp, new List<string>
                 {
                     $"{LevelType.BuiltIn.GetDataPath()}/{BuiltInData.GlobalCalibrationModeLevelId}/level.json"
                 });

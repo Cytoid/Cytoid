@@ -161,10 +161,37 @@ public class EventSelectionScreen : Screen
         }
         AddTask(LoadCover);
         AddTask(LoadLogo);
+
+        Context.Player.Settings.SeenEvents.Add(meta.uid);
+        Context.Player.SaveSettings();
         
         infoBanner.Leave(onComplete: () =>
         {
-            viewDetailsButton.onPointerClick.SetListener(_ => Application.OpenURL($"{Context.WebsiteUrl}/posts/{meta.uid}"));
+            viewDetailsButton.onPointerClick.SetListener(_ =>
+            {
+                if (meta.url.IsNullOrEmptyTrimmed())
+                {
+                    Application.OpenURL($"{Context.WebsiteUrl}/posts/{meta.uid}");
+                }
+                else
+                {
+                    WebViewOverlay.Show(meta.url, 
+                        onFullyShown: () =>
+                        {
+                            LoopAudioPlayer.Instance.FadeOutLoopPlayer();
+                        }, 
+                        onFullyHidden: async () =>
+                        {
+                            AudioSettings.Reset(AudioSettings.GetConfiguration());
+                            await UniTask.DelayFrame(5);
+                            LoopAudioPlayer.Instance.Apply(it =>
+                            {
+                                it.FadeInLoopPlayer();
+                                it.PlayAudio(it.PlayingAudio, forceReplay: true);
+                            });
+                        });
+                }
+            });
             const string dateFormat = "yyyy/MM/dd HH:mm";
             durationText.text = (meta.startDate.HasValue ? meta.startDate.Value.LocalDateTime.ToString(dateFormat) : "")
                                 + "~"

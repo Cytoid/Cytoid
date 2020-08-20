@@ -28,7 +28,7 @@ public class WebViewOverlay : SingletonMonoBehavior<WebViewOverlay>
     public void Open(string url)
     {
         webView.SetVisibility(true);
-        webView.SetURLPattern(".*artifacts\\.cytoid\\.io.*", "Never!", ".*");
+        webView.SetURLPattern("Never!", "Never!", "^((?!artifacts\\.cytoid\\.io|EmbeddedPlayer|embed|outchain|player\\.bilibili|blackboard\\/html5).)*$");
         webView.LoadURL(url);
     }
 

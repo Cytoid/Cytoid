@@ -46,6 +46,16 @@ public class Level
         Context.Database.SetLevelRecord(Record);
     }
 
+    public void CopyFrom(Level other)
+    {
+        Type = other.Type;
+        IsLocal = other.IsLocal;
+        OnlineLevel = other.OnlineLevel;
+        Meta = other.Meta;
+        Record = other.Record;
+        Path = other.Path;
+    }
+
 }
 
 public enum LevelType {

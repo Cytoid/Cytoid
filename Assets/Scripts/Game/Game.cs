@@ -432,6 +432,7 @@ public class Game : MonoBehaviour
         if (!State.IsFailed && State.ShouldFail) Fail();
         if (State.IsFailed) Music.Volume -= 1f / 60f;
         if (State.IsPlaying)
+            
         {
             if (State.ClearCount >= Chart.Model.note_list.Count) Complete();
 
@@ -443,7 +444,7 @@ public class Game : MonoBehaviour
             MusicProgress = Time / MusicLength;
             ChartProgress = Time / ChartLength;
 
-            if (!State.IsCompleted)
+            if (!State.IsCompleted && !State.IsFailed)
             {
                 // Process chart elements
                 while (Chart.CurrentEventId < Chart.Model.event_order_list.Count &&

@@ -461,6 +461,7 @@ public class GamePreparationScreen : Screen
                 {
                     // Unload the current preview
                     Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.PreviewMusic);
+                    Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.GameCover);
                 }
             },
             onDownloadAborted: () =>
@@ -473,6 +474,7 @@ public class GamePreparationScreen : Screen
             },
             onUnpackSucceeded: level =>
             {
+                Level.CopyFrom(level);
                 // Load with level manager and reload screen
                 Level = level;
                 Context.SelectedLevel = level;

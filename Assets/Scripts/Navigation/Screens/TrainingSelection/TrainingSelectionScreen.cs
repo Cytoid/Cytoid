@@ -74,7 +74,7 @@ public class TrainingSelectionScreen : Screen
         scrollRect.totalCount = content.Levels.Count;
         scrollRect.objectsToFill = content.Levels.Select(it => new LevelView{Level = it}).ToArray().Cast<object>().ToArray();
         scrollRect.RefillCells();
-        if (lastScrollPosition >= 0)
+        if (lastScrollPosition > -1)
         {
             scrollRect.SetVerticalNormalizedPositionFix(lastScrollPosition);
         }

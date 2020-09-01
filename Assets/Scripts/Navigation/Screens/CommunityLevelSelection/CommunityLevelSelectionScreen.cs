@@ -198,7 +198,7 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
         }
         else
         {
-            if (LoadedPayload.ScrollPosition >= 0) scrollRect.verticalNormalizedPosition = LoadedPayload.ScrollPosition;
+            if (LoadedPayload.ScrollPosition > -1) scrollRect.verticalNormalizedPosition = LoadedPayload.ScrollPosition;
         }
     }
 

@@ -81,7 +81,7 @@ public class LevelSelectionScreen : Screen
 
     protected override void Render()
     {
-        if (LoadedPayload.ScrollPosition >= 0) scrollRect.SetVerticalNormalizedPositionFix(LoadedPayload.ScrollPosition);
+        if (LoadedPayload.ScrollPosition > -1) scrollRect.SetVerticalNormalizedPositionFix(LoadedPayload.ScrollPosition);
         categorySelect.Select(LoadedPayload.CategoryIndex);
         RefillLevels();
         categorySelect.onSelect.AddListener((index, canvasGroup) =>

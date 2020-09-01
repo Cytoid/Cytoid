@@ -228,7 +228,7 @@ public class CommunityHomeScreen : Screen
         base.OnRendered();
         
         await UniTask.DelayFrame(3); // Scroll position not set fix
-        if (LoadedPayload.ScrollPosition >= 0) scrollRect.verticalNormalizedPosition = LoadedPayload.ScrollPosition;
+        if (LoadedPayload.ScrollPosition > -1) scrollRect.verticalNormalizedPosition = LoadedPayload.ScrollPosition;
         
         contentHolder.DOFade(1, 0.4f).SetEase(Ease.OutCubic);
     }

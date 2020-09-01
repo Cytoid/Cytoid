@@ -133,7 +133,7 @@ public class ProfileScreen : Screen
                     }
                 }
                 await UniTask.DelayFrame(2);
-                if (LoadedPayload.LeaderboardScrollPosition >= 0) leaderboardScrollRect.verticalNormalizedPosition = LoadedPayload.LeaderboardScrollPosition;
+                if (LoadedPayload.LeaderboardScrollPosition > -1) leaderboardScrollRect.verticalNormalizedPosition = LoadedPayload.LeaderboardScrollPosition;
             }
             catch (Exception e)
             {
@@ -214,7 +214,7 @@ public class ProfileScreen : Screen
         }
         contentTabs.Select(LoadedPayload.TabIndex);
         await UniTask.DelayFrame(2);
-        if (LoadedPayload.ProfileScrollPosition >= 0) profileTab.scrollRect.verticalNormalizedPosition = LoadedPayload.ProfileScrollPosition;
+        if (LoadedPayload.ProfileScrollPosition > -1) profileTab.scrollRect.verticalNormalizedPosition = LoadedPayload.ProfileScrollPosition;
     }
 
     public class Payload : ScreenPayload

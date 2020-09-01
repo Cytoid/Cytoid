@@ -208,7 +208,7 @@ public class TierSelectionScreen : Screen
         });
         LayoutFixer.Fix(scrollRect.content, count: 6);
 
-        if (lastScrollPosition >= 0)
+        if (lastScrollPosition > -1)
         {
             await UniTask.DelayFrame(5);
             LayoutFixer.Fix(scrollRect.content, count: 6);

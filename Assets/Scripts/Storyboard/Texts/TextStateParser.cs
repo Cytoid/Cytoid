@@ -18,6 +18,10 @@ namespace Cytoid.Storyboard.Texts
             if (ColorUtility.TryParseHtmlString((string) json.SelectToken("color"), out var tmp))
                 state.Color = new Color {R = tmp.r, G = tmp.g, B = tmp.b, A = tmp.a};
             state.Text = (string) json.SelectToken("text") ?? state.Text;
+            if (state.Text != null && state.Text.StartsWith("[") && state.Text.EndsWith("]"))
+            {
+                state.Text = state.Text.Substring(1, state.Text.Length - 2).Get();
+            }
             state.Size = (int?) json.SelectToken("size") ?? state.Size;
             state.Align = (string) json.SelectToken("align") ?? state.Align;
             state.LetterSpacing = (float?) json.SelectToken("letter_spacing") ?? state.LetterSpacing;

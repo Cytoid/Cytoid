@@ -197,7 +197,7 @@ public class GamePreparationScreen : Screen
 
     private void LoadOwner()
     {
-        if (Level.Type == LevelType.User && Level.OnlineLevel?.Owner != null)
+        if (Level.Type == LevelType.User && Level.OnlineLevel?.Owner != null && Level.OnlineLevel?.Owner.Uid != Context.OfficialAccountId)
         {
             ownerRoot.gameObject.SetActive(true);
             ownerAvatar.action = AvatarAction.OpenProfile;

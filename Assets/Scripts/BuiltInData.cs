@@ -21,4 +21,5 @@ public static class BuiltInData
         "skillmode.thebigblack"
     };
     public const string GlobalCalibrationModeLevelId = "teages.offset_guide";
+    public const string TutorialLevelId = "io.cytoid.tutorial";
 }

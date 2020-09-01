@@ -122,49 +122,10 @@ public class ResultScreen : Screen
                                   $"<b>{"RESULT_AVG_TIMING_ERR".Get()}</b> {gameState.AverageTimingError:0.000}s    " +
                                   $"<b>{"RESULT_STD_TIMING_ERR".Get()}</b> {gameState.StandardTimingError:0.000}s";
         if (!Context.Player.Settings.DisplayEarlyLateIndicators) advancedMetricText.text = "";
-
-        var performance = new LevelRecord.Performance {Score = (int) gameState.Score, Accuracy = gameState.Accuracy};
-
-        var record = gameState.Level.Record;
-
-        // Increment local play count
-        if (record.PlayCounts.ContainsKey(gameState.Difficulty.Id))
-        {
-            record.PlayCounts[gameState.Difficulty.Id] += 1;
-        }
-        else
-        {
-            record.PlayCounts[gameState.Difficulty.Id] = 1;
-        }
         
-        // Save performance to local
-        var bestPerformances = gameState.Mode == GameMode.Standard
-            ? record.BestPerformances
-            : record.BestPracticePerformances;
-
-        if (!bestPerformances.ContainsKey(gameState.Difficulty.Id))
-        {
-            newBestText.text = "RESULT_NEW".Get();
-            bestPerformances[gameState.Difficulty.Id] = performance;
-        }
-        else
-        {
-            var historicBest = bestPerformances[gameState.Difficulty.Id];
-            if (performance.Score > historicBest.Score)
-            {
-                newBestText.text = $"+{performance.Score - historicBest.Score}";
-                bestPerformances[gameState.Difficulty.Id] = performance;
-            }
-            else if (performance.Score == historicBest.Score && performance.Accuracy > historicBest.Accuracy)
-            {
-                newBestText.text = $"+{(Mathf.FloorToInt((float) (performance.Accuracy - historicBest.Accuracy) * 100 * 100) / 100f):0.00}%";
-                bestPerformances[gameState.Difficulty.Id] = performance;
-            }
-            else
-            {
-                newBestText.text = "";
-            }
-        }
+        var record = gameState.Level.Record;
+        record.IncrementPlayCountByOne(gameState.Difficulty);
+        newBestText.text = record.TrySaveBestPerformance(gameState.Mode, gameState.Difficulty, (int) gameState.Score, gameState.Accuracy);
         gameState.Level.SaveRecord();
 
         shareButton.onPointerClick.SetListener(_ => StartCoroutine(Share()));

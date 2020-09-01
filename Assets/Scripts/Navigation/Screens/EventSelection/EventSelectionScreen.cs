@@ -6,6 +6,7 @@ using DG.Tweening;
 using MoreMountains.NiceVibrations;
 using Proyecto26;
 using Cysharp.Threading.Tasks;
+using E7.Native;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.UI;
@@ -183,6 +184,8 @@ public class EventSelectionScreen : Screen
                         onFullyHidden: async () =>
                         {
                             AudioSettings.Reset(AudioSettings.GetConfiguration());
+                            Context.AudioManager.Dispose();
+                            Context.AudioManager.Initialize();
                             await UniTask.DelayFrame(5);
                             LoopAudioPlayer.Instance.Apply(it =>
                             {

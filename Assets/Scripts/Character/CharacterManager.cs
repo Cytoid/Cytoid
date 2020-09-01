@@ -109,8 +109,9 @@ public class CharacterManager
                 Uri = $"{Context.ApiUrl}/characters",
                 Headers = Context.OnlinePlayer.GetRequestHeaders(),
                 EnableDebug = true
-            }).Then(characters =>
+            }).Then(array =>
             {
+                var characters = array.ToList();
                 // Save to DB
                 Context.Database.Let(it =>
                 {

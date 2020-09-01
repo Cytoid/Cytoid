@@ -1,4 +1,5 @@
-﻿using MoreMountains.NiceVibrations;
+﻿using System;
+using MoreMountains.NiceVibrations;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -9,7 +10,7 @@ public class DragChildNote : Note
     {
         return Game.Config.UseClassicStyle
             ? (NoteRenderer) new ClassicDragChildNoteRenderer(this)
-            : new DefaultDragChildNoteRenderer(this);
+            : throw new NotSupportedException();
     }
 
     public override void OnTouch(Vector2 screenPos)

@@ -14,6 +14,7 @@ public class Chart
     
     public float MusicOffset { get; }
     public bool DisplayBoundaries { get; }
+    public bool DisplayBackground { get; }
     public int HorizontalMargin { get; }
     public int VerticalMargin { get; }
     public bool SkipMusicOnCompletion { get; }
@@ -65,6 +66,7 @@ public class Chart
         // Cytoid chart parameters
         MusicOffset = (float) Model.music_offset;
         DisplayBoundaries = Model.display_boundaries ?? Context.Player.Settings.DisplayBoundaries;
+        DisplayBackground = Model.display_background ?? true;
         HorizontalMargin = Model.horizontal_margin ?? Context.Player.Settings.HorizontalMargin;
         VerticalMargin = Model.vertical_margin ?? Context.Player.Settings.VerticalMargin;
         SkipMusicOnCompletion = Model.skip_music_on_completion ?? Context.Player.Settings.SkipMusicOnCompletion;

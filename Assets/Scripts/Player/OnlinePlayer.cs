@@ -141,7 +141,10 @@ public class OnlinePlayer
     {
         if (Context.Player.Settings.LoginToken == null)
         {
-            return new Dictionary<string, string>();
+            return new Dictionary<string, string>
+            {
+                {"Accept-Language", ((Language) Context.Player.Settings.Language).GetAcceptLanguageHeaderValue()}
+            };
         }
         return new Dictionary<string, string>
         {

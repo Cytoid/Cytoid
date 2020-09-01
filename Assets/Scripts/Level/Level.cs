@@ -72,7 +72,7 @@ public static class LevelTypeExtensions {
             case LevelType.Tier:
                 return Path.Combine(Application.temporaryCachePath, "Tiers");
             case LevelType.BuiltIn:
-                return Path.Combine(Application.temporaryCachePath, "BuiltIn");
+                return Path.Combine(Application.temporaryCachePath, "Built In");
             case LevelType.Temp:
                 return Path.Combine(Application.temporaryCachePath, "Temp");
             default:

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class HoldNote : Note
@@ -16,7 +17,7 @@ public class HoldNote : Note
     {
         return Game.Config.UseClassicStyle
             ? (NoteRenderer) new ClassicHoldNoteRenderer(this)
-            : new DefaultHoldNoteRenderer(this);
+            : throw new NotSupportedException();
     }
 
     public override void Collect()

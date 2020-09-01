@@ -368,6 +368,30 @@ public class LevelManager
         Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalLevelCoverThumbnail);
     }
 
+    public async UniTask<Level> LoadOrInstallBuiltInLevel(string id, LevelType loadType, bool forceInstall = false)
+    {
+        async UniTask<Level> GetLevel()
+        {
+            var levels = await LoadFromMetadataFiles(loadType, new List<string>
+            {
+                $"{loadType.GetDataPath()}/{id}/level.json"
+            });
+            if (levels.Count > 0) return levels.First();
+            return LoadedLocalLevels.ContainsKey(id) ? LoadedLocalLevels[id] : null;
+        }
+
+        var level = forceInstall ? null : await GetLevel();
+
+        if (level == null)
+        {
+            var paths = await Context.LevelManager.CopyBuiltInLevelsToDownloads(new List<string> {id});
+            await Context.LevelManager.InstallLevels(paths, loadType);
+            level = await GetLevel();
+        }
+
+        return level;
+    }
+
     public async UniTask<List<Level>> LoadFromMetadataFiles(LevelType type, List<string> jsonPaths, bool forceReload = false)
     {
         var lowMemory = false;
@@ -430,14 +454,21 @@ public class LevelManager
 
                 if (type != LevelType.Temp && LoadedLocalLevels.ContainsKey(meta.id))
                 {
-                    if (LoadedLocalLevels[meta.id].Type != LevelType.User && type == LevelType.User)
+                    if (LoadedLocalLevels[meta.id].Type == LevelType.Tier && type == LevelType.User)
                     {
-                        Debug.LogWarning($"Community level cannot override non-community level");
+                        Debug.LogWarning($"Community level cannot override tier level");
                         Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {path}");
                         continue;
                     }
+                    if (LoadedLocalLevels[meta.id].Meta.version > meta.version)
+                    {
+                        Debug.LogWarning($"Level to load has smaller version than loaded level");
+                        Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {path}");
+                        continue;
+                    }
+                    loadedPaths.Remove(LoadedLocalLevels[meta.id].Path);
                 }
-
+                
                 OnLevelLoadProgress.Invoke(meta.id, index + 1, jsonPaths.Count);
 
                 timer.Time("OnLevelLoadProgressEvent");

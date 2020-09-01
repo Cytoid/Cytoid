@@ -10,7 +10,7 @@ public class DragHeadNote : Note
     {
         return Game.Config.UseClassicStyle
             ? (NoteRenderer) new ClassicDragHeadNoteRenderer(this)
-            : new DefaultDragHeadNoteRenderer(this);
+            : throw new NotSupportedException();
     }
 
     public bool IsCollecting;

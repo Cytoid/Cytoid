@@ -198,7 +198,7 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
         }
         else
         {
-            if (LoadedPayload.ScrollPosition > 0) scrollRect.verticalNormalizedPosition = LoadedPayload.ScrollPosition;
+            if (LoadedPayload.ScrollPosition >= 0) scrollRect.verticalNormalizedPosition = LoadedPayload.ScrollPosition;
         }
     }
 
@@ -306,7 +306,7 @@ public class CommunityLevelSelectionScreen : Screen, ScreenChangeListener
         public int LastPage = 0;
         public bool IsLastPageLoaded;
         public bool CanLoadMore = true;
-        public float ScrollPosition;
+        public float ScrollPosition = -1;
     }
     
     public new Payload IntentPayload => (Payload) base.IntentPayload;

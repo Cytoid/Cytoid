@@ -53,8 +53,10 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
 
     public void Dispose()
     {
+        isInitialized = false;
         controllers.Keys.ToList().FindAll(it => !controllers[it].IsPreloaded).ForEach(Unload);
         controllers.Clear();
+        NativeAudio.Dispose();
     }
 
     public void SetUseNativeAudio(bool useNativeAudio)

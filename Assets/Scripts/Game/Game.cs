@@ -57,8 +57,9 @@ public class Game : MonoBehaviour
     public bool EditorForceAutoMod;
     public GameMode EditorGameMode = GameMode.Unspecified;
     public bool EditorImmediatelyComplete;
+    public float EditorCompletionDelay;
     public bool EditorImmediatelyCompleteFail;
-    
+
     public AudioManager.Controller Music { get; protected set; }
     
     public List<UniTask> BeforeStartTasks { get; protected set; } = new List<UniTask>();
@@ -171,27 +172,8 @@ public class Game : MonoBehaviour
         else if (mode == GameMode.GlobalCalibration)
         {
             // Load global calibration level
-            async UniTask<Level> GetGlobalCalibrationLevel()
-            {
-                var levels = await Context.LevelManager.LoadFromMetadataFiles(LevelType.Temp, new List<string>
-                {
-                    $"{LevelType.BuiltIn.GetDataPath()}/{BuiltInData.GlobalCalibrationModeLevelId}/level.json"
-                });
-                if (levels.Count > 0) return levels.First();
-                return Context.LevelManager.LoadedLocalLevels.ContainsKey(BuiltInData.GlobalCalibrationModeLevelId)
-                    ? Context.LevelManager.LoadedLocalLevels[BuiltInData.GlobalCalibrationModeLevelId]
-                    : null;
-            }
-
-            Level = await GetGlobalCalibrationLevel();
-
-            if (Level == null)
-            {
-                var paths = await Context.LevelManager.CopyBuiltInLevelsToDownloads(new List<string>
-                    {BuiltInData.GlobalCalibrationModeLevelId});
-                await Context.LevelManager.InstallLevels(paths, LevelType.BuiltIn);
-                Level = await GetGlobalCalibrationLevel();
-            }
+            Level = await Context.LevelManager.LoadOrInstallBuiltInLevel(BuiltInData.GlobalCalibrationModeLevelId,
+                LevelType.Temp);
 
             Difficulty = Level.Meta.GetEasiestDifficulty();
             
@@ -376,7 +358,7 @@ public class Game : MonoBehaviour
         LayoutStaticizer.Staticize(modHolderParent.transform);
         onGameStarted.Invoke(this);
 
-        if (Application.isEditor && EditorImmediatelyComplete)
+        if (Application.isEditor && EditorImmediatelyComplete && State.Mode != GameMode.GlobalCalibration && State.Mode != GameMode.Calibration)
         {
             if (EditorImmediatelyCompleteFail)
             {
@@ -384,6 +366,10 @@ public class Game : MonoBehaviour
             }
             else 
             {
+                if (EditorCompletionDelay > 0)
+                {
+                    await UniTask.Delay(TimeSpan.FromSeconds(EditorCompletionDelay));
+                }
                 State.FillTestData(Chart.Model.note_list.Count);
                 Complete();
             }

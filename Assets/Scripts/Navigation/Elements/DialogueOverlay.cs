@@ -15,6 +15,7 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
     
     [GetComponent] public Canvas canvas;
     [GetComponent] public CanvasGroup canvasGroup;
+    public Image backdropImage;
     public InteractableMonoBehavior detectionArea;
     public GameObject parent;
     public DialogueBox topDialogueBox;
@@ -24,7 +25,7 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
     public SoftButton choiceButtonPrefab;
     public DialogueImage image;
     
-    public bool IsShown { get; private set; }
+    public bool IsActive { get; private set; }
 
     private void Start()
     {
@@ -39,11 +40,14 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
         topDialogueBox.SetDisplayed(false);
         bottomDialogueBox.SetDisplayed(false);
         bottomFullDialogueBox.SetDisplayed(false);
+        backdropImage.SetAlpha(0.7f);
     }
 
     private async UniTask Enter()
     {
-        IsShown = true;
+        backdropImage.DOKill();
+        backdropImage.SetAlpha(0.7f);
+        IsActive = true;
         canvas.enabled = true;
         canvas.overrideSorting = true;
         canvas.sortingOrder = NavigationSortingOrder.DialogueOverlay;
@@ -71,13 +75,15 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
         bottomFullDialogueBox.SetDisplayed(false);
         canvasGroup.enabled = false;
         parent.SetActive(false);
-        IsShown = false;
+        IsActive = false;
     }
 
-    public static async void Show(Story story)
+    public static bool IsShown() => Instance.IsActive;
+
+    public static async UniTask Show(Story story)
     {
         var instance = Instance;
-        if (instance.IsShown) await UniTask.WaitUntil(() => !instance.IsShown);
+        if (instance.IsActive) await UniTask.WaitUntil(() => !instance.IsActive);
         await instance.Enter();
 
         var spriteSets = new Dictionary<string, DialogueSpriteSet>();
@@ -113,13 +119,41 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
         while (story.canContinue)
         {
             var message = ReplacePlaceholders(story.Continue());
+            var duration = 0f;
             var tags = story.currentTags;
+
+            var setDuration = TagValue(tags, "Duration");
+            if (setDuration != null)
+            {
+                duration = float.Parse(setDuration);
+            }
+            
+            var setOverlayOpacity = TagValue(tags, "OverlayOpacity");
+            if (setOverlayOpacity != null)
+            {
+                setOverlayOpacity.Split('/', out var targetOpacity, out var fadeDuration, out var fadeDelay);
+                SetOverlayOpacity().Forget();
+                async UniTaskVoid SetOverlayOpacity()
+                {
+                    await UniTask.Delay(TimeSpan.FromSeconds(float.Parse(fadeDelay)));
+                    instance.backdropImage.DOFade(float.Parse(targetOpacity), float.Parse(fadeDuration));
+                }
+            }
             
             var setHighlight = TagValue(tags, "Highlight");
             if (setHighlight != null)
             {
-                lastHighlightTarget = DialogueHighlightTarget.Find(setHighlight);
-                lastHighlightTarget.Highlighted = true;
+                lastHighlightTarget = await DialogueHighlightTarget.Find(setHighlight);
+                if (lastHighlightTarget != null)
+                {
+                    lastHighlightTarget.Highlighted = true;
+                }
+            }
+
+            var waitForHighlightOnClick = FlagValue(tags, "WaitForHighlightOnClick");
+            if (waitForHighlightOnClick && lastHighlightTarget == null)
+            {
+                waitForHighlightOnClick = false;
             }
             
             var setImage = TagValue(tags, "Image");
@@ -195,7 +229,8 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
                 SpeakerName = currentSpeaker,
                 Sprite = currentSprite,
                 Position = currentPosition,
-                HasChoices = story.currentChoices.Count > 0
+                HasChoices = story.currentChoices.Count > 0,
+                IsBlocked = waitForHighlightOnClick || duration > 0
             };
             
             // Lookup animation
@@ -233,18 +268,26 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
             {
                 instance.image.Clear();
             }
-            
-            await dialogueBox.SetDisplayed(true);
-            lastDialogue = dialogue;
-            lastDialogueBox = dialogueBox;
-            
-            instance.detectionArea.onPointerClick.SetListener(_ =>
+
+            if (message.IsNullOrEmptyTrimmed())
             {
-                dialogueBox.WillFastForwardDialogue = true;
-            });
-            await dialogueBox.ShowDialogue(dialogue);
-            
-            if (story.currentChoices.Count > 0)
+                await dialogueBox.SetDisplayed(false);
+            }
+            else
+            {
+                await dialogueBox.SetDisplayed(true);
+                lastDialogue = dialogue;
+                lastDialogueBox = dialogueBox;
+
+                instance.detectionArea.onPointerClick.SetListener(_ => { dialogueBox.WillFastForwardDialogue = true; });
+                await dialogueBox.ShowDialogue(dialogue);
+            }
+
+            if (waitForHighlightOnClick)
+            {
+                await lastHighlightTarget.WaitForOnClick();
+            }
+            else if (story.currentChoices.Count > 0)
             {
                 var proceed = false;
                 var buttons = new List<SoftButton>();
@@ -285,7 +328,15 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
                     dialogueBox.messageBox.DOScale(1f, 0.2f);
                     proceed = true;
                 });
-                await UniTask.WaitUntil(() => proceed);
+                if (duration > 0)
+                {
+                    await UniTask.WhenAny(UniTask.WaitUntil(() => proceed),
+                        UniTask.Delay(TimeSpan.FromSeconds(duration)));
+                }
+                else
+                {
+                    await UniTask.WaitUntil(() => proceed);
+                }
                 instance.detectionArea.onPointerDown.RemoveAllListeners();
                 instance.detectionArea.onPointerUp.RemoveAllListeners();
             }
@@ -309,6 +360,11 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
         {
             return tags.Find(it => it.Trim().StartsWith(tag + ":"))?.Let(it => it.Substring(it.IndexOf(':') + 1).Trim());
         }
+        
+        bool FlagValue(List<string> tags, string tag)
+        {
+            return tags.Any(it => it.Trim() == tag);
+        }
 
         void DisposeImageSprite()
         {
@@ -324,7 +380,10 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
         {
             foreach (var (placeholder, function) in PlaceholderFunctions)
             {
-                str = str.Replace(placeholder, function());
+                if (str.Contains(placeholder))
+                {
+                    str = str.Replace(placeholder, function());
+                }
             }
             return str;
         }
@@ -335,6 +394,7 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
         {"[BADGE_TITLE]", () => CurrentBadge.title},
         {"[BADGE_DESCRIPTION]", () => CurrentBadge.description},
         {"[BADGE_IMAGE_URL]", () => CurrentBadge.GetImageUrl()},
+        {"[N/A]", () => ""}
     };
 
 }
@@ -354,8 +414,11 @@ public class DialogueOverlayEditor : Editor
             if (GUILayout.Button("Intro"))
             {
                 var intro = Resources.Load<TextAsset>("Stories/Intro");
+                LevelSelectionScreen.HighlightedLevelId = BuiltInData.TutorialLevelId;
                 var story = new Story(intro.text);
+                story.variablesState["IsBeginner"] = true;
                 DialogueOverlay.Show(story);
+                //LevelSelectionScreen.HighlightedLevelId = null;
             }
             if (GUILayout.Button("Badge"))
             {

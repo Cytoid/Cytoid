@@ -113,7 +113,7 @@ public class DialogueBox : MonoBehaviour
             }
         }
         WillFastForwardDialogue = false;
-        if (!dialogue.HasChoices)
+        if (!dialogue.HasChoices && !dialogue.IsBlocked)
         {
             caretImage.DOFade(1, 0.4f);
             
@@ -138,6 +138,7 @@ public class Dialogue
     public RuntimeAnimatorController AnimatorController { get; set; }
     public string AnimationName { get; set; }
     public bool HasChoices { get; set; }
+    public bool IsBlocked { get; set; }
 }
 
 public enum DialogueBoxPosition
@@ -151,7 +152,7 @@ public class DialogueSpriteSet
 
     public static DialogueSpriteSet Parse(string name)
     {
-        switch (name)
+        /*switch (name)
         {
             case "Tira":
                 return new DialogueSpriteSet
@@ -162,25 +163,7 @@ public class DialogueSpriteSet
                         {"Default", new State {SpriteAddress = "Stories/Characters/Tira/Default"}}
                     }
                 };
-            case "Nut":
-                return new DialogueSpriteSet
-                {
-                    Id = "Nut",
-                    States = new Dictionary<string, State>
-                    {
-                        {"Default", new State {SpriteAddress = "Stories/Characters/Nut/Default"}}
-                    }
-                };
-            case "Fujao":
-                return new DialogueSpriteSet
-                {
-                    Id = "Fujao",
-                    States = new Dictionary<string, State>
-                    {
-                        {"Default", new State {SpriteAddress = "Stories/Characters/Fujao/Default"}}
-                    }
-                };
-        }
+        }*/
         throw new InvalidOperationException(name);
     }
     
@@ -226,6 +209,12 @@ public class DialogueAnimationSet
                 {
                     Id = "Sayaka",
                     ControllerAddress = "Stories/Characters/Sayaka/Controller"
+                };
+            case "Kaede":
+                return new DialogueAnimationSet
+                {
+                    Id = "Kaede",
+                    ControllerAddress = "Stories/Characters/Kaede/Controller"
                 };
         }
         throw new InvalidOperationException(name);

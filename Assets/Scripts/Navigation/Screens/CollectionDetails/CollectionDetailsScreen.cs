@@ -58,7 +58,7 @@ public class CollectionDetailsScreen : Screen
         scrollRect.totalCount = collection.levels.Count;
         scrollRect.objectsToFill = collection.levels.Select(it => new LevelView{ Level = it.ToLevel(LoadedPayload.Type), DisplayOwner = true}).ToArray().Cast<object>().ToArray();
         scrollRect.RefillCells();
-        if (LoadedPayload.ScrollPosition > 0)
+        if (LoadedPayload.ScrollPosition >= 0)
         {
             scrollRect.SetVerticalNormalizedPositionFix(LoadedPayload.ScrollPosition);
         }
@@ -152,8 +152,8 @@ public class CollectionDetailsScreen : Screen
         public string TitleOverride;
         public string SloganOverride;
         public LevelType Type = LevelType.User;
-        
-        public float ScrollPosition;
+
+        public float ScrollPosition = -1;
     }
     
     public new Payload IntentPayload => (Payload) base.IntentPayload;

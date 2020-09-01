@@ -103,8 +103,20 @@ public class CommunityHomeScreen : Screen
         if (LoadedPayload != null) LoadedPayload.ScrollPosition = scrollRect.verticalNormalizedPosition;
     }
 
-    protected override void LoadPayload(ScreenLoadPromise promise)
+    protected override async void LoadPayload(ScreenLoadPromise promise)
     {
+        if (Context.Player.ShouldOneShot("Copyright Policy"))
+        {
+            if (!await TermsOverlay.Show("COPYRIGHT_POLICY".Get()))
+            {
+                promise.Reject();
+                Context.Player.ClearOneShot("Copyright Policy");
+                Context.ScreenManager.ChangeScreen(Context.ScreenManager.PopAndPeekHistory(), ScreenTransition.Out,
+                    addTargetScreenToHistory: false);
+                return;
+            }
+        }
+        
         SpinnerOverlay.Show();
 
         var promises = new List<IPromise>();
@@ -216,7 +228,7 @@ public class CommunityHomeScreen : Screen
         base.OnRendered();
         
         await UniTask.DelayFrame(3); // Scroll position not set fix
-        if (LoadedPayload.ScrollPosition > 0) scrollRect.verticalNormalizedPosition = LoadedPayload.ScrollPosition;
+        if (LoadedPayload.ScrollPosition >= 0) scrollRect.verticalNormalizedPosition = LoadedPayload.ScrollPosition;
         
         contentHolder.DOFade(1, 0.4f).SetEase(Ease.OutCubic);
     }
@@ -287,7 +299,7 @@ public class CommunityHomeScreen : Screen
     public class Payload : ScreenPayload
     {
         public Layout Layout;
-        public float ScrollPosition;
+        public float ScrollPosition = -1;
     }
     
     public new Payload IntentPayload => (Payload) base.IntentPayload;

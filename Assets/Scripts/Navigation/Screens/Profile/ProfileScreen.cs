@@ -31,7 +31,7 @@ public class ProfileScreen : Screen
             Context.ScreenManager.ChangeScreen(MainMenuScreen.Id, ScreenTransition.In);
             Toast.Next(Toast.Status.Success, "TOAST_SUCCESSFULLY_SIGNED_OUT".Get());
             ProfileWidget.Instance.SetSignedOut();
-            Context.ScreenManager.GetScreen<SignInScreen>().passwordInput.text = "";
+            Context.ScreenManager.GetScreen<SignInScreen>().signInPasswordInput.text = "";
         });
         contentTabs.selectOnScreenBecameActive = false;
         contentTabs.onTabSelect.AddListener((index, tab) =>
@@ -133,7 +133,7 @@ public class ProfileScreen : Screen
                     }
                 }
                 await UniTask.DelayFrame(2);
-                if (LoadedPayload.LeaderboardScrollPosition != 0) leaderboardScrollRect.verticalNormalizedPosition = LoadedPayload.LeaderboardScrollPosition;
+                if (LoadedPayload.LeaderboardScrollPosition >= 0) leaderboardScrollRect.verticalNormalizedPosition = LoadedPayload.LeaderboardScrollPosition;
             }
             catch (Exception e)
             {
@@ -214,7 +214,7 @@ public class ProfileScreen : Screen
         }
         contentTabs.Select(LoadedPayload.TabIndex);
         await UniTask.DelayFrame(2);
-        if (LoadedPayload.ProfileScrollPosition != 0) profileTab.scrollRect.verticalNormalizedPosition = LoadedPayload.ProfileScrollPosition;
+        if (LoadedPayload.ProfileScrollPosition >= 0) profileTab.scrollRect.verticalNormalizedPosition = LoadedPayload.ProfileScrollPosition;
     }
 
     public class Payload : ScreenPayload
@@ -223,8 +223,8 @@ public class ProfileScreen : Screen
         public bool IsPlayer;
         public int TabIndex;
         public FullProfile Profile;
-        public float ProfileScrollPosition;
-        public float LeaderboardScrollPosition;
+        public float ProfileScrollPosition = -1;
+        public float LeaderboardScrollPosition = -1;
     }
     
     public new Payload IntentPayload => (Payload) base.IntentPayload;

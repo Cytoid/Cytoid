@@ -735,9 +735,7 @@ public enum GameMode
     Practice = 2,
     Calibration = 3,
     Tier = 4,
-    GlobalCalibration = 5,
-    BasicTutorial = 6,
-    AdvancedTutorial = 7
+    GlobalCalibration = 5
 }
 
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]  

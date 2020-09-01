@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public class LevelSelectionScreen : Screen
 {
+    public static string HighlightedLevelId = null;
 
     public TransitionElement levelGrid;
     public LoopVerticalScrollRect scrollRect;
@@ -80,7 +81,7 @@ public class LevelSelectionScreen : Screen
 
     protected override void Render()
     {
-        if (LoadedPayload.ScrollPosition > 0) scrollRect.SetVerticalNormalizedPositionFix(LoadedPayload.ScrollPosition);
+        if (LoadedPayload.ScrollPosition >= 0) scrollRect.SetVerticalNormalizedPositionFix(LoadedPayload.ScrollPosition);
         categorySelect.Select(LoadedPayload.CategoryIndex);
         RefillLevels();
         categorySelect.onSelect.AddListener((index, canvasGroup) =>
@@ -201,6 +202,16 @@ public class LevelSelectionScreen : Screen
                 break;
         }
 
+        if (HighlightedLevelId != null)
+        {
+            var highlightedLevel = levels.FirstOrDefault(it => it.Id == HighlightedLevelId);
+            if (highlightedLevel != null)
+            {
+                levels.Remove(highlightedLevel);
+                levels.Insert(0, highlightedLevel);
+            }
+        }
+
         scrollRect.totalCount = levels.Count;
         scrollRect.objectsToFill = levels.Select(it => new LevelView{Level = it}).ToArray().Cast<object>().ToArray();
         scrollRect.RefillCells();
@@ -237,7 +248,7 @@ public class LevelSelectionScreen : Screen
     public class Payload : ScreenPayload
     {
         public int CategoryIndex;
-        public float ScrollPosition;
+        public float ScrollPosition = -1;
     }
     
     public new Payload IntentPayload => (Payload) base.IntentPayload;

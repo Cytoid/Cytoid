@@ -21,6 +21,7 @@ public class ChartModel
     public string ring_color;
     public string[] fill_colors = new string[12];
     public bool? display_boundaries;
+    public bool? display_background;
     public int? horizontal_margin;
     public int? vertical_margin;
     public bool? skip_music_on_completion;

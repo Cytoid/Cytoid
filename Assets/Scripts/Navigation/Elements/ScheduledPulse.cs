@@ -15,16 +15,26 @@ public class ScheduledPulse : MonoBehaviour, ScreenBecameActiveListener, ScreenB
     
     public void OnScreenBecameActive()
     {
-        isPulsing = true;
         if (startPulsingOnScreenBecameActive)
         {
-            var start = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            var delay = (int) (initialDelay * 1000);
-            NextPulseTime = start + delay;
+            StartPulsing();
         }
     }
 
     public void OnScreenBecameInactive()
+    {
+        StopPulsing();
+    }
+
+    public void StartPulsing()
+    {
+        isPulsing = true;
+        var start = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var delay = (int) (initialDelay * 1000);
+        NextPulseTime = start + delay;
+    }
+
+    public void StopPulsing()
     {
         isPulsing = false;
     }

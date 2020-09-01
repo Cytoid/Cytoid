@@ -102,7 +102,7 @@ public class ProfileTab : MonoBehaviour
             else
             {
                 var lastActive = profile.LastActive.Value.LocalDateTime;
-                if (DateTime.Now - lastActive > TimeSpan.FromMinutes(30))
+                if (DateTime.Now - lastActive <= TimeSpan.FromMinutes(30))
                 {
                     MarkOnline();
                 }

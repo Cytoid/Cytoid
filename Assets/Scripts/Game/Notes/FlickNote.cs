@@ -13,7 +13,7 @@ public class FlickNote : Note
     {
         return Game.Config.UseClassicStyle
             ? (NoteRenderer) new ClassicFlickNoteRenderer(this)
-            : new DefaultFlickNoteRenderer(this);
+            : throw new NotSupportedException();
     }
 
     public override void OnTouch(Vector2 screenPos)

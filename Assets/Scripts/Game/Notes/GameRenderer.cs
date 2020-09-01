@@ -54,7 +54,7 @@ public class GameRenderer
                 .ForEach(it => it.enabled = false);
         }
 
-        if (Game.State.Mode != GameMode.GlobalCalibration)
+        if (Game.State.Mode != GameMode.GlobalCalibration && Game.Chart.DisplayBackground)
         {
             // Cover
             cover = GameObjectProvider.Instance.cover;

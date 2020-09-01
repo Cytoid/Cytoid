@@ -22,7 +22,7 @@ public class LevelCard : InteractableMonoBehavior
     public List<DifficultyBall> difficultyBalls = new List<DifficultyBall>();
 
     private LevelView levelView;
-    private Level level
+    public Level Level
     {
         get => levelView?.Level;
         set
@@ -130,16 +130,16 @@ public class LevelCard : InteractableMonoBehavior
     {
         levelView = view;
 
-        artist.text = level.Meta.artist;
-        title.text = level.Meta.title;
-        titleLocalized.text = level.Meta.title_localized;
-        titleLocalized.gameObject.SetActive(!level.Meta.title_localized.IsNullOrEmptyTrimmed());
+        artist.text = Level.Meta.artist;
+        title.text = Level.Meta.title;
+        titleLocalized.text = Level.Meta.title_localized;
+        titleLocalized.gameObject.SetActive(!Level.Meta.title_localized.IsNullOrEmptyTrimmed());
 
         for (var index = 0; index < 3; index++)
         {
-            if (index <= level.Meta.charts.Count - 1)
+            if (index <= Level.Meta.charts.Count - 1)
             {
-                var chart = level.Meta.charts[index];
+                var chart = Level.Meta.charts[index];
                 difficultyBalls[index].gameObject.SetActive(true);
                 difficultyBalls[index].SetModel(Difficulty.Parse(chart.type), chart.difficulty);
             }
@@ -149,12 +149,12 @@ public class LevelCard : InteractableMonoBehavior
             }
         }
         
-        if (levelView.DisplayOwner && level.OnlineLevel?.Owner != null && level.OnlineLevel?.Owner.Uid != Context.OfficialAccountId)
+        if (levelView.DisplayOwner && Level.OnlineLevel?.Owner != null && Level.OnlineLevel?.Owner.Uid != Context.OfficialAccountId)
         {
             ownerRoot.gameObject.SetActive(true);
             ownerAvatar.action = AvatarAction.OpenProfile;
-            ownerAvatar.SetModel(level.OnlineLevel.Owner);
-            ownerName.text = level.OnlineLevel.Owner.Uid;
+            ownerAvatar.SetModel(Level.OnlineLevel.Owner);
+            ownerName.text = Level.OnlineLevel.Owner.Uid;
         }
         else
         {
@@ -245,14 +245,14 @@ public class LevelCard : InteractableMonoBehavior
             }
             
             // It's possible that this level now has a local version
-            if (!level.IsLocal && level.OnlineLevel.HasLocal(LevelType.User))
+            if (!Level.IsLocal && Level.OnlineLevel.HasLocal(LevelType.User))
             {
-                level = level.OnlineLevel.ToLevel(LevelType.User);
+                Level = Level.OnlineLevel.ToLevel(LevelType.User);
             }
 
-            if (level.IsLocal)
+            if (Level.IsLocal)
             {
-                var path = "file://" + level.Path + LevelManager.CoverThumbnailFilename;
+                var path = "file://" + Level.Path + LevelManager.CoverThumbnailFilename;
                 try
                 {
                     sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.LocalLevelCoverThumbnail,
@@ -267,7 +267,7 @@ public class LevelCard : InteractableMonoBehavior
             {
                 try
                 {
-                    var path = level.OnlineLevel.Cover.ThumbnailUrl;
+                    var path = Level.OnlineLevel.Cover.ThumbnailUrl;
                     sprite = await Context.AssetMemory.LoadAsset<Sprite>(path, AssetTag.RemoteLevelCoverThumbnail,
                         coverToken.Token,
                         new SpriteAssetOptions(new[] {width, height}));
@@ -365,14 +365,14 @@ public class LevelCard : InteractableMonoBehavior
     {
         base.OnPointerClick(eventData);
         if (isStatic) return;
-        if (level != null)
+        if (Level != null)
         {
             if (Context.ScreenManager.IsChangingScreen)
             {
                 return;
             }
             
-            if (Context.IsOffline() && !level.IsLocal)
+            if (Context.IsOffline() && !Level.IsLocal)
             {
                 Dialog.PromptAlert("DIALOG_OFFLINE_LEVEL_NOT_AVAILABLE".Get());
                 return;
@@ -383,24 +383,24 @@ public class LevelCard : InteractableMonoBehavior
 
             Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.In, 0.4f,
                 transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter(),
-                payload: new GamePreparationScreen.Payload {Level = level});
+                payload: new GamePreparationScreen.Payload {Level = Level});
         }
     }
 
     public void OnAction()
     {
-        if (!level.IsLocal) return;
+        if (!Level.IsLocal) return;
         if (Context.ScreenManager.ActiveScreenId != LevelSelectionScreen.Id &&
             Context.ScreenManager.ActiveScreenId != CommunityLevelSelectionScreen.Id) return;
 
         Context.Haptic(HapticTypes.Warning, true);
         var dialog = Dialog.Instantiate();
-        dialog.Message = "DIALOG_CONFIRM_DELETE".Get(level.Meta.title);
+        dialog.Message = "DIALOG_CONFIRM_DELETE".Get(Level.Meta.title);
         dialog.UsePositiveButton = true;
         dialog.UseNegativeButton = true;
         dialog.OnPositiveButtonClicked = _ =>
         {
-            Context.LevelManager.DeleteLocalLevel(level.Id);
+            Context.LevelManager.DeleteLocalLevel(Level.Id);
             Toast.Next(Toast.Status.Success, "TOAST_SUCCESSFULLY_DELETED_LEVEL".Get());
             dialog.Close();
         };

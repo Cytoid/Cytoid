@@ -131,7 +131,7 @@ public class LocalPlayerSettings
     public int AndroidDspBufferSize { get; set; } = -1;
 
     [JsonProperty("use_experimental_note_ar")] public bool UseExperimentalNoteAr { get; set; } = false;
-    [JsonProperty("use_experimental_note_animations")] public bool UseExperimentalNoteAnimations { get; set; } = false;
+    [JsonProperty("use_experimental_note_animations")] public bool UseExperimentalNoteAnimations { get; set; } = true;
 
     [JsonProperty("use_developer_console")] public bool UseDeveloperConsole { get; set; } = true;
 

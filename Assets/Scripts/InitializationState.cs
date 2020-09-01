@@ -1,11 +1,15 @@
 public class InitializationState
 {
     public bool IsInitialized;
-    public bool IsFirstLaunch;
-    public FirstLaunchPhase FirstLaunchPhase;
+    public FirstLaunchPhase FirstLaunchPhase = FirstLaunchPhase.None;
+
+    public bool IsDuringFirstLaunch() =>
+        FirstLaunchPhase != FirstLaunchPhase.None && FirstLaunchPhase != FirstLaunchPhase.Completed;
+
+    public bool IsAfterFirstLaunch() => FirstLaunchPhase == FirstLaunchPhase.Completed;
 }
 
 public enum FirstLaunchPhase
 {
-    GlobalCalibration, BasicTutorial, AdvancedTutorial
+    None, GlobalCalibration, BasicTutorial, Completed
 }

@@ -296,12 +296,12 @@ public class Player
         Settings.SetTriggers.Add(key);
         SaveSettings();
     }
-
+    
 }
 
 public class StringKey
 {
-    public const string FirstLaunch = "First Launch121";
+    public const string FirstLaunch = "First Launch12111111111";
 }
 
 public class LocalPlayerLegacy

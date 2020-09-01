@@ -24,7 +24,7 @@ public class AssetBundleBuilder : OdinEditorWindow
     {
         "character_sayaka",
         "character_sayaka_tachie",
-        //"character_kaede",
+        "character_kaede",
         "character_kaede_tachie"
     };
 

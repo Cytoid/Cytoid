@@ -49,7 +49,7 @@ public class TermsOverlay : SingletonMonoBehavior<TermsOverlay>
             it.canvasGroup.DOKill();
             it.canvasGroup.DOFade(1, duration).SetEase(Ease.OutCubic);
             Context.SetMajorCanvasBlockRaycasts(false);
-            it.text.text = $"\n\n\n{text}\n\n\n";
+            it.text.text = $"\n\n\n\n{text}\n\n\n\n".Replace(" ", "\u00A0"); // Replace with non-breaking space
             it.scrollRect.verticalNormalizedPosition = 1;
             it.scheduledPulse.StartPulsing();
             it.agreeButton.onPointerClick.AddListener(_ =>

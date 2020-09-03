@@ -167,6 +167,25 @@ public class ProfileScreen : Screen
                 promise.Resolve(IntentPayload);
                 return;
             }
+
+            if (Context.IsOffline())
+            {
+                // Fetch offline profile and cast it as full profile
+                Context.OnlinePlayer.FetchProfile()
+                    .Then(profile =>
+                    {
+                        var fullProfile =
+                            JsonConvert.DeserializeObject<FullProfile>(JsonConvert.SerializeObject(profile));
+                        IntentPayload.Profile = fullProfile;
+                        promise.Resolve(IntentPayload);
+                    })
+                    .CatchRequestError(error =>
+                    {
+                        Debug.LogError(error);
+                        Dialog.PromptGoBack("DIALOG_OFFLINE_FEATURE_NOT_AVAILABLE".Get());
+                    });
+                return;
+            }
         }
         
         SpinnerOverlay.Show();
@@ -177,7 +196,10 @@ public class ProfileScreen : Screen
             EnableDebug = true
         }).Then(data =>
         {
-            if (IntentPayload.IsPlayer) Context.OnlinePlayer.LastFullProfile = data;
+            if (IntentPayload.IsPlayer)
+            {
+                Context.OnlinePlayer.LastFullProfile = data;
+            }
             IntentPayload.Profile = data;
             promise.Resolve(IntentPayload);
         }).CatchRequestError(error =>
@@ -208,7 +230,7 @@ public class ProfileScreen : Screen
         {
             profileTab.characterDisplay.Load(CharacterAsset.GetTachieBundleId(Context.CharacterManager.SelectedCharacterId));
         }
-        else
+        else if (LoadedPayload.Profile.Character != null)
         {
             profileTab.characterDisplay.Load(CharacterAsset.GetTachieBundleId(LoadedPayload.Profile.Character.AssetId));
         }

@@ -80,10 +80,15 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
 
     public static bool IsShown() => Instance.IsActive;
 
+    public static bool TerminateCurrentStory;
+
     public static async UniTask Show(Story story)
     {
         var instance = Instance;
-        if (instance.IsActive) await UniTask.WaitUntil(() => !instance.IsActive);
+        if (instance.IsActive)
+        {
+            await UniTask.WaitUntil(() => !instance.IsActive);
+        }
         await instance.Enter();
 
         var spriteSets = new Dictionary<string, DialogueSpriteSet>();
@@ -116,7 +121,7 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
         DialogueBox lastDialogueBox = null;
         DialogueHighlightTarget lastHighlightTarget = null;
 
-        while (story.canContinue)
+        while (story.canContinue && !TerminateCurrentStory)
         {
             var message = ReplacePlaceholders(story.Continue());
             var duration = 0f;
@@ -279,12 +284,16 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
                 lastDialogue = dialogue;
                 lastDialogueBox = dialogueBox;
 
+                instance.detectionArea.onPointerDown.SetListener(_ => { dialogueBox.messageBox.DOScale(0.97f, 0.2f); });
+                instance.detectionArea.onPointerUp.SetListener(_ => { dialogueBox.messageBox.DOScale(1f, 0.2f); });
                 instance.detectionArea.onPointerClick.SetListener(_ => { dialogueBox.WillFastForwardDialogue = true; });
                 await dialogueBox.ShowDialogue(dialogue);
             }
 
             if (waitForHighlightOnClick)
             {
+                instance.detectionArea.onPointerDown.RemoveAllListeners();
+                instance.detectionArea.onPointerUp.RemoveAllListeners();
                 await lastHighlightTarget.WaitForOnClick();
             }
             else if (story.currentChoices.Count > 0)
@@ -307,10 +316,11 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
                 }
 
                 LayoutFixer.Fix(instance.choicesRoot);
-                await UniTask.DelayFrame(4);
+                await UniTask.DelayFrame(5);
 
                 foreach (var button in buttons)
                 {
+                    button.transitionElement.UseCurrentStateAsDefault();
                     button.transitionElement.Enter();
                     await UniTask.Delay(TimeSpan.FromSeconds(0.2f));
                 }
@@ -347,6 +357,7 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
                 lastHighlightTarget = null;
             }
         }
+        TerminateCurrentStory = false;
         if (lastDialogueBox != null) lastDialogueBox.SetDisplayed(false);
         
         instance.image.Clear();
@@ -394,49 +405,8 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
         {"[BADGE_TITLE]", () => CurrentBadge.title},
         {"[BADGE_DESCRIPTION]", () => CurrentBadge.description},
         {"[BADGE_IMAGE_URL]", () => CurrentBadge.GetImageUrl()},
-        {"[N/A]", () => ""}
+        {"[N/A]", () => ""},
+        {"[RATING]", () => Context.OnlinePlayer?.LastProfile?.Rating.ToString("N2") ?? "N/A"}
     };
 
 }
-
-
-#if UNITY_EDITOR
-
-[CustomEditor(typeof(DialogueOverlay))]
-public class DialogueOverlayEditor : Editor
-{
-    public override void OnInspectorGUI()
-    {
-        DrawDefaultInspector();
-
-        if (Application.isPlaying)
-        {
-            if (GUILayout.Button("Intro"))
-            {
-                var intro = Resources.Load<TextAsset>("Stories/Intro");
-                LevelSelectionScreen.HighlightedLevelId = BuiltInData.TutorialLevelId;
-                var story = new Story(intro.text);
-                story.variablesState["IsBeginner"] = true;
-                DialogueOverlay.Show(story);
-                //LevelSelectionScreen.HighlightedLevelId = null;
-            }
-            if (GUILayout.Button("Badge"))
-            {
-                DialogueOverlay.CurrentBadge = new Badge
-                {
-                    title = "夏祭：一段",
-                    description = "测试\n你好\n贵阳！\n11111111111",
-                    type = BadgeType.Event,
-                    metadata = new Dictionary<string, object>
-                    {
-                        {"imageUrl", "http://artifacts.cytoid.io/badges/sora1.jpg"}
-                    }
-                };
-                var badge = Resources.Load<TextAsset>("Stories/Badge");
-                var story = new Story(badge.text);
-                DialogueOverlay.Show(story);
-            }
-        }
-    }
-}
-#endif

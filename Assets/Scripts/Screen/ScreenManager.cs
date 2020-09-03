@@ -291,7 +291,7 @@ public class ScreenManager : SingletonMonoBehavior<ScreenManager>
         newScreen.CanvasGroup.alpha = 0;
         newScreen.State = ScreenState.Active;
         var blocksRaycasts = newScreen.CanvasGroup.blocksRaycasts;
-        newScreen.CanvasGroup.blocksRaycasts = blocksRaycasts; // Special handling
+        newScreen.CanvasGroup.interactable = newScreen.CanvasGroup.blocksRaycasts = blocksRaycasts; // Special handling
 
         if (disableTransitions)
         {

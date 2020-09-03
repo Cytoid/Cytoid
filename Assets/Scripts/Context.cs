@@ -575,7 +575,7 @@ public class Context : SingletonMonoBehavior<Context>
                             Player.Settings.DisplayBoundaries = true;
                            
                             var sceneLoader = new SceneLoader("Game");
-                            await UniTask.WhenAll(sceneLoader.Load(), UniTask.Delay(TimeSpan.FromSeconds(3)));
+                            await UniTask.WhenAll(sceneLoader.Load(), UniTask.Delay(TimeSpan.FromSeconds(1f)));
                             sceneLoader.Activate();
                             break;
                         case FirstLaunchPhase.BasicTutorial:
@@ -592,7 +592,7 @@ public class Context : SingletonMonoBehavior<Context>
                             Player.ClearTrigger(StringKey.FirstLaunch);
                             InitializationState.FirstLaunchPhase = FirstLaunchPhase.Completed;
 
-                            await UniTask.Delay(TimeSpan.FromSeconds(3));
+                            await UniTask.Delay(TimeSpan.FromSeconds(1f));
                             
                             // Initialize navigation like normal
                             await InitializeNavigation();
@@ -854,7 +854,7 @@ public class Context : SingletonMonoBehavior<Context>
             {
                 Filename = dbPath,
                 // Password = SecuredConstants.DbSecret,
-                Connection = Application.isEditor ? ConnectionType.Shared : ConnectionType.Direct
+                Connection = ConnectionType.Direct
             }
         );
         if (db.GetCollection<LocalPlayerSettings>("settings").FindOne(Query.All()) != null)
@@ -876,7 +876,7 @@ public class Context : SingletonMonoBehavior<Context>
                     {
                         Filename = dbPath,
                         // Password = SecuredConstants.DbSecret,
-                        Connection = Application.isEditor ? ConnectionType.Shared : ConnectionType.Direct
+                        Connection = ConnectionType.Direct
                     }
                 );
                 if (bakDb.GetCollection<LocalPlayerSettings>("settings").FindOne(Query.All()) != null)

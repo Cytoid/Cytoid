@@ -22,15 +22,16 @@ public class InitializationScreen : Screen
         statusText.text = "";
 
         await UniTask.DelayFrame(10);
-
-        Context.LevelManager.OnLevelInstallProgress.AddListener(OnLevelInstallProgress);
-        await Context.LevelManager.InstallUserCommunityLevels();
-        Context.LevelManager.OnLevelInstallProgress.RemoveListener(OnLevelInstallProgress);
         
         Context.LevelManager.OnLevelLoadProgress.AddListener(OnLevelLoadProgress);
-        await Context.LevelManager.LoadLevelsOfType(LevelType.User);
         await Context.LevelManager.LoadLevelsOfType(LevelType.BuiltIn);
+        await Context.LevelManager.LoadLevelsOfType(LevelType.User);
         Context.LevelManager.OnLevelLoadProgress.RemoveListener(OnLevelLoadProgress);
+        
+        Context.LevelManager.OnLevelInstallProgress.AddListener(OnLevelInstallProgress);
+        await Context.LevelManager.LoadOrInstallBuiltInLevels();
+        await Context.LevelManager.InstallUserCommunityLevels();
+        Context.LevelManager.OnLevelInstallProgress.RemoveListener(OnLevelInstallProgress);
 
         if (Context.Player.ShouldMigrate)
         {

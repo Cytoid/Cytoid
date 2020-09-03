@@ -213,9 +213,13 @@ public class NavigationBehavior : SingletonMonoBehavior<NavigationBehavior>
             gameObject.GetComponentsInChildren<HiddenIfOfflineElement>(true).ForEach(it =>
             {
                 Fix(it.gameObject, !offline);
-                it.rebuildTransform.RebuildLayout();
-                var o = it.rebuildTransform.gameObject;
-                Fix(o, o.activeSelf);
+                var rebuild = it.rebuildTransform;
+                if (rebuild != null)
+                {
+                    rebuild.RebuildLayout();
+                    var o = rebuild.gameObject;
+                    Fix(o, o.activeSelf);
+                }
             });
         }
         

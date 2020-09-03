@@ -85,6 +85,7 @@ public class SignInScreen : Screen
         closeButton.Leave();
         signUpButtonParent.Leave();
         await UniTask.WaitUntil(() => completed);
+        if (State != ScreenState.Active) return;
         closeButton.Enter();
         signUpButtonParent.Enter();
     }
@@ -127,7 +128,7 @@ public class SignInScreen : Screen
             return;
         }
         
-        if (!await TermsOverlay.Show("TERMS_OF_SERVICES".Get()))
+        if (!await TermsOverlay.Show("TERMS_OF_SERVICE".Get()))
         {
             return;
         }
@@ -185,6 +186,7 @@ public class SignInScreen : Screen
         });
 
         await UniTask.WaitUntil(() => completed);
+        if (State != ScreenState.Active) return;
         closeButton.Enter();
         signInButtonParent.Enter();
     }

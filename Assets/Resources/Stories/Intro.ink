@@ -1,6 +1,5 @@
 # AnimationSet: Sayaka
 VAR IsBeginner = false
-VAR AllTiersReleased = false
 你好！# Position: Bottom # Speaker: Sayaka # Animation: Sayaka/Default
 欢迎来到 Cytoid！# Animation: Sayaka/Happy
 Cytoid 是一个由社区驱动、由玩家运营的，^/完全免费的音乐游戏。^^/让我先简单介绍一下游戏的不同模式吧！# Animation: Sayaka/Default
@@ -34,6 +33,6 @@ Cytoid 内置的关卡并不多，^/那你可能会想，要怎样才可以玩�
 { IsBeginner == false:
     就算是 Cytoid 的老玩家，^也务必尝试一下这里的关卡哦！# Highlight: TrainingCard
 }
-最后是†段位模式†。^^/段位系统是对玩家 Cytoid 实力的分级评定，/要是充满信心又想考验自己的水平，^就来挑战一下吧～？# Highlight: TiersCard
+最后是†段位模式†。^^/段位系统是对玩家 Cytoid 实力的分级评定，^/要是充满信心又想考验自己的水平，^就来挑战一下吧～？# Highlight: TiersCard
 那么，对 Cytoid 玩法的介绍就大致到这里啦！^^/祝你玩得愉快！# Position: Bottom # Animation: Sayaka/Happy
 -> DONE

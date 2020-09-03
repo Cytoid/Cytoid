@@ -51,19 +51,19 @@ public class Profile
 [Serializable]
 public class FullProfile : Profile
 {
-    [JsonProperty("timeSeries")] public List<TimeSeriesData> TimeSeries { get; set; }
+    [JsonProperty("timeSeries")] public List<TimeSeriesData> TimeSeries { get; set; } = new List<TimeSeriesData>();
     [JsonProperty("lastActive")] public DateTimeOffset? LastActive { get; set; }
     [JsonProperty("levelCount")] public int LevelCount { get; set; }
-    [JsonProperty("levels")] public List<OnlineLevel> Levels { get; set; }
+    [JsonProperty("levels")] public List<OnlineLevel> Levels { get; set; } = new List<OnlineLevel>();
     [JsonProperty("featuredLevelCount")] public int FeaturedLevelCount { get; set; }
-    [JsonProperty("featuredLevels")] public List<OnlineLevel> FeaturedLevels { get; set; }
+    [JsonProperty("featuredLevels")] public List<OnlineLevel> FeaturedLevels { get; set; } = new List<OnlineLevel>();
     [JsonProperty("collectionCount")] public int CollectionCount { get; set; }
-    [JsonProperty("collections")] public List<CollectionMeta> Collections { get; set; }
-    [JsonProperty("recentRecords")] public List<OnlineRecord> RecentRecords { get; set; }
+    [JsonProperty("collections")] public List<CollectionMeta> Collections { get; set; } = new List<CollectionMeta>();
+    [JsonProperty("recentRecords")] public List<OnlineRecord> RecentRecords { get; set; } = new List<OnlineRecord>();
     [JsonProperty("tier")] public TierMeta Tier { get; set; }
     [JsonProperty("character")] public CharacterMeta Character { get; set; }
-    
-    [JsonProperty("badges")] public List<Badge> Badges { get; set; }
+
+    [JsonProperty("badges")] public List<Badge> Badges { get; set; } = new List<Badge>();
 
     [Serializable]
     public class TimeSeriesData

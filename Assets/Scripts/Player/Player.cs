@@ -219,7 +219,7 @@ public class Player
             DisplayProfiler = legacy.DisplayProfiler,
             DisplayNoteIds = legacy.DisplayNoteIds,
             LocalLevelSort = Enum.TryParse<LevelSort>(legacy.LocalLevelsSortBy, out var sort) ? sort : LevelSort.AddedDate,
-            AndroidDspBufferSize = legacy.DspBufferSize,
+            AndroidDspBufferSize = 1024, // Force 1024
             LocalLevelSortIsAscending = legacy.LocalLevelsSortInAscendingOrder
         };
         return settings;
@@ -301,7 +301,7 @@ public class Player
 
 public class StringKey
 {
-    public const string FirstLaunch = "First Launch12111111111";
+    public const string FirstLaunch = "First Launch1211111111111";
 }
 
 public class LocalPlayerLegacy

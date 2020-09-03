@@ -72,6 +72,16 @@ public class LevelManager
         return packagePaths;
     }
 
+    public async UniTask<List<Level>> LoadOrInstallBuiltInLevels()
+    {
+        var levels = new List<Level>();
+        foreach (var levelId in BuiltInData.BuiltInLevelIds)
+        {
+            levels.Add(await LoadOrInstallBuiltInLevel(levelId, LevelType.BuiltIn));
+        }
+        return levels;
+    }
+
     public async UniTask<List<string>> InstallUserCommunityLevels()
     {
         if (Application.platform == RuntimePlatform.IPhonePlayer)
@@ -400,214 +410,223 @@ public class LevelManager
         {
             lowMemory = true;
         }
+        var loadedCount = 0;
+        var tasks = new List<UniTask>();
         var results = new List<Level>();
         int index;
         for (index = 0; index < jsonPaths.Count; index++)
         {
-            var timer = new BenchmarkTimer($"Level loader ({index + 1} / {jsonPaths.Count})") {Enabled = false};
-            var jsonPath = jsonPaths[index];
-            try
+            var loadIndex = index;
+            async UniTask LoadLevel()
             {
-                FileInfo info;
+                var timer = new BenchmarkTimer($"Level loader ({loadIndex + 1} / {jsonPaths.Count})") {Enabled = false};
+                var jsonPath = jsonPaths[loadIndex];
                 try
                 {
-                    info = new FileInfo(jsonPath);
+                    FileInfo info;
+                    try
+                    {
+                        info = new FileInfo(jsonPath);
+                        if (info.Directory == null)
+                        {
+                            throw new FileNotFoundException(info.ToString());
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogWarning(e);
+                        Debug.LogWarning($"{jsonPath} could not be read");
+                        Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {jsonPath}");
+                        return;
+                    }
+
+                    var path = info.Directory.FullName + Path.DirectorySeparatorChar;
+
+                    if (!forceReload && loadedPaths.Contains(path))
+                    {
+                        Debug.LogWarning($"Level from {path} is already loaded");
+                        Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {path}");
+                        return;
+                    }
+
+                    Debug.Log($"Loading {loadIndex + 1}/{jsonPaths.Count} from {path}");
+
+                    if (!File.Exists(jsonPath))
+                    {
+                        Debug.LogWarning($"level.json not found at {jsonPath}");
+                        Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {path}");
+                        return;
+                    }
+
+                    await UniTask.SwitchToThreadPool();
+                    var meta = JsonConvert.DeserializeObject<LevelMeta>(File.ReadAllText(jsonPath));
+                    await UniTask.SwitchToMainThread();
+                    
+                    timer.Time("Deserialization");
+
+                    if (meta == null)
+                    {
+                        Debug.LogWarning($"Invalid level.json at {jsonPath}");
+                        Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {path}");
+                        return;
+                    }
+
+                    if (type != LevelType.Temp && LoadedLocalLevels.ContainsKey(meta.id))
+                    {
+                        if (LoadedLocalLevels[meta.id].Type == LevelType.Tier && type == LevelType.User)
+                        {
+                            Debug.LogWarning($"Community level cannot override tier level");
+                            Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {path}");
+                            return;
+                        }
+                        if (LoadedLocalLevels[meta.id].Meta.version > meta.version)
+                        {
+                            Debug.LogWarning($"Level to load has smaller version than loaded level");
+                            Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {path}");
+                            return;
+                        }
+                        loadedPaths.Remove(LoadedLocalLevels[meta.id].Path);
+                    }
+
+                    // Sort charts
+                    meta.SortCharts();
+
+                    // Reject invalid level meta
+                    if (!meta.Validate())
+                    {
+                        Debug.LogWarning($"Invalid metadata in level.json at {jsonPath}");
+                        Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {path}");
+                        return;
+                    }
+
+                    timer.Time("Validate");
+
+                    var db = Context.Database;
+                    await UniTask.SwitchToThreadPool();
+                    var level = Level.FromLocal(path, type, meta, db);
+                    var record = level.Record;
+                    if (record.AddedDate == DateTimeOffset.MinValue)
+                    {
+                        if (type == LevelType.User)
+                        {
+                            record.AddedDate = Context.Library.Levels.ContainsKey(level.Id) 
+                                ? Context.Library.Levels[level.Id].Date 
+                                : info.LastWriteTimeUtc;
+                        }
+                        level.SaveRecord();
+                    }
+                    await UniTask.SwitchToMainThread();
+                    timer.Time("LevelRecord");
+
+                    if (type != LevelType.Temp)
+                    {
+                        LoadedLocalLevels[meta.id] = level;
+                        loadedPaths.Add(path);
+
+                        // Generate thumbnail
+                        if (!File.Exists(level.Path + CoverThumbnailFilename))
+                        {
+                            var thumbnailPath = "file://" + level.Path + level.Meta.background.path;
+
+                            if (lowMemory)
+                            {
+                                // Give up
+                                Debug.LogWarning($"Low memory!");
+                                Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {jsonPath}");
+                                return;
+                            }
+
+                            using (var request = UnityWebRequest.Get(thumbnailPath))
+                            {
+                                await request.SendWebRequest();
+                                if (request.isNetworkError || request.isHttpError)
+                                {
+                                    Debug.LogWarning(request.error);
+                                    Debug.LogWarning($"Cannot get background texture from {thumbnailPath}");
+                                    Debug.LogWarning(
+                                        $"Skipped generating thumbnail for {loadIndex + 1}/{jsonPaths.Count}: {meta.id} ({path})");
+                                    return;
+                                }
+
+                                var coverTexture = request.downloadHandler.data.ToTexture2D();
+                                if (coverTexture == null)
+                                {
+                                    Debug.LogWarning(request.error);
+                                    Debug.LogWarning($"Cannot get background texture from {thumbnailPath}");
+                                    Debug.LogWarning(
+                                        $"Skipped generating thumbnail for {loadIndex + 1}/{jsonPaths.Count}: {meta.id} ({path})");
+                                    return;
+                                }
+
+                                if (lowMemory)
+                                {
+                                    // Give up
+                                    Object.Destroy(coverTexture);
+                                    Debug.LogWarning($"Low memory!");
+                                    Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {jsonPath}");
+                                    return;
+                                }
+
+                                var croppedTexture = TextureScaler.FitCrop(coverTexture, Context.LevelThumbnailWidth,
+                                    Context.LevelThumbnailHeight);
+
+                                if (lowMemory)
+                                {
+                                    // Give up
+                                    Object.Destroy(coverTexture);
+                                    Object.Destroy(croppedTexture);
+                                    Debug.LogWarning($"Low memory!");
+                                    Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {jsonPath}");
+                                    return;
+                                }
+
+                                var bytes = croppedTexture.EncodeToJPG();
+                                Object.Destroy(coverTexture);
+                                Object.Destroy(croppedTexture);
+
+                                await UniTask.DelayFrame(0); // Reduce load to prevent crash
+
+                                try
+                                {
+                                    File.WriteAllBytes(level.Path + CoverThumbnailFilename, bytes);
+                                    Debug.Log(
+                                        $"Thumbnail generated {loadIndex + 1}/{jsonPaths.Count}: {level.Id} ({thumbnailPath})");
+
+                                    await UniTask.DelayFrame(0); // Reduce load to prevent crash
+                                }
+                                catch (Exception e)
+                                {
+                                    Debug.LogWarning(e);
+                                    Debug.LogWarning($"Could not write to {level.Path + CoverThumbnailFilename}");
+                                    Debug.LogWarning(
+                                        $"Skipped generating thumbnail for {loadIndex + 1}/{jsonPaths.Count} from {jsonPath}");
+                                }
+                            }
+
+                            timer.Time("Generate thumbnail");
+                        }
+                    }
+                    
+                    results.Add(level);
+                    OnLevelLoadProgress.Invoke(meta.id, ++loadedCount, jsonPaths.Count);
+                    Debug.Log($"Loaded {loadIndex + 1}/{jsonPaths.Count}: {meta.id} ");
+                    timer.Time("OnLevelLoadProgressEvent");
                 }
                 catch (Exception e)
                 {
-                    Debug.LogWarning(e);
-                    Debug.LogWarning($"{jsonPath} could not be read");
-                    Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {jsonPath}");
-                    continue;
-                }
-
-                if (info.Directory == null) continue;
-
-                var path = info.Directory.FullName + Path.DirectorySeparatorChar;
-
-                if (!forceReload && loadedPaths.Contains(path))
-                {
-                    Debug.LogWarning($"Level from {path} is already loaded");
-                    Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {path}");
-                    continue;
-                }
-
-                Debug.Log($"Loading {index + 1}/{jsonPaths.Count} from {path}");
-
-                if (!File.Exists(jsonPath))
-                {
-                    Debug.LogWarning($"level.json not found at {jsonPath}");
-                    Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {path}");
-                    continue;
+                    Debug.LogError(e);
+                    Debug.LogError($"Unexpected error while loading from {jsonPath}");
+                    Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {jsonPath}");
                 }
                 
-                var meta = JsonConvert.DeserializeObject<LevelMeta>(File.ReadAllText(jsonPath));
-
-                timer.Time("Deserialization");
-
-                if (meta == null)
-                {
-                    Debug.LogWarning($"Invalid level.json at {jsonPath}");
-                    Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {path}");
-                    continue;
-                }
-
-                if (type != LevelType.Temp && LoadedLocalLevels.ContainsKey(meta.id))
-                {
-                    if (LoadedLocalLevels[meta.id].Type == LevelType.Tier && type == LevelType.User)
-                    {
-                        Debug.LogWarning($"Community level cannot override tier level");
-                        Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {path}");
-                        continue;
-                    }
-                    if (LoadedLocalLevels[meta.id].Meta.version > meta.version)
-                    {
-                        Debug.LogWarning($"Level to load has smaller version than loaded level");
-                        Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {path}");
-                        continue;
-                    }
-                    loadedPaths.Remove(LoadedLocalLevels[meta.id].Path);
-                }
-                
-                OnLevelLoadProgress.Invoke(meta.id, index + 1, jsonPaths.Count);
-
-                timer.Time("OnLevelLoadProgressEvent");
-
-                // Sort charts
-                meta.SortCharts();
-
-                // Reject invalid level meta
-                if (!meta.Validate())
-                {
-                    Debug.LogWarning($"Invalid metadata in level.json at {jsonPath}");
-                    Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {path}");
-                    continue;
-                }
-
-                timer.Time("Validate");
-
-                var level = Level.FromLocal(path, type, meta);
-
-                var record = level.Record;
-
-                if (record.AddedDate == DateTimeOffset.MinValue)
-                {
-                    if (type == LevelType.User)
-                    {
-                        record.AddedDate = Context.Library.Levels.ContainsKey(level.Id) 
-                            ? Context.Library.Levels[level.Id].Date 
-                            : info.LastWriteTimeUtc;
-                    }
-                }
-
-                level.SaveRecord();
-                timer.Time("LevelRecord");
-
-                results.Add(level);
-
-                if (type != LevelType.Temp)
-                {
-                    LoadedLocalLevels[meta.id] = level;
-                    loadedPaths.Add(path);
-
-                    // Generate thumbnail
-                    if (!File.Exists(level.Path + CoverThumbnailFilename))
-                    {
-                        var thumbnailPath = "file://" + level.Path + level.Meta.background.path;
-
-                        if (lowMemory)
-                        {
-                            // Give up
-                            Debug.LogWarning($"Low memory!");
-                            Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {jsonPath}");
-                            continue;
-                        }
-
-                        using (var request = UnityWebRequest.Get(thumbnailPath))
-                        {
-                            await request.SendWebRequest();
-                            if (request.isNetworkError || request.isHttpError)
-                            {
-                                Debug.LogWarning(request.error);
-                                Debug.LogWarning($"Cannot get background texture from {thumbnailPath}");
-                                Debug.LogWarning(
-                                    $"Skipped generating thumbnail for {index + 1}/{jsonPaths.Count}: {meta.id} ({path})");
-                                continue;
-                            }
-
-                            var coverTexture = request.downloadHandler.data.ToTexture2D();
-                            if (coverTexture == null)
-                            {
-                                Debug.LogWarning(request.error);
-                                Debug.LogWarning($"Cannot get background texture from {thumbnailPath}");
-                                Debug.LogWarning(
-                                    $"Skipped generating thumbnail for {index + 1}/{jsonPaths.Count}: {meta.id} ({path})");
-                                continue;
-                            }
-
-                            if (lowMemory)
-                            {
-                                // Give up
-                                Object.Destroy(coverTexture);
-                                Debug.LogWarning($"Low memory!");
-                                Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {jsonPath}");
-                                continue;
-                            }
-
-                            var croppedTexture = TextureScaler.FitCrop(coverTexture, Context.LevelThumbnailWidth,
-                                Context.LevelThumbnailHeight);
-
-                            if (lowMemory)
-                            {
-                                // Give up
-                                Object.Destroy(coverTexture);
-                                Object.Destroy(croppedTexture);
-                                Debug.LogWarning($"Low memory!");
-                                Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {jsonPath}");
-                                continue;
-                            }
-
-                            var bytes = croppedTexture.EncodeToJPG();
-                            Object.Destroy(coverTexture);
-                            Object.Destroy(croppedTexture);
-
-                            await UniTask.DelayFrame(0); // Reduce load to prevent crash
-
-                            try
-                            {
-                                File.WriteAllBytes(level.Path + CoverThumbnailFilename, bytes);
-                                Debug.Log(
-                                    $"Thumbnail generated {index + 1}/{jsonPaths.Count}: {level.Id} ({thumbnailPath})");
-
-                                await UniTask.DelayFrame(0); // Reduce load to prevent crash
-                            }
-                            catch (Exception e)
-                            {
-                                Debug.LogWarning(e);
-                                Debug.LogWarning($"Could not write to {level.Path + CoverThumbnailFilename}");
-                                Debug.LogWarning(
-                                    $"Skipped generating thumbnail for {index + 1}/{jsonPaths.Count} from {jsonPath}");
-                            }
-                        }
-
-                        timer.Time("Generate thumbnail");
-                    }
-                }
-                
-                Debug.Log($"Loaded {index + 1}/{jsonPaths.Count}: {meta.id} ");
-            }
-            catch (Exception e)
-            {
-                Debug.LogError(e);
-                Debug.LogError($"Unexpected error while loading from {jsonPath}");
-                Debug.LogWarning($"Skipped {index + 1}/{jsonPaths.Count} from {jsonPath}");
+                timer.Time();
             }
 
-            timer.Time();
+            tasks.Add(LoadLevel());
         }
 
+        await UniTask.WhenAll(tasks);
         Application.lowMemory -= OnLowMemory;
-        
         return results;
     }
 

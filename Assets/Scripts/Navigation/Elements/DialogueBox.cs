@@ -82,7 +82,7 @@ public class DialogueBox : MonoBehaviour
         caretImage.DOKill();
         caretImage.DOFade(0, 0.4f);
         WillFastForwardDialogue = false;
-        dialogue.Message = dialogue.Message.Replace('/', '\n');
+        dialogue.Message = dialogue.Message.Trim().Replace('/', '\n').Replace(" ", "\u00A0"); // Replace with non-breaking space
         var baseDelay = 2;
         var isBold = false;
         var baseText = "";

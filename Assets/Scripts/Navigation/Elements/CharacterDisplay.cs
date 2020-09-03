@@ -2,18 +2,22 @@ using System;
 using Cysharp.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 [RequireComponent(typeof(CanvasGroup))]
-public class CharacterDisplay : MonoBehaviour, ScreenBecameActiveListener, ScreenLeaveCompletedListener
+public class CharacterDisplay : MonoBehaviour, ScreenBecameActiveListener, ScreenLeaveCompletedListener, ScreenBecameInactiveListener
 {
 
     [GetComponent] public CanvasGroup canvasGroup;
     public TransitionElement transitionElement;
+    public InteractableMonoBehavior interactableMonoBehavior;
     public bool loadOnScreenBecameActive = true;
     public bool loadActiveCharacter = true;
     public bool enterTransitionElementOnEnter = true;
+    public bool interactable;
 
     public bool IsLoaded { get; private set; }
+    public Func<PointerEventData, UniTask> OnInteract { get; set; }
 
     private string loadedBundleId;
     private AssetBundle loadedAssetBundle;
@@ -69,6 +73,18 @@ public class CharacterDisplay : MonoBehaviour, ScreenBecameActiveListener, Scree
             transitionElement.Enter();
         }
         loadedGameObject.GetComponent<AnimatedCharacter>()?.OnEnter();
+        if (interactable)
+        {
+            var isInteracting = false;
+            interactableMonoBehavior.onPointerClick.SetListener(async data =>
+            {
+                print(data);
+                if (isInteracting || OnInteract == null) return;
+                isInteracting = true;
+                await OnInteract.Invoke(data);
+                isInteracting = false;
+            });
+        }
     }
 
     public void Unload()
@@ -88,6 +104,10 @@ public class CharacterDisplay : MonoBehaviour, ScreenBecameActiveListener, Scree
                 Destroy(rectTransform.gameObject);
                 rectTransform = null;
             }
+            if (interactable)
+            {
+                interactableMonoBehavior.onPointerClick.RemoveAllListeners();
+            }
         }
     }
 
@@ -101,6 +121,14 @@ public class CharacterDisplay : MonoBehaviour, ScreenBecameActiveListener, Scree
         if (loadOnScreenBecameActive && loadActiveCharacter)
         {
             Load(CharacterAsset.GetTachieBundleId(Context.CharacterManager.SelectedCharacterId));
+        }
+    }
+
+    public void OnScreenBecameInactive()
+    {
+        if (interactable)
+        {
+            interactableMonoBehavior.onPointerClick.RemoveAllListeners();
         }
     }
 

@@ -139,15 +139,18 @@ public class ProfileTab : MonoBehaviour
         UpdateChart(ChartType.AvgRating);
         
         pillRows.ForEach(it => LayoutFixer.Fix(it));
-        var eventBadges = profile.GetEventBadges();
-        if (eventBadges.Any())
+        if (Context.IsOnline())
         {
-            badgeGrid.gameObject.SetActive(true);
-            badgeGrid.SetModel(eventBadges);
-        }
-        else
-        {
-            badgeGrid.gameObject.SetActive(false);
+            var eventBadges = profile.GetEventBadges();
+            if (eventBadges.Any())
+            {
+                badgeGrid.gameObject.SetActive(true);
+                badgeGrid.SetModel(eventBadges);
+            }
+            else
+            {
+                badgeGrid.gameObject.SetActive(false);
+            }
         }
 
         foreach (Transform child in recordSection.recordCardHolder) Destroy(child.gameObject);

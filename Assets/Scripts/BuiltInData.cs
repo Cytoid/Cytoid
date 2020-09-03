@@ -20,6 +20,10 @@ public static class BuiltInData
         "skillmode.antinomia",
         "skillmode.thebigblack"
     };
+    public static readonly List<string> BuiltInLevelIds = new List<string>
+    {
+        "io.cytoid.tutorial"
+    };
     public const string GlobalCalibrationModeLevelId = "teages.offset_guide";
     public const string TutorialLevelId = "io.cytoid.tutorial";
 }

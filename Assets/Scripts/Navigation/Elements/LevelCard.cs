@@ -389,7 +389,7 @@ public class LevelCard : InteractableMonoBehavior
 
     public void OnAction()
     {
-        if (!Level.IsLocal) return;
+        if (!Level.IsLocal || Level.Type == LevelType.BuiltIn) return;
         if (Context.ScreenManager.ActiveScreenId != LevelSelectionScreen.Id &&
             Context.ScreenManager.ActiveScreenId != CommunityLevelSelectionScreen.Id) return;
 

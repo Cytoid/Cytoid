@@ -36,7 +36,7 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
         Context.PostSceneChanged.AddListener(PostSceneChanged);
         Context.CharacterManager.OnActiveCharacterSet.AddListener(asset =>
         {
-            SetMainAudio(asset.musicAudio != null ? asset.musicAudio : defaultLoopAudio);
+            SetMainAudio(Context.Player.Settings.PlayCharacterTheme && asset.musicAudio != null ? asset.musicAudio : defaultLoopAudio);
         });
 
         Context.OnApplicationInitialized.AddListener(Initialize);

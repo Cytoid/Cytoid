@@ -14,12 +14,17 @@ public static class DatabaseExtensions
         col.EnsureIndex(x => x.LevelId, true);
         return col.FindOne(it => it.LevelId == levelId);
     }
-    
+
+    private static object SetLevelRecordLock = new object();
+
     public static void SetLevelRecord(this LiteDatabase db, LevelRecord record, bool overwrite = false)
     {
         var col = db.GetCollection<LevelRecord>("level_records");
         if (overwrite) col.FindOne(it => it.LevelId == record.LevelId)?.Let(it => col.Delete(it.Id));
-        if (!col.Update(record)) col.Insert(record);
+        lock (SetLevelRecordLock)
+        {
+            if (!col.Update(record)) col.Insert(record);
+        }
     }
 
     public static Profile GetProfile(this LiteDatabase db)
@@ -33,5 +38,5 @@ public static class DatabaseExtensions
         col.DeleteMany(x => true);
         col.Insert(profile);
     }
-    
+
 }

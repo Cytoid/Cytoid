@@ -6,6 +6,7 @@ using LiteDB;
 using Newtonsoft.Json;
 using Proyecto26;
 using Cysharp.Threading.Tasks;
+using Ink.Runtime;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -84,6 +85,12 @@ public class TrainingSelectionScreen : Screen
                 it.Leave(false, true);
                 it.Enter();
             });
+
+        characterDisplay.OnInteract = async _ => await ShowTrainingDialogue();
+        if (Context.Player.ShouldOneShot("Met Training Instructor"))
+        {
+            ShowTrainingDialogue(true).Forget();
+        }
     }
 
     public async void LoadContent()
@@ -179,6 +186,17 @@ public class TrainingSelectionScreen : Screen
             LoadedContent = new Content {Levels = levels.OrderBy(it => it.Meta.GetEasiestDifficultyLevel()).ToList()};
             OnContentLoaded(LoadedContent);
         }
+    }
+
+    public async UniTask ShowTrainingDialogue(bool firstOccurrence = false)
+    {
+        var text = Resources.Load<TextAsset>("Stories/Training");
+        var story = new Story(text.text);
+        Resources.UnloadAsset(text);
+        story.variablesState["FirstOccurrence"] = firstOccurrence;
+        story.variablesState["SignedIn"] = Context.OnlinePlayer.IsAuthenticated;
+        story.variablesState["Rating"] = Context.OnlinePlayer.LastProfile?.Rating ?? 0;
+        await DialogueOverlay.Show(story);
     }
 
     public override void OnScreenChangeFinished(Screen from, Screen to)

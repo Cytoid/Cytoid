@@ -17,12 +17,17 @@ public class CharacterSelectionScreen : Screen
     public Text characterDesignerText;
     public TransitionElement characterTransitionElement;
     public CharacterDisplay characterDisplay;
+    public Sprite volumeSprite;
+    public Sprite volumeMuteSprite;
 
     public InteractableMonoBehavior helpButton;
+    public InteractableMonoBehavior muteButton;
     public InteractableMonoBehavior previousButton;
     public InteractableMonoBehavior nextButton;
     public InteractableMonoBehavior illustratorProfileButton;
     public InteractableMonoBehavior characterDesignerProfileButton;
+
+    private Image muteButtonImage;
 
     public override void OnScreenInitialized()
     {
@@ -31,6 +36,7 @@ public class CharacterSelectionScreen : Screen
         infoCard.enterOnScreenBecomeActive = characterTransitionElement.enterOnScreenBecomeActive = false;
 
         helpButton.onPointerClick.AddListener(_ => Dialog.PromptAlert("CHARACTER_TUTORIAL".Get()));
+        muteButtonImage = muteButton.GetComponentInChildren<Image>();
     }
 
     public override void OnScreenBecameActive()
@@ -147,6 +153,8 @@ public class CharacterSelectionScreen : Screen
 
     protected override void Render()
     {
+        muteButton.scaleOnClick = false;
+        muteButton.onPointerClick.RemoveAllListeners();
         previousButton.onPointerClick.RemoveAllListeners();
         nextButton.onPointerClick.RemoveAllListeners();
         if (LoadedPayload.OwnedCharacters.Count == 1)
@@ -221,8 +229,29 @@ public class CharacterSelectionScreen : Screen
         {
             characterDesignerHolder.gameObject.SetActive(false);
         }
-
         infoCard.transform.RebuildLayout();
+
+        if (character.musicAudio == null)
+        {
+            muteButtonImage.sprite = volumeSprite;
+            muteButtonImage.SetAlpha(0.3f);
+            muteButton.scaleOnClick = false;
+            muteButton.onPointerClick.RemoveAllListeners();
+        }
+        else
+        {
+            muteButtonImage.sprite = Context.Player.Settings.PlayCharacterTheme ? volumeSprite : volumeMuteSprite;
+            muteButtonImage.SetAlpha(1f);
+            muteButton.scaleOnClick = true;
+            muteButton.onPointerClick.SetListener(_ =>
+            {
+                Context.Player.Settings.PlayCharacterTheme = !Context.Player.Settings.PlayCharacterTheme;
+                Context.Player.SaveSettings();
+                LoopAudioPlayer.Instance.SetMainAudio(Context.Player.Settings.PlayCharacterTheme ? character.musicAudio : LoopAudioPlayer.Instance.defaultLoopAudio);
+                muteButtonImage.sprite = Context.Player.Settings.PlayCharacterTheme ? volumeSprite : volumeMuteSprite;
+            });
+        }
+        
         await characterDisplay.Load(CharacterAsset.GetTachieBundleId(meta.AssetId));
         NavigationBackdrop.Instance.UpdateBlur();
 

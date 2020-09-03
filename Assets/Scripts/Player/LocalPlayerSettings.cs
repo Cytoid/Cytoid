@@ -26,6 +26,8 @@ public class LocalPlayerSettings
 
     [JsonProperty("character_id")] public string ActiveCharacterId { get; set; }
 
+    [JsonProperty("play_character_theme")] public bool PlayCharacterTheme { get; set; } = true;
+
     [JsonProperty("language")] public int Language { get; set; } = 0;
     [JsonProperty("play_ranked")] public bool PlayRanked { get; set; } = false;
 

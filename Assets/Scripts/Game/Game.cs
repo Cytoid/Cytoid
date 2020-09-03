@@ -177,15 +177,6 @@ public class Game : MonoBehaviour
 
             Difficulty = Level.Meta.GetEasiestDifficulty();
             
-            // Reset audio config
-            if (Application.platform == RuntimePlatform.Android)
-            {
-                var audioConfig = AudioSettings.GetConfiguration();
-                audioConfig.dspBufferSize = Context.Player.Settings.AndroidDspBufferSize = 1024;
-                Context.Player.SaveSettings();
-                AudioSettings.Reset(audioConfig);
-            }
-            
             // Initialize global calibrator
             globalCalibrator = new GlobalCalibrator(this);
         }

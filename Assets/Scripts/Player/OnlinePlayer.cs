@@ -155,13 +155,13 @@ public class OnlinePlayer
 
     public IPromise<Profile> FetchProfile()
     {
-        var uid = Context.Player.Id;
+        var id = Context.Player.Id;
         if (IsAuthenticating || Context.IsOnline())
         {
             // Online
             return RestClient.Get<Profile>(new RequestHelper
             {
-                Uri = $"{Context.ApiUrl}/profile/{uid}",
+                Uri = $"{Context.ApiUrl}/profile/{id}",
                 Headers = GetRequestHeaders(),
                 EnableDebug = true
             }).Then(profile =>

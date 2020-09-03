@@ -104,9 +104,10 @@ public class MainMenuScreen : Screen
         {
             LaunchedFirstLaunchDialogue = true;
             
-            var intro = Resources.Load<TextAsset>("Stories/Intro");
+            var text = Resources.Load<TextAsset>("Stories/Intro");
             LevelSelectionScreen.HighlightedLevelId = BuiltInData.TutorialLevelId;
-            var story = new Story(intro.text);
+            var story = new Story(text.text);
+            Resources.UnloadAsset(text);
             story.variablesState["IsBeginner"] = levelCount < 10;
             await DialogueOverlay.Show(story);
             LevelSelectionScreen.HighlightedLevelId = null;

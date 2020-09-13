@@ -626,10 +626,12 @@ public class Game : MonoBehaviour
         onGameFailed.Invoke(this);
     }
 
-    public virtual async void Complete()
+    public virtual async void Complete(bool? skipMusic = null)
     {
         if (State.IsCompleted || State.IsFailed) return;
         print("Game completed");
+
+        if (skipMusic == null) skipMusic = Chart.SkipMusicOnCompletion;
 
         State.IsCompleted = true;
 
@@ -652,7 +654,7 @@ public class Game : MonoBehaviour
             var startTime = DateTime.Now;
             await UniTask.WaitUntil(() =>
             {
-                if (Chart.SkipMusicOnCompletion)
+                if (skipMusic.Value)
                 {
                     volume -= 1 / 60f;
                     if (volume < 1)

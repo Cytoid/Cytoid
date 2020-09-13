@@ -190,7 +190,7 @@ public class PlayerGame : Game
 
     public override void Retry() => Expression.Empty();
 
-    public override void Complete() => Expression.Empty();
+    public override void Complete(bool? skipMusic = null) => Expression.Empty();
 
     public override void Dispose() => Expression.Empty();
 

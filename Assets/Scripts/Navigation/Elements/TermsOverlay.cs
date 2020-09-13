@@ -1,6 +1,7 @@
 using System;
 using DG.Tweening;
 using Cysharp.Threading.Tasks;
+using Polyglot;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -37,31 +38,34 @@ public class TermsOverlay : SingletonMonoBehavior<TermsOverlay>
         isTransitioning = true;
         var hasResult = false;
         var result = false;
-        Instance.Apply(it =>
+        var it = Instance;
+        it.canvas.enabled = true;
+        it.canvas.overrideSorting = true;
+        it.canvas.sortingOrder = NavigationSortingOrder.TermsOverlay;
+        it.canvasGroup.enabled = true;
+        it.canvasGroup.blocksRaycasts = true;
+        it.canvasGroup.interactable = true;
+        LayoutFixer.Fix(it.agreeButton.transform.parent);
+        await UniTask.DelayFrame(5);
+        it.canvasGroup.DOKill();
+        it.canvasGroup.DOFade(1, duration).SetEase(Ease.OutCubic);
+        Context.SetMajorCanvasBlockRaycasts(false);
+        it.text.text = $"\n\n\n\n{text}\n\n\n\n";
+        if (((Language) Context.Player.Settings.Language).ShouldUseNonBreakingSpaces())
         {
-            it.agreeButton.transform.parent.RebuildLayout();
-            it.canvas.enabled = true;
-            it.canvas.overrideSorting = true;
-            it.canvas.sortingOrder = NavigationSortingOrder.TermsOverlay;
-            it.canvasGroup.enabled = true;
-            it.canvasGroup.blocksRaycasts = true;
-            it.canvasGroup.interactable = true;
-            it.canvasGroup.DOKill();
-            it.canvasGroup.DOFade(1, duration).SetEase(Ease.OutCubic);
-            Context.SetMajorCanvasBlockRaycasts(false);
-            it.text.text = $"\n\n\n\n{text}\n\n\n\n".Replace(" ", "\u00A0"); // Replace with non-breaking space
-            it.scrollRect.verticalNormalizedPosition = 1;
-            it.scheduledPulse.StartPulsing();
-            it.agreeButton.onPointerClick.AddListener(_ =>
-            {
-                hasResult = true;
-                result = true;
-            });
-            it.disagreeButton.onPointerClick.AddListener(_ =>
-            {
-                hasResult = true;
-                result = false;
-            });
+            it.text.text = it.text.text.Replace(" ", "\u00A0");
+        }
+        it.scrollRect.verticalNormalizedPosition = 1;
+        it.scheduledPulse.StartPulsing();
+        it.agreeButton.onPointerClick.AddListener(_ =>
+        {
+            hasResult = true;
+            result = true;
+        });
+        it.disagreeButton.onPointerClick.AddListener(_ =>
+        {
+            hasResult = true;
+            result = false;
         });
         if (onFullyShown != null)
         {

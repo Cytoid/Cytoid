@@ -78,7 +78,6 @@ public class CharacterDisplay : MonoBehaviour, ScreenBecameActiveListener, Scree
             var isInteracting = false;
             interactableMonoBehavior.onPointerClick.SetListener(async data =>
             {
-                print(data);
                 if (isInteracting || OnInteract == null) return;
                 isInteracting = true;
                 await OnInteract.Invoke(data);

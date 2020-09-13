@@ -87,12 +87,12 @@ public class TierCard : MonoBehaviour
             if (tier.locked)
             {
                 lockedOverlayIcon.sprite = lockedIcon;
-                lockedOverlayText.text = "Locked";
+                lockedOverlayText.text = "TIER_LOCKED".Get();
             } 
             else if (!tier.StagesValid)
             {
                 lockedOverlayIcon.sprite = unlockedIcon;
-                lockedOverlayText.text = "Not downloaded";
+                lockedOverlayText.text = "TIER_NOT_DOWNLOADED".Get();
             }
 
             foreach (Transform child in criteriaHolder.transform) Destroy(child.gameObject);

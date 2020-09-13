@@ -153,7 +153,7 @@ public class GlobalCalibrator
         if (calibrationCompleted) return;
         
         LeanTouch.OnFingerDown = _ => { };
-        game.Complete();
+        game.Complete(true);
         Dialog.Prompt("OFFSET_SETUP_WIZARD_DIALOG_ASK_SKIP".Get(), Skip, Restart);
     }
 
@@ -172,7 +172,7 @@ public class GlobalCalibrator
 
         LeanTouch.OnFingerDown = _ => { };
         calibrationCompleted = true;
-        game.Complete();
+        game.Complete(true);
         Dialog.PromptAlert("OFFSET_SETUP_WIZARD_DIALOG_COMPLETE".Get($"{offsets.Average():F3}"),
             Complete
         );
@@ -193,7 +193,7 @@ public class GlobalCalibrator
         }
 
         canExitSource.Cancel();
-        game.Complete();
+        game.Complete(true);
     }
 
     public void Dispose()

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using Cysharp.Threading.Tasks;
+using Polyglot;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -82,8 +83,13 @@ public class DialogueBox : MonoBehaviour
         caretImage.DOKill();
         caretImage.DOFade(0, 0.4f);
         WillFastForwardDialogue = false;
-        dialogue.Message = dialogue.Message.Trim().Replace('/', '\n').Replace(" ", "\u00A0"); // Replace with non-breaking space
-        var baseDelay = 2;
+        dialogue.Message = dialogue.Message.Trim().Replace('/', '\n');
+        var useNonBreakingSpaces = ((Language) Context.Player.Settings.Language).ShouldUseNonBreakingSpaces();
+        if (useNonBreakingSpaces)
+        {
+            dialogue.Message = dialogue.Message.Replace(" ", "\u00A0");
+        }
+        var baseDelay = useNonBreakingSpaces ? 2 : 1;
         var isBold = false;
         var baseText = "";
         foreach (var c in dialogue.Message)

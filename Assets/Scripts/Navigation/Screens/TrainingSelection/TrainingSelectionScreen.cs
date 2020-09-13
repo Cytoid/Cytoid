@@ -86,8 +86,8 @@ public class TrainingSelectionScreen : Screen
                 it.Enter();
             });
 
-        characterDisplay.OnInteract = async _ => await ShowTrainingDialogue();
-        if (Context.Player.ShouldOneShot("Met Training Instructor"))
+        characterDisplay.OnInteract = async _ => await ShowTrainingDialogue(false);
+        if (Context.Player.ShouldOneShot("Training Mode: Is First Met"))
         {
             ShowTrainingDialogue(true).Forget();
         }
@@ -96,6 +96,13 @@ public class TrainingSelectionScreen : Screen
     public async void LoadContent()
     {
         SpinnerOverlay.Show();
+        var willUnpackAll = false;
+        if (Context.Player.Settings.TrainingModeVersion < BuiltInData.TrainingModeVersion)
+        {
+            Context.Player.Settings.TrainingModeVersion = BuiltInData.TrainingModeVersion;
+            Context.Player.SaveSettings();
+            willUnpackAll = true;
+        }
 
         // Logic:
         // If online: load from API
@@ -119,7 +126,7 @@ public class TrainingSelectionScreen : Screen
                     
                     foreach (var onlineLevel in data.Levels)
                     {
-                        if (onlineLevel.HasLocal(LevelType.User) || !BuiltInData.TrainingModeLevelIds.Contains(onlineLevel.Uid))
+                        if (!willUnpackAll && (onlineLevel.HasLocal(LevelType.User) || !BuiltInData.TrainingModeLevelIds.Contains(onlineLevel.Uid)))
                         {
                             levels.Add(onlineLevel.ToLevel(LevelType.User));
                         }
@@ -146,8 +153,8 @@ public class TrainingSelectionScreen : Screen
             
             foreach (var uid in levelUids)
             {
-                if (Context.LevelManager.LoadedLocalLevels.ContainsKey(uid)
-                    && Context.LevelManager.LoadedLocalLevels[uid].Type == LevelType.User)
+                if (!willUnpackAll && Context.LevelManager.LoadedLocalLevels.ContainsKey(uid)
+                                     && Context.LevelManager.LoadedLocalLevels[uid].Type == LevelType.User)
                 {
                     levels.Add(Context.LevelManager.LoadedLocalLevels[uid]);
                 }
@@ -188,15 +195,21 @@ public class TrainingSelectionScreen : Screen
         }
     }
 
-    public async UniTask ShowTrainingDialogue(bool firstOccurrence = false)
+    public async UniTask ShowTrainingDialogue(bool isFirstMet)
     {
         var text = Resources.Load<TextAsset>("Stories/Training");
         var story = new Story(text.text);
         Resources.UnloadAsset(text);
-        story.variablesState["FirstOccurrence"] = firstOccurrence;
+        story.variablesState["IsFirstMet"] = isFirstMet;
+        var shouldIntroduceMechanisms = Context.Player.ShouldOneShot("Training Mode: Should Introduce Mechanisms");
+        story.variablesState["ShouldIntroduceMechanisms"] = shouldIntroduceMechanisms;
         story.variablesState["SignedIn"] = Context.OnlinePlayer.IsAuthenticated;
         story.variablesState["Rating"] = Context.OnlinePlayer.LastProfile?.Rating ?? 0;
         await DialogueOverlay.Show(story);
+        if (shouldIntroduceMechanisms && (int) story.variablesState["IntroducedMechanisms"] == 0)
+        {
+            Context.Player.ClearOneShot("Training Mode: Should Introduce Mechanisms");
+        }
     }
 
     public override void OnScreenChangeFinished(Screen from, Screen to)

@@ -3,6 +3,7 @@ using DG.Tweening;
 using MoreMountains.NiceVibrations;
 using Newtonsoft.Json;
 using Cysharp.Threading.Tasks;
+using Ink.Runtime;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -227,11 +228,25 @@ public class GamePreparationScreen : Screen
         }
     }
 
-    private void UpdateStartButton()
+    private async void UpdateStartButton()
     {
         if (Level.IsLocal)
         {
             startButton.State = Context.Player.Settings.PlayRanked ? CircleButtonState.Start : CircleButtonState.Practice;
+
+            print(actionTabs.CurrentActionIndex + "/" + Context.Player.Settings.PlayRanked);
+            if (actionTabs.CurrentActionIndex < 0 && !Context.Player.Settings.PlayRanked && Context.Player.ShouldOneShot("Practice Mode Explanation"))
+            {
+                var text = Resources.Load<TextAsset>("Stories/PracticeMode");
+                var story = new Story(text.text);
+                Resources.UnloadAsset(text);
+                await DialogueOverlay.Show(story);
+            }
+            
+            if (Level.Type == LevelType.User && Context.Player.ShouldOneShot("Community Level Offset Calibration"))
+            {
+                Dialog.PromptAlert("DIALOG_TUTORIAL_OFFSET_CALIBRATION".Get());
+            }
         }
         else
         {
@@ -480,11 +495,6 @@ public class GamePreparationScreen : Screen
                 Context.SelectedLevel = level;
                 Toast.Enqueue(Toast.Status.Success, "TOAST_SUCCESSFULLY_DOWNLOADED_LEVEL".Get());
 
-                if (Level.Type == LevelType.User && Context.Player.ShouldOneShot("Community Level Offset Calibration"))
-                {
-                    Dialog.PromptAlert("DIALOG_TUTORIAL_OFFSET_CALIBRATION".Get());
-                }
-                
                 UpdateTopMenu();
                 LoadPreview(true);
                 LoadCover(true);

@@ -18,7 +18,7 @@ using UnityEngine.SceneManagement;
 
 public class Context : SingletonMonoBehavior<Context>
 {
-    public const string VersionName = "2.0.0 RC";
+    public const string VersionName = "2.0.0";
     public const string VersionString = "2.0.0";
     public const int VersionCode = 88;
 

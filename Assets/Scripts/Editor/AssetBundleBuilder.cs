@@ -27,8 +27,7 @@ public class AssetBundleBuilder : OdinEditorWindow
         "character_kaede",
         "character_kaede_tachie"
     };
-
-
+    
     [MenuItem("Cytoid/AssetBundle Builder")]
     private static void OpenWindow()
     {
@@ -179,7 +178,7 @@ public class AssetBundleBuilder : OdinEditorWindow
     }
 
     [Button]
-    public void PublishToStreamingAssets()
+    public void PublishCatalog()
     {
         // Generate catalog
         var catalog = new JObject();

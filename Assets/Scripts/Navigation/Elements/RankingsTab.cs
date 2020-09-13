@@ -6,7 +6,7 @@ using RSG;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecameActiveListener
+public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecameActiveListener, ScreenBecameInactiveListener
 {
     public GameObject icon;
     public SpinnerElement spinner;
@@ -32,7 +32,12 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
             icon.SetActive(false);
         }
     }
-    
+
+    public void OnScreenBecameInactive()
+    {
+        updateRankingToken = DateTime.Now;
+    }
+
     private DateTime updateRankingToken;
     
     public IPromise<(int, List<RankingEntry>)> UpdateRankings(string levelId, string chartType)
@@ -163,9 +168,4 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
             });
     }
 
-    private void OnDestroy()
-    {
-        updateTierRankingToken = DateTime.MinValue;
-    }
-    
 }

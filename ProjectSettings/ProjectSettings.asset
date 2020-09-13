@@ -168,12 +168,12 @@ PlayerSettings:
   androidSupportedAspectRatio: 1
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
-    Android: me.tigerhix.cytoid
+    Android: me.tigerhix.cytoid.cn
     Standalone: com.Company.ProductName
     iPhone: me.tigerhix.cytoid
   buildNumber:
     iPhone: 89
-  AndroidBundleVersionCode: 92
+  AndroidBundleVersionCode: 100
   AndroidMinSdkVersion: 19
   AndroidTargetSdkVersion: 28
   AndroidPreferredInstallLocation: 1
@@ -248,7 +248,7 @@ PlayerSettings:
   clonedFromGUID: 5f34be1353de5cf4398729fda238591b
   templatePackageId: com.unity.template.2d@2.3.2
   templateDefaultScene: Assets/Scenes/SampleScene.unity
-  AndroidTargetArchitectures: 1
+  AndroidTargetArchitectures: 3
   AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 0}
   AndroidKeystoreName: C:/Cytoid/debug.keystore
@@ -775,7 +775,7 @@ PlayerSettings:
     29: CT_TPS
   platformArchitecture: {}
   scriptingBackend:
-    Android: 0
+    Android: 1
     Standalone: 0
   il2cppCompilerConfiguration:
     Android: 2

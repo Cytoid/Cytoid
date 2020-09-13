@@ -1,9 +1,11 @@
 using System;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class WebViewHolder : SingletonMonoBehavior<WebViewHolder>
 {
     public WebViewObject webView;
+    public WebViewLoadedEvent OnWebViewLoaded = new WebViewLoadedEvent();
     
     protected override void Awake()
     {
@@ -64,6 +66,7 @@ public class WebViewHolder : SingletonMonoBehavior<WebViewHolder>
                 ");
 #endif
                 webView.EvaluateJS(@"document.body.style.background = 'none';");
+                OnWebViewLoaded.Invoke(msg);
             },
             //ua: "custom user agent string",
             enableWKWebView: true,
@@ -72,4 +75,7 @@ public class WebViewHolder : SingletonMonoBehavior<WebViewHolder>
         webView.SetMargins(0, 0, (int) ((48 + 96 + 48) / 1920f * UnityEngine.Screen.width), 0);
         webView.SetScrollBounceEnabled(true);
     }
+}
+
+public class WebViewLoadedEvent : UnityEvent<string> {
 }

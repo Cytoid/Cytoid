@@ -7,9 +7,12 @@ public class WebViewOverlay : SingletonMonoBehavior<WebViewOverlay>
 {
     [GetComponent] public Canvas canvas;
     [GetComponent] public CanvasGroup canvasGroup;
+    [GetComponentInChildren] public SpinnerElement spinnerElement;
 
     public InteractableMonoBehavior closeButton;
     public Action onFullyHidden = null;
+
+    private DateTime loadToken;
 
     private void Start()
     {
@@ -20,21 +23,39 @@ public class WebViewOverlay : SingletonMonoBehavior<WebViewOverlay>
         canvasGroup.alpha = 0;
         canvasGroup.blocksRaycasts = false;
         canvasGroup.interactable = false;
+        spinnerElement.IsSpinning = false;
         closeButton.onPointerClick.AddListener(_ => Hide());
     }
 
     private WebViewObject webView => WebViewHolder.Instance.webView;
 
-    public void Open(string url)
+    public async void Open(string url)
     {
         webView.SetVisibility(true);
         webView.SetURLPattern("Never!", "Never!", "^((?!artifacts\\.cytoid\\.io|EmbeddedPlayer|embed|outchain|player\\.bilibili|blackboard\\/html5).)*$");
         webView.LoadURL(url);
+        spinnerElement.IsSpinning = true;
+        var token = loadToken = new DateTime();
+        void OnLoaded()
+        {
+            if (loadToken != token) return;
+            spinnerElement.IsSpinning = false;
+        }
+        WebViewHolder.Instance.OnWebViewLoaded.AddListener(loadedUrl =>
+        {
+            if (loadedUrl != url) return;
+            OnLoaded();
+        });
+        if (Application.isEditor)
+        {
+            await UniTask.Delay(TimeSpan.FromSeconds(1));
+            OnLoaded();
+        }
     }
 
     public void Close()
     {
-        webView.EvaluateJS(@"FadeOut()");
+        // webView.EvaluateJS(@"FadeOut()");
     }
     
     public static async void Show(string url, float duration = 0.4f, Action onFullyShown = null, Action onFullyHidden = null)
@@ -70,11 +91,12 @@ public class WebViewOverlay : SingletonMonoBehavior<WebViewOverlay>
             it.Close();
             Context.SetMajorCanvasBlockRaycasts(true);
         });
-        await UniTask.Delay(TimeSpan.FromSeconds(duration));
+        Instance.webView.LoadURL("about:blank");
+        Instance.webView.LoadURL("about:blank");
+        Instance.webView.SetVisibility(false); // TODO: Maybe fix this... or maybe not ¯\_(ツ)_/¯
+        await UniTask.Delay(TimeSpan.FromSeconds(duration)); 
         Instance.canvas.enabled = false;
         Instance.canvasGroup.enabled = false;
-        Instance.webView.LoadURL("about:blank");
-        Instance.webView.SetVisibility(false);
         if (onFullyHidden == null) onFullyHidden = Instance.onFullyHidden;
         onFullyHidden?.Invoke();
     }

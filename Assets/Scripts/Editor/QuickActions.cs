@@ -27,9 +27,17 @@ public class QuickActions : OdinEditorWindow
     }
 
     private bool running;
-    [ToggleLeft] public bool firstOccurrence;
+    [ToggleLeft] public bool isFirstMet;
     [ToggleLeft] public bool signedIn;
     public float rating;
+
+    [Button(Name = "Clear Training Mode Story State")]
+    [DisableInEditorMode]
+    public void ClearOneShotShouldIntroduceMechanisms()
+    {
+        Context.Player.ClearOneShot("Training Mode: Should Introduce Mechanisms");
+        Context.Player.ClearOneShot("Training Mode: Is First Met");
+    }
     
     [Button(Name = "Story: Training")]
     [DisableInEditorMode]
@@ -38,12 +46,18 @@ public class QuickActions : OdinEditorWindow
         if (running) DialogueOverlay.TerminateCurrentStory = true;
         var compiler = new Ink.Compiler(File.ReadAllText("Assets/Resources/Stories/Training.ink"));
         var story = compiler.Compile();
-        story.variablesState["FirstOccurrence"] = firstOccurrence;
+        story.variablesState["IsFirstMet"] = isFirstMet;
+        var shouldIntroduceMechanisms = Context.Player.ShouldOneShot("Training Mode: Should Introduce Mechanisms");
+        story.variablesState["ShouldIntroduceMechanisms"] = shouldIntroduceMechanisms;
         story.variablesState["SignedIn"] = signedIn;
         story.variablesState["Rating"] = rating;
         running = true;
         await DialogueOverlay.Show(story);
         running = false;
+        if (shouldIntroduceMechanisms && (int) story.variablesState["IntroducedMechanisms"] == 0)
+        {
+            Context.Player.ClearOneShot("Training Mode: Should Introduce Mechanisms");
+        }
     }
 
     [Button(Name = "Story: Badge")]
@@ -63,6 +77,23 @@ public class QuickActions : OdinEditorWindow
         var badge = Resources.Load<TextAsset>("Stories/Badge");
         var story = new Story(badge.text);
         await DialogueOverlay.Show(story);
+    }
+
+    [Button(Name = "Story: Practice Mode")]
+    [DisableInEditorMode]
+    public async void StoryPracticeMode()
+    {
+        var text = Resources.Load<TextAsset>("Stories/PracticeMode");
+        var story = new Story(text.text);
+        Resources.UnloadAsset(text);
+        await DialogueOverlay.Show(story);
+    }
+    
+    [Button(Name = "Clear Practice Mode State")]
+    [DisableInEditorMode]
+    public void ClearPracticeModeState()
+    {
+        Context.Player.ClearOneShot("Practice Mode Explanation");
     }
 
     [Button(Name = "Terms: Terms of Service")]

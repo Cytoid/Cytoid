@@ -102,13 +102,14 @@ public class LevelSelectionScreen : Screen
         // Category?
         var category = categorySelect.SelectedIndex;
         var filters = new List<Func<Level, bool>>();
+        var builtInLevels = BuiltInData.BuiltInLevelIds.ToHashSet();
         switch (category)
         {
             case 1:
-                filters.Add(level => Context.Library.Levels.ContainsKey(level.Id));
+                filters.Add(level => Context.Library.Levels.ContainsKey(level.Id) || builtInLevels.Contains(level.Id));
                 break;
             case 2:
-                filters.Add(level => !Context.Library.Levels.ContainsKey(level.Id));
+                filters.Add(level => !Context.Library.Levels.ContainsKey(level.Id) && !builtInLevels.Contains(level.Id));
                 break;
         }
         var query = searchInputField.text.Trim();

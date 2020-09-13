@@ -30,8 +30,8 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
     private RectTransform profileRectTransform;
     
     private Action closeAction;
-    private List<Action> actions = new List<Action>();
-    private int currentActionIndex;
+    public List<Action> Actions { get; } = new List<Action>();
+    public int CurrentActionIndex { get; private set; }
     private float lastProfileRectWidth;
 
     private void Awake()
@@ -76,7 +76,7 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
             action.tabIndicator.hiddenOnStart = true;
             action.tabIndicator.enterOnScreenBecomeActive = false;
 
-            actions.Add(action);
+            Actions.Add(action);
             
             tabs[index].hiddenOnStart = true;
             tabs[index].enterOnScreenBecomeActive = false;
@@ -119,14 +119,14 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
 
     public void OnAction(Action action)
     {
-        var prev = currentActionIndex == -1 ? closeAction : actions[currentActionIndex];
-        var enterTransition = action.index < currentActionIndex ? Transition.Right : Transition.Left;
-        var leaveTransition = action.index < currentActionIndex ? Transition.Left : Transition.Right;
+        var prev = CurrentActionIndex == -1 ? closeAction : Actions[CurrentActionIndex];
+        var enterTransition = action.index < CurrentActionIndex ? Transition.Right : Transition.Left;
+        var leaveTransition = action.index < CurrentActionIndex ? Transition.Left : Transition.Right;
         if (action.index == -1)
         {
             // Close
             tabBackground.Leave();
-            actions.ForEach(it =>
+            Actions.ForEach(it =>
             {
                 DOFade(it.icon, 1f, animationDuration);
                 it.tabIndicator.leaveTo = leaveTransition;
@@ -151,7 +151,7 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
             
             action.tabIndicator.enterFrom = enterTransition;
             action.tabIndicator.Enter();
-            actions.ForEach(it =>
+            Actions.ForEach(it =>
             {
                 if (it.index != action.index)
                 {
@@ -176,7 +176,7 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
             closeDetectionArea.DetectionEnabled = true;
             tabBackground.canvasGroup.blocksRaycasts = true;
         }
-        currentActionIndex = action.index;
+        CurrentActionIndex = action.index;
         onTabChanged.Invoke(prev, action);
     }
     
@@ -208,7 +208,7 @@ public class ActionTabs : MonoBehaviour, ScreenChangeListener
 
     public void OnScreenChangeStarted(Screen from, Screen to)
     {
-        if (currentActionIndex >= 0) Close();
+        if (CurrentActionIndex >= 0) Close();
     }
 
     public void OnScreenChangeFinished(Screen from, Screen to) => Expression.Empty();

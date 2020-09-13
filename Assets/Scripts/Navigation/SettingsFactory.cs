@@ -397,7 +397,7 @@ public static class SettingsFactory
             .SaveSettingsOnChange();
     }
 
-    public static void InstantiateAdvancedSettings(Transform parent)
+    public static void InstantiateAdvancedSettings(Transform parent, bool more = false)
     {
         var lp = Context.Player;
         var provider = NavigationUiElementProvider.Instance;
@@ -480,5 +480,31 @@ public static class SettingsFactory
                 },
                 "SETTINGS_UNIT_SECONDS".Get(), 0.ToString())
             .SaveSettingsOnChange();
+
+        if (more)
+        {
+            Object.Instantiate(provider.buttonPreferenceElement, parent)
+                .SetContent("", "",
+                    "APPLY LATEST LOCALIZATION", async () =>
+                    {
+                        SpinnerOverlay.Show();
+                        await LocalizationImporter.DownloadCustomSheet();
+
+                        foreach (var gameObject in SceneManager.GetActiveScene().GetRootGameObjects())
+                        {
+                            gameObject.transform.GetComponentsInChildren<Screen>(true)
+                                .ForEach(it => LayoutStaticizer.Activate(it.transform));
+
+                            gameObject.transform.GetComponentsInChildren<LocalizedText>(true)
+                                .ForEach(it => it.OnLocalize());
+
+                            gameObject.transform.GetComponentsInChildren<LayoutGroup>(true)
+                                .ForEach(it => it.transform.RebuildLayout());
+                        }
+
+                        SpinnerOverlay.Hide();
+                        Toast.Next(Toast.Status.Success, "Applied latest localization (cleared on restart).");
+                    });
+        }
     }
 }

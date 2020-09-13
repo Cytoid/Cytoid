@@ -17,7 +17,7 @@ public class MainMenuScreen : Screen
     public RectTransform layout;
     public Text freePlayText;
     public InteractableMonoBehavior aboutButton;
-    public CanvasGroup eventNotificationGroup;
+    public BadgeNotification eventNotification;
 
     public Image upperLeftOverlayImage;
     public Image overlayImage;
@@ -28,7 +28,10 @@ public class MainMenuScreen : Screen
     public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
-        aboutButton.onPointerClick.AddListener(it => Dialog.PromptAlert($"TEMP_MESSAGE_2.0_BETA_CREDITS".Get(Context.VersionName)));
+        aboutButton.onPointerClick.SetListener(_ =>
+        {
+            WebViewOverlay.Show(Context.ApiUrl + "/credits");
+        });
     }
 
     public override async void OnScreenBecameActive()
@@ -49,8 +52,6 @@ public class MainMenuScreen : Screen
         freePlayText.text = "MAIN_LEVELS_LOADED".Get(levelCount);
         freePlayText.transform.RebuildLayout();
 
-        eventNotificationGroup.alpha = 0;
-        
         ProfileWidget.Instance.Enter();
 
         if (Context.CharacterManager.GetActiveCharacterAsset().mirrorLayout)
@@ -95,7 +96,7 @@ public class MainMenuScreen : Screen
                 }
                 if (hasUnseenEvent)
                 {
-                    eventNotificationGroup.DOFade(1, 0.4f);
+                    eventNotification.Show();
                 }
             }).CatchRequestError(Debug.LogWarning);
         }

@@ -338,6 +338,27 @@ public class LevelManager
                     return false;
                 }
             }
+
+            var info = new FileInfo(destFolder);
+            var path = info.FullName + Path.DirectorySeparatorChar;
+            Debug.Log($"Removing {path}");
+            loadedPaths.Remove(path);
+
+            var coverPath = path + CoverThumbnailFilename;
+            Debug.Log($"Search {coverPath}");
+            if (File.Exists(coverPath))
+            {
+                try
+                {
+                    File.Delete(coverPath);
+                    File.Delete(coverPath + ".576.360"); // TODO: Unhardcode this (how?)
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Failed to delete cover thumbnail: {coverPath}");
+                    Debug.LogError(e);
+                }
+            }
         }
 
         return true;
@@ -507,12 +528,9 @@ public class LevelManager
                     var record = level.Record;
                     if (record.AddedDate == DateTimeOffset.MinValue)
                     {
-                        if (type == LevelType.User)
-                        {
-                            record.AddedDate = Context.Library.Levels.ContainsKey(level.Id) 
-                                ? Context.Library.Levels[level.Id].Date 
-                                : info.LastWriteTimeUtc;
-                        }
+                        record.AddedDate = Context.Library.Levels.ContainsKey(level.Id) 
+                            ? Context.Library.Levels[level.Id].Date 
+                            : info.LastWriteTimeUtc;
                         level.SaveRecord();
                     }
                     await UniTask.SwitchToMainThread();

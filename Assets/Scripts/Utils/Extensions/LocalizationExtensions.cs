@@ -45,4 +45,19 @@ public static class LocalizationExtensions
         }
     }
     
+    public static bool ShouldUseNonBreakingSpaces(this Language language)
+    {
+        switch (language)
+        {
+            case Language.Simplified_Chinese:
+            case Language.Traditional_Chinese:
+            case Language.Japanese:
+            case Language.Korean:
+            case Language.Fujaoese:
+                return true;
+            default:
+                return false;
+        }
+    }
+    
 }

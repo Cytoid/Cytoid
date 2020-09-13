@@ -127,6 +127,18 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
             var duration = 0f;
             var tags = story.currentTags;
 
+            var doAction = TagValue(tags, "Action");
+            if (doAction != null)
+            {
+                switch (doAction)
+                {
+                    case "GamePreparation/ShowGameplayTab":
+                        var tabs = Context.ScreenManager.GetScreen<GamePreparationScreen>().actionTabs;
+                        tabs.OnAction(tabs.Actions.Find(it => it.index == 2));
+                        break;
+                }
+            }
+
             var setDuration = TagValue(tags, "Duration");
             if (setDuration != null)
             {
@@ -311,7 +323,7 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
                         story.ChooseChoiceIndex(closureIndex);
                         proceed = true;
                     });
-                    choiceButton.Label = choice.text;
+                    choiceButton.Label = choice.text.Get();
                     buttons.Add(choiceButton);
                 }
 
@@ -389,6 +401,12 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
 
         string ReplacePlaceholders(string str)
         {
+            str = str.Replace("[N/A]", "");
+            str = str.Trim();
+            if (str.StartsWith("[STORY_"))
+            {
+                str = str.Substring(1, str.Length - 2).Get();
+            }
             foreach (var (placeholder, function) in PlaceholderFunctions)
             {
                 if (str.Contains(placeholder))
@@ -405,7 +423,6 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
         {"[BADGE_TITLE]", () => CurrentBadge.title},
         {"[BADGE_DESCRIPTION]", () => CurrentBadge.description},
         {"[BADGE_IMAGE_URL]", () => CurrentBadge.GetImageUrl()},
-        {"[N/A]", () => ""},
         {"[RATING]", () => Context.OnlinePlayer?.LastProfile?.Rating.ToString("N2") ?? "N/A"}
     };
 

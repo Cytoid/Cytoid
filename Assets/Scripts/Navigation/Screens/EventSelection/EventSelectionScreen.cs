@@ -25,6 +25,8 @@ public class EventSelectionScreen : Screen
     public InteractableMonoBehavior previousButton;
     public InteractableMonoBehavior nextButton;
 
+    public BadgeNotification viewDetailsNotification;
+
     public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
@@ -168,8 +170,15 @@ public class EventSelectionScreen : Screen
         
         infoBanner.Leave(onComplete: () =>
         {
+            if (!Context.Player.Settings.ReadEventDetails.Contains(meta.uid))
+            {
+                viewDetailsNotification.Show();
+            }
             viewDetailsButton.onPointerClick.SetListener(_ =>
             {
+                Context.Player.Settings.ReadEventDetails.Add(meta.uid);
+                Context.Player.SaveSettings();
+                viewDetailsNotification.Hide();
                 if (meta.url.IsNullOrEmptyTrimmed())
                 {
                     Application.OpenURL($"{Context.WebsiteUrl}/posts/{meta.uid}");
@@ -205,12 +214,6 @@ public class EventSelectionScreen : Screen
                 {
                     Context.Haptic(HapticTypes.Failure, true);
                     // TODO
-                    Dialog.Instantiate().Also(it =>
-                    {
-                        it.Message = "TEMP_MESSAGE_NEW_VERSION_REQUIRED".Get();
-                        it.UsePositiveButton = true;
-                        it.UseNegativeButton = false;
-                    }).Open();
                     return;
                 }
                 Context.Haptic(HapticTypes.SoftImpact, true);

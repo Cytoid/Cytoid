@@ -2,6 +2,7 @@ using System.Collections.Generic;
 
 public static class BuiltInData
 {
+    public static int TrainingModeVersion = 2;
     public static readonly List<string> TrainingModeLevelIds = new List<string>
     {
         "skillmode.space",
@@ -22,7 +23,9 @@ public static class BuiltInData
     };
     public static readonly List<string> BuiltInLevelIds = new List<string>
     {
-        "io.cytoid.tutorial"
+        "io.cytoid.tutorial",
+        "io.cytoid.ecstatic",
+        "io.cytoid.8bit_adventurer"
     };
     public const string GlobalCalibrationModeLevelId = "teages.offset_guide";
     public const string TutorialLevelId = "io.cytoid.tutorial";

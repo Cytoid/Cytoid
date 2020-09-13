@@ -150,6 +150,12 @@ public class LocalPlayerSettings
     
     [JsonProperty("seen_events")]
     public HashSet<string> SeenEvents { get; set; } = new HashSet<string>();
+    
+    [JsonProperty("read_event_details")]
+    public HashSet<string> ReadEventDetails { get; set; } = new HashSet<string>();
+
+    [JsonProperty("training_mode_version")]
+    public int TrainingModeVersion { get; set; } = 1;
 
 }
 

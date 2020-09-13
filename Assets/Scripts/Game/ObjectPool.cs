@@ -266,6 +266,7 @@ public class ObjectPool
 
         public override void OnCollect(Game game, Note note)
         {
+            if (note == null || note.gameObject == null) return;
             note.gameObject.SetActive(false);
         }
 
@@ -300,6 +301,7 @@ public class ObjectPool
 
         public override void OnCollect(Game game, DragLineElement dragLine)
         {
+            if (dragLine == null || dragLine.gameObject == null) return;
             dragLine.gameObject.SetActive(false);
         }
         
@@ -346,6 +348,7 @@ public class ObjectPool
 
         public override void OnCollect(Game game, ParticleSystem particle)
         {
+            if (particle == null || particle.gameObject == null) return;
             particle.Stop();
             particle.gameObject.SetActive(false);
         }

@@ -3,9 +3,12 @@ using UnityEngine;
 
 public class MeshTriangle : MonoBehaviour
 {
+    private static readonly int MaterialColor = Shader.PropertyToID("Tint");
+    
     [NonSerialized] public Note Note;
 
     private Mesh mesh;
+    private MeshRenderer meshRenderer;
     private Scanner scanner;
     private Camera mainCamera;
 
@@ -25,6 +28,7 @@ public class MeshTriangle : MonoBehaviour
             new Vector2()
         };
         mesh.triangles = new[] {0, 1, 2};
+        meshRenderer = gameObject.GetComponent<MeshRenderer>();
         scanner = Scanner.Instance;
         mainCamera = Camera.main;
     }
@@ -69,5 +73,7 @@ public class MeshTriangle : MonoBehaviour
                 scannerPosition.y)
         };
         mesh.triangles = new[] {0, 1, 2};
+        
+        meshRenderer.material.color = Color.white.WithAlpha(0.1f * Mathf.Min(1f, scanner.opacity));
     }
 }

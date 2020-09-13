@@ -121,7 +121,6 @@ public class TierSelectionScreen : Screen
                 {
                     icons.Enter();
                     SpinnerOverlay.Hide();
-                    Dialog.PromptAlert("ALPHA_TIER_WARNING".Get());
                 });
             }).CatchRequestError(error =>
             {

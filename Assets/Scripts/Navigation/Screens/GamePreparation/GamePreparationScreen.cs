@@ -228,7 +228,7 @@ public class GamePreparationScreen : Screen
         }
     }
 
-    private async void UpdateStartButton()
+    private async void UpdateStartButton(bool justDownloadedLevel = false)
     {
         if (Level.IsLocal)
         {
@@ -243,7 +243,7 @@ public class GamePreparationScreen : Screen
                 await DialogueOverlay.Show(story);
             }
             
-            if (Level.Type == LevelType.User && Context.Player.ShouldOneShot("Community Level Offset Calibration"))
+            if (justDownloadedLevel && Level.Type == LevelType.User && Context.Player.ShouldOneShot("Community Level Offset Calibration"))
             {
                 Dialog.PromptAlert("DIALOG_TUTORIAL_OFFSET_CALIBRATION".Get());
             }
@@ -499,7 +499,7 @@ public class GamePreparationScreen : Screen
                 LoadPreview(true);
                 LoadCover(true);
                 if (!previewAudioSource.isPlaying) LoadPreview(true);
-                UpdateStartButton();
+                UpdateStartButton(true);
             },
             onUnpackFailed: () =>
             {

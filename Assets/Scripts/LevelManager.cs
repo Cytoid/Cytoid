@@ -351,6 +351,8 @@ public class LevelManager
                 try
                 {
                     File.Delete(coverPath);
+                    File.Delete(coverPath + ".288.180");
+                    File.Delete(coverPath + ".432.270");
                     File.Delete(coverPath + ".576.360"); // TODO: Unhardcode this (how?)
                 }
                 catch (Exception e)

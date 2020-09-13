@@ -112,7 +112,7 @@ public class SignInScreen : Screen
         var password = signUpPasswordInput.text;
         var email = signUpEmailInput.text;
         
-        if (!Regex.IsMatch(id, "[a-z0-9-_]{3,16}"))
+        if (!Regex.IsMatch(id, "^[a-z0-9-_]{3,16}$"))
         {
             Toast.Next(Toast.Status.Failure, "TOAST_INCORRECT_ID_FORMAT".Get());
             return;

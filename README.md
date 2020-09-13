@@ -1,4 +1,4 @@
-<img src="https://i.imgur.com/hB0Gaj2.jpg" style="width: 100%">
+<img src="blob:https://imgur.com/1df9ac0e-3700-4124-aab9-a8014b8fa825" style="width: 100%">
 
 # Cytoid [![CodeFactor](https://www.codefactor.io/repository/github/cytoid/cytoid/badge)](https://www.codefactor.io/repository/github/cytoid/cytoid) [![Join the Discord](https://discordapp.com/api/guilds/362884768498712579/widget.png?style=shield)](https://discord.gg/cytoid)
 
@@ -8,8 +8,8 @@ A community-driven touchscreen music game available on [App Store](https://itune
 
 Cytoid is built in C# with [Unity 2019.4.8f1 (Personal)](https://unity3d.com).
 
-Because of license restrictions, some plugins/assets used in the project are not included in this repository. View the [.gitignore](https://github.com/TigerHix/Cytoid/blob/main/.gitignore) for more information.
+Because of license restrictions, some plugins/assets used in the project are not included in this repository. View [.gitignore](https://github.com/TigerHix/Cytoid/blob/main/.gitignore) for more information.
 
 ## License
 
-Source code (excluding graphical assets, unless stated otherwise) is distributed under [GPL-3.0 License](https://www.gnu.org/licenses/gpl-3.0.en.html) license. See [`LICENSE`](https://github.com/Cytoid/Cytoid/blob/main/LICENSE) for more information
+Source code (excluding graphical assets, unless stated otherwise) is distributed under [GPL-3.0 License](https://www.gnu.org/licenses/gpl-3.0.en.html).

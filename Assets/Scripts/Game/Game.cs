@@ -27,14 +27,14 @@ public class Game : MonoBehaviour
     public GameRenderer Renderer { get; protected set; }
 
     public Level Level { get; protected set; }
-    
+
     public Difficulty Difficulty { get; protected set; }
     public Chart Chart { get; protected set; }
 
     public Cytoid.Storyboard.Storyboard Storyboard { get; protected set; }
-    
+
     public string StoryboardPath { get; protected set; }
-    
+
     public float Time { get; protected set; }
     public float MusicLength { get; protected set; }
     public float ChartLength { get; protected set; }
@@ -43,7 +43,7 @@ public class Game : MonoBehaviour
     public float MusicProgress { get; protected set; }
     public float ChartProgress { get; protected set; }
     public float UnpauseCountdown { get; protected set; }
-    
+
     public bool ResynchronizeChartOnNextFrame { get; set; }
 
     public int ContentLayer { get; private set; }
@@ -61,7 +61,7 @@ public class Game : MonoBehaviour
     public bool EditorImmediatelyCompleteFail;
 
     public AudioManager.Controller Music { get; protected set; }
-    
+
     public List<UniTask> BeforeStartTasks { get; protected set; } = new List<UniTask>();
     public List<UniTask> BeforeExitTasks { get; protected set; } = new List<UniTask>();
 
@@ -87,7 +87,7 @@ public class Game : MonoBehaviour
     public GameEvent onBottomBoundaryBounded = new GameEvent();
 
     private GlobalCalibrator globalCalibrator;
-    
+
     protected virtual void Awake()
     {
         ContentLayer = LayerMask.NameToLayer("Content");
@@ -115,9 +115,9 @@ public class Game : MonoBehaviour
             if (Context.SelectedGameMode != GameMode.Unspecified)
             {
                 Context.GameErrorState = new GameErrorState {Message = "DIALOG_LEVEL_LOAD_ERROR".Get(), Exception = e};
-                
+
                 await UniTask.Delay(TimeSpan.FromSeconds(3));
-                
+
                 var sceneLoader = new SceneLoader("Navigation");
                 sceneLoader.Load();
                 var transitioned = false;
@@ -156,7 +156,7 @@ public class Game : MonoBehaviour
                 tierState = new TierState(MockData.Season.tiers[0]);
                 Context.TierState = tierState;
             }
-            
+
             if (tierState.IsFailed || tierState.IsCompleted)
             {
                 // Reset tier state
@@ -165,7 +165,7 @@ public class Game : MonoBehaviour
             }
 
             tierState.CurrentStageIndex++;
-            
+
             Level = tierState.Tier.Meta.stages[Context.TierState.CurrentStageIndex].ToLevel(LevelType.Tier);
             Difficulty = Difficulty.Parse(Level.Meta.charts.Last().type);
         }
@@ -176,7 +176,7 @@ public class Game : MonoBehaviour
                 LevelType.Temp);
 
             Difficulty = Level.Meta.GetEasiestDifficulty();
-            
+
             // Initialize global calibrator
             globalCalibrator = new GlobalCalibrator(this);
         }
@@ -223,7 +223,7 @@ public class Game : MonoBehaviour
         {
             mods.Add(Mod.Auto);
         }
-        
+
         Chart = new Chart(
             chartText,
             mods.Contains(Mod.FlipX) || mods.Contains(Mod.FlipAll),
@@ -238,11 +238,11 @@ public class Game : MonoBehaviour
         {
             ObjectPool.UpdateNoteObjectCount(type, Chart.MaxSamePageNoteCountByType[type] * 3);
         }
-        
+
         // Load audio
         print("Loading audio");
         AudioListener.pause = false;
-        
+
         if (Context.AudioManager == null) await UniTask.WaitUntil(() => Context.AudioManager != null);
         Context.AudioManager.Initialize();
         var audioPath = "file://" + Level.Path + Level.Meta.GetMusicPath(Difficulty.Id);
@@ -253,10 +253,10 @@ public class Game : MonoBehaviour
             Debug.LogError(loader.Error);
             throw new Exception($"Failed to download audio from {audioPath}");
         }
-        
+
         Music = Context.AudioManager.Load("Level", loader.AudioClip, false, false, true);
         MusicLength = Music.Length;
-        
+
         // Load storyboard
         StoryboardPath =
             Level.Path + (chartMeta.storyboard != null ? chartMeta.storyboard.path : "storyboard.json");
@@ -291,7 +291,7 @@ public class Game : MonoBehaviour
         // State & config
         State = new GameState(this, mode, mods);
         Context.GameState = State;
-        
+
         if (Application.isEditor) Debug.Log("Chart checksum: " + State.ChartChecksum);
 
         Config = new GameConfig(this);
@@ -305,11 +305,11 @@ public class Game : MonoBehaviour
         // System config
         Application.targetFrameRate = 120;
         Context.SetAutoRotation(false);
-        
+
         // Update last played time
         Level.Record.LastPlayedDate = DateTimeOffset.UtcNow;
         Level.SaveRecord();
-        
+
         // Initialize note pool
         ObjectPool.Initialize();
 
@@ -318,10 +318,11 @@ public class Game : MonoBehaviour
         {
             Context.ScreenManager.ChangeScreen(OverlayScreen.Id, ScreenTransition.None);
         }
+
         onGameLoaded.Invoke(this);
 
         levelInfoParent.transform.RebuildLayout();
-        
+
         if (startAutomatically)
         {
             StartGame();
@@ -349,18 +350,20 @@ public class Game : MonoBehaviour
         LayoutStaticizer.Staticize(modHolderParent.transform);
         onGameStarted.Invoke(this);
 
-        if (Application.isEditor && EditorImmediatelyComplete && State.Mode != GameMode.GlobalCalibration && State.Mode != GameMode.Calibration)
+        if (Application.isEditor && EditorImmediatelyComplete && State.Mode != GameMode.GlobalCalibration &&
+            State.Mode != GameMode.Calibration)
         {
             if (EditorImmediatelyCompleteFail)
             {
                 Fail();
             }
-            else 
+            else
             {
                 if (EditorCompletionDelay > 0)
                 {
                     await UniTask.Delay(TimeSpan.FromSeconds(EditorCompletionDelay));
                 }
+
                 State.FillTestData(Chart.Model.note_list.Count);
                 Complete();
             }
@@ -378,7 +381,8 @@ public class Game : MonoBehaviour
         var resumeElapsedTime = UnityEngine.Time.realtimeSinceStartup - GameStartedOrResumedTimestamp;
         var nowDspTime = AudioSettings.dspTime;
         // Sync: every 600 ticks (=10 seconds) and every tick within the first 0.5 seconds after start/unpause
-        if ((ResynchronizeChartOnNextFrame || ticksBeforeSynchronization <= 0 || resumeElapsedTime < 0.5f) && nowDspTime != lastDspTime)
+        if ((ResynchronizeChartOnNextFrame || ticksBeforeSynchronization <= 0 || resumeElapsedTime < 0.5f) &&
+            nowDspTime != lastDspTime)
         {
             ResynchronizeChartOnNextFrame = false;
             Time = (float) nowDspTime;
@@ -391,13 +395,13 @@ public class Game : MonoBehaviour
             Time += UnityEngine.Time.unscaledDeltaTime;
         }
     }
-    
+
     protected virtual void Update()
     {
         if (!IsLoaded) return;
-        
+
         Renderer.OnUpdate();
-        
+
         if (!State.IsPlaying) return;
 
         if (Input.GetKeyDown(KeyCode.Escape) && !(this is PlayerGame) && State.Mode != GameMode.Tier)
@@ -409,7 +413,7 @@ public class Game : MonoBehaviour
         if (!State.IsFailed && State.ShouldFail) Fail();
         if (State.IsFailed) Music.Volume -= 1f / 60f;
         if (State.IsPlaying)
-            
+
         {
             if (State.ClearCount >= Chart.Model.note_list.Count) Complete();
 
@@ -497,9 +501,10 @@ public class Game : MonoBehaviour
             globalCalibrator.Restart();
             return false;
         }
+
         if (!IsLoaded || !State.IsPlaying || State.IsCompleted || State.IsFailed) return false;
         print("Game paused");
-        
+
         unpauseToken?.Cancel();
         UnpauseCountdown = 0;
         State.IsPlaying = false;
@@ -512,12 +517,13 @@ public class Game : MonoBehaviour
         else
         {
             Context.AudioManager.Get("Navigate2").Play(ignoreDsp: true);
-        
+
             Context.ScreenManager.ChangeScreen(PausedScreen.Id, ScreenTransition.None);
             Context.SetAutoRotation(true);
-        
+
             onGamePaused.Invoke(this);
         }
+
         return true;
     }
 
@@ -550,7 +556,7 @@ public class Game : MonoBehaviour
 
             UnpauseCountdown -= 0.1f;
         }
-        
+
         Unpause();
     }
 
@@ -563,25 +569,25 @@ public class Game : MonoBehaviour
         GameStartedOrResumedTimestamp = UnityEngine.Time.realtimeSinceStartup;
         AudioListener.pause = false;
         State.IsPlaying = true;
-        
+
         onGameUnpaused.Invoke(this);
     }
 
     public virtual async void Abort()
     {
         print("Game aborted");
-        
+
         Music.Stop();
         // Resume DSP
         AudioListener.pause = false;
-        
+
         // Unload resources
         Context.AudioManager.Unload("Level");
-        
+
         onGameAborted.Invoke(this);
-        
+
         Dispose();
-        
+
         var sceneLoader = new SceneLoader("Navigation");
         sceneLoader.Load();
         var transitioned = false;
@@ -594,14 +600,14 @@ public class Game : MonoBehaviour
     public virtual async void Retry()
     {
         print("Game retried");
-        
+
         // Unload resources
         Context.AudioManager.Unload("Level");
-        
+
         onGameRetried.Invoke(this);
-        
+
         Dispose();
-        
+
         var sceneLoader = new SceneLoader("Game");
         sceneLoader.Load();
         var transitioned = false;
@@ -610,19 +616,19 @@ public class Game : MonoBehaviour
         await UniTask.WaitUntil(() => transitioned && sceneLoader.IsLoaded);
         sceneLoader.Activate();
     }
-    
+
     public void Fail()
     {
         if (State.IsFailed) return;
         print("Game failed");
-        
+
         State.IsFailed = true;
         State.OnFail();
         inputController.DisableInput();
 
         Context.ScreenManager.ChangeScreen(FailedScreen.Id, ScreenTransition.None);
         Context.AudioManager.Get("LevelFailed").Play();
-        
+
         onGameFailed.Invoke(this);
     }
 
@@ -640,15 +646,16 @@ public class Game : MonoBehaviour
         {
             Context.TierState.OnStageComplete();
         }
+
         inputController.DisableInput();
 
         onGameCompleted.Invoke(this);
-        
+
         if (!EditorImmediatelyComplete)
         {
             var maxVolume = Music.Volume;
             var volume = Music.Volume * 3f;
-            
+
             // Wait for audio to finish
             var remainingLength = MusicLength - Music.PlaybackTime;
             var startTime = DateTime.Now;
@@ -661,6 +668,7 @@ public class Game : MonoBehaviour
                     {
                         Music.Volume = Math.Min(maxVolume, volume);
                     }
+
                     return Music.IsFinished() || volume <= 0;
                 }
                 else
@@ -670,6 +678,7 @@ public class Game : MonoBehaviour
                 }
             });
         }
+
         State.IsReadyToExit = true;
 
         print("Audio ended");
@@ -682,13 +691,13 @@ public class Game : MonoBehaviour
         catch (OperationCanceledException)
         {
         }
-        
+
         onGameBeforeExit.Invoke(this);
-        
+
         await Resources.UnloadUnusedAssets();
         Dispose();
         globalCalibrator?.Dispose();
-        
+
         var sceneLoader = new SceneLoader("Navigation");
         sceneLoader.Load();
 
@@ -702,13 +711,12 @@ public class Game : MonoBehaviour
     {
         onGameUpdate.RemoveAllListeners();
         onGameLateUpdate.RemoveAllListeners();
-        
+
         inputController.DisableInput();
         ObjectPool.Dispose();
-        
+
         onGameDisposed.Invoke(this);
     }
-
 }
 
 public class GameEvent : UnityEvent<Game>

@@ -5,7 +5,6 @@ using Newtonsoft.Json;
 
 namespace Cytoid.Storyboard
 {
-
     [Serializable]
     public abstract class Object
     {
@@ -17,7 +16,7 @@ namespace Cytoid.Storyboard
 
         public abstract void FindStates(float time, out ObjectState currentState, out ObjectState nextState);
     }
-    
+
     [Serializable]
     public class Object<T> : Object where T : ObjectState
     {
@@ -27,11 +26,11 @@ namespace Cytoid.Storyboard
         {
             return States[0].Time == float.MaxValue;
         }
-        
+
         public override void FindStates(float time, out ObjectState currentState, out ObjectState nextState)
         {
             // TODO: Offline lookup generation?
-            
+
             if (States.Count == 0)
             {
                 currentState = null;
@@ -82,7 +81,7 @@ namespace Cytoid.Storyboard
     public class NoteController : Object<NoteControllerState>
     {
     }
-    
+
     [Serializable]
     public class Line : StageObject<LineState>
     {
@@ -113,18 +112,18 @@ namespace Cytoid.Storyboard
         public int? Order;
 
         public float? PivotX;
-        public float? PivotY ;
-        public float? RotX ;
-        public float? RotY ;
-        public float? RotZ ;
+        public float? PivotY;
+        public float? RotX;
+        public float? RotY;
+        public float? RotZ;
 
-        public float? ScaleX ;
-        public float? ScaleY ;
+        public float? ScaleX;
+        public float? ScaleY;
 
-        public UnitFloat Width ;
-        public UnitFloat X ;
-        public UnitFloat Y ;
-        public UnitFloat Z ;
+        public UnitFloat Width;
+        public UnitFloat X;
+        public UnitFloat Y;
+        public UnitFloat Z;
     }
 
     [Serializable]
@@ -307,7 +306,7 @@ namespace Cytoid.Storyboard
         public float? VignetteEnd; // Range: 0~1
         public float? VignetteIntensity; // Range: 0~1
         public float? VignetteStart; // Range: 0~1
-        
+
         public UnitFloat X; // Every x/y = 2 * Camera.main.orthographicSize
         public UnitFloat Y;
         public UnitFloat Z;
@@ -358,5 +357,4 @@ namespace Cytoid.Storyboard
             };
         }
     }
-
 }

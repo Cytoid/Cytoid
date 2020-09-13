@@ -6,22 +6,22 @@ using UnityEngine;
 public sealed class GameState
 {
     public GameMode Mode { get; }
-    
+
     public Level Level { get; }
-    
+
     public Difficulty Difficulty { get; }
-    
+
     public string ChartChecksum { get; }
-    
+
     public int DifficultyLevel { get; }
-    
+
     public bool IsStarted { get; set; }
-    
+
     public bool IsPlaying { get; set; }
-    
+
     public bool IsCompleted { get; set; }
     public bool IsReadyToExit { get; set; }
-    
+
     public bool IsFailed { get; set; }
     public HashSet<Mod> Mods { get; }
     public SecuredDouble MaxHealth { get; } = new SecuredDouble();
@@ -31,7 +31,7 @@ public sealed class GameState
 
     public int ClearCount { get; private set; }
     public bool ShouldFail { get; private set; }
-    
+
     public SecuredDouble Score { get; private set; } = new SecuredDouble();
     public SecuredDouble Accuracy { get; private set; } = new SecuredDouble();
     public SecuredInt Combo { get; private set; } = new SecuredInt();
@@ -39,9 +39,9 @@ public sealed class GameState
     public SecuredDouble Health { get; private set; } = new SecuredDouble();
 
     public double HealthPercentage => Health.Value / MaxHealth;
-    
+
     public bool UseHealthSystem { get; private set; }
-    
+
     public double NoteScoreMultiplier { get; private set; } = 1.0;
 
     [AvailableOnComplete] public Dictionary<NoteGrade, int> GradeCounts => OnCompleteGuard(gradeCounts);
@@ -82,12 +82,13 @@ public sealed class GameState
     {
         Mod.Fast, Mod.Slow, Mod.HideScanline, Mod.HideNotes
     };
+
     private static readonly HashSet<Mod> DisallowedCalibrationMods = new HashSet<Mod>
     {
         Mod.Auto, Mod.AutoDrag, Mod.AutoFlick, Mod.AutoHold,
         Mod.AP, Mod.FC, Mod.Hard, Mod.ExHard
     };
-    
+
     public GameState(Game game, GameMode mode, HashSet<Mod> mods)
     {
         Level = game.Level;
@@ -100,12 +101,12 @@ public sealed class GameState
         NoteCount = game.Chart.Model.note_list.Count;
         game.Chart.Model.note_list.ForEach(it => Judgements[it.id] = new NoteJudgement());
         noteScoreMultiplierFactor = Math.Sqrt(NoteCount) / 3.0;
-        
+
         UseHealthSystem = Mods.Contains(Mod.Hard) || Mods.Contains(Mod.ExHard) || mode == GameMode.Tier;
         MaxHealth = DifficultyLevel * 75;
         if (MaxHealth <= 0) MaxHealth = 1000;
         Health = MaxHealth;
-        
+
         switch (mode)
         {
             case GameMode.Tier:
@@ -146,7 +147,7 @@ public sealed class GameState
         Difficulty = Difficulty.Parse(Level.Meta.charts[0].type);
         ChartChecksum = SecuredOperations.CalculateChartChecksum(Level, Difficulty);
     }
-    
+
     public GameState(GameMode mode, Level level, Difficulty difficulty) : this()
     {
         Mode = mode;
@@ -160,12 +161,13 @@ public sealed class GameState
         if (!Application.isEditor) throw new Exception();
 
         ClearCount = noteCount;
-        for (var i = 0; i < noteCount; i++) Judgements[i] = new NoteJudgement
-        {
-            IsJudged = true,
-            Grade = NoteGrade.Perfect,
-            Error = 0,
-        };
+        for (var i = 0; i < noteCount; i++)
+            Judgements[i] = new NoteJudgement
+            {
+                IsJudged = true,
+                Grade = NoteGrade.Perfect,
+                Error = 0,
+            };
         Combo = MaxCombo = noteCount;
 #if UNITY_EDITOR
         Score = 1000000;
@@ -182,6 +184,7 @@ public sealed class GameState
         {
             return;
         }
+
         if (Judgements[note.Model.id].IsJudged)
         {
             return;
@@ -207,14 +210,17 @@ public sealed class GameState
 
         // Combo
         var miss = grade == NoteGrade.Bad || grade == NoteGrade.Miss;
-        
-        if (miss) Combo = 0; else Combo++;
+
+        if (miss) Combo = 0;
+        else Combo++;
         if (Combo > MaxCombo) MaxCombo = Combo;
 
         if (Mode == GameMode.Tier)
         {
-            if (miss) Context.TierState.Combo = 0; else Context.TierState.Combo++;
-            if (Context.TierState.Combo > Context.TierState.MaxCombo) Context.TierState.MaxCombo = Context.TierState.Combo;
+            if (miss) Context.TierState.Combo = 0;
+            else Context.TierState.Combo++;
+            if (Context.TierState.Combo > Context.TierState.MaxCombo)
+                Context.TierState.MaxCombo = Context.TierState.Combo;
         }
 
         // Score multiplier
@@ -269,6 +275,7 @@ public sealed class GameState
             noteScore *= NoteScoreMultiplier;
             Score += noteScore;
         }
+
         if (Score > 999500)
         {
             if (ClearCount == NoteCount && isFullScorePossible)
@@ -276,6 +283,7 @@ public sealed class GameState
                 Score = 1000000;
             }
         }
+
         if (Score > 1000000) Score = 1000000;
         if (Score == 1000000 && !isFullScorePossible) Score = 999999; // In case of double inaccuracy
 
@@ -287,10 +295,11 @@ public sealed class GameState
         else
         {
             accumulatedAccuracy += 1.0 * (NoteGrade.Great.GetAccuracyWeight() +
-                                           (NoteGrade.Perfect.GetAccuracyWeight() -
-                                            NoteGrade.Great.GetAccuracyWeight()) *
-                                           greatGradeWeight);
+                                          (NoteGrade.Perfect.GetAccuracyWeight() -
+                                           NoteGrade.Great.GetAccuracyWeight()) *
+                                          greatGradeWeight);
         }
+
         Accuracy = accumulatedAccuracy / ClearCount;
 
         // Health mods
@@ -304,7 +313,7 @@ public sealed class GameState
                 .Select[Mode == GameMode.Practice ? unrankedGradingIndex[grade] : rankedGradingIndex[grade]];
 
             double change = 0;
-            
+
             switch (mod.Type)
             {
                 case HpModType.Absolute:
@@ -344,8 +353,6 @@ public sealed class GameState
         {
             ShouldFail = true;
         }
-        
-        
     }
 
     public bool IsJudged(int noteId) => Judgements[noteId].IsJudged;
@@ -373,7 +380,7 @@ public sealed class GameState
     {
         if (!IsCompleted) throw new InvalidOperationException();
     }
-    
+
     private T OnCompleteGuard<T>(T target)
     {
         if (!IsCompleted) throw new InvalidOperationException();
@@ -583,7 +590,7 @@ public sealed class GameState
             })
         }
     });
-    
+
     private static ModeHpMod tierHpMods = new ModeHpMod(new Dictionary<NoteType, NoteHpMod>
     {
         {
@@ -677,7 +684,6 @@ public sealed class GameState
     });
 
     #endregion
-    
 }
 
 public class NoteJudgement
@@ -712,7 +718,7 @@ public class HpMod
     public double Value;
     public HpModType Type;
     public bool UseHealthBuffer;
-    
+
     public HpMod(double value, HpModType type, bool useHealthBuffer = false)
     {
         Value = value;
@@ -738,7 +744,7 @@ public enum GameMode
     GlobalCalibration = 5
 }
 
-[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]  
+[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
 public class AvailableOnComplete : Attribute
 {
 }
@@ -748,7 +754,7 @@ public class JudgeData
     public NoteGrade Grade { get; }
     public double Error { get; }
     public double GreatGradeWeight { get; }
-    
+
     public JudgeData(NoteGrade grade, double error, double greatGradeWeight)
     {
         Grade = grade;

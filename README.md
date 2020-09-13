@@ -1,4 +1,4 @@
-<img src="blob:https://imgur.com/1df9ac0e-3700-4124-aab9-a8014b8fa825" style="width: 100%">
+<img src="https://i.imgur.com/vc3ylH1.jpg" style="width: 100%">
 
 # Cytoid [![CodeFactor](https://www.codefactor.io/repository/github/cytoid/cytoid/badge)](https://www.codefactor.io/repository/github/cytoid/cytoid) [![Join the Discord](https://discordapp.com/api/guilds/362884768498712579/widget.png?style=shield)](https://discord.gg/cytoid)
 

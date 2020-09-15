@@ -157,6 +157,12 @@ public class LocalPlayerSettings
     [JsonProperty("training_mode_version")]
     public int TrainingModeVersion { get; set; } = 1;
 
+    [JsonProperty("request_store_review_confidence")]
+    public int RequestStoreReviewConfidence { get; set; } = 0;
+
+    [JsonProperty("requested_for_store_review")]
+    public bool RequestedForStoreReview { get; set; } = false;
+
 }
 
 public enum CdnRegion

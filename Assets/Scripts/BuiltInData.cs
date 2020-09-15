@@ -29,4 +29,5 @@ public static class BuiltInData
     };
     public const string GlobalCalibrationModeLevelId = "teages.offset_guide";
     public const string TutorialLevelId = "io.cytoid.tutorial";
+    public const string DefaultCharacterAssetId = "Sayaka";
 }

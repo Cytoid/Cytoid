@@ -4,6 +4,11 @@ using System.Linq;
 using Polyglot;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+#if UNITY_IOS
+using UnityEngine.iOS;
+#elif UNITY_ANDROID
+using Google.Play.Review;
+#endif
 
 public class Player
 {
@@ -20,6 +25,55 @@ public class Player
     {
         LoadSettings();
         ValidateData();
+    }
+
+    public async void BoostStoreReviewConfidence()
+    {
+        Settings.RequestStoreReviewConfidence++;
+        if (Settings.RequestStoreReviewConfidence >= 5 && !Settings.RequestedForStoreReview)
+        {
+            Settings.RequestedForStoreReview = true;
+            await RequestStoreReview();
+        }
+        SaveSettings();
+    }
+
+    public async UniTask RequestStoreReview()
+    {
+#if UNITY_IOS
+        Device.RequestStoreReview();
+#elif UNITY_ANDROID
+        if (Context.Distribution == Distribution.China)
+        {
+            Context.AudioManager.Get("ActionSuccess").Play();
+            Dialog.Prompt("享受 Cytoid 吗？\n请在 TapTap 上给我们打个分吧！", () =>
+            {
+                Application.OpenURL("https://www.taptap.com/app/158749");
+            });
+        }
+        else
+        {
+            var reviewManager = new ReviewManager();
+            var requestFlow = reviewManager.RequestReviewFlow();
+            await requestFlow;
+            if (requestFlow.Error != ReviewErrorCode.NoError)
+            {
+                Debug.LogWarning("Failed to launch Google Play review request flow");
+                Debug.LogWarning(requestFlow.Error.ToString());
+                return;
+            }
+
+            var reviewInfo = requestFlow.GetResult();
+            var launchFlow = reviewManager.LaunchReviewFlow(reviewInfo);
+            await launchFlow;
+            if (launchFlow.Error != ReviewErrorCode.NoError)
+            {
+                Debug.LogWarning("Failed to launch Google Play review request flow");
+                Debug.LogWarning(launchFlow.Error.ToString());
+                return;
+            }
+        }   
+#endif
     }
 
     public bool ShouldEnableDebug()

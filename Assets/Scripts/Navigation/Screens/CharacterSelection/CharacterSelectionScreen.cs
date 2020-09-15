@@ -58,6 +58,12 @@ public class CharacterSelectionScreen : Screen
             {
                 try
                 {
+                    if (Application.isEditor)
+                    {
+                        Debug.Log("Available characters:");
+                        characters.PrintJson();
+                    }
+
                     if (characters.Count == 0)
                     {
                         // TODO: This should not happen! We have Sayaka

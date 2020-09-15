@@ -13,7 +13,7 @@ public class CharacterManager
 
     public string SelectedCharacterId
     {
-        get => Context.Player.Settings.ActiveCharacterId ?? "Sayaka";
+        get => Context.Player.Settings.ActiveCharacterId ?? BuiltInData.DefaultCharacterAssetId;
         set
         {
             Context.Player.Settings.ActiveCharacterId = value;
@@ -101,6 +101,12 @@ public class CharacterManager
 
     public RSG.IPromise<List<CharacterMeta>> GetAvailableCharactersMeta()
     {
+        List<CharacterMeta> PostProcess(List<CharacterMeta> result)
+        {
+            var defaultCharacter = result.FirstOrDefault(it => it.AssetId == BuiltInData.DefaultCharacterAssetId);
+            if (defaultCharacter != null) defaultCharacter.Date = DateTimeOffset.MinValue;
+            return result.OrderByDescending(x => x.Date.HasValue).ThenBy(x => x.Date).ToList();
+        }
         if (Context.IsOnline())
         {
             // Online
@@ -119,8 +125,8 @@ public class CharacterManager
                     col.DeleteMany(x => true);
                     col.Insert(characters);
                 });
-                
-                return characters.ToList();
+
+                return PostProcess(characters);
             });
         }
 
@@ -128,7 +134,7 @@ public class CharacterManager
         return Context.Database.Let(it =>
         {
             var col = it.GetCollection<CharacterMeta>("characters");
-            var result = col.FindAll().ToList();
+            var result = PostProcess(col.FindAll().ToList());
             return Promise<List<CharacterMeta>>.Resolved(result);
         });
     }

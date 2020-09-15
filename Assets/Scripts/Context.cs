@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using DG.Tweening;
 using LunarConsolePlugin;
 using MoreMountains.NiceVibrations;
@@ -154,7 +153,15 @@ public class Context : SingletonMonoBehavior<Context>
 
     private static void OnLowMemory()
     {
-        // TODO: Work on this
+        if (SceneManager.GetActiveScene().name == "Navigation")
+        {
+            Resources.UnloadUnusedAssets();
+            
+            AudioManager.Get("ActionError").Play(ignoreDsp: true);
+            LoopAudioPlayer.Instance.StopAudio(0);
+            Dialog.PromptAlert("DIALOG_LOW_MEMORY".Get());
+        }
+        // TODO: Investigate on this
         // Resources.UnloadUnusedAssets();
         return;
         AssetMemory.DisposeAllAssets();
@@ -247,7 +254,6 @@ public class Context : SingletonMonoBehavior<Context>
             catch (Exception e)
             {
                 Debug.LogError(e);
-                Haptic(HapticTypes.Failure, true);
                 Dialog.PromptUnclosable("DIALOG_CRITICAL_ERROR_COULD_NOT_START_GAME_REASON_X".Get(
                     "DIALOG_CRITICAL_ERROR_REASON_WRITE_PERMISSION".Get()));
                 return;
@@ -264,7 +270,6 @@ public class Context : SingletonMonoBehavior<Context>
         catch (Exception e)
         {
             Debug.LogError(e);
-            Haptic(HapticTypes.Failure, true);
             Dialog.Instantiate().Also(it =>
             {
                 it.UseNegativeButton = false;
@@ -571,6 +576,7 @@ public class Context : SingletonMonoBehavior<Context>
                             SelectedLevel = await LevelManager.LoadOrInstallBuiltInLevel(BuiltInData.TutorialLevelId,
                                 LevelType.BuiltIn, true);
                             SelectedDifficulty = Difficulty.Easy;
+                            SelectedMods.Clear();
                             
                             Player.Settings.DisplayBoundaries = true;
                            

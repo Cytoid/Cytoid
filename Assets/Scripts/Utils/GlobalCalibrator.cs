@@ -102,6 +102,7 @@ public class GlobalCalibrator
                 UniTask.WaitUntil(() => retries >= 10),
                 UniTask.Delay(TimeSpan.FromSeconds(120), cancellationToken: cancelSource.Token)
             );
+            if (game == null || game.gameObject == null) return;
             AskSkipCalibration();
         }
         catch (OperationCanceledException)

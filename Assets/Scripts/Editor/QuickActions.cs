@@ -14,6 +14,17 @@ public class QuickActions : OdinEditorWindow
         GetWindow<QuickActions>().Show();
     }
 
+    [Button(Name = "Rate on TapTap")]
+    [DisableInEditorMode]
+    public void RateOnTapTap()
+    {
+        Context.AudioManager.Get("ActionSuccess").Play();
+        Dialog.Prompt("享受 Cytoid 吗？\n请在 TapTap 上给我们打个分吧！", () =>
+        {
+            Application.OpenURL("https://www.taptap.com/app/158749");
+        });
+    }
+
     [Button(Name = "Story: Intro")]
     [DisableInEditorMode]
     public async void StoryIntro()

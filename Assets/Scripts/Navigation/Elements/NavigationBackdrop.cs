@@ -265,7 +265,7 @@ public class NavigationBackdrop : SingletonMonoBehavior<NavigationBackdrop>, Scr
         }
     }
 
-    public void OnScreenChangeFinished(Screen from, Screen to)
+    public async void OnScreenChangeFinished(Screen from, Screen to)
     {
         if (to == null) return;
         if (BlockedScreenIds.Contains(to.GetId()))
@@ -273,8 +273,9 @@ public class NavigationBackdrop : SingletonMonoBehavior<NavigationBackdrop>, Scr
             SetVisible(false);
         }
         
-        if (to is InitializationScreen)
+        if (to is InitializationScreen initScreen)
         {
+            await UniTask.WaitUntil(() => initScreen.IsInitialized);
             ShouldParallaxActive = true;
             SetVisible(true);
             SetBlurred(true);

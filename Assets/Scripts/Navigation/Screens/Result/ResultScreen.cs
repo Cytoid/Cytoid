@@ -320,7 +320,7 @@ public class ResultScreen : Screen
         sceneLoader.Activate();
     }
 
-    private void EnterControls()
+    private async void EnterControls()
     {
         lowerLeftColumn.Enter();
         lowerRightColumn.Enter();
@@ -328,6 +328,12 @@ public class ResultScreen : Screen
         if (Context.Distribution == Distribution.China && Context.Player.ShouldOneShot("Tips: Calibration"))
         {
             Dialog.PromptAlert("<b>提示：</b>\n如果感觉手感不对劲的话，有可能需要设置谱面偏移。可以在准备界面的设置菜单中进入校正模式。");
+        }
+
+        if (ScoreGrades.From(gameState.Score) >= ScoreGrade.A)
+        {
+            await UniTask.Delay(TimeSpan.FromSeconds(1f));
+            Context.Player.BoostStoreReviewConfidence();
         }
     }
 

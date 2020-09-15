@@ -11,6 +11,8 @@ public class InitializationScreen : Screen
     public Text statusText;
     public Text versionText;
     public InteractableMonoBehavior detectionArea;
+    
+    public bool IsInitialized { get; private set; }
 
     public override string GetId() => Id;
 
@@ -23,6 +25,10 @@ public class InitializationScreen : Screen
 
         await UniTask.DelayFrame(10);
         
+        Context.LevelManager.OnLevelInstallProgress.AddListener(OnLevelInstallProgress);
+        await Context.LevelManager.InstallUserCommunityLevels();
+        Context.LevelManager.OnLevelInstallProgress.RemoveListener(OnLevelInstallProgress);
+        
         Context.LevelManager.OnLevelLoadProgress.AddListener(OnLevelLoadProgress);
         await Context.LevelManager.LoadLevelsOfType(LevelType.BuiltIn);
         await Context.LevelManager.LoadLevelsOfType(LevelType.User);
@@ -30,7 +36,6 @@ public class InitializationScreen : Screen
         
         Context.LevelManager.OnLevelInstallProgress.AddListener(OnLevelInstallProgress);
         await Context.LevelManager.LoadOrInstallBuiltInLevels();
-        await Context.LevelManager.InstallUserCommunityLevels();
         Context.LevelManager.OnLevelInstallProgress.RemoveListener(OnLevelInstallProgress);
 
         if (Context.Player.ShouldMigrate)
@@ -60,6 +65,8 @@ public class InitializationScreen : Screen
             Context.AudioManager.Get("LevelStart").Play();
             Context.ScreenManager.ChangeScreen(MainMenuScreen.Id, ScreenTransition.In);
         });
+        
+        IsInitialized = true;
     }
 
     private void OnLevelInstallProgress(string fileName, int current, int total)

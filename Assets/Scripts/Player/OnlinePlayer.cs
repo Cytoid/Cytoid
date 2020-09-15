@@ -59,7 +59,8 @@ public class OnlinePlayer
             }).CatchRequestError(result =>
             {
                 IsAuthenticated = false;
-                Debug.LogError(result);
+                Debug.LogWarning("Sign in failed.");
+                Debug.LogWarning(result);
                 if (result.IsHttpError)
                 {
                     Context.Player.Settings.LoginToken = null;
@@ -109,7 +110,8 @@ public class OnlinePlayer
             }).CatchRequestError(result =>
             {
                 IsAuthenticated = false; 
-                Debug.LogError(result);
+                Debug.LogWarning("Sign in failed.");
+                Debug.LogWarning(result);
                 if (!result.IsNetworkError)
                 {
                     Context.Player.Settings.LoginToken = null;
@@ -173,6 +175,7 @@ public class OnlinePlayer
                 return profile;
             }).CatchRequestError(error =>
             {
+                Debug.LogError("Could not fetch profile.");
                 Debug.LogError(error);
                 return null;
             });

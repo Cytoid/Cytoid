@@ -154,7 +154,8 @@ public class SignInScreen : Screen
             .CatchRequestError(error =>
             {
                 failed = true;
-                Debug.LogError(error);
+                Debug.LogWarning("Sign up failed.");
+                Debug.LogWarning(error);
 
                 var errorResponse = JsonConvert.DeserializeObject<SignUpErrorResponse>(error.Response);
                 Toast.Next(Toast.Status.Failure, errorResponse.message);

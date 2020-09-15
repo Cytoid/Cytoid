@@ -43,7 +43,7 @@ public class Player
 #if UNITY_IOS
         Device.RequestStoreReview();
 #elif UNITY_ANDROID
-        if (Context.Distribution == Distribution.China)
+        if (Context.Distribution == Distribution.TapTap)
         {
             Context.AudioManager.Get("ActionSuccess").Play();
             Dialog.Prompt("享受 Cytoid 吗？\n请在 TapTap 上给我们打个分吧！", () =>

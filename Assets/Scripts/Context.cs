@@ -452,7 +452,7 @@ public class Context : SingletonMonoBehavior<Context>
                 Player.Settings.CdnRegion = CdnRegion.MainlandChina;
             }
         } 
-        else if (Distribution == Distribution.China)
+        else if (Distribution == Distribution.TapTap)
         {
             Player.Settings.CdnRegion = CdnRegion.MainlandChina;
         }
@@ -906,7 +906,7 @@ public class Context : SingletonMonoBehavior<Context>
             switch (Application.identifier)
             {
                 case "me.tigerhix.cytoid": return Distribution.Global;
-                case "me.tigerhix.cytoid.cn": return Distribution.China;
+                case "me.tigerhix.cytoid.cn": return Distribution.TapTap;
             }
             throw new InvalidOperationException();
         }
@@ -915,7 +915,7 @@ public class Context : SingletonMonoBehavior<Context>
 
 public enum Distribution
 {
-    Global, China
+    Global, TapTap
 }
 
 public class OfflineModeToggleEvent : UnityEvent<bool>

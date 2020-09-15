@@ -7,7 +7,7 @@ public class Bootstrapper : MonoBehaviour
     
     private async void Awake()
     {
-        if (Context.Distribution == Distribution.China)
+        if (Context.Distribution == Distribution.TapTap)
         {
             await splash.Display();
         }

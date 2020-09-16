@@ -103,13 +103,14 @@ public class LevelSelectionScreen : Screen
         var category = categorySelect.SelectedIndex;
         var filters = new List<Func<Level, bool>>();
         var builtInLevels = BuiltInData.BuiltInLevelIds.ToHashSet();
+        bool IsOfficial(Level level) => Context.Library.Levels.ContainsKey(level.Id) || builtInLevels.Contains(level.Id) || level.Id.StartsWith("io.cytoid.");
         switch (category)
         {
             case 1:
-                filters.Add(level => Context.Library.Levels.ContainsKey(level.Id) || builtInLevels.Contains(level.Id));
+                filters.Add(IsOfficial);
                 break;
             case 2:
-                filters.Add(level => !Context.Library.Levels.ContainsKey(level.Id) && !builtInLevels.Contains(level.Id));
+                filters.Add(it => !IsOfficial(it));
                 break;
         }
         var query = searchInputField.text.Trim();

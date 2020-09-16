@@ -403,6 +403,7 @@ namespace Cytoid.Storyboard
             // Create initial state
             var initialState = (TS) CreateState((TS) null, obj);
             states.Add(initialState);
+            // TODO: gfsd storyboard issue: template's first state should override initial state?
 
             // Create template states
             if (obj.TryGetValue("template", out var tmp))

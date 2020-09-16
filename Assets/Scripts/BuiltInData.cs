@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 public static class BuiltInData
 {
-    public static int TrainingModeVersion = 2;
+    public const int TrainingModeVersion = 3;
     public static readonly List<string> TrainingModeLevelIds = new List<string>
     {
         "skillmode.space",

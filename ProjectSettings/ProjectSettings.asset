@@ -168,12 +168,12 @@ PlayerSettings:
   androidSupportedAspectRatio: 1
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
-    Android: me.tigerhix.cytoid.cn
+    Android: me.tigerhix.cytoid
     Standalone: com.Company.ProductName
     iPhone: me.tigerhix.cytoid
   buildNumber:
-    iPhone: 100
-  AndroidBundleVersionCode: 100
+    iPhone: 101
+  AndroidBundleVersionCode: 101
   AndroidMinSdkVersion: 19
   AndroidTargetSdkVersion: 28
   AndroidPreferredInstallLocation: 1
@@ -184,7 +184,7 @@ PlayerSettings:
   ForceInternetPermission: 1
   ForceSDCardPermission: 1
   CreateWallpaper: 0
-  APKExpansionFiles: 0
+  APKExpansionFiles: 1
   keepLoadedShadersAlive: 0
   StripUnusedMeshComponents: 1
   VertexChannelCompressionMask: 4054
@@ -253,7 +253,7 @@ PlayerSettings:
   androidSplashScreen: {fileID: 0}
   AndroidKeystoreName: C:/Cytoid/debug.keystore
   AndroidKeyaliasName: androiddebugkey
-  AndroidBuildApkPerCpuArchitecture: 0
+  AndroidBuildApkPerCpuArchitecture: 1
   AndroidTVCompatibility: 0
   AndroidIsGame: 1
   AndroidEnableTango: 0

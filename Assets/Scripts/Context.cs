@@ -153,14 +153,15 @@ public class Context : SingletonMonoBehavior<Context>
 
     private static void OnLowMemory()
     {
-        if (SceneManager.GetActiveScene().name == "Navigation")
+        // TODO: This pops up on startup on iOS, lol
+        /*if (SceneManager.GetActiveScene().name == "Navigation")
         {
             Resources.UnloadUnusedAssets();
             
             AudioManager.Get("ActionError").Play(ignoreDsp: true);
             LoopAudioPlayer.Instance.StopAudio(0);
             Dialog.PromptAlert("DIALOG_LOW_MEMORY".Get());
-        }
+        }*/
         // TODO: Investigate on this
         // Resources.UnloadUnusedAssets();
         return;

@@ -48,7 +48,7 @@ public class MainMenuScreen : Screen
         overlayImage.SetAlpha(Context.CharacterManager.GetActiveCharacterAsset().mainMenuRightOverlayAlpha);
 
         var levelCount = Context.LevelManager.LoadedLocalLevels.Count(it =>
-            it.Value.Type == LevelType.User && !BuiltInData.TrainingModeLevelIds.Contains(it.Value.Id));
+            (it.Value.Type == LevelType.User || it.Value.Type == LevelType.BuiltIn) && !BuiltInData.TrainingModeLevelIds.Contains(it.Value.Id));
         freePlayText.text = "MAIN_LEVELS_LOADED".Get(levelCount);
         freePlayText.transform.RebuildLayout();
 

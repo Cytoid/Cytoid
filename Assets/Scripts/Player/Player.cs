@@ -70,7 +70,6 @@ public class Player
             {
                 Debug.LogWarning("Failed to launch Google Play review request flow");
                 Debug.LogWarning(launchFlow.Error.ToString());
-                return;
             }
         }   
 #endif

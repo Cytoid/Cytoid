@@ -292,7 +292,7 @@ public class OnlinePlayer
         var top10 = new List<TierRankingEntry>();
         return RestClient.GetArray<TierRankingEntry>(new RequestHelper
         {
-            Uri = $"{Context.ApiUrl}/seasons/alpha/tiers/{tierId}/records?limit=10",
+            Uri = $"{Context.ApiUrl}/seasons/{(SecuredConstants.UseBetaTierSeason ? "beta" : "alpha")}/tiers/{tierId}/records?limit=10",
             Headers = Context.OnlinePlayer.GetRequestHeaders(),
             EnableDebug = true
         }).Then(data =>
@@ -304,7 +304,7 @@ public class OnlinePlayer
                     return RestClient.GetArray<TierRankingEntry>(new RequestHelper
                     {
                         Uri =
-                            $"{Context.ApiUrl}/seasons/alpha/tiers/{tierId}/user_ranking?limit=6",
+                            $"{Context.ApiUrl}/seasons/{(SecuredConstants.UseBetaTierSeason ? "beta" : "alpha")}/tiers/{tierId}/user_ranking?limit=6",
                         Headers = GetRequestHeaders(),
                         EnableDebug = true
                     });

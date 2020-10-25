@@ -196,7 +196,7 @@ public static class CdnRegionExtensions
             case CdnRegion.MainlandChina:
                 return "https://api.cytoid.cn";
             case CdnRegion.Debug:
-                return "http://dorm.neoto.xin:4000";
+                return "http://data.cs.purdue.edu:8964";
             default:
                 throw new ArgumentOutOfRangeException(nameof(region), region, null);
         }

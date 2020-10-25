@@ -142,7 +142,8 @@ public class MainMenuScreen : Screen
                         Dialog.PromptAlert(it.message);
                     }
 
-                    var localVersion = new Version(Context.VersionString);
+                    print($"local: {Application.version}, latest: {it.currentVersion}, min supported: {it.minSupportedVersion}");
+                    var localVersion = new Version(Application.version);
                     var currentVersion = new Version(it.currentVersion);
                     var minSupportedVersion = new Version(it.minSupportedVersion);
                     if (localVersion < minSupportedVersion)

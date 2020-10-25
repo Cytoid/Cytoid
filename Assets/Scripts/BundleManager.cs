@@ -115,7 +115,7 @@ public class BundleManager
         var url = Context.BundleRemoteFullUrl + "catalog.json";
         Debug.Log($"[BundleManager] Requested catalog from {url}");
         var request = UnityWebRequest.Get(url);
-        request.timeout = 5;
+        request.timeout = 3;
         using (request)
         {
             await request.SendWebRequest();
@@ -150,6 +150,10 @@ public class BundleManager
     public bool IsUpToDate(string bundleId)
     {
         if (!Catalog.ContainsEntry(bundleId)) return false;
+        var list = new List<Hash128>();
+        Caching.GetCachedVersions(bundleId, list);
+        Debug.Log($"Checking if {bundleId} is up to date...");
+        list.ForEach(it => Debug.Log($"    Version {it}"));
         return Caching.IsVersionCached(bundleId, (int) Catalog.GetEntry(bundleId).version);
     }
 
@@ -214,13 +218,13 @@ public class BundleManager
         {
             Debug.Log($"[BundleManager] Requested StreamingAssets bundle {bundleId}");
         }
-        Debug.Log($"[BundleManager] Version: {Catalog.GetEntry(bundleId).version}");
-
+        
         if (!Catalog.ContainsEntry(bundleId))
         {
             Debug.LogError($"[BundleManager] {bundleId} does not exist in the catalog!");
             return null;
         }
+        Debug.Log($"[BundleManager] Version: {Catalog.GetEntry(bundleId).version}");
 
         if (onLocallyResolved == default) onLocallyResolved = () => { };
         if (onDownloadSucceeded == default) onDownloadSucceeded = () => { };

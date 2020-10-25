@@ -287,11 +287,11 @@ public class Player
             {
                 return GraphicsQuality.Ultra;
             }
-            if (UnityEngine.iOS.Device.generation >= UnityEngine.iOS.DeviceGeneration.iPhone7)
+            if (UnityEngine.iOS.Device.generation >= UnityEngine.iOS.DeviceGeneration.iPhone8)
             {
                 return GraphicsQuality.High;
             }
-            if (UnityEngine.iOS.Device.generation >= UnityEngine.iOS.DeviceGeneration.iPhone5S)
+            if (UnityEngine.iOS.Device.generation >= UnityEngine.iOS.DeviceGeneration.iPhone7)
             {
                 return GraphicsQuality.Medium;
             }

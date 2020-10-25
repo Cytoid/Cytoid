@@ -36,6 +36,7 @@ public class RankingsTab : MonoBehaviour, ScreenInitializedListener, ScreenBecam
     public void OnScreenBecameInactive()
     {
         updateRankingToken = DateTime.Now;
+        updateTierRankingToken = DateTime.Now;
     }
 
     private DateTime updateRankingToken;

@@ -47,7 +47,7 @@ namespace Cytoid.Storyboard
         
         protected UnityEngine.Color EaseColor(Color i, Color j)
         {
-            if (i == null) throw new ArgumentNullException();
+            if (i == null) return UnityEngine.Color.clear;
             if (j == null) return i.ToUnityColor();
             return UnityEngine.Color.Lerp(i.ToUnityColor(), j.ToUnityColor(), EaseFloat(0, 1));
         }

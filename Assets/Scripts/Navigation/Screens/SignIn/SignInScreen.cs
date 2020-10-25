@@ -157,8 +157,15 @@ public class SignInScreen : Screen
                 Debug.LogWarning("Sign up failed.");
                 Debug.LogWarning(error);
 
-                var errorResponse = JsonConvert.DeserializeObject<SignUpErrorResponse>(error.Response);
-                Toast.Next(Toast.Status.Failure, errorResponse.message);
+                if (error.IsHttpError && error.StatusCode == 403)
+                {
+                    Toast.Next(Toast.Status.Failure, "TOAST_LIKELY_INCORRECT_SYSTEM_TIME".Get());
+                }
+                else
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<SignUpErrorResponse>(error.Response);
+                    Toast.Next(Toast.Status.Failure, errorResponse.message);
+                }
             });
 
         closeButton.Leave();

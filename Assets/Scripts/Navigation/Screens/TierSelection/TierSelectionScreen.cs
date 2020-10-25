@@ -108,7 +108,7 @@ public class TierSelectionScreen : Screen
             await Context.LevelManager.LoadLevelsOfType(LevelType.Tier);
             RestClient.Get(new RequestHelper
             {
-                Uri = $"{Context.ApiUrl}/seasons/alpha",
+                Uri = $"{Context.ApiUrl}/seasons/{(SecuredConstants.UseBetaTierSeason ? "beta" : "alpha")}",
                 Headers = Context.OnlinePlayer.GetRequestHeaders(),
                 Timeout = 5,
             }).Then(res =>
@@ -447,6 +447,19 @@ public class TierSelectionScreen : Screen
             Context.LevelManager.DownloadAndUnpackLevelDialog(
                 level,
                 false,
+                onDownloadSucceeded: () =>
+                {
+                    if (level.IsLocal)
+                    {
+                        var previewPath = "file://" + level.Path + level.Meta.music_preview.path;
+                        if (previewPath == lastPreviewPath)
+                        {
+                            previewAudioSource.Stop();
+                            Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.PreviewMusic);
+                            Debug.Log("Disposed tier preview music");
+                        }
+                    }
+                },
                 onDownloadAborted: () => { error = true; },
                 onDownloadFailed: () => { error = true; },
                 onUnpackSucceeded: downloadedLevel =>

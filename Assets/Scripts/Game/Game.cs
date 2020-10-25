@@ -223,6 +223,10 @@ public class Game : MonoBehaviour
         {
             mods.Add(Mod.Auto);
         }
+        if (mode == GameMode.GlobalCalibration)
+        {
+            mods.Clear();   
+        }
 
         Chart = new Chart(
             chartText,

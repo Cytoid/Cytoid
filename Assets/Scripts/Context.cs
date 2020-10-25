@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using DG.Tweening;
 using LunarConsolePlugin;
 using MoreMountains.NiceVibrations;
@@ -10,6 +11,7 @@ using Proyecto26;
 using Tayx.Graphy;
 using Cysharp.Threading.Tasks;
 using LiteDB;
+using Sirenix.Utilities;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
@@ -17,9 +19,8 @@ using UnityEngine.SceneManagement;
 
 public class Context : SingletonMonoBehavior<Context>
 {
-    public const string VersionName = "2.0.0";
-    public const string VersionString = "2.0.0";
-    public const int VersionCode = 88;
+    public const string VersionName = "2.0.2";
+    public const int VersionCode = 102;
 
     public static string MockApiUrl;
 
@@ -104,6 +105,7 @@ public class Context : SingletonMonoBehavior<Context>
     }
 
     private static LiteDatabase database;
+    private static bool ShouldSnapshotDatabase = false;
 
     public static Level SelectedLevel
     {
@@ -359,6 +361,7 @@ public class Context : SingletonMonoBehavior<Context>
         OnApplicationInitialized.Invoke();
         
         LunarConsole.SetConsoleEnabled(Player.Settings.UseDeveloperConsole);
+        ShouldSnapshotDatabase = true;
     }
 
     private static async UniTask InitializeNavigation()
@@ -771,23 +774,19 @@ public class Context : SingletonMonoBehavior<Context>
         {
             case GraphicsQuality.Ultra:
             case GraphicsQuality.High:
-                UnityEngine.Screen.SetResolution(InitialWidth, InitialHeight, true);
-                QualitySettings.masterTextureLimit = 0;
+                UnityEngine.Screen.SetResolution(InitialWidth, InitialHeight, FullScreenMode.ExclusiveFullScreen);
                 break;
             case GraphicsQuality.Medium:
                 UnityEngine.Screen.SetResolution((int) (InitialWidth * 0.7f),
-                    (int) (InitialHeight * 0.7f), true);
-                QualitySettings.masterTextureLimit = 0;
+                    (int) (InitialHeight * 0.7f), FullScreenMode.ExclusiveFullScreen);
                 break;
             case GraphicsQuality.Low:
                 UnityEngine.Screen.SetResolution((int) (InitialWidth * 0.5f),
-                    (int) (InitialHeight * 0.5f), true);
-                QualitySettings.masterTextureLimit = 1;
+                    (int) (InitialHeight * 0.5f), FullScreenMode.ExclusiveFullScreen);
                 break;
             case GraphicsQuality.VeryLow:
                 UnityEngine.Screen.SetResolution((int) (InitialWidth * 0.3f),
-                    (int) (InitialHeight * 0.3f), true);
-                QualitySettings.masterTextureLimit = 1;
+                    (int) (InitialHeight * 0.3f), FullScreenMode.ExclusiveFullScreen);
                 break;
         }
 
@@ -834,7 +833,7 @@ public class Context : SingletonMonoBehavior<Context>
 
     private void OnApplicationFocus(bool hasFocus)
     {
-        if (!hasFocus && Database != null)
+        if (ShouldSnapshotDatabase && !hasFocus && Database != null)
         {
             // Database.Checkpoint();
             Database.Dispose();
@@ -844,7 +843,7 @@ public class Context : SingletonMonoBehavior<Context>
 
     private void OnApplicationPause(bool pauseStatus)
     {
-        if (pauseStatus && Database != null)
+        if (ShouldSnapshotDatabase && pauseStatus && Database != null)
         {
             // Database.Checkpoint();
             Database.Dispose();
@@ -855,48 +854,93 @@ public class Context : SingletonMonoBehavior<Context>
     private static LiteDatabase CreateDatabase()
     {
         var dbPath = Path.Combine(Application.persistentDataPath, "Cytoid.db");
-        var dbBackupPath = Path.Combine(Application.persistentDataPath, "Cytoid.db.bak");
-        var db = new LiteDatabase(
-            new ConnectionString
-            {
-                Filename = dbPath,
-                // Password = SecuredConstants.DbSecret,
-                Connection = ConnectionType.Direct
-            }
-        );
-        if (db.GetCollection<LocalPlayerSettings>("settings").FindOne(Query.All()) != null)
+        LiteDatabase NewDatabase()
         {
+            return new LiteDatabase(
+                new ConnectionString
+                {
+                    Filename = dbPath,
+                    Connection = ConnectionType.Direct
+                }
+            );
+        }
+
+        LiteDatabase db = null;
+        try
+        {
+            db = NewDatabase();
+        }
+        catch (Exception e)
+        {
+            Debug.Log(e);
+            Debug.Log($"Could not read {dbPath}");
+        }
+
+        if (db?.GetCollection<LocalPlayerSettings>("settings").FindOne(Query.All()) != null)
+        {
+            // Is there too many backups already?
+            var snapshots = Directory.GetFiles(Application.persistentDataPath, ".snapshot-*").ToList();
+            snapshots.Sort(string.CompareOrdinal);
+            if (snapshots.Count > 5)
+            {
+                snapshots.Take(snapshots.Count - 5).ForEach(File.Delete);
+                Debug.Log($"Removed {snapshots.Count - 5} obsolete snapshots");
+            }
+            
             // Make a backup
-            File.Copy(dbPath, dbBackupPath, true);
-            Debug.Log("Database backup complete.");
+            File.Copy(dbPath, Path.Combine(Application.persistentDataPath, ".snapshot-" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()), true);
+            Debug.Log("Database snapshot complete");
         }
         else
         {
-            // Is there a backup?
-            if (File.Exists(Path.Combine(Application.persistentDataPath, "Cytoid.db.bak")))
+            // Is there backups?
+            var snapshots = Directory.GetFiles(Application.persistentDataPath, ".snapshot-*").ToList();
+            if (snapshots.Count == 0) return db ?? NewDatabase();
+            
+            db?.Dispose();
+            File.Delete(dbPath);
+            snapshots.Sort((a, b) => string.CompareOrdinal(b, a));
+            
+            string rolledBackFrom = null;
+            foreach (var snapshotPath in snapshots)
             {
-                File.Copy(dbBackupPath, dbPath, true);
-                Debug.Log("Database rollback complete.");
+                Debug.Log($"Rolling back from {snapshotPath}");
+                File.Copy(snapshotPath, dbPath, true);
+                LiteDatabase snapshotDb = null;
+                try
+                {
+                    snapshotDb = new LiteDatabase(
+                        new ConnectionString
+                        {
+                            Filename = dbPath,
+                            Connection = ConnectionType.Direct
+                        }
+                    );
+                }
+                catch (Exception e)
+                {
+                    Debug.Log(e);
+                    Debug.Log($"Could not read {snapshotPath}");
+                }
+
+                if (snapshotDb?.GetCollection<LocalPlayerSettings>("settings").FindOne(Query.All()) != null)
+                {
+                    db = snapshotDb;
+                    Debug.Log("Rollback success");
+                    rolledBackFrom = snapshotPath;
+                    break;
+                }
                 
-                var bakDb = new LiteDatabase(
-                    new ConnectionString
-                    {
-                        Filename = dbPath,
-                        // Password = SecuredConstants.DbSecret,
-                        Connection = ConnectionType.Direct
-                    }
-                );
-                if (bakDb.GetCollection<LocalPlayerSettings>("settings").FindOne(Query.All()) != null)
-                {
-                    db.Dispose();
-                    db = bakDb;
-                }
-                else
-                {
-                    bakDb.Dispose();
-                }
+                Debug.Log($"Could not roll back from {snapshotPath}");
+                snapshotDb?.Dispose();
+                File.Delete(snapshotPath);
+            }
+
+            if (rolledBackFrom == null) {
+                return NewDatabase();
             }
         }
+        
         return db;
     }
 

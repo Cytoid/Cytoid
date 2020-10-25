@@ -56,6 +56,7 @@ public class InitializationScreen : Screen
         statusText.transform.RebuildLayout();
         await Context.Instance.DetectServerCdn();
         await Context.Instance.CheckServerCdn();
+        await Context.BundleManager.DownloadAndSaveCatalog();
 
         spinnerElement.gameObject.SetActive(false);
         statusText.text = "INIT_TOUCH_TO_START".Get();

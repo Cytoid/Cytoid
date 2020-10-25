@@ -42,6 +42,7 @@ public class SpinnerOverlay : SingletonMonoBehavior<SpinnerOverlay>
         if (onFullyShown != null)
         {
             await UniTask.Delay(TimeSpan.FromSeconds(0.2f));
+            if (Instance == null || Instance.gameObject) return;
             onFullyShown();
         }
     }
@@ -57,6 +58,7 @@ public class SpinnerOverlay : SingletonMonoBehavior<SpinnerOverlay>
             Context.SetMajorCanvasBlockRaycasts(true);
         });
         await UniTask.Delay(TimeSpan.FromSeconds(0.2f));
+        if (Instance == null || Instance.gameObject) return;
         Instance.canvas.enabled = false;
         Instance.canvasGroup.enabled = false;
         if (onFullyHidden != null)

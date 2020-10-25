@@ -170,8 +170,8 @@ public sealed class GameState
             };
         Combo = MaxCombo = noteCount;
 #if UNITY_EDITOR
-        Score = 1000000;
-        Accuracy = 1.000000;
+        Score = 500000;
+        Accuracy = 0.500000;
 #else
         Score = 0;
         Accuracy = 0.000000;

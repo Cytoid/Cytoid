@@ -135,17 +135,7 @@ public abstract class Note : MonoBehaviour
         if (!IsCleared)
         {
             // Update position
-            var model = Model;
-            var ovr = model.Override;
-            var position = model.position;
-
-            if (ovr.XMultiplier != 1 || ovr.XOffset != 0) position.x = Game.Chart.ConvertChartXToScreenX((float) model.x * ovr.XMultiplier + ovr.XOffset);
-            if (ovr.YMultiplier != 1 || ovr.YOffset != 0) position.y = Game.Chart.ConvertChartYToScreenY(model.y * ovr.YMultiplier + ovr.YOffset);
-            if (ovr.X != null) position.x = ovr.X.Value;
-            if (ovr.Y != null) position.y = ovr.Y.Value;
-            if (ovr.Z != null) position.z = ovr.Z.Value;
-        
-            gameObject.transform.localPosition = position;
+            gameObject.transform.localPosition = Model.CalculatePosition(Game.Chart);
             
             // Autoplay
             if (IsAutoEnabled())

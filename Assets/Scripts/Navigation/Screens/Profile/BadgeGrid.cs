@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -23,7 +24,7 @@ public class BadgeGrid : MonoBehaviour
                 badgeDisplays[index].gameObject.SetActive(true);
                 if (index < Math.Min(list.Count, badgeDisplays.Count))
                 {
-                    badgeDisplays[index].SetModel(list[i]);
+                    badgeDisplays[index].SetModel(list[index]);
                 }
                 else
                 {

@@ -109,6 +109,20 @@ public class ChartModel
         public float nextdraglinestoptime;
         public int style = 1;
 
+        public Vector3 CalculatePosition(Chart chart)
+        {
+            var ovr = Override;
+            var pos = position;
+
+            if (ovr.XMultiplier != 1 || ovr.XOffset != 0) pos.x = chart.ConvertChartXToScreenX((float) x * ovr.XMultiplier + ovr.XOffset);
+            if (ovr.YMultiplier != 1 || ovr.YOffset != 0) pos.y = chart.ConvertChartYToScreenY(y * ovr.YMultiplier + ovr.YOffset);
+            if (ovr.X != null) pos.x = ovr.X.Value;
+            if (ovr.Y != null) pos.y = ovr.Y.Value;
+            if (ovr.Z != null) pos.z = ovr.Z.Value;
+
+            return pos;
+        }
+
         public NoteOverride Override { get; } = new NoteOverride();
 
         public class NoteOverride

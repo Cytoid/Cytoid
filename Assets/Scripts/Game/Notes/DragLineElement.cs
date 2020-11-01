@@ -87,8 +87,8 @@ public class DragLineElement : MonoBehaviour
             }
         }
 
-        var fromNotePosition = hasFromNote ? (fromNote is DragHeadNote dragHeadNote ? dragHeadNote.OriginalPosition : fromNote.transform.localPosition) : FromNoteModel.position;
-        var toNotePosition = hasToNote ? toNote.transform.localPosition : ToNoteModel.position;
+        var fromNotePosition = hasFromNote ? (fromNote is DragHeadNote dragHeadNote ? dragHeadNote.OriginalPosition : fromNote.transform.localPosition) : FromNoteModel.CalculatePosition(Game.Chart);
+        var toNotePosition = hasToNote ? toNote.transform.localPosition : ToNoteModel.CalculatePosition(Game.Chart);
         
         var transform = this.transform;
         transform.localPosition = fromNotePosition;

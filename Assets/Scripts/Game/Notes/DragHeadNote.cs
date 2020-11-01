@@ -89,9 +89,21 @@ public class DragHeadNote : Note
         if (Game.Time >= Model.start_time)
         {
             // Move drag head
+            if (FromNoteModel.id == 523)
+            {
+                if (hasFromNote && fromNote != this)
+                {
+                    print(fromNote.transform.localPosition);
+                }
+                else
+                {
+                    print(FromNoteModel.CalculatePosition(Game.Chart));
+                }
+            }
+            
             transform.localPosition = Vector3.Lerp(
-                (hasFromNote && fromNote != this) ? fromNote.transform.localPosition : FromNoteModel.position, 
-                hasToNote ? toNote.transform.localPosition : ToNoteModel.position,
+                (hasFromNote && fromNote != this) ? fromNote.transform.localPosition : FromNoteModel.CalculatePosition(Game.Chart), 
+                hasToNote ? toNote.transform.localPosition : ToNoteModel.CalculatePosition(Game.Chart),
                 (Game.Time - FromNoteModel.start_time) / (ToNoteModel.start_time - FromNoteModel.start_time));
 
             // Moved to next note?
@@ -99,7 +111,7 @@ public class DragHeadNote : Note
             {
                 if (ToNoteModel == EndNoteModel) // Last note
                 {
-                    transform.localPosition = hasToNote ? toNote.transform.localPosition : ToNoteModel.position;
+                    transform.localPosition = hasToNote ? toNote.transform.localPosition : ToNoteModel.CalculatePosition(Game.Chart);
                 }
                 else
                 {

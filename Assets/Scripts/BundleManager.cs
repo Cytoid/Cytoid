@@ -115,10 +115,19 @@ public class BundleManager
         var url = Context.BundleRemoteFullUrl + "catalog.json";
         Debug.Log($"[BundleManager] Requested catalog from {url}");
         var request = UnityWebRequest.Get(url);
-        request.timeout = 3;
+        request.timeout = 10;
         using (request)
         {
-            await request.SendWebRequest();
+            try
+            {
+                await request.SendWebRequest();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+                return null;
+            }
+
             if (request.isNetworkError || request.isHttpError)
             {
                 Debug.LogError(request.error);
@@ -315,12 +324,22 @@ public class BundleManager
 
         using (request)
         {
-            request.SendWebRequest();
-
-            while (!request.isDone)
+            try
             {
-                if (aborted) break;
-                await UniTask.Yield();
+                request.SendWebRequest();
+
+                while (!request.isDone)
+                {
+                    if (aborted) break;
+                    await UniTask.Yield();
+                }
+
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+                onDownloadFailed();
+                return null;
             }
 
             if (aborted)

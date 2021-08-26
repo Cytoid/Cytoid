@@ -18,9 +18,9 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
         InitializeHoldComponents();
     }
 
-    public override void OnLateUpdate()
+    protected override void UpdateCollider()
     {
-        base.OnLateUpdate();
+        base.UpdateCollider();
         if (HoldNote.IsHolding) Collider.radius *= 1.3333f;
     }
 
@@ -36,7 +36,6 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
         Triangle = Object.Instantiate(provider.trianglePrefab, Game.contentParent.transform).GetComponent<MeshTriangle>();
         Triangle.gameObject.SetActive(false);
         HoldFx = Object.Instantiate(Game.effectController.holdFx, Note.transform, false);
-        HoldFx.transform.SetLocalScale(HoldFx.transform.localScale.x * (1 + Context.Player.Settings.ClearEffectsSize));
         HoldFx.transform.DeltaZ(-0.001f);
         InitialProgressRingScale = ProgressRing.transform.localScale;
         ProgressRing.maxCutoff = 0;
@@ -55,11 +54,8 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
         ProgressRing.spriteRenderer.material.renderQueue = 3000 + Note.Model.id; // TODO: Magic number
         var mainModule = HoldFx.main;
         mainModule.startColor = BaseFillColor;
-        var newProgressRingScale = InitialProgressRingScale * SizeMultiplier;
-        ProgressRing.transform.SetLocalScaleXY(newProgressRingScale.x, newProgressRingScale.y);
-
-        CompletedLine.size = new Vector2(1, 0);
         Line.size = new Vector2(1, 0.21f * Mathf.Floor(Note.Model.holdlength / 0.21f));
+        CompletedLine.size = new Vector2(1, 0);
     }
 
     public override void OnCollect()
@@ -78,7 +74,6 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
         {
             Line.enabled = true;
             CompletedLine.enabled = true;
-            CompletedLine.transform.SetLocalScaleX(Line.transform.localScale.x);
             ProgressRing.enabled = true;
             switch (Note.Model.style)
             {
@@ -124,9 +119,10 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
 
                         if (UseExperimentalAnimations)
                         {
-                            Ring.transform.DOScale(BaseTransformSize * 0.85f, 0.2f);
-                            Fill.transform.DOScale(BaseTransformSize * 0.85f, 0.2f);
-                            SpriteMask.transform.DOScale(BaseTransformSize * 0.85f, 0.2f);
+                            var size = BaseTransformSize * Note.Model.Override.SizeMultiplier;
+                            Ring.transform.DOScale(size * 0.85f, 0.2f);
+                            Fill.transform.DOScale(size * 0.85f, 0.2f);
+                            SpriteMask.transform.DOScale(size * 0.85f, 0.2f);
                         }
                         
                         if (Game.State.IsPlaying && !HoldFx.isPlaying)
@@ -146,13 +142,13 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
                         {
                             if (Note.Game.Time > Note.Model.start_time + Note.JudgmentOffset)
                             {
-                                CompletedLine.size = new Vector2(1, Note.Model.holdlength * HoldNote.HoldProgress);
+                                CompletedLine.size = new Vector2(CompletedLine.size.x, Note.Model.holdlength * HoldNote.HoldProgress);
                             }
                         }
                         break;
                     }
                     case 2:
-                        Line.size = new Vector2(1, Note.Model.holdlength * (1 - HoldNote.HoldProgress));
+                        Line.size = new Vector2(Line.size.x, Note.Model.holdlength * (1 - HoldNote.HoldProgress));
                         break;
                 }
             }
@@ -204,21 +200,34 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
 
     protected override void UpdateTransformScale()
     {
-        if (Game.Time > Note.Model.start_time) return; // Already scaled to maximum
+        if (Game.Time > Note.Model.start_time) return; // Already scaled to maximum TODO: size_multiplier no longer works?
+
+        var scale = BaseTransformScale * Note.Model.Override.SizeMultiplier;
+        var newProgressRingScale = InitialProgressRingScale * scale;
+        ProgressRing.transform.SetLocalScaleXY(newProgressRingScale.x, newProgressRingScale.y);
         
         // Scale the entire transform
         var timeScale = Mathf.Clamp((Game.Time - Note.Model.intro_time) / (Note.Model.start_time - Note.Model.intro_time), 0f, 1f);
-        
+
+        var size = BaseTransformSize * Note.Model.Override.SizeMultiplier;
         var minPercentageSize = Note.Model.initial_scale;
-        var timeScaledSize = BaseTransformSize * minPercentageSize + BaseTransformSize * (1 - minPercentageSize) * timeScale;
+        var timeScaledSize = size * minPercentageSize + size * (1 - minPercentageSize) * timeScale;
         const float minPercentageLineSize = 0.0f;
-        var timeScaledLineSize = minPercentageLineSize + (1 - minPercentageLineSize) * timeScale;
         
         Ring.transform.SetLocalScaleXY(timeScaledSize, timeScaledSize);
         Fill.transform.SetLocalScaleXY(timeScaledSize, timeScaledSize);
         SpriteMask.transform.SetLocalScaleXY(timeScaledSize, timeScaledSize);
 
-        Line.transform.SetLocalScaleX(timeScaledLineSize * SizeMultiplier);
+        var timeScaledLineSize = scale * minPercentageLineSize + scale * (1 - minPercentageLineSize) * timeScale;
+        Line.transform.SetLocalScaleX(timeScaledLineSize);
+        CompletedLine.transform.SetLocalScaleX(timeScaledLineSize);
+        
+        var fxScale = Note.Model.Override.SizeMultiplier;
+        if (Note.Model.size != double.MinValue)
+        {
+            fxScale *= (float) Note.Model.size / (float) Note.Game.Chart.Model.size;
+        }
+        HoldFx.transform.SetLocalScale(HoldFx.transform.localScale.x * (1 + Context.Player.Settings.ClearEffectsSize) * fxScale);
     }
 
     protected override void UpdateFillScale()

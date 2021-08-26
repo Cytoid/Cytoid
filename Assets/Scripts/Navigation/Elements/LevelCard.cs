@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DG.Tweening;
-using MoreMountains.NiceVibrations;
 using Cysharp.Threading.Tasks;
+using MoreMountains.NiceVibrations;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -21,6 +21,10 @@ public class LevelCard : InteractableMonoBehavior
     public bool isStatic;
     public List<DifficultyBall> difficultyBalls = new List<DifficultyBall>();
 
+    public CanvasGroup actionOverlay;
+    public Image actionIcon;
+    public GradientMeshEffect actionGradient;
+
     private LevelView levelView;
     public Level Level
     {
@@ -37,16 +41,35 @@ public class LevelCard : InteractableMonoBehavior
 
     private Screen screenParent;
     private bool addedScreenListeners;
+    private LevelCardState currentState = LevelCardState.Normal;
 
-    public void ScrollCellContent(object levelObject)
+    private void AddScreenListeners()
     {
         screenParent = this.GetScreenParent();
-        if (!addedScreenListeners)
+        if (screenParent != null && !addedScreenListeners)
         {
             addedScreenListeners = true;
             screenParent.onScreenRendered.AddListener(OnScreenRendered);
             screenParent.onScreenBecameInactive.AddListener(OnScreenBecameInactive);
+            screenParent.onScreenUpdate.AddListener(OnScreenUpdate);
         }
+    }
+    
+    private void RemoveScreenListeners()
+    {
+        if (addedScreenListeners)
+        {
+            addedScreenListeners = false;
+            screenParent.onScreenRendered.RemoveListener(OnScreenRendered);
+            screenParent.onScreenBecameInactive.RemoveListener(OnScreenBecameInactive);
+            screenParent.onScreenUpdate.RemoveListener(OnScreenUpdate);
+        }
+        screenParent = null;
+    }
+    
+    public void ScrollCellContent(object levelObject)
+    {
+        AddScreenListeners();
         SetModel((LevelView) levelObject);
     }
 
@@ -62,26 +85,17 @@ public class LevelCard : InteractableMonoBehavior
         cover.sprite = null;
         cover.DOKill();
         cover.SetAlpha(0);
+        currentState = LevelCardState.Normal;
+        actionOverlay.gameObject.SetActive(false);
+        actionStateAnimation?.Kill();
 
-        if (addedScreenListeners)
-        {
-            addedScreenListeners = false;
-            screenParent.onScreenRendered.RemoveListener(OnScreenRendered);
-            screenParent.onScreenBecameInactive.RemoveListener(OnScreenBecameInactive);
-        }
-        screenParent = null;
+        RemoveScreenListeners();
     }
 
     private void Awake()
     {
         Unload();
-        screenParent = this.GetScreenParent();
-        if (screenParent != null && !addedScreenListeners)
-        {
-            addedScreenListeners = true;
-            screenParent.onScreenRendered.AddListener(OnScreenRendered);
-            screenParent.onScreenBecameInactive.AddListener(OnScreenBecameInactive);
-        }
+        AddScreenListeners();
     }
 
     public void Unload()
@@ -113,6 +127,11 @@ public class LevelCard : InteractableMonoBehavior
     {
         // Texture could be collected, or we didn't load at all, so let's try to load again
         LoadCover();
+    }
+
+    private void OnScreenUpdate()
+    {
+        SetActionState(true);
     }
 
     private void OnScreenBecameInactive()
@@ -162,6 +181,8 @@ public class LevelCard : InteractableMonoBehavior
             ownerAvatar.Dispose();
             ownerName.text = "";
         }
+
+        SetActionState(false);
 
         LayoutFixer.Fix(transform, count: 2);
 
@@ -336,7 +357,7 @@ public class LevelCard : InteractableMonoBehavior
         if (transform == null) return; // Transform destroyed?
         ignoreNextPointerUp = true;
         OnPointerUp(eventData);
-        OnAction();
+        OnLongPress();
         actionToken = null;
     }
 
@@ -371,40 +392,134 @@ public class LevelCard : InteractableMonoBehavior
             {
                 return;
             }
-            
-            if (Context.IsOffline() && !Level.IsLocal)
+
+            var openLevel = false;
+            var screen = Context.ScreenManager.ActiveScreen;
+            if (screen is LevelCardEventHandler handler)
             {
-                Dialog.PromptAlert("DIALOG_OFFLINE_LEVEL_NOT_AVAILABLE".Get());
-                return;
+                if (handler.OnLevelCardPressed(levelView))
+                {
+                    openLevel = true;
+                }
+            }
+            else
+            {
+                openLevel = true;
             }
 
-            Context.AudioManager.Get("Navigate2").Play();
-            Context.Haptic(HapticTypes.MediumImpact, true);
+            if (openLevel)
+            {
+                Context.AudioManager.Get("Navigate2").Play();
+                Context.Haptic(HapticTypes.MediumImpact, true);
 
-            Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.In, 0.4f,
-                transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter(),
-                payload: new GamePreparationScreen.Payload {Level = Level});
+                Context.ScreenManager.ChangeScreen(GamePreparationScreen.Id, ScreenTransition.In, 0.4f,
+                    transitionFocus: GetComponent<RectTransform>().GetScreenSpaceCenter(),
+                    payload: new GamePreparationScreen.Payload {Level = levelView.Level});
+            }
         }
     }
 
-    public void OnAction()
-    {
-        if (!Level.IsLocal || Level.Type == LevelType.BuiltIn) return;
-        if (Context.ScreenManager.ActiveScreenId != LevelSelectionScreen.Id &&
-            Context.ScreenManager.ActiveScreenId != CommunityLevelSelectionScreen.Id) return;
+    private Sequence actionStateAnimation;
 
-        Context.Haptic(HapticTypes.Warning, true);
-        var dialog = Dialog.Instantiate();
-        dialog.Message = "DIALOG_CONFIRM_DELETE".Get(Level.Meta.title);
-        dialog.UsePositiveButton = true;
-        dialog.UseNegativeButton = true;
-        dialog.OnPositiveButtonClicked = _ =>
+    private void SetActionState(bool animate)
+    {
+        if (!(screenParent is LevelBatchSelection batchSelection)) return;
+        
+        var toState = LevelCardState.Normal;
+        if (batchSelection.IsBatchSelectingLevels)
         {
-            Context.LevelManager.DeleteLocalLevel(Level.Id);
-            Toast.Next(Toast.Status.Success, "TOAST_SUCCESSFULLY_DELETED_LEVEL".Get());
-            dialog.Close();
-        };
-        dialog.Open();
+            switch (batchSelection.LevelBatchAction)
+            {
+                case LevelBatchAction.Delete:
+                    if (batchSelection.BatchSelectedLevels.ContainsKey(levelView.Level.Id))
+                    {
+                        toState = LevelCardState.WillDelete;
+                    }
+
+                    break;
+                case LevelBatchAction.Download:
+                    if (Context.LevelManager.LoadedLocalLevels.ContainsKey(levelView.Level.Id))
+                    {
+                        toState = LevelCardState.Downloaded;
+                    }
+                    else if (batchSelection.BatchSelectedLevels.ContainsKey(levelView.Level.Id))
+                    {
+                        toState = LevelCardState.WillDownload;
+                    }
+
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        if (toState != currentState)
+        {
+            currentState = toState;
+
+            switch (currentState)
+            {
+                case LevelCardState.WillDelete:
+                    actionIcon.sprite = NavigationUiElementProvider.Instance.levelActionOverlayDeleteIcon;
+                    actionGradient.SetGradient(NavigationUiElementProvider.Instance.levelActionOverlayDeleteGradient.GetGradient());
+                    break;
+                case LevelCardState.WillDownload:
+                    actionIcon.sprite = NavigationUiElementProvider.Instance.levelActionOverlayDownloadIcon;
+                    actionGradient.SetGradient(NavigationUiElementProvider.Instance.levelActionOverlayDownloadGradient.GetGradient());
+                    break;
+                case LevelCardState.Downloaded:
+                    actionIcon.sprite = NavigationUiElementProvider.Instance.levelActionOverlayDownloadedIcon;
+                    actionGradient.SetGradient(NavigationUiElementProvider.Instance.levelActionOverlayDownloadedGradient.GetGradient());
+                    break;
+            }
+            
+            if (currentState != LevelCardState.Normal)
+            {
+                actionOverlay.alpha = 0;
+                actionOverlay.gameObject.SetActive(true);
+                if (animate)
+                {
+                    actionOverlay.DOFade(1, 0.2f).SetEase(Ease.OutCubic);
+                    if (currentState == LevelCardState.WillDelete || currentState == LevelCardState.WillDownload)
+                    {
+                        actionStateAnimation?.Kill();
+                        actionStateAnimation = DOTween.Sequence()
+                            .Append(actionIcon.rectTransform.DOScale(0.95f, 0.1f))
+                            .Append(actionIcon.rectTransform.DOScale(1f, 0.1f));
+                    }
+                }
+                else
+                {
+                    actionOverlay.alpha = 1;
+                    actionIcon.rectTransform.SetLocalScale(1);
+                }
+            }
+            else
+            {
+                if (animate)
+                {
+                    actionOverlay.DOFade(0, 0.2f).SetEase(Ease.OutCubic);
+                }
+                else
+                {
+                    actionOverlay.gameObject.SetActive(false);
+                }
+            }
+        }
+    }
+
+    public void OnLongPress()
+    {
+        var screen = Context.ScreenManager.ActiveScreen;
+        if (screen is LevelCardEventHandler handler)
+        {
+            handler.OnLevelCardLongPressed(levelView);
+        }
+    }
+    
+    private enum LevelCardState
+    {
+        Normal, WillDelete, WillDownload, Downloaded
     }
 }
 
@@ -412,4 +527,11 @@ public class LevelView
 {
     public Level Level;
     public bool DisplayOwner;
+}
+
+public interface LevelCardEventHandler
+{
+    bool OnLevelCardPressed(LevelView view);
+
+    void OnLevelCardLongPressed(LevelView view);
 }

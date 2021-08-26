@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
+using MoreMountains.NiceVibrations;
+using UnityEngine;
 using UnityEngine.UI;
 
-public class LevelSelectionScreen : Screen
+public class LevelSelectionScreen : Screen, LevelCardEventHandler, LevelBatchSelection
 {
     public static string HighlightedLevelId = null;
 
@@ -16,6 +19,15 @@ public class LevelSelectionScreen : Screen
     public ToggleRadioGroupPreferenceElement sortByRadioGroup;
     public ToggleRadioGroupPreferenceElement sortOrderRadioGroup;
     public InputField searchInputField;
+
+    public TransitionElement batchActionBar;
+    public Text batchActionBarMessage;
+    public InteractableMonoBehavior batchActionCancelButton;
+    public InteractableMonoBehavior batchActionDeleteButton;
+    
+    public bool IsBatchSelectingLevels { get; private set; }
+    public Dictionary<string, Level> BatchSelectedLevels { get; } = new Dictionary<string, Level>();
+    public LevelBatchAction LevelBatchAction { get; } = LevelBatchAction.Delete;
 
     public override void OnScreenInitialized()
     {
@@ -55,11 +67,8 @@ public class LevelSelectionScreen : Screen
         SetupOptions();
         Context.OnLanguageChanged.AddListener(SetupOptions);
 
-        Context.LevelManager.OnLevelDeleted.AddListener(_ =>
-        {
-            if (State != ScreenState.Active) return;
-            RefillLevels(true);
-        });
+        batchActionCancelButton.onPointerClick.AddListener(_ => LeaveBatchSelection());
+        batchActionDeleteButton.onPointerClick.AddListener(_ => DeleteBatchSelection());
     }
 
     public override void OnScreenBecameInactive()
@@ -93,6 +102,8 @@ public class LevelSelectionScreen : Screen
 
     public void RefillLevels(bool keepScrollPosition = false)
     {
+        LeaveBatchSelection();
+        
         var scrollPosition = scrollRect.verticalNormalizedPosition;
 
         // Sort with selected method
@@ -119,6 +130,10 @@ public class LevelSelectionScreen : Screen
         if (scrollRect.totalCount == 0 && category == 0 && query.IsNullOrEmptyTrimmed() && Context.Player.ShouldOneShot("Tips: No Community Levels Yet"))
         {
             Dialog.PromptAlert("DIALOG_TIPS_NO_COMMUNITY_LEVELS_YET".Get());
+        } 
+        else if (Context.Player.Settings.TotalLaunches >= 3 && Context.Player.ShouldOneShot("Tips: Long Press To Delete"))
+        {
+            Dialog.PromptAlert("DIALOG_TIPS_LONG_PRESS_TO_DELETE".Get());
         }
 
         if (keepScrollPosition)
@@ -129,6 +144,8 @@ public class LevelSelectionScreen : Screen
 
     public void RefillLevels(LevelSort sort, bool asc, string query = "", List<Func<Level, bool>> filters = null)
     {
+        LeaveBatchSelection();
+        
         var dict = new Dictionary<string, Level>(Context.LevelManager.LoadedLocalLevels);
         foreach (var id in BuiltInData.TrainingModeLevelIds) dict.Remove(id);
         foreach (var (id, level) in Context.Library.Levels)
@@ -219,9 +236,154 @@ public class LevelSelectionScreen : Screen
         scrollRect.RefillCells();
     }
 
+    public bool OnLevelCardPressed(LevelView view)
+    {
+        if (!IsBatchSelectingLevels)
+        {
+            if (Context.IsOffline() && !view.Level.IsLocal)
+            {
+                Dialog.PromptAlert("DIALOG_OFFLINE_LEVEL_NOT_AVAILABLE".Get());
+                return false;
+            }
+
+            return true;
+        }
+        else
+        {
+            if (view.Level.Type == LevelType.BuiltIn)
+            {
+                Context.AudioManager.Get("ActionError").Play();
+                Context.Haptic(HapticTypes.Failure, true);
+                
+                Dialog.PromptAlert("DIALOG_CANNOT_DELETE_BUILT_IN_LEVEL".Get());
+                return false;
+            }
+            
+            Context.AudioManager.Get("Navigate1").Play();
+            Context.Haptic(HapticTypes.Selection, true);
+            
+            if (BatchSelectedLevels.ContainsKey(view.Level.Id))
+            {
+                BatchSelectedLevels.Remove(view.Level.Id);
+
+                if (!BatchSelectedLevels.Any())
+                {
+                    LeaveBatchSelection();
+                }
+            }
+            else
+            {
+                BatchSelectedLevels[view.Level.Id] = view.Level;
+            }
+            
+            UpdateBatchSelectionText();
+            
+            return false;
+        }
+    }
+
+    public void OnLevelCardLongPressed(LevelView view)
+    {
+        if (!IsBatchSelectingLevels)
+        {
+            if (view.Level.Type == LevelType.BuiltIn)
+            {
+                Context.AudioManager.Get("ActionError").Play();
+                Context.Haptic(HapticTypes.Failure, true);
+                
+                Dialog.PromptAlert("DIALOG_CANNOT_DELETE_BUILT_IN_LEVEL".Get());
+                return;
+            }
+            
+            Context.AudioManager.Get("Navigate1").Play();
+            Context.Haptic(HapticTypes.Selection, true);
+            
+            BatchSelectedLevels[view.Level.Id] = view.Level;
+            
+            EnterBatchSelection();
+            UpdateBatchSelectionText();
+        }
+        else
+        {
+            OnLevelCardPressed(view);
+        }
+    }
+
+    public void EnterBatchSelection()
+    {
+        if (IsBatchSelectingLevels) return;
+        
+        IsBatchSelectingLevels = true;
+        batchActionBar.transform.RebuildLayout();
+        batchActionBar.Enter();
+    }
+
+    public void LeaveBatchSelection()
+    {
+        if (!IsBatchSelectingLevels) return;
+        
+        IsBatchSelectingLevels = false;
+        batchActionBar.Leave();
+        BatchSelectedLevels.Clear();
+    }
+
+    private void UpdateBatchSelectionText()
+    {
+        batchActionBarMessage.text = (BatchSelectedLevels.Count == 1 ? "LEVEL_SELECT_SELECTED_X_LEVEL" : "LEVEL_SELECT_SELECTED_X_LEVELS").Get(BatchSelectedLevels.Count);
+    }
+
+    private void DeleteBatchSelection()
+    {
+        var levelsToDelete = new List<Level>(BatchSelectedLevels.Values);
+        LeaveBatchSelection();
+        
+        Context.Haptic(HapticTypes.Warning, true);
+        var dialog = Dialog.Instantiate();
+        dialog.Message = "DIALOG_CONFIRM_DELETE".Get(levelsToDelete.Count);
+        dialog.UsePositiveButton = true;
+        dialog.UseNegativeButton = true;
+        dialog.OnPositiveButtonClicked = async _ =>
+        {
+            dialog.Close();
+            
+            var progressDialog = Dialog.Instantiate();
+            progressDialog.UsePositiveButton = progressDialog.UseNegativeButton = false;
+            progressDialog.UseProgress = true;
+            progressDialog.Message = "DIALOG_DELETING".Get();
+            progressDialog.Open();
+
+            var deleted = 0;
+            foreach (var it in levelsToDelete)
+            {
+                deleted++;
+                progressDialog.Message = "DIALOG_DELETING_X_Y".Get(deleted, levelsToDelete.Count);
+                progressDialog.Progress = (float) deleted / levelsToDelete.Count;
+
+                await UniTask.SwitchToThreadPool();
+
+                await UniTask.DelayFrame(5);
+                
+                Context.LevelManager.DeleteLocalLevel(it.Id);
+                
+                await UniTask.SwitchToMainThread();
+            }
+            
+            RefillLevels(true);
+
+            progressDialog.Close();
+            
+            Toast.Next(Toast.Status.Success, "TOAST_SUCCESSFULLY_DELETED_X_LEVELS".Get(levelsToDelete.Count));
+        };
+        dialog.Open();
+    }
+    
     public override void OnScreenChangeStarted(Screen from, Screen to)
     {
         base.OnScreenChangeStarted(from, to);
+        if (from == this)
+        {
+            LeaveBatchSelection();
+        }
         if (to == this)
         {
             levelGrid.Enter();
@@ -274,4 +436,16 @@ public enum LevelSort
     AddedDate,
     LastPlayedDate,
     PlayCount
+}
+
+public interface LevelBatchSelection
+{
+    bool IsBatchSelectingLevels { get; }
+    Dictionary<string, Level> BatchSelectedLevels { get; }
+    LevelBatchAction LevelBatchAction { get; }
+}
+
+public enum LevelBatchAction
+{
+    Delete, Download
 }

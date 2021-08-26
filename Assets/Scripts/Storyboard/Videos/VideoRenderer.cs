@@ -106,13 +106,23 @@ namespace Cytoid.Storyboard.Videos
         public override void Update(VideoState fromState, VideoState toState)
         {
             base.Update(fromState, toState);
-            if (!VideoPlayer.isPlaying)
+            if (!MainRenderer.Game.State.IsPlaying)
             {
-                var seek = MainRenderer.Time - fromState.Time;
-                if (seek > 0)
+                if (VideoPlayer.isPlaying)
                 {
-                    VideoPlayer.time = seek;
-                    VideoPlayer.Play();
+                    VideoPlayer.Pause();
+                }
+            }
+            else
+            {
+                if (!VideoPlayer.isPlaying)
+                {
+                    var seek = MainRenderer.Time - fromState.Time;
+                    if (seek > 0)
+                    {
+                        VideoPlayer.time = seek;
+                        VideoPlayer.Play();
+                    }
                 }
             }
         }

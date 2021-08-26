@@ -529,6 +529,14 @@ namespace Cytoid.Storyboard
         {
             if (token == null) return null;
 
+            var noteToken = obj.SelectToken("note");
+            if (noteToken != null)
+            {
+                var value = (int) noteToken;
+                replacements["note"] = value;
+                return value;
+            }
+            
             if (token.Type == JTokenType.Float || token.Type == JTokenType.Integer) return (float) token;
 
             if (token.Type == JTokenType.String)
@@ -542,13 +550,6 @@ namespace Cytoid.Storyboard
                 {
                     if (it == "$note")
                     {
-                        var noteToken = obj.SelectToken("note");
-                        if (noteToken != null)
-                        {
-                            var value = (int) noteToken;
-                            replacements["note"] = value;
-                            return value;
-                        }
                         if (!replacements.ContainsKey("note"))
                         {
                             throw new Exception("$note not found");

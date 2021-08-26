@@ -113,6 +113,7 @@ public class Player
             
             Settings = result;
             FillDefault();
+            Settings.TotalLaunches++;
             SaveSettings();
         });
     }

@@ -4,7 +4,7 @@ using UnityEngine;
 public class CharacterAsset : MonoBehaviour
 {
     public GradientMeshEffect nameGradient;
-     public IntroloopAudio musicAudio;
+    public IntroloopAudio musicAudio;
     public ParallaxElement parallaxPrefab;
     public bool mirrorLayout;
 

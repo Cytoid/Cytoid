@@ -157,13 +157,13 @@ public class SignInScreen : Screen
                 Debug.LogWarning("Sign up failed.");
                 Debug.LogWarning(error);
 
-                if (error.IsHttpError && error.StatusCode == 403)
+                if (error.IsNetworkError)
                 {
-                    Toast.Next(Toast.Status.Failure, "TOAST_LIKELY_INCORRECT_SYSTEM_TIME".Get());
-                }
+                    Toast.Next(Toast.Status.Failure, "TOAST_CHECK_NETWORK_CONNECTION".Get());
+                } 
                 else
                 {
-                    var errorResponse = JsonConvert.DeserializeObject<SignUpErrorResponse>(error.Response);
+                    var errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(error.Response);
                     Toast.Next(Toast.Status.Failure, errorResponse.message);
                 }
             });
@@ -234,14 +234,14 @@ public class SignInScreen : Screen
                         case 401:
                             Toast.Next(Toast.Status.Failure, "TOAST_INCORRECT_ID_OR_PASSWORD".Get());
                             break;
-                        case 403:
-                            Toast.Next(Toast.Status.Failure, "TOAST_LIKELY_INCORRECT_SYSTEM_TIME".Get());
-                            break;
                         case 404:
                             Toast.Next(Toast.Status.Failure, "TOAST_ID_NOT_FOUND".Get());
                             break;
                         default:
-                            Toast.Next(Toast.Status.Failure, "TOAST_STATUS_CODE".Get(error.StatusCode));
+                            var errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(error.Response);
+                            Toast.Next(Toast.Status.Failure, errorResponse.message);
+                            Debug.LogWarning("Sign in failed.");
+                            Debug.LogWarning(error);
                             break;
                     }
                 }
@@ -305,7 +305,7 @@ public class SignInScreen : Screen
     }
 
     [Serializable]
-    class SignUpErrorResponse
+    class ErrorResponse
     {
         public string message;
     }

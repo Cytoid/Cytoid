@@ -54,8 +54,6 @@ public class ClassicLongHoldNoteRenderer : ClassicHoldNoteRenderer
         {
             Line2.enabled = true;
             CompletedLine2.enabled = true;
-            
-            CompletedLine2.transform.SetLocalScaleX(Line2.transform.localScale.x);
             if (Game.State.Mods.Contains(Mod.HideNotes))
             {
                 Line2.enabled = false;
@@ -95,8 +93,8 @@ public class ClassicLongHoldNoteRenderer : ClassicHoldNoteRenderer
                         }
 
                         var noteY = Note.transform.localPosition.y;
-                        topLine.size = new Vector2(1, (orthographicSize - noteY) * HoldNote.HoldProgress);
-                        bottomLine.size = new Vector2(1, -(-orthographicSize - noteY) * HoldNote.HoldProgress);
+                        topLine.size = new Vector2(topLine.size.x, (orthographicSize - noteY) * HoldNote.HoldProgress);
+                        bottomLine.size = new Vector2(bottomLine.size.x, -(-orthographicSize - noteY) * HoldNote.HoldProgress);
                     }
                 }
             }
@@ -132,8 +130,9 @@ public class ClassicLongHoldNoteRenderer : ClassicHoldNoteRenderer
     protected override void UpdateTransformScale()
     {
         base.UpdateTransformScale();
-        Line.size = new Vector2(1, orthographicSize * 4);
+        
         Line2.transform.SetLocalScaleX(Line.transform.localScale.x);
+        CompletedLine2.transform.SetLocalScaleX(CompletedLine.transform.localScale.x);
     }
 
     public override void Dispose()

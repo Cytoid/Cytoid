@@ -1,11 +1,11 @@
-using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using Cysharp.Threading.Tasks;
+using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ParallaxElement : MonoBehaviour, ScreenChangeListener
+public class ParallaxElement : SerializedMonoBehaviour, ScreenChangeListener
 {
     public static bool UseGyroscope = true;
     public static float GyroscopeMultiplier = 36f;
@@ -13,6 +13,7 @@ public class ParallaxElement : MonoBehaviour, ScreenChangeListener
 
     public bool Enabled { get; set; } = true;
     public float CurrentScale { get; private set; } = 1f;
+    public List<Layer> Layers => layers;
     
     public int width = 1920;
     public int height = 1080;
@@ -22,6 +23,8 @@ public class ParallaxElement : MonoBehaviour, ScreenChangeListener
 
     public List<float> speeds = new List<float> {200, 120, 180, 200, 75, 50};
     public float multiplier = -540f;
+
+    public ParallaxAnimation animation = new ParallaxAnimation();
 
     private readonly List<Layer> layers = new List<Layer>();
     private Layer menuLayer;
@@ -57,6 +60,8 @@ public class ParallaxElement : MonoBehaviour, ScreenChangeListener
 
     private void Update()
     {
+        animation.OnUpdate(this);
+
         var currentScreenSize = new Vector2(UnityEngine.Screen.width, UnityEngine.Screen.height);
 
         if (currentScreenSize != screenSize)
@@ -174,5 +179,51 @@ public class ParallaxElement : MonoBehaviour, ScreenChangeListener
         {
             it.sprite = null;
         });
+    }
+}
+
+public class ParallaxAnimation
+{
+    public virtual void OnUpdate(ParallaxElement element)
+    {
+        
+    }
+}
+
+public class ThreoseAnimation : ParallaxAnimation
+{
+    private bool initialized;
+    private Image coloredBackgroundImage;
+    private Image closedEyesImage;
+    private bool shouldOpenEyes;
+    
+    public override void OnUpdate(ParallaxElement element)
+    {
+        if (!initialized)
+        {
+            coloredBackgroundImage = element.Layers[1].RectTransform.gameObject.GetComponent<Image>();
+            closedEyesImage = element.Layers[4].RectTransform.gameObject.GetComponent<Image>();
+            initialized = true;
+        }
+
+        var playbackTime = LoopAudioPlayer.Instance.PlaybackTime;
+        var shouldOpenEyesNow =
+            (playbackTime > 53.058 && playbackTime < 81.899)
+            || (playbackTime > 149.761 && playbackTime < 247.597);
+
+        if (shouldOpenEyesNow != shouldOpenEyes)
+        {
+            shouldOpenEyes = shouldOpenEyesNow;
+            if (shouldOpenEyes)
+            {
+                coloredBackgroundImage.DOFade(1, 0.2f).SetEase(Ease.OutCubic);
+                closedEyesImage.DOFade(0, 0.2f).SetEase(Ease.Linear);
+            }
+            else
+            {
+                coloredBackgroundImage.DOFade(0, 0.2f).SetEase(Ease.OutCubic);
+                closedEyesImage.DOFade(1, 0.2f).SetEase(Ease.Linear);
+            }
+        }
     }
 }

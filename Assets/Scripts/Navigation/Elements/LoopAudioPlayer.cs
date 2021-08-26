@@ -14,6 +14,7 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
     public IntroloopAudio resultLoopAudio;
     public AudioMixerGroup audioMixerGroup;
 
+    public float PlaybackTime => IntroloopPlayer.Instance.GetPlayheadTime();
     public float MaxVolume { get; private set; } = 1f;
     public IntroloopAudio MainLoopAudio { get; private set; }
     public IntroloopAudio PlayingAudio { get; private set; }

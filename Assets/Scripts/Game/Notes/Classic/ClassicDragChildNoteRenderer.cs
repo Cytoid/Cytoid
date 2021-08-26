@@ -32,9 +32,11 @@ public class ClassicDragChildNoteRenderer : ClassicNoteRenderer
 
     protected override void UpdateTransformScale()
     {
+        var size = BaseTransformSize * Note.Model.Override.SizeMultiplier;
+        
         var minSize = Note.Model.initial_scale;
         var timeScale = Mathf.Clamp((Game.Time - Note.Model.intro_time) / (Note.Model.start_time - Note.Model.intro_time), 0f, 1f);
-        var timeScaledSize = BaseTransformSize * minSize + BaseTransformSize * (1 - minSize) * timeScale;
+        var timeScaledSize = size * minSize + size * (1 - minSize) * timeScale;
 
         Note.transform.SetLocalScaleXY(timeScaledSize, timeScaledSize);
     }

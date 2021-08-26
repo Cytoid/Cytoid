@@ -109,7 +109,7 @@ public class ProfileScreen : Screen
 
         SpinnerOverlay.Show();
         var uri = Context.ApiUrl + "/leaderboard?limit=50";
-        if (mode == "me") uri += "&user=" + Context.Player.Id;
+        if (mode == "me") uri += "&user=" + Context.OnlinePlayer.LastProfile.User.Id;
         RestClient.GetArray<Leaderboard.Entry>(new RequestHelper
         {
             Uri = uri,

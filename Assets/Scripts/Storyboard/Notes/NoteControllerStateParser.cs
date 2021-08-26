@@ -25,7 +25,8 @@ namespace Cytoid.Storyboard.Notes
             state.XMultiplier = (float?) json.SelectToken("x_multiplier") ?? state.XMultiplier;
             state.YMultiplier = (float?) json.SelectToken("y_multiplier") ?? state.YMultiplier;
             state.XOffset = (float?) json.SelectToken("dx") ?? state.XOffset;
-            state.YOffset = (float?) json.SelectToken("dy") ?? state.YOffset;
+            state.YOffset = (float?) json.SelectToken("dy") ?? state.YOffset; // TODO: This is broken
+            // TODO: Implement y_offset
             
             state.OverrideRotX = (bool?) json.SelectToken("override_rot_x") ?? state.OverrideRotX;
             state.RotX = (float?) json.SelectToken("rot_x") ?? state.RotX;

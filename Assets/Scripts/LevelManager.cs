@@ -22,7 +22,6 @@ public class LevelManager
     public readonly LevelInstallProgressEvent OnLevelInstallProgress = new LevelInstallProgressEvent();
     public readonly LevelLoadProgressEvent OnLevelLoadProgress = new LevelLoadProgressEvent();
     public readonly LevelEvent OnLevelMetaUpdated = new LevelEvent();
-    public readonly LevelEvent OnLevelDeleted = new LevelEvent();
 
     public readonly Dictionary<string, Level> LoadedLocalLevels = new Dictionary<string, Level>();
     private readonly HashSet<string> loadedPaths = new HashSet<string>();
@@ -197,7 +196,6 @@ public class LevelManager
         Directory.Delete(Path.GetDirectoryName(level.Path) ?? throw new InvalidOperationException(), true);
         LoadedLocalLevels.Remove(level.Id);
         loadedPaths.Remove(level.Path);
-        OnLevelDeleted.Invoke(level);
     }
 
     public Promise<LevelMeta> FetchLevelMeta(string levelId, bool updateLocal = false)
@@ -742,7 +740,10 @@ public class LevelManager
         Action onDownloadFailed = default,
         Action<Level> onUnpackSucceeded = default,
         Action onUnpackFailed = default,
-        bool forceInternational = false
+        bool forceInternational = false,
+        bool batchDownloading = false, 
+        int batchDownloadCurrent = default,
+        int batchDownloadTotal = default
     )
     {
         if (!Context.OnlinePlayer.IsAuthenticated)
@@ -757,7 +758,8 @@ public class LevelManager
         if (onUnpackFailed == default) onUnpackFailed = () => { };
 
         var dialog = Dialog.Instantiate();
-        dialog.Message = "DIALOG_DOWNLOADING".Get();
+        dialog.Message = batchDownloading ? "DIALOG_BATCH_DOWNLOADING_P_Q".Get(batchDownloadCurrent, batchDownloadTotal) : "DIALOG_DOWNLOADING".Get();
+
         dialog.UseProgress = true;
         dialog.UsePositiveButton = false;
         dialog.UseNegativeButton = allowAbort;
@@ -951,12 +953,21 @@ public class LevelManager
             {
                 downloadedSize = req.DownloadedBytes;
                 it.Progress = downloadedSize * 1.0f / totalSize;
-                it.Message = "DIALOG_DOWNLOADING_X_Y".Get(downloadedSize.ToHumanReadableFileSize(),
-                    totalSize.ToHumanReadableFileSize());
+
+                if (batchDownloading)
+                {
+                    it.Message = "DIALOG_BATCH_DOWNLOADING_P_Q_R_S_T".Get(batchDownloadCurrent, batchDownloadTotal, level.Meta.title, downloadedSize.ToHumanReadableFileSize(),
+                        totalSize.ToHumanReadableFileSize());
+                }
+                else
+                {
+                    it.Message = "DIALOG_DOWNLOADING_X_Y".Get(downloadedSize.ToHumanReadableFileSize(),
+                        totalSize.ToHumanReadableFileSize());
+                }
             }
             else
             {
-                it.Message = "DIALOG_DOWNLOADING".Get();
+                it.Message = batchDownloading ? "DIALOG_BATCH_DOWNLOADING_P_Q".Get(batchDownloadCurrent, batchDownloadTotal) : "DIALOG_DOWNLOADING".Get();
             }
         });
         if (allowAbort)

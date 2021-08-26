@@ -135,7 +135,7 @@ public class LocalPlayerSettings
     [JsonProperty("use_experimental_note_ar")] public bool UseExperimentalNoteAr { get; set; } = false;
     [JsonProperty("use_experimental_note_animations")] public bool UseExperimentalNoteAnimations { get; set; } = true;
 
-    [JsonProperty("use_developer_console")] public bool UseDeveloperConsole { get; set; } = true;
+    [JsonProperty("use_developer_console")] public bool UseDeveloperConsole { get; set; } = false;
 
     [JsonProperty("local_level_sort_is_ascending")]
     public bool LocalLevelSortIsAscending { get; set; } = false;
@@ -162,6 +162,9 @@ public class LocalPlayerSettings
 
     [JsonProperty("requested_for_store_review")]
     public bool RequestedForStoreReview { get; set; } = false;
+
+    [JsonProperty("total_launches")] 
+    public int TotalLaunches { get; set; } = 0;
 
 }
 

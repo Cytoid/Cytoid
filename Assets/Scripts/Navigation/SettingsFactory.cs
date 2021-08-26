@@ -37,7 +37,9 @@ public static class SettingsFactory
                         ("正體中文", (int) Language.Traditional_Chinese),
                         ("日本語", (int) Language.Japanese),
                         ("한국어", (int) Language.Korean),
-                        ("符语", (int) Language.Fujaoese)
+                        ("符语", (int) Language.Fujaoese),
+                        ("Italiano", (int) Language.Italian),
+                        ("Deutsch", (int) Language.German)
                     }).SaveSettingsOnChange();
                 element.caretSelect.onSelect.AddListener((_, value) =>
                 {

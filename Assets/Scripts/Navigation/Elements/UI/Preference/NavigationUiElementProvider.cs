@@ -9,4 +9,12 @@ public class NavigationUiElementProvider : SingletonMonoBehavior<NavigationUiEle
     public PillRadioGroupPreferenceElement pillRadioGroupPreferenceElement;
     public SelectPreferenceElement selectPreferenceElement;
     public ToggleRadioGroupPreferenceElement toggleRadioGroupPreferenceElement;
+
+    public Sprite levelActionOverlayDownloadIcon;
+    public Sprite levelActionOverlayDownloadedIcon;
+    public Sprite levelActionOverlayDeleteIcon;
+    public GradientMeshEffect levelActionOverlayDownloadGradient;
+    public GradientMeshEffect levelActionOverlayDownloadedGradient;
+    public GradientMeshEffect levelActionOverlayDeleteGradient;
+
 }

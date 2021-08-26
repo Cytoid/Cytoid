@@ -339,20 +339,23 @@ public class ScreenEditor : Editor
     {
         DrawDefaultInspector();
         var component = (Screen) target;
-        
-        if (GUILayout.Button("Set inactive"))
-        {
-            component.State = ScreenState.Inactive;
-        }
 
-        if (GUILayout.Button("Set active"))
+        if (Application.isPlaying)
         {
-            component.State = ScreenState.Active;
-        }
-        
-        if (GUILayout.Button("Destroy"))
-        {
-            component.State = ScreenState.Destroyed;
+            if (GUILayout.Button("Set inactive"))
+            {
+                component.State = ScreenState.Inactive;
+            }
+
+            if (GUILayout.Button("Set active"))
+            {
+                component.State = ScreenState.Active;
+            }
+
+            if (GUILayout.Button("Destroy"))
+            {
+                component.State = ScreenState.Destroyed;
+            }
         }
     }
 

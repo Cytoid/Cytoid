@@ -42,6 +42,16 @@ public class QuickActions : OdinEditorWindow
     [ToggleLeft] public bool signedIn;
     public float rating;
 
+    [Button(Name = "Story: Debug")]
+    [DisableInEditorMode]
+    public async void StoryDebug()
+    {
+        var text = Resources.Load<TextAsset>("Stories/Debug");
+        var story = new Story(text.text);
+        Resources.UnloadAsset(text);
+        await DialogueOverlay.Show(story);
+    }
+    
     [Button(Name = "Clear Training Mode Story State")]
     [DisableInEditorMode]
     public void ClearOneShotShouldIntroduceMechanisms()
@@ -119,6 +129,15 @@ public class QuickActions : OdinEditorWindow
     public async void TermsCopyrightPolicy()
     {
         TermsOverlay.Show("COPYRIGHT_POLICY".Get());
+    }
+    
+    public CharacterAsset testCharacter;
+
+    [Button(Name = "Preview Test Character")]
+    [DisableInEditorMode]
+    public void PreviewTestCharacter()
+    {
+        Context.CharacterManager.SetTestActiveCharacter(testCharacter);
     }
     
 }

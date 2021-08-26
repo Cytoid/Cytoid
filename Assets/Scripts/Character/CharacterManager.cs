@@ -25,7 +25,10 @@ public class CharacterManager
     private AssetBundle activeCharacterAssetBundle;
     private GameObject activeCharacterGameObject;
 
-    public CharacterAsset GetActiveCharacterAsset() => activeCharacterGameObject.GetComponent<CharacterAsset>();
+    private CharacterAsset testCharacterAsset;
+    private bool useTestCharacterAsset;
+
+    public CharacterAsset GetActiveCharacterAsset() => useTestCharacterAsset ? testCharacterAsset : activeCharacterGameObject.GetComponent<CharacterAsset>();
 
     public async UniTask<CharacterAsset> SetActiveCharacter(string id)
     {
@@ -69,7 +72,17 @@ public class CharacterManager
 
         var characterAsset = activeCharacterGameObject.GetComponent<CharacterAsset>();
         OnActiveCharacterSet.Invoke(characterAsset);
+
+        useTestCharacterAsset = false;
         return characterAsset;
+    }
+
+    // For development only.
+    public void SetTestActiveCharacter(CharacterAsset asset)
+    {
+        testCharacterAsset = asset;
+        OnActiveCharacterSet.Invoke(asset);
+        useTestCharacterAsset = true;
     }
 
     public async UniTask<bool> SetSelectedCharacterActive()

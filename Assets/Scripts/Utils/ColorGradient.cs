@@ -1,7 +1,7 @@
 using System;
-using System.Linq;
 using UnityEngine;
 
+[Serializable]
 public class ColorGradient
 {
     public static ColorGradient None = new ColorGradient(Color.white, Color.white, 0);

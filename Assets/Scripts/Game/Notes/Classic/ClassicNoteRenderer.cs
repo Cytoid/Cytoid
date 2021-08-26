@@ -7,9 +7,9 @@ public class ClassicNoteRenderer : NoteRenderer
     public readonly SpriteRenderer Ring;
     protected readonly bool DisplayNoteId;
     protected readonly NoteId NoteId;
-    
-    protected float SizeMultiplier;
+
     protected float BaseTransformSize;
+    protected float BaseTransformScale;
     protected Color BaseRingColor;
     protected Color BaseFillColor;
 
@@ -40,14 +40,14 @@ public class ClassicNoteRenderer : NoteRenderer
         var config = Game.Config;
 
         // Calculate base size
-        SizeMultiplier = Game.Config.GlobalNoteSizeMultiplier;
+        BaseTransformScale = Game.Config.GlobalNoteSizeMultiplier;
         if (Note.Model.size != double.MinValue)
         {
             // Chart note override?
-            SizeMultiplier = (float) Note.Model.size / (float) Game.Chart.Model.size * SizeMultiplier;
+            BaseTransformScale *= (float) Note.Model.size / (float) Game.Chart.Model.size;
         }
 
-        BaseTransformSize = config.NoteSizes[Note.Type] * SizeMultiplier;
+        BaseTransformSize = config.NoteTransformSizes[Note.Type] * BaseTransformScale;
 
         // Colors
         BaseRingColor = Note.Model.ring_color?.ToColor() ?? config.GetRingColor(Note.Model);
@@ -66,7 +66,7 @@ public class ClassicNoteRenderer : NoteRenderer
     public override void OnCollect()
     {
         base.OnCollect();
-        SizeMultiplier = default;
+        BaseTransformScale = default;
         BaseTransformSize = default;
         BaseRingColor = default;
         BaseFillColor = default;
@@ -75,17 +75,21 @@ public class ClassicNoteRenderer : NoteRenderer
     protected override void Render()
     {
         if (NoteId != null) NoteId.Visible = !(Game is PlayerGame playerGame) || !playerGame.HideInterface;
-        UpdateCollider();
         UpdateComponentStates();
         UpdateColors();
         UpdateTransformScale();
         UpdateFillScale();
         UpdateComponentOpacity();
+        UpdateCollider();
     }
 
     protected virtual void UpdateCollider()
     {
         Collider.enabled = Game.Time >= Note.Model.intro_time && Game.Time <= Note.Model.end_time + Note.MissThreshold;
+        
+        var radius = Note.Game.Config.NoteHitboxSizes[Note.Type] / Note.Game.Config.GlobalNoteSizeMultiplier; // Default hitbox
+        radius *= Note.Model.Override.SizeMultiplier; // Scales to storyboard-defined size
+        Collider.radius = radius;
     }
 
     protected virtual void UpdateComponentStates()
@@ -131,9 +135,7 @@ public class ClassicNoteRenderer : NoteRenderer
     
     protected virtual void UpdateTransformScale()
     {
-        var sizeMultiplier = Note.Model.Override.SizeMultiplier;
-
-        var transformSize = BaseTransformSize * sizeMultiplier;
+        var transformSize = BaseTransformSize * Note.Model.Override.SizeMultiplier;
         
         // Scale entire transform
         var minPercentageSize = Note.Model.initial_scale;

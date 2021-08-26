@@ -37,6 +37,7 @@ public class Dialog : MonoBehaviour
         {
             message = value;
             messageText.text = message;
+            messageText.transform.parent.RebuildLayout();
         }
     }
 

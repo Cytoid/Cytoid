@@ -45,7 +45,9 @@ public class ProfileTab : MonoBehaviour
     public LevelCard levelCardPrefab;
     public CollectionSection collectionSection;
     public CollectionCard collectionCardPrefab;
-
+    public Text characterNameText;
+    public Text characterLevelText;
+    
     public RectTransform characterPaddingReference;
     
     public List<Transform> pillRows;
@@ -55,6 +57,27 @@ public class ProfileTab : MonoBehaviour
 
     public FullProfile Profile { get; private set; }
 
+    public void UpdateCharacterInfo()
+    {
+        var meta = Context.Database.Let(it =>
+        {
+            var col = it.GetCollection<CharacterMeta>("characters");
+            try
+            {
+                var result = col.Find(m => m.AssetId == Context.CharacterManager.SelectedCharacterId);
+                return result.FirstOrDefault();
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning(e);
+                return null;
+            }
+        });
+        characterNameText.text = meta?.Name ?? "Sayaka";
+        characterLevelText.text = $"{"PROFILE_WIDGET_LEVEL".Get()} {meta?.Exp?.CurrentLevel ?? 1}";
+        LayoutFixer.Fix(characterNameText.transform.parent.parent);
+    }
+    
     public async void SetModel(FullProfile profile)
     {
         Profile = profile;
@@ -134,7 +157,7 @@ public class ProfileTab : MonoBehaviour
         totalRankedScoreText.text = (profile.Activities.TotalRankedScore ?? 0).ToString("N0");
         totalPlayTimeText.text = TimeSpan.FromSeconds(profile.Activities.TotalPlayTime)
             .Let(it => it.ToString(it.Days > 0 ? @"d\d\ h\h\ m\m\ s\s" : @"h\h\ m\m\ s\s"));
-        
+
         chartRadioGroup.onSelect.SetListener(type => UpdateChart((ChartType) Enum.Parse(typeof(ChartType), type, true)));
         UpdateChart(ChartType.AvgRating);
         

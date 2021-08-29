@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Proyecto26;
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,6 +22,11 @@ public class CharacterSelectionScreen : Screen
     public CharacterDisplay characterDisplay;
     public Sprite volumeSprite;
     public Sprite volumeMuteSprite;
+    public Transform variantSelectorHolder;
+    public CanvasGroup lockedOverlayCanvasGroup;
+
+    public Text levelText;
+    public Text expText;
 
     public InteractableMonoBehavior helpButton;
     public InteractableMonoBehavior muteButton;
@@ -26,6 +34,7 @@ public class CharacterSelectionScreen : Screen
     public InteractableMonoBehavior nextButton;
     public InteractableMonoBehavior illustratorProfileButton;
     public InteractableMonoBehavior characterDesignerProfileButton;
+    public InteractableMonoBehavior unlockButton;
 
     private Image muteButtonImage;
 
@@ -37,10 +46,15 @@ public class CharacterSelectionScreen : Screen
 
         helpButton.onPointerClick.AddListener(_ => Dialog.PromptAlert("CHARACTER_TUTORIAL".Get()));
         muteButtonImage = muteButton.GetComponentInChildren<Image>();
+        
+        lockedOverlayCanvasGroup.alpha = 0;
+        lockedOverlayCanvasGroup.blocksRaycasts = false;
     }
 
     public override void OnScreenBecameActive()
     {
+        lockedOverlayCanvasGroup.alpha = 0;
+        lockedOverlayCanvasGroup.blocksRaycasts = false;
         characterTransitionElement.Apply(it =>
         {
             it.enterMultiplier = 0;
@@ -110,11 +124,16 @@ public class CharacterSelectionScreen : Screen
                         {
                             Toast.Next(Toast.Status.Failure, "CHARACTER_FAILED_TO_DOWNLOAD".Get());
                         }
-                        else
-                        {
-                            IntentPayload.OwnedCharacters.Add(meta);
-                        }
                     }
+
+                    characters.ForEach(it =>
+                    {
+                        if (it.SetId == null) it.SetId = it.Id;
+                    });
+                    IntentPayload.OwnedCharacters.AddRange(characters
+                        .Select((meta, index) => new {meta, index})
+                        .GroupBy(it => it.meta.SetId)
+                        .Select(it => new MergedCharacterMeta { variants = it.OrderBy(x => x.index).Select(x => x.meta).ToList() }));
 
                     print($"Number of downloads: {downloaded}");
 
@@ -188,81 +207,155 @@ public class CharacterSelectionScreen : Screen
         base.OnRendered();
         
         LoadedPayload.SelectedIndex =
-            LoadedPayload.OwnedCharacters.FindIndex(it =>
-                it.AssetId == Context.CharacterManager.SelectedCharacterId);
-        if (LoadedPayload.SelectedIndex < 0) LoadedPayload.SelectedIndex = 0; // Reset to default
-        LoadCharacter(LoadedPayload.OwnedCharacters[LoadedPayload.SelectedIndex]);
+            LoadedPayload.OwnedCharacters.FindIndex(it => it.variants.Any(x => x.AssetId == Context.CharacterManager.SelectedCharacterId));
+        if (LoadedPayload.SelectedIndex < 0) {
+            LoadedPayload.SelectedIndex = 0; // Reset to default
+            LoadedPayload.SelectedVariantIndex = 0;
+        }
+        else
+        {
+            LoadedPayload.SelectedVariantIndex = LoadedPayload.OwnedCharacters[LoadedPayload.SelectedIndex].variants
+                .FindIndex(it => it.AssetId == Context.CharacterManager.SelectedCharacterId);
+        }
+        Reload();
     }
 
-    public async void LoadCharacter(CharacterMeta meta)
+    public async void Reload()
     {
+        var mergedMeta = LoadedPayload.OwnedCharacters[LoadedPayload.SelectedIndex];
+        var meta = mergedMeta.variants[LoadedPayload.SelectedVariantIndex];
+        
         ParallaxHolder.WillDelaySet = true;
 
-        var isNewCharacter = Context.CharacterManager.ActiveCharacterBundleId != meta.AssetId;
-        if (isNewCharacter)
-        {
-            SpinnerOverlay.Show();
+        var characterBundle = await Context.BundleManager.LoadCachedBundle(CharacterAsset.GetMainBundleId(meta.AssetId));
+        var loader = characterBundle.LoadAssetAsync<GameObject>("Character");
+        await loader;
+        var characterAsset = Instantiate((GameObject) loader.asset).GetComponent<CharacterAsset>();
 
+        var requireReload = IntentPayload.displayedCharacter == null
+                            || IntentPayload.displayedCharacter.SetId != meta.SetId
+                            || IntentPayload.displayedCharacter.VariantParallaxAsset != meta.VariantParallaxAsset
+                            || IntentPayload.displayedCharacter.VariantAudioAsset != meta.VariantAudioAsset;
+
+        if (requireReload)
+        {
             infoCard.Leave(false);
-            characterTransitionElement.Leave(false);
+            SpinnerOverlay.Show();
         }
 
-        var character = await Context.CharacterManager.SetActiveCharacter(meta.AssetId);
-        if (character == null)
-        {
-            throw new Exception("Character not downloaded or corrupted");
-        }
+        await UniTask.WaitUntil(() => !characterTransitionElement.IsInTransition);
+        characterTransitionElement.Leave();
 
-        if (isNewCharacter)
+        if (!meta.Locked)
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(0.4f));
-        }
-
-        nameText.text = meta.Name;
-        nameGradient.SetGradient(character.nameGradient.GetGradient());
-        descriptionText.text = meta.Description;
-        levelCard.SetModel(meta.Level.ToLevel(LevelType.User));
-        illustratorText.text = meta.Illustrator.Name;
-        illustratorProfileButton.onPointerClick.SetListener(_ => Application.OpenURL(meta.Illustrator.Url));
-        if (meta.CharacterDesigner != null && !meta.CharacterDesigner.Name.IsNullOrEmptyTrimmed())
-        {
-            characterDesignerHolder.gameObject.SetActive(true);
-            characterDesignerText.text = meta.CharacterDesigner.Name;
-            characterDesignerProfileButton.onPointerClick.SetListener(_ =>
-                Application.OpenURL(meta.CharacterDesigner.Url));
-        }
-        else
-        {
-            characterDesignerHolder.gameObject.SetActive(false);
-        }
-        infoCard.transform.RebuildLayout();
-
-        if (character.musicAudio == null)
-        {
-            muteButtonImage.sprite = volumeSprite;
-            muteButtonImage.SetAlpha(0.3f);
-            muteButton.scaleOnClick = false;
-            muteButton.onPointerClick.RemoveAllListeners();
-        }
-        else
-        {
-            muteButtonImage.sprite = Context.Player.Settings.PlayCharacterTheme ? volumeSprite : volumeMuteSprite;
-            muteButtonImage.SetAlpha(1f);
-            muteButton.scaleOnClick = true;
-            muteButton.onPointerClick.SetListener(_ =>
+            lockedOverlayCanvasGroup.blocksRaycasts = false;
+            lockedOverlayCanvasGroup.DOFade(0, 0.4f);
+            
+            await Context.CharacterManager.SetActiveCharacter(meta.AssetId, requireReload);
+            if (requireReload)
             {
-                Context.Player.Settings.PlayCharacterTheme = !Context.Player.Settings.PlayCharacterTheme;
-                Context.Player.SaveSettings();
-                LoopAudioPlayer.Instance.SetMainAudio(Context.Player.Settings.PlayCharacterTheme ? character.musicAudio : LoopAudioPlayer.Instance.defaultLoopAudio);
-                muteButtonImage.sprite = Context.Player.Settings.PlayCharacterTheme ? volumeSprite : volumeMuteSprite;
-            });
+                await UniTask.Delay(TimeSpan.FromSeconds(0.4f));
+            }
         }
-        
-        await characterDisplay.Load(CharacterAsset.GetTachieBundleId(meta.AssetId));
-        NavigationBackdrop.Instance.UpdateBlur();
+        else
+        {
+            lockedOverlayCanvasGroup.blocksRaycasts = true;
+            lockedOverlayCanvasGroup.DOFade(1, 0.4f);
+        }
 
-        infoCard.Enter();
-        characterTransitionElement.Leave(false, true);
+        if (requireReload)
+        {
+            nameText.text = meta.Name;
+            nameGradient.SetGradient(characterAsset.nameGradient.GetGradient());
+            descriptionText.text = meta.Description;
+            if (meta.Level != null)
+            {
+                levelCard.SetModel(meta.Level.ToLevel(LevelType.User));
+            }
+
+            illustratorText.text = meta.Illustrator.Name;
+            illustratorProfileButton.onPointerClick.SetListener(_ => Application.OpenURL(meta.Illustrator.Url));
+            if (meta.CharacterDesigner != null && !meta.CharacterDesigner.Name.IsNullOrEmptyTrimmed())
+            {
+                characterDesignerHolder.gameObject.SetActive(true);
+                characterDesignerText.text = meta.CharacterDesigner.Name;
+                characterDesignerProfileButton.onPointerClick.SetListener(_ =>
+                    Application.OpenURL(meta.CharacterDesigner.Url));
+            }
+            else
+            {
+                characterDesignerHolder.gameObject.SetActive(false);
+            }
+
+            if (meta.Exp == null)
+            {
+                meta.Exp = new CharacterMeta.ExpData
+                {
+                    CurrentLevel = 1,
+                    CurrentLevelExp = 0,
+                    NextLevelExp = 10,
+                    TotalExp = 0
+                };
+            }
+            levelText.text = $"{"PROFILE_WIDGET_LEVEL".Get()} {meta.Exp.CurrentLevel}";
+            expText.text = $"{"PROFILE_WIDGET_EXP".Get()} {(int) meta.Exp.TotalExp}/{(int) meta.Exp.NextLevelExp}";
+
+            infoCard.transform.RebuildLayout();
+
+            if (characterAsset.musicAudio == null)
+            {
+                muteButtonImage.sprite = volumeSprite;
+                muteButtonImage.SetAlpha(0.3f);
+                muteButton.scaleOnClick = false;
+                muteButton.onPointerClick.RemoveAllListeners();
+            }
+            else
+            {
+                muteButtonImage.sprite = Context.Player.Settings.PlayCharacterTheme ? volumeSprite : volumeMuteSprite;
+                muteButtonImage.SetAlpha(1f);
+                muteButton.scaleOnClick = true;
+                muteButton.onPointerClick.SetListener(_ =>
+                {
+                    Context.Player.Settings.PlayCharacterTheme = !Context.Player.Settings.PlayCharacterTheme;
+                    Context.Player.SaveSettings();
+                    LoopAudioPlayer.Instance.SetMainAudio(Context.Player.Settings.PlayCharacterTheme
+                        ? characterAsset.musicAudio
+                        : LoopAudioPlayer.Instance.defaultLoopAudio);
+                    muteButtonImage.sprite = Context.Player.Settings.PlayCharacterTheme ? volumeSprite : volumeMuteSprite;
+                });
+            }
+
+            NavigationBackdrop.Instance.UpdateBlur();
+
+            infoCard.Enter();
+        }
+
+        if (IntentPayload.displayedCharacter?.SetId != meta.SetId)
+        {
+            // Spawn radio group
+            foreach (Transform child in variantSelectorHolder)
+            {
+                Destroy(child.gameObject);
+            }
+
+            if (mergedMeta.HasOtherVariants)
+            {
+                var radioGroup = Instantiate(NavigationUiElementProvider.Instance.pillRadioGroup, variantSelectorHolder);
+                radioGroup.labels = mergedMeta.variants.Select(it => it.VariantName).ToList();
+                radioGroup.values = Enumerable.Range(0, mergedMeta.variants.Count).Select(it => it.ToString()).ToList();
+                radioGroup.defaultValue = mergedMeta.variants.FindIndex(it => it.Id == meta.Id).ToString();
+                radioGroup.Initialize();
+                radioGroup.onSelect.AddListener(it =>
+                {
+                    LoadedPayload.SelectedVariantIndex = int.Parse(it);
+                    Reload();
+                });
+                variantSelectorHolder.RebuildLayout();
+            }
+        }
+
+        await UniTask.WaitUntil(() => !characterTransitionElement.IsInTransition);
+        await characterDisplay.Load(CharacterAsset.GetTachieBundleId(meta.AssetId), meta.Locked);
         characterTransitionElement.Enter();
         characterTransitionElement.Apply(it =>
         {
@@ -270,6 +363,9 @@ public class CharacterSelectionScreen : Screen
             it.enterDelay = 0.4f;
             it.enterDuration = 0.8f;
         });
+        
+        Destroy(characterAsset.gameObject);
+        Context.BundleManager.Release(CharacterAsset.GetMainBundleId(meta.AssetId));
 
         if (Context.IsOffline())
         {
@@ -277,40 +373,50 @@ public class CharacterSelectionScreen : Screen
         }
         else
         {
-            RestClient.Post(new RequestHelper
+            if (Application.isEditor && MockData.AvailableCharacters.Any(it => it.Id == meta.Id))
+            {
+                SpinnerOverlay.Hide();
+            }
+            else
+            {
+                if (!meta.Locked)
                 {
-                    Uri = $"{Context.ApiUrl}/profile/{Context.Player.Id}/character",
-                    Headers = Context.OnlinePlayer.GetRequestHeaders(),
-                    EnableDebug = true,
-                    Body = new CharacterPostData
-                    {
-                        characterId = meta.Id
-                    }
-                })
-                .CatchRequestError(error =>
-                {
-                    Debug.LogError(error);
-                    Toast.Next(Toast.Status.Failure, "TOAST_FAILED_TO_UPDATE_PROFILE_CHARACTER".Get());
-                })
-                .Finally(() =>
-                {
-                    SpinnerOverlay.Hide();
-                });
+                    RestClient.Post(new RequestHelper
+                        {
+                            Uri = $"{Context.ApiUrl}/profile/{Context.Player.Id}/character",
+                            Headers = Context.OnlinePlayer.GetRequestHeaders(),
+                            EnableDebug = true,
+                            Body = new CharacterPostData
+                            {
+                                characterId = meta.Id
+                            }
+                        })
+                        .CatchRequestError(error =>
+                        {
+                            Debug.LogError(error);
+                            Toast.Next(Toast.Status.Failure, "TOAST_FAILED_TO_UPDATE_PROFILE_CHARACTER".Get());
+                        })
+                        .Finally(() => { SpinnerOverlay.Hide(); });
+                }
+            }
         }
 
         ParallaxHolder.WillDelaySet = false;
+        IntentPayload.displayedCharacter = meta;
     }
 
     private void NextCharacter()
     {
         LoadedPayload.SelectedIndex = (LoadedPayload.SelectedIndex + 1).Mod(LoadedPayload.OwnedCharacters.Count);
-        LoadCharacter(LoadedPayload.OwnedCharacters[LoadedPayload.SelectedIndex]);
+        LoadedPayload.SelectedVariantIndex = 0;
+        Reload();
     }
 
     private void PreviousCharacter()
     {
         LoadedPayload.SelectedIndex = (LoadedPayload.SelectedIndex - 1).Mod(LoadedPayload.OwnedCharacters.Count);
-        LoadCharacter(LoadedPayload.OwnedCharacters[LoadedPayload.SelectedIndex]);
+        LoadedPayload.SelectedVariantIndex = 0;
+        Reload();
     }
     
     [Serializable]
@@ -321,8 +427,11 @@ public class CharacterSelectionScreen : Screen
     
     public class Payload : ScreenPayload
     {
-        public readonly List<CharacterMeta> OwnedCharacters = new List<CharacterMeta>();
+        public readonly List<MergedCharacterMeta> OwnedCharacters = new List<MergedCharacterMeta>();
         public int SelectedIndex;
+        public int SelectedVariantIndex;
+
+        public CharacterMeta displayedCharacter;
     }
     
     public new Payload IntentPayload => (Payload) base.IntentPayload;
@@ -339,3 +448,20 @@ public class CharacterSelectionScreen : Screen
     public override string GetId() => Id;
     
 }
+
+#if UNITY_EDITOR
+[CustomEditor(typeof(CharacterSelectionScreen))]
+public class CharacterSelectionScreenEditor : Editor
+{
+    public override void OnInspectorGUI()
+    {
+        base.OnInspectorGUI();
+        var parent = (CharacterSelectionScreen) target;
+        if (GUILayout.Button("Switch variant 0/1"))
+        {
+            parent.IntentPayload.SelectedVariantIndex = parent.IntentPayload.SelectedVariantIndex == 1 ? 0 : 1;
+            parent.Reload();
+        }
+    }
+}
+#endif

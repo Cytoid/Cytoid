@@ -339,7 +339,7 @@ public class LevelSelectionScreen : Screen, LevelCardEventHandler, LevelBatchSel
         
         Context.Haptic(HapticTypes.Warning, true);
         var dialog = Dialog.Instantiate();
-        dialog.Message = "DIALOG_CONFIRM_DELETE".Get(levelsToDelete.Count);
+        dialog.Message = (levelsToDelete.Count == 1 ? "DIALOG_CONFIRM_DELETE_X_LEVEL" : "DIALOG_CONFIRM_DELETE_X_LEVELS").Get(levelsToDelete.Count);
         dialog.UsePositiveButton = true;
         dialog.UseNegativeButton = true;
         dialog.OnPositiveButtonClicked = async _ =>

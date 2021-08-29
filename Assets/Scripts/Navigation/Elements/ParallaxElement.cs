@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using DG.Tweening;
 using Cysharp.Threading.Tasks;
 using Sirenix.OdinInspector;
@@ -199,6 +200,8 @@ public class ThreoseAnimation : ParallaxAnimation
     
     public override void OnUpdate(ParallaxElement element)
     {
+        if (!element.Layers.Any()) return;
+        
         if (!initialized)
         {
             coloredBackgroundImage = element.Layers[1].RectTransform.gameObject.GetComponent<Image>();

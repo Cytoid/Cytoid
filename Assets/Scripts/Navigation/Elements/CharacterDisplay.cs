@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(CanvasGroup))]
 public class CharacterDisplay : MonoBehaviour, ScreenBecameActiveListener, ScreenLeaveCompletedListener, ScreenBecameInactiveListener
@@ -26,7 +27,7 @@ public class CharacterDisplay : MonoBehaviour, ScreenBecameActiveListener, Scree
     private DateTime asyncLoadToken;
     private bool isLoading;
 
-    public async UniTask Load(string tachieBundleId)
+    public async UniTask Load(string tachieBundleId, bool silhouette = false)
     {
         if (isLoading) await UniTask.WaitUntil(() => !isLoading);
 
@@ -60,6 +61,13 @@ public class CharacterDisplay : MonoBehaviour, ScreenBecameActiveListener, Scree
         t.SetParent(transform);
         t.anchoredPosition = Vector3.zero;
         t.localScale = Vector3.one;
+
+        if (silhouette)
+        {
+            t.GetComponentsInChildren<Image>()
+                .ForEach(it => it.color = Color.black.WithAlpha(it.color.a));
+        }
+        
         Enter();
 
         isLoading = false;

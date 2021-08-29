@@ -10,6 +10,8 @@ public class NavigationUiElementProvider : SingletonMonoBehavior<NavigationUiEle
     public SelectPreferenceElement selectPreferenceElement;
     public ToggleRadioGroupPreferenceElement toggleRadioGroupPreferenceElement;
 
+    public PillRadioGroup pillRadioGroup;
+    
     public Sprite levelActionOverlayDownloadIcon;
     public Sprite levelActionOverlayDownloadedIcon;
     public Sprite levelActionOverlayDeleteIcon;

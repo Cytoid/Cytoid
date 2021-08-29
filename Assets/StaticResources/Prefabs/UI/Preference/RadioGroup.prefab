@@ -66,6 +66,7 @@ MonoBehaviour:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
+  m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -230,7 +231,7 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
-  - {fileID: 3105325138903573799}
+  - {fileID: 7041972867491159478}
   - {fileID: 7041972866731602357}
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -349,7 +350,7 @@ MonoBehaviour:
   m_BlockingObjects: 0
   m_BlockingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 311
 --- !u!1 &7041972867844177636
 GameObject:
   m_ObjectHideFlags: 0
@@ -412,6 +413,7 @@ MonoBehaviour:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
+  m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -478,17 +480,17 @@ PrefabInstance:
     - target: {fileID: 5377942000649238697, guid: 1aecece6171ce0c41b2a4433a8577cc2,
         type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5377942000649238697, guid: 1aecece6171ce0c41b2a4433a8577cc2,
         type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5377942000649238697, guid: 1aecece6171ce0c41b2a4433a8577cc2,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -32
       objectReference: {fileID: 0}
     - target: {fileID: 5377942000649238697, guid: 1aecece6171ce0c41b2a4433a8577cc2,
         type: 3}
@@ -622,7 +624,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1aecece6171ce0c41b2a4433a8577cc2, type: 3}
---- !u!224 &3105325138903573799 stripped
+--- !u!224 &7041972867491159478 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 5377942000673749142, guid: 1aecece6171ce0c41b2a4433a8577cc2,
     type: 3}

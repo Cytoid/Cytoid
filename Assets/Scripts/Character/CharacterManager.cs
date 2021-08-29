@@ -30,7 +30,7 @@ public class CharacterManager
 
     public CharacterAsset GetActiveCharacterAsset() => useTestCharacterAsset ? testCharacterAsset : activeCharacterGameObject.GetComponent<CharacterAsset>();
 
-    public async UniTask<CharacterAsset> SetActiveCharacter(string id)
+    public async UniTask<CharacterAsset> SetActiveCharacter(string id, bool requiresReload = true)
     {
         if (id == null) throw new ArgumentNullException();
         var bundleId = "character_" + id.ToLower();
@@ -71,7 +71,7 @@ public class CharacterManager
         activeCharacterGameObject = UnityEngine.Object.Instantiate((GameObject) loader.asset);
 
         var characterAsset = activeCharacterGameObject.GetComponent<CharacterAsset>();
-        OnActiveCharacterSet.Invoke(characterAsset);
+        OnActiveCharacterSet.Invoke(characterAsset, requiresReload);
 
         useTestCharacterAsset = false;
         return characterAsset;
@@ -81,7 +81,7 @@ public class CharacterManager
     public void SetTestActiveCharacter(CharacterAsset asset)
     {
         testCharacterAsset = asset;
-        OnActiveCharacterSet.Invoke(asset);
+        OnActiveCharacterSet.Invoke(asset, true);
         useTestCharacterAsset = true;
     }
 
@@ -117,8 +117,9 @@ public class CharacterManager
         List<CharacterMeta> PostProcess(List<CharacterMeta> result)
         {
             var defaultCharacter = result.FirstOrDefault(it => it.AssetId == BuiltInData.DefaultCharacterAssetId);
-            if (defaultCharacter != null) defaultCharacter.Date = DateTimeOffset.MinValue;
-            return result.OrderByDescending(x => x.Date.HasValue).ThenBy(x => x.Date).ToList();
+            if (defaultCharacter != null) defaultCharacter.Date = DateTimeOffset.MinValue.ToString();
+            var sorted = result.OrderBy(x => x.Date == null ? DateTimeOffset.MinValue : DateTimeOffset.Parse(x.Date)).ToList();
+            return sorted;
         }
         if (Context.IsOnline())
         {
@@ -131,6 +132,14 @@ public class CharacterManager
             }).Then(array =>
             {
                 var characters = array.ToList();
+                
+                // Editor only!
+                if (Application.isEditor)
+                {
+                    characters.RemoveAll(it => MockData.AvailableCharacters.Any(x => it.Id == x.Id));
+                    characters.AddRange(MockData.AvailableCharacters.Where(it => characters.All(x => x.Id != it.Id)));
+                }
+                
                 // Save to DB
                 Context.Database.Let(it =>
                 {
@@ -154,6 +163,6 @@ public class CharacterManager
     
 }
 
-public class ActiveCharacterSetEvent : UnityEvent<CharacterAsset>
+public class ActiveCharacterSetEvent : UnityEvent<CharacterAsset, bool>
 {
 }

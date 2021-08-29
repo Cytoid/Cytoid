@@ -421,6 +421,7 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
     private static readonly Dictionary<string, Func<string>> PlaceholderFunctions = new Dictionary<string, Func<string>>
     {
         {"[BADGE_TITLE]", () => CurrentBadge.title},
+        {"[BADGE_DATE]", () => CurrentBadge.date.ToString("yyyy.MM.dd")},
         {"[BADGE_DESCRIPTION]", () => CurrentBadge.description},
         {"[BADGE_IMAGE_URL]", () => CurrentBadge.GetImageUrl()},
         {"[RATING]", () => Context.OnlinePlayer?.LastProfile?.Rating.ToString("N2") ?? "N/A"}

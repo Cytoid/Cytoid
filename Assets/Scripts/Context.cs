@@ -11,6 +11,7 @@ using Proyecto26;
 using Tayx.Graphy;
 using Cysharp.Threading.Tasks;
 using LiteDB;
+using Sentry;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
@@ -185,6 +186,8 @@ public class Context : SingletonMonoBehavior<Context>
     {
         LunarConsole.SetConsoleEnabled(true); // Enable startup debug
         
+        SentrySdk.CaptureMessage("Test event");
+
         InitializationState = new InitializationState();
 
         UserDataPath = Application.persistentDataPath;

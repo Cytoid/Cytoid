@@ -8,7 +8,6 @@ using UnityEngine.UI;
 
 public class ProfileScreen : Screen
 {
-
     public UpperOverlay upperOverlay;
     public ContentTabs contentTabs;
     public Transform topRightColumn;
@@ -54,6 +53,8 @@ public class ProfileScreen : Screen
         contentTabs.UnselectAll();
         contentTabs.gameObject.SetActive(false);
         topRightColumn.gameObject.SetActive(false);
+
+        profileTab.UpdateCharacterInfo();
         base.OnScreenBecameActive();
     }
 

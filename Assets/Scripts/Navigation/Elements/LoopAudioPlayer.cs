@@ -50,10 +50,10 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
         UpdateMaxVolume();
     }
 
-    public void UpdateMaxVolume()
+    public void UpdateMaxVolume(float volume)
     {
         var previousMaxVolume = MaxVolume;
-        MaxVolume = Context.Player.Settings.MusicVolume;
+        MaxVolume = volume;
         if (MaxVolume == 0) MaxVolume = 0.000001f;
         audioMixerGroup.audioMixer.GetFloat("MasterVolume", out var currentMixerGroupVolume);
         if (PrintDebugMessages) print($"LoopAudioPlayer: Current mixer group volume is {currentMixerGroupVolume}");
@@ -62,6 +62,11 @@ public class LoopAudioPlayer : SingletonMonoBehavior<LoopAudioPlayer>, ScreenCha
         var mixerGroupVolume = ConvertToMixerGroupVolume(currentVolumePercentage * MaxVolume);
         audioMixerGroup.audioMixer.SetFloat("MasterVolume", mixerGroupVolume);
         if (PrintDebugMessages) print($"LoopAudioPlayer: Mixer group volume set to {mixerGroupVolume}");
+    }
+    
+    public void UpdateMaxVolume()
+    {
+        UpdateMaxVolume(Context.Player.Settings.MusicVolume);
     }
 
     private static float ConvertToMixerGroupVolume(float f)

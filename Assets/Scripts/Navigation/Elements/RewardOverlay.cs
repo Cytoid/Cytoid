@@ -57,7 +57,7 @@ public class RewardOverlay : SingletonMonoBehavior<RewardOverlay>
         canvasGroup.enabled = false;
     }
 
-    public static void Show(List<OnlinePlayerStateChange.Reward> rewards)
+    public static void Show(List<Reward> rewards)
     {
         rewards = rewards.OrderBy(it => it.Type).ToList();
         Instance.Apply(async it =>
@@ -65,7 +65,7 @@ public class RewardOverlay : SingletonMonoBehavior<RewardOverlay>
             var entered = false;
             foreach (var reward in rewards)
             {
-                if (reward.Type == OnlinePlayerStateChange.Reward.RewardType.Badge)
+                if (reward.Type == Reward.RewardType.Badge)
                 {
                     var badge = reward.badgeValue.Value;
                     if (badge.type != BadgeType.Event) continue; // Only support event badges at the moment
@@ -73,18 +73,18 @@ public class RewardOverlay : SingletonMonoBehavior<RewardOverlay>
                 
                 switch (reward.Type)
                 {
-                    case OnlinePlayerStateChange.Reward.RewardType.Level:
+                    case Reward.RewardType.Level:
                         it.topMessage.text = "REWARD_LEVEL_ADDED_TO_LIBRARY".Get();
                         it.levelCard.gameObject.SetActive(true);
                         it.levelCard.SetModel(reward.onlineLevelValue.Value.ToLevel(LevelType.User));
                         break;
-                    case OnlinePlayerStateChange.Reward.RewardType.Character:
+                    case Reward.RewardType.Character:
                         it.topMessage.text = "REWARD_CHARACTER_UNLOCKED".Get();
                         it.bottomMessage.text = reward.characterValue.Value.Name;
                         it.characterDisplay.gameObject.SetActive(true);
                         it.characterDisplay.Load(CharacterAsset.GetTachieBundleId(reward.characterValue.Value.AssetId));
                         break;
-                    case OnlinePlayerStateChange.Reward.RewardType.Badge:
+                    case Reward.RewardType.Badge:
                         it.topMessage.text = "REWARD_BADGE_UNLOCKED".Get();
                         it.bottomMessage.text = reward.badgeValue.Value.title;
                         it.badgeDisplay.gameObject.SetActive(true);
@@ -102,14 +102,14 @@ public class RewardOverlay : SingletonMonoBehavior<RewardOverlay>
                 var elements = new List<TransitionElement>{it.topMessage.GetComponent<TransitionElement>()};
                 switch (reward.Type)
                 {
-                    case OnlinePlayerStateChange.Reward.RewardType.Level:
+                    case Reward.RewardType.Level:
                         elements.Add(it.levelCard.GetComponent<TransitionElement>());
                         break;
-                    case OnlinePlayerStateChange.Reward.RewardType.Character:
+                    case Reward.RewardType.Character:
                         elements.Add(it.characterDisplay.GetComponent<TransitionElement>());
                         elements.Add(it.bottomMessage.GetComponent<TransitionElement>());
                         break;
-                    case OnlinePlayerStateChange.Reward.RewardType.Badge:
+                    case Reward.RewardType.Badge:
                         elements.Add(it.badgeDisplay.GetComponent<TransitionElement>());
                         elements.Add(it.bottomMessage.GetComponent<TransitionElement>());
                         break;
@@ -132,13 +132,13 @@ public class RewardOverlay : SingletonMonoBehavior<RewardOverlay>
                 
                 switch (reward.Type)
                 {
-                    case OnlinePlayerStateChange.Reward.RewardType.Level:
+                    case Reward.RewardType.Level:
                         it.levelCard.Unload();
                         break;
-                    case OnlinePlayerStateChange.Reward.RewardType.Character:
+                    case Reward.RewardType.Character:
                         it.characterDisplay.Unload();
                         break;
-                    case OnlinePlayerStateChange.Reward.RewardType.Badge:
+                    case Reward.RewardType.Badge:
                         it.badgeDisplay.Clear();
                         it.badgeDisplay.gameObject.SetActive(false);
                         break;

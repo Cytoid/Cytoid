@@ -25,7 +25,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static string MockApiUrl;
 
     public static CdnRegion CdnRegion => Player.Settings.CdnRegion;
-    public static string ApiUrl => MockApiUrl ?? CdnRegion.GetApiUrl();
+    public static string ApiUrl => Application.isEditor ? (MockApiUrl ?? CdnRegion.GetApiUrl()) : CdnRegion.GetApiUrl();
     public static string WebsiteUrl => CdnRegion.GetWebsiteUrl();
 
     public static string BundleRemoteBaseUrl

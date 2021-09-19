@@ -236,12 +236,12 @@ public class TierResultScreen : Screen
                     Context.OnlinePlayer.FetchProfile();
 
                     if (stateChange.rewards != null 
-                        && stateChange.rewards.Any(it => it.Type == OnlinePlayerStateChange.Reward.RewardType.Level || it.Type == OnlinePlayerStateChange.Reward.RewardType.Character))
+                        && stateChange.rewards.Any(it => it.Type == Reward.RewardType.Level || it.Type == Reward.RewardType.Character))
                     {
                         RewardOverlay.Show(stateChange.rewards);
 
                         if (stateChange.rewards.Any(
-                            it => it.Type == OnlinePlayerStateChange.Reward.RewardType.Level))
+                            it => it.Type == Reward.RewardType.Level))
                         {
                             Context.Library.Fetch();
                         }

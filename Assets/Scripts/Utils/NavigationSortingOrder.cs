@@ -10,6 +10,8 @@ public static class NavigationSortingOrder
     public const int HighlightedElement = 160;
     public const int DialogueBox = 170;
     
+    public const int QuestOverlay = 172;
+    
     public const int TermsOverlay = 175;
     
     public const int SpinnerOverlay = 180;

@@ -45,17 +45,18 @@ public class InitializationScreen : Screen
             await Context.Player.Migrate();
         }
         
-        // Check region
-        if (Context.Player.ShouldTrigger("Reset Server CDN To CN"))
-        {
-            Debug.Log("Reset server CDN to CN");
-            Context.Player.Settings.CdnRegion = CdnRegion.MainlandChina;
-        }
+        // // Check region
+        // if (Context.Player.ShouldTrigger("Reset Server CDN To CN"))
+        // {
+        //     Debug.Log("Reset server CDN to CN");
+        //     Context.Player.Settings.CdnRegion = CdnRegion.MainlandChina;
+        // }
         
         statusText.text = "INIT_CONNECTING_TO_SERVER".Get();
         statusText.transform.RebuildLayout();
-        await Context.Instance.DetectServerCdn();
-        await Context.Instance.CheckServerCdn();
+        // await Context.Instance.DetectServerCdn();
+        // await Context.Instance.CheckServerCdn();
+        Context.Player.Settings.CdnRegion = CdnRegion.International;
         await Context.BundleManager.DownloadAndSaveCatalog();
 
         spinnerElement.gameObject.SetActive(false);

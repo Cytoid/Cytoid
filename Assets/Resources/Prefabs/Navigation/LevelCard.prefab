@@ -1691,7 +1691,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 2100000, guid: 2e387ef1019d8fb448bd9234a1581179, type: 2}
   m_Color: {r: 0.1981132, g: 0.1981132, b: 0.1981132, a: 0.9019608}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -1746,7 +1746,7 @@ CanvasGroup:
   m_Enabled: 1
   m_Alpha: 1
   m_Interactable: 0
-  m_BlocksRaycasts: 0
+  m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
 --- !u!1 &6609752123841233524
 GameObject:

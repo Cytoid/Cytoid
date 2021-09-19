@@ -11,7 +11,6 @@ using UnityEngine.UI;
 
 public class CommunityLevelSelectionScreen : Screen, LevelCardEventHandler, LevelBatchSelection
 {
-    private static readonly Dictionary<string, ulong> CachedDownloadSizes = new Dictionary<string, ulong>();
     public LoopVerticalScrollRect scrollRect;
 
     public Text titleText;
@@ -28,10 +27,14 @@ public class CommunityLevelSelectionScreen : Screen, LevelCardEventHandler, Leve
     public Text batchActionBarMessage;
     public InteractableMonoBehavior batchActionCancelButton;
     public InteractableMonoBehavior batchActionDownloadButton;
+
+    private readonly LevelBatchSelectionDownloadHandler levelBatchSelectionHandler = new LevelBatchSelectionDownloadHandler();
     
-    public bool IsBatchSelectingLevels { get; private set; }
-    public Dictionary<string, Level> BatchSelectedLevels { get; } = new Dictionary<string, Level>();
-    public LevelBatchAction LevelBatchAction { get; } = LevelBatchAction.Download;
+    public bool IsBatchSelectingLevels => levelBatchSelectionHandler.IsBatchSelectingLevels;
+    public Dictionary<string, Level> BatchSelectedLevels => levelBatchSelectionHandler.BatchSelectedLevels;
+    public LevelBatchAction LevelBatchAction => levelBatchSelectionHandler.LevelBatchAction;
+    public bool OnLevelCardPressed(LevelView view) => levelBatchSelectionHandler.OnLevelCardPressed(view);
+    public void OnLevelCardLongPressed(LevelView view) => levelBatchSelectionHandler.OnLevelCardLongPressed(view);
 
     public override void OnScreenInitialized()
     {
@@ -57,8 +60,18 @@ public class CommunityLevelSelectionScreen : Screen, LevelCardEventHandler, Leve
         SetupOptions();
         Context.OnLanguageChanged.AddListener(SetupOptions);
         
-        batchActionCancelButton.onPointerClick.AddListener(_ => LeaveBatchSelection());
-        batchActionDownloadButton.onPointerClick.AddListener(_ => DownloadBatchSelection());
+        levelBatchSelectionHandler.OnEnterBatchSelection.AddListener(() =>
+        {
+            batchActionBar.transform.RebuildLayout();
+            batchActionBar.Enter();
+        });
+        levelBatchSelectionHandler.OnLeaveBatchSelection.AddListener(() =>
+        {
+            batchActionBar.Leave();
+        });
+        levelBatchSelectionHandler.batchActionBarMessage = batchActionBarMessage;
+        batchActionCancelButton.onPointerClick.AddListener(_ => levelBatchSelectionHandler.LeaveBatchSelection());
+        batchActionDownloadButton.onPointerClick.AddListener(_ => levelBatchSelectionHandler.DownloadBatchSelection());
     }
 
     public override void OnScreenBecameActive()
@@ -208,7 +221,7 @@ public class CommunityLevelSelectionScreen : Screen, LevelCardEventHandler, Leve
     {
         if (reset)
         {
-            LeaveBatchSelection();
+            levelBatchSelectionHandler.LeaveBatchSelection();
         }
         
         const int pageSize = 12;
@@ -295,182 +308,13 @@ public class CommunityLevelSelectionScreen : Screen, LevelCardEventHandler, Leve
             LoadMoreLevels();
         }
     }
-    
-    public void EnterBatchSelection()
-    {
-        if (IsBatchSelectingLevels) return;
-        
-        IsBatchSelectingLevels = true;
-        batchActionBar.transform.RebuildLayout();
-        batchActionBar.Enter();
-    }
-
-    public void LeaveBatchSelection()
-    {
-        if (!IsBatchSelectingLevels) return;
-        
-        IsBatchSelectingLevels = false;
-        batchActionBar.Leave();
-        BatchSelectedLevels.Clear();
-    }
-
-    private DateTime lastFetchDownloadSizeDateTime = DateTime.UtcNow;
-    
-    private async void UpdateBatchSelectionText()
-    {
-        batchActionBarMessage.text = (BatchSelectedLevels.Count == 1 ? "LEVEL_SELECT_SELECTED_X_LEVEL" : "LEVEL_SELECT_SELECTED_X_LEVELS").Get(BatchSelectedLevels.Count);
-        // Estimate download size
-        lastFetchDownloadSizeDateTime = DateTime.UtcNow;
-        
-        foreach (var (levelId, level) in BatchSelectedLevels)
-        {
-            if (CachedDownloadSizes.ContainsKey(levelId)) continue;
-            var proceed = false;
-            var cancelled = false;
-            var dateTime = lastFetchDownloadSizeDateTime;
-            RestClient.Get<OnlineLevel>(new RequestHelper 
-            {
-                Uri = $"{Context.ApiUrl}/levels/{level.Id}",
-                Headers = Context.OnlinePlayer.GetRequestHeaders(),
-                EnableDebug = true,
-                Timeout = 5
-            }).Then(it =>
-            {
-                CachedDownloadSizes[levelId] = (ulong) it.Size;
-            }).Finally(() =>
-            {
-                proceed = true;
-                if (dateTime != lastFetchDownloadSizeDateTime) cancelled = true;
-            });
-            await UniTask.WaitUntil(() => proceed);
-            if (cancelled) return;
-        }
-
-        var totalSize = (ulong) BatchSelectedLevels
-            .Select(it => CachedDownloadSizes.ContainsKey(it.Key) ? CachedDownloadSizes[it.Key] : 0)
-            .Sum(it => (long) it);
-
-        batchActionBarMessage.text =
-            (BatchSelectedLevels.Count == 1 ? "LEVEL_SELECT_SELECTED_X_LEVEL" : "LEVEL_SELECT_SELECTED_X_LEVELS").Get(BatchSelectedLevels.Count)
-            + "LEVEL_SELECT_ESTIMATED_DOWNLOAD_SIZE_X".Get(totalSize.ToHumanReadableFileSize());
-    }
-    
-    private async void DownloadBatchSelection()
-    {
-        var levelsToDownload = new List<Level>(BatchSelectedLevels.Values);
-        LeaveBatchSelection();
-
-        for (var index = 0; index < levelsToDownload.Count; index++)
-        {
-            var levelToDownload = levelsToDownload[index];
-            var aborted = false;
-            var succeeded = false;
-            var failed = false;
-            Context.LevelManager.DownloadAndUnpackLevelDialog(
-                levelToDownload,
-                allowAbort: true,
-                onDownloadAborted: () =>
-                {
-                    aborted = true;
-                    Toast.Enqueue(Toast.Status.Success, "TOAST_DOWNLOAD_CANCELLED".Get());
-                },
-                onDownloadFailed: () =>
-                {
-                    failed = true;
-                    Toast.Next(Toast.Status.Failure, "TOAST_COULD_NOT_DOWNLOAD_LEVEL".Get());
-                },
-                onUnpackFailed: () =>
-                {
-                    failed = true;
-                    Toast.Next(Toast.Status.Failure, "TOAST_COULD_NOT_UNPACK_LEVEL".Get());
-                },
-                onUnpackSucceeded: level =>
-                {
-                    succeeded = true;
-                    levelToDownload.CopyFrom(level);
-                },
-                batchDownloading: true,
-                batchDownloadCurrent: index + 1,
-                batchDownloadTotal: levelsToDownload.Count
-            );
-            await UniTask.WaitUntil(() => aborted || succeeded || failed);
-            if (aborted) return;
-        }
-
-        Toast.Next(Toast.Status.Success, "TOAST_SUCCESSFULLY_DOWNLOADED_X_LEVELS".Get(levelsToDownload.Count));
-    }
-    
-    public bool OnLevelCardPressed(LevelView view)
-    {
-        if (!IsBatchSelectingLevels)
-        {
-            if (Context.IsOffline() && !view.Level.IsLocal)
-            {
-                Dialog.PromptAlert("DIALOG_OFFLINE_LEVEL_NOT_AVAILABLE".Get());
-                return false;
-            }
-
-            return true;
-        }
-        else
-        {
-            if (Context.LevelManager.LoadedLocalLevels.ContainsKey(view.Level.Id))
-            {
-                Context.AudioManager.Get("ActionError").Play();
-                Context.Haptic(HapticTypes.Warning, true);
-                return false;
-            }
-            
-            Context.AudioManager.Get("Navigate1").Play();
-            Context.Haptic(HapticTypes.Selection, true);
-            
-            if (BatchSelectedLevels.ContainsKey(view.Level.Id))
-            {
-                BatchSelectedLevels.Remove(view.Level.Id);
-
-                if (!BatchSelectedLevels.Any())
-                {
-                    LeaveBatchSelection();
-                }
-            }
-            else
-            {
-                BatchSelectedLevels[view.Level.Id] = view.Level;
-            }
-            
-            UpdateBatchSelectionText();
-
-            return false;
-        }
-    }
-
-    public void OnLevelCardLongPressed(LevelView view)
-    {
-        if (!IsBatchSelectingLevels)
-        {
-            Context.AudioManager.Get("Navigate1").Play();
-            Context.Haptic(HapticTypes.Selection, true);
-
-            if (!Context.LevelManager.LoadedLocalLevels.ContainsKey(view.Level.Id))
-            {
-                BatchSelectedLevels[view.Level.Id] = view.Level;
-            }
-
-            EnterBatchSelection();
-            UpdateBatchSelectionText();
-        }
-        else
-        {
-            OnLevelCardPressed(view);
-        }
-    }
 
     public override void OnScreenChangeStarted(Screen @from, Screen to)
     {
         base.OnScreenChangeStarted(@from, to);
         if (from == this)
         {
-            LeaveBatchSelection();
+            levelBatchSelectionHandler.LeaveBatchSelection();
         }
     }
 

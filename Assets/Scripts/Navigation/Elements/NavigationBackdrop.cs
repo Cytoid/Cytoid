@@ -8,6 +8,9 @@ using UnityEngine.UI;
 
 public class NavigationBackdrop : SingletonMonoBehavior<NavigationBackdrop>, ScreenChangeListener
 {
+    public static float TranslucentImageMaxAlpha = 1f;
+    public static float TranslucentImageSpriteBlending = 0.5f;
+    
     public Camera renderCamera;
     public Canvas renderCanvas;
     public RectTransform renderRectTransform;
@@ -68,6 +71,7 @@ public class NavigationBackdrop : SingletonMonoBehavior<NavigationBackdrop>, Scr
         Context.ScreenManager.AddHandler(this);
         SetVisible(false);
         translucentImage.enabled = false;
+        translucentImage.spriteBlending = TranslucentImageSpriteBlending;
         translucentRawImageBackground.enabled = false;
         translucentRawImage.enabled = false;
     }
@@ -150,11 +154,11 @@ public class NavigationBackdrop : SingletonMonoBehavior<NavigationBackdrop>, Scr
             target.DOKill();
             if (!immediate)
             {
-                target.DOFade(1, TransitionTime);
+                target.DOFade(TranslucentImageMaxAlpha, TransitionTime);
             }
             else
             {
-                target.SetAlpha(1);
+                target.SetAlpha(TranslucentImageMaxAlpha);
             }
 
             if (target == translucentRawImage)

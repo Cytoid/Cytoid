@@ -126,7 +126,7 @@ public class CharacterManager
             // Online
             return RestClient.GetArray<CharacterMeta>(new RequestHelper
             {
-                Uri = $"{Context.ApiUrl}/characters",
+                Uri = $"{Context.ApiUrl}/characters/all",
                 Headers = Context.OnlinePlayer.GetRequestHeaders(),
                 EnableDebug = true
             }).Then(array =>

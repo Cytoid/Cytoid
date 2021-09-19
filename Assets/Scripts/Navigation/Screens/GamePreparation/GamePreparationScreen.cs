@@ -23,9 +23,8 @@ public class GamePreparationScreen : Screen
     public RankingsTab rankingsTab;
     public RatingTab ratingTab;
 
-    public RectTransform ownerRoot;
-    public Avatar ownerAvatar;
-    public Text ownerName;
+    public MediumAvatarWithName ownerAvatar;
+    public Transform ownerRoot;
 
     public GameObject gameplayIcon;
     public GameObject settingsIcon;
@@ -198,18 +197,16 @@ public class GamePreparationScreen : Screen
 
     private void LoadOwner()
     {
-        if (Level.Type == LevelType.User && Level.OnlineLevel?.Owner != null && Level.OnlineLevel?.Owner.Uid != Context.OfficialAccountId)
+        if (Level.OnlineLevel?.Owner != null)
         {
             ownerRoot.gameObject.SetActive(true);
-            ownerAvatar.action = AvatarAction.OpenProfile;
             ownerAvatar.SetModel(Level.OnlineLevel.Owner);
-            ownerName.text = Level.OnlineLevel.Owner.Uid;
         }
         else
         {
             ownerRoot.gameObject.SetActive(false);
-            ownerAvatar.Dispose();
         }
+        ownerRoot.parent.RebuildLayout();
     }
 
     private void UpdateTopMenu()
@@ -389,8 +386,7 @@ public class GamePreparationScreen : Screen
     public override void OnScreenBecameInactive()
     {
         base.OnScreenBecameInactive();
-        ownerRoot.gameObject.SetActive(false);
-        ownerAvatar.Dispose();
+        
         Context.LevelManager.OnLevelMetaUpdated.RemoveListener(OnLevelMetaUpdated);
         Context.OnlinePlayer.OnLevelBestPerformanceUpdated.RemoveListener(OnLevelBestPerformanceUpdated);
         Context.OnSelectedLevelChanged.RemoveListener(OnSelectedLevelChanged);

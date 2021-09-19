@@ -300,7 +300,7 @@ public class CharacterSelectionScreen : Screen
             levelText.text = $"{"PROFILE_WIDGET_LEVEL".Get()} {meta.Exp.CurrentLevel}";
             expText.text = $"{"PROFILE_WIDGET_EXP".Get()} {(int) meta.Exp.TotalExp}/{(int) meta.Exp.NextLevelExp}";
 
-            infoCard.transform.RebuildLayout();
+            LayoutFixer.Fix(infoCard.transform);
 
             if (characterAsset.musicAudio == null)
             {

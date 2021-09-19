@@ -1,10 +1,12 @@
+using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
+using MoreMountains.NiceVibrations;
 using Proyecto26;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class CollectionDetailsScreen : Screen
+public class CollectionDetailsScreen : Screen, LevelCardEventHandler, LevelBatchSelection
 {
     public TransitionElement icons;
     
@@ -14,13 +16,70 @@ public class CollectionDetailsScreen : Screen
     public Image coverImage;
     public Text titleText;
     public Text sloganText;
+    
+    public MediumAvatarWithName curatorAvatar;
+    
+    public TransitionElement batchActionBar;
+    public Text batchActionBarMessage;
+    public InteractableMonoBehavior batchActionCancelButton;
+    public InteractableMonoBehavior batchActionSelectAllButton;
+    public InteractableMonoBehavior batchActionDownloadButton;
+    
+    private readonly LevelBatchSelectionDownloadHandler levelBatchSelectionHandler = new LevelBatchSelectionDownloadHandler();
 
+    public bool IsBatchSelectingLevels => levelBatchSelectionHandler.IsBatchSelectingLevels;
+    public Dictionary<string, Level> BatchSelectedLevels => levelBatchSelectionHandler.BatchSelectedLevels;
+    public LevelBatchAction LevelBatchAction => levelBatchSelectionHandler.LevelBatchAction;
+    public bool OnLevelCardPressed(LevelView view) => levelBatchSelectionHandler.OnLevelCardPressed(view);
+    public void OnLevelCardLongPressed(LevelView view) => levelBatchSelectionHandler.OnLevelCardLongPressed(view);
+
+    public override void OnScreenChangeStarted(Screen from, Screen to)
+    {
+        base.OnScreenChangeStarted(from, to);
+        if (from == this)
+        {
+            levelBatchSelectionHandler.LeaveBatchSelection();
+        }
+    }
+    
     public override void OnScreenInitialized()
     {
         base.OnScreenInitialized();
         coverImage.sprite = null;
         titleText.text = "";
         sloganText.text = "";
+        
+        levelBatchSelectionHandler.OnEnterBatchSelection.AddListener(() =>
+        {
+            batchActionBar.transform.RebuildLayout();
+            batchActionBar.Enter();
+        });
+        levelBatchSelectionHandler.OnLeaveBatchSelection.AddListener(() =>
+        {
+            batchActionBar.Leave();
+        });
+        levelBatchSelectionHandler.batchActionBarMessage = batchActionBarMessage;
+        batchActionCancelButton.onPointerClick.AddListener(_ => levelBatchSelectionHandler.LeaveBatchSelection());
+        batchActionSelectAllButton.onPointerClick.AddListener(_ =>
+        {
+            if (BatchSelectedLevels.Count < LoadedPayload.Collection.levels.Count)
+            {
+                BatchSelectedLevels.Clear();
+                LoadedPayload.Collection.levels.ForEach(it =>
+                {
+                    if (!it.HasLocal(LevelType.User) && !it.HasLocal(LevelType.BuiltIn))
+                    {
+                        BatchSelectedLevels[it.Uid] = it.ToLevel(LevelType.User);
+                    }
+                });
+                levelBatchSelectionHandler.UpdateBatchSelectionText();
+            }
+            else
+            {
+                BatchSelectedLevels.Clear();
+            }
+        });
+        batchActionDownloadButton.onPointerClick.AddListener(_ => levelBatchSelectionHandler.DownloadBatchSelection());
     }
 
     public override void OnScreenEnterCompleted()
@@ -68,6 +127,7 @@ public class CollectionDetailsScreen : Screen
     
     protected override void LoadPayload(ScreenLoadPromise promise)
     {
+        coverImage.sprite = null;
         coverImage.color = Color.black;
 
         if (IntentPayload.Collection != null)
@@ -111,10 +171,9 @@ public class CollectionDetailsScreen : Screen
             });
 
         icons.Leave(false, true);
-        if (LoadedPayload.Collection.owner.Uid != Context.OfficialAccountId)
-        {
-            icons.Enter();
-        }
+        icons.Enter();
+
+        curatorAvatar.SetModel(LoadedPayload.Collection.owner);
         
         if (coverImage.sprite == null || coverImage.sprite.texture == null)
         {

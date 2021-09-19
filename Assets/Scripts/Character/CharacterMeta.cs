@@ -14,10 +14,10 @@ public class CharacterMeta
     
     [JsonProperty("locked")] public bool Locked { get; set; }
     
-    [JsonProperty("set_id")] [CanBeNull] public string SetId { get; set; }
-    [JsonProperty("variant_name")] [CanBeNull] public string VariantName { get; set; }
-    [JsonProperty("variant_parallax_asset")] [CanBeNull] public string VariantParallaxAsset { get; set; }
-    [JsonProperty("variant_audio_asset")] [CanBeNull] public string VariantAudioAsset { get; set; }
+    [JsonProperty("setId")] [CanBeNull] public string SetId { get; set; }
+    [JsonProperty("variantName")] [CanBeNull] public string VariantName { get; set; }
+    [JsonProperty("variantParallaxAsset")] [CanBeNull] public string VariantParallaxAsset { get; set; }
+    [JsonProperty("variantAudioAsset")] [CanBeNull] public string VariantAudioAsset { get; set; }
 
     [Serializable]
     public class IllustratorMeta

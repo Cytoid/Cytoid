@@ -63,25 +63,25 @@ public class ContextEditor : Editor
 
             if (GUILayout.Button("Test reward overlay"))
             {
-                RewardOverlay.Show(new List<OnlinePlayerStateChange.Reward>
+                RewardOverlay.Show(new List<Reward>
                 {
-                    JsonConvert.DeserializeObject<OnlinePlayerStateChange.Reward>(@"{""type"":""character"",""value"":{""illustrator"":{""name"":""しがらき"",""url"":""https://www.pixiv.net/en/users/1004274""},""designer"":{""name"":"""",""url"":""""},""name"":""Mafumafu"",""description"":""何でも屋です。"",""_id"":""5e6f90dcdab3462655fb93a4"",""levelId"":4101,""asset"":""Mafu"",""tachieAsset"":""MafuTachie"",""id"":""5e6f90dcdab3462655fb93a4""}}"),
-                    new OnlinePlayerStateChange.Reward
+                    JsonConvert.DeserializeObject<Reward>(@"{""type"":""character"",""value"":{""illustrator"":{""name"":""しがらき"",""url"":""https://www.pixiv.net/en/users/1004274""},""designer"":{""name"":"""",""url"":""""},""name"":""Mafumafu"",""description"":""何でも屋です。"",""_id"":""5e6f90dcdab3462655fb93a4"",""levelId"":4101,""asset"":""Mafu"",""tachieAsset"":""MafuTachie"",""id"":""5e6f90dcdab3462655fb93a4""}}"),
+                    new Reward
                     {
                         type = "level",
                         onlineLevelValue = new Lazy<OnlineLevel>(() => MockData.OnlineLevel)
                     },
-                    new OnlinePlayerStateChange.Reward
+                    new Reward
                     {
                         type = "badge",
                         badgeValue = new Lazy<Badge>(() => JsonConvert.DeserializeObject<Badge>(@"{""_id"":""5f38e922fe1dfb383c7b93fa"",""uid"":""sora-1"",""listed"":false,""metadata"":{""imageUrl"":""http://artifacts.cytoid.io/badges/sora1.jpg""},""type"":""event"",""id"":""5f38e922fe1dfb383c7b93fa""}"))
                     },
-                    new OnlinePlayerStateChange.Reward
+                    new Reward
                     {
                         type = "badge",
                         badgeValue = new Lazy<Badge>(() => JsonConvert.DeserializeObject<Badge>(@"{""_id"":""5f390f2cfe1dfb383c7b93fb"",""uid"":""sora-2"",""listed"":false,""metadata"":{""imageUrl"":""http://artifacts.cytoid.io/badges/sora2.jpg"",""overrides"":[""sora-1""]},""type"":""event"",""id"":""5f390f2cfe1dfb383c7b93fb""}"))
                     },
-                    new OnlinePlayerStateChange.Reward
+                    new Reward
                     {
                         type = "badge",
                         badgeValue = new Lazy<Badge>(() => JsonConvert.DeserializeObject<Badge>(@"{""_id"":""5f390f57fe1dfb383c7b93fc"",""uid"":""sora-3"",""listed"":false,""metadata"":{""imageUrl"":""http://artifacts.cytoid.io/badges/sora3.jpg"",""overrides"":[""sora-1"",""sora-2""]},""type"":""event"",""id"":""5f390f57fe1dfb383c7b93fc""}"))

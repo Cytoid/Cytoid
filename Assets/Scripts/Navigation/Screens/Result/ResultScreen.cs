@@ -237,7 +237,7 @@ public class ResultScreen : Screen
                         RewardOverlay.Show(stateChange.rewards);
 
                         if (stateChange.rewards.Any(
-                            it => it.Type == OnlinePlayerStateChange.Reward.RewardType.Level))
+                            it => it.Type == Reward.RewardType.Level))
                         {
                             Context.Library.Fetch();
                         }

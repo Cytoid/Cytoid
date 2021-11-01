@@ -10,9 +10,9 @@ public class QuestView : MonoBehaviour
     public GameObject objectiveRoot;
     public GameObject rewardRoot;
     
-    public void SetModel(Quest quest)
+    public void SetModel(OngoingQuest quest)
     {
-        descriptionText.text = quest.Description;
+        descriptionText.text = quest.Name;
         foreach (Transform child in objectiveRoot.transform) Destroy(child.gameObject);
         quest.Objectives.ForEach(it => Instantiate(objectiveViewPrefab, objectiveRoot.transform).SetModel(it));
         foreach (Transform child in rewardRoot.transform) Destroy(child.gameObject);

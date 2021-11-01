@@ -1,9 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using Ink.Runtime;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Proyecto26;
 using Sirenix.OdinInspector;
 using Sirenix.OdinInspector.Editor;
 using UnityEditor;
@@ -147,43 +145,20 @@ public class QuickActions : OdinEditorWindow
     [DisableInEditorMode]
     private static void QuestOverlayTest()
     {
-        QuestOverlay.Show(new List<Quest>
+        RestClient.Get<AdventureState>(new RequestHelper 
         {
-            new Quest
+            Uri = "https://5375-8-45-42-81.ngrok.io/epics/adventures/edge-of-consciousness",
+            Headers = Context.OnlinePlayer.GetRequestHeaders(),
+            EnableDebug = true
+        })
+            .Then(data =>
             {
-                Description = "解锁角色「木苏糖（觉醒）」",
-                Objectives = new List<Objective>
-                {
-                    new Objective
-                    {
-                        Description = "在关卡「愛を探して」获得 SSS 或以上成绩",
-                        IsCompleted = true,
-                        CurrentProgress = 1,
-                        MaxProgress = 1
-                    },
-                    new Objective
-                    {
-                        Description = "角色「木苏糖」等级达到 50 级",
-                        IsCompleted = false,
-                        CurrentProgress = 47,
-                        MaxProgress = 50
-                    }
-                },
-                Rewards = new List<Reward>
-                {
-                    new Reward
-                    {
-                        type = "badge",
-                        badgeValue = new Lazy<Badge>(() => JsonConvert.DeserializeObject<Badge>(@"{""_id"":""5f38e922fe1dfb383c7b93fa"",""uid"":""sora-1"",""listed"":false,""metadata"":{""imageUrl"":""http://artifacts.cytoid.io/badges/sora1.jpg""},""type"":""event"",""id"":""5f38e922fe1dfb383c7b93fa""}"))
-                    },
-                    new Reward()
-                    {
-                        type = "character",
-                        characterValue = new Lazy<CharacterMeta>(() => MockData.AvailableCharacters[MockData.AvailableCharacters.Count - 1])
-                    }
-                }
-            }
-        });
+                QuestOverlay.Show(data);
+            })
+            .Catch(err =>
+            {
+                Debug.LogError(err);
+            });
     }
     
 }

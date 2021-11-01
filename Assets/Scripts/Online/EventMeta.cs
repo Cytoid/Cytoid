@@ -15,6 +15,7 @@ public class EventMeta
 
     public int? levelId;
     public string collectionId;
+    [CanBeNull] public string epicId;
     [CanBeNull] public OnlineImageAsset cover;
     [CanBeNull] public OnlineImageAsset logo;
 

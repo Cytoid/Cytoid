@@ -58,7 +58,7 @@ public class Dialog : MonoBehaviour
         get => progress;
         set
         {
-            progress = value;
+            progress = Mathf.Clamp(value, 0, 1);
             progressImage.rectTransform.DOWidth(progress *
                                                 ((RectTransform) progressImage.transform.parent.transform).rect.width,
                 0.4f).SetEase(Ease.OutCubic);

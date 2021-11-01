@@ -19,6 +19,7 @@ public class EventSelectionScreen : Screen
     public TransitionElement infoBanner;
     public Text durationText;
     public InteractableMonoBehavior viewDetailsButton;
+    public InteractableMonoBehavior viewObjectivesButton;
     public InteractableMonoBehavior enterButton;
     
     public InteractableMonoBehavior helpButton;
@@ -26,6 +27,7 @@ public class EventSelectionScreen : Screen
     public InteractableMonoBehavior nextButton;
 
     public BadgeNotification viewDetailsNotification;
+    public BadgeNotification viewObjectivesNotification;
 
     public override void OnScreenInitialized()
     {
@@ -174,6 +176,10 @@ public class EventSelectionScreen : Screen
             {
                 viewDetailsNotification.Show();
             }
+            if (!Context.Player.Settings.ReadEventObjectives.Contains(meta.uid))
+            {
+                viewObjectivesNotification.Show();
+            }
             viewDetailsButton.onPointerClick.SetListener(_ =>
             {
                 Context.Player.Settings.ReadEventDetails.Add(meta.uid);
@@ -208,6 +214,27 @@ public class EventSelectionScreen : Screen
             durationText.text = (meta.startDate.HasValue ? meta.startDate.Value.LocalDateTime.ToString(dateFormat) : "")
                                 + "~"
                                 + (meta.endDate.HasValue ? meta.endDate.Value.LocalDateTime.ToString(dateFormat) : "");
+            viewObjectivesButton.onPointerClick.SetListener(_ =>
+            {
+                Context.Player.Settings.ReadEventObjectives.Add(meta.uid);
+                Context.Player.SaveSettings();
+                viewObjectivesNotification.Hide();
+                
+                SpinnerOverlay.Show();
+                RestClient.Get<AdventureState>(new RequestHelper
+                    {
+                        Uri = $"{Context.ApiUrl}/epics/adventures/{meta.epicId}",
+                        Headers = Context.OnlinePlayer.GetRequestHeaders(),
+                        EnableDebug = true
+                    })
+                    .Then(QuestOverlay.Show)
+                    .Catch(err =>
+                    {
+                        Debug.LogError(err);
+                        Dialog.PromptAlert("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
+                    })
+                    .Finally(() => SpinnerOverlay.Hide());
+            });
             enterButton.onPointerClick.SetListener(_ =>
             {
                 if (meta.locked)

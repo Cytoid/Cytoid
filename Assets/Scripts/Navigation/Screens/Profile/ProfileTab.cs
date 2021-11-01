@@ -45,8 +45,10 @@ public class ProfileTab : MonoBehaviour
     public LevelCard levelCardPrefab;
     public CollectionSection collectionSection;
     public CollectionCard collectionCardPrefab;
+    public TransitionElement characterStatusColumn;
     public Text characterNameText;
     public Text characterLevelText;
+    public Text characterExpText;
     
     public RectTransform characterPaddingReference;
     
@@ -57,27 +59,6 @@ public class ProfileTab : MonoBehaviour
 
     public FullProfile Profile { get; private set; }
 
-    public void UpdateCharacterInfo()
-    {
-        var meta = Context.Database.Let(it =>
-        {
-            var col = it.GetCollection<CharacterMeta>("characters");
-            try
-            {
-                var result = col.Find(m => m.AssetId == Context.CharacterManager.SelectedCharacterId);
-                return result.FirstOrDefault();
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning(e);
-                return null;
-            }
-        });
-        characterNameText.text = meta?.Name ?? "Sayaka";
-        characterLevelText.text = $"{"PROFILE_WIDGET_LEVEL".Get()} {meta?.Exp?.CurrentLevel ?? 1}";
-        LayoutFixer.Fix(characterNameText.transform.parent.parent);
-    }
-    
     public async void SetModel(FullProfile profile)
     {
         Profile = profile;
@@ -263,6 +244,15 @@ public class ProfileTab : MonoBehaviour
         await UniTask.DelayFrame(0);
         
         characterTransitionElement.Enter();
+    }
+
+    public async void UpdateCharacterMeta(string name, CharacterMeta.ExpData expData)
+    {
+        characterNameText.text = name ?? "???";
+        characterLevelText.text = $"{"PROFILE_WIDGET_LEVEL".Get()} {expData?.CurrentLevel.ToString() ?? "???"}";
+        characterExpText.text = $"{"PROFILE_WIDGET_EXP".Get()} " + (expData != null ? $"{(int) expData.TotalExp}/{(int) expData.NextLevelExp}" : "???");
+        characterNameText.transform.parent.RebuildLayout();
+        characterStatusColumn.Enter();
     }
 
     private void UpdateChart(ChartType type)

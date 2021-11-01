@@ -12,9 +12,10 @@ public class CharacterMeta
     [JsonProperty("illustrator")] public IllustratorMeta Illustrator { get; set; }
     [JsonProperty("designer")] public CharacterDesignerMeta CharacterDesigner { get; set; }
     
-    [JsonProperty("locked")] public bool Locked { get; set; }
+    [JsonProperty("owned")] public bool Owned { get; set; }
     
     [JsonProperty("setId")] [CanBeNull] public string SetId { get; set; }
+    [JsonProperty("setOrder")] public int SetOrder { get; set; }
     [JsonProperty("variantName")] [CanBeNull] public string VariantName { get; set; }
     [JsonProperty("variantParallaxAsset")] [CanBeNull] public string VariantParallaxAsset { get; set; }
     [JsonProperty("variantAudioAsset")] [CanBeNull] public string VariantAudioAsset { get; set; }
@@ -35,8 +36,9 @@ public class CharacterMeta
 
     [JsonProperty("level")] [CanBeNull] public OnlineLevel Level { get; set; }
     [JsonProperty("asset")] public string AssetId { get; set; }
+    [JsonProperty("questId")] public string QuestId { get; set; }
     
-    [JsonProperty("exp")] public ExpData Exp { get; set; }
+    [JsonProperty("exp")] [CanBeNull] public ExpData Exp { get; set; }
     
     [Serializable]
     public class ExpData

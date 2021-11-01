@@ -7,6 +7,8 @@ using System.Threading;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 using Cytoid.Storyboard;
+using LiteDB;
+using Polyglot;
 using UnityEditor;
 using UnityEngine.Events;
 using UnityEngine.Networking;
@@ -262,8 +264,29 @@ public class Game : MonoBehaviour
         MusicLength = Music.Length;
 
         // Load storyboard
-        StoryboardPath =
-            Level.Path + (chartMeta.storyboard != null ? chartMeta.storyboard.path : "storyboard.json");
+        string sbFile = null;
+        if (chartMeta.storyboard != null)
+        {
+            if (chartMeta.storyboard.localizations != null)
+            {
+                Debug.Log("Using localized storyboard");
+                sbFile = chartMeta.storyboard.localizations.GetOrDefault(Localization.Instance.SelectedLanguage.ToString());
+                if (sbFile == null)
+                {
+                    Debug.LogError($"Localized storyboard for language {Localization.Instance.SelectedLanguage.ToString()} does not exist");
+                }
+            }
+            if (sbFile == null)
+            {
+                sbFile = chartMeta.storyboard.path;
+            }
+        }
+        if (sbFile == null)
+        {
+            sbFile = "storyboard.json";
+        }
+        
+        StoryboardPath = Level.Path + sbFile;
 
         if (File.Exists(StoryboardPath))
         {

@@ -71,12 +71,8 @@ public static class SettingsFactory
                     var labels = new List<(string, int)>
                     {
                         ("SETTINGS_SERVER_REGION_INTERNATIONAL".Get(), (int) CdnRegion.International),
-                        ("SETTINGS_SERVER_REGION_MAINLAND_CHINA".Get(), (int) CdnRegion.MainlandChina)
+                        ("Debug", (int) CdnRegion.Debug)
                     };
-                    if (Application.isEditor || Context.Player.ShouldEnableDebug())
-                    {
-                        labels.Add(("Debug", (int) CdnRegion.Debug));
-                    }
                     element.SetContent("SETTINGS_SERVER_REGION".Get(), "SETTINGS_SERVER_REGION_DESC".Get(),
                         () => (int) lp.Settings.CdnRegion, it =>
                         {
@@ -84,6 +80,15 @@ public static class SettingsFactory
                             Context.Player.ClearTrigger("Reset Server CDN To CN");
                         }, labels.ToArray()).SaveSettingsOnChange();
                 });
+                var input = Object.Instantiate(provider.inputPreferenceElement, parent);
+                input.SetContent("Debug API URL", "",
+                        () => lp.Settings.DebugApiUrl, it =>
+                        {
+                            lp.Settings.DebugApiUrl = it;
+                            input.inputField.text = it.ToString(CultureInfo.InvariantCulture).Trim().ToLower();
+                        },
+                        "", "", widerInput: true)
+                    .SaveSettingsOnChange();
             }
         }
 

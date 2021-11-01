@@ -109,6 +109,7 @@ public class LevelMeta : IComparable<LevelMeta>
     public class StoryboardSection
     {
         public string path = "storyboard.json";
+        public Dictionary<string, string> localizations = new Dictionary<string, string>();
     }
 
     public bool Validate()

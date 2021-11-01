@@ -140,8 +140,9 @@ public class LevelCard : InteractableMonoBehavior
         coverToken?.Cancel();
     }
 
-    public void SetModel(Level level)
+    public void SetModel(Level level, bool ignoreIfIdEqual = false)
     {
+        if (ignoreIfIdEqual && level.Id == levelView?.Level?.Id) return;
         SetModel(new LevelView {Level = level});
     }
 

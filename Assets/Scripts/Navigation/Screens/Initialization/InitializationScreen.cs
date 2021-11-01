@@ -56,7 +56,7 @@ public class InitializationScreen : Screen
         statusText.transform.RebuildLayout();
         // await Context.Instance.DetectServerCdn();
         // await Context.Instance.CheckServerCdn();
-        Context.Player.Settings.CdnRegion = CdnRegion.International;
+        if (!Application.isEditor) Context.Player.Settings.CdnRegion = CdnRegion.International;
         await Context.BundleManager.DownloadAndSaveCatalog();
 
         spinnerElement.gameObject.SetActive(false);

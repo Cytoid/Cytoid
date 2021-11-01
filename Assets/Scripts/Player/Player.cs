@@ -89,6 +89,13 @@ public class Player
         {
             Settings.Language = (int) Language.English;
         }
+        
+        // Save default Sayaka character meta
+        var characterCol = Context.Database.GetCollection<CharacterMeta>("characters");
+        if (!characterCol.Exists(it => it.Id == BuiltInData.DefaultCharacterId))
+        {
+            characterCol.Insert(BuiltInData.DefaultCharacterMeta);
+        }
     }
     
     public void LoadSettings()

@@ -151,7 +151,8 @@ public class OnlinePlayer
         return new Dictionary<string, string>
         {
             {"Authorization", "JWT " + Context.Player.Settings.LoginToken},
-            {"Accept-Language", ((Language) Context.Player.Settings.Language).GetAcceptLanguageHeaderValue()}
+            {"Accept-Language", ((Language) Context.Player.Settings.Language).GetAcceptLanguageHeaderValue()},
+            {"User-Agent", $"CytoidClient/{Context.VersionName}"}
         };
     }
 

@@ -26,12 +26,12 @@ public class QuestOverlay : SingletonMonoBehavior<QuestOverlay>
         closeButton.onPointerClick.AddListener(_ => Hide());
     }
 
-    public static async void Show(List<Quest> quests)
+    public static async void Show(AdventureState adventureState)
     {
         Instance.Apply(it =>
         {
             foreach (Transform child in Instance.layoutRoot.transform) Destroy(child.gameObject);
-            quests.ForEach(quest => Instantiate(it.questViewPrefab, it.layoutRoot.transform).SetModel(quest));
+            adventureState.OngoingQuests.ForEach(quest => Instantiate(it.questViewPrefab, it.layoutRoot.transform).SetModel(quest));
             LayoutFixer.Fix(it.layoutRoot.transform);
             
             it.canvas.enabled = true;

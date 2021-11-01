@@ -55,7 +55,7 @@ public class StartupLogger : SingletonMonoBehavior<StartupLogger>
 
     private void Save()
     {
-        var path = Context.UserDataPath + "/startup.log";
+        var path = Application.persistentDataPath + "/startup.log";
         try
         {
             File.WriteAllLines(path, entries);

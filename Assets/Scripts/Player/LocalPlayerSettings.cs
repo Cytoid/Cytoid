@@ -19,6 +19,7 @@ public class LocalPlayerSettings
     [JsonProperty("schema_version")] public int SchemaVersion { get; set; }
 
     [JsonProperty("cdn_region")] public CdnRegion CdnRegion { get; set; } = CdnRegion.International;
+    [JsonProperty("cdn_region")] public string DebugApiUrl { get; set; } = "http://localhost:4000";
 
     [JsonProperty("player_id")] public string PlayerId { get; set; }
 
@@ -153,6 +154,9 @@ public class LocalPlayerSettings
     
     [JsonProperty("read_event_details")]
     public HashSet<string> ReadEventDetails { get; set; } = new HashSet<string>();
+    
+    [JsonProperty("read_event_objectives")]
+    public HashSet<string> ReadEventObjectives { get; set; } = new HashSet<string>();
 
     [JsonProperty("training_mode_version")]
     public int TrainingModeVersion { get; set; } = 1;
@@ -199,7 +203,7 @@ public static class CdnRegionExtensions
             case CdnRegion.MainlandChina:
                 return "https://api.cytoid.cn";
             case CdnRegion.Debug:
-                return "http://data.cs.purdue.edu:8964";
+                return Context.Player.Settings.DebugApiUrl;
             default:
                 throw new ArgumentOutOfRangeException(nameof(region), region, null);
         }

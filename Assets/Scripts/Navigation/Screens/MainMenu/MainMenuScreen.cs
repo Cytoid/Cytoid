@@ -112,12 +112,22 @@ public class MainMenuScreen : Screen
             story.variablesState["IsBeginner"] = levelCount < 10;
             await DialogueOverlay.Show(story);
             LevelSelectionScreen.HighlightedLevelId = null;
+
+            Context.Player.ShouldOneShot("Android Migration Info");
         }
         else
         {
             if (DialogueOverlay.IsShown())
             {
                 await UniTask.WaitUntil(() => !DialogueOverlay.IsShown());
+            }
+         
+            if (Context.AndroidVersionCode >= 30 || Application.isEditor)
+            {
+                if (Context.Player.ShouldOneShot("Android Migration Info"))
+                {
+                    await AndroidMigrationInfoOverlay.Show();
+                }
             }
             
             if (PromptCachedCharacterDataCleared)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 using Proyecto26;
 using Cysharp.Threading.Tasks;
@@ -53,8 +54,6 @@ public class ProfileScreen : Screen
         contentTabs.UnselectAll();
         contentTabs.gameObject.SetActive(false);
         topRightColumn.gameObject.SetActive(false);
-
-        profileTab.UpdateCharacterInfo();
         base.OnScreenBecameActive();
     }
 
@@ -152,18 +151,15 @@ public class ProfileScreen : Screen
         }
     }
 
-    protected override void LoadPayload(ScreenLoadPromise promise)
+    protected override async void LoadPayload(ScreenLoadPromise promise)
     {
         IntentPayload.IsPlayer = IntentPayload.Id == Context.OnlinePlayer.LastProfile?.User.Id;
-        if (IntentPayload.Profile != null)
-        {
-            promise.Resolve(IntentPayload);
-            return;
-        }
         if (IntentPayload.IsPlayer)
         {
             if (Context.OnlinePlayer.LastFullProfile != null)
             {
+                // Fetch latest character exp
+                await Context.CharacterManager.FetchSelectedCharacterExp();
                 IntentPayload.Profile = Context.OnlinePlayer.LastFullProfile;
                 promise.Resolve(IntentPayload);
                 return;
@@ -187,22 +183,75 @@ public class ProfileScreen : Screen
                     });
                 return;
             }
+        } 
+        else if (IntentPayload.Profile != null)
+        {
+            promise.Resolve(IntentPayload);
+            return;
         }
         
         SpinnerOverlay.Show();
+
         RestClient.Get<FullProfile>(new RequestHelper
         {
             Uri = $"{Context.ApiUrl}/profile/{IntentPayload.Id}/details",
             Headers = Context.OnlinePlayer.GetRequestHeaders(),
             EnableDebug = true
-        }).Then(data =>
+        }).Then(async profile =>
         {
             if (IntentPayload.IsPlayer)
             {
-                Context.OnlinePlayer.LastFullProfile = data;
+                Context.OnlinePlayer.LastFullProfile = profile;
+
+                if (profile.Character.AssetId != Context.CharacterManager.SelectedCharacterId)
+                {
+                    if (!await Context.BundleManager.DownloadAndSaveCatalog())
+                    {
+                        Context.ScreenManager.ChangeScreen(Context.ScreenManager.PopAndPeekHistory(), ScreenTransition.Out, addTargetScreenToHistory: false);
+                        return;
+                    }
+                    if (await Context.CharacterManager.SetActiveCharacter(profile.Character.AssetId) == null)
+                    {
+                        var (success, locallyResolved) = await Context.CharacterManager.DownloadCharacterAssetDialog(CharacterAsset.GetMainBundleId(profile.Character.AssetId));
+                        if (!success && !locallyResolved)
+                        {
+                            Context.ScreenManager.ChangeScreen(Context.ScreenManager.PopAndPeekHistory(), ScreenTransition.Out, addTargetScreenToHistory: false);
+                            return;
+                        }
+                        else
+                        {
+                            Context.CharacterManager.SelectedCharacterId = profile.Character.AssetId;
+                        }
+                    }
+                }
+                
+                // Fetch latest character exp
+                await Context.CharacterManager.FetchSelectedCharacterExp();
             }
-            IntentPayload.Profile = data;
+
+            IntentPayload.Profile = profile;
             promise.Resolve(IntentPayload);
+            
+            // RestClient.Get<CharacterMeta.ExpData>(new RequestHelper
+            // {
+            //     Uri = $"{Context.ApiUrl}/characters/exp?characterId={characterId}",
+            //     Headers = Context.OnlinePlayer.GetRequestHeaders(),
+            //     EnableDebug = true
+            // }).Then(expData =>
+            // {
+            //     profile.Character.Exp = expData;
+            // }).CatchRequestError(error =>
+            // {
+            //     if (error.IsHttpError)
+            //     {
+            //         Debug.LogError(error);
+            //         Context.Player.Settings.ActiveCharacterId = BuiltInData.DefaultCharacterAssetId;
+            //     }
+            // }).Finally(() =>
+            // {
+            //     IntentPayload.Profile = profile;
+            //     promise.Resolve(IntentPayload);
+            // });
         }).CatchRequestError(error =>
         {
             Debug.LogError(error);
@@ -235,6 +284,8 @@ public class ProfileScreen : Screen
         {
             profileTab.characterDisplay.Load(CharacterAsset.GetTachieBundleId(LoadedPayload.Profile.Character.AssetId));
         }
+        var (name, exp) = await Context.CharacterManager.FetchSelectedCharacterExp(useLocal: true);
+        profileTab.UpdateCharacterMeta(name, exp);
         contentTabs.Select(LoadedPayload.TabIndex);
         await UniTask.DelayFrame(2);
         if (LoadedPayload.ProfileScrollPosition > -1) profileTab.scrollRect.verticalNormalizedPosition = LoadedPayload.ProfileScrollPosition;

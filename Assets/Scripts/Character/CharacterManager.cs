@@ -49,7 +49,7 @@ public class CharacterManager
             return null;
         }
 
-        if (activeCharacterAssetBundle != null)
+        if (activeCharacterAssetBundle != null && requiresReload)
         {
             // Delay the release to allow LoopAudioPlayer to transition between character songs
             var currentGameObject = activeCharacterGameObject;
@@ -112,14 +112,74 @@ public class CharacterManager
         return (success, locallyResolved);
     }
 
+    public async UniTask<(string, CharacterMeta.ExpData)> FetchSelectedCharacterExp(bool useLocal = false)
+    {
+        var characterMeta = Context.Database.Let(it =>
+        {
+            var col = it.GetCollection<CharacterMeta>("characters");
+            try
+            {
+                var result = col.Find(m => m.AssetId == Context.CharacterManager.SelectedCharacterId);
+                return result.FirstOrDefault();
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning(e);
+                return null;
+            }
+        });
+        
+        if (characterMeta != null)
+        {
+            if (useLocal || Context.IsOffline())
+            {
+                return (characterMeta.Name, characterMeta.Exp);
+            }
+
+            // Fetch latest exp
+            bool? success = null;
+            var name = characterMeta.Name;
+            CharacterMeta.ExpData exp = null;
+            RestClient.Get<CharacterMeta.ExpData>(new RequestHelper
+            {
+                Uri = $"{Context.ApiUrl}/characters/{characterMeta.Id}/exp",
+                Headers = Context.OnlinePlayer.GetRequestHeaders(),
+                EnableDebug = true
+            }).Then(data =>
+            {
+                success = true;
+                name = characterMeta.Name;
+                exp = data;
+                
+                // Update DB meta
+                Context.Database.Let(it =>
+                {
+                    var col = it.GetCollection<CharacterMeta>("characters");
+                    var localMeta = col.FindOne(meta => meta.Id == characterMeta.Id);
+                    localMeta.Exp = data;
+                    col.Update(localMeta);
+                });
+            }).Catch(err =>
+            {
+                success = false;
+                Debug.LogError(err);
+            });
+
+            await UniTask.WaitUntil(() => success != null);
+
+            return (name, exp);
+        }
+
+        return (null, null);
+    }
+
     public RSG.IPromise<List<CharacterMeta>> GetAvailableCharactersMeta()
     {
         List<CharacterMeta> PostProcess(List<CharacterMeta> result)
         {
             var defaultCharacter = result.FirstOrDefault(it => it.AssetId == BuiltInData.DefaultCharacterAssetId);
             if (defaultCharacter != null) defaultCharacter.Date = DateTimeOffset.MinValue.ToString();
-            var sorted = result.OrderBy(x => x.Date == null ? DateTimeOffset.MinValue : DateTimeOffset.Parse(x.Date)).ToList();
-            return sorted;
+            return result;
         }
         if (Context.IsOnline())
         {
@@ -133,12 +193,12 @@ public class CharacterManager
             {
                 var characters = array.ToList();
                 
-                // Editor only!
-                if (Application.isEditor)
-                {
-                    characters.RemoveAll(it => MockData.AvailableCharacters.Any(x => it.Id == x.Id));
-                    characters.AddRange(MockData.AvailableCharacters.Where(it => characters.All(x => x.Id != it.Id)));
-                }
+                // // Editor only!
+                // if (Application.isEditor)
+                // {
+                //     characters.RemoveAll(it => MockData.AvailableCharacters.Any(x => it.Id == x.Id));
+                //     characters.AddRange(MockData.AvailableCharacters.Where(it => characters.All(x => x.Id != it.Id)));
+                // }
                 
                 // Save to DB
                 Context.Database.Let(it =>

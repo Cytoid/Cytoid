@@ -4,6 +4,7 @@ using MoreMountains.NiceVibrations;
 using UnityEngine;
 using UnityEngine.UI;
 
+// LOL.
 public class ThreoseGlitch : InteractableMonoBehavior
 {
     public static bool Glitched = false;
@@ -22,12 +23,13 @@ public class ThreoseGlitch : InteractableMonoBehavior
         {
             Debug.Log(Count);
             Count++;
-            if (Count == 13 && !Glitched)
+            if (Count == 100 && !Glitched)
             {
                 Glitched = true;
                 OnGlitched();
                 Context.PostSceneChanged.AddListener(OnPostSceneChanged);
-
+                Context.AudioManager.Get("Glitch").Play();
+                
                 if (Application.platform == RuntimePlatform.IPhonePlayer)
                 {
                     MMVibrationManager.Haptic(HapticTypes.HeavyImpact);

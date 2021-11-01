@@ -5,6 +5,7 @@ using ICSharpCode.SharpZipLib.Zip;
 using MoreMountains.NiceVibrations;
 using Proyecto26;
 using Cysharp.Threading.Tasks;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -166,18 +167,10 @@ public class ProfileWidget : SingletonMonoBehavior<ProfileWidget>, ScreenChangeL
                 }
                 else
                 {
-                    switch (error.StatusCode)
-                    {
-                        case 401:
-                            Toast.Next(Toast.Status.Failure, "TOAST_INCORRECT_ID_OR_PASSWORD".Get());
-                            break;
-                        case 404:
-                            Toast.Next(Toast.Status.Failure, "TOAST_ID_NOT_FOUND".Get());
-                            break;
-                        default:
-                            Toast.Next(Toast.Status.Failure, "TOAST_STATUS_CODE".Get(error.StatusCode));
-                            break;
-                    }
+                    var errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(error.Response);
+                    Toast.Next(Toast.Status.Failure, errorResponse.message);
+                    Debug.LogWarning("Sign in failed.");
+                    Debug.LogWarning(error);
                     SetSignedOut();
                 }
             });

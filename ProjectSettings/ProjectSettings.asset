@@ -124,7 +124,7 @@ PlayerSettings:
     16:10: 1
     16:9: 1
     Others: 1
-  bundleVersion: 2.0.2
+  bundleVersion: 2.1
   preloadedAssets: []
   metroInputSource: 0
   wsaTransparentSwapchain: 0
@@ -168,14 +168,14 @@ PlayerSettings:
   androidSupportedAspectRatio: 1
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
-    Android: me.tigerhix.cytoid.cn
+    Android: me.tigerhix.cytoid
     Standalone: com.Company.ProductName
     iPhone: me.tigerhix.cytoid
   buildNumber:
     iPhone: 105
-  AndroidBundleVersionCode: 102
+  AndroidBundleVersionCode: 105
   AndroidMinSdkVersion: 19
-  AndroidTargetSdkVersion: 29
+  AndroidTargetSdkVersion: 30
   AndroidPreferredInstallLocation: 1
   aotOptions: nrgctx-trampolines=8192,nimt-trampolines=8192,ntrampolines=4096
   stripEngineCode: 1
@@ -184,7 +184,7 @@ PlayerSettings:
   ForceInternetPermission: 1
   ForceSDCardPermission: 1
   CreateWallpaper: 0
-  APKExpansionFiles: 1
+  APKExpansionFiles: 0
   keepLoadedShadersAlive: 0
   StripUnusedMeshComponents: 1
   VertexChannelCompressionMask: 4054
@@ -249,12 +249,12 @@ PlayerSettings:
   clonedFromGUID: 5f34be1353de5cf4398729fda238591b
   templatePackageId: com.unity.template.2d@2.3.2
   templateDefaultScene: Assets/Scenes/SampleScene.unity
-  AndroidTargetArchitectures: 3
+  AndroidTargetArchitectures: 2
   AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 0}
   AndroidKeystoreName: C:/Cytoid/debug.keystore
   AndroidKeyaliasName: androiddebugkey
-  AndroidBuildApkPerCpuArchitecture: 1
+  AndroidBuildApkPerCpuArchitecture: 0
   AndroidTVCompatibility: 0
   AndroidIsGame: 1
   AndroidEnableTango: 0

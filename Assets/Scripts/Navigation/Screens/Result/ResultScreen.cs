@@ -25,6 +25,11 @@ public class ResultScreen : Screen
     public Text standardMetricText;
     public Text advancedMetricText;
 
+    public TransitionElement characterStatusColumn;
+    public Text characterNameText;
+    public Text characterLevelText;
+    public Text characterExpText;
+
     public RankingsTab rankingsTab;
     public RatingTab ratingTab;
     public GameObject rankingsIcon;
@@ -215,6 +220,33 @@ public class ResultScreen : Screen
         isSharing = false;
     }
 
+    public async void FetchCharacterExp()
+    {
+        var (name, previousExpData) = await Context.CharacterManager.FetchSelectedCharacterExp(useLocal: true);
+        var (_, expData) = await Context.CharacterManager.FetchSelectedCharacterExp();
+        if (State != ScreenState.Active) return;
+        characterNameText.text = name ?? "???";
+        characterLevelText.text = $"{"PROFILE_WIDGET_LEVEL".Get()} {expData?.CurrentLevel.ToString() ?? "???"}";
+        characterExpText.text = $"{"PROFILE_WIDGET_EXP".Get()} " + (expData != null ? $"{(int) expData.TotalExp}/{(int) expData.NextLevelExp}" : "???");
+
+        if (previousExpData != null && expData != null)
+        {
+            var levelDifference = expData.CurrentLevel - previousExpData.CurrentLevel;
+            var expDifference = expData.TotalExp - previousExpData.TotalExp;
+            if (levelDifference > 0)
+            {
+                characterLevelText.text += $" <color=#9BC53D>(+{levelDifference})</color>";
+            }
+            if (expDifference > 1e-6)
+            {
+                characterExpText.text = $"{"PROFILE_WIDGET_EXP".Get()} {(int)expData.TotalExp} <color=#9BC53D>(+{Math.Round(expDifference)})</color> /{(int)expData.NextLevelExp}";
+            }
+            
+            characterNameText.transform.parent.RebuildLayout();
+            characterStatusColumn.Enter();
+        }
+    }
+
     public void UploadRecord()
     {
         var usedAuto =  gameState.Mods.Contains(Mod.Auto) || gameState.Mods.Contains(Mod.AutoDrag) || gameState.Mods.Contains(Mod.AutoHold) || gameState.Mods.Contains(Mod.AutoFlick);
@@ -223,6 +255,17 @@ public class ResultScreen : Screen
         rankingsTab.spinner.IsSpinning = true;
 
         var uploadRecord = SecuredOperations.MakeRecord(gameState);
+        if (Application.isEditor)
+        {
+            if (Context.Instance.forceUploadScore >= 0)
+            {
+                uploadRecord.score = Context.Instance.forceUploadScore;
+            }
+            if (Context.Instance.forceUploadAccuracy >= 0)
+            {
+                uploadRecord.accuracy = Context.Instance.forceUploadAccuracy;
+            }
+        }
         SecuredOperations.UploadRecord(gameState, uploadRecord)
             .Then(stateChange =>
                 {
@@ -231,7 +274,9 @@ public class ResultScreen : Screen
                     EnterControls();
                     rankingsTab.UpdateRankings(gameState.Level.Id, gameState.Difficulty.Id);
                     Context.OnlinePlayer.FetchProfile();
-                    
+                    // Fetch latest character exp
+                    FetchCharacterExp();
+
                     if (stateChange.rewards != null)
                     {
                         RewardOverlay.Show(stateChange.rewards);

@@ -12,13 +12,15 @@ using Tayx.Graphy;
 using Cysharp.Threading.Tasks;
 using LiteDB;
 using Sentry;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
 public class Context : SingletonMonoBehavior<Context>
 {
+    public int forceUploadScore = -1;
+    public float forceUploadAccuracy = -1f;
+    
     public const string VersionName = "2.1";
     public const int VersionCode = 105;
 
@@ -184,9 +186,15 @@ public class Context : SingletonMonoBehavior<Context>
 
     private async void InitializeApplication()
     {
+        if (Application.platform == RuntimePlatform.Android)
+        {
+            // Get Android version
+            using (var version = new AndroidJavaClass("android.os.Build$VERSION")) {
+                AndroidVersionCode = version.GetStatic<int>("SDK_INT");
+                print("Android version code: " + AndroidVersionCode);
+            }
+        }
         LunarConsole.SetConsoleEnabled(true); // Enable startup debug
-        
-        SentrySdk.CaptureMessage("Test event");
 
         InitializationState = new InitializationState();
 
@@ -241,10 +249,6 @@ public class Context : SingletonMonoBehavior<Context>
         
         if (Application.platform == RuntimePlatform.Android)
         {
-            // Get Android version
-            using (var version = new AndroidJavaClass("android.os.Build$VERSION")) {
-                AndroidVersionCode = version.GetStatic<int>("SDK_INT");
-            }
             // Try to write to ensure we have write permissions
             try
             {
@@ -727,29 +731,30 @@ public class Context : SingletonMonoBehavior<Context>
         }
     }
 
-    private string GetAndroidStoragePath()
+    public string GetAndroidStoragePath()
     {
-        var path = "";
-        if (Application.platform == RuntimePlatform.Android)
+        if (Application.platform != RuntimePlatform.Android) return "";
+        return AndroidVersionCode <= 29 ? GetAndroidLegacyStoragePath() : Application.persistentDataPath;
+    }
+
+    public string GetAndroidLegacyStoragePath()
+    {
+        try
         {
-            try
+            using (var javaClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
             {
-                using (var javaClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+                using (var activityClass = javaClass.GetStatic<AndroidJavaObject>("currentActivity"))
                 {
-                    using (var activityClass = javaClass.GetStatic<AndroidJavaObject>("currentActivity"))
-                    {
-                        path = activityClass.Call<AndroidJavaObject>("getAndroidStorageFile")
-                            .Call<string>("getAbsolutePath");
-                    }
+                    return activityClass.Call<AndroidJavaObject>("getAndroidStorageFile")
+                        .Call<string>("getAbsolutePath");
                 }
             }
-            catch (Exception e)
-            {
-                Debug.LogError("Could not get Android storage path: " + e.Message);
-            }
         }
-
-        return path;
+        catch (Exception e)
+        {
+            Debug.LogError("Could not get Android storage path: " + e.Message);
+            return null;
+        }
     }
 
     public static void UpdateProfilerDisplay()

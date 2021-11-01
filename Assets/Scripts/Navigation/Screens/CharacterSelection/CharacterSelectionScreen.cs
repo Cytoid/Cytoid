@@ -131,9 +131,11 @@ public class CharacterSelectionScreen : Screen
                         if (it.SetId == null) it.SetId = it.Id;
                     });
                     IntentPayload.OwnedCharacters.AddRange(characters
-                        .Select((meta, index) => new {meta, index})
+                        .Select((meta, index) => new { meta, index })
                         .GroupBy(it => it.meta.SetId)
-                        .Select(it => new MergedCharacterMeta { variants = it.OrderBy(x => x.index).Select(x => x.meta).ToList() }));
+                        .Select(it => new MergedCharacterMeta { variants = it.OrderBy(x => x.meta.SetOrder).Select(x => x.meta).ToList() })
+                        .OrderBy(it => it.StandardVariant.Date)
+                    );
 
                     print($"Number of downloads: {downloaded}");
 
@@ -198,13 +200,6 @@ public class CharacterSelectionScreen : Screen
             previousButton.onPointerClick.AddListener(_ => PreviousCharacter());
             nextButton.onPointerClick.AddListener(_ => NextCharacter());
         }
-
-        base.Render();
-    }
-
-    protected override void OnRendered()
-    {
-        base.OnRendered();
         
         LoadedPayload.SelectedIndex =
             LoadedPayload.OwnedCharacters.FindIndex(it => it.variants.Any(x => x.AssetId == Context.CharacterManager.SelectedCharacterId));
@@ -217,6 +212,14 @@ public class CharacterSelectionScreen : Screen
             LoadedPayload.SelectedVariantIndex = LoadedPayload.OwnedCharacters[LoadedPayload.SelectedIndex].variants
                 .FindIndex(it => it.AssetId == Context.CharacterManager.SelectedCharacterId);
         }
+        
+        base.Render();
+    }
+
+    protected override void OnRendered()
+    {
+        base.OnRendered();
+        
         Reload();
     }
 
@@ -236,6 +239,13 @@ public class CharacterSelectionScreen : Screen
                             || IntentPayload.displayedCharacter.SetId != meta.SetId
                             || IntentPayload.displayedCharacter.VariantParallaxAsset != meta.VariantParallaxAsset
                             || IntentPayload.displayedCharacter.VariantAudioAsset != meta.VariantAudioAsset;
+        Debug.Log("Require reload: " + requireReload);
+        Debug.Log(IntentPayload.displayedCharacter?.SetId);
+        Debug.Log(meta.SetId);
+        Debug.Log(IntentPayload.displayedCharacter?.VariantParallaxAsset);
+        Debug.Log(meta.VariantParallaxAsset);
+        Debug.Log(IntentPayload.displayedCharacter?.VariantAudioAsset);
+        Debug.Log(meta.VariantAudioAsset);
 
         if (requireReload)
         {
@@ -246,7 +256,7 @@ public class CharacterSelectionScreen : Screen
         await UniTask.WaitUntil(() => !characterTransitionElement.IsInTransition);
         characterTransitionElement.Leave();
 
-        if (!meta.Locked)
+        if (meta.Owned)
         {
             lockedOverlayCanvasGroup.blocksRaycasts = false;
             lockedOverlayCanvasGroup.DOFade(0, 0.4f);
@@ -261,47 +271,74 @@ public class CharacterSelectionScreen : Screen
         {
             lockedOverlayCanvasGroup.blocksRaycasts = true;
             lockedOverlayCanvasGroup.DOFade(1, 0.4f);
+            
+            unlockButton.onPointerClick.SetListener(_ =>
+            {
+                if (meta.QuestId == null)
+                {
+                    Dialog.PromptAlert("This is a bug. Blame Neo for that.\nJoin our Discord to report this bug: https://discord.gg/cytoid");
+                    return;
+                }
+                
+                SpinnerOverlay.Show();
+                RestClient.Get<SingleQuestState>(new RequestHelper
+                    {
+                        Uri = $"{Context.ApiUrl}/epics/adventures/characters/{meta.QuestId}",
+                        Headers = Context.OnlinePlayer.GetRequestHeaders(),
+                        EnableDebug = true
+                    })
+                    .Then(data =>
+                    {
+                        QuestOverlay.Show(new AdventureState {OngoingQuests = new List<OngoingQuest>{data.Quest}});
+                    })
+                    .Catch(err =>
+                    {
+                        Debug.LogError(err);
+                        Dialog.PromptAlert("DIALOG_COULD_NOT_CONNECT_TO_SERVER".Get());
+                    })
+                    .Finally(() => SpinnerOverlay.Hide());
+            });
         }
+
+        nameText.text = meta.Name;
+        nameGradient.SetGradient(characterAsset.nameGradient.GetGradient());
+        descriptionText.text = meta.Description;
+
+        illustratorText.text = meta.Illustrator.Name;
+        illustratorProfileButton.onPointerClick.SetListener(_ => Application.OpenURL(meta.Illustrator.Url));
+        if (meta.CharacterDesigner != null && !meta.CharacterDesigner.Name.IsNullOrEmptyTrimmed())
+        {
+            characterDesignerHolder.gameObject.SetActive(true);
+            characterDesignerText.text = meta.CharacterDesigner.Name;
+            characterDesignerProfileButton.onPointerClick.SetListener(_ =>
+                Application.OpenURL(meta.CharacterDesigner.Url));
+        }
+        else
+        {
+            characterDesignerHolder.gameObject.SetActive(false);
+        }
+
+        if (meta.Exp == null)
+        {
+            meta.Exp = new CharacterMeta.ExpData
+            {
+                CurrentLevel = 1,
+                CurrentLevelExp = 0,
+                NextLevelExp = 10,
+                TotalExp = 0
+            };
+        }
+        levelText.text = $"{"PROFILE_WIDGET_LEVEL".Get()} {meta.Exp.CurrentLevel}";
+        expText.text = $"{"PROFILE_WIDGET_EXP".Get()} {(int) meta.Exp.TotalExp}/{(int) meta.Exp.NextLevelExp}";
+        
+        if (meta.Level != null)
+        {
+            levelCard.SetModel(meta.Level.ToLevel(LevelType.User), ignoreIfIdEqual: true);
+        }
+        LayoutFixer.Fix(infoCard.transform);
 
         if (requireReload)
         {
-            nameText.text = meta.Name;
-            nameGradient.SetGradient(characterAsset.nameGradient.GetGradient());
-            descriptionText.text = meta.Description;
-            if (meta.Level != null)
-            {
-                levelCard.SetModel(meta.Level.ToLevel(LevelType.User));
-            }
-
-            illustratorText.text = meta.Illustrator.Name;
-            illustratorProfileButton.onPointerClick.SetListener(_ => Application.OpenURL(meta.Illustrator.Url));
-            if (meta.CharacterDesigner != null && !meta.CharacterDesigner.Name.IsNullOrEmptyTrimmed())
-            {
-                characterDesignerHolder.gameObject.SetActive(true);
-                characterDesignerText.text = meta.CharacterDesigner.Name;
-                characterDesignerProfileButton.onPointerClick.SetListener(_ =>
-                    Application.OpenURL(meta.CharacterDesigner.Url));
-            }
-            else
-            {
-                characterDesignerHolder.gameObject.SetActive(false);
-            }
-
-            if (meta.Exp == null)
-            {
-                meta.Exp = new CharacterMeta.ExpData
-                {
-                    CurrentLevel = 1,
-                    CurrentLevelExp = 0,
-                    NextLevelExp = 10,
-                    TotalExp = 0
-                };
-            }
-            levelText.text = $"{"PROFILE_WIDGET_LEVEL".Get()} {meta.Exp.CurrentLevel}";
-            expText.text = $"{"PROFILE_WIDGET_EXP".Get()} {(int) meta.Exp.TotalExp}/{(int) meta.Exp.NextLevelExp}";
-
-            LayoutFixer.Fix(infoCard.transform);
-
             if (characterAsset.musicAudio == null)
             {
                 muteButtonImage.sprite = volumeSprite;
@@ -326,36 +363,33 @@ public class CharacterSelectionScreen : Screen
             }
 
             NavigationBackdrop.Instance.UpdateBlur();
+        }
+        
+        infoCard.Enter();
 
-            infoCard.Enter();
+        // Spawn radio group
+        foreach (Transform child in variantSelectorHolder)
+        {
+            Destroy(child.gameObject);
         }
 
-        if (IntentPayload.displayedCharacter?.SetId != meta.SetId)
+        if (mergedMeta.HasOtherVariants)
         {
-            // Spawn radio group
-            foreach (Transform child in variantSelectorHolder)
+            var radioGroup = Instantiate(NavigationUiElementProvider.Instance.pillRadioGroup, variantSelectorHolder);
+            radioGroup.labels = mergedMeta.variants.Select(it => it.VariantName).ToList();
+            radioGroup.values = Enumerable.Range(0, mergedMeta.variants.Count).Select(it => it.ToString()).ToList();
+            radioGroup.defaultValue = mergedMeta.variants.FindIndex(it => it.Id == meta.Id).ToString();
+            radioGroup.Initialize();
+            radioGroup.onSelect.AddListener(it =>
             {
-                Destroy(child.gameObject);
-            }
-
-            if (mergedMeta.HasOtherVariants)
-            {
-                var radioGroup = Instantiate(NavigationUiElementProvider.Instance.pillRadioGroup, variantSelectorHolder);
-                radioGroup.labels = mergedMeta.variants.Select(it => it.VariantName).ToList();
-                radioGroup.values = Enumerable.Range(0, mergedMeta.variants.Count).Select(it => it.ToString()).ToList();
-                radioGroup.defaultValue = mergedMeta.variants.FindIndex(it => it.Id == meta.Id).ToString();
-                radioGroup.Initialize();
-                radioGroup.onSelect.AddListener(it =>
-                {
-                    LoadedPayload.SelectedVariantIndex = int.Parse(it);
-                    Reload();
-                });
-                variantSelectorHolder.RebuildLayout();
-            }
+                LoadedPayload.SelectedVariantIndex = int.Parse(it);
+                Reload();
+            });
+            variantSelectorHolder.RebuildLayout();
         }
 
         await UniTask.WaitUntil(() => !characterTransitionElement.IsInTransition);
-        await characterDisplay.Load(CharacterAsset.GetTachieBundleId(meta.AssetId), meta.Locked);
+        await characterDisplay.Load(CharacterAsset.GetTachieBundleId(meta.AssetId), !meta.Owned);
         characterTransitionElement.Enter();
         characterTransitionElement.Apply(it =>
         {
@@ -363,9 +397,12 @@ public class CharacterSelectionScreen : Screen
             it.enterDelay = 0.4f;
             it.enterDuration = 0.8f;
         });
-        
-        Destroy(characterAsset.gameObject);
-        Context.BundleManager.Release(CharacterAsset.GetMainBundleId(meta.AssetId));
+
+        if (requireReload)
+        {
+            Destroy(characterAsset.gameObject);
+            Context.BundleManager.Release(CharacterAsset.GetMainBundleId(meta.AssetId));
+        }
 
         if (Context.IsOffline())
         {
@@ -373,31 +410,24 @@ public class CharacterSelectionScreen : Screen
         }
         else
         {
-            if (Application.isEditor && MockData.AvailableCharacters.Any(it => it.Id == meta.Id))
+            if (meta.Owned)
             {
-                SpinnerOverlay.Hide();
-            }
-            else
-            {
-                if (!meta.Locked)
-                {
-                    RestClient.Post(new RequestHelper
+                RestClient.Post(new RequestHelper
+                    {
+                        Uri = $"{Context.ApiUrl}/profile/{Context.Player.Id}/character",
+                        Headers = Context.OnlinePlayer.GetRequestHeaders(),
+                        EnableDebug = true,
+                        Body = new CharacterPostData
                         {
-                            Uri = $"{Context.ApiUrl}/profile/{Context.Player.Id}/character",
-                            Headers = Context.OnlinePlayer.GetRequestHeaders(),
-                            EnableDebug = true,
-                            Body = new CharacterPostData
-                            {
-                                characterId = meta.Id
-                            }
-                        })
-                        .CatchRequestError(error =>
-                        {
-                            Debug.LogError(error);
-                            Toast.Next(Toast.Status.Failure, "TOAST_FAILED_TO_UPDATE_PROFILE_CHARACTER".Get());
-                        })
-                        .Finally(() => { SpinnerOverlay.Hide(); });
-                }
+                            characterId = meta.Id
+                        }
+                    })
+                    .CatchRequestError(error =>
+                    {
+                        Debug.LogError(error);
+                        Toast.Next(Toast.Status.Failure, "TOAST_FAILED_TO_UPDATE_PROFILE_CHARACTER".Get());
+                    })
+                    .Finally(() => { SpinnerOverlay.Hide(); });
             }
         }
 

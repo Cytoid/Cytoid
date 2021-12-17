@@ -4,7 +4,7 @@
 //  Lunar Unity Mobile Console
 //  https://github.com/SpaceMadness/lunar-unity-console
 //
-//  Copyright 2019 Alex Lementuev, SpaceMadness.
+//  Copyright 2015-2021 Alex Lementuev, SpaceMadness.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //
+
 
 #import <UIKit/UIKit.h>
 
@@ -39,16 +40,18 @@ typedef uint8_t LUConsoleLogTypeMask;
                                             (TYPE) == LUConsoleLogTypeError || \
                                             (TYPE) == LUConsoleLogTypeAssert)
 
+@class LULogMessage;
+
 @interface LUConsoleLogEntry : NSObject
 
 @property (nonatomic, readonly) LUConsoleLogType type;
-@property (nonatomic, readonly) NSString * message;
+@property (nonatomic, readonly) LULogMessage * message;
 @property (nonatomic, readonly) NSString * stackTrace;
 @property (nonatomic, readonly) UIImage  * icon;
 @property (nonatomic, readonly) BOOL hasStackTrace;
 
-+ (instancetype)entryWithType:(LUConsoleLogType)type message:(NSString *)message stackTrace:(NSString *)stackTrace;
-- (instancetype)initWithType:(LUConsoleLogType)type message:(NSString *)message stackTrace:(NSString *)stackTrace;
++ (instancetype)entryWithType:(LUConsoleLogType)type message:(LULogMessage *)message stackTrace:(NSString *)stackTrace;
+- (instancetype)initWithType:(LUConsoleLogType)type message:(LULogMessage *)message stackTrace:(NSString *)stackTrace;
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellAtIndex:(NSUInteger)index;
 - (CGSize)cellSizeForTableView:(UITableView *)tableView;

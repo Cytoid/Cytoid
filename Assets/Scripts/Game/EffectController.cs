@@ -106,8 +106,9 @@ public class EffectController : MonoBehaviour
         var scale = noteRenderer.Note.Model.Override.SizeMultiplier;
         if (noteRenderer.Note.Model.size != double.MinValue)
         {
-            scale *= (float) noteRenderer.Note.Model.size / (float) noteRenderer.Game.Chart.Model.size;
+            scale *= (float) noteRenderer.Note.Model.size;
         }
+        scale *= (float) noteRenderer.Game.Chart.Model.size;
         settings.end.size = (isDragType ? 4f : 5f) * noteRenderer.Game.Config.GlobalNoteSizeMultiplier * (1 + clearEffectSizeMultiplier) * scale;
         settings.start.thickness = 1.333f;
         settings.end.thickness = 0.333f;

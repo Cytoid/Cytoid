@@ -59,6 +59,7 @@ namespace Proyecto26.Common
             {
                 request.SetRequestHeader(header.Key, header.Value);
             }
+            request.SetRequestHeader("User-Agent", $"CytoidClient/{Context.VersionName}");
             if (options.Timeout.HasValue)
             {
                 request.timeout = options.Timeout.Value;

@@ -91,6 +91,7 @@ public class ChartModel
         public double approach_rate = 1.0;
         public double size = double.MinValue;
         public double opacity = double.MinValue;
+        public double hitbox = double.MinValue;
         public string ring_color;
         public string fill_color;
 
@@ -141,6 +142,7 @@ public class ChartModel
             public Color? FillColor;
             public float OpacityMultiplier = 1;
             public float SizeMultiplier = 1;
+            public float HitboxMultiplier = 1;
         }
         
         public float Duration => end_time - start_time;

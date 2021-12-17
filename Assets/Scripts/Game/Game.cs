@@ -9,6 +9,7 @@ using Cysharp.Threading.Tasks;
 using Cytoid.Storyboard;
 using LiteDB;
 using Polyglot;
+using Sentry;
 using UnityEditor;
 using UnityEngine.Events;
 using UnityEngine.Networking;
@@ -202,6 +203,15 @@ public class Game : MonoBehaviour
         onGameReadyToLoad.Invoke(this);
 
         await Resources.UnloadUnusedAssets();
+        
+        SentrySdk.AddBreadcrumb(
+            "Game preload",
+            data: new Dictionary<string, string>
+            {
+                { "Level", Level.Id },
+                { "Difficulty", Difficulty.ToString() }
+            },
+            level: BreadcrumbLevel.Info);
 
         // Load chart
         print("Loading chart");
@@ -273,7 +283,7 @@ public class Game : MonoBehaviour
                 sbFile = chartMeta.storyboard.localizations.GetOrDefault(Localization.Instance.SelectedLanguage.ToString());
                 if (sbFile == null)
                 {
-                    Debug.LogError($"Localized storyboard for language {Localization.Instance.SelectedLanguage.ToString()} does not exist");
+                    Debug.Log($"Localized storyboard for language {Localization.Instance.SelectedLanguage.ToString()} does not exist");
                 }
             }
             if (sbFile == null)
@@ -285,8 +295,15 @@ public class Game : MonoBehaviour
         {
             sbFile = "storyboard.json";
         }
-        
+
         StoryboardPath = Level.Path + sbFile;
+        
+        // if (Level.Id == "io.cytoid.searchingforyourlove")
+        // {
+        //     SentrySdk.CaptureMessage(
+        //         $"Language: {Localization.Instance.SelectedLanguage.ToString()}, Storyboard path: {StoryboardPath}, Exists: {File.Exists(StoryboardPath)}",
+        //         SentryLevel.Error);
+        // }
 
         if (File.Exists(StoryboardPath))
         {

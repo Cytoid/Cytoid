@@ -50,8 +50,8 @@ public class AndroidMigrationInfoOverlay : SingletonMonoBehavior<AndroidMigratio
         it.canvasGroup.DOFade(1, duration).SetEase(Ease.OutCubic);
         Context.SetMajorCanvasBlockRaycasts(false);
         it.text.text = "ANDROID_MIGRATION_INFO_TEXT".Get()
-            .Replace("%OLD_DIR%", Context.Instance.GetAndroidLegacyStoragePath())
-            .Replace("%NEW_DIR%", Context.Instance.GetAndroidStoragePath());
+            .Replace("%OLD_DIR%", Context.Instance.GetAndroidLegacyStoragePath() + "/Cytoid")
+            .Replace("%NEW_DIR%", Context.Instance.GetAndroidStoragePath() + "/Cytoid");
         if (((Language) Context.Player.Settings.Language).ShouldUseNonBreakingSpaces())
         {
             it.text.text = it.text.text.Replace(" ", "\u00A0");

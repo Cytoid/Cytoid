@@ -4,7 +4,7 @@
 //  Lunar Unity Mobile Console
 //  https://github.com/SpaceMadness/lunar-unity-console
 //
-//  Copyright 2019 Alex Lementuev, SpaceMadness.
+//  Copyright 2015-2021 Alex Lementuev, SpaceMadness.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //
+
 
 #ifndef __LunarConsole__unity_native_interface__
 #define __LunarConsole__unity_native_interface__
@@ -41,7 +42,7 @@ OBJC_EXTERN void __lunar_console_action_register(int actionId, const char *actio
 OBJC_EXTERN void __lunar_console_action_unregister(int actionId);
 
 // variables
-OBJC_EXTERN void __lunar_console_cvar_register(int entryId, const char *name, const char *type, const char *value, const char *defaultValue, int flags, BOOL hasRange, float min, float max);
+OBJC_EXTERN void __lunar_console_cvar_register(int entryId, const char *name, const char *type, const char *value, const char *defaultValue, int flags, BOOL hasRange, float min, float max, const char *values);
 OBJC_EXTERN void __lunar_console_cvar_update(int entryId, const char *value);
 
 #endif /* defined(__LunarConsole__unity_native_interface__) */

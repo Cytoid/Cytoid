@@ -43,6 +43,7 @@ namespace Cytoid.Storyboard.Notes
                 state.FillColor = new Color {R = tmp2.r, G = tmp2.g, B = tmp2.b, A = tmp2.a};
             state.OpacityMultiplier = (float?) json.SelectToken("opacity_multiplier") ?? state.OpacityMultiplier;
             state.SizeMultiplier = (float?) json.SelectToken("size_multiplier") ?? state.SizeMultiplier;
+            state.HitboxMultiplier = (float?) json.SelectToken("hitbox_multiplier") ?? state.HitboxMultiplier;
             state.HoldDirection = (int?) json.SelectToken("hold_direction") ?? state.HoldDirection;
             state.Style = (int?) json.SelectToken("style") ?? state.Style;
         }

@@ -4,7 +4,7 @@
 //  Lunar Unity Mobile Console
 //  https://github.com/SpaceMadness/lunar-unity-console
 //
-//  Copyright 2019 Alex Lementuev, SpaceMadness.
+//  Copyright 2015-2021 Alex Lementuev, SpaceMadness.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //
+
 
 //
 //  LUConsoleLogEntryTableViewCell.m
@@ -61,13 +62,14 @@ static UIEdgeInsets _messageInsets;
 
 @implementation LUConsoleLogEntryTableViewCell
 
-+ (void)load
++ (void)initialize
 {
     if (!LU_IOS_MIN_VERSION_AVAILABLE) {
         return;
     }
 
-    if ([self class] == [LUConsoleLogEntryTableViewCell class]) {
+    if (_messageInsets.left == _messageInsets.right) // initialize can be called multiple times
+    {
         LUTheme *theme = [LUTheme mainTheme];
 
         UIImage *icon = theme.cellLog.icon;
@@ -182,14 +184,16 @@ static UIEdgeInsets _messageInsets;
     _iconView.image = icon;
 }
 
-- (NSString *)message
+- (void)setMessage:(LULogMessage *)message
 {
-    return _messageLabel.text;
-}
-
-- (void)setMessage:(NSString *)message
-{
-    _messageLabel.text = message;
+    if (message.tags.count > 0)
+    {
+        _messageLabel.attributedText = [message createAttributedTextWithSkin:self.theme.attributedTextSkin];
+    }
+    else
+    {
+        _messageLabel.text = message.text;
+    }
 }
 
 - (UIColor *)messageColor
@@ -339,9 +343,12 @@ static UIEdgeInsets _messageInsets;
     self.messageLabel.frame = CGRectMake(messageX, messageY, messageWidth, messageHeight);
 }
 
-- (void)setMessage:(NSString *)message attributes:(NSDictionary<NSAttributedStringKey, id> *)attributes
+- (void)setMessage:(LULogMessage *)message attributes:(NSDictionary<NSAttributedStringKey, id> *)attributes
 {
-    self.messageLabel.attributedText = [[NSAttributedString alloc] initWithString:message attributes:attributes];
+    self.messageLabel.attributedText = message.tags.count > 0
+        ? [message createAttributedTextWithSkin:[LUTheme mainTheme].attributedTextSkin attributes:attributes]
+        : [[NSAttributedString alloc] initWithString:message.text attributes:attributes];
+    
 }
 
 @end

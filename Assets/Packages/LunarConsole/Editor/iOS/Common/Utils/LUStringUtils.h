@@ -4,7 +4,7 @@
 //  Lunar Unity Mobile Console
 //  https://github.com/SpaceMadness/lunar-unity-console
 //
-//  Copyright 2019 Alex Lementuev, SpaceMadness.
+//  Copyright 2015-2021 Alex Lementuev, SpaceMadness.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -19,8 +19,10 @@
 //  limitations under the License.
 //
 
+
 #import <Foundation/Foundation.h>
 
 BOOL LUStringTryParseInteger(NSString *str, NSInteger *outResult);
+BOOL LUStringTryParseHex(NSString *str, NSUInteger *outResult);
 BOOL LUStringTryParseFloat(NSString *str, float *outResult);
 NSString *LUSerializeDictionaryToString(NSDictionary *data);

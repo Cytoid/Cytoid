@@ -56,6 +56,7 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
         mainModule.startColor = BaseFillColor;
         Line.size = new Vector2(1, 0.21f * Mathf.Floor(Note.Model.holdlength / 0.21f));
         CompletedLine.size = new Vector2(1, 0);
+        HoldFx.GetComponent<ParticleSystemRenderer>().sortingOrder = Fill.sortingOrder - 1;
     }
 
     public override void OnCollect()
@@ -222,12 +223,12 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
         Line.transform.SetLocalScaleX(timeScaledLineSize);
         CompletedLine.transform.SetLocalScaleX(timeScaledLineSize);
         
-        var fxScale = Note.Model.Override.SizeMultiplier;
+        var fxScale = (float) Note.Game.Chart.Model.size * Note.Model.Override.SizeMultiplier;
         if (Note.Model.size != double.MinValue)
         {
-            fxScale *= (float) Note.Model.size / (float) Note.Game.Chart.Model.size;
+            fxScale *= (float) Note.Model.size;
         }
-        HoldFx.transform.SetLocalScale(HoldFx.transform.localScale.x * (1 + Context.Player.Settings.ClearEffectsSize) * fxScale);
+        HoldFx.transform.SetLocalScale(5 * (1 + Context.Player.Settings.ClearEffectsSize) * fxScale);
     }
 
     protected override void UpdateFillScale()

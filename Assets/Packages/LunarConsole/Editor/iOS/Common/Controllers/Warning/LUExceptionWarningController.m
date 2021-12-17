@@ -4,7 +4,7 @@
 //  Lunar Unity Mobile Console
 //  https://github.com/SpaceMadness/lunar-unity-console
 //
-//  Copyright 2019 Alex Lementuev, SpaceMadness.
+//  Copyright 2015-2021 Alex Lementuev, SpaceMadness.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -19,12 +19,13 @@
 //  limitations under the License.
 //
 
+
 #import "LUExceptionWarningController.h"
 
 #import "Lunar.h"
 
 @interface LUExceptionWarningController () {
-    NSString *_message;
+    LULogMessage *_message;
 }
 
 @property (nonatomic, weak) IBOutlet UILabel *errorLabel;
@@ -33,7 +34,7 @@
 
 @implementation LUExceptionWarningController
 
-- (instancetype)initWithMessage:(NSString *)message
+- (instancetype)initWithMessage:(LULogMessage *)message
 {
     self = [super initWithNibName:NSStringFromClass([self class]) bundle:nil];
     if (self) {
@@ -47,7 +48,14 @@
 {
     [super viewDidLoad];
 
-    _errorLabel.text = _message;
+    if (_message.tags.count > 0)
+    {
+        _errorLabel.attributedText = [_message createAttributedTextWithSkin:[LUTheme mainTheme].attributedTextSkin];
+    }
+    else
+    {
+        _errorLabel.text = _message.text;
+    }
 }
 
 #pragma mark -

@@ -40,11 +40,11 @@ public class ClassicNoteRenderer : NoteRenderer
         var config = Game.Config;
 
         // Calculate base size
-        BaseTransformScale = Game.Config.GlobalNoteSizeMultiplier;
+        BaseTransformScale = (float) Game.Chart.Model.size * Game.Config.GlobalNoteSizeMultiplier;
         if (Note.Model.size != double.MinValue)
         {
             // Chart note override?
-            BaseTransformScale *= (float) Note.Model.size / (float) Game.Chart.Model.size;
+            BaseTransformScale *= (float) Note.Model.size;
         }
 
         BaseTransformSize = config.NoteTransformSizes[Note.Type] * BaseTransformScale;
@@ -87,8 +87,10 @@ public class ClassicNoteRenderer : NoteRenderer
     {
         Collider.enabled = Game.Time >= Note.Model.intro_time && Game.Time <= Note.Model.end_time + Note.MissThreshold;
         
-        var radius = Note.Game.Config.NoteHitboxSizes[Note.Type] / Note.Game.Config.GlobalNoteSizeMultiplier; // Default hitbox
+        var radius = Note.Game.Config.NoteHitboxSizes[Note.Type]; // Default hitbox 
+        if (Note.Model.hitbox != double.MinValue) radius *= (float) Note.Model.hitbox;
         radius *= Note.Model.Override.SizeMultiplier; // Scales to storyboard-defined size
+        radius *= Note.Model.Override.HitboxMultiplier;
         Collider.radius = radius;
     }
 

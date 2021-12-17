@@ -76,7 +76,7 @@ namespace Cytoid.Storyboard.Sprites
 
         public override void Dispose()
         {
-            if (MainRenderer.SpritePathRefCount.ContainsKey(LoadPath))
+            if (LoadPath != null && MainRenderer.SpritePathRefCount.ContainsKey(LoadPath))
             {
                 MainRenderer.SpritePathRefCount[LoadPath]--;
                 if (MainRenderer.SpritePathRefCount[LoadPath] == 0)

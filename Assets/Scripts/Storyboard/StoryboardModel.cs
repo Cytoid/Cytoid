@@ -190,6 +190,7 @@ namespace Cytoid.Storyboard
         public Color FillColor;
         public float? OpacityMultiplier;
         public float? SizeMultiplier;
+        public float? HitboxMultiplier;
         public int? HoldDirection;
         public int? Style;
     }

@@ -45,6 +45,7 @@ public class ClassicLongHoldNoteRenderer : ClassicHoldNoteRenderer
         CompletedLine2.size = new Vector2(1, 0);
         Line.size = new Vector2(1, orthographicSize * 4);
         Line2.size = new Vector2(1, orthographicSize * 4);
+        HoldFx.GetComponent<ParticleSystemRenderer>().sortingOrder = Fill.sortingOrder - 1;
     }
 
     protected override void UpdateComponentStates()

@@ -117,12 +117,13 @@ namespace Cytoid.Storyboard.Videos
             {
                 if (!VideoPlayer.isPlaying)
                 {
-                    var seek = MainRenderer.Time - fromState.Time;
-                    if (seek > 0)
-                    {
-                        VideoPlayer.time = seek;
-                        VideoPlayer.Play();
-                    }
+                    VideoPlayer.Play();
+                    // var seek = MainRenderer.Time - fromState.Time;
+                    // if (seek > 0)
+                    // {
+                    //     VideoPlayer.time = seek;
+                    //     VideoPlayer.Play();
+                    // }
                 }
             }
         }

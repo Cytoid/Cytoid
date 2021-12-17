@@ -39,6 +39,7 @@ public class LevelManager
             // Copy the file from StreamingAssets to temp directory
             using (var request = UnityWebRequest.Get(packagePath))
             {
+                request.SetRequestHeader("User-Agent", $"CytoidClient/{Context.VersionName}");
                 await request.SendWebRequest();
 
                 if (request.isNetworkError || request.isHttpError)
@@ -556,6 +557,7 @@ public class LevelManager
 
                             using (var request = UnityWebRequest.Get(thumbnailPath))
                             {
+                                request.SetRequestHeader("User-Agent", $"CytoidClient/{Context.VersionName}");
                                 await request.SendWebRequest();
                                 if (request.isNetworkError || request.isHttpError)
                                 {

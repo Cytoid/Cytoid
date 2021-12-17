@@ -32,7 +32,7 @@ public class WebViewOverlay : SingletonMonoBehavior<WebViewOverlay>
     public async void Open(string url)
     {
         webView.SetVisibility(true);
-        webView.SetURLPattern("Never!", "Never!", "^((?!artifacts\\.cytoid\\.io|services\\.cytoid\\.io|artifacts\\.cytoid\\.cn|api\\.cytoid\\.cn|EmbeddedPlayer|embed|outchain|player\\.bilibili|blackboard\\/html5).)*$");
+        webView.SetURLPattern("Never!", "Never!", "^((?!artifacts\\.cytoid\\.io|w\\.soundcloud|services\\.cytoid\\.io|artifacts\\.cytoid\\.cn|api\\.cytoid\\.cn|EmbeddedPlayer|embed|outchain|player\\.bilibili|blackboard\\/html5).)*$");
         webView.LoadURL(url);
         spinnerElement.IsSpinning = true;
         var token = loadToken = new DateTime();

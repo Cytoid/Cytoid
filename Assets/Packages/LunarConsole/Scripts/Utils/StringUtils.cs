@@ -4,7 +4,7 @@
 //  Lunar Unity Mobile Console
 //  https://github.com/SpaceMadness/lunar-unity-console
 //
-//  Copyright 2019 Alex Lementuev, SpaceMadness.
+//  Copyright 2015-2021 Alex Lementuev, SpaceMadness.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 //  limitations under the License.
 //
 
+
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -32,8 +33,6 @@ namespace LunarConsolePluginInternal
     public static class StringUtils
     {
         private static readonly char[] kSpaceSplitChars = { ' ' };
-
-        private static readonly Regex kRichTagRegex = new Regex("(<color=.*?>)|(<b>)|(<i>)|(</color>)|(</b>)|(</i>)");
 
         internal static string TryFormat(string format, params object[] args)
         {
@@ -395,15 +394,6 @@ namespace LunarConsolePluginInternal
 
         #endregion
 
-        //////////////////////////////////////////////////////////////////////////////
-
-        public static string RemoveRichTextTags(string line)
-        {
-            return kRichTagRegex.Replace(line, String.Empty);
-        }
-
-        //////////////////////////////////////////////////////////////////////////////
-
         #region Suggestion
 
         private static List<string> s_tempList;
@@ -553,6 +543,11 @@ namespace LunarConsolePluginInternal
 
         #region string representation
 
+        internal static string ToString(object value)
+        {
+            return value != null ? value.ToString() : null;
+        }
+        
         internal static string ToString(int value)
         {
             return value.ToString();

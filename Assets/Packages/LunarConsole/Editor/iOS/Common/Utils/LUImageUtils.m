@@ -4,7 +4,7 @@
 //  Lunar Unity Mobile Console
 //  https://github.com/SpaceMadness/lunar-unity-console
 //
-//  Copyright 2019 Alex Lementuev, SpaceMadness.
+//  Copyright 2015-2021 Alex Lementuev, SpaceMadness.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //
+
 
 #import "LUImageUtils.h"
 #import "Lunar.h"
@@ -34,4 +35,12 @@ UIImage *LUGet3SlicedImage(NSString *name)
     UIImage *image = LUGetImage(name);
     LUAssertMsgv(((int)image.size.width) % 3 == 0, @"3 sliced image has wrong width: %g", image.size.width);
     return [image stretchableImageWithLeftCapWidth:image.size.width / 3 topCapHeight:0];
+}
+
+UIColor * LUUIColorFromRGB(NSUInteger value) {
+    static const float multipler = 1.0 / 255.0;
+    return [UIColor colorWithRed:((float)((value & 0xFF000000) >> 24)) * multipler
+                           green:((float)((value & 0xFF0000) >> 16)) * multipler
+                            blue:((float)((value & 0xFF00) >> 8)) * multipler
+                           alpha:((float)(value & 0xFF)) * multipler];
 }

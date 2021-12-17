@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using Polyglot;
 using Proyecto26;
 using RSG;
+using Sentry;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -53,9 +54,11 @@ public class OnlinePlayer
                     reject(new RequestException("Profile not found", true, false, 404, null));
                     return;
                 }
+                SentrySdk.ConfigureScope(scope => scope.User = new User {Username = profile.User.Uid, Id = profile.User.Id});
                 IsAuthenticated = true;
                 OnAuthenticated.Invoke();
                 resolve(profile);
+                FetchCharacterDataInBackground();
             }).CatchRequestError(result =>
             {
                 IsAuthenticated = false;
@@ -104,9 +107,11 @@ public class OnlinePlayer
                     reject(new RequestException("Profile not found", true, false, 404, null));
                     return;
                 }
+                SentrySdk.ConfigureScope(scope => scope.User = new User {Username = profile.User.Uid, Id = profile.User.Id});
                 IsAuthenticated = true;
                 OnAuthenticated.Invoke();
                 resolve(profile);
+                FetchCharacterDataInBackground();
             }).CatchRequestError(result =>
             {
                 IsAuthenticated = false; 
@@ -122,8 +127,16 @@ public class OnlinePlayer
         });
     }
 
+    private void FetchCharacterDataInBackground()
+    {
+        Context.CharacterManager.GetAvailableCharactersMeta()
+            .Then(async _ => await Context.CharacterManager.FetchSelectedCharacterExp());
+    }
+
     public void Deauthenticate()
     {
+        SentrySdk.ConfigureScope(scope => scope.User = null);
+        
         Context.Player.Settings.LoginToken = null;
         Context.Player.SaveSettings();
         LastProfile = null;
@@ -151,8 +164,7 @@ public class OnlinePlayer
         return new Dictionary<string, string>
         {
             {"Authorization", "JWT " + Context.Player.Settings.LoginToken},
-            {"Accept-Language", ((Language) Context.Player.Settings.Language).GetAcceptLanguageHeaderValue()},
-            {"User-Agent", $"CytoidClient/{Context.VersionName}"}
+            {"Accept-Language", ((Language) Context.Player.Settings.Language).GetAcceptLanguageHeaderValue()}
         };
     }
 

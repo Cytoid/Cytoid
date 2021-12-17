@@ -4,7 +4,7 @@
 //  Lunar Unity Mobile Console
 //  https://github.com/SpaceMadness/lunar-unity-console
 //
-//  Copyright 2019 Alex Lementuev, SpaceMadness.
+//  Copyright 2015-2021 Alex Lementuev, SpaceMadness.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //
+
 
 #import "LUConsoleLogEntry.h"
 
@@ -34,13 +35,14 @@ static NSArray *_cellSkinLookup;
 
 @implementation LUConsoleLogEntry
 
-+ (void)load
++ (void)initialize
 {
     if (!LU_IOS_MIN_VERSION_AVAILABLE) {
         return;
     }
 
-    if ([self class] == [LUConsoleLogEntry class]) {
+    if (_cellSkinLookup == nil) // initialize can be called multiple times
+    {
         LUTheme *theme = [LUTheme mainTheme];
 
         _cellSkinLookup = [[NSArray alloc] initWithObjects:
@@ -55,12 +57,12 @@ static NSArray *_cellSkinLookup;
     }
 }
 
-+ (instancetype)entryWithType:(LUConsoleLogType)type message:(NSString *)message stackTrace:(NSString *)stackTrace
++ (instancetype)entryWithType:(LUConsoleLogType)type message:(LULogMessage *)message stackTrace:(NSString *)stackTrace
 {
     return [[[self class] alloc] initWithType:type message:message stackTrace:stackTrace];
 }
 
-- (instancetype)initWithType:(LUConsoleLogType)type message:(NSString *)message stackTrace:(NSString *)stackTrace
+- (instancetype)initWithType:(LUConsoleLogType)type message:(LULogMessage *)message stackTrace:(NSString *)stackTrace
 {
     self = [super init];
     if (self) {
@@ -79,7 +81,7 @@ static NSArray *_cellSkinLookup;
 {
     if ([object isKindOfClass:[self class]]) {
         LUConsoleLogEntry *other = object;
-        return other.type == _type && [other.message isEqualToString:_message];
+        return other.type == _type && [other.message isEqual:_message];
     }
 
     return false;
@@ -102,10 +104,10 @@ static NSArray *_cellSkinLookup;
 
     LUCellSkin *cellSkin = [self cellSkinForLogType:_type];
 
-    cell.message = _message;
     cell.messageColor = cellSkin.textColor;
     cell.cellColor = index % 2 == 0 ? cellSkin.backgroundColorDark : cellSkin.backgroundColorLight;
     cell.icon = cellSkin.icon;
+    [cell setMessage:_message];
 
     return cell;
 }
@@ -115,7 +117,7 @@ static NSArray *_cellSkinLookup;
     CGFloat cellWidth = CGRectGetWidth(tableView.bounds);
     if (!LUFloatApprox(_cachedWidth, cellWidth)) {
         _cachedWidth = cellWidth;
-        _cachedHeight = [LUConsoleLogEntryTableViewCell heightForCellWithText:_message width:cellWidth];
+        _cachedHeight = [LUConsoleLogEntryTableViewCell heightForCellWithText:_message.text width:cellWidth];
     }
 
     return CGSizeMake(cellWidth, _cachedHeight);
@@ -181,7 +183,7 @@ static NSArray *_cellSkinLookup;
 
     LUCellSkin *cellSkin = [self cellSkinForLogType:self.type];
 
-    cell.message = self.message;
+    [cell setMessage:self.message];
     cell.messageColor = cellSkin.textColor;
     cell.cellColor = index % 2 == 0 ? cellSkin.backgroundColorDark : cellSkin.backgroundColorLight;
     cell.icon = cellSkin.icon;
@@ -235,7 +237,7 @@ static NSArray *_cellSkinLookup;
     CGFloat cellWidth = CGRectGetWidth(tableView.bounds);
     if (!LUFloatApprox(self.cachedWidth, cellWidth)) {
         self.cachedWidth = cellWidth;
-        self.cachedHeight = [LUConsoleOverlayLogEntryTableViewCell heightForCellWithText:self.message width:cellWidth];
+        self.cachedHeight = [LUConsoleOverlayLogEntryTableViewCell heightForCellWithText:self.message.text width:cellWidth];
     }
 
     return CGSizeMake(cellWidth, self.cachedHeight);

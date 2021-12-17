@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Polyglot;
 using Cysharp.Threading.Tasks;
+using LiteDB;
+using Sentry;
 using UnityEngine;
 #if UNITY_IOS
 using UnityEngine.iOS;
@@ -25,6 +27,10 @@ public class Player
     {
         LoadSettings();
         ValidateData();
+        if (!Settings.PlayerId.IsNullOrWhiteSpace())
+        {
+            SentrySdk.ConfigureScope(scope => scope.User = new User {Username = Settings.PlayerId});
+        }
     }
 
     public async void BoostStoreReviewConfidence()

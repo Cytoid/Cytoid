@@ -4,7 +4,7 @@
 //  Lunar Unity Mobile Console
 //  https://github.com/SpaceMadness/lunar-unity-console
 //
-//  Copyright 2019 Alex Lementuev, SpaceMadness.
+//  Copyright 2015-2021 Alex Lementuev, SpaceMadness.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //
+
 
 #import "LUConsolePopupController.h"
 #import "Lunar.h"
@@ -339,11 +340,11 @@ NSString * const LUConsolePopupControllerWillDisappearNotification = @"LUConsole
 {
     // FIXME: store button details and set params in viewDidLoad
     dispatch_async(dispatch_get_main_queue(), ^{
-        _learnMoreButton.hidden = NO;
-        [_learnMoreButton setTitle:title forState:UIControlStateNormal];
-        [_learnMoreButton addTarget:target
-                             action:action
-                   forControlEvents:UIControlEventTouchUpInside];
+        self->_learnMoreButton.hidden = NO;
+        [self->_learnMoreButton setTitle:title forState:UIControlStateNormal];
+        [self->_learnMoreButton addTarget:target
+                                   action:action
+                         forControlEvents:UIControlEventTouchUpInside];
     });
 }
 

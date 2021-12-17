@@ -4,7 +4,7 @@
 //  Lunar Unity Mobile Console
 //  https://github.com/SpaceMadness/lunar-unity-console
 //
-//  Copyright 2019 Alex Lementuev, SpaceMadness.
+//  Copyright 2015-2021 Alex Lementuev, SpaceMadness.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //
+
 
 #import <MessageUI/MessageUI.h>
 
@@ -448,7 +449,7 @@ static const CGFloat kMinWidthToResizeSearchBar = 480;
 - (void)tableView:(UITableView *)tableView performAction:(SEL)action forRowAtIndexPath:(NSIndexPath *)indexPath withSender:(id)sender
 {
     LUConsoleLogEntry *entry = [self entryForRowAtIndexPath:indexPath];
-    [self copyTextToClipboard:entry.message];
+    [self copyTextToClipboard:entry.message.text];
 }
 
 #pragma mark -

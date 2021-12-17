@@ -4,7 +4,7 @@
 //  Lunar Unity Mobile Console
 //  https://github.com/SpaceMadness/lunar-unity-console
 //
-//  Copyright 2019 Alex Lementuev, SpaceMadness.
+//  Copyright 2015-2021 Alex Lementuev, SpaceMadness.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //
+
 
 #import "LUConsole.h"
 
@@ -51,7 +52,7 @@
     return [_entries entryAtIndex:index];
 }
 
-- (void)logMessage:(NSString *)message stackTrace:(NSString *)stackTrace type:(LUConsoleLogType)type
+- (void)logMessage:(LULogMessage *)message stackTrace:(NSString *)stackTrace type:(LUConsoleLogType)type
 {
     NSUInteger oldTotalCount   = _entries.totalCount;   // total count before we added a new item
     NSUInteger oldTrimmedCount = _entries.trimmedCount; // trimmed count before we added a new item

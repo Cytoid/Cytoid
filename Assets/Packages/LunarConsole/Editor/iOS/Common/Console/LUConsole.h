@@ -4,7 +4,7 @@
 //  Lunar Unity Mobile Console
 //  https://github.com/SpaceMadness/lunar-unity-console
 //
-//  Copyright 2019 Alex Lementuev, SpaceMadness.
+//  Copyright 2015-2021 Alex Lementuev, SpaceMadness.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -19,12 +19,14 @@
 //  limitations under the License.
 //
 
+
 #import <UIKit/UIKit.h>
 
 #import "LUConsoleLogEntry.h"
 
 @class LUConsole;
 @class LUConsoleLogEntryList;
+@class LULogMessage;
 
 @protocol LunarConsoleDelegate <NSObject>
 
@@ -54,7 +56,7 @@
 
 - (LUConsoleLogEntry *)entryAtIndex:(NSUInteger)index;
 
-- (void)logMessage:(NSString *)message stackTrace:(NSString *)stackTrace type:(LUConsoleLogType)type;
+- (void)logMessage:(LULogMessage *)message stackTrace:(NSString *)stackTrace type:(LUConsoleLogType)type;
 - (void)clear;
 
 - (NSString *)getText;

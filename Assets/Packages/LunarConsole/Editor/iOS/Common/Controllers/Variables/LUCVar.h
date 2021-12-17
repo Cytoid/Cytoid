@@ -4,7 +4,7 @@
 //  Lunar Unity Mobile Console
 //  https://github.com/SpaceMadness/lunar-unity-console
 //
-//  Copyright 2019 Alex Lementuev, SpaceMadness.
+//  Copyright 2015-2021 Alex Lementuev, SpaceMadness.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 //  limitations under the License.
 //
 
+
 #import "LUEntry.h"
 
 typedef enum : NSUInteger {
@@ -26,7 +27,8 @@ typedef enum : NSUInteger {
     LUCVarTypeBoolean,
     LUCVarTypeInteger,
     LUCVarTypeFloat,
-    LUCVarTypeString
+    LUCVarTypeString,
+    LUCVarTypeEnum
 } LUCVarType;
 
 typedef enum : NSUInteger {
@@ -51,6 +53,7 @@ extern NSString * const LUCVarTypeNameBoolean;
 extern NSString * const LUCVarTypeNameInteger;
 extern NSString * const LUCVarTypeNameFloat;
 extern NSString * const LUCVarTypeNameString;
+extern NSString * const LUCVarTypeNameEnum;
 extern NSString * const LUCVarTypeNameUnknown;
 
 @interface LUCVar : LUEntry
@@ -59,6 +62,7 @@ extern NSString * const LUCVarTypeNameUnknown;
 @property (nonatomic, strong) NSString *value;
 @property (nonatomic, strong) NSString *defaultValue;
 @property (nonatomic, readonly) BOOL isDefaultValue;
+@property (nonatomic, strong) NSArray<NSString *> *values;
 @property (nonatomic, assign) LUCVarFlags flags;
 @property (nonatomic, assign) LUCVarRange range;
 @property (nonatomic, readonly) BOOL hasRange;

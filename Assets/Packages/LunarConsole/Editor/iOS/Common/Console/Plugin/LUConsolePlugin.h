@@ -4,7 +4,7 @@
 //  Lunar Unity Mobile Console
 //  https://github.com/SpaceMadness/lunar-unity-console
 //
-//  Copyright 2019 Alex Lementuev, SpaceMadness.
+//  Copyright 2015-2021 Alex Lementuev, SpaceMadness.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //
+
 
 #import <Foundation/Foundation.h>
 
@@ -83,6 +84,7 @@ extern NSString * const LUConsoleCheckFullVersionNotificationSource;
 
 - (LUCVar *)registerVariableWithId:(int)entryId name:(NSString *)name type:(NSString *)type value:(NSString *)value;
 - (LUCVar *)registerVariableWithId:(int)entryId name:(NSString *)name type:(NSString *)type value:(NSString *)value defaultValue:(NSString *)defaultValue;
+- (LUCVar *)registerVariableWithId:(int)entryId name:(NSString *)name type:(NSString *)type value:(NSString *)value defaultValue:(NSString *)defaultValue values:(NSArray<NSString *> *)values;
 - (void)setValue:(NSString *)value forVariableWithId:(int)variableId;
 
 - (void)enableGestureRecognition;

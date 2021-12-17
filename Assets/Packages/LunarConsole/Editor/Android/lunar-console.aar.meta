@@ -1,21 +1,30 @@
 fileFormatVersion: 2
-guid: ae21eaefd8dea3d47b15cd26f22b4fd7
-timeCreated: 1576517649
-licenseType: Store
+guid: 8c04a287e839b49ec81abc152624ec48
 PluginImporter:
-  serializedVersion: 1
+  externalObjects: {}
+  serializedVersion: 2
   iconMap: {}
   executionOrder: {}
+  defineConstraints: []
   isPreloaded: 0
+  isOverridable: 0
+  isExplicitlyReferenced: 0
+  validateReferences: 1
   platformData:
-    Android:
+  - first:
+      Android: Android
+    second:
       enabled: 1
       settings: {}
-    Any:
+  - first:
+      Any: 
+    second:
       enabled: 0
       settings: {}
-    Editor:
-      enabled: 1
+  - first:
+      Editor: Editor
+    second:
+      enabled: 0
       settings:
         DefaultValueInitialized: true
   userData: 

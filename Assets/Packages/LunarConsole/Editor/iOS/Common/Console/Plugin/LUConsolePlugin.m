@@ -4,7 +4,7 @@
 //  Lunar Unity Mobile Console
 //  https://github.com/SpaceMadness/lunar-unity-console
 //
-//  Copyright 2019 Alex Lementuev, SpaceMadness.
+//  Copyright 2015-2021 Alex Lementuev, SpaceMadness.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //
+
 
 #import "LUConsolePlugin.h"
 
@@ -131,7 +132,7 @@ static NSString *const kScriptMessageTrackEvent = @"track_event";
 
         [UIView animateWithDuration:kWindowAnimationDuration
                          animations:^{
-                             _consoleWindow.frame = windowFrame;
+                            self->_consoleWindow.frame = windowFrame;
                          }];
 
         [self registerNotifications];
@@ -185,13 +186,21 @@ static NSString *const kScriptMessageTrackEvent = @"track_event";
 
 - (void)logMessage:(NSString *)message stackTrace:(NSString *)stackTrace type:(LUConsoleLogType)type
 {
+    LULogMessage *logMessage;
+    if (_settings.richTextTags) {
+        logMessage = [LULogMessage fromRichText:message];
+    }
+    else {
+        logMessage = [[LULogMessage alloc] initWithText:message tags:nil];
+    }
+    
     if ([self shouldDisplayErrorType:type] && _consoleWindow == nil) {
-        [self showWarningWithMessage:message];
+        [self showWarningWithMessage:logMessage];
     }
 
     // TODO: use batching
     lunar_dispatch_main(^{
-        [_console logMessage:message stackTrace:stackTrace type:type];
+        [self->_console logMessage:logMessage stackTrace:stackTrace type:type];
     });
 }
 
@@ -235,7 +244,12 @@ static NSString *const kScriptMessageTrackEvent = @"track_event";
 
 - (LUCVar *)registerVariableWithId:(int)entryId name:(NSString *)name type:(NSString *)type value:(NSString *)value defaultValue:(NSString *)defaultValue
 {
-    return [_actionRegistry registerVariableWithId:entryId name:name typeName:type value:value defaultValue:defaultValue];
+    return [self registerVariableWithId:entryId name:name type:type value:value defaultValue:value values:nil];
+}
+
+- (LUCVar *)registerVariableWithId:(int)entryId name:(NSString *)name type:(NSString *)type value:(NSString *)value defaultValue:(NSString *)defaultValue values:(NSArray<NSString *> *)values
+{
+    return [_actionRegistry registerVariableWithId:entryId name:name typeName:type value:value defaultValue:defaultValue values:values];
 }
 
 - (void)setValue:(NSString *)value forVariableWithId:(int)variableId
@@ -246,7 +260,7 @@ static NSString *const kScriptMessageTrackEvent = @"track_event";
 #pragma mark -
 #pragma mark Warnings
 
-- (BOOL)showWarningWithMessage:(NSString *)message
+- (BOOL)showWarningWithMessage:(LULogMessage *)message
 {
     if (_warningWindow == nil) {
 		CGRect safeRect = [LUUIHelper safeAreaRect];
@@ -442,7 +456,6 @@ static NSString *const kScriptMessageTrackEvent = @"track_event";
 
 - (BOOL)shouldDisplayErrorType:(LUConsoleLogType)type
 {
-    return YES;
     if (!LU_IS_CONSOLE_LOG_TYPE_ERROR(type)) {
         return NO;
     }

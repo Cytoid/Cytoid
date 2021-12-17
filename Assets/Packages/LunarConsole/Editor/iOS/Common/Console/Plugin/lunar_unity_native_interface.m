@@ -4,7 +4,7 @@
 //  Lunar Unity Mobile Console
 //  https://github.com/SpaceMadness/lunar-unity-console
 //
-//  Copyright 2019 Alex Lementuev, SpaceMadness.
+//  Copyright 2015-2021 Alex Lementuev, SpaceMadness.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //
+
 
 #include <Foundation/Foundation.h>
 
@@ -116,15 +117,17 @@ void __lunar_console_action_unregister(int actionId)
     }
 }
 
-void __lunar_console_cvar_register(int entryId, const char *nameStr, const char *typeStr, const char *valueStr, const char *defaultValueStr, int flags, BOOL hasRange, float min, float max)
+void __lunar_console_cvar_register(int entryId, const char *nameStr, const char *typeStr, const char *valueStr, const char *defaultValueStr, int flags, BOOL hasRange, float min, float max, const char *valuesStr)
 {
     lunar_dispatch_main(^{
         NSString *name = [[NSString alloc] initWithUTF8String:nameStr];
         NSString *type = [[NSString alloc] initWithUTF8String:typeStr];
         NSString *value = [[NSString alloc] initWithUTF8String:valueStr];
         NSString *defaultValue = [[NSString alloc] initWithUTF8String:defaultValueStr];
+        NSString *values = valuesStr ? [[NSString alloc] initWithUTF8String:valuesStr] : nil;
 
         LUCVar *cvar = [_lunarConsolePlugin registerVariableWithId:entryId name:name type:type value:value defaultValue:defaultValue];
+        cvar.values = [values componentsSeparatedByString:@","];
         cvar.flags = flags;
         if (!isnan(min) && !isnan(max)) {
             cvar.range = LUMakeCVarRange(min, max);

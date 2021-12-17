@@ -55,7 +55,7 @@
       "dependencies": {}
     },
     "com.unity.analytics": {
-      "version": "3.3.5",
+      "version": "3.6.11",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -64,14 +64,14 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ext.nunit": {
-      "version": "1.0.0",
+      "version": "1.0.6",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.rider": {
-      "version": "1.1.4",
+      "version": "1.2.1",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -79,8 +79,17 @@
       },
       "url": "https://packages.unity.com"
     },
+    "com.unity.ide.visualstudio": {
+      "version": "2.0.11",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.test-framework": "1.1.9"
+      },
+      "url": "https://packages.unity.com"
+    },
     "com.unity.ide.vscode": {
-      "version": "1.2.2",
+      "version": "1.2.4",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
@@ -105,18 +114,18 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.test-framework": {
-      "version": "1.1.18",
+      "version": "1.1.29",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "com.unity.ext.nunit": "1.0.0",
+        "com.unity.ext.nunit": "1.0.6",
         "com.unity.modules.imgui": "1.0.0",
         "com.unity.modules.jsonserialize": "1.0.0"
       },
       "url": "https://packages.unity.com"
     },
     "com.unity.textmeshpro": {
-      "version": "2.0.1",
+      "version": "2.1.4",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -134,11 +143,11 @@
       }
     },
     "io.sentry.unity": {
-      "version": "https://github.com/getsentry/unity.git#0.5.1",
+      "version": "https://github.com/getsentry/unity.git#0.6.0",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "1422d8133b12e67bce6f1fcd8d82512c5442f5e9"
+      "hash": "21dcb455c8219abfe0998427a7b217cd199a529f"
     },
     "com.unity.modules.ai": {
       "version": "1.0.0",

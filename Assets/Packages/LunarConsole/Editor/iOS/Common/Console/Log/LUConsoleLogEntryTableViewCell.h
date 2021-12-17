@@ -4,7 +4,7 @@
 //  Lunar Unity Mobile Console
 //  https://github.com/SpaceMadness/lunar-unity-console
 //
-//  Copyright 2019 Alex Lementuev, SpaceMadness.
+//  Copyright 2015-2021 Alex Lementuev, SpaceMadness.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -19,20 +19,23 @@
 //  limitations under the License.
 //
 
+
 #import <UIKit/UIKit.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class LULogMessage;
+
 @interface LUConsoleLogEntryTableViewCell : UITableViewCell
 
-@property (nonatomic, strong, nullable) UIImage  * icon;
-@property (nonatomic, strong, nullable) NSString * message;
-@property (nonatomic, strong, nullable) UIColor  * messageColor;
-@property (nonatomic, strong, nullable) UIColor  * cellColor;
+@property (nonatomic, strong, nullable) UIImage      * icon;
+@property (nonatomic, strong, nullable) UIColor      * messageColor;
+@property (nonatomic, strong, nullable) UIColor      * cellColor;
 
 + (nonnull instancetype)cellWithFrame:(CGRect)frame cellIdentifier:(nullable NSString *)cellIdentifier;
 - (nonnull instancetype)initWithFrame:(CGRect)frame cellIdentifier:(nullable NSString *)cellIdentifier;
 
+- (void)setMessage:(LULogMessage *)message;
 - (void)setSize:(CGSize)size;
 
 + (CGFloat)heightForCellWithText:(nullable NSString *)text width:(CGFloat)width;
@@ -49,7 +52,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (CGFloat)heightForCellWithText:(nullable NSString *)text width:(CGFloat)width;
 
-- (void)setMessage:(NSString *)message attributes:(NSDictionary<NSAttributedStringKey, id> *)attributes;
+- (void)setMessage:(LULogMessage *)message attributes:(NSDictionary<NSAttributedStringKey, id> *)attributes;
 
 @end
 

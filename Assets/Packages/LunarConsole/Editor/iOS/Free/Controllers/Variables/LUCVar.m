@@ -4,7 +4,7 @@
 //  Lunar Unity Mobile Console
 //  https://github.com/SpaceMadness/lunar-unity-console
 //
-//  Copyright 2019 Alex Lementuev, SpaceMadness.
+//  Copyright 2015-2021 Alex Lementuev, SpaceMadness.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 //  limitations under the License.
 //
 
+
 #import "LUCVar.h"
 
 #import "Lunar.h"
@@ -27,6 +28,7 @@ NSString * const LUCVarTypeNameBoolean = @"Boolean";
 NSString * const LUCVarTypeNameInteger = @"Integer";
 NSString * const LUCVarTypeNameFloat   = @"Float";
 NSString * const LUCVarTypeNameString  = @"String";
+NSString * const LUCVarTypeNameEnum    = @"Enum";
 NSString * const LUCVarTypeNameUnknown = @"Unknown";
 
 @implementation LUCVar

@@ -56,5 +56,9 @@ public class Difficulty : IComparable<Difficulty>
                 return Extreme;
         }
     }
-    
+
+    public override string ToString()
+    {
+        return Name;
+    }
 }

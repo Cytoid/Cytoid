@@ -121,6 +121,11 @@ namespace Cytoid.Storyboard.Notes
             {
                 Note.Override.SizeMultiplier = EaseFloat(From.SizeMultiplier, To.SizeMultiplier);
             }
+            
+            if (From.HitboxMultiplier != null)
+            {
+                Note.Override.HitboxMultiplier = EaseFloat(From.HitboxMultiplier, To.HitboxMultiplier);
+            }
 
             if (From.XMultiplier != null)
             {

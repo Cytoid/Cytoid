@@ -4,7 +4,7 @@
 //  Lunar Unity Mobile Console
 //  https://github.com/SpaceMadness/lunar-unity-console
 //
-//  Copyright 2019 Alex Lementuev, SpaceMadness.
+//  Copyright 2015-2021 Alex Lementuev, SpaceMadness.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -19,13 +19,20 @@
 //  limitations under the License.
 //
 
+
 #import "LUTheme.h"
 
 #import "Lunar.h"
 
 static LUTheme *_mainTheme;
 
+static NSString const * _fontStyleBold = @"Bold";
+static NSString const * _fontStyleItalic = @"Italic";
+static NSString const * _fontStyleBoldItalic = @"BoldItalic";
+
 @interface LUTheme ()
+
+@property (nonatomic, readwrite) LUAttributedTextSkin *attributedTextSkin;
 
 @property (nonatomic, strong) UIColor *statusBarColor;
 @property (nonatomic, strong) UIColor *statusBarTextColor;
@@ -141,6 +148,19 @@ static UIImage *CreateCollapseBackgroundImage()
     return [collapseImage resizableImageWithCapInsets:UIEdgeInsetsMake(offset, offset, offset, offset)];
 }
 
+@interface LUAttributedTextSkin ()
+
+@property (nonatomic, readwrite) UIFont *regularFont;
+@property (nonatomic, readwrite) UIFont *boldFont;
+@property (nonatomic, readwrite) UIFont *italicFont;
+@property (nonatomic, readwrite) UIFont *boldItalicFont;
+
+@end
+
+@implementation LUAttributedTextSkin
+
+@end
+
 @implementation LUTheme
 
 + (void)initialize
@@ -226,6 +246,12 @@ static UIImage *CreateCollapseBackgroundImage()
         actionButtonLargeSkin.normalImage = LUGet3SlicedImage(@"lunar_console_action_button_large_normal");
         actionButtonLargeSkin.selectedImage = LUGet3SlicedImage(@"lunar_console_action_button_large_selected");
         _mainTheme.actionButtonLargeSkin = actionButtonLargeSkin;
+        
+        _mainTheme.attributedTextSkin = [[LUAttributedTextSkin alloc] init];
+        _mainTheme.attributedTextSkin.regularFont = [self createDefaultFont];
+        _mainTheme.attributedTextSkin.boldFont = [self createDefaultFontWithStyle:_fontStyleBold];
+        _mainTheme.attributedTextSkin.italicFont = [self createDefaultFontWithStyle:_fontStyleItalic];
+        _mainTheme.attributedTextSkin.boldItalicFont = [self createDefaultFontWithStyle:_fontStyleBoldItalic];
     }
 }
 
@@ -244,6 +270,11 @@ static UIImage *CreateCollapseBackgroundImage()
     return [self createCustomFontWithName:@"Menlo-regular" size:size];
 }
 
++ (UIFont *)createDefaultFontWithStyle:(NSString const*)style
+{
+    NSString *fontName = [[NSString alloc] initWithFormat:@"Menlo-%@", style];
+    return [self createCustomFontWithName:fontName size:10];
+}
 
 + (UIFont *)createDefaultFont
 {

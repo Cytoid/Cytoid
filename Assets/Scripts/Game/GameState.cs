@@ -253,7 +253,7 @@ public sealed class GameState
         if (Mode == GameMode.Practice)
         {
             Score += 900000.0 / NoteCount * grade.GetScoreWeight(false) +
-                     100000.0 / (NoteCount * (NoteCount + 1) / 2.0) * Combo;
+                     100000.0 / (NoteCount * (long) (NoteCount + 1) / 2.0) * Combo;
         }
         else
         {

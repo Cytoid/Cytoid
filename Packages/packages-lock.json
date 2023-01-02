@@ -1,47 +1,5 @@
 {
   "dependencies": {
-    "com.google.android.appbundle": {
-      "version": "1.2.0",
-      "depth": 2,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://unityregistry-pa.googleapis.com"
-    },
-    "com.google.external-dependency-manager": {
-      "version": "1.2.159",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://unityregistry-pa.googleapis.com"
-    },
-    "com.google.play.common": {
-      "version": "1.2.0",
-      "depth": 1,
-      "source": "registry",
-      "dependencies": {
-        "com.google.android.appbundle": "1.2.0"
-      },
-      "url": "https://unityregistry-pa.googleapis.com"
-    },
-    "com.google.play.core": {
-      "version": "1.2.0",
-      "depth": 1,
-      "source": "registry",
-      "dependencies": {
-        "com.google.android.appbundle": "1.2.0"
-      },
-      "url": "https://unityregistry-pa.googleapis.com"
-    },
-    "com.google.play.review": {
-      "version": "1.2.0",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.google.play.common": "1.2.0",
-        "com.google.play.core": "1.2.0"
-      },
-      "url": "https://unityregistry-pa.googleapis.com"
-    },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
       "depth": 0,

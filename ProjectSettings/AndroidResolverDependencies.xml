@@ -1,0 +1,37 @@
+<dependencies>
+  <packages>
+    <package>com.google.android.play:core-common:2.0.0</package>
+    <package>com.google.android.play:review:2.0.0</package>
+  </packages>
+  <files>
+    <file>Assets/Plugins/Android/android.arch.core.common-1.0.0.jar</file>
+    <file>Assets/Plugins/Android/android.arch.lifecycle.common-1.0.0.jar</file>
+    <file>Assets/Plugins/Android/android.arch.lifecycle.runtime-1.0.0.aar</file>
+    <file>Assets/Plugins/Android/com.android.support.support-annotations-26.1.0.jar</file>
+    <file>Assets/Plugins/Android/com.android.support.support-compat-26.1.0.aar</file>
+    <file>Assets/Plugins/Android/com.android.support.support-core-ui-26.1.0.aar</file>
+    <file>Assets/Plugins/Android/com.android.support.support-core-utils-26.1.0.aar</file>
+    <file>Assets/Plugins/Android/com.android.support.support-fragment-26.1.0.aar</file>
+    <file>Assets/Plugins/Android/com.android.support.support-media-compat-26.1.0.aar</file>
+    <file>Assets/Plugins/Android/com.android.support.support-v4-26.1.0.aar</file>
+    <file>Assets/Plugins/Android/com.google.android.gms.play-services-basement-16.0.1.aar</file>
+    <file>Assets/Plugins/Android/com.google.android.gms.play-services-tasks-16.0.1.aar</file>
+    <file>Assets/Plugins/Android/com.google.android.play.core-common-2.0.0.aar</file>
+    <file>Assets/Plugins/Android/com.google.android.play.review-2.0.0.aar</file>
+  </files>
+  <settings>
+    <setting name="androidAbis" value="arm64-v8a,armeabi-v7a" />
+    <setting name="bundleId" value="me.tigerhix.cytoid" />
+    <setting name="explodeAars" value="True" />
+    <setting name="gradleBuildEnabled" value="True" />
+    <setting name="gradlePropertiesTemplateEnabled" value="False" />
+    <setting name="gradleTemplateEnabled" value="False" />
+    <setting name="installAndroidPackages" value="True" />
+    <setting name="localMavenRepoDir" value="Assets/GeneratedLocalRepo" />
+    <setting name="packageDir" value="Assets/Plugins/Android" />
+    <setting name="patchAndroidManifest" value="True" />
+    <setting name="patchMainTemplateGradle" value="True" />
+    <setting name="projectExportEnabled" value="False" />
+    <setting name="useJetifier" value="False" />
+  </settings>
+</dependencies>

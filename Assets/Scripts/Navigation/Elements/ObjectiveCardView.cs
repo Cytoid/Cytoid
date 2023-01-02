@@ -17,13 +17,13 @@ public class ObjectiveCardView : MonoBehaviour
         switch (objective.ProgressType)
         {
             case ProgressType.Percentage:
-                progressText.text = $"{objective.Progress}%/{objective.Completion}%";
+                progressText.text = $"{objective.Progress * 100:F2}%/{objective.Completion * 100:F2}%";
                 break;
             case ProgressType.OneDecimal:
-                progressText.text = $"{objective.Progress:F2}/{objective.Completion:F2}";
+                progressText.text = $"{objective.Progress:F1}/{objective.Completion:F1}";
                 break;
             case ProgressType.TwoDecimal:
-                progressText.text = $"{objective.Progress:F1}/{objective.Completion:F1}";
+                progressText.text = $"{objective.Progress:F2}/{objective.Completion:F2}";
                 break;
             default:
                 progressText.text = $"{Math.Round(objective.Progress)}/{Math.Round(objective.Completion)}";

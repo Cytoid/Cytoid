@@ -213,6 +213,7 @@ public class ProfileTab : MonoBehaviour
             {
                 viewAllFeaturedLevelsButton.gameObject.SetActive(false);
             }
+            // TODO: Qualified button
             
             viewAllLevelsButton.transform.parent.RebuildLayout();
         }

@@ -33,6 +33,10 @@ public class OnlineLevelQuery
         {
             uri += "&featured=true";
         }
+        if (category == "qualified")
+        {
+            uri += "&qualified=true";
+        }
 
         if (limit >= 0)
         {

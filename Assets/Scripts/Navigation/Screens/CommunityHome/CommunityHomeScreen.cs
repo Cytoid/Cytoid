@@ -39,6 +39,16 @@ public class CommunityHomeScreen : Screen
             },
             new Layout.LevelSection
             {
+                TitleKey = "COMMUNITY_HOME_NEW_QUALIFIED",
+                Query = new OnlineLevelQuery
+                {
+                    sort = "modification_date",
+                    order = "desc",
+                    category = "qualified"
+                }
+            },
+            new Layout.LevelSection
+            {
                 TitleKey = "COMMUNITY_HOME_NEW_UPLOADS",
                 Query = new OnlineLevelQuery
                 {

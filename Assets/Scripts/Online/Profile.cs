@@ -57,6 +57,8 @@ public class FullProfile : Profile
     [JsonProperty("levels")] public List<OnlineLevel> Levels { get; set; } = new List<OnlineLevel>();
     [JsonProperty("featuredLevelCount")] public int FeaturedLevelCount { get; set; }
     [JsonProperty("featuredLevels")] public List<OnlineLevel> FeaturedLevels { get; set; } = new List<OnlineLevel>();
+    [JsonProperty("qualifiedLevelCount")] public int FeaturedLevelCount { get; set; }
+    [JsonProperty("qualifiedLevels")] public List<OnlineLevel> FeaturedLevels { get; set; } = new List<OnlineLevel>();
     [JsonProperty("collectionCount")] public int CollectionCount { get; set; }
     [JsonProperty("collections")] public List<CollectionMeta> Collections { get; set; } = new List<CollectionMeta>();
     [JsonProperty("recentRecords")] public List<OnlineRecord> RecentRecords { get; set; } = new List<OnlineRecord>();

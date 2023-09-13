@@ -106,7 +106,8 @@ public class CommunityCollectionSelectionScreen : Screen
             new[]
             {
                 ("COMMUNITY_SELECT_CATEGORY_ALL".Get(), "all"),
-                ("COMMUNITY_SELECT_CATEGORY_FEATURED".Get(), "featured")
+                ("COMMUNITY_SELECT_CATEGORY_FEATURED".Get(), "featured"),
+                ("COMMUNITY_SELECT_CATEGORY_QUALIFIED".Get(), "qualified")
             });
         timeRadioGroup.SetContent(null, null,
             () => "all", it => {

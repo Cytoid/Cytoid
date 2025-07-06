@@ -14,6 +14,9 @@ using Sentry;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
+#if UNITY_ANDROID
+using UnityEngine.Android;
+#endif
 
 public class Context : SingletonMonoBehavior<Context>
 {
@@ -51,11 +54,11 @@ public class Context : SingletonMonoBehavior<Context>
         get
         {
 #if UNITY_ANDROID
-                return $"{BundleRemoteBaseUrl}/Android/";
+            return $"{BundleRemoteBaseUrl}/Android/";
 #elif UNITY_IOS
             return $"{BundleRemoteBaseUrl}/iOS/";
 #else
-                throw new InvalidOperationException();
+            throw new InvalidOperationException();
 #endif
         }
     }
@@ -261,6 +264,7 @@ public class Context : SingletonMonoBehavior<Context>
                 var file = UserDataPath + "/" + Path.GetRandomFileName();
                 File.Create(file);
                 File.Delete(file);
+                Debug.Log("Write permission granted");
             }
             catch (Exception e)
             {
@@ -773,22 +777,30 @@ public class Context : SingletonMonoBehavior<Context>
 
     public string GetAndroidStoragePath()
     {
-        if (Application.platform != RuntimePlatform.Android) return "";
-        return AndroidVersionCode <= 29 ? GetAndroidLegacyStoragePath() : Application.persistentDataPath;
+#if UNITY_ANDROID
+        if (
+            AndroidVersionCode <= 29
+            && Permission.HasUserAuthorizedPermission(Permission.ExternalStorageRead)
+            && Permission.HasUserAuthorizedPermission(Permission.ExternalStorageWrite)
+        )
+        {
+            return GetAndroidLegacyStoragePath();
+        }
+
+        return Application.persistentDataPath;
+#else
+        return "";
+#endif
     }
 
     public string GetAndroidLegacyStoragePath()
     {
         try
         {
-            using (var javaClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
-            {
-                using (var activityClass = javaClass.GetStatic<AndroidJavaObject>("currentActivity"))
-                {
-                    return activityClass.Call<AndroidJavaObject>("getAndroidStorageFile")
-                        .Call<string>("getAbsolutePath");
-                }
-            }
+            using var javaClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+            using var activityClass = javaClass.GetStatic<AndroidJavaObject>("currentActivity");
+            return activityClass.Call<AndroidJavaObject>("getAndroidStorageFile")
+                .Call<string>("getAbsolutePath");
         }
         catch (Exception e)
         {

@@ -1,5 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.unity3d.player" xmlns:tools="http://schemas.android.com/tools">
+  <!-- Storage Permissions -->
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
   <application android:allowAudioPlaybackCapture="true" android:requestLegacyExternalStorage="true">
     <activity android:name="me.tigerhix.cytoid.CytoidPluginActivity" android:screenOrientation="sensorLandscape" android:label="@string/app_name" android:configChanges="fontScale|keyboard|keyboardHidden|locale|mnc|mcc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|touchscreen" android:exported="true" android:launchMode="singleTask">
       <intent-filter>
@@ -43,5 +46,6 @@
         <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.cytoidlevel.zip" />
       </intent-filter>
     </activity>
+    <meta-data android:name="unityplayer.SkipPermissionsDialog" android:value="true" />
   </application>
 </manifest>

@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 using DG.Tweening;
-using MoreMountains.NiceVibrations;
+
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.EventSystems;

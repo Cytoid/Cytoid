@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DG.Tweening;
 using Cysharp.Threading.Tasks;
-using MoreMountains.NiceVibrations;
+
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;

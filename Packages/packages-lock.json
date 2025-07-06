@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.benoitfreslon.vibration": {
+      "version": "https://github.com/BenoitFreslon/Vibration.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "0fe3ea18d2288b0c60dde2f369a70dc207f152b0"
+    },
     "com.boxqkrtm.ide.cursor": {
       "version": "https://github.com/boxqkrtm/com.unity.ide.cursor.git",
       "depth": 0,

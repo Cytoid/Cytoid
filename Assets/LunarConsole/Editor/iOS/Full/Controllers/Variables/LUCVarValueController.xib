@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="16097" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="16087"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="LUCVarValueController">
+            <connections>
+                <outlet property="errorLabel" destination="U1t-W9-x4f" id="Wn3-Yl-HyK"/>
+                <outlet property="errorLabelHeightConstraint" destination="es9-pQ-52O" id="tus-Wd-jV5"/>
+                <outlet property="slider" destination="XG0-J6-nLk" id="VfP-EC-fmN"/>
+                <outlet property="textField" destination="lvV-dB-uaV" id="QNc-HG-e5x"/>
+                <outlet property="view" destination="iN0-l3-epB" id="SMU-Hl-0IJ"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleToFill" id="iN0-l3-epB">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="70"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <stackView opaque="NO" contentMode="scaleToFill" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="phR-XX-Scv">
+                    <rect key="frame" x="20" y="18" width="280" height="34"/>
+                    <subviews>
+                        <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="XG0-J6-nLk" customClass="LUSlider">
+                            <rect key="frame" x="-2" y="0.0" width="164" height="35"/>
+                            <constraints>
+                                <constraint firstAttribute="width" constant="160" id="3zS-9V-yKK"/>
+                            </constraints>
+                            <connections>
+                                <action selector="sliderEditingFinished:" destination="-1" eventType="touchUpInside" id="3Lp-Bj-W5Y"/>
+                                <action selector="sliderEditingFinished:" destination="-1" eventType="touchUpOutside" id="zRV-AZ-GpL"/>
+                                <action selector="sliderValueChanged:" destination="-1" eventType="valueChanged" id="WgU-36-ncf"/>
+                            </connections>
+                        </slider>
+                        <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="lvV-dB-uaV" customClass="LUTextField">
+                            <rect key="frame" x="168" y="0.0" width="112" height="34"/>
+                            <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                            <textInputTraits key="textInputTraits"/>
+                            <connections>
+                                <outlet property="delegate" destination="-1" id="2pd-Oa-AoJ"/>
+                            </connections>
+                        </textField>
+                    </subviews>
+                </stackView>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="U1t-W9-x4f">
+                    <rect key="frame" x="0.0" y="55" width="320" height="15"/>
+                    <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="15" id="es9-pQ-52O"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                    <color key="textColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                    <nil key="highlightedColor"/>
+                </label>
+            </subviews>
+            <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <constraints>
+                <constraint firstItem="phR-XX-Scv" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="20" id="3K8-pl-lRq"/>
+                <constraint firstAttribute="bottom" secondItem="U1t-W9-x4f" secondAttribute="bottom" id="Mee-oy-9kP"/>
+                <constraint firstAttribute="trailing" secondItem="phR-XX-Scv" secondAttribute="trailing" constant="20" id="NBJ-IM-sCb"/>
+                <constraint firstItem="U1t-W9-x4f" firstAttribute="centerX" secondItem="iN0-l3-epB" secondAttribute="centerX" id="WbG-8H-9Nn"/>
+                <constraint firstItem="U1t-W9-x4f" firstAttribute="width" secondItem="iN0-l3-epB" secondAttribute="width" id="hZy-Qv-hIt"/>
+                <constraint firstItem="phR-XX-Scv" firstAttribute="centerX" secondItem="iN0-l3-epB" secondAttribute="centerX" id="mZE-AZ-Shu"/>
+                <constraint firstItem="phR-XX-Scv" firstAttribute="centerY" secondItem="iN0-l3-epB" secondAttribute="centerY" id="tMt-sJ-77v"/>
+            </constraints>
+            <nil key="simulatedStatusBarMetrics"/>
+            <nil key="simulatedTopBarMetrics"/>
+            <nil key="simulatedBottomBarMetrics"/>
+            <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+            <point key="canvasLocation" x="34.5" y="-244"/>
+        </view>
+    </objects>
+</document>

@@ -955,12 +955,7 @@ public class Context : SingletonMonoBehavior<Context>
     {
         get
         {
-            switch (Application.identifier)
-            {
-                case "me.tigerhix.cytoid": return Distribution.Global;
-                case "me.tigerhix.cytoid.cn": return Distribution.TapTap;
-            }
-            throw new InvalidOperationException();
+            return Distribution.Global;
         }
     }
 }

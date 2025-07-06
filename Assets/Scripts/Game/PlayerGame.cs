@@ -58,7 +58,7 @@ public class PlayerGame : Game
             // Watch for file changes
             print($"Enabling file watcher on {StoryboardPath}");
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-            Environment.SetEnvironmentVariable("MONO_MANAGED_WATCHER", "enabled");
+            System.Environment.SetEnvironmentVariable("MONO_MANAGED_WATCHER", "enabled");
 #endif
             watcher = new FileSystemWatcher
             {

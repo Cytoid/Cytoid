@@ -612,6 +612,9 @@ public class Context : SingletonMonoBehavior<Context>
 
                                 await UniTask.Delay(TimeSpan.FromSeconds(1f));
 
+                                // Clear navigation history before entering tutorial
+                                ScreenManager.History = new Stack<Intent>();
+
                                 // Initialize navigation like normal
                                 await InitializeNavigation();
                                 break;

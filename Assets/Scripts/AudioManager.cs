@@ -35,11 +35,13 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         SetUseNativeAudio(Context.Player.Settings.UseNativeAudio);
         if (useNativeAudio)
         {
-            NativeAudio.Initialize(new NativeAudio.InitializationOptions
+            var options = new NativeAudio.InitializationOptions
             {
-                androidAudioTrackCount = 2
-            });
-            Debug.Log("Native Audio initialized");
+                androidAudioTrackCount = 2,
+                androidBufferSize = -1 // 使用设备原生缓冲区大小
+            };
+            NativeAudio.Initialize(options);
+            Debug.Log($"Native Audio initialized with {NativeAudio.GetNativeSourceCount()} sources");
         }
 
         preloadedAudioClips.ForEach(it => Load(it.name, it, isPreloaded: true));
@@ -100,7 +102,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
 
     public void SetUseNativeAudio(bool useNativeAudio)
     {
-        this.useNativeAudio = NativeAudio.OnSupportedPlatform() && useNativeAudio;
+        this.useNativeAudio = NativeAudio.OnSupportedPlatform && useNativeAudio;
     }
 
     public Controller Load(string id, AudioClip audioClip, bool? useNativeAudio = null, bool isResource = false, bool isMusic = false, bool isPreloaded = false)
@@ -281,7 +283,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
     public class Exceed7Controller : Controller
     {
         private NativeAudioPointer pointer;
-        private NativeAudioController controller;
+        private NativeSource source;
         private float length;
         private float volume = 1f;
         private bool isPlaying = false;
@@ -299,27 +301,35 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             set
             {
                 volume = value;
-                controller?.SetVolume(volume);
+                if (source.IsValid)
+                {
+                    source.SetVolume(volume);
+                }
             }
         }
 
         public override float PlaybackTime
         {
-            get => controller.GetPlaybackTime();
-            set => controller.SetPlaybackTime(value);
+            get => source.IsValid ? source.GetPlaybackTime() : 0f;
+            set
+            {
+                if (source.IsValid)
+                {
+                    source.SetPlaybackTime(value);
+                }
+            }
         }
 
         public override float Length => length;
 
         public override void Play(AudioTrackIndex trackIndex = AudioTrackIndex.RoundRobin, bool ignoreDsp = false)
         {
-            controller = pointer.Play(new NativeAudio.PlayOptions
-            {
-                audioPlayerIndex = Parent.GetAvailableIndex(trackIndex)
-            });
-            controller.SetVolume(volume);
+            var sourceIndex = Parent.GetAvailableIndex(trackIndex);
+            source = NativeAudio.GetNativeSource(sourceIndex);
+            source.Play(pointer);
+            source.SetVolume(volume);
             isPlaying = true;
-            Debug.Log("Controller volume set to " + volume);
+            Debug.Log("Source volume set to " + volume);
         }
 
         public override double PlayScheduled(AudioTrackIndex trackIndex = AudioTrackIndex.RoundRobin, double delay = 1.0, bool ignoreDsp = false)
@@ -330,19 +340,28 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         public override void Pause()
         {
             isPlaying = false;
-            controller.TrackPause();
+            if (source.IsValid)
+            {
+                source.Pause();
+            }
         }
 
         public override void Resume()
         {
             isPlaying = true;
-            controller.TrackResume();
+            if (source.IsValid)
+            {
+                source.Resume();
+            }
         }
 
         public override void Stop()
         {
             isPlaying = false;
-            controller?.Stop();
+            if (source.IsValid)
+            {
+                source.Stop();
+            }
         }
 
         public override async void Unload()
@@ -362,7 +381,6 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         {
             return isPlaying;
         }
-
     }
 }
 

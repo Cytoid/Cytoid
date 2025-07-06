@@ -20,7 +20,7 @@ public class ColorGradient
         var args = gradient.Split(',');
         startColor = args[0].ToColor();
         endColor = args[1].ToColor();
-        this.angle = (args.Length > 2 && angle == null) ? float.Parse(args[2]) : (angle ?? 0);
+        this.angle = (args.Length > 2 && angle == null) ? NumberUtils.ParseFloat(args[2]) : (angle ?? 0);
     }
 }
 

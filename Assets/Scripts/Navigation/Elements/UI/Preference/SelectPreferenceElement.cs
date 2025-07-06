@@ -26,7 +26,7 @@ public class SelectPreferenceElement : PreferenceElement
         caretSelect.labels = labelsToValues.Select(it => it.Item1).ToList();
         caretSelect.values = labelsToValues.Select(it => it.Item2.ToString(CultureInfo.InvariantCulture)).ToList();
         caretSelect.Select(getter().ToString(CultureInfo.InvariantCulture));
-        caretSelect.onSelect.AddListener((_, it) => Wrap(setter)(float.Parse(it)));
+        caretSelect.onSelect.AddListener((_, it) => Wrap(setter)(NumberUtils.ParseFloat(it)));
         base.SetContent(title, description);
         return this;
     }
@@ -38,7 +38,7 @@ public class SelectPreferenceElement : PreferenceElement
         caretSelect.labels = labelsToValues.Select(it => it.Item1).ToList();
         caretSelect.values = labelsToValues.Select(it => it.Item2.ToString(CultureInfo.InvariantCulture)).ToList();
         caretSelect.Select(getter().ToString(CultureInfo.InvariantCulture));
-        caretSelect.onSelect.AddListener((_, it) => Wrap(setter)(int.Parse(it)));
+        caretSelect.onSelect.AddListener((_, it) => Wrap(setter)(NumberUtils.ParseInt(it)));
         base.SetContent(title, description);
         return this;
     }

@@ -45,7 +45,7 @@ public static class SettingsFactory
                 {
                     SpinnerOverlay.Show();
 
-                    Localization.Instance.SelectLanguage((Language) int.Parse(value));
+                    Localization.Instance.SelectLanguage((Language) NumberUtils.ParseInt(value));
 
                     foreach (var gameObject in SceneManager.GetActiveScene().GetRootGameObjects())
                     {

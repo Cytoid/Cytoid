@@ -150,7 +150,7 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
             var setDuration = TagValue(tags, "Duration");
             if (setDuration != null)
             {
-                duration = float.Parse(setDuration);
+                duration = NumberUtils.ParseFloat(setDuration);
             }
             
             var setOverlayOpacity = TagValue(tags, "OverlayOpacity");
@@ -160,8 +160,8 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
                 SetOverlayOpacity().Forget();
                 async UniTaskVoid SetOverlayOpacity()
                 {
-                    await UniTask.Delay(TimeSpan.FromSeconds(float.Parse(fadeDelay)));
-                    instance.backdropImage.DOFade(float.Parse(targetOpacity), float.Parse(fadeDuration));
+                    await UniTask.Delay(TimeSpan.FromSeconds(NumberUtils.ParseFloat(fadeDelay)));
+                    instance.backdropImage.DOFade(NumberUtils.ParseFloat(targetOpacity), NumberUtils.ParseFloat(fadeDuration));
                 }
             }
             
@@ -288,7 +288,7 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
             {
                 if (shouldSetImageSprite)
                 {
-                    instance.image.SetData(currentImageSprite, int.Parse(imageWidth), int.Parse(imageHeight), int.Parse(imageRadius));
+                    instance.image.SetData(currentImageSprite, NumberUtils.ParseInt(imageWidth), NumberUtils.ParseInt(imageHeight), NumberUtils.ParseInt(imageRadius));
                     await UniTask.Delay(TimeSpan.FromSeconds(1.5f));
                     shouldSetImageSprite = false;
                 }

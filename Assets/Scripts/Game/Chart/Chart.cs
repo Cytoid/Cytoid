@@ -435,15 +435,15 @@ public class Chart
             switch (type)
             {
                 case "PAGE_SIZE":
-                    pageDuration = float.Parse(data[1]);
+                    pageDuration = NumberUtils.ParseFloat(data[1]);
                     break;
                 case "PAGE_SHIFT":
-                    pageShift = float.Parse(data[1]);
+                    pageShift = NumberUtils.ParseFloat(data[1]);
                     break;
                 case "NOTE":
-                    var note = new LegacyNote(int.Parse(data[1]), float.Parse(data[2]), float.Parse(data[3]),
-                        float.Parse(data[4]), false);
-                    tmpNotes.Add(int.Parse(data[1]), note);
+                    var note = new LegacyNote(NumberUtils.ParseInt(data[1]), NumberUtils.ParseFloat(data[2]), NumberUtils.ParseFloat(data[3]),
+                        NumberUtils.ParseFloat(data[4]), false);
+                    tmpNotes.Add(NumberUtils.ParseInt(data[1]), note);
                     if (note.Duration > 0) note.Type = LegacyNoteType.Hold;
                     break;
                 case "LINK":

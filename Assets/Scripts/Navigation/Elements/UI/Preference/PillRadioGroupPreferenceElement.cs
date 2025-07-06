@@ -40,7 +40,7 @@ public class PillRadioGroupPreferenceElement : PreferenceElement
         radioGroup.values = labelsToValues.Select(it => it.Item2.ToString()).ToList();
         radioGroup.defaultValue = getter().ToString();
         radioGroup.Initialize();
-        radioGroup.onSelect.AddListener(it => Wrap(setter)(int.Parse(it)));
+        radioGroup.onSelect.AddListener(it => Wrap(setter)(NumberUtils.ParseInt(it)));
         base.SetContent(title, description);
         return this;
     }

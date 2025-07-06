@@ -96,9 +96,9 @@ namespace Cytoid.Storyboard
                 case JTokenType.String:
                 {
                     var split = ((string) token).Split(':');
-                    if (split.Length == 1) return new UnitFloat(float.Parse(split[0]), defaultUnit, scaleToCanvas, span);
+                    if (split.Length == 1) return new UnitFloat(NumberUtils.ParseFloat(split[0]), defaultUnit, scaleToCanvas, span);
                     var type = split[0].ToLower();
-                    var value = float.Parse(split[1]);
+                    var value = NumberUtils.ParseFloat(split[1]);
                     return new UnitFloat(value, (ReferenceUnit) Enum.Parse(typeof(ReferenceUnit), type, true), scaleToCanvas, span);
                 }
                 default:

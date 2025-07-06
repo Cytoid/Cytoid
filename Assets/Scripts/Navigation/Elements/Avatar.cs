@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DG.Tweening;
-using MoreMountains.NiceVibrations;
+
 using Proyecto26;
 using Cysharp.Threading.Tasks;
 using UnityEngine;

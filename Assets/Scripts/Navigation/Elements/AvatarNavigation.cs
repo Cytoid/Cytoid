@@ -1,4 +1,4 @@
-using MoreMountains.NiceVibrations;
+
 using UnityEngine.EventSystems;
 
 public class AvatarNavigation : InteractableMonoBehavior

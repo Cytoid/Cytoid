@@ -1,6 +1,5 @@
 using System;
 using Cysharp.Threading.Tasks;
-using MoreMountains.NiceVibrations;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -29,15 +28,13 @@ public class ThreoseGlitch : InteractableMonoBehavior
                 OnGlitched();
                 Context.PostSceneChanged.AddListener(OnPostSceneChanged);
                 Context.AudioManager.Get("Glitch").Play();
-                
-                if (Application.platform == RuntimePlatform.IPhonePlayer)
-                {
-                    MMVibrationManager.Haptic(HapticTypes.HeavyImpact);
-                }
-                else
-                {
-                    MMNVAndroid.AndroidVibrate(80);
-                }
+
+#if UNITY_IOS
+                Vibration.VibrateIOS(ImpactFeedbackStyle.Heavy);
+#elif UNITY_ANDROID
+                Vibration.VibrateAndroid(80);
+#endif
+
                 originalTachie.SetAlpha(0);
                 glitchedTachie.SetAlpha(1);
                 await UniTask.Delay(TimeSpan.FromSeconds(0.5));

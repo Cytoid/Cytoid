@@ -1,6 +1,6 @@
 using System;
 using DG.Tweening;
-using MoreMountains.NiceVibrations;
+
 using UnityEngine;
 using UnityEngine.Serialization;
 

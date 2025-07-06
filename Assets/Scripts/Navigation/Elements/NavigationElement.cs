@@ -1,7 +1,7 @@
 using System;
 using System.Linq.Expressions;
 using System.Threading;
-using MoreMountains.NiceVibrations;
+
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.EventSystems;

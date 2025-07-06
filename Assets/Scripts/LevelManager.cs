@@ -29,13 +29,13 @@ public class LevelManager
     public async UniTask<List<string>> CopyBuiltInLevelsToDownloads(List<string> levelIds)
     {
         var packagePaths = new List<string>();
-        
+
         // Install all missing training levels that are built in
         foreach (var uid in levelIds)
         {
             var packagePath = Application.streamingAssetsPath + "/Levels/" + uid + ".cytoidlevel";
             if (Application.platform == RuntimePlatform.IPhonePlayer) packagePath = "file://" + packagePath;
-                
+
             // Copy the file from StreamingAssets to temp directory
             using (var request = UnityWebRequest.Get(packagePath))
             {
@@ -98,11 +98,11 @@ public class LevelManager
                 files.AddRange(Directory.GetFiles(Context.iOSTemporaryInboxPath, "*.cytoidlevel"));
                 files.AddRange(Directory.GetFiles(Context.iOSTemporaryInboxPath, "*.cytoidlevel.zip"));
             }
-            
+
             foreach (var file in files)
             {
                 if (file == null) continue;
-                
+
                 var toPath = Context.UserDataPath + "/" + Path.GetFileName(file);
                 try
                 {
@@ -155,11 +155,53 @@ public class LevelManager
             var fileName = Path.GetFileNameWithoutExtension(levelFile);
             OnLevelInstallProgress.Invoke(fileName, index, packagePaths.Count);
 
-            var destFolder = $"{type.GetDataPath()}/{fileName}";
-            if (await UnpackLevelPackage(levelFile, destFolder))
+            // Create a temporary folder with UUID
+            var tempFolder = $"{type.GetDataPath()}/{Guid.NewGuid()}";
+            if (await UnpackLevelPackage(levelFile, tempFolder))
             {
+                // Read level.json to get the id
+                var levelJsonPath = tempFolder + "/level.json";
+
+                if (!File.Exists(levelJsonPath))
+                {
+                    Debug.LogError($"level.json not found in {levelFile}");
+                    Directory.Delete(tempFolder, true);
+                    continue;
+                }
+
+                var meta = JsonConvert.DeserializeObject<LevelMeta>(File.ReadAllText(levelJsonPath));
+                if (meta == null || string.IsNullOrEmpty(meta.id))
+                {
+                    Debug.LogError($"Invalid level.json in {levelFile}");
+                    Directory.Delete(tempFolder, true);
+                    continue;
+                }
+
+                // Validate id format
+                var idRegex = new System.Text.RegularExpressions.Regex(@"^[a-z0-9_]+([-_.][a-z0-9_]+)+$");
+                if (!idRegex.IsMatch(meta.id))
+                {
+                    Debug.LogError($"Invalid level id format in {levelFile}: {meta.id}");
+                    Directory.Delete(tempFolder, true);
+                    continue;
+                }
+
+                var destFolder = $"{type.GetDataPath()}/{meta.id}";
+
+                // Copy all files from temp folder to destination folder
+                foreach (var file in Directory.GetFiles(tempFolder, "*.*", SearchOption.AllDirectories))
+                {
+                    var relativePath = file.Substring(tempFolder.Length + 1);
+                    var destFile = Path.Combine(destFolder, relativePath);
+                    Directory.CreateDirectory(Path.GetDirectoryName(destFile));
+                    File.Copy(file, destFile, true);
+                }
+                
+                // Delete the temp folder
+                Directory.Delete(tempFolder, true);
+                
                 loadedLevelJsonFiles.Add(destFolder + "/level.json");
-                Debug.Log($"Installed {index}/{packagePaths.Count}: {levelFile}");
+                Debug.Log($"Installed {index}/{packagePaths.Count}: {levelFile} to {destFolder}");
             }
             else
             {
@@ -193,7 +235,7 @@ public class LevelManager
         var level = LoadedLocalLevels[id];
         level.Record.AddedDate = DateTimeOffset.MinValue;
         level.SaveRecord();
-        
+
         Directory.Delete(Path.GetDirectoryName(level.Path) ?? throw new InvalidOperationException(), true);
         LoadedLocalLevels.Remove(level.Id);
         loadedPaths.Remove(level.Path);
@@ -229,8 +271,8 @@ public class LevelManager
                     if (error.StatusCode == 404)
                     {
                         Debug.Log($"Level {levelId} does not exist on the remote server");
-                    } 
-                    else 
+                    }
+                    else
                     {
                         Debug.Log($"Level {levelId} cannot be accessed on the remote server");
                     }
@@ -282,11 +324,11 @@ public class LevelManager
             Debug.LogError(error);
             return false;
         }
-       
+
         using (var fileStream = new MemoryStream())
         {
             ZipFile zipFile;
-            
+
             try
             {
                 fileStream.Write(zipFileData, 0, zipFileData.Length);
@@ -416,7 +458,7 @@ public class LevelManager
 
         if (level == null)
         {
-            var paths = await Context.LevelManager.CopyBuiltInLevelsToDownloads(new List<string> {id});
+            var paths = await Context.LevelManager.CopyBuiltInLevelsToDownloads(new List<string> { id });
             await Context.LevelManager.InstallLevels(paths, loadType);
             level = await GetLevel();
         }
@@ -441,7 +483,7 @@ public class LevelManager
             var loadIndex = index;
             async UniTask LoadLevel()
             {
-                var timer = new BenchmarkTimer($"Level loader ({loadIndex + 1} / {jsonPaths.Count})") {Enabled = false};
+                var timer = new BenchmarkTimer($"Level loader ({loadIndex + 1} / {jsonPaths.Count})") { Enabled = false };
                 var jsonPath = jsonPaths[loadIndex];
                 try
                 {
@@ -483,7 +525,7 @@ public class LevelManager
                     await UniTask.SwitchToThreadPool();
                     var meta = JsonConvert.DeserializeObject<LevelMeta>(File.ReadAllText(jsonPath));
                     await UniTask.SwitchToMainThread();
-                    
+
                     timer.Time("Deserialization");
 
                     if (meta == null)
@@ -529,8 +571,8 @@ public class LevelManager
                     var record = level.Record;
                     if (record.AddedDate == DateTimeOffset.MinValue)
                     {
-                        record.AddedDate = Context.Library.Levels.ContainsKey(level.Id) 
-                            ? Context.Library.Levels[level.Id].Date 
+                        record.AddedDate = Context.Library.Levels.ContainsKey(level.Id)
+                            ? Context.Library.Levels[level.Id].Date
                             : info.LastWriteTimeUtc;
                         level.SaveRecord();
                     }
@@ -626,7 +668,7 @@ public class LevelManager
                             timer.Time("Generate thumbnail");
                         }
                     }
-                    
+
                     results.Add(level);
                     OnLevelLoadProgress.Invoke(meta.id, ++loadedCount, jsonPaths.Count);
                     Debug.Log($"Loaded {loadIndex + 1}/{jsonPaths.Count}: {meta.id} ");
@@ -638,7 +680,7 @@ public class LevelManager
                     Debug.LogError($"Unexpected error while loading from {jsonPath}");
                     Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {jsonPath}");
                 }
-                
+
                 timer.Time();
             }
 
@@ -716,7 +758,7 @@ public class LevelManager
             updated = true;
         }
 
-        foreach (var type in new List<string> {LevelMeta.Easy, LevelMeta.Hard, LevelMeta.Extreme})
+        foreach (var type in new List<string> { LevelMeta.Easy, LevelMeta.Hard, LevelMeta.Extreme })
         {
             if (remote.GetChartSection(type) != null && local.GetChartSection(type) != null &&
                 local.GetChartSection(type).difficulty != remote.GetChartSection(type).difficulty)
@@ -743,7 +785,7 @@ public class LevelManager
         Action<Level> onUnpackSucceeded = default,
         Action onUnpackFailed = default,
         bool forceInternational = false,
-        bool batchDownloading = false, 
+        bool batchDownloading = false,
         int batchDownloadCurrent = default,
         int batchDownloadTotal = default
     )
@@ -772,7 +814,7 @@ public class LevelManager
         var aborted = false;
         var targetFile = $"{Application.temporaryCachePath}/Downloads/{level.Id}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}.cytoidlevel";
         var destFolder = $"{level.Type.GetDataPath()}/{level.Id}";
-        
+
         try
         {
             Directory.CreateDirectory(destFolder);
@@ -809,7 +851,7 @@ public class LevelManager
                 throw new OperationCanceledException();
             }
 
-            totalSize = (ulong) it.Size;
+            totalSize = (ulong)it.Size;
             downloading = true;
             var packagePath = (forceInternational ? CdnRegion.International : Context.CdnRegion).GetPackageUrl(level.Id);
             Debug.Log($"Package path: {packagePath}");
@@ -862,7 +904,7 @@ public class LevelManager
                 try
                 {
                     level =
-                        (await Context.LevelManager.LoadFromMetadataFiles(level.Type, new List<string> {destFolder + "/level.json"}, true))
+                        (await Context.LevelManager.LoadFromMetadataFiles(level.Type, new List<string> { destFolder + "/level.json" }, true))
                         .First();
                     onUnpackSucceeded(level);
                 }
@@ -901,20 +943,20 @@ public class LevelManager
             }
             else
             {
-                if (!forceInternational 
+                if (!forceInternational
                     && error is RequestException requestException
                     && requestException.StatusCode < 400 && requestException.StatusCode >= 500)
                 {
-                     DownloadAndUnpackLevelDialog(
-                         level,
-                         allowAbort,
-                         onDownloadSucceeded,
-                         onDownloadAborted,
-                         onDownloadFailed,
-                         onUnpackSucceeded,
-                         onUnpackFailed,
-                         true
-                     );
+                    DownloadAndUnpackLevelDialog(
+                        level,
+                        allowAbort,
+                        onDownloadSucceeded,
+                        onDownloadAborted,
+                        onDownloadFailed,
+                        onUnpackSucceeded,
+                        onUnpackFailed,
+                        true
+                    );
                 }
                 else
                 {
@@ -985,7 +1027,7 @@ public class LevelManager
 
         dialog.Open();
     }
-    
+
 }
 
 public class LevelEvent : UnityEvent<Level>

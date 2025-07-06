@@ -1,0 +1,12 @@
+{
+    "name": "com.cwilkes.common",
+    "displayName": "Common",
+    "version": "1.0.0",
+    "author": {
+        "name": "Carlos Wilkes",
+        "email": "carlos.wilkes@gmail.com",
+        "url": "https://carloswilkes.com"
+    },
+    "unity": "2019.4",
+    "description": "Shared code library."
+}

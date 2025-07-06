@@ -1,0 +1,29 @@
+{
+    "name": "CW.Common",
+    "rootNamespace": "",
+    "references": [
+        "Unity.InputSystem",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.HighDefinition.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.render-pipelines.high-definition",
+            "expression": "",
+            "define": "__HDRP__"
+        },
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "",
+            "define": "__INPUTSYSTEM__"
+        }
+    ],
+    "noEngineReferences": false
+}

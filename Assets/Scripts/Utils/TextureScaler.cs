@@ -26,7 +26,7 @@ public class TextureScaler
 
         //Get rendered data back to a new texture
         Texture2D result = new Texture2D(width, height, TextureFormat.ARGB32, true);
-        result.Resize(width, height);
+        result.Reinitialize(width, height);
         result.ReadPixels(texR, 0, 0, true);
         return result;
     }
@@ -44,7 +44,7 @@ public class TextureScaler
         _gpu_scale(tex, width, height, mode);
 
         // Update new texture
-        tex.Resize(width, height);
+        tex.Reinitialize(width, height);
         tex.ReadPixels(texR, 0, 0, true);
         tex.Apply(true); //Remove this if you hate us applying textures for you :)
     }
@@ -52,7 +52,7 @@ public class TextureScaler
     public static Texture2D FitCrop(Texture2D tex, int width, int height, FilterMode mode = FilterMode.Trilinear)
     {
         var result = new Texture2D(width, height, TextureFormat.ARGB32, true);
-        result.Resize(width, height);
+        result.Reinitialize(width, height);
         var targetRatio = width * 1.0f / height;
         var ratio = tex.width * 1.0f / tex.height;
         // Debug.Log($"Width: {width}, Height: {height}, Texture width: {tex.width}, Texture height: {tex.height}, Target ratio: {targetRatio}, Texture ratio: {ratio}");

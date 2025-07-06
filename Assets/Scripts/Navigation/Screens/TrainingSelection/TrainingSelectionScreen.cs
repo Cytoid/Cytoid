@@ -198,6 +198,7 @@ public class TrainingSelectionScreen : Screen
     public async UniTask ShowTrainingDialogue(bool isFirstMet)
     {
         var text = Resources.Load<TextAsset>("Stories/Training");
+        Debug.Log($"[TrainingSelectionScreen] Loading training dialogue from {text.name}");
         var story = new Story(text.text);
         Resources.UnloadAsset(text);
         story.variablesState["IsFirstMet"] = isFirstMet;
@@ -206,7 +207,7 @@ public class TrainingSelectionScreen : Screen
         story.variablesState["SignedIn"] = Context.OnlinePlayer.IsAuthenticated;
         story.variablesState["Rating"] = Context.OnlinePlayer.LastProfile?.Rating ?? 0;
         await DialogueOverlay.Show(story);
-        if (shouldIntroduceMechanisms && (int) story.variablesState["IntroducedMechanisms"] == 0)
+        if (shouldIntroduceMechanisms && !(bool)story.variablesState["IntroducedMechanisms"])
         {
             Context.Player.ClearOneShot("Training Mode: Should Introduce Mechanisms");
         }

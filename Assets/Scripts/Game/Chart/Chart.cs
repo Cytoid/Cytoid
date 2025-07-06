@@ -17,8 +17,8 @@ public class Chart
     public bool DisplayBackground { get; }
     public int HorizontalMargin { get; }
     public int VerticalMargin { get; }
+    public bool RestrictPlayAreaAspectRatio { get; }
     public bool SkipMusicOnCompletion { get; }
-
     public bool IsHorizontallyInverted { get; }
     public bool IsVerticallyInverted { get; }
     public bool UseScannerSmoothing { get; set; }
@@ -69,8 +69,25 @@ public class Chart
         DisplayBackground = Model.display_background ?? true;
         HorizontalMargin = Model.horizontal_margin ?? Context.Player.Settings.HorizontalMargin;
         VerticalMargin = Model.vertical_margin ?? Context.Player.Settings.VerticalMargin;
+        RestrictPlayAreaAspectRatio = Model.restrict_play_area_aspect_ratio ?? Context.Player.Settings.RestrictPlayAreaAspectRatio;
         SkipMusicOnCompletion = Model.skip_music_on_completion ?? Context.Player.Settings.SkipMusicOnCompletion;
 
+        // Apply aspect ratio restriction if enabled
+        if (RestrictPlayAreaAspectRatio)
+        {
+            const float maxRatio = 16f / 9f;  // 16:9
+            const float minRatio = 4f / 3f;   // 4:3
+            
+            if (screenRatio > maxRatio)
+            {
+                screenRatio = maxRatio;
+            }
+            else if (screenRatio < minRatio)
+            {
+                screenRatio = minRatio;
+            }
+        }
+        
         var height = cameraOrthographicSize * 2.0f;
         var width = height * screenRatio;
         

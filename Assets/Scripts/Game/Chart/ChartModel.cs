@@ -24,6 +24,7 @@ public class ChartModel
     public bool? display_background;
     public int? horizontal_margin;
     public int? vertical_margin;
+    public bool? restrict_play_area_aspect_ratio;
     public bool? skip_music_on_completion;
     
     [Serializable]

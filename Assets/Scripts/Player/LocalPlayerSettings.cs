@@ -102,6 +102,8 @@ public class LocalPlayerSettings
     [JsonProperty("note_size")] public float NoteSize { get; set; } = 0; // -0.5~0.5
     [JsonProperty("horizontal_margin")] public int HorizontalMargin { get; set; } = 3; // 1~5
     [JsonProperty("vertical_margin")] public int VerticalMargin { get; set; } = 3; // 1~5
+    [JsonProperty("restrict_play_area_aspect_ratio")]
+    public bool RestrictPlayAreaAspectRatio { get; set; } = true;
     [JsonProperty("cover_opacity")] public float CoverOpacity { get; set; } = 0.15f; // 0~1
     [JsonProperty("music_volume")] public float MusicVolume { get; set; } = 0.85f; // 0~1
     [JsonProperty("sound_effects_volume")] public float SoundEffectsVolume { get; set; } = 1f; // 0~1

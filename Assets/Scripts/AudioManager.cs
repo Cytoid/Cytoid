@@ -53,10 +53,49 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
 
     public void Dispose()
     {
+        if (!isInitialized) return;
+        
         isInitialized = false;
-        controllers.Keys.ToList().FindAll(it => !controllers[it].IsPreloaded).ForEach(Unload);
+        
+        // First stop all playing audio
+        foreach (var controller in controllers.Values)
+        {
+            try
+            {
+                controller.Stop();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Error stopping audio controller: {e}");
+            }
+        }
+        
+        // Then unload non-preloaded audio
+        var keysToUnload = controllers.Keys.ToList().FindAll(it => !controllers[it].IsPreloaded);
+        foreach (var key in keysToUnload)
+        {
+            try
+            {
+                Unload(key);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Error unloading audio {key}: {e}");
+            }
+        }
+        
+        // Clear controllers dictionary
         controllers.Clear();
-        NativeAudio.Dispose();
+        
+        // Finally dispose native audio
+        try
+        {
+            NativeAudio.Dispose();
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Error disposing native audio: {e}");
+        }
     }
 
     public void SetUseNativeAudio(bool useNativeAudio)

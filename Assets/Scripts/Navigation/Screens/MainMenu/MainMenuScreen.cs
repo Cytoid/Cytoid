@@ -13,7 +13,7 @@ public class MainMenuScreen : Screen
     public static bool CheckedAnnouncement = false;
     public static bool PromptCachedCharacterDataCleared = false;
     public static bool LaunchedFirstLaunchDialogue = false;
-    
+
     public RectTransform layout;
     public Text freePlayText;
     public InteractableMonoBehavior aboutButton;
@@ -22,7 +22,7 @@ public class MainMenuScreen : Screen
     public Image upperLeftOverlayImage;
     public Image overlayImage;
     public RectTransform overlayHolder;
-    
+
     public override string GetId() => Id;
 
     public override void OnScreenInitialized()
@@ -62,7 +62,7 @@ public class MainMenuScreen : Screen
             layout.anchoredPosition = new Vector2(96, -90);
             overlayHolder.SetLeft(280);
             overlayHolder.SetRight(840);
-            overlayHolder.SetLocalScaleX(-2); 
+            overlayHolder.SetLocalScaleX(-2);
         }
         else
         {
@@ -74,7 +74,7 @@ public class MainMenuScreen : Screen
             overlayHolder.SetRight(280);
             overlayHolder.SetLocalScaleX(2);
         }
-        
+
         // Check new events
         if (Context.IsOnline() && Context.OnlinePlayer.IsAuthenticated)
         {
@@ -104,7 +104,7 @@ public class MainMenuScreen : Screen
         if (Context.InitializationState.IsAfterFirstLaunch() && !LaunchedFirstLaunchDialogue)
         {
             LaunchedFirstLaunchDialogue = true;
-            
+
             var text = Resources.Load<TextAsset>("Stories/Intro");
             LevelSelectionScreen.HighlightedLevelId = BuiltInData.TutorialLevelId;
             var story = new Story(text.text);
@@ -121,7 +121,7 @@ public class MainMenuScreen : Screen
             {
                 await UniTask.WaitUntil(() => !DialogueOverlay.IsShown());
             }
-         
+
             if (Context.AndroidVersionCode >= 30 || Application.isEditor)
             {
                 if (Context.Player.ShouldOneShot("Android Migration Info"))
@@ -129,7 +129,7 @@ public class MainMenuScreen : Screen
                     await AndroidMigrationInfoOverlay.Show();
                 }
             }
-            
+
             if (PromptCachedCharacterDataCleared)
             {
                 PromptCachedCharacterDataCleared = false;
@@ -152,8 +152,8 @@ public class MainMenuScreen : Screen
                         Dialog.PromptAlert(it.message);
                     }
 
-                    print($"local: {Application.version}, latest: {it.currentVersion}, min supported: {it.minSupportedVersion}");
-                    var localVersion = new Version(Application.version);
+                    print($"local: {Context.VersionIdentifier}, latest: {it.currentVersion}, min supported: {it.minSupportedVersion}");
+                    var localVersion = new Version(Context.VersionIdentifier);
                     var currentVersion = new Version(it.currentVersion);
                     var minSupportedVersion = new Version(it.minSupportedVersion);
                     if (localVersion < minSupportedVersion)
@@ -187,7 +187,7 @@ public class MainMenuScreen : Screen
         base.OnScreenChangeFinished(from, to);
         if (to == this)
         {
-            foreach (var assetTag in (AssetTag[]) Enum.GetValues(typeof(AssetTag)))
+            foreach (var assetTag in (AssetTag[])Enum.GetValues(typeof(AssetTag)))
             {
                 if (assetTag == AssetTag.PlayerAvatar) continue;
                 Context.AssetMemory.DisposeTaggedCacheAssets(assetTag);

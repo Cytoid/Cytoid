@@ -13,7 +13,7 @@ PlayerSettings:
   useOnDemandResources: 0
   accelerometerFrequency: 60
   companyName: TigerHix
-  productName: Cytoid
+  productName: Cytoid (Teages build)
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0, g: 0, b: 0, a: 1}
@@ -74,7 +74,7 @@ PlayerSettings:
   androidFullscreenMode: 1
   defaultIsNativeResolution: 1
   macRetinaSupport: 1
-  runInBackground: 1
+  runInBackground: 0
   captureSingleScreen: 0
   muteOtherAudioSources: 1
   Prepare IOS For Recording: 0
@@ -174,7 +174,7 @@ PlayerSettings:
   androidSupportedAspectRatio: 1
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
-    Android: me.tigerhix.cytoid
+    Android: me.tigerhix.cytoid_teages
     Standalone: com.Company.ProductName
     iPhone: me.tigerhix.cytoid
   buildNumber:
@@ -188,9 +188,9 @@ PlayerSettings:
   iPhoneStrippingLevel: 0
   iPhoneScriptCallOptimization: 0
   ForceInternetPermission: 1
-  ForceSDCardPermission: 1
+  ForceSDCardPermission: 0
   CreateWallpaper: 0
-  APKExpansionFiles: 1
+  APKExpansionFiles: 0
   keepLoadedShadersAlive: 0
   StripUnusedMeshComponents: 1
   VertexChannelCompressionMask: 4054
@@ -255,12 +255,12 @@ PlayerSettings:
   clonedFromGUID: 5f34be1353de5cf4398729fda238591b
   templatePackageId: com.unity.template.2d@2.3.2
   templateDefaultScene: Assets/Scenes/SampleScene.unity
-  AndroidTargetArchitectures: 3
+  AndroidTargetArchitectures: 2
   AndroidTargetDevices: 0
   AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 0}
-  AndroidKeystoreName: C:/Cytoid/debug.keystore
-  AndroidKeyaliasName: androiddebugkey
+  AndroidKeystoreName: /Users/teages/Documents/xyz.teages.cytoid-beta.keystore
+  AndroidKeyaliasName: cytoid beta sign
   AndroidBuildApkPerCpuArchitecture: 1
   AndroidTVCompatibility: 0
   AndroidIsGame: 1
@@ -804,18 +804,22 @@ PlayerSettings:
   webGLThreadsSupport: 0
   webGLWasmStreaming: 0
   scriptingDefineSymbols:
-    1: CT_TPS;MOREMOUNTAINS_NICEVIBRATIONS;ODIN_INSPECTOR
-    4: ADDRESSABLES_LOG_ALL;CT_TPS;MOREMOUNTAINS_NICEVIBRATIONS;ODIN_INSPECTOR;LUNAR_CONSOLE_EXPORT_IOS_FILES
-    7: ADDRESSABLES_LOG_ALL;CT_TPS;MOREMOUNTAINS_NICEVIBRATIONS;ODIN_INSPECTOR
-    13: CT_TPS
-    14: CT_TPS
-    19: CT_TPS
-    21: CT_TPS
-    25: CT_TPS
+    1: CT_TPS;MOREMOUNTAINS_NICEVIBRATIONS;ODIN_INSPECTOR;ODIN_INSPECTOR_3;ODIN_INSPECTOR_3_1;ODIN_INSPECTOR_3_2;ODIN_INSPECTOR_3_3;DOTWEEN
+    4: ADDRESSABLES_LOG_ALL;CT_TPS;MOREMOUNTAINS_NICEVIBRATIONS;ODIN_INSPECTOR;LUNAR_CONSOLE_EXPORT_IOS_FILES;DOTWEEN
+    7: ADDRESSABLES_LOG_ALL;CT_TPS;MOREMOUNTAINS_NICEVIBRATIONS;ODIN_INSPECTOR;ODIN_INSPECTOR_3;ODIN_INSPECTOR_3_1;ODIN_INSPECTOR_3_2;ODIN_INSPECTOR_3_3;DOTWEEN
+    13: CT_TPS;DOTWEEN
+    14: CT_TPS;DOTWEEN
+    19: CT_TPS;DOTWEEN
+    21: CT_TPS;DOTWEEN
+    25: CT_TPS;DOTWEEN
     26: CT_TPS
-    27: CT_TPS
-    28: CT_TPS
-    29: CT_TPS
+    27: CT_TPS;DOTWEEN
+    28: CT_TPS;DOTWEEN
+    29: CT_TPS;DOTWEEN
+    30: DOTWEEN
+    31: DOTWEEN
+    32: DOTWEEN
+    33: DOTWEEN
   platformArchitecture:
     iPhone: 1
   scriptingBackend:

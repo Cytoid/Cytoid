@@ -29,7 +29,7 @@ public class Player
         ValidateData();
         if (!Settings.PlayerId.IsNullOrWhiteSpace())
         {
-            SentrySdk.ConfigureScope(scope => scope.User = new User {Username = Settings.PlayerId});
+            SentrySdk.ConfigureScope(scope => scope.User = new SentryUser {Username = Settings.PlayerId});
         }
     }
 

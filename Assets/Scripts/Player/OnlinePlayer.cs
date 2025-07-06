@@ -54,7 +54,7 @@ public class OnlinePlayer
                     reject(new RequestException("Profile not found", true, false, 404, null));
                     return;
                 }
-                SentrySdk.ConfigureScope(scope => scope.User = new User {Username = profile.User.Uid, Id = profile.User.Id});
+                SentrySdk.ConfigureScope(scope => scope.User = new SentryUser {Username = profile.User.Uid, Id = profile.User.Id});
                 IsAuthenticated = true;
                 OnAuthenticated.Invoke();
                 resolve(profile);
@@ -107,7 +107,7 @@ public class OnlinePlayer
                     reject(new RequestException("Profile not found", true, false, 404, null));
                     return;
                 }
-                SentrySdk.ConfigureScope(scope => scope.User = new User {Username = profile.User.Uid, Id = profile.User.Id});
+                SentrySdk.ConfigureScope(scope => scope.User = new SentryUser {Username = profile.User.Uid, Id = profile.User.Id});
                 IsAuthenticated = true;
                 OnAuthenticated.Invoke();
                 resolve(profile);

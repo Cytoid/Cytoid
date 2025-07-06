@@ -15,12 +15,32 @@ MonoBehaviour:
   <Enabled>k__BackingField: 1
   <Dsn>k__BackingField: https://82bc58ec32cd4b2fbc7cb5fe3d72b636@o921970.ingest.sentry.io/5934619
   <CaptureInEditor>k__BackingField: 0
+  <EnableLogDebouncing>k__BackingField: 0
+  <DebounceTimeLog>k__BackingField: 1000
+  <DebounceTimeWarning>k__BackingField: 1000
+  <DebounceTimeError>k__BackingField: 1000
   <TracesSampleRate>k__BackingField: 0
+  <AutoStartupTraces>k__BackingField: 1
+  <AutoSceneLoadTraces>k__BackingField: 1
+  <AutoAwakeTraces>k__BackingField: 0
   <AutoSessionTracking>k__BackingField: 1
   <AutoSessionTrackingInterval>k__BackingField: 30000
   <ReleaseOverride>k__BackingField: 
   <EnvironmentOverride>k__BackingField: 
   <AttachStacktrace>k__BackingField: 0
+  <AttachScreenshot>k__BackingField: 0
+  <ScreenshotQuality>k__BackingField: 1
+  <ScreenshotCompression>k__BackingField: 75
+  <AttachViewHierarchy>k__BackingField: 0
+  <MaxViewHierarchyRootObjects>k__BackingField: 100
+  <MaxViewHierarchyObjectChildCount>k__BackingField: 20
+  <MaxViewHierarchyDepth>k__BackingField: 10
+  <BreadcrumbsForLogs>k__BackingField: 1
+  <BreadcrumbsForWarnings>k__BackingField: 1
+  <BreadcrumbsForAsserts>k__BackingField: 1
+  <BreadcrumbsForErrors>k__BackingField: 1
+  <BreadcrumbsForExceptions>k__BackingField: 1
+  <CaptureLogErrorEvents>k__BackingField: 1
   <MaxBreadcrumbs>k__BackingField: 100
   <ReportAssembliesMode>k__BackingField: 1
   <SendDefaultPii>k__BackingField: 0
@@ -28,10 +48,29 @@ MonoBehaviour:
   <EnableOfflineCaching>k__BackingField: 1
   <MaxCacheItems>k__BackingField: 30
   <InitCacheFlushTimeout>k__BackingField: 0
+  <SampleRate>k__BackingField: 1
   <ShutdownTimeout>k__BackingField: 2000
   <MaxQueueItems>k__BackingField: 30
+  <AnrDetectionEnabled>k__BackingField: 1
+  <AnrTimeout>k__BackingField: 5000
+  <CaptureFailedRequests>k__BackingField: 1
+  <FailedRequestStatusCodes>k__BackingField: f401000057020000
+  <FilterBadGatewayExceptions>k__BackingField: 1
+  <FilterWebExceptions>k__BackingField: 1
+  <FilterSocketExceptions>k__BackingField: 1
   <IosNativeSupportEnabled>k__BackingField: 1
   <AndroidNativeSupportEnabled>k__BackingField: 1
+  <NdkIntegrationEnabled>k__BackingField: 1
+  <NdkScopeSyncEnabled>k__BackingField: 1
+  <PostGenerateGradleProjectCallbackOrder>k__BackingField: 1
+  <WindowsNativeSupportEnabled>k__BackingField: 1
+  <MacosNativeSupportEnabled>k__BackingField: 1
+  <LinuxNativeSupportEnabled>k__BackingField: 1
+  <Il2CppLineNumberSupportEnabled>k__BackingField: 1
+  <RuntimeOptionsConfiguration>k__BackingField: {fileID: 0}
+  <BuildTimeOptionsConfiguration>k__BackingField: {fileID: 0}
+  <OptionsConfiguration>k__BackingField: {fileID: 11400000, guid: 9a7b59f0ff203404e9bebd0bd4c37114,
+    type: 2}
   <Debug>k__BackingField: 1
   <DebugOnlyInEditor>k__BackingField: 1
   <DiagnosticLevel>k__BackingField: 2

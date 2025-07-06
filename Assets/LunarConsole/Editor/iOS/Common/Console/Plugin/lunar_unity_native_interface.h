@@ -45,4 +45,7 @@ OBJC_EXTERN void __lunar_console_action_unregister(int actionId);
 OBJC_EXTERN void __lunar_console_cvar_register(int entryId, const char *name, const char *type, const char *value, const char *defaultValue, int flags, BOOL hasRange, float min, float max, const char *values);
 OBJC_EXTERN void __lunar_console_cvar_update(int entryId, const char *value);
 
+// settings
+OBJC_EXTERN void __lunar_console_update_settings(const char *settingsJson);
+
 #endif /* defined(__LunarConsole__unity_native_interface__) */

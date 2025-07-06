@@ -464,16 +464,20 @@ public static class SettingsFactory
                 () => lp.Settings.UseDeveloperConsole, it =>
                 {
                     lp.Settings.UseDeveloperConsole = it;
-                    LunarConsole.SetConsoleEnabled(it);
-                    if (!it)
+                    if (it)
                     {
+                        ConsoleManager.enable();
+                    }
+                    else
+                    {
+                        ConsoleManager.disable();
                         Dialog.PromptAlert("DIALOG_DISABLE_DEVELOPER_CONSOLE_WARNING".Get());
                     }
                 })
             .SaveSettingsOnChange();
         Object.Instantiate(provider.buttonPreferenceElement, parent)
             .SetContent("", "",
-                "SETTINGS_BUTTON_ENTER".Get(), LunarConsole.Show);
+                "SETTINGS_BUTTON_ENTER".Get(), ConsoleManager.show);
 
         Object.Instantiate(provider.pillRadioGroupPreferenceElement, parent)
             .SetContent("SETTINGS_EXPERIMENTAL_NOTE_AR".Get(), "SETTINGS_EXPERIMENTAL_NOTE_AR_DESC".Get(),

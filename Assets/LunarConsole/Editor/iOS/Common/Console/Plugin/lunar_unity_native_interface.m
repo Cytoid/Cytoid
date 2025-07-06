@@ -142,3 +142,12 @@ void __lunar_console_cvar_update(int entryId, const char *valueStr)
         [_lunarConsolePlugin setValue:value forVariableWithId:entryId];
     });
 }
+
+void __lunar_console_update_settings(const char *settingsJsonStr)
+{
+    lunar_dispatch_main(^{
+        LUAssert(_lunarConsolePlugin);
+        NSString *settingsJson = [[NSString alloc] initWithUTF8String:settingsJsonStr];
+        [_lunarConsolePlugin updateSettings:settingsJson];
+    });
+}

@@ -503,4 +503,51 @@ static NSString *const kScriptMessageTrackEvent = @"track_event";
     _console = [[LUConsole alloc] initWithCapacity:capacity trimCount:trim];
 }
 
+- (void)updateSettings:(NSString *)settingsJson
+{
+    NSData *settingsData = [settingsJson dataUsingEncoding:NSUTF8StringEncoding];
+    NSDictionary *settingsDict = [NSJSONSerialization JSONObjectWithData:settingsData options:0 error:nil];
+    
+    if (settingsDict != nil) {
+        LUPluginSettings *newSettings = [[LUPluginSettings alloc] initWithDictionary:settingsDict];
+        if (newSettings != nil) {
+            _settings = newSettings;
+            
+            // Update action registry settings
+            _actionRegistry.actionSortingEnabled = _settings.sortActions;
+            _actionRegistry.variableSortingEnabled = _settings.sortVariables;
+            
+            // Update gesture recognition
+            if (_settings.gesture == LUConsoleGestureNone) {
+                [self disableGestureRecognition];
+            } else {
+                [self enableGestureRecognition];
+            }
+            
+            // Update overlay
+            if (_settings.logOverlay.enabled) {
+                [self showOverlay];
+            } else {
+                [self hideOverlay];
+            }
+            
+            // Save settings
+            [self saveSettings];
+        }
+    }
+}
+
+- (void)saveSettings
+{
+    NSString *settingsPath = [self settingsPath];
+    NSData *settingsData = [NSKeyedArchiver archivedDataWithRootObject:_settings];
+    [settingsData writeToFile:settingsPath atomically:YES];
+}
+
+- (NSString *)settingsPath
+{
+    NSString *documentsDir = LUGetDocumentsDir();
+    return [documentsDir stringByAppendingPathComponent:@"lunar-console-settings.json"];
+}
+
 @end

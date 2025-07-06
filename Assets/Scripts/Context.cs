@@ -196,7 +196,7 @@ public class Context : SingletonMonoBehavior<Context>
                 print("Android version code: " + AndroidVersionCode);
             }
         }
-        LunarConsole.SetConsoleEnabled(true); // Enable startup debug
+        ConsoleManager.enable(); // Enable startup debug
 
         InitializationState = new InitializationState();
 
@@ -368,7 +368,14 @@ public class Context : SingletonMonoBehavior<Context>
         IsInitialized = true;
         OnApplicationInitialized.Invoke();
 
-        LunarConsole.SetConsoleEnabled(Player.Settings.UseDeveloperConsole);
+        if (Player.Settings.UseDeveloperConsole)
+        {
+            ConsoleManager.enable();
+        }
+        else
+        {
+            ConsoleManager.disable();
+        }
         ShouldSnapshotDatabase = true;
     }
 

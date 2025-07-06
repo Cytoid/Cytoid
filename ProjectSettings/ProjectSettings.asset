@@ -267,8 +267,8 @@ PlayerSettings:
   AndroidTargetArchitectures: 2
   AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 0}
-  AndroidKeystoreName: /Users/teages/Documents/xyz.teages.cytoid-beta.keystore
-  AndroidKeyaliasName: cytoid beta sign
+  AndroidKeystoreName: '{dedicated}: cytoid-key/cytoid-upload-key.keystore'
+  AndroidKeyaliasName: upload
   AndroidEnableArmv9SecurityFeatures: 0
   AndroidEnableArm64MTE: 0
   AndroidBuildApkPerCpuArchitecture: 1

@@ -1,0 +1,15 @@
+{
+	"displayName": "Lean Touch",
+	"description": "Lightweight touch for all projects.",
+	"name": "com.cwilkes.lean.touch",
+	"version": "1.0.0",
+	"unity": "2019.4",
+	"author": {
+		"name": "Carlos Wilkes",
+		"email": "carlos.wilkes@gmail.com",
+		"url": "https://carloswilkes.com"
+	},
+	"dependencies": {
+		"com.cwilkes.lean.common": "1.0.0"
+	}
+}

@@ -96,6 +96,7 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
 
         if (story.globalTags != null)
         {
+            Debug.Log($"[DialogueOverlay] Processing global tags: {string.Join(", ", story.globalTags)}");
             story.globalTags.FindAll(it => it.Trim().StartsWith("SpriteSet:"))
                 .Select(it => it.Substring(it.IndexOf(':') + 1).Trim())
                 .Select(DialogueSpriteSet.Parse)
@@ -103,8 +104,15 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
             story.globalTags.FindAll(it => it.Trim().StartsWith("AnimationSet:"))
                 .Select(it => it.Substring(it.IndexOf(':') + 1).Trim())
                 .Select(DialogueAnimationSet.Parse)
-                .ForEach(it => animationSets[it.Id] = it);
+                .ForEach(it => 
+                {
+                    Debug.Log($"[DialogueOverlay] Adding animation set: {it.Id}");
+                    animationSets[it.Id] = it;
+                });
         }
+
+        Debug.Log($"[DialogueOverlay] Initialized sprite sets: {string.Join(", ", spriteSets.Keys)}");
+        Debug.Log($"[DialogueOverlay] Initialized animation sets: {string.Join(", ", animationSets.Keys)}");
 
         await spriteSets.Values.Select(it => it.Initialize());
         await animationSets.Values.Select(it => it.Initialize());
@@ -208,7 +216,7 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
                 {
                     setSprite.Split('/', out var id, out var state);
 
-                    if (!spriteSets.ContainsKey(id)) throw new ArgumentOutOfRangeException();
+                    if (!spriteSets.ContainsKey(id)) throw new ArgumentOutOfRangeException(id, $"Sprite set {id} in {setSprite} not found");
                     currentSprite = spriteSets[id].States[state].Sprite;
                     currentAnimation = null;
                 }
@@ -217,6 +225,7 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
             var setAnimation = TagValue(tags, "Animation");
             if (setAnimation != null)
             {
+                Debug.Log($"[DialogueOverlay] Processing animation tag: {setAnimation}");
                 if (setAnimation == "null")
                 {
                     currentAnimation = null;
@@ -253,9 +262,12 @@ public class DialogueOverlay : SingletonMonoBehavior<DialogueOverlay>
             // Lookup animation
             if (currentAnimation != null)
             {
+                Debug.Log($"[DialogueOverlay] Looking up animation: {currentAnimation}");
                 currentAnimation.Split('/', out var id, out var animationName);
+                Debug.Log($"[DialogueOverlay] Animation ID: {id}, Name: {animationName}");
+                Debug.Log($"[DialogueOverlay] Available animation sets: {string.Join(", ", animationSets.Keys)}");
                 
-                if (!animationSets.ContainsKey(id)) throw new ArgumentOutOfRangeException();
+                if (!animationSets.ContainsKey(id)) throw new ArgumentOutOfRangeException(id, $"Animation set not found: {id}");
                 dialogue.AnimatorController = animationSets[id].Controller;
                 dialogue.AnimationName = animationName;
             }

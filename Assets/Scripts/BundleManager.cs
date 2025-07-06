@@ -20,7 +20,9 @@ public class BundleManager
     private static string BuiltInBundlesBasePath {
         get
         {
-#if UNITY_ANDROID
+#if UNITY_EDITOR && UNITY_ANDROID
+            return "file://" + Application.streamingAssetsPath + "/Android/Bundles/";
+#elif UNITY_ANDROID
             return Application.streamingAssetsPath + "/Android/Bundles/";
 #elif UNITY_IOS
             return "file://" + Application.streamingAssetsPath + "/iOS/Bundles/";
@@ -37,6 +39,7 @@ public class BundleManager
         BundleCatalog builtInCatalog;
         using (var request = UnityWebRequest.Get(BuiltInCatalogPath))
         {
+            Debug.Log($"[BundleManager] Loading built-in catalog from {BuiltInCatalogPath}");
             await request.SendWebRequest();
             var text = Encoding.UTF8.GetString(request.downloadHandler.data);
             builtInCatalog = new BundleCatalog(JObject.Parse(text));

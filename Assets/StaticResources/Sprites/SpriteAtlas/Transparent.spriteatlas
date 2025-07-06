@@ -28,6 +28,8 @@ SpriteAtlas:
       allowAlphaSplitting: 0
       enableRotation: 1
       enableTightPacking: 0
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
     variantMultiplier: 1
     packables:
     - {fileID: 2800000, guid: 14cd2c7a9994d438ba53faccb1e9ddf1, type: 3}
@@ -36,6 +38,8 @@ SpriteAtlas:
     - {fileID: 2800000, guid: 321193551d28c2c469f68aa4a84fac5a, type: 3}
     - {fileID: 2800000, guid: c6506a18dd5704d89a2eb3f23f2cf965, type: 3}
     bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
   m_MasterAtlas: {fileID: 0}
   m_PackedSprites:
   - {fileID: 21300000, guid: 683f5042846aa4ceab4606cbe1db98c2, type: 3}
@@ -49,5 +53,6 @@ SpriteAtlas:
   - AccentOverlay
   - DialogOverlay
   - RoundedCardMask
+  m_RenderDataMap: {}
   m_Tag: Transparent
   m_IsVariant: 0

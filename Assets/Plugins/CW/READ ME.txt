@@ -1,0 +1,9 @@
+Welcome to CW assets!
+
+Inside each asset folder is the GUIDE file (e.g. Plugins/CW/***/GUIDE), which contains the documentation.
+Simply select this file in the Project tab, and from the inspector tab click the "Local Documentation" button!
+You can also open the documentation by clicking the "Documentation" icon at the top right of any component inspector.
+
+You can find all demo scenes in the Examples folder (e.g. Plugins/CW/***/Examples), which take you step by step through each feature.
+
+Enjoy!

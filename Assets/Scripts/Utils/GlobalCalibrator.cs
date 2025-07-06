@@ -63,7 +63,7 @@ public class GlobalCalibrator
             await UniTask.Delay(4000);
 
             messageText.Enqueue("OFFSET_SETUP_WIZARD_2".Get());
-            LeanTouch.OnFingerDown = OnFingerDown;
+            LeanTouch.OnFingerDown += OnFingerDown;
             await UniTask.WaitUntil(() => needRetry || calibratedFourMeasures,
                 cancellationToken: cancelSource.Token);
 
@@ -138,7 +138,7 @@ public class GlobalCalibrator
         {
             if (calibratedFourMeasures)
             {
-                LeanTouch.OnFingerDown = _ => { };
+                LeanTouch.OnFingerDown -= OnFingerDown;
                 PromptComplete();
             }
             else
@@ -153,7 +153,7 @@ public class GlobalCalibrator
     {
         if (calibrationCompleted) return;
         
-        LeanTouch.OnFingerDown = _ => { };
+        LeanTouch.OnFingerDown -= OnFingerDown;
         game.Complete(true);
         Dialog.Prompt("OFFSET_SETUP_WIZARD_DIALOG_ASK_SKIP".Get(), Skip, Restart);
     }
@@ -162,7 +162,7 @@ public class GlobalCalibrator
     {
         if (calibrationCompleted) return;
 
-        LeanTouch.OnFingerDown = _ => { };
+        LeanTouch.OnFingerDown -= OnFingerDown;
         offsets.Clear();
         Complete();
     }
@@ -171,7 +171,7 @@ public class GlobalCalibrator
     {
         if (calibrationCompleted) return;
 
-        LeanTouch.OnFingerDown = _ => { };
+        LeanTouch.OnFingerDown -= OnFingerDown;
         calibrationCompleted = true;
         game.Complete(true);
         Dialog.PromptAlert("OFFSET_SETUP_WIZARD_DIALOG_COMPLETE".Get($"{offsets.Average():F3}"),
@@ -181,7 +181,7 @@ public class GlobalCalibrator
 
     private async void Complete()
     {
-        LeanTouch.OnFingerDown = _ => { };
+        LeanTouch.OnFingerDown -= OnFingerDown;
         calibrationCompleted = true;
         messageText.Enqueue(string.Empty, true);
         progressIndicator.Progress = 0;
@@ -200,7 +200,7 @@ public class GlobalCalibrator
     public void Dispose()
     {
         if (disposed) return;
-        LeanTouch.OnFingerDown = _ => { };
+        LeanTouch.OnFingerDown -= OnFingerDown;
         disposed = true;
         cancelSource.Cancel();
     }

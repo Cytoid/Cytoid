@@ -22,16 +22,16 @@ public class InputController : MonoBehaviour
 
     public void EnableInput()
     {
-        LeanTouch.OnFingerDown = OnFingerDown;
-        LeanTouch.OnFingerSet = OnFingerSet;
-        LeanTouch.OnFingerUp = OnFingerUp;
+        LeanTouch.OnFingerDown += OnFingerDown;
+        LeanTouch.OnFingerUpdate += OnFingerUpdate;
+        LeanTouch.OnFingerUp += OnFingerUp;
     }
 
     public void DisableInput()
     {
-        LeanTouch.OnFingerDown = _ => { };
-        LeanTouch.OnFingerSet = _ => { };
-        LeanTouch.OnFingerUp = _ => { };
+        LeanTouch.OnFingerDown -= OnFingerDown;
+        LeanTouch.OnFingerUpdate -= OnFingerUpdate;
+        LeanTouch.OnFingerUp -= OnFingerUp;
     }
 
     public void OnNoteCollected(Note note)
@@ -129,7 +129,7 @@ public class InputController : MonoBehaviour
         }
     }
 
-    protected virtual void OnFingerSet(LeanFinger finger)
+    protected virtual void OnFingerUpdate(LeanFinger finger)
     {
         var pos = game.camera.orthographic
             ? game.camera.ScreenToWorldPoint(finger.ScreenPosition)

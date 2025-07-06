@@ -173,11 +173,18 @@ TPS_cache/
 /Assets/ExternalDependencyManager.meta
 /Assets/GooglePlayPlugins/
 /Assets/GooglePlayPlugins.meta
-/Assets/Packages/LunarConsole/
-/Assets/Plugins/Android/*.jar
-/Assets/Plugins/Android/*.jar.meta
-/Assets/Plugins/Android/*.aar
-/Assets/Plugins/Android/*.aar.meta
+/Assets/Plugins/Android/android.*.jar
+/Assets/Plugins/Android/android.*.jar.meta
+/Assets/Plugins/Android/android.*.aar
+/Assets/Plugins/Android/android.*.aar.meta
+/Assets/Plugins/Android/com.android.*.jar
+/Assets/Plugins/Android/com.android.*.jar.meta
+/Assets/Plugins/Android/com.android.*.aar
+/Assets/Plugins/Android/com.android.*.aar.meta
+/Assets/Plugins/Android/com.google.*.jar
+/Assets/Plugins/Android/com.google.*.jar.meta
+/Assets/Plugins/Android/com.google.*.aar
+/Assets/Plugins/Android/com.google.*.aar.meta
 
 Assets/Resources/Stories/Debug.ink
 Assets/Resources/Stories/Debug.ink.meta

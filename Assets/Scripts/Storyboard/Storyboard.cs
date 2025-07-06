@@ -544,7 +544,7 @@ namespace Cytoid.Storyboard
                 var split = ((string) token).Split(':');
                 var type = split[0].ToLower();
                 var offset = 0f;
-                if (split.Length == 3) offset = float.Parse(split[2]);
+                if (split.Length == 3) offset = NumberUtils.ParseFloat(split[2]);
 
                 var id = split[1].Let(it =>
                 {
@@ -563,7 +563,7 @@ namespace Cytoid.Storyboard
                         }
                         return (int) replacements["note"];
                     }
-                    return int.Parse(it);
+                    return NumberUtils.ParseInt(it);
                 });
                 var note = Game.Chart.Model.note_map[id];
                 switch (type)

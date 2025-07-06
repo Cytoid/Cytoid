@@ -382,7 +382,7 @@ public class CharacterSelectionScreen : Screen
             radioGroup.Initialize();
             radioGroup.onSelect.AddListener(it =>
             {
-                LoadedPayload.SelectedVariantIndex = int.Parse(it);
+                LoadedPayload.SelectedVariantIndex = NumberUtils.ParseInt(it);
                 Reload();
             });
             variantSelectorHolder.RebuildLayout();

@@ -277,7 +277,7 @@ public class ProfileTab : MonoBehaviour
                     break;
             }
             entries.Add(new LineEntry(pos, (float) value));
-            var date = FirstDateOfWeekISO8601(int.Parse(data.Year), int.Parse(data.Week));
+            var date = FirstDateOfWeekISO8601(NumberUtils.ParseInt(data.Year), NumberUtils.ParseInt(data.Week));
             if (date.Day >= 1 && date.Day <= 7)
             {
                 dates.Add(date.ToString("MMM"));

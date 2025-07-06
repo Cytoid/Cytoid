@@ -273,6 +273,7 @@ public class Player
             NoteSize = legacy.NoteSize,
             HorizontalMargin = legacy.HorizontalMargin,
             VerticalMargin = legacy.VerticalMargin,
+            RestrictPlayAreaAspectRatio = legacy.RestrictPlayAreaAspectRatio,
             CoverOpacity = legacy.CoverOpacity,
             MusicVolume = legacy.MusicVolume,
             SoundEffectsVolume = legacy.SoundEffectsVolume,
@@ -364,6 +365,12 @@ public class Player
         SaveSettings();
     }
     
+    // Restrict play area aspect ratio (default: true)
+    public bool RestrictPlayAreaAspectRatio
+    {
+        get => PlayerPrefs.GetInt("RestrictPlayAreaAspectRatio", 1) != 0;
+        set => PlayerPrefs.SetInt("RestrictPlayAreaAspectRatio", value ? 1 : 0);
+    }
 }
 
 public class StringKey
@@ -546,6 +553,12 @@ public class LocalPlayerLegacy
     {
         get => PlayerPrefsExtensions.GetBool("local levels sort in ascending order", false);
         set => PlayerPrefsExtensions.SetBool("local levels sort in ascending order", value);
+    }
+
+    public bool RestrictPlayAreaAspectRatio
+    {
+        get => PlayerPrefsExtensions.GetBool("RestrictPlayAreaAspectRatio", true);
+        set => PlayerPrefsExtensions.SetBool("RestrictPlayAreaAspectRatio", value);
     }
 
     public float GetLevelNoteOffset(string levelId)

@@ -289,6 +289,11 @@ public static class SettingsFactory
                     ("-4", -1), ("-3", 0), ("-2", 1), ("-1", 2), ("0", 3), ("+1", 4), ("+2", 5), ("+3", 6), ("+4", 7)
                 })
             .SaveSettingsOnChange();
+
+        Object.Instantiate(provider.pillRadioGroupPreferenceElement, parent)
+            .SetContent("SETTINGS_RESTRICT_PLAY_AREA_ASPECT_RATIO".Get(), "SETTINGS_RESTRICT_PLAY_AREA_ASPECT_RATIO_DESC".Get(),
+                () => lp.Settings.RestrictPlayAreaAspectRatio, it => lp.Settings.RestrictPlayAreaAspectRatio = it)
+            .SaveSettingsOnChange();
     }
 
     public static void InstantiateVisualSettings(Transform parent)

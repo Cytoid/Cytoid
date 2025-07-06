@@ -93,4 +93,6 @@ extern NSString * const LUConsoleCheckFullVersionNotificationSource;
 - (void)sendScriptMessageName:(NSString *)name;
 - (void)sendScriptMessageName:(NSString *)name params:(NSDictionary *)params;
 
+- (void)updateSettings:(NSString *)settingsJson;
+
 @end

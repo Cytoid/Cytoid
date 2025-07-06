@@ -400,6 +400,7 @@ namespace LunarConsolePlugin
             bool HideConsole();
             void ClearConsole();
             void Destroy();
+            void UpdateSettings(string settingsJson);
         }
 
         #region CVar resolver
@@ -638,6 +639,9 @@ namespace LunarConsolePlugin
             private static extern void __lunar_console_initialize(string targetName, string methodName, string version, string settingsJson);
 
             [DllImport("__Internal")]
+            private static extern void __lunar_console_update_settings(string settingsJson);
+
+            [DllImport("__Internal")]
             private static extern void __lunar_console_log_message(string message, string stackTrace, int type);
 
             [DllImport("__Internal")]
@@ -734,6 +738,11 @@ namespace LunarConsolePlugin
             {
                 __lunar_console_destroy();
             }
+
+            public void UpdateSettings(string settingsJson)
+            {
+                __lunar_console_update_settings(settingsJson);
+            }
         }
 
         #elif UNITY_ANDROID
@@ -761,6 +770,7 @@ namespace LunarConsolePlugin
             private readonly IntPtr m_methodUnregisterAction;
             private readonly IntPtr m_methodRegisterVariable;
             private readonly IntPtr m_methodUpdateVariable;
+            private readonly IntPtr m_methodUpdateSettings;
             private readonly IntPtr m_methodDestroy;
 
             private readonly Queue<LogMessageEntry> m_messageQueue;
@@ -802,6 +812,7 @@ namespace LunarConsolePlugin
                 m_methodUnregisterAction = GetStaticMethod(m_pluginClassRaw, "unregisterAction", "(I)V");
                 m_methodRegisterVariable = GetStaticMethod(m_pluginClassRaw, "registerVariable", "(ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZFFLjava/lang/String;)V");
                 m_methodUpdateVariable = GetStaticMethod(m_pluginClassRaw, "updateVariable", "(ILjava/lang/String;)V");
+                m_methodUpdateSettings = GetStaticMethod(m_pluginClassRaw, "updateSettings", "(Ljava/lang/String;)V");
                 m_methodDestroy = GetStaticMethod(m_pluginClassRaw, "destroy", "()V");
 
                 m_messageQueue = new Queue<LogMessageEntry>();
@@ -970,6 +981,19 @@ namespace LunarConsolePlugin
                 }
             }
 
+            public void UpdateSettings(string settingsJson)
+            {
+                try
+                {
+                    m_args1[0] = jval(settingsJson);
+                    CallStaticVoidMethod(m_methodUpdateSettings, m_args1);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError("Exception while updating settings: " + e.Message);
+                }
+            }
+
             #endregion
 
             #region Helpers
@@ -1081,9 +1105,13 @@ namespace LunarConsolePlugin
             public void OnVariableUpdated(CRegistry registry, CVar cvar)
             {
             }
+
+            public void UpdateSettings(string settingsJson)
+            {
+            }
         }
 
-        #endif // UNITY_ANDROID
+        #endif // UNITY_EDITOR
 
         #endregion
 
@@ -1646,6 +1674,53 @@ namespace LunarConsolePlugin
         {
             get { return m_registry; }
         }
+
+        /// <summary>
+        /// Gets the current console settings
+        /// </summary>
+        public static LunarConsoleSettings settings
+        {
+            get 
+            { 
+                #if LUNAR_CONSOLE_ENABLED
+                return s_instance != null ? s_instance.m_settings : null;
+                #else
+                return null;
+                #endif
+            }
+        }
+
+        /// <summary>
+        /// Updates console settings and syncs them to native layer
+        /// </summary>
+        /// <param name="newSettings">New settings to apply</param>
+        public static void UpdateSettings(LunarConsoleSettings newSettings)
+        {
+            #if LUNAR_CONSOLE_ENABLED
+            if (s_instance != null)
+            {
+                s_instance.m_settings = newSettings;
+                s_instance.SyncSettingsToNative();
+            }
+            else
+            {
+                Log.w("Can't update settings: instance is not initialized. Make sure you've installed it correctly");
+            }
+            #else
+            Log.w("Can't update settings: plugin is disabled");
+            #endif
+        }
+
+        #if LUNAR_CONSOLE_ENABLED
+        private void SyncSettingsToNative()
+        {
+            if (m_platform != null)
+            {
+                var settingsJson = JsonUtility.ToJson(m_settings);
+                m_platform.UpdateSettings(settingsJson);
+            }
+        }
+        #endif
 
         #endregion
     }

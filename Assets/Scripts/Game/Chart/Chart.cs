@@ -451,7 +451,7 @@ public class Chart
                     for (var i = 1; i < data.Length; i++)
                     {
                         int id;
-                        if (!int.TryParse(data[i], out id)) continue;
+                        if (!NumberUtils.TryParseInt(data[i], out id)) continue;
                         note = tmpNotes[id];
                         note.Type = LegacyNoteType.Drag;
 

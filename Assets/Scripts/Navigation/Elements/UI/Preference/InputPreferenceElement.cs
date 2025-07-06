@@ -56,7 +56,7 @@ public class InputPreferenceElement : PreferenceElement
     {
         return it =>
         {
-            if (float.TryParse(it, out var value))
+            if (NumberUtils.TryParseFloat(it, out var value))
             {
                 Wrap(setter)(value);
             }

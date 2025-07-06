@@ -174,7 +174,7 @@ PlayerSettings:
   overrideDefaultApplicationIdentifier: 1
   AndroidBundleVersionCode: 109
   AndroidMinSdkVersion: 23
-  AndroidTargetSdkVersion: 34
+  AndroidTargetSdkVersion: 35
   AndroidPreferredInstallLocation: 1
   aotOptions: nrgctx-trampolines=8192,nimt-trampolines=8192,ntrampolines=4096
   stripEngineCode: 1
@@ -873,7 +873,7 @@ PlayerSettings:
     iPhone: 1
   scriptingBackend:
     Android: 1
-    Standalone: 0
+    Standalone: 1
   il2cppCompilerConfiguration:
     Android: 2
   il2cppCodeGeneration: {}

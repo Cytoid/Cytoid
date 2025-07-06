@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="14460.31" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina5_9" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14460.20"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="LUConsoleResizeController">
+            <connections>
+                <outlet property="hintLabel" destination="qIu-gH-eto" id="oxs-vc-kgg"/>
+                <outlet property="resizeBottomBar" destination="Z5w-JX-OEd" id="U6d-EU-cwH"/>
+                <outlet property="resizeBottomLeftBar" destination="WIa-CS-3jJ" id="DKL-06-Olf"/>
+                <outlet property="resizeBottomRightBar" destination="60S-cR-Di2" id="QR2-sq-3Jm"/>
+                <outlet property="resizeLeftBar" destination="xPr-BS-0Cx" id="69p-fU-b44"/>
+                <outlet property="resizeRightBar" destination="yUz-VB-ayv" id="wLT-iu-GBJ"/>
+                <outlet property="resizeTopBar" destination="18B-uW-y5W" id="AHR-fH-Uqf"/>
+                <outlet property="resizeTopLeftBar" destination="xlx-AN-9Gs" id="sCU-2x-jPU"/>
+                <outlet property="resizeTopRightBar" destination="PhG-jU-na2" id="py9-Zi-hmw"/>
+                <outlet property="view" destination="Uwc-4L-NS0" id="TgI-Pn-rZi"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view clipsSubviews="YES" contentMode="scaleToFill" id="Uwc-4L-NS0" userLabel="View">
+            <rect key="frame" x="0.0" y="0.0" width="375" height="812"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+            <subviews>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="18B-uW-y5W" userLabel="Resize Top Bar">
+                    <rect key="frame" x="44" y="44" width="287" height="44"/>
+                    <subviews>
+                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="lunar_console_resize_handle_horizontal" translatesAutoresizingMaskIntoConstraints="NO" id="etl-o5-XsQ" userLabel="Handle Image">
+                            <rect key="frame" x="131.66666666666666" y="10" width="24" height="24"/>
+                        </imageView>
+                    </subviews>
+                    <color key="backgroundColor" red="1" green="0.57637232542037964" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <constraints>
+                        <constraint firstItem="etl-o5-XsQ" firstAttribute="centerY" secondItem="18B-uW-y5W" secondAttribute="centerY" id="81a-2l-cDY"/>
+                        <constraint firstItem="etl-o5-XsQ" firstAttribute="centerX" secondItem="18B-uW-y5W" secondAttribute="centerX" id="Fvm-05-Hsi"/>
+                        <constraint firstAttribute="height" constant="44" id="Gbu-aw-aVp"/>
+                    </constraints>
+                </view>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Z5w-JX-OEd" userLabel="Resize Bottom Bar">
+                    <rect key="frame" x="44" y="734" width="287" height="44"/>
+                    <subviews>
+                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="lunar_console_resize_handle_horizontal" translatesAutoresizingMaskIntoConstraints="NO" id="QpC-1x-KHk" userLabel="Handle Image">
+                            <rect key="frame" x="131.66666666666666" y="10" width="24" height="24"/>
+                        </imageView>
+                    </subviews>
+                    <color key="backgroundColor" red="1" green="0.57637232542037964" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <constraints>
+                        <constraint firstItem="QpC-1x-KHk" firstAttribute="centerX" secondItem="Z5w-JX-OEd" secondAttribute="centerX" id="ZlN-1o-ZRg"/>
+                        <constraint firstAttribute="height" constant="44" id="pus-j8-YCe"/>
+                        <constraint firstItem="QpC-1x-KHk" firstAttribute="centerY" secondItem="Z5w-JX-OEd" secondAttribute="centerY" id="rJn-pn-C3i"/>
+                    </constraints>
+                </view>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="xPr-BS-0Cx" userLabel="Resize Left Bar">
+                    <rect key="frame" x="0.0" y="88" width="44" height="646"/>
+                    <subviews>
+                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="lunar_console_resize_handle_vertical" translatesAutoresizingMaskIntoConstraints="NO" id="qRS-IQ-mcT" userLabel="Handle Image">
+                            <rect key="frame" x="10" y="311" width="24" height="24"/>
+                        </imageView>
+                    </subviews>
+                    <color key="backgroundColor" red="1" green="0.57637232542037964" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <constraints>
+                        <constraint firstItem="qRS-IQ-mcT" firstAttribute="centerX" secondItem="xPr-BS-0Cx" secondAttribute="centerX" id="m4N-5g-flz"/>
+                        <constraint firstItem="qRS-IQ-mcT" firstAttribute="centerY" secondItem="xPr-BS-0Cx" secondAttribute="centerY" id="no1-R5-3bR"/>
+                        <constraint firstAttribute="width" constant="44" id="tYi-sp-TiM"/>
+                    </constraints>
+                </view>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="yUz-VB-ayv" userLabel="Resize Right Bar">
+                    <rect key="frame" x="331" y="88" width="44" height="646"/>
+                    <subviews>
+                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="lunar_console_resize_handle_vertical" translatesAutoresizingMaskIntoConstraints="NO" id="Uz5-MG-psH" userLabel="Handle Image">
+                            <rect key="frame" x="10" y="315" width="24" height="24"/>
+                        </imageView>
+                    </subviews>
+                    <color key="backgroundColor" red="1" green="0.57637232542037964" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="44" id="4wn-AR-kkF"/>
+                        <constraint firstItem="Uz5-MG-psH" firstAttribute="centerX" secondItem="yUz-VB-ayv" secondAttribute="centerX" id="V1z-LM-5pV"/>
+                        <constraint firstItem="Uz5-MG-psH" firstAttribute="centerY" secondItem="yUz-VB-ayv" secondAttribute="centerY" constant="4" id="dPq-mh-F8e"/>
+                    </constraints>
+                </view>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="xlx-AN-9Gs" userLabel="Resize Top Left Bar">
+                    <rect key="frame" x="0.0" y="44" width="44" height="44"/>
+                    <color key="backgroundColor" red="0.0" green="0.97680455446243286" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="44" id="aGu-X4-RPI"/>
+                        <constraint firstAttribute="height" constant="44" id="xPf-k8-HcL"/>
+                    </constraints>
+                </view>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="PhG-jU-na2" userLabel="Resize Top Right Bar">
+                    <rect key="frame" x="331" y="44" width="44" height="44"/>
+                    <color key="backgroundColor" red="0.0" green="0.97680455446243286" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="44" id="kOZ-a9-1Y2"/>
+                        <constraint firstAttribute="height" constant="44" id="nyo-Ki-eKL"/>
+                    </constraints>
+                </view>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="WIa-CS-3jJ" userLabel="Resize Bottom Left Bar">
+                    <rect key="frame" x="0.0" y="734" width="44" height="44"/>
+                    <color key="backgroundColor" red="0.0" green="0.97680455446243286" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="44" id="HOJ-jV-uOg"/>
+                        <constraint firstAttribute="height" constant="44" id="ajJ-HZ-PC7"/>
+                    </constraints>
+                </view>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="60S-cR-Di2">
+                    <rect key="frame" x="331" y="734" width="44" height="44"/>
+                    <color key="backgroundColor" red="0.44877815246582031" green="0.96131914854049683" blue="0.28988200426101685" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="44" id="EPK-6I-tNp"/>
+                        <constraint firstAttribute="height" constant="44" id="GMv-at-szr"/>
+                    </constraints>
+                </view>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="qIu-gH-eto" userLabel="Drag Borders To Resize">
+                    <rect key="frame" x="44" y="88" width="287" height="646"/>
+                    <string key="text">Drag Handles To Resize
+Drag View To Move</string>
+                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="uYK-R6-5FQ" userLabel="Button Close">
+                    <rect key="frame" x="321" y="740" width="46" height="30"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="46" id="TN6-Qt-Bor"/>
+                        <constraint firstAttribute="height" constant="30" id="X0w-g2-xfO"/>
+                    </constraints>
+                    <state key="normal" image="lunar_console_icon_button_close"/>
+                    <connections>
+                        <action selector="onClose:" destination="-1" eventType="touchUpInside" id="Scq-ta-6HP"/>
+                    </connections>
+                </button>
+            </subviews>
+            <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <constraints>
+                <constraint firstItem="PhG-jU-na2" firstAttribute="leading" secondItem="18B-uW-y5W" secondAttribute="trailing" id="0gL-jz-QCG"/>
+                <constraint firstItem="2Wg-hv-aqE" firstAttribute="bottom" secondItem="60S-cR-Di2" secondAttribute="bottom" id="1RD-Kf-Uu0"/>
+                <constraint firstItem="yUz-VB-ayv" firstAttribute="trailing" secondItem="PhG-jU-na2" secondAttribute="trailing" id="2pM-q8-ebO"/>
+                <constraint firstItem="uYK-R6-5FQ" firstAttribute="trailing" secondItem="60S-cR-Di2" secondAttribute="trailing" constant="-8" id="4oD-q1-lQ7"/>
+                <constraint firstItem="Z5w-JX-OEd" firstAttribute="bottom" secondItem="WIa-CS-3jJ" secondAttribute="bottom" id="6bJ-QQ-tgP"/>
+                <constraint firstItem="xPr-BS-0Cx" firstAttribute="leading" secondItem="xlx-AN-9Gs" secondAttribute="leading" id="6bh-3V-s0d"/>
+                <constraint firstItem="xlx-AN-9Gs" firstAttribute="leading" secondItem="WIa-CS-3jJ" secondAttribute="leading" id="CU5-vk-rl5"/>
+                <constraint firstItem="18B-uW-y5W" firstAttribute="leading" secondItem="xlx-AN-9Gs" secondAttribute="trailing" id="JLX-Mb-P2e"/>
+                <constraint firstItem="uYK-R6-5FQ" firstAttribute="bottom" secondItem="60S-cR-Di2" secondAttribute="bottom" constant="-8" id="KuA-iM-ysm"/>
+                <constraint firstItem="xPr-BS-0Cx" firstAttribute="top" secondItem="xlx-AN-9Gs" secondAttribute="bottom" id="MfT-60-dqk"/>
+                <constraint firstItem="PhG-jU-na2" firstAttribute="top" secondItem="xlx-AN-9Gs" secondAttribute="top" id="Oek-1G-bgy"/>
+                <constraint firstItem="PhG-jU-na2" firstAttribute="trailing" secondItem="60S-cR-Di2" secondAttribute="trailing" id="STa-9U-uUm"/>
+                <constraint firstItem="18B-uW-y5W" firstAttribute="top" secondItem="xlx-AN-9Gs" secondAttribute="top" id="SuR-6u-vqk"/>
+                <constraint firstItem="60S-cR-Di2" firstAttribute="leading" secondItem="Z5w-JX-OEd" secondAttribute="trailing" id="TgC-3L-sBZ"/>
+                <constraint firstItem="qIu-gH-eto" firstAttribute="top" secondItem="18B-uW-y5W" secondAttribute="bottom" id="UjF-Xv-vYS"/>
+                <constraint firstItem="xlx-AN-9Gs" firstAttribute="leading" secondItem="2Wg-hv-aqE" secondAttribute="leading" id="WO4-Xe-XT0"/>
+                <constraint firstItem="2Wg-hv-aqE" firstAttribute="trailing" secondItem="60S-cR-Di2" secondAttribute="trailing" id="Yq2-nw-owp"/>
+                <constraint firstItem="Z5w-JX-OEd" firstAttribute="top" secondItem="qIu-gH-eto" secondAttribute="bottom" id="cDD-cN-o78"/>
+                <constraint firstItem="WIa-CS-3jJ" firstAttribute="top" secondItem="xPr-BS-0Cx" secondAttribute="bottom" id="d3H-nh-ONp"/>
+                <constraint firstItem="yUz-VB-ayv" firstAttribute="top" secondItem="PhG-jU-na2" secondAttribute="bottom" id="dHV-oc-0cx"/>
+                <constraint firstItem="60S-cR-Di2" firstAttribute="bottom" secondItem="WIa-CS-3jJ" secondAttribute="bottom" id="fjT-NB-LDJ"/>
+                <constraint firstItem="60S-cR-Di2" firstAttribute="top" secondItem="yUz-VB-ayv" secondAttribute="bottom" id="sc2-Ot-1AT"/>
+                <constraint firstItem="qIu-gH-eto" firstAttribute="leading" secondItem="xPr-BS-0Cx" secondAttribute="trailing" id="uBi-ip-0RV"/>
+                <constraint firstItem="xlx-AN-9Gs" firstAttribute="top" secondItem="2Wg-hv-aqE" secondAttribute="top" id="z1K-ed-bKE"/>
+                <constraint firstItem="yUz-VB-ayv" firstAttribute="leading" secondItem="qIu-gH-eto" secondAttribute="trailing" id="zja-3J-g7C"/>
+                <constraint firstItem="Z5w-JX-OEd" firstAttribute="leading" secondItem="WIa-CS-3jJ" secondAttribute="trailing" id="zvE-ev-ZKi"/>
+            </constraints>
+            <nil key="simulatedStatusBarMetrics"/>
+            <nil key="simulatedTopBarMetrics"/>
+            <viewLayoutGuide key="safeArea" id="2Wg-hv-aqE"/>
+            <point key="canvasLocation" x="34.399999999999999" y="53.940886699507388"/>
+        </view>
+    </objects>
+    <resources>
+        <image name="lunar_console_icon_button_close" width="24" height="24"/>
+        <image name="lunar_console_resize_handle_horizontal" width="24" height="24"/>
+        <image name="lunar_console_resize_handle_vertical" width="24" height="24"/>
+    </resources>
+</document>

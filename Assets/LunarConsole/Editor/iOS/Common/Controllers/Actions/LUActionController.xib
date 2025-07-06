@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="14460.31" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14460.20"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="LUActionController">
+            <connections>
+                <outlet property="actionsView" destination="w8d-Hz-LoQ" id="7hk-G7-eOv"/>
+                <outlet property="filterBar" destination="vKS-zo-ZIz" id="MiC-f4-m7a"/>
+                <outlet property="learnMoreButton" destination="Aa5-oX-X6k" id="6ia-Vi-ozx"/>
+                <outlet property="noActionsWarningLabel" destination="b9E-cA-rdH" id="Nnx-sB-1Iw"/>
+                <outlet property="noActionsWarningView" destination="Kwy-j4-dCD" id="iDh-cA-6cX"/>
+                <outlet property="tableView" destination="fve-SL-Ifu" id="qAk-M1-lqy"/>
+                <outlet property="view" destination="MJy-N8-UoI" id="7tl-ON-OeV"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleToFill" id="MJy-N8-UoI">
+            <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+            <subviews>
+                <label contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Actions &amp; Variables" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Ouu-Ne-nFv" userLabel="Title Bar">
+                    <rect key="frame" x="0.0" y="20" width="375" height="20"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="20" id="pgQ-Me-QmY"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" type="boldSystem" pointSize="10"/>
+                    <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Kwy-j4-dCD" userLabel="No Actions Warning View">
+                    <rect key="frame" x="0.0" y="40" width="375" height="627"/>
+                    <subviews>
+                        <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" alignment="center" spacing="16" translatesAutoresizingMaskIntoConstraints="NO" id="p6O-E3-EBr">
+                            <rect key="frame" x="156" y="271.5" width="63.5" height="84.5"/>
+                            <subviews>
+                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="lunar_console_actions_empty_warning" translatesAutoresizingMaskIntoConstraints="NO" id="dGG-61-ZsJ" userLabel="No Actions Icon">
+                                    <rect key="frame" x="7.5" y="0.0" width="48" height="48"/>
+                                </imageView>
+                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Warning" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="b9E-cA-rdH">
+                                    <rect key="frame" x="0.0" y="64" width="63.5" height="20.5"/>
+                                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                    <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                    <nil key="highlightedColor"/>
+                                </label>
+                            </subviews>
+                        </stackView>
+                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Aa5-oX-X6k" userLabel="&quot;Learn More...&quot; Button">
+                            <rect key="frame" x="142" y="589" width="91" height="30"/>
+                            <state key="normal" title="Learn More..."/>
+                            <connections>
+                                <action selector="onInfoButton:" destination="-1" eventType="touchUpInside" id="g7M-tQ-K4H"/>
+                            </connections>
+                        </button>
+                    </subviews>
+                    <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    <constraints>
+                        <constraint firstItem="Aa5-oX-X6k" firstAttribute="bottom" secondItem="Kwy-j4-dCD" secondAttribute="bottom" constant="-8" id="0Oi-Bl-m9E"/>
+                        <constraint firstItem="p6O-E3-EBr" firstAttribute="centerX" secondItem="Kwy-j4-dCD" secondAttribute="centerX" id="Teh-F1-kOx"/>
+                        <constraint firstItem="Aa5-oX-X6k" firstAttribute="centerX" secondItem="Kwy-j4-dCD" secondAttribute="centerX" id="TpM-7i-WT5"/>
+                        <constraint firstItem="p6O-E3-EBr" firstAttribute="centerY" secondItem="Kwy-j4-dCD" secondAttribute="centerY" id="f2e-tf-NhW"/>
+                    </constraints>
+                </view>
+                <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="w8d-Hz-LoQ">
+                    <rect key="frame" x="0.0" y="40" width="375" height="583"/>
+                    <subviews>
+                        <searchBar contentMode="redraw" barStyle="black" placeholder="Filter" translucent="NO" translatesAutoresizingMaskIntoConstraints="NO" id="vKS-zo-ZIz">
+                            <rect key="frame" x="0.0" y="0.0" width="375" height="56"/>
+                            <constraints>
+                                <constraint firstAttribute="height" constant="56" id="Z1T-w0-kvT"/>
+                            </constraints>
+                            <color key="tintColor" red="0.66666666666666663" green="0.66666666666666663" blue="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                            <textInputTraits key="textInputTraits"/>
+                        </searchBar>
+                        <tableView clipsSubviews="YES" contentMode="scaleToFill" bounces="NO" alwaysBounceVertical="YES" style="plain" separatorStyle="none" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" translatesAutoresizingMaskIntoConstraints="NO" id="fve-SL-Ifu" customClass="LUTableView">
+                            <rect key="frame" x="0.0" y="56" width="375" height="527"/>
+                            <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        </tableView>
+                    </subviews>
+                </stackView>
+            </subviews>
+            <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <constraints>
+                <constraint firstItem="Kwy-j4-dCD" firstAttribute="trailing" secondItem="tx5-Mv-QOc" secondAttribute="trailing" id="6Oj-iq-Unw"/>
+                <constraint firstItem="Ouu-Ne-nFv" firstAttribute="top" secondItem="tx5-Mv-QOc" secondAttribute="top" id="9XO-iH-4KI"/>
+                <constraint firstItem="w8d-Hz-LoQ" firstAttribute="bottom" secondItem="tx5-Mv-QOc" secondAttribute="bottom" constant="-44" id="ARf-Cr-UJK"/>
+                <constraint firstItem="Kwy-j4-dCD" firstAttribute="bottom" secondItem="tx5-Mv-QOc" secondAttribute="bottom" id="HzQ-hA-Aq2"/>
+                <constraint firstItem="Ouu-Ne-nFv" firstAttribute="leading" secondItem="tx5-Mv-QOc" secondAttribute="leading" id="Jvh-Eb-IkL"/>
+                <constraint firstItem="Ouu-Ne-nFv" firstAttribute="trailing" secondItem="tx5-Mv-QOc" secondAttribute="trailing" id="SJq-WW-Z4h"/>
+                <constraint firstItem="w8d-Hz-LoQ" firstAttribute="top" secondItem="Ouu-Ne-nFv" secondAttribute="bottom" id="Spv-Qv-bSu"/>
+                <constraint firstItem="w8d-Hz-LoQ" firstAttribute="leading" secondItem="tx5-Mv-QOc" secondAttribute="leading" id="Ztx-PT-D14"/>
+                <constraint firstItem="w8d-Hz-LoQ" firstAttribute="trailing" secondItem="tx5-Mv-QOc" secondAttribute="trailing" id="aQz-fF-7Xh"/>
+                <constraint firstItem="Kwy-j4-dCD" firstAttribute="leading" secondItem="tx5-Mv-QOc" secondAttribute="leading" id="phh-2M-omj"/>
+                <constraint firstItem="Kwy-j4-dCD" firstAttribute="top" secondItem="Ouu-Ne-nFv" secondAttribute="bottom" id="vos-3R-ZUX"/>
+            </constraints>
+            <nil key="simulatedStatusBarMetrics"/>
+            <viewLayoutGuide key="safeArea" id="tx5-Mv-QOc"/>
+            <point key="canvasLocation" x="-5" y="-86"/>
+        </view>
+    </objects>
+    <resources>
+        <image name="lunar_console_actions_empty_warning" width="48" height="48"/>
+    </resources>
+</document>

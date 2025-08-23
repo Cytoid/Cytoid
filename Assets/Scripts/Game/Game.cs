@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -533,6 +533,13 @@ public class Game : MonoBehaviour
     protected virtual void OnApplicationPause(bool willPause)
     {
         if (IsLoaded && State.IsStarted && willPause)
+        {
+            Pause();
+        }
+    }
+    protected virtual void OnApplicationFocus(bool hasFocus)
+    {
+        if (IsLoaded && State.IsStarted && !hasFocus)
         {
             Pause();
         }

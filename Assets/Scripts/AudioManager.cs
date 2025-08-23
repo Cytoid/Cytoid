@@ -56,9 +56,9 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
     public void Dispose()
     {
         if (!isInitialized) return;
-        
+
         isInitialized = false;
-        
+
         // First stop all playing audio
         foreach (var controller in controllers.Values)
         {
@@ -71,7 +71,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
                 Debug.LogError($"Error stopping audio controller: {e}");
             }
         }
-        
+
         // Then unload non-preloaded audio
         var keysToUnload = controllers.Keys.ToList().FindAll(it => !controllers[it].IsPreloaded);
         foreach (var key in keysToUnload)
@@ -85,10 +85,10 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
                 Debug.LogError($"Error unloading audio {key}: {e}");
             }
         }
-        
+
         // Clear controllers dictionary
         controllers.Clear();
-        
+
         // Finally dispose native audio
         try
         {
@@ -111,7 +111,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         if (controllers.ContainsKey(id)) Unload(id);
         print("[AudioManager] Loading " + id);
         return controllers[id] = useNativeAudio.Value
-            ? (Controller) new Exceed7Controller(this, audioClip, isMusic, isPreloaded)
+            ? (Controller)new Exceed7Controller(this, audioClip, isMusic, isPreloaded)
             : new UnityController(this, audioClip, isResource, isMusic, isPreloaded);
     }
 
@@ -139,7 +139,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
 
     private int GetAvailableIndex(AudioTrackIndex trackIndex)
     {
-        var index = (int) trackIndex;
+        var index = (int)trackIndex;
         if (index == -1)
         {
             index = trackCurrentIndex;
@@ -327,7 +327,11 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             var sourceIndex = Parent.GetAvailableIndex(trackIndex);
             source = NativeAudio.GetNativeSource(sourceIndex);
             source.Play(pointer);
+#if UNITY_ANDROID
+            source.SetVolume(volume >= 0.05f ? volume : float.Epsilon);
+#else
             source.SetVolume(volume);
+#endif
             isPlaying = true;
             Debug.Log("Source volume set to " + volume);
         }

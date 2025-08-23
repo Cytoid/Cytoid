@@ -34,9 +34,28 @@ public class LevelManager
         foreach (var uid in levelIds)
         {
             var packagePath = Application.streamingAssetsPath + "/Levels/" + uid + ".cytoidlevel";
+            byte[] bytes;
+#if UNITY_EDITOR
+            // Check if we're in editor - use File.ReadAllBytes directly
+            if (!File.Exists(packagePath))
+            {
+                Debug.LogError($"Failed to copy level {uid} from StreamingAssets");
+                continue;
+            }
+
+            try
+            {
+                bytes = File.ReadAllBytes(packagePath);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Failed to copy level {uid} from {packagePath}: {e.Message}");
+                continue;
+            }
+#else
+            // For runtime builds (especially mobile), use UnityWebRequest
             if (Application.platform == RuntimePlatform.IPhonePlayer) packagePath = "file://" + packagePath;
 
-            // Copy the file from StreamingAssets to temp directory
             using (var request = UnityWebRequest.Get(packagePath))
             {
                 request.SetRequestHeader("User-Agent", $"CytoidClient/{Context.VersionName}");
@@ -44,29 +63,29 @@ public class LevelManager
 
                 if (request.isNetworkError || request.isHttpError)
                 {
-                    Debug.LogError(request.error);
                     Debug.LogError($"Failed to copy level {uid} from StreamingAssets");
                     continue;
                 }
 
-                var bytes = request.downloadHandler.data;
-                var targetDirectory = $"{Application.temporaryCachePath}/Downloads";
-                var targetFile = $"{targetDirectory}/{uid}.cytoidlevel";
-
-                try
-                {
-                    Directory.CreateDirectory(targetDirectory);
-                    File.WriteAllBytes(targetFile, bytes);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError(e);
-                    Debug.LogError($"Failed to copy level {uid} from StreamingAssets to {targetFile}");
-                    continue;
-                }
-
-                packagePaths.Add(targetFile);
+                bytes = request.downloadHandler.data;
             }
+#endif
+            var targetDirectory = $"{Application.temporaryCachePath}/Downloads";
+            var targetFile = $"{targetDirectory}/{uid}.cytoidlevel";
+
+            try
+            {
+                Directory.CreateDirectory(targetDirectory);
+                File.WriteAllBytes(targetFile, bytes);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+                Debug.LogError($"Failed to copy level {uid} from StreamingAssets to {targetFile}");
+                continue;
+            }
+
+            packagePaths.Add(targetFile);
         }
 
         return packagePaths;

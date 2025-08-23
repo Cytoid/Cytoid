@@ -345,7 +345,12 @@ public class Context : SingletonMonoBehavior<Context>
         switch (SceneManager.GetActiveScene().name)
         {
             case "Navigation":
-                if (Player.ShouldTrigger(StringKey.FirstLaunch, false))
+# if UNITY_EDITOR
+                var shouldLaunchCalibrationGuide = false;
+# else
+                var shouldLaunchCalibrationGuide = Player.ShouldTrigger(StringKey.FirstLaunch, false);
+# endif
+                if (shouldLaunchCalibrationGuide)
                 {
                     InitializationState.FirstLaunchPhase = FirstLaunchPhase.GlobalCalibration;
 

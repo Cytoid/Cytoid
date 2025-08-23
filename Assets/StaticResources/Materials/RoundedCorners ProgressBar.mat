@@ -87,6 +87,6 @@ Material:
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _WidthHeightRadius: {r: 0, g: 16, b: 16, a: 0}
+    - _WidthHeightRadius: {r: 1072, g: 16, b: 16, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

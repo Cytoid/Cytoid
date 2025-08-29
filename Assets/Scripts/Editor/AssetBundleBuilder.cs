@@ -154,6 +154,9 @@ public class AssetBundleBuilder : OdinEditorWindow
             assetBundleBuilds.Add(build);
         }
 
+        // Outside Assets folder
+        Directory.CreateDirectory($"AssetBundles/{FolderName}");
+
         BuildPipeline.BuildAssetBundles($"AssetBundles/{FolderName}", assetBundleBuilds.ToArray(),
             BuildAssetBundleOptions.StrictMode, buildTarget);
 

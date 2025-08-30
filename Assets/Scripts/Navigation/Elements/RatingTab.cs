@@ -18,18 +18,27 @@ public class RatingTab : MonoBehaviour, ScreenInitializedListener
     {
         ratingText.text = "";
     }
-    
-    private void OnLevelRatingUpdated(string id, LevelRating data)
+
+    private string FormatRatingText(int rating)
     {
-        if (levelId != id) return;
-        if (data.total > 0)
+        if (rating > 10000)
         {
-            ratingText.text = ((data.average ?? 0) / 2.0).ToString("0.00");
+            return (rating / 1000f).ToString("0.0") + "k+";
+        }
+        if (rating > 0)
+        {
+            return rating.ToString("0");
         }
         else
         {
-            ratingText.text = "N/A";
+            return "N/A";
         }
+    }
+
+    private void OnLevelRatingUpdated(string id, LevelRating data)
+    {
+        if (levelId != id) return;
+        ratingText.text = FormatRatingText(data.like);
 
         rateLevelElement.SetModel(id, data);
         rateLevelElement.rateButton.onPointerClick.SetListener(_ =>

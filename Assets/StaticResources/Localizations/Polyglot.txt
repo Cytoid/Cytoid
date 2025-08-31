@@ -162,6 +162,7 @@ PROFILE_RECENT_PLAYS		Recent plays		Partidas recientes	Kürzlich gespielt	Partit
 PROFILE_UPLOADED_LEVELS		Uploaded levels		Niveles subidos	Hochgeladene Level	LIvelli caricati	Níveis enviados	Níveis enviados	Опубликованные уровни									アップロードした譜面	上传关卡	已上傳的關卡		Nahrané úrovně								Level đã tải lên				Опубліковані рівні
 PROFILE_VIEW_ALL_X		View all {0}		Ver todos {0}	Alles anschauen	Vedi tutti{0}	Ver todos {0}	Ver todos {0}	Посмотреть все {0}									すべて見る {0}	查看全部 {0}	檢視全部（{0}）		Zobrazit všech {0}								Xem tất cả				Переглянути всі {0}
 PROFILE_VIEW_FEATURED_X		View {0} featured		Ver {0} destacados	Siehe {0} Highlights	vedi {0} in primo piano	Ver {0}	Ver {0}	Посмотреть избранные {0}									おすすめ譜面を見る {0}	查看精选 {0}	檢視推薦（{0}）		Zobrazit {0} doporučených								Xem tất cả (Yêu thích)				
+PROFILE_VIEW_QUALIFIED_X		View {0} qualified																	查看优选 {0}															
 PROFILE_COLLECTIONS		Collections		Colecciones	Kollektion	Collezioni	Coleções	Coleções	Коллекции									コレクション	合集	已建立的選輯		Kolekce								Bộ sưu tập				Колекції
 																																		
 LEADERBOARD_TOP		Top		Top	Top	Top	Top	Topo	Лидеры									上位	榜首排行	世界	리더보드	Top								Cao nhất	Nasataas	Top	椰叶	Топ
@@ -397,6 +398,7 @@ GAME_PREP_VIEW_ON_CYTOIDIO		View on CytoidIO		Ver en CytoidIO	Auf CytoidIO ansch
 COMMUNITY_HOME_COMMUNITY		Community		Comunidad	Community	Community	Comunidade	Comunidade	Сообщество									コミュニティー	社区	社群瀏覽	커뮤니티	Komunita								Cộng đồng	Komunidad	Komunitas		
 COMMUNITY_HOME_VIEW_ALL		View all		Ver todo	Alles anschauen	Vedi tutti	Ver todos	Ver todos	Посмотреть все									もっと見る	查看全部	檢視全部	모두 보기	Zobrazit vše								Xem tất cả	Tignan lahat	Lihat semua	全来	
 COMMUNITY_HOME_NEW_UPLOADS		New uploads		Nuevas subidas	Neue Uploads	Nuove uscite	Novos uploads	Novos uploads	Новые публикации									最新の譜面	最新上传	近期上傳	최근 출시된 채보	Nově nahrané								Các level mới nhất	Bagong labas	Upload terbaru	成功上市	
+COMMUNITY_HOME_NEW_QUALIFIED		New qualified																	最新优选															
 COMMUNITY_HOME_TRENDING_THIS_MONTH		Trending this month		Tendencias de este mes	Trend in diesen Monat 	Di moda questo mese	Em alta nesse mês	Em alta nesse mês	Популярно в этом месяце									今月のトレンド	时下流行	本月人氣	이번달 인기 채보	Trendující tento měsíc								Thịnh hành trong tháng này	Trending sa buwan na ito	Trending bulan ini	当月2分钟最速手术室传说	
 COMMUNITY_HOME_BEST_OF_CYTOID		Best of Cytoid		Lo mejor de Cytoid	Das Beste von Cytoid 	Il meglio di cytoid	O Melhor do Cytoid	O Melhor do Cytoid	Лучшее в Cytoid									Best of CYTOID	备受瞩目	推薦關卡	베스트 채보	Nejlepší z Cytoidu								Best of Cytoid		Terbaik dari Cytoid	CFHSS 认证的最佳谱面	
 COMMUNITY_SEARCH_QUERY		SEARCH QUERY		Consulta de búsqueda	SUCHANFRAGE 	BARRA DI RICERCA	BUSCA	BUSCA	ПОИСК									検索	搜索	線上搜尋	검색	VYHLEDÁVACÍ DOTAZ								TÌM KIẾM	Hanapin	PENCARIAN		
@@ -428,6 +430,7 @@ COMMUNITY_SELECT_SORT_ORDER_DESC		Descending		Descendiente	Aufsteigend	Discenden
 COMMUNITY_SELECT_CATEGORY		CATEGORY		CATEGORIA	KATEGORIE	CATEGORIA	CATEGORIA	CATEGORIA	КАТЕГОРИЯ									カテゴリ	类别	分類選擇	그룹	KATEGORIE								PHÂN LOẠI		KATEGORI		
 COMMUNITY_SELECT_CATEGORY_ALL		All		Todo	Alle	Tutti	Todos	Todos	Все									すべて	全部	全部	모두	Vše								Tất cả		Semua		
 COMMUNITY_SELECT_CATEGORY_FEATURED		Featured		Destacado	Beliebt	In primo piano	Em destaque	Em destaque	Избранные									おすすめ	精选	推薦	추천	Doporučené								Được ưa chuộng				
+COMMUNITY_SELECT_CATEGORY_QUALIFIED		Qualified																	优选															
 COMMUNITY_SELECT_TIME		TIME		TIEMPO	ZEIT	DATA	DATA	DATA	ДАТА ЗАГРУЗКИ									時間	时间	上傳時間篩選	업로드 날짜	ČAS								THỜI ĐIỂM		WAKTU		
 COMMUNITY_SELECT_TIME_ANY_TIME		Any time		Cualquier tiempo	Jederzeit	Qualsiasi 	Qualquer data	Qualquer data	За все время									すべて	全部时间	全部	상관 없음	Kdykoliv								Mọi thời điểm		Kapanpun		
 COMMUNITY_SELECT_TIME_PAST_WEEK		Past week		Ultima semana	Letzte Woche	Ultima settimana	Semana passada	Semana passada	За последнюю неделю									1週間以内	最近一周	一星期內	이번 주	Poslední týden								Tuần trước		Minggu terakhir		

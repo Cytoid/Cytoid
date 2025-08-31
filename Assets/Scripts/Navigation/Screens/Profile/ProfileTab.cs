@@ -10,12 +10,12 @@ using UnityEngine.UI;
 
 public class ProfileTab : MonoBehaviour
 {
-    
+
     [GetComponent] public RectTransform rectTransform;
     public Canvas canvas;
     public CanvasGroup canvasGroup;
     public ScrollRect scrollRect;
-    
+
     public Avatar avatar;
     public CharacterDisplay characterDisplay;
     public TransitionElement characterTransitionElement;
@@ -42,6 +42,7 @@ public class ProfileTab : MonoBehaviour
     public LevelSection levelSection;
     public InteractableMonoBehavior viewAllLevelsButton;
     public InteractableMonoBehavior viewAllFeaturedLevelsButton;
+    public InteractableMonoBehavior viewAllQualifiedLevelsButton;
     public LevelCard levelCardPrefab;
     public CollectionSection collectionSection;
     public CollectionCard collectionCardPrefab;
@@ -49,9 +50,9 @@ public class ProfileTab : MonoBehaviour
     public Text characterNameText;
     public Text characterLevelText;
     public Text characterExpText;
-    
+
     public RectTransform characterPaddingReference;
-    
+
     public List<Transform> pillRows;
     public Transform sectionParent;
 
@@ -130,7 +131,7 @@ public class ProfileTab : MonoBehaviour
         }
         ratingText.text = $"{"PROFILE_WIDGET_RATING".Get()} {profile.Rating:0.00}";
         levelText.text = $"{"PROFILE_WIDGET_LEVEL".Get()} {profile.Exp.CurrentLevel}";
-        expText.text = $"{"PROFILE_WIDGET_EXP".Get()} {(int) profile.Exp.TotalExp}/{(int) profile.Exp.NextLevelExp}";
+        expText.text = $"{"PROFILE_WIDGET_EXP".Get()} {(int)profile.Exp.TotalExp}/{(int)profile.Exp.NextLevelExp}";
         totalRankedPlaysText.text = profile.Activities.TotalRankedPlays.ToString("N0");
         totalClearedNotesText.text = profile.Activities.ClearedNotes.ToString("N0");
         highestMaxComboText.text = profile.Activities.MaxCombo.ToString("N0");
@@ -139,9 +140,9 @@ public class ProfileTab : MonoBehaviour
         totalPlayTimeText.text = TimeSpan.FromSeconds(profile.Activities.TotalPlayTime)
             .Let(it => it.ToString(it.Days > 0 ? @"d\d\ h\h\ m\m\ s\s" : @"h\h\ m\m\ s\s"));
 
-        chartRadioGroup.onSelect.SetListener(type => UpdateChart((ChartType) Enum.Parse(typeof(ChartType), type, true)));
+        chartRadioGroup.onSelect.SetListener(type => UpdateChart((ChartType)Enum.Parse(typeof(ChartType), type, true)));
         UpdateChart(ChartType.AvgRating);
-        
+
         pillRows.ForEach(it => LayoutFixer.Fix(it));
         if (Context.IsOnline())
         {
@@ -167,7 +168,7 @@ public class ProfileTab : MonoBehaviour
             foreach (var record in profile.RecentRecords.Take(6))
             {
                 var recordCard = Instantiate(recordCardPrefab, recordSection.recordCardHolder);
-                recordCard.SetModel(new RecordView{DisplayOwner = false, Record = record});
+                recordCard.SetModel(new RecordView { DisplayOwner = false, Record = record });
             }
         }
         else
@@ -181,18 +182,18 @@ public class ProfileTab : MonoBehaviour
             foreach (var level in profile.Levels.Take(6))
             {
                 var levelCard = Instantiate(levelCardPrefab, levelSection.levelCardHolder);
-                levelCard.SetModel(new LevelView {DisplayOwner = false, Level = level.ToLevel(LevelType.User)});
+                levelCard.SetModel(new LevelView { DisplayOwner = false, Level = level.ToLevel(LevelType.User) });
             }
 
             viewAllLevelsButton.GetComponentInChildren<Text>().text = "PROFILE_VIEW_ALL_X".Get(profile.LevelCount);
             viewAllLevelsButton.onPointerClick.SetListener(_ =>
             {
                 Context.ScreenManager.ChangeScreen(CommunityLevelSelectionScreen.Id, ScreenTransition.In, 0.4f,
-                    transitionFocus: ((RectTransform) viewAllLevelsButton.transform).GetScreenSpaceCenter(),
+                    transitionFocus: ((RectTransform)viewAllLevelsButton.transform).GetScreenSpaceCenter(),
                     payload: new CommunityLevelSelectionScreen.Payload
-                        {
-                            Query = new OnlineLevelQuery{owner = profile.User.Uid, category = "all", sort = "creation_date", order = "desc"},
-                        });
+                    {
+                        Query = new OnlineLevelQuery { owner = profile.User.Uid, category = "all", sort = "creation_date", order = "desc" },
+                    });
             });
             if (profile.FeaturedLevelCount > 0)
             {
@@ -202,10 +203,10 @@ public class ProfileTab : MonoBehaviour
                 viewAllFeaturedLevelsButton.onPointerClick.SetListener(_ =>
                 {
                     Context.ScreenManager.ChangeScreen(CommunityLevelSelectionScreen.Id, ScreenTransition.In, 0.4f,
-                        transitionFocus: ((RectTransform) viewAllFeaturedLevelsButton.transform).GetScreenSpaceCenter(),
+                        transitionFocus: ((RectTransform)viewAllFeaturedLevelsButton.transform).GetScreenSpaceCenter(),
                         payload: new CommunityLevelSelectionScreen.Payload
                         {
-                            Query = new OnlineLevelQuery{owner = profile.User.Uid, category = "featured", sort = "creation_date", order = "desc"},
+                            Query = new OnlineLevelQuery { owner = profile.User.Uid, category = "featured", sort = "creation_date", order = "desc" },
                         });
                 });
             }
@@ -213,7 +214,26 @@ public class ProfileTab : MonoBehaviour
             {
                 viewAllFeaturedLevelsButton.gameObject.SetActive(false);
             }
-            
+            if (profile.QualifiedLevelCount > 0)
+            {
+                viewAllQualifiedLevelsButton.gameObject.SetActive(true);
+                viewAllQualifiedLevelsButton.GetComponentInChildren<Text>().text =
+                    "PROFILE_VIEW_QUALIFIED_X".Get(profile.QualifiedLevelCount);
+                viewAllQualifiedLevelsButton.onPointerClick.SetListener(_ =>
+                {
+                    Context.ScreenManager.ChangeScreen(CommunityLevelSelectionScreen.Id, ScreenTransition.In, 0.4f,
+                        transitionFocus: ((RectTransform)viewAllQualifiedLevelsButton.transform).GetScreenSpaceCenter(),
+                        payload: new CommunityLevelSelectionScreen.Payload
+                        {
+                            Query = new OnlineLevelQuery { owner = profile.User.Uid, category = "qualified", sort = "creation_date", order = "desc" },
+                        });
+                });
+            }
+            else
+            {
+                viewAllQualifiedLevelsButton.gameObject.SetActive(false);
+            }
+
             viewAllLevelsButton.transform.parent.RebuildLayout();
         }
         else
@@ -238,11 +258,11 @@ public class ProfileTab : MonoBehaviour
         LayoutFixer.Fix(sectionParent);
 
         await UniTask.DelayFrame(5);
-        
+
         transform.RebuildLayout();
-        
+
         await UniTask.DelayFrame(0);
-        
+
         characterTransitionElement.Enter();
     }
 
@@ -250,7 +270,7 @@ public class ProfileTab : MonoBehaviour
     {
         characterNameText.text = name ?? "???";
         characterLevelText.text = $"{"PROFILE_WIDGET_LEVEL".Get()} {expData?.CurrentLevel.ToString() ?? "???"}";
-        characterExpText.text = $"{"PROFILE_WIDGET_EXP".Get()} " + (expData != null ? $"{(int) expData.TotalExp}/{(int) expData.NextLevelExp}" : "???");
+        characterExpText.text = $"{"PROFILE_WIDGET_EXP".Get()} " + (expData != null ? $"{(int)expData.TotalExp}/{(int)expData.NextLevelExp}" : "???");
         characterNameText.transform.parent.RebuildLayout();
         characterStatusColumn.Enter();
     }
@@ -276,7 +296,7 @@ public class ProfileTab : MonoBehaviour
                     value = data.Count;
                     break;
             }
-            entries.Add(new LineEntry(pos, (float) value));
+            entries.Add(new LineEntry(pos, (float)value));
             var date = FirstDateOfWeekISO8601(NumberUtils.ParseInt(data.Year), NumberUtils.ParseInt(data.Week));
             if (date.Day >= 1 && date.Day <= 7)
             {
@@ -298,8 +318,8 @@ public class ProfileTab : MonoBehaviour
                 {
                     it.MaxAutoValue = false;
                     it.MinAutoValue = false;
-                    it.Max = allData.Count == 0 ? 16 : Mathf.CeilToInt((float) allData.MaxBy(x => x.CumulativeRating).CumulativeRating);
-                    it.Min = allData.Count == 0 ? 0 : (int) allData.MinBy(x => x.CumulativeRating).CumulativeRating;
+                    it.Max = allData.Count == 0 ? 16 : Mathf.CeilToInt((float)allData.MaxBy(x => x.CumulativeRating).CumulativeRating);
+                    it.Min = allData.Count == 0 ? 0 : (int)allData.MinBy(x => x.CumulativeRating).CumulativeRating;
                 });
                 chart.AxisConfig.VerticalAxisConfig.ValueFormatterConfig.ValueDecimalPlaces = 2;
                 break;
@@ -308,8 +328,8 @@ public class ProfileTab : MonoBehaviour
                 {
                     it.MaxAutoValue = false;
                     it.MinAutoValue = false;
-                    it.Max = allData.Count == 0 ? 100 : Mathf.CeilToInt((float) allData.MaxBy(x => x.CumulativeAccuracy).CumulativeAccuracy * 100);
-                    it.Min = allData.Count == 0 ? 0 : (int) (allData.MinBy(x => x.CumulativeAccuracy).CumulativeAccuracy * 100);
+                    it.Max = allData.Count == 0 ? 100 : Mathf.CeilToInt((float)allData.MaxBy(x => x.CumulativeAccuracy).CumulativeAccuracy * 100);
+                    it.Min = allData.Count == 0 ? 0 : (int)(allData.MinBy(x => x.CumulativeAccuracy).CumulativeAccuracy * 100);
                 });
                 chart.AxisConfig.VerticalAxisConfig.ValueFormatterConfig.ValueDecimalPlaces = 2;
                 break;
@@ -330,7 +350,7 @@ public class ProfileTab : MonoBehaviour
     {
         AvgRating, AvgAccuracy, Plays
     }
-    
+
     /**
      * Credits:
      * https://stackoverflow.com/a/9064954/2706176
@@ -360,6 +380,6 @@ public class ProfileTab : MonoBehaviour
 
         // Subtract 3 days from Thursday to get Monday, which is the first weekday in ISO8601
         return result.AddDays(-3);
-    }       
-    
+    }
+
 }

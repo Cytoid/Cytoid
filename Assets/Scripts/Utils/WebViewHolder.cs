@@ -68,7 +68,7 @@ public class WebViewHolder : SingletonMonoBehavior<WebViewHolder>
                 webView.EvaluateJS(@"document.body.style.background = 'none';");
                 OnWebViewLoaded.Invoke(msg);
             },
-            //ua: "custom user agent string",
+            ua: $"CytoidClient/{Context.VersionIdentifier}",
             enableWKWebView: true,
             transparent: true
         );

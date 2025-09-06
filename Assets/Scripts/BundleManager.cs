@@ -118,7 +118,7 @@ public class BundleManager
         var url = Context.BundleRemoteFullUrl + "catalog.json";
         Debug.Log($"[BundleManager] Requested catalog from {url}");
         var request = UnityWebRequest.Get(url);
-        request.SetRequestHeader("User-Agent", $"CytoidClient/{Context.VersionName}");
+        request.SetRequestHeader("User-Agent", $"CytoidClient/{Context.VersionIdentifier}");
         request.timeout = 10;
         using (request)
         {
@@ -270,7 +270,7 @@ public class BundleManager
                 {
                     using (var headRequest = UnityWebRequest.Head(downloadUrl))
                     {
-                        headRequest.SetRequestHeader("User-Agent", $"CytoidClient/{Context.VersionName}");
+                        headRequest.SetRequestHeader("User-Agent", $"CytoidClient/{Context.VersionIdentifier}");
                         await headRequest.SendWebRequest();
 
                         if (headRequest.isNetworkError || headRequest.isHttpError)
@@ -299,7 +299,7 @@ public class BundleManager
 
         Dialog dialog = null;
         var request = UnityWebRequestAssetBundle.GetAssetBundle(downloadUrl, Catalog.GetEntry(bundleId).version, 0U);
-        request.SetRequestHeader("User-Agent", $"CytoidClient/{Context.VersionName}");
+        request.SetRequestHeader("User-Agent", $"CytoidClient/{Context.VersionIdentifier}");
         var aborted = false;
         if (showDialog)
         {

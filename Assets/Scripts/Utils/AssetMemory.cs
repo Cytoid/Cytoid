@@ -131,7 +131,7 @@ public class AssetMemory
                 {
                     using (var request = UnityWebRequest.Get(path))
                     {
-                        request.SetRequestHeader("User-Agent", $"CytoidClient/{Context.VersionName}");
+                        request.SetRequestHeader("User-Agent", $"CytoidClient/{Context.VersionIdentifier}");
                         request.downloadHandler =
                             new DownloadHandlerFile(cachePath).Also(it => it.removeFileOnAbort = true);
                         await request.SendWebRequest();
@@ -183,7 +183,7 @@ public class AssetMemory
             
             using (var request = UnityWebRequest.Get(loadPath))
             {
-                request.SetRequestHeader("User-Agent", $"CytoidClient/{Context.VersionName}");
+                request.SetRequestHeader("User-Agent", $"CytoidClient/{Context.VersionIdentifier}");
                 await request.SendWebRequest();
 
                 if (cancellationToken != default && cancellationToken.IsCancellationRequested)

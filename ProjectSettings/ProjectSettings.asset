@@ -140,7 +140,7 @@ PlayerSettings:
   loadStoreDebugModeEnabled: 0
   visionOSBundleVersion: 1.0
   tvOSBundleVersion: 1.0
-  bundleVersion: 2.1.2
+  bundleVersion: 2.1.3
   preloadedAssets: []
   metroInputSource: 0
   wsaTransparentSwapchain: 0
@@ -169,10 +169,10 @@ PlayerSettings:
   buildNumber:
     Standalone: 0
     VisionOS: 0
-    iPhone: 118
+    iPhone: 122
     tvOS: 0
   overrideDefaultApplicationIdentifier: 1
-  AndroidBundleVersionCode: 200118
+  AndroidBundleVersionCode: 200122
   AndroidMinSdkVersion: 23
   AndroidTargetSdkVersion: 35
   AndroidPreferredInstallLocation: 1
@@ -267,7 +267,7 @@ PlayerSettings:
   AndroidTargetArchitectures: 3
   AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 0}
-  AndroidKeystoreName: '{dedicated}: cytoid-key/cytoid-upload-key.keystore'
+  AndroidKeystoreName: /Users/teages/Documents/cytoid-key/cytoid-upload-key.keystore
   AndroidKeyaliasName: upload
   AndroidEnableArmv9SecurityFeatures: 0
   AndroidEnableArm64MTE: 0

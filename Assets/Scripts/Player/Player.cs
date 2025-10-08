@@ -287,7 +287,7 @@ public class Player
             DisplayProfiler = legacy.DisplayProfiler,
             DisplayNoteIds = legacy.DisplayNoteIds,
             LocalLevelSort = Enum.TryParse<LevelSort>(legacy.LocalLevelsSortBy, out var sort) ? sort : LevelSort.AddedDate,
-            AndroidDspBufferSize = 1024, // Force 1024
+            AndroidDspBufferSize = -1,
             LocalLevelSortIsAscending = legacy.LocalLevelsSortInAscendingOrder
         };
         return settings;

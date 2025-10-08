@@ -38,10 +38,14 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             var options = new NativeAudio.InitializationOptions
             {
                 androidAudioTrackCount = 2,
-                androidBufferSize = -1 // 使用设备原生缓冲区大小
+                androidBufferSize = -1
             };
             NativeAudio.Initialize(options);
             Debug.Log($"Native Audio initialized with {NativeAudio.GetNativeSourceCount()} sources");
+        }
+        else
+        {
+            Debug.Log("Native Audio is disabled, using Unity Audio");
         }
 
         preloadedAudioClips.ForEach(it => Load(it.name, it, isPreloaded: true));
@@ -235,19 +239,19 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
 
         public override void Pause()
         {
-            if (index < 0) throw new InvalidOperationException();
+            if (index < 0) return;
             Source.Pause();
         }
 
         public override void Resume()
         {
-            if (index < 0) throw new InvalidOperationException();
+            if (index < 0) return;
             Source.UnPause();
         }
 
         public override void Stop()
         {
-            if (index < 0) throw new InvalidOperationException();
+            if (index < 0) return;
             Source.Stop();
         }
 

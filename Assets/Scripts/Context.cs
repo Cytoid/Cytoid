@@ -23,9 +23,9 @@ public class Context : SingletonMonoBehavior<Context>
     public int forceUploadScore = -1;
     public float forceUploadAccuracy = -1f;
 
-    public const string VersionIdentifier = "2.1.3";
-    public const string VersionName = "2.1.3 BUILD.4";
-    public const int VersionCode = 122;
+    public const string VersionIdentifier = "2.1.4";
+    public const string VersionName = "2.1.4 BUILD.1";
+    public const int VersionCode = 123;
 
     public static string MockApiUrl;
 

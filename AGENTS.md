@@ -121,17 +121,12 @@ Without artifacts, the plugin uses a **mock engine** (host protocol still works)
 
 Optional download: `CYTOID_GAME_CORE_ARTIFACT_BASE_URL` + `./tool/setup_unity_artifacts.sh`.
 
-Release automation: `.github/workflows/release.yml` uses `danielroe/uppt`
-(`pr` + `release` subactions only) to open `release/vX.Y.Z` PRs from
-conventional commits, tag merged release PRs as `vX.Y.Z`, create a GitHub
-Release, and dispatch `.github/workflows/flutter-plugin-artifacts.yml`.
-We do not use `uppt/publish`, because it publishes npm packages.
-
-CI: `.github/workflows/flutter-plugin-artifacts.yml` uses GameCI `unity-builder@v4`
-for Android AAR export/package and iOS UnityLibrary export. iOS
+CI: `.github/workflows/flutter-plugin-artifacts.yml` is manual-only
+(`workflow_dispatch`). It uses GameCI `unity-builder@v4` for Android AAR
+export/package and, when `build_ios` is enabled, iOS UnityLibrary export. iOS
 `UnityFramework.xcframework` packaging runs afterward on macOS/Xcode from the
-exported Xcode project. Release tags matching `v*` create GitHub Release assets
-instead of publishing to dart.dev.
+exported Xcode project. The workflow uploads GitHub Actions artifacts only; it
+does not create release PRs, tags, GitHub Releases, or dart.dev publications.
 
 ### cytoid_flutter (full app)
 
@@ -172,14 +167,6 @@ flutter run
 | `CytoidCoreBuild.ExportAndroidLibraryForFlutter` | Export Gradle library + AAR artifacts |
 | `CytoidCoreBuild.ExportIOSLibraryForFlutter` | Export Xcode project + UnityFramework.xcframework |
 | `CytoidCoreBuild.ExportIOSLibraryForFlutterWithoutPackaging` | Export iOS Xcode project only; CI packages on macOS |
-
-### Release automation
-
-`package.json` at the repository root is a release manifest for `uppt`; it is
-not an npm package we publish. `uppt` bumps that version in the release PR and
-creates `vX.Y.Z` tags. The artifact workflow syncs the Flutter plugin
-`pubspec.yaml` version from the tag at packaging time via
-`flutter_plugin/tool/sync_pubspec_version_from_tag.sh`.
 
 ---
 
@@ -239,7 +226,6 @@ Append new rows when architecture or default paths change.
 |-------|----------|
 | External dependencies inventory | `DEPENDENCIES.md` |
 | Build menu / batchmode | `Assets/Scripts/Editor/CytoidCoreBuild.cs` |
-| Release PR / tag automation | `.github/workflows/release.yml`, `package.json` |
 | CI plugin artifacts | `.github/workflows/flutter-plugin-artifacts.yml` |
 | Vendor asset install | `flutter_plugin/tool/install_vendor_from_archive.sh`, `docs/vendor.md` |
 | Game bridge | `Assets/Scripts/Host/GameBridge.cs` |

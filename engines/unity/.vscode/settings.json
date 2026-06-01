@@ -52,12 +52,6 @@
         "Logs/": true,
         "logs/": true,
         "ProjectSettings/": true,
-        "engines/unity/Library/": true,
-        "engines/unity/library/": true,
-        "engines/unity/Logs/": true,
-        "engines/unity/logs/": true,
-        "engines/unity/ProjectSettings/": true,
-        "engines/unity/UserSettings/": true,
         "UserSettings/": true,
         "temp/": true,
         "Temp/": true
@@ -66,11 +60,13 @@
         "*.asset": "yaml",
         "*.meta": "yaml",
         "*.prefab": "yaml",
-        "*.unity": "yaml"
+        "*.unity": "yaml",
     },
     "explorer.fileNesting.enabled": true,
     "explorer.fileNesting.patterns": {
-        "*.sln": "*.csproj"
+        "*.sln": "*.csproj",
+        "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "Cytoid-public.slnx"
+    "dotnet.defaultSolution": "unity.slnx",
+    "dotnet.enableWorkspaceBasedDevelopment": false
 }

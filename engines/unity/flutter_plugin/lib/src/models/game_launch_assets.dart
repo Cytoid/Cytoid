@@ -14,11 +14,16 @@ class GameLaunchAssets {
   final String? storyboardPath;
 
   factory GameLaunchAssets.fromJson(Map<String, dynamic> json) {
+    final vfsUri = _readRequiredString(json, 'vfsUri');
+    final chartPath = _readRequiredString(json, 'chartPath');
+    final musicPath = _readRequiredString(json, 'musicPath');
+    final storyboardPath = _readOptionalString(json, 'storyboardPath');
+
     return GameLaunchAssets(
-      vfsUri: json['vfsUri'] as String,
-      chartPath: json['chartPath'] as String,
-      musicPath: json['musicPath'] as String,
-      storyboardPath: json['storyboardPath'] as String?,
+      vfsUri: vfsUri,
+      chartPath: chartPath,
+      musicPath: musicPath,
+      storyboardPath: storyboardPath,
     );
   }
 
@@ -29,5 +34,25 @@ class GameLaunchAssets {
       'musicPath': musicPath,
       if (storyboardPath != null) 'storyboardPath': storyboardPath,
     };
+  }
+
+  static String _readRequiredString(Map<String, dynamic> json, String field) {
+    final value = json[field];
+    if (value is String) {
+      return value;
+    }
+    throw FormatException(
+      'GameLaunchAssets.fromJson: missing or invalid field $field',
+    );
+  }
+
+  static String? _readOptionalString(Map<String, dynamic> json, String field) {
+    final value = json[field];
+    if (value == null || value is String) {
+      return value as String?;
+    }
+    throw FormatException(
+      'GameLaunchAssets.fromJson: missing or invalid field $field',
+    );
   }
 }

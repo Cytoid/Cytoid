@@ -78,4 +78,40 @@ void main() {
     expect(result.accuracy, 99.5);
     expect(result.gradeCounts, {'perfect': 10});
   });
+
+  test('rejects missing or malformed launch assets', () {
+    expect(
+      () => GameLaunchPayload.fromJson({
+        'levelMetaJson': '{}',
+        'selectedDifficulty': 'hard',
+      }),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          contains("Invalid or missing 'assets' field"),
+        ),
+      ),
+    );
+
+    expect(
+      () => GameLaunchPayload.fromJson({
+        'levelMetaJson': '{}',
+        'selectedDifficulty': 'hard',
+        'assets': {
+          'vfsUri': 'file:///levels/level/',
+          'chartPath': 'charts/hard.json',
+        },
+      }),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          contains(
+            'GameLaunchAssets.fromJson: missing or invalid field musicPath',
+          ),
+        ),
+      ),
+    );
+  });
 }

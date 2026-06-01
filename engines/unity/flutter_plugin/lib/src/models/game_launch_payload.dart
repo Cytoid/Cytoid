@@ -24,10 +24,17 @@ class GameLaunchPayload {
   final TierPlayLaunch? tierPlay;
 
   factory GameLaunchPayload.fromJson(Map<String, dynamic> json) {
+    final assetsJson = json['assets'];
+    if (assetsJson is! Map) {
+      throw const FormatException(
+        "Invalid or missing 'assets' field: expected Map<String, dynamic>",
+      );
+    }
+
     return GameLaunchPayload(
       levelMetaJson: json['levelMetaJson'] as String,
       selectedDifficulty: json['selectedDifficulty'] as String,
-      assets: GameLaunchAssets.fromJson(json['assets'] as Map<String, dynamic>),
+      assets: GameLaunchAssets.fromJson(Map<String, dynamic>.from(assetsJson)),
       settings: json['settings'] is Map<String, dynamic>
           ? GameLaunchSettings.fromJson(
               json['settings'] as Map<String, dynamic>,

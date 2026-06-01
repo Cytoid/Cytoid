@@ -21,13 +21,18 @@ public static class GameLaunchVfs
             throw new ArgumentException($"assets.vfsUri is not a valid URI: {e.Message}");
         }
 
-        if (!uri.IsFile)
+        if (!uri.IsAbsoluteUri || !uri.IsFile || uri.IsUnc || !string.IsNullOrEmpty(uri.Host))
         {
             throw new ArgumentException("assets.vfsUri must be a local file:// directory URI.");
         }
 
         var path = Uri.UnescapeDataString(uri.LocalPath);
         var fullPath = Path.GetFullPath(path);
+        if (File.Exists(fullPath))
+        {
+            throw new ArgumentException("assets.vfsUri root must be a directory, not a file.");
+        }
+
         return EnsureTrailingSeparator(fullPath);
     }
 

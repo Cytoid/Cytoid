@@ -7,10 +7,6 @@ public class GameLaunchPayload
 {
     public string levelMetaJson;
     public string selectedDifficulty;
-    public string chartText;
-    public byte[] musicBytes;
-    public string musicFormat = "mp3";
-    public string storyboardText;
     public GameLaunchSettings settings;
     public GameLaunchAssets assets;
     public List<string> mods = new List<string>();

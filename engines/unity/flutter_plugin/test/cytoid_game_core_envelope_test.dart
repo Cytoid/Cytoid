@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:cytoid_game_core/cytoid_game_core.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -11,7 +9,9 @@ void main() {
       payload: {'text': 'hello'},
     );
 
-    final decoded = CytoidGameCoreEnvelope.fromJsonString(envelope.toJsonString());
+    final decoded = CytoidGameCoreEnvelope.fromJsonString(
+      envelope.toJsonString(),
+    );
 
     expect(decoded.v, CytoidGameCoreEnvelope.currentVersion);
     expect(decoded.id, 'abc');
@@ -39,26 +39,30 @@ void main() {
     final launch = GameLaunchPayload(
       levelMetaJson: '{"id":"level"}',
       selectedDifficulty: 'hard',
-      musicBytes: Uint8List.fromList([1, 2, 3]),
+      assets: const GameLaunchAssets(
+        vfsUri: 'file:///levels/level/',
+        chartPath: 'charts/hard.json',
+        musicPath: 'audio/song.ogg',
+      ),
       settings: const GameLaunchSettings(
         noteSize: 1.2,
         hitboxSizes: {'0': 2, '4': 1},
         holdHitSoundTiming: 'Both',
         graphicsQuality: 'High',
       ),
-      assets: const GameLaunchAssets(chartUri: 'file:///chart.txt'),
     );
 
     final decodedLaunch = GameLaunchPayload.fromJson(launch.toJson());
 
     expect(decodedLaunch.levelMetaJson, '{"id":"level"}');
     expect(decodedLaunch.selectedDifficulty, 'hard');
-    expect(decodedLaunch.musicBytes, [1, 2, 3]);
     expect(decodedLaunch.settings?.noteSize, 1.2);
     expect(decodedLaunch.settings?.hitboxSizes, {'0': 2, '4': 1});
     expect(decodedLaunch.settings?.holdHitSoundTiming, 'Both');
     expect(decodedLaunch.settings?.graphicsQuality, 'High');
-    expect(decodedLaunch.assets?.chartUri, 'file:///chart.txt');
+    expect(decodedLaunch.assets.vfsUri, 'file:///levels/level/');
+    expect(decodedLaunch.assets.chartPath, 'charts/hard.json');
+    expect(decodedLaunch.assets.musicPath, 'audio/song.ogg');
 
     final result = GameResultPayload.fromJson({
       'completed': true,

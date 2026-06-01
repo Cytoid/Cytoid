@@ -68,7 +68,13 @@ namespace Cytoid.Storyboard.Videos
                     prefix = ""; // Android Q Unity issue
                     VideoPlayer.source = VideoSource.Url;
                 }
-                var path = prefix + MainRenderer.Game.Level.Path + videoPath;
+                var path = MainRenderer.Game.UsesExternalContent
+                    ? GameLaunchVfs.ResolveRequiredFilePath(
+                        MainRenderer.Game.Level.Path,
+                        videoPath,
+                        "storyboard.video.path")
+                    : MainRenderer.Game.Level.Path + videoPath;
+                path = prefix + path;
                 VideoPlayer.url = path;
                 VideoPlayer.aspectRatio = VideoAspectRatio.FitOutside;
                 VideoPlayer.renderMode = VideoRenderMode.RenderTexture;

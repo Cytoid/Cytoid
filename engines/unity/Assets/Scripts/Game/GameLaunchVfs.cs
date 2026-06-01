@@ -1,81 +1,173 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 public static class GameLaunchVfs
 {
-    /// <summary>
-    /// Resolves a directory URI from <c>bridge.play.start</c> assets into a local path suitable for
-    /// <see cref="Level.Path"/> (absolute, trailing directory separator).
-    /// </summary>
-    public static string ResolveDirectoryPath(string vfsUri)
+    public static string ResolveRootDirectoryPath(string vfsUri)
     {
         if (string.IsNullOrWhiteSpace(vfsUri))
         {
-            return string.Empty;
+            throw new ArgumentException("assets.vfsUri is required.");
         }
 
-        string path;
-        if (vfsUri.StartsWith("file://", StringComparison.OrdinalIgnoreCase))
+        Uri uri;
+        try
         {
-            path = Uri.UnescapeDataString(new Uri(vfsUri).LocalPath);
+            uri = new Uri(vfsUri);
         }
-        else
+        catch (Exception e)
         {
-            path = vfsUri;
-        }
-
-        if (!path.EndsWith(Path.DirectorySeparatorChar.ToString())
-            && !path.EndsWith(Path.AltDirectorySeparatorChar.ToString()))
-        {
-            path += Path.DirectorySeparatorChar;
+            throw new ArgumentException($"assets.vfsUri is not a valid URI: {e.Message}");
         }
 
-        return path;
+        if (!uri.IsFile)
+        {
+            throw new ArgumentException("assets.vfsUri must be a local file:// directory URI.");
+        }
+
+        var path = Uri.UnescapeDataString(uri.LocalPath);
+        var fullPath = Path.GetFullPath(path);
+        return EnsureTrailingSeparator(fullPath);
     }
 
-    public static string ResolveFileUri(string uri)
+    public static string ResolveRequiredFilePath(string rootDirectory, string assetPath, string fieldName)
     {
-        if (string.IsNullOrWhiteSpace(uri))
+        if (string.IsNullOrWhiteSpace(assetPath))
         {
-            return null;
+            throw new ArgumentException($"{fieldName} is required.");
         }
 
-        if (uri.StartsWith("file://", StringComparison.OrdinalIgnoreCase))
-        {
-            return uri;
-        }
-
-        return new Uri(Path.GetFullPath(uri)).AbsoluteUri;
+        return ResolveFilePath(rootDirectory, assetPath, fieldName);
     }
 
-    public static string ResolveFileUri(string vfsUri, string relativePath)
+    public static string ResolveOptionalFilePath(string rootDirectory, string assetPath, string fieldName)
     {
-        if (string.IsNullOrWhiteSpace(vfsUri) || string.IsNullOrWhiteSpace(relativePath))
-        {
-            return null;
-        }
-
-        var directory = ResolveDirectoryPath(vfsUri);
-        if (string.IsNullOrWhiteSpace(directory))
-        {
-            return null;
-        }
-
-        return ResolveFileUri(Path.Combine(directory, relativePath));
+        return string.IsNullOrWhiteSpace(assetPath) ? null : ResolveFilePath(rootDirectory, assetPath, fieldName);
     }
 
-    public static string ResolveFilePath(string uri)
+    public static string ResolveRequiredFileUri(string rootDirectory, string assetPath, string fieldName)
     {
-        if (string.IsNullOrWhiteSpace(uri))
+        return ToFileUri(ResolveRequiredFilePath(rootDirectory, assetPath, fieldName));
+    }
+
+    public static string ResolveOptionalFileUri(string rootDirectory, string assetPath, string fieldName)
+    {
+        var path = ResolveOptionalFilePath(rootDirectory, assetPath, fieldName);
+        return path == null ? null : ToFileUri(path);
+    }
+
+    public static string ToFileUri(string path)
+    {
+        return new Uri(Path.GetFullPath(path)).AbsoluteUri;
+    }
+
+    private static string ResolveFilePath(string rootDirectory, string assetPath, string fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(rootDirectory))
         {
-            return null;
+            throw new ArgumentException("VFS root directory is required.");
         }
 
-        if (uri.StartsWith("file://", StringComparison.OrdinalIgnoreCase))
+        var root = EnsureTrailingSeparator(Path.GetFullPath(rootDirectory));
+        var relative = NormalizeRelativePath(assetPath, fieldName);
+        var target = Path.GetFullPath(Path.Combine(root, relative));
+
+        if (!IsInsideRoot(root, target))
         {
-            return Uri.UnescapeDataString(new Uri(uri).LocalPath);
+            throw new ArgumentException($"{fieldName} escapes the VFS root.");
         }
 
-        return uri;
+        return target;
+    }
+
+    private static string NormalizeRelativePath(string assetPath, string fieldName)
+    {
+        if (assetPath.IndexOf('\0') >= 0)
+        {
+            throw new ArgumentException($"{fieldName} contains a NUL character.");
+        }
+
+        if (assetPath.StartsWith(@"\\", StringComparison.Ordinal) ||
+            assetPath.StartsWith("//", StringComparison.Ordinal))
+        {
+            throw new ArgumentException($"{fieldName} must not be a UNC path.");
+        }
+
+        var normalized = assetPath.Replace('\\', '/');
+        while (normalized.StartsWith("/", StringComparison.Ordinal))
+        {
+            normalized = normalized.Substring(1);
+        }
+
+        if (HasUriScheme(normalized))
+        {
+            throw new ArgumentException($"{fieldName} must be a VFS-relative path, not a URI or absolute path.");
+        }
+
+        var parts = new List<string>();
+        foreach (var part in normalized.Split('/'))
+        {
+            if (part.Length == 0 || part == ".")
+            {
+                continue;
+            }
+
+            if (part == "..")
+            {
+                throw new ArgumentException($"{fieldName} must not contain '..' path segments.");
+            }
+
+            parts.Add(part);
+        }
+
+        if (parts.Count == 0)
+        {
+            throw new ArgumentException($"{fieldName} must point to a file inside the VFS root.");
+        }
+
+        return Path.Combine(parts.ToArray());
+    }
+
+    private static bool HasUriScheme(string path)
+    {
+        var colonIndex = path.IndexOf(':');
+        if (colonIndex <= 0)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < colonIndex; i++)
+        {
+            var c = path[i];
+            var valid = i == 0
+                ? char.IsLetter(c)
+                : char.IsLetterOrDigit(c) || c == '+' || c == '-' || c == '.';
+            if (!valid)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool IsInsideRoot(string root, string target)
+    {
+        var comparison = Path.DirectorySeparatorChar == '\\'
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+        return target.StartsWith(root, comparison);
+    }
+
+    private static string EnsureTrailingSeparator(string path)
+    {
+        if (path.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal) ||
+            path.EndsWith(Path.AltDirectorySeparatorChar.ToString(), StringComparison.Ordinal))
+        {
+            return path;
+        }
+
+        return path + Path.DirectorySeparatorChar;
     }
 }

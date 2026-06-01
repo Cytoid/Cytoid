@@ -12,6 +12,9 @@ class LevelVfsMaterializer {
   Future<GameLaunchAssets> materializeFolder({
     required String levelId,
     required String folderAssetPath,
+    required String chartPath,
+    required String musicPath,
+    String? storyboardPath,
     AssetBundle? bundle,
   }) async {
     final assetBundle = bundle ?? rootBundle;
@@ -41,6 +44,9 @@ class LevelVfsMaterializer {
     final vfsPath = '${levelDir.path}${Platform.pathSeparator}';
     return GameLaunchAssets(
       vfsUri: Uri.file(vfsPath, windows: false).toString(),
+      chartPath: chartPath,
+      musicPath: musicPath,
+      storyboardPath: storyboardPath,
     );
   }
 }

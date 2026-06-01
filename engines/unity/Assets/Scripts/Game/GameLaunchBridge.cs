@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 
@@ -44,15 +43,17 @@ public static class GameLaunchBridge
                 throw new ArgumentException($"Missing chart for difficulty: {difficulty.Id}");
             }
 
-            var storyboardPath = level.Path + (chart.storyboard?.path ?? "storyboard.json");
             var payload = new GameLaunchPayload
             {
                 levelMetaJson = JsonConvert.SerializeObject(level.Meta),
                 selectedDifficulty = difficulty.Id,
-                chartText = File.ReadAllText(level.Path + chart.path),
-                musicBytes = File.ReadAllBytes(level.Path + level.Meta.GetMusicPath(difficulty.Id)),
-                musicFormat = Path.GetExtension(level.Meta.GetMusicPath(difficulty.Id)).TrimStart('.'),
-                storyboardText = File.Exists(storyboardPath) ? File.ReadAllText(storyboardPath) : null
+                assets = new GameLaunchAssets
+                {
+                    vfsUri = GameLaunchVfs.ToFileUri(level.Path),
+                    chartPath = chart.path,
+                    musicPath = level.Meta.GetMusicPath(difficulty.Id),
+                    storyboardPath = chart.storyboard?.path
+                }
             };
 
             StartGameWithPayload(payload);

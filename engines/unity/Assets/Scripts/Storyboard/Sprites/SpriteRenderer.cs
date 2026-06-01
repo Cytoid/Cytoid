@@ -57,7 +57,12 @@ namespace Cytoid.Storyboard.Sprites
                 }
                 Image.gameObject.name = $"Sprite[{spritePath}]";
 
-                LoadPath = "file://" + MainRenderer.Game.Level.Path + spritePath;
+                LoadPath = MainRenderer.Game.UsesExternalContent
+                    ? GameLaunchVfs.ResolveRequiredFileUri(
+                        MainRenderer.Game.Level.Path,
+                        spritePath,
+                        "storyboard.sprite.path")
+                    : "file://" + MainRenderer.Game.Level.Path + spritePath;
                 Image.sprite = await Context.AssetMemory.LoadAsset<UnityEngine.Sprite>(LoadPath, AssetTag.Storyboard);
 
                 if (!MainRenderer.SpritePathRefCount.ContainsKey(LoadPath))

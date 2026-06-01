@@ -128,7 +128,11 @@ void main() {
       GameLaunchPayload(
         levelMetaJson: '{}',
         selectedDifficulty: 'easy',
-        musicBytes: Uint8List.fromList([1]),
+        assets: const GameLaunchAssets(
+          vfsUri: 'file:///levels/test/',
+          chartPath: 'chart.json',
+          musicPath: 'music.mp3',
+        ),
       ),
     );
     await Future<void>.delayed(Duration.zero);
@@ -168,7 +172,11 @@ void main() {
       GameLaunchPayload(
         levelMetaJson: '{}',
         selectedDifficulty: 'easy',
-        musicBytes: Uint8List.fromList([1]),
+        assets: const GameLaunchAssets(
+          vfsUri: 'file:///levels/test/',
+          chartPath: 'chart.json',
+          musicPath: 'music.mp3',
+        ),
       ),
     );
     await Future<void>.delayed(Duration.zero);
@@ -223,7 +231,11 @@ void main() {
       GameLaunchPayload(
         levelMetaJson: '{}',
         selectedDifficulty: 'easy',
-        musicBytes: Uint8List.fromList([1]),
+        assets: const GameLaunchAssets(
+          vfsUri: 'file:///levels/test/',
+          chartPath: 'chart.json',
+          musicPath: 'music.mp3',
+        ),
       ),
     );
     await Future<void>.delayed(Duration.zero);

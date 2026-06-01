@@ -49,39 +49,21 @@ class ExampleLevel {
     final assets = await vfsMaterializer.materializeFolder(
       levelId: id,
       folderAssetPath: baseAssetPath,
+      chartPath: difficulty.chartAsset,
+      musicPath: musicAsset,
+      storyboardPath: difficulty.storyboardAsset,
     );
     final metaJson = await rootBundle.loadString(metaAsset);
-    final chartText = await rootBundle.loadString(
-      '$baseAssetPath/${difficulty.chartAsset}',
-    );
-    final musicFormat = musicAsset.split('.').last.toLowerCase();
-    final musicBytes = musicFormat == 'mp3'
-        ? await _loadBytes('$baseAssetPath/$musicAsset')
-        : null;
-    final storyboardText = difficulty.storyboardAsset == null
-        ? null
-        : await rootBundle.loadString(
-            '$baseAssetPath/${difficulty.storyboardAsset}',
-          );
 
     return GameLaunchPayload(
       levelMetaJson: metaJson,
       selectedDifficulty: difficulty.type,
-      chartText: chartText,
-      musicBytes: musicBytes,
-      musicFormat: musicFormat,
-      storyboardText: storyboardText,
-      settings: settings.toLaunchSettings(),
       assets: assets,
+      settings: settings.toLaunchSettings(),
       mods: mods?.toModStringList() ?? const [],
       gameMode: tierPlay != null ? GameMode.tier : mods?.gameMode,
       tierPlay: tierPlay,
     );
-  }
-
-  static Future<Uint8List> _loadBytes(String asset) async {
-    final data = await rootBundle.load(asset);
-    return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
   }
 }
 
@@ -112,7 +94,9 @@ class ExampleLevelRepository {
     for (final baseAssetPath in folderRoots) {
       final metaJson = await rootBundle.loadString('$baseAssetPath/level.json');
       final meta = jsonDecode(metaJson) as Map<String, dynamic>;
-      levels.add(_exampleLevelFromMeta(meta: meta, baseAssetPath: baseAssetPath));
+      levels.add(
+        _exampleLevelFromMeta(meta: meta, baseAssetPath: baseAssetPath),
+      );
     }
 
     levels.sort((a, b) => a.title.compareTo(b.title));
@@ -120,7 +104,8 @@ class ExampleLevelRepository {
   }
 
   Future<ExampleLevel> loadGlobalCalibrationGuide() async {
-    final baseAssetPath = '$exampleLevelAssetRoot/$exampleHiddenLevelFolderName';
+    final baseAssetPath =
+        '$exampleLevelAssetRoot/$exampleHiddenLevelFolderName';
     final metaJson = await rootBundle.loadString('$baseAssetPath/level.json');
     final meta = jsonDecode(metaJson) as Map<String, dynamic>;
 
@@ -136,8 +121,9 @@ class ExampleLevelRepository {
     required String baseAssetPath,
     String? defaultDifficultyLabelOverride,
   }) {
-    final charts =
-        (meta['charts'] as List).cast<Map<dynamic, dynamic>>().map((chart) {
+    final charts = (meta['charts'] as List).cast<Map<dynamic, dynamic>>().map((
+      chart,
+    ) {
       final type = chart['type'] as String;
       final storyboard = chart['storyboard'];
       final name = chart['name'];

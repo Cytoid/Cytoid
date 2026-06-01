@@ -10,7 +10,7 @@ public sealed class ExternalGameContentProvider : IGameContentProvider
     private readonly GameLaunchPayload payload;
     private readonly Level level;
     private readonly Difficulty difficulty;
-    private NLayerMemoryLoader nLayerMemoryLoader;
+    private readonly string vfsRoot;
     private AudioClipLoader audioClipLoader;
     private AudioClip audioClip;
 
@@ -30,76 +30,56 @@ public sealed class ExternalGameContentProvider : IGameContentProvider
             throw new ArgumentException($"Missing chart for difficulty: {difficulty.Id}");
         }
 
-        var vfsPath = GameLaunchVfs.ResolveDirectoryPath(payload.assets?.vfsUri);
-        level = Level.FromExternal(meta, vfsPath);
+        if (payload.assets == null)
+        {
+            throw new ArgumentException("assets is required in launch payload");
+        }
+
+        vfsRoot = GameLaunchVfs.ResolveRootDirectoryPath(payload.assets.vfsUri);
+        level = Level.FromExternal(meta, vfsRoot);
     }
 
     public UniTask<string> LoadChartText()
     {
-        if (!string.IsNullOrEmpty(payload.chartText))
-        {
-            return UniTask.FromResult(payload.chartText);
-        }
-
-        var chartUri = payload.assets?.chartUri ??
-                       GameLaunchVfs.ResolveFileUri(payload.assets?.vfsUri, ChartSection.path);
-        var chartPath = GameLaunchVfs.ResolveFilePath(chartUri);
-        if (!string.IsNullOrEmpty(chartPath) && File.Exists(chartPath))
+        var chartPath = GameLaunchVfs.ResolveRequiredFilePath(vfsRoot, payload.assets.chartPath, "assets.chartPath");
+        if (File.Exists(chartPath))
         {
             return UniTask.FromResult(File.ReadAllText(chartPath));
         }
 
-        throw new ArgumentException("Missing chart text in launch payload");
+        throw new ArgumentException($"Missing chart file in launch payload: {payload.assets.chartPath}");
     }
 
     public async UniTask<AudioClip> LoadMusic()
     {
-        if (payload.musicBytes != null && payload.musicBytes.Length > 0)
+        var musicPath = GameLaunchVfs.ResolveRequiredFilePath(vfsRoot, payload.assets.musicPath, "assets.musicPath");
+        if (!File.Exists(musicPath))
         {
-            var normalizedFormat = (payload.musicFormat ?? string.Empty).Trim().ToLowerInvariant();
-            if (normalizedFormat == "mpeg") normalizedFormat = "mp3";
-            if (normalizedFormat != "mp3")
-            {
-                throw new NotSupportedException($"External audio format is not supported yet: {payload.musicFormat}");
-            }
-
-            nLayerMemoryLoader?.Dispose();
-            nLayerMemoryLoader = new NLayerMemoryLoader(payload.musicBytes, $"{level.Id}-{difficulty.Id}");
-            audioClip = nLayerMemoryLoader.LoadAudioClip();
-            return audioClip;
+            throw new ArgumentException($"Missing music file in launch payload: {payload.assets.musicPath}");
         }
 
-        var musicUri = payload.assets?.musicUri ??
-                       GameLaunchVfs.ResolveFileUri(payload.assets?.vfsUri, level.Meta.GetMusicPath(difficulty.Id));
-        if (!string.IsNullOrEmpty(musicUri))
+        audioClipLoader?.Unload();
+        audioClipLoader = new AudioClipLoader(GameLaunchVfs.ToFileUri(musicPath));
+        await audioClipLoader.Load();
+        if (!string.IsNullOrEmpty(audioClipLoader.Error))
         {
-            audioClipLoader?.Unload();
-            audioClipLoader = new AudioClipLoader(musicUri);
-            await audioClipLoader.Load();
-            if (!string.IsNullOrEmpty(audioClipLoader.Error))
-            {
-                throw new ArgumentException($"Failed to load music: {audioClipLoader.Error}");
-            }
-
-            audioClip = audioClipLoader.AudioClip;
-            return audioClip;
+            throw new ArgumentException($"Failed to load music: {audioClipLoader.Error}");
         }
 
-        throw new ArgumentException("Missing music bytes or music URI in launch payload");
+        audioClip = audioClipLoader.AudioClip;
+        return audioClip;
     }
 
     public UniTask<string> LoadStoryboardText()
     {
-        if (!string.IsNullOrEmpty(payload.storyboardText))
-        {
-            return UniTask.FromResult(payload.storyboardText);
-        }
-
-        var storyboardUri = payload.assets?.storyboardUri ??
-                            GameLaunchVfs.ResolveFileUri(payload.assets?.vfsUri,
-                                ChartSection.storyboard?.path ?? "storyboard.json");
-        var storyboardPath = GameLaunchVfs.ResolveFilePath(storyboardUri);
-        return UniTask.FromResult(!string.IsNullOrEmpty(storyboardPath) && File.Exists(storyboardPath)
+        var storyboardRelativePath = !string.IsNullOrWhiteSpace(payload.assets.storyboardPath)
+            ? payload.assets.storyboardPath
+            : ChartSection.storyboard?.path ?? "storyboard.json";
+        var storyboardPath = GameLaunchVfs.ResolveOptionalFilePath(
+            vfsRoot,
+            storyboardRelativePath,
+            "assets.storyboardPath");
+        return UniTask.FromResult(storyboardPath != null && File.Exists(storyboardPath)
             ? File.ReadAllText(storyboardPath)
             : null);
     }
@@ -109,8 +89,6 @@ public sealed class ExternalGameContentProvider : IGameContentProvider
         audioClip = null;
         audioClipLoader?.DisposeDecoder();
         audioClipLoader = null;
-        nLayerMemoryLoader?.Dispose();
-        nLayerMemoryLoader = null;
     }
 
     public HashSet<Mod> ParseMods()

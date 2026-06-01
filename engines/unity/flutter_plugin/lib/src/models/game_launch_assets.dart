@@ -1,33 +1,33 @@
 /// File URI references for level assets passed to the game core.
 class GameLaunchAssets {
   const GameLaunchAssets({
-    this.vfsUri,
-    this.chartUri,
-    this.musicUri,
-    this.storyboardUri,
+    required this.vfsUri,
+    required this.chartPath,
+    required this.musicPath,
+    this.storyboardPath,
   });
 
   /// Directory containing level files (charts, storyboard images, etc.).
-  final String? vfsUri;
-  final String? chartUri;
-  final String? musicUri;
-  final String? storyboardUri;
+  final String vfsUri;
+  final String chartPath;
+  final String musicPath;
+  final String? storyboardPath;
 
   factory GameLaunchAssets.fromJson(Map<String, dynamic> json) {
     return GameLaunchAssets(
-      vfsUri: json['vfsUri'] as String?,
-      chartUri: json['chartUri'] as String?,
-      musicUri: json['musicUri'] as String?,
-      storyboardUri: json['storyboardUri'] as String?,
+      vfsUri: json['vfsUri'] as String,
+      chartPath: json['chartPath'] as String,
+      musicPath: json['musicPath'] as String,
+      storyboardPath: json['storyboardPath'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      if (vfsUri != null) 'vfsUri': vfsUri,
-      if (chartUri != null) 'chartUri': chartUri,
-      if (musicUri != null) 'musicUri': musicUri,
-      if (storyboardUri != null) 'storyboardUri': storyboardUri,
+      'vfsUri': vfsUri,
+      'chartPath': chartPath,
+      'musicPath': musicPath,
+      if (storyboardPath != null) 'storyboardPath': storyboardPath,
     };
   }
 }

@@ -4,7 +4,7 @@ using System;
 public class GameLaunchAssets
 {
     public string vfsUri;
-    public string chartUri;
-    public string musicUri;
-    public string storyboardUri;
+    public string chartPath;
+    public string musicPath;
+    public string storyboardPath;
 }

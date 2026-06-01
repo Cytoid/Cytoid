@@ -214,15 +214,11 @@ Dart models live in `lib/host/models/`. C# sources in `cytoid-core-unity` are au
 |-------|------|----------|-------------|
 | `levelMetaJson` | string | yes | Serialized `LevelMeta` JSON. |
 | `selectedDifficulty` | string | yes | Difficulty id (e.g. `"hard"`). |
-| `chartText` | string | yes* | Raw chart JSON text. *Omit when using `assets.chartUri`. |
-| `musicBytes` | bytes (base64 in JSON) | yes* | Audio file bytes. *Spike only; prefer `assets.musicUri`. |
-| `musicFormat` | string | no | Audio format, default `"mp3"`. |
-| `storyboardText` | string | no | Storyboard JSON text. |
+| `assets` | object | yes | VFS root and selected VFS-relative asset paths. |
 | `settings` | object | no | `GameLaunchSettings`. |
 | `mods` | string[] | no | Active mod ids. See [Mod values](#mod-values) below. |
 | `gameMode` | string | no | Game mode. `"Standard"` (default), `"Practice"`, `"Calibration"`, `"GlobalCalibration"`, or `"Tier"`. Omit for standard play. `GlobalCalibration` is launched from settings with the `teages.offset_guide` level. |
 | `tierPlay` | object | yes when `gameMode` is `"Tier"` | Initial state for one tier stage session. See [TierPlayLaunch](#tierplaylaunch). |
-| `assets` | object | no | File URI references (v1 extension). |
 
 #### TierPlayLaunch
 
@@ -305,18 +301,26 @@ Valid strings for the `mods` array (case-sensitive, PascalCase):
 - `ExHard` overrides `Hard`; both may not be active simultaneously.
 - Any `Auto*` mod removes `AP` and `FC`; selecting `AP` or `FC` removes all `Auto*` mods.
 
-#### GameLaunchAssets (file URI extension)
+#### GameLaunchAssets
 
-For production, large files must not cross the MethodChannel. Flutter writes assets to a shared app directory; the engine reads by URI.
+Large files must not cross the MethodChannel. Flutter writes assets to a shared app directory and sends one VFS root plus selected VFS-relative paths.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `vfsUri` | string | `file://` URI to the level root directory (trailing slash). Storyboard sprites/videos resolve paths relative to this directory via `Level.Path`. |
-| `chartUri` | string | `file://` URI to chart JSON. |
-| `musicUri` | string | `file://` URI to audio file. |
-| `storyboardUri` | string | `file://` URI to storyboard JSON. |
+| `vfsUri` | string | Required local `file://` URI to the level root directory. Unity stores this as `Level.Path`. |
+| `chartPath` | string | Required VFS-relative path to chart JSON. |
+| `musicPath` | string | Required VFS-relative path to the music file. |
+| `storyboardPath` | string | Optional VFS-relative path to storyboard JSON. If omitted, Unity uses `chart.storyboard.path`, then `storyboard.json`. |
 
-Unity `ExternalGameContentProvider` reads `vfsUri` plus inline or URI chart/music/storyboard assets. Use URI assets for large files and non-mp3 audio.
+Asset path rules:
+
+- Asset paths are relative to `vfsUri`; do not send absolute paths or URI strings.
+- Leading `/` is treated as `./`, so `/storyboard.json` resolves to `storyboard.json`.
+- `\` is normalized to `/`, `.` and repeated separators are collapsed.
+- `..`, NUL characters, URI schemes, Windows drive paths, and UNC paths are rejected.
+- After canonicalization, every resolved asset must remain inside the VFS root.
+
+Unity `ExternalGameContentProvider` reads chart, music, storyboard, background, storyboard sprites, and storyboard videos from the VFS. Missing chart/music files fail the launch; missing storyboard continues without storyboard.
 
 ### GameResultPayload
 
@@ -406,7 +410,8 @@ Standalone debug builds (`DebugNavigationController`) keep the existing Navigati
 | Malformed envelope JSON | Native or adapter logs; optionally emit `game.play.result` with `failed: true`. |
 | `bridge.play.start` before `game.ready` | Flutter should await `game.ready`; native may queue or reject. |
 | Overlapping `bridge.play.start` | v1: reject with `game.play.result` (`failed: true`, error describes conflict). |
-| Oversized inline assets | Do not send large `musicBytes`; use `assets.*Uri`. |
+| Invalid or escaping VFS asset path | Reject with `game.play.result` (`failed: true`, error describes the path issue). |
+| Missing required chart/music file | Reject with `game.play.result` (`failed: true`, error describes the missing file). |
 
 ## Versioning
 

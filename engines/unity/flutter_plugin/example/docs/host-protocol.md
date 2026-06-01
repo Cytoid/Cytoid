@@ -171,7 +171,7 @@ Dart consumer: `CytoidGameCoreClient.logBatchEvents` → `CytoidGameCoreLogBatch
 
 ### `bridge.play.start`
 
-Payload fields mirror `GameLaunchPayload` in `cytoid-core-unity/Assets/Scripts/Game/GameLaunchPayload.cs`.
+Payload fields mirror `GameLaunchPayload` in `Cytoid/engines/unity/Assets/Scripts/Game/GameLaunchPayload.cs`.
 
 See [GameLaunchPayload](#gamelaunchpayload) below.
 
@@ -183,7 +183,7 @@ envelope.payload → JSON string → GameLaunchBridge.StartGame(json)
 
 ### `game.play.result`
 
-Payload fields mirror `GameResultPayload` in `cytoid-core-unity/Assets/Scripts/Game/GameResultPayload.cs`.
+Payload fields mirror `GameResultPayload` in `Cytoid/engines/unity/Assets/Scripts/Game/GameResultPayload.cs`.
 
 Unity adapter:
 
@@ -420,9 +420,9 @@ Standalone debug builds (`DebugNavigationController`) keep the existing Navigati
 |----------|------|
 | `../lib/` | Dart protocol models and `CytoidGameCoreClient` |
 | `unity-artifacts.md` | Unity artifact setup |
-| `cytoid-core-unity/Assets/Scripts/Game/GameLaunchBridge.cs` | Unity entry for external launches |
-| `cytoid-core-unity/Assets/Scripts/Game/GameResultBridge.cs` | Unity result emission |
-| `cytoid-core-unity/Assets/Scripts/Host/` | Unity adapter |
+| `Cytoid/engines/unity/Assets/Scripts/Game/GameLaunchBridge.cs` | Unity entry for external launches |
+| `Cytoid/engines/unity/Assets/Scripts/Game/GameResultBridge.cs` | Unity result emission |
+| `Cytoid/engines/unity/Assets/Scripts/Host/` | Unity adapter |
 
 ## Implementation phases
 

@@ -31,7 +31,7 @@ The plugin can compile without Unity artifacts and will use the mock engine. Ins
 runtime artifacts when testing the real Unity core:
 
 ```sh
-cd flutter_plugin
+cd engines/unity/flutter_plugin
 export CYTOID_GAME_CORE_ARTIFACT_BASE_URL=https://example.com/cytoid-game-core
 export CYTOID_GAME_CORE_ARTIFACT_VERSION=0.0.1
 ./tool/setup_unity_artifacts.sh
@@ -58,7 +58,7 @@ builds require a simulator slice or no Unity artifact so the mock runtime is use
 ## Example
 
 ```sh
-cd flutter_plugin/example
+cd engines/unity/flutter_plugin/example
 flutter pub get
 flutter run
 ```

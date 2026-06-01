@@ -6,7 +6,7 @@ Add one unpacked folder per level under `assets/levels/`. Each folder must conta
 
 Flutter only bundles directories listed in `pubspec.yaml`. A single `assets/levels/` line does **not** include nested folders — each level needs its own entry.
 
-After adding or removing a folder, run from `flutter_plugin/example`:
+After adding or removing a folder, run from `engines/unity/flutter_plugin/example`:
 
 ```sh
 dart run tool/sync_level_assets.dart

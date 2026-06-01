@@ -52,6 +52,12 @@
         "Logs/": true,
         "logs/": true,
         "ProjectSettings/": true,
+        "engines/unity/Library/": true,
+        "engines/unity/library/": true,
+        "engines/unity/Logs/": true,
+        "engines/unity/logs/": true,
+        "engines/unity/ProjectSettings/": true,
+        "engines/unity/UserSettings/": true,
         "UserSettings/": true,
         "temp/": true,
         "Temp/": true

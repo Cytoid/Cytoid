@@ -6,9 +6,11 @@ A community-driven touchscreen music game available on [App Store](https://itune
 
 ## Getting Started
 
-Cytoid is built in C# with [Unity 6000.0.75f1 (Personal)](https://unity3d.com).
+### Gameplay Core
 
-Licensed Unity packages are optional: unzip a maintainer **`Assets/Vendor/`** bundle at the project root (gitignored). See [docs/vendor.md](docs/vendor.md). Without it, in-repo fallbacks (e.g. storyboard shaders) are used.
+The Unity gameplay core lives at `engines/unity/` and is built with [Unity 6000.0.75f1 (Personal)](https://unity3d.com).
+
+Licensed Unity packages are optional: unzip a maintainer **`Assets/Vendor/`** bundle at `engines/unity/`. See [docs/vendor.md](docs/vendor.md). Without it, in-repo fallbacks (e.g. storyboard shaders) are used.
 
 You also need to install Native Audio (free since 2025-09-22) from the Asset Store.
 

@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Zip Assets/Vendor/ for distribution. Extract at Unity project root to restore the same path.
+# Zip engines/unity/Assets/Vendor/ for distribution. Extract at Unity project root to restore the same path.
 set -eu
 
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-VENDOR_ROOT="$ROOT/Assets/Vendor"
+REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+UNITY_ROOT="$REPO_ROOT/engines/unity"
+VENDOR_ROOT="$UNITY_ROOT/Assets/Vendor"
 PKG_DIR="$VENDOR_ROOT/StoryboardFilters"
-OUT_DIR="$ROOT/Builds/vendor-bundles"
+OUT_DIR="$REPO_ROOT/Builds/vendor-bundles"
 STAMP="$(date -u +%Y%m%d)"
 OUT_ZIP="${OUT_DIR}/cytoid-core-unity-vendor-${STAMP}.zip"
 
@@ -32,9 +33,9 @@ mkdir -p "$OUT_DIR"
 rm -f "$OUT_ZIP"
 
 (
-  cd "$ROOT"
+  cd "$UNITY_ROOT"
   zip -r "$OUT_ZIP" Assets/Vendor -x "*.DS_Store" -x "*__MACOSX*"
 )
 
 echo "Wrote $OUT_ZIP"
-echo "Install: cd <project-root> && unzip -o \"$OUT_ZIP\""
+echo "Install: cd <repo>/engines/unity && unzip -o \"$OUT_ZIP\""

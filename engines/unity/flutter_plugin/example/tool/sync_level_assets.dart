@@ -3,7 +3,7 @@
 // Regenerates pubspec.yaml entries for each assets/levels/<folder>/.
 // Flutter bundles one directory per line (subfolders are not implied by the parent).
 //
-// Run manually from flutter_plugin/example after adding or removing a level folder:
+// Run manually from engines/unity/flutter_plugin/example after adding or removing a level folder:
 //   dart run tool/sync_level_assets.dart
 //   flutter pub get
 
@@ -18,7 +18,7 @@ const _endMarker = '    # END example_level_assets';
 void main() {
   final pubspecFile = File(_pubspecPath);
   if (!pubspecFile.existsSync()) {
-    stderr.writeln('Run from flutter_plugin/example (pubspec.yaml not found).');
+    stderr.writeln('Run from engines/unity/flutter_plugin/example (pubspec.yaml not found).');
     exitCode = 1;
     return;
   }

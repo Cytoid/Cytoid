@@ -37,7 +37,7 @@ public class GameBridge : MonoBehaviour
         {
             Debug.Log(
                 "[GameBridge] Standalone debug mode — CytoidGameCore protocol inactive. "
-                + "Test bridge ↔ game messaging via flutter_plugin/example with plugin artifacts.");
+                + "Test bridge ↔ game messaging via engines/unity/flutter_plugin/example with plugin artifacts.");
             return;
         }
 

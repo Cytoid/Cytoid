@@ -15,6 +15,8 @@ permissions:
 env:
   UNITY_VERSION: 6000.0.75f1
   FLUTTER_VERSION: 3.44.0
+  UNITY_PROJECT_PATH: engines/unity
+  FLUTTER_PLUGIN_PATH: engines/unity/flutter_plugin
 
 jobs:
   android:
@@ -35,8 +37,8 @@ jobs:
       - name: Restore Unity Library cache
         uses: actions/cache@v4
         with:
-          path: Library
-          key: Library-Android-${{ env.UNITY_VERSION }}-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          path: ${{ env.UNITY_PROJECT_PATH }}/Library
+          key: Library-Android-${{ env.UNITY_VERSION }}-${{ hashFiles('engines/unity/Assets/**', 'engines/unity/Packages/**', 'engines/unity/ProjectSettings/**') }}
           restore-keys: |
             Library-Android-${{ env.UNITY_VERSION }}-
             Library-Android-
@@ -45,7 +47,7 @@ jobs:
         env:
           CYTOID_VENDOR_ARCHIVE: ${{ secrets.CYTOID_VENDOR_ARCHIVE_URL }}
           CYTOID_VENDOR_ARCHIVE_SHA256: ${{ secrets.CYTOID_VENDOR_ARCHIVE_SHA256 }}
-        run: flutter_plugin/tool/install_vendor_from_archive.sh
+        run: ${{ env.FLUTTER_PLUGIN_PATH }}/tool/install_vendor_from_archive.sh
 
       - name: Export and package Android Unity library
         uses: game-ci/unity-builder@v4
@@ -55,6 +57,7 @@ jobs:
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           unityVersion: ${{ env.UNITY_VERSION }}
+          projectPath: ${{ env.UNITY_PROJECT_PATH }}
           targetPlatform: Android
           buildMethod: CytoidCoreBuild.ExportAndroidLibraryForFlutter
           allowDirtyBuild: true
@@ -63,7 +66,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cytoid-game-core-android
-          path: flutter_plugin/.cytoid_game_core/artifacts/unity/android/
+          path: ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts/unity/android/
           if-no-files-found: error
 
   ios-export:
@@ -85,8 +88,8 @@ jobs:
       - name: Restore Unity Library cache
         uses: actions/cache@v4
         with:
-          path: Library
-          key: Library-iOS-${{ env.UNITY_VERSION }}-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          path: ${{ env.UNITY_PROJECT_PATH }}/Library
+          key: Library-iOS-${{ env.UNITY_VERSION }}-${{ hashFiles('engines/unity/Assets/**', 'engines/unity/Packages/**', 'engines/unity/ProjectSettings/**') }}
           restore-keys: |
             Library-iOS-${{ env.UNITY_VERSION }}-
             Library-iOS-
@@ -95,7 +98,7 @@ jobs:
         env:
           CYTOID_VENDOR_ARCHIVE: ${{ secrets.CYTOID_VENDOR_ARCHIVE_URL }}
           CYTOID_VENDOR_ARCHIVE_SHA256: ${{ secrets.CYTOID_VENDOR_ARCHIVE_SHA256 }}
-        run: flutter_plugin/tool/install_vendor_from_archive.sh
+        run: ${{ env.FLUTTER_PLUGIN_PATH }}/tool/install_vendor_from_archive.sh
 
       - name: Export iOS UnityLibrary Xcode project
         uses: game-ci/unity-builder@v4
@@ -105,6 +108,7 @@ jobs:
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           unityVersion: ${{ env.UNITY_VERSION }}
+          projectPath: ${{ env.UNITY_PROJECT_PATH }}
           targetPlatform: iOS
           buildMethod: CytoidCoreBuild.ExportIOSLibraryForFlutterWithoutPackaging
           allowDirtyBuild: true
@@ -113,7 +117,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cytoid-game-core-ios-export
-          path: flutter_plugin/.cytoid_game_core/exports/ios/UnityLibrary/
+          path: ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/exports/ios/UnityLibrary/
           if-no-files-found: error
 
   ios-package:
@@ -129,22 +133,22 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: cytoid-game-core-ios-export
-          path: flutter_plugin/.cytoid_game_core/exports/ios/UnityLibrary
+          path: ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/exports/ios/UnityLibrary
 
       - name: Build UnityFramework.xcframework
-        run: flutter_plugin/tool/build_unity_ios_framework.sh
+        run: ${{ env.FLUTTER_PLUGIN_PATH }}/tool/build_unity_ios_framework.sh
 
       - name: Zip XCFramework
-        run: ditto -c -k --sequesterRsrc --keepParent flutter_plugin/.cytoid_game_core/artifacts/unity/ios/UnityFramework.xcframework flutter_plugin/.cytoid_game_core/artifacts/unity/ios/UnityFramework.xcframework.zip
+        run: ditto -c -k --sequesterRsrc --keepParent ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts/unity/ios/UnityFramework.xcframework ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts/unity/ios/UnityFramework.xcframework.zip
 
       - name: Upload iOS artifacts
         uses: actions/upload-artifact@v4
         with:
           name: cytoid-game-core-ios
           path: |
-            flutter_plugin/.cytoid_game_core/artifacts/unity/ios/UnityFramework.framework/
-            flutter_plugin/.cytoid_game_core/artifacts/unity/ios/UnityFramework.xcframework/
-            flutter_plugin/.cytoid_game_core/artifacts/unity/ios/UnityFramework.xcframework.zip
+            ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts/unity/ios/UnityFramework.framework/
+            ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts/unity/ios/UnityFramework.xcframework/
+            ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts/unity/ios/UnityFramework.xcframework.zip
           if-no-files-found: error
 
   flutter-package:
@@ -166,26 +170,26 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: cytoid-game-core-android
-          path: flutter_plugin/.cytoid_game_core/artifacts/unity/android
+          path: ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts/unity/android
 
       - name: Flutter pub get
-        working-directory: flutter_plugin
+        working-directory: ${{ env.FLUTTER_PLUGIN_PATH }}
         run: flutter pub get
 
       - name: Analyze Flutter plugin
-        working-directory: flutter_plugin
+        working-directory: ${{ env.FLUTTER_PLUGIN_PATH }}
         run: flutter analyze lib test
 
       - name: Run Flutter plugin tests
-        working-directory: flutter_plugin
+        working-directory: ${{ env.FLUTTER_PLUGIN_PATH }}
         run: flutter test
 
       - name: Package Flutter plugin zip
-        run: flutter_plugin/tool/package_flutter_plugin.sh
+        run: ${{ env.FLUTTER_PLUGIN_PATH }}/tool/package_flutter_plugin.sh
 
       - name: Upload Flutter plugin package
         uses: actions/upload-artifact@v4
         with:
           name: cytoid-game-core-flutter-plugin
-          path: flutter_plugin/.cytoid_game_core/dist/cytoid_game_core-*.zip
+          path: ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/dist/cytoid_game_core-*.zip
           if-no-files-found: error

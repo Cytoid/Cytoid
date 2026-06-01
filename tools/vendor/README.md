@@ -1,11 +1,11 @@
 # Vendor bundles (maintainers)
 
-Paid Unity payloads live under **`Assets/Vendor/`** (gitignored), matching other top-level `Assets/` folders (`Scripts`, `Packages`, …).
+Paid Unity payloads live under **`engines/unity/Assets/Vendor/`** (gitignored), matching other Unity `Assets/` folders (`Scripts`, `Packages`, ...).
 
 ## Layout
 
 ```
-Assets/Vendor/                    # gitignored
+engines/unity/Assets/Vendor/      # gitignored
 └── StoryboardFilters/            # Camera Filter Pack + Sleek Render + Vendor*.cs
     └── (future packages as siblings, PascalCase folder names)
 ```
@@ -24,13 +24,14 @@ Output: `Builds/vendor-bundles/cytoid-core-unity-vendor-YYYYMMDD.zip`
 bash tools/vendor/clean.sh
 ```
 
-Deletes `Assets/Vendor/` and stray `Assets/Vendor.meta`. Use before switching to fallback-only, or to reinstall from a fresh zip.
+Deletes `engines/unity/Assets/Vendor/` and stray `Vendor.meta`. Use before switching to fallback-only, or to reinstall from a fresh zip.
 
 ## Install
 
-From the project root:
+From the Unity project root:
 
 ```bash
+cd engines/unity
 unzip -o /path/to/cytoid-core-unity-vendor-YYYYMMDD.zip
 ```
 

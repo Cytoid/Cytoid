@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class DragLineElement : MonoBehaviour
@@ -133,8 +133,16 @@ public class DragLineElement : MonoBehaviour
         }
 
         var time = Game.Time;
-        introRatio = (FromNoteModel.nextdraglinestoptime - time) /
-                     (FromNoteModel.nextdraglinestoptime - FromNoteModel.nextdraglinestarttime);
+        var introDuration = FromNoteModel.nextdraglinestoptime - FromNoteModel.nextdraglinestarttime;
+        if (introDuration > 0)
+        {
+            introRatio = (FromNoteModel.nextdraglinestoptime - time) / introDuration;
+        }
+        else
+        {
+            introRatio = time < FromNoteModel.nextdraglinestarttime ? 1.0f : 0.0f;
+        }
+
         outroRatio = (time - FromNoteModel.start_time) / (ToNoteModel.start_time - FromNoteModel.start_time);
 
         if (introRatio > 0 && introRatio < 1)

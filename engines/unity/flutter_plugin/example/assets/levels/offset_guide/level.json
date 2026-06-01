@@ -1,0 +1,28 @@
+{
+    "version": 3,
+    "schema_version":2,
+
+    "id": "teages.offset_guide",
+    "title": "Offset Setting Guide",
+
+    "artist": "Teages",
+    "illustrator": "Teages",
+    "charter": "Teages",
+    "music": {
+        "path": "music.ogg"
+    },
+    "music_preview": {
+        "path": "preview.ogg"
+    },
+    "background": {
+        "path": "background.png"
+    },
+    "charts": [
+    {
+        "type": "extreme",
+        "name": "Offset test",
+        "difficulty": 0,
+        "path": "Chart.txt"
+    }
+  ]
+}

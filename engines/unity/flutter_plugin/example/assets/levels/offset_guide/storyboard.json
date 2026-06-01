@@ -1,0 +1,11 @@
+{
+    "controllers": [
+        {
+            "time": 0,
+            "background_dim": 1,
+            "note_opacity_multiplier": 0,
+            "scanline_opacity": 0,
+            "ui_opacity": 0
+        }
+    ]
+}

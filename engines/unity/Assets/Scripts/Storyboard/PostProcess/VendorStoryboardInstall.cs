@@ -46,7 +46,16 @@ namespace Cytoid.Storyboard.PostProcess
                    && Directory.Exists(Path.Combine(root, "Sleek Render"));
         }
 
-        static Type ResolveBootstrapType()
+        /// <summary>
+        /// Resolves the vendor bootstrap type via a build-safe two-step lookup:
+        /// <see cref="Type.GetType(string)"/> first, then an AppDomain assembly
+        /// scan. <see cref="Type.GetType(string)"/> with a bare name only searches
+        /// the calling assembly and mscorlib, which fails for cross-assembly
+        /// lookups in built players (IL2CPP/AOT). Used by IsComplete(), the
+        /// runtime loader, and the editor diagnostic menu (the latter lives in
+        /// Assembly-CSharp-Editor, so this must be public, not internal).
+        /// </summary>
+        public static Type ResolveBootstrapType()
         {
             return Type.GetType(BootstrapTypeName)
                    ?? AppDomain.CurrentDomain.GetAssemblies()

@@ -9,21 +9,21 @@ namespace Cytoid.Storyboard.Sprites
     {
 
         public UnityEngine.UI.Image Image { get; private set; }
-        
+
         public RectTransform RectTransform { get; private set; }
-        
+
         public Canvas Canvas { get; private set; }
-        
+
         public CanvasGroup CanvasGroup { get; private set; }
-        
+
         public string LoadPath { get; private set; }
-        
+
         public SpriteRenderer(StoryboardRenderer mainRenderer, Sprite component) : base(mainRenderer, component)
         {
         }
-        
+
         public override Transform Transform => RectTransform;
-        
+
         public override bool IsOnCanvas => true;
 
         public override StoryboardRendererEaser<SpriteState> CreateEaser() => new SpriteEaser(this);
@@ -46,9 +46,9 @@ namespace Cytoid.Storyboard.Sprites
                 Canvas.overrideSorting = true;
                 Canvas.sortingLayerName = "Storyboard1";
                 CanvasGroup = Image.GetComponent<CanvasGroup>();
-                
+
                 Clear();
-                
+
                 var spritePath = Component.States[0].Path;
                 if (spritePath == null && Component.States.Count > 1) spritePath = Component.States[1].Path;
                 if (spritePath == null)

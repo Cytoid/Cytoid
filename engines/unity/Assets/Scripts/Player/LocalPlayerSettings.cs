@@ -100,7 +100,7 @@ public class LocalPlayerSettings
 
     [JsonProperty("display_storyboard_effects")]
     public bool DisplayStoryboardEffects { get; set; } = true;
-    
+
     [JsonProperty("skip_music_on_completion")]
     public bool SkipMusicOnCompletion { get; set; } = true;
 
@@ -129,19 +129,19 @@ public class LocalPlayerSettings
     public bool LocalLevelSortIsAscending { get; set; } = false;
 
     [JsonProperty("use_menu_transitions")] public bool UseMenuTransitions { get; set; } = true;
-    
+
     [JsonProperty("performed_one_shots")]
     public HashSet<string> PerformedOneShots { get; set; } = new HashSet<string>();
-    
+
     [JsonProperty("set_triggers")]
     public HashSet<string> SetTriggers { get; set; } = new HashSet<string>();
-    
+
     [JsonProperty("seen_events")]
     public HashSet<string> SeenEvents { get; set; } = new HashSet<string>();
-    
+
     [JsonProperty("read_event_details")]
     public HashSet<string> ReadEventDetails { get; set; } = new HashSet<string>();
-    
+
     [JsonProperty("read_event_objectives")]
     public HashSet<string> ReadEventObjectives { get; set; } = new HashSet<string>();
 
@@ -154,7 +154,7 @@ public class LocalPlayerSettings
     [JsonProperty("requested_for_store_review")]
     public bool RequestedForStoreReview { get; set; } = false;
 
-    [JsonProperty("total_launches")] 
+    [JsonProperty("total_launches")]
     public int TotalLaunches { get; set; } = 0;
 
 }

@@ -10,9 +10,9 @@ namespace Cytoid.Storyboard.Sprites
         public UnityEngine.LineRenderer Line { get; private set; }
 
         public override Transform Transform => Line.transform;
-        
+
         public override bool IsOnCanvas => false;
-        
+
         public LineRenderer(StoryboardRenderer mainRenderer, Line component) : base(mainRenderer, component)
         {
         }
@@ -44,7 +44,7 @@ namespace Cytoid.Storyboard.Sprites
         }
 
         public override void Dispose()
-        { 
+        {
             Destroy(Line.gameObject);
         }
 

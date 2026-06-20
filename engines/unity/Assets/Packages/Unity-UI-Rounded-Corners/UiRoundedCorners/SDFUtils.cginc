@@ -14,9 +14,9 @@ float rectangle(float2 samplePosition, float2 halfSize){
 }
 
 // An extension of rectangle() function to modify signed distance (effect as a wrap around rectangle)
-float roundedRectangle(float2 samplePosition, float absoluteRound, float2 halfSize){ 
+float roundedRectangle(float2 samplePosition, float absoluteRound, float2 halfSize){
     // subtrancting value from final distance effects like a wrap around rectangle, so
-    // the solution is to decrease actual rectangle with `absoluteRound` value 
+    // the solution is to decrease actual rectangle with `absoluteRound` value
     // and then make an effect of wrap with size of `absoluteRound`
     return rectangle(samplePosition, halfSize - absoluteRound) - absoluteRound;
 }
@@ -61,22 +61,22 @@ float CalcAlphaForIndependentCorners(float2 samplePosition, float2 halfSize, flo
     samplePosition = (samplePosition - .5) * halfSize * 2;
 
     float r1 = rectangle(samplePosition, halfSize);
-                
+
     float2 r2Position = rotate(translate(samplePosition, rect2props.xy), .125);
     float r2 = rectangle(r2Position, rect2props.zw);
-    
+
     float2 circle0Position = translate(samplePosition, float2(-halfSize.x + r.x, halfSize.y - r.x));
     float c0 = circle(circle0Position, r.x);
-    
+
     float2 circle1Position = translate(samplePosition, float2(halfSize.x - r.y, halfSize.y - r.y));
     float c1 = circle(circle1Position, r.y);
-    
+
     float2 circle2Position = translate(samplePosition, float2(halfSize.x - r.z, -halfSize.y + r.z));
     float c2 = circle(circle2Position, r.z);
-    
+
     float2 circle3Position = translate(samplePosition, -halfSize + r.w);
     float c3 = circle(circle3Position, r.w);
-        
+
     float dist = max(r1,min(min(min(min(r2, c0), c1), c2), c3));
     return AntialiasedCutoff(dist);
 }

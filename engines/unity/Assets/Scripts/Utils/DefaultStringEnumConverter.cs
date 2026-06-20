@@ -17,7 +17,7 @@ public class DefaultUnknownEnumConverter : StringEnumConverter
     /// <summary>
     /// Default constructor. Defaults the default value to 0.
     /// </summary>
-    public DefaultUnknownEnumConverter() 
+    public DefaultUnknownEnumConverter()
     {}
 
     /// <inheritdoc />

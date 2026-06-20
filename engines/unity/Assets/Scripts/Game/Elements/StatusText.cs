@@ -23,9 +23,9 @@ public class StatusText : MonoBehaviour
     public void Load()
     {
         if (Context.InitializationState.IsDuringFirstLaunch())
-        { 
+        {
             text.text = "";
-        } 
+        }
         else switch (game.State.Mode)
         {
             case GameMode.Calibration:

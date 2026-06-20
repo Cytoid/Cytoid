@@ -21,13 +21,13 @@ Get `.unitypackage` from [releases](https://github.com/Nobinator/Unity-UI-Rounde
 ## How to use
 ### Same roundness
 - Attach `ImageWithRoundedCorners` to gameobject with `Image`
-- Сreate new material 
+- Сreate new material
 - Pick `RoundedCorners` shader
 - Attach material to `ImageWithRoundedCorners` and `Image`
 - Profit
 ### Separate roundness
 - Attach `ImageWithIndependentRoundedCorners` to gameobject with `Image`
-- Сreate new material 
+- Сreate new material
 - Pick `IndependentRoundedCorners` shader
 - Attach material to `ImageWithIndependentRoundedCorners` and `Image`
 - Profit

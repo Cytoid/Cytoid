@@ -5,7 +5,7 @@ using UnityEditor.iOS.Xcode;
 
 public class iOSPostProcessBuildActions
 {
-    
+
     /**
      * Credits: https://stackoverflow.com/a/54370793/2706176
      */
@@ -18,7 +18,7 @@ public class iOSPostProcessBuildActions
         plist.ReadFromFile(plistPath);
 
         var rootDict = plist.root;
-        
+
         // Skip App Store Connect export compliance questionnaire
         rootDict.SetBoolean("ITSAppUsesNonExemptEncryption", false);
         // Enable iTunes file sharing

@@ -22,7 +22,7 @@ public class ContextEditor : Editor
                 }
                 GUILayout.Label("");
             }
-            
+
             if (Context.AssetMemory != null)
             {
                 GUILayout.Label("Asset memory usage:", new GUIStyle().Also(it => it.fontStyle = FontStyle.Bold));

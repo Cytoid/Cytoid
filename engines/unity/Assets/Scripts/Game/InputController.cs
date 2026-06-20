@@ -69,8 +69,8 @@ public class InputController : MonoBehaviour
             if (note.Type != NoteType.DragHead && note.Type != NoteType.DragChild && note.Type != NoteType.CDragChild)
             {
                 TouchableNormalNotes.Add(note);
-            } 
-            else 
+            }
+            else
             {
                 TouchableDragNotes.Add(note);
             }
@@ -212,11 +212,11 @@ public class InputController : MonoBehaviour
             var pos = game.camera.orthographic
                 ? game.camera.ScreenToWorldPoint(finger.ScreenPosition)
                 : game.camera.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
-            
+
             var flickingNote = FlickingNotes[finger.Index];
             flickingNote.UpdateFingerPosition(pos);
             FlickingNotes.Remove(finger.Index);
         }
     }
-    
+
 }

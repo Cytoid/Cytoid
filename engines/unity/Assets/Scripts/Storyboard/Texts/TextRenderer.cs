@@ -7,15 +7,15 @@ namespace Cytoid.Storyboard.Texts
 {
     public class TextRenderer : StoryboardComponentRenderer<Text, TextState>
     {
-        
+
         public UnityEngine.UI.Text Text { get; private set; }
-        
+
         public LetterSpacing LetterSpacing { get; private set; }
-        
+
         public RectTransform RectTransform { get; private set; }
-        
+
         public Canvas Canvas { get; private set; }
-        
+
         public CanvasGroup CanvasGroup { get; private set; }
 
         public TextRenderer(StoryboardRenderer mainRenderer, Text component) : base(mainRenderer, component)
@@ -53,7 +53,7 @@ namespace Cytoid.Storyboard.Texts
         }
 
         public override StoryboardRendererEaser<TextState> CreateEaser() => new TextEaser(this);
-        
+
         public override void Clear()
         {
             Text.text = "";

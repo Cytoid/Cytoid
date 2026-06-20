@@ -9,7 +9,7 @@ public class NoteOffsetWidget : MonoBehaviour
 
     public Sprite compressSprite;
     public Sprite expandSprite;
-    
+
     public InteractableMonoBehavior collapseButton;
     public Image collapseIcon;
     public TransitionElement contentHolder;
@@ -50,7 +50,7 @@ public class NoteOffsetWidget : MonoBehaviour
                 collapseIcon.sprite = compressSprite;
                 contentHolder.Enter();
             }
-            
+
         });
         autoplayRadioGroup.onSelect.AddListener(it =>
         {

@@ -43,5 +43,5 @@ public class BeatPulseVisualizer : MonoBehaviour
             : EasingFunction.Linear(intensity, 0.1f, (float) halfProgress);
         image.DOFade(opacity, 0.2f);
     }
-    
+
 }

@@ -8,15 +8,15 @@ namespace Cytoid.Storyboard
     public abstract class StoryboardComponentRenderer
     {
         public Object Component { get; protected set; }
-        
+
         public List<StoryboardComponentRenderer> Children = new List<StoryboardComponentRenderer>();
 
         public StoryboardComponentRenderer Parent;
-        
+
         public abstract Transform Transform { get; }
-        
+
         public abstract Transform CanvasTransform { get; }
-        
+
         public abstract Transform WorldTransform { get; }
 
         public abstract bool IsOnCanvas { get; }
@@ -43,14 +43,14 @@ namespace Cytoid.Storyboard
         }
 
         private bool isTransformActive;
-        
+
     }
-    
+
     public abstract class StoryboardComponentRenderer<TO, TS> : StoryboardComponentRenderer where TS : ObjectState where TO : Object<TS>
     {
 
         public StoryboardRenderer MainRenderer { get; private set; }
-        
+
         public StoryboardRendererEaser<TS> Easer { get; private set; }
 
         public new TO Component { get; private set; }
@@ -162,7 +162,7 @@ namespace Cytoid.Storyboard
             }
             equivalentTransform.transform.localPosition = Vector3.zero;
             equivalentTransform.transform.localScale = Vector3.one;
-            
+
             UpdateEquivalentTransform();
         }
 
@@ -191,7 +191,7 @@ namespace Cytoid.Storyboard
                     // World -> Canvas
                     var pos = Transform.position;
                     var screenPos = MainRenderer.Camera.WorldToScreenPoint(pos);
-                    
+
                     rectTransform.anchoredPosition = new Vector2(
                         screenPos.x * MainRenderer.Constants.WorldToCanvasXMultiplier,
                         screenPos.y * MainRenderer.Constants.WorldToCanvasYMultiplier
@@ -199,7 +199,7 @@ namespace Cytoid.Storyboard
                 }
             }
         }
-        
+
         protected virtual Transform GetParentTransform()
         {
             if (Component.ParentId != null)
@@ -211,5 +211,5 @@ namespace Cytoid.Storyboard
         }
 
     }
-    
+
 }

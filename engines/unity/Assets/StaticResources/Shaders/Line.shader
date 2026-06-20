@@ -20,7 +20,7 @@
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
-			
+
 			#include "UnityCG.cginc"
 
 			struct appdata
@@ -51,7 +51,7 @@
 				o.c = v.c * _Color;
 				return o;
 			}
-			
+
 			float _LightColor;
 			float _Start;
 			float _End;

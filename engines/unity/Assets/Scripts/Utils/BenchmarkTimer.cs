@@ -8,7 +8,7 @@ public class BenchmarkTimer
     private DateTimeOffset lastSectionTime;
 
     public bool Enabled { get; set; } = true;
-    
+
     public BenchmarkTimer(string description)
     {
         this.description = description;
@@ -28,5 +28,5 @@ public class BenchmarkTimer
         var span = DateTimeOffset.UtcNow - startTime;
         if (Enabled) Debug.Log($"{description}: Finished in {span.TotalMilliseconds} ms");
     }
-    
-}   
+
+}

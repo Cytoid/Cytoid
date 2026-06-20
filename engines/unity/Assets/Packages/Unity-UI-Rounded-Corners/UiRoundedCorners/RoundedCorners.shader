@@ -10,13 +10,13 @@ Shader "UI/RoundedCorners/RoundedCorners" {
         [HideInInspector] _StencilReadMask ("Stencil Read Mask", Float) = 255
         [HideInInspector] _ColorMask ("Color Mask", Float) = 15
         [HideInInspector] _UseUIAlphaClip ("Use Alpha Clip", Float) = 0
-        
+
         // Definition in Properties section is required to Mask works properly
         _WidthHeightRadius ("WidthHeightRadius", Vector) = (0,0,0,0)
         _BorderWidth ("BorderWidth", Float) = 0
         // ---
     }
-    
+
     SubShader {
         Tags {
             "RenderType"="Transparent"
@@ -36,23 +36,23 @@ Shader "UI/RoundedCorners/RoundedCorners" {
         ZTest [unity_GUIZTestMode]
         ColorMask [_ColorMask]
         // ---
-        
+
         Blend SrcAlpha OneMinusSrcAlpha
         ZWrite Off
 
         Pass {
             CGPROGRAM
-            
+
             #include "UnityCG.cginc"
             #include "SDFUtils.cginc"
             #include "ShaderSetup.cginc"
-            
+
             #pragma vertex vert
             #pragma fragment frag
-            
+
             #include "Packages/com.coffee.softmask-for-ugui/SoftMask.cginc"
 			#pragma shader_feature __ SOFTMASK_EDITOR	// Add for soft mask
-            
+
             float4 _WidthHeightRadius;
             float _BorderWidth;
             sampler2D _MainTex;
@@ -65,7 +65,7 @@ Shader "UI/RoundedCorners/RoundedCorners" {
                 float alpha = outerAlpha - innerAlpha;
                 return mixAlpha(tex2D(_MainTex, i.uv), i.color, alpha * SoftMask(i.vertex, i.vertex));
             }
-            
+
             ENDCG
         }
     }

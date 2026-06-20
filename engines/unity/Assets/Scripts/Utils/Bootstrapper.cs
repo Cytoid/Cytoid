@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 public class Bootstrapper : MonoBehaviour
 {
     public Splash splash;
-    
+
     private async void Awake()
     {
         if (Context.Distribution == Distribution.TapTap)
@@ -13,5 +13,5 @@ public class Bootstrapper : MonoBehaviour
         }
         SceneManager.LoadScene("Navigation");
     }
-    
-}    
+
+}

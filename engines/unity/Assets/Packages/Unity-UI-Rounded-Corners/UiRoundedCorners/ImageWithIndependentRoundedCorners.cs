@@ -5,11 +5,11 @@ using UnityEngine.UI;
 [ExecuteInEditMode]
 [UnityEngine.Scripting.Preserve]
 public class ImageWithIndependentRoundedCorners : MonoBehaviour {
-	
+
 	public Vector4 r;
 	public Material material;
 	public float borderWidth;
-	
+
 	// xy - position,
 	// zw - halfSize
 	[HideInInspector, SerializeField] private Vector4 rect2props;
@@ -18,21 +18,21 @@ public class ImageWithIndependentRoundedCorners : MonoBehaviour {
 	private readonly int prop_radiuses = Shader.PropertyToID("_r");
 	private readonly int prop_rect2props = Shader.PropertyToID("_rect2props");
 	private static readonly int prop_borderWidth = Shader.PropertyToID("_BorderWidth");
-	
+
 	// Vector2.right rotated clockwise by 45 degrees
 	private static readonly Vector2 wNorm = new Vector2(.7071068f, -.7071068f);
 	// Vector2.right rotated counter-clockwise by 45 degrees
 	private static readonly Vector2 hNorm = new Vector2(.7071068f, .7071068f);
 
-	
+
 	void OnRectTransformDimensionsChange(){
 		Refresh();
 	}
-	
+
 	private void OnValidate(){
 		Refresh();
 	}
-	
+
 	private void RecalculateProps(Vector2 size){
 
 		// Vector that goes from left to right sides of rect2
@@ -41,16 +41,16 @@ public class ImageWithIndependentRoundedCorners : MonoBehaviour {
 		// Project vector aVec to wNorm to get magnitude of rect2 width vector
 		var halfWidth = Vector2.Dot(aVec, wNorm) * .5f;
 		rect2props.z = halfWidth;
-		
-		
+
+
 		// Vector that goes from bottom to top sides of rect2
 		var bVec = new Vector2(size.x, size.y - r.w - r.y);
-		
+
 		// Project vector bVec to hNorm to get magnitude of rect2 height vector
 		var halfHeight = Vector2.Dot(bVec, hNorm) * .5f;
 		rect2props.w = halfHeight;
-		
-		
+
+
 		// Vector that goes from left to top sides of rect2
 		var efVec = new Vector2(size.x - r.x - r.y, 0);
 		// Vector that goes from point E to point G, which is top-left of rect2

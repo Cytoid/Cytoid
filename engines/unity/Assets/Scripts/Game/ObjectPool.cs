@@ -6,7 +6,7 @@ using Object = UnityEngine.Object;
 
 public class ObjectPool
 {
-    
+
     private readonly Dictionary<NoteType, int> initialNoteObjectCount = new Dictionary<NoteType, int>
     {
         {NoteType.Click, 24},
@@ -22,13 +22,13 @@ public class ObjectPool
 
     public readonly SortedDictionary<int, Note> SpawnedNotes = new SortedDictionary<int, Note>(); // Currently on-screen
     public readonly SortedDictionary<int, DragLineElement> SpawnedDragLines = new SortedDictionary<int, DragLineElement>();
-    
+
     private readonly Dictionary<NoteType, NotePoolItem> notePoolItems = new Dictionary<NoteType, NotePoolItem>();
     private readonly DragLinePoolItem dragLinePoolItem = new DragLinePoolItem();
     private readonly Dictionary<EffectController.Effect, PrefabPoolItem> effectPoolItems = new Dictionary<EffectController.Effect, PrefabPoolItem>();
-    
+
     public Game Game { get; }
-    
+
     public ObjectPool(Game game)
     {
         Game = game;
@@ -49,9 +49,9 @@ public class ObjectPool
 
     public void Initialize()
     {
-        initialDragLineObjectCount = initialNoteObjectCount[NoteType.DragHead] 
+        initialDragLineObjectCount = initialNoteObjectCount[NoteType.DragHead]
                                      + initialNoteObjectCount[NoteType.DragChild]
-                                     + initialNoteObjectCount[NoteType.CDragHead] 
+                                     + initialNoteObjectCount[NoteType.CDragHead]
                                      + initialNoteObjectCount[NoteType.CDragChild];
         var timer = new BenchmarkTimer("Game ObjectPool");
         foreach (var type in initialNoteObjectCount.Keys)
@@ -75,7 +75,7 @@ public class ObjectPool
                 chart.MaxSamePageNonDragTypeNoteCount * 2
             },
             {
-                EffectController.Effect.ClearDrag, 
+                EffectController.Effect.ClearDrag,
                 chart.MaxSamePageDragTypeNoteCount * 2
             },
             {
@@ -83,7 +83,7 @@ public class ObjectPool
                 chart.MaxSamePageNoteCount * 2
             },
             {
-                EffectController.Effect.Hold, 
+                EffectController.Effect.Hold,
                 chart.MaxSamePageHoldTypeNoteCount * 16 * 2
             }
         };
@@ -112,7 +112,7 @@ public class ObjectPool
         notePoolItems.Values.ForEach(it => it.Dispose());
         dragLinePoolItem.Dispose();
     }
-    
+
     public Note SpawnNote(ChartModel.Note model)
     {
         if (SpawnedNotes.ContainsKey(model.id)) return SpawnedNotes[model.id];
@@ -190,7 +190,7 @@ public class ObjectPool
     public class PoolItemInstantiateProvider
     {
     }
-    
+
     public class PoolItemSpawnProvider
     {
     }
@@ -304,19 +304,19 @@ public class ObjectPool
             if (dragLine == null || dragLine.gameObject == null) return;
             dragLine.gameObject.SetActive(false);
         }
-        
+
         public override void Dispose()
         {
             PooledItems.ForEach(it => it.Dispose());
         }
     }
-    
+
     public class ParticleSystemInstantiateProvider : PoolItemInstantiateProvider
     {
         public ParticleSystem Prefab;
         public Transform Parent;
     }
-    
+
     public class ParticleSystemSpawnProvider : PoolItemSpawnProvider
     {
         public Transform Parent;

@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 public class FontManager
 {
-    
+
     public Font RegularFont;
     public Font BoldFont;
     public Font ExtraLightFont;
@@ -38,7 +38,7 @@ public class FontManager
 
         foreach (var gameObject in SceneManager.GetActiveScene().GetRootGameObjects())
         {
-            gameObject.GetComponentsInChildren<Text>(true).ForEach(UpdateText); 
+            gameObject.GetComponentsInChildren<Text>(true).ForEach(UpdateText);
         }
     }
 
@@ -84,7 +84,7 @@ public class FontManager
                 break;
         }
     }
-    
+
 }
 
 public enum FontWeight

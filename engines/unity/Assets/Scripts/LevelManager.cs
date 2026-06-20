@@ -211,10 +211,10 @@ public class LevelManager
                     Directory.CreateDirectory(Path.GetDirectoryName(destFile));
                     File.Copy(file, destFile, true);
                 }
-                
+
                 // Delete the temp folder
                 Directory.Delete(tempFolder, true);
-                
+
                 loadedLevelJsonFiles.Add(destFolder + "/level.json");
                 Debug.Log($"Installed {index}/{packagePaths.Count}: {levelFile} to {destFolder}");
             }

@@ -25,7 +25,7 @@ namespace UnityEngine.UI
             base.OnValidate();
         }
 #endif
-        
+
         private Text TextComponent
         {
             get

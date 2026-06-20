@@ -216,7 +216,7 @@ public class Game : MonoBehaviour
         onGameReadyToLoad.Invoke(this);
 
         await Resources.UnloadUnusedAssets();
-        
+
         // Load chart
         print("Loading chart");
         var chartMeta = contentProvider.ChartSection;
@@ -229,7 +229,7 @@ public class Game : MonoBehaviour
         }
         if (mode == GameMode.GlobalCalibration)
         {
-            mods.Clear();   
+            mods.Clear();
         }
 
         Chart = new Chart(

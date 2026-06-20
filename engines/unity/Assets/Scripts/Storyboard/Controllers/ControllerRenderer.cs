@@ -11,9 +11,9 @@ namespace Cytoid.Storyboard.Controllers
     {
 
         public override Transform Transform => throw new InvalidOperationException();
-        
+
         public override bool IsOnCanvas => false;
-        
+
         public ControllerRenderer(StoryboardRenderer mainRenderer, Controller component) : base(mainRenderer, component)
         {
         }

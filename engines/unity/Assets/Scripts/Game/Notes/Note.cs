@@ -5,34 +5,34 @@ using UnityEngine;
 
 public abstract class Note : MonoBehaviour
 {
-    
+
     [NonSerialized] public NoteRenderer Renderer;
     public bool IsInitialized { get; private set; }
-    
+
     public bool IsCollected { get; private set; }
-    
+
     public Game Game { get; private set; }
     public ChartModel.Note Model { get; private set; }
     public ChartModel.Note NextNoteModel { get; private set; }
 
     private bool hasNextNote;
     private Note nextNote;
-    
+
     public ChartModel Chart { get; private set; }
     public ChartModel.Page Page { get; private set; }
     public NoteType Type { get; private set; }
-    
+
     public float MissThreshold { get; set; }
-    
+
     public bool IsCleared { get; private set; }
 
     // For ranked mode: weighted difference between the current timing and the perfect timing
     public float GreatGradeWeight { get; protected set; }
-    
+
     public float JudgmentOffset { get; protected set; }
-    
+
     public bool HasEmerged => Game.Time >= Model.intro_time;
-    
+
     public float TimeUntilStart => Model.start_time - Game.Time;
     public float TimeUntilEnd => Model.end_time - Game.Time;
 
@@ -47,7 +47,7 @@ public abstract class Note : MonoBehaviour
     public virtual void SetData(int noteId)
     {
         IsCollected = false;
-    
+
         Chart = Game.Chart.Model;
         Model = Game.Chart.Model.note_map[noteId];
         if (Model.next_id > 0 && Chart.note_map.ContainsKey(Model.next_id))
@@ -57,11 +57,11 @@ public abstract class Note : MonoBehaviour
 
         Page = Chart.page_list[Model.page_index];
         Type = (NoteType) Model.type;
-        
+
         Renderer.OnNoteLoaded();
         MissThreshold = Type.GetDefaultMissThreshold();
         JudgmentOffset = Context.Player.Settings.JudgmentOffset;
-        
+
         Game.onGameUpdate.AddListener(OnGameUpdate);
         Game.onGameLateUpdate.AddListener(OnGameLateUpdate);
     }
@@ -76,7 +76,7 @@ public abstract class Note : MonoBehaviour
     {
         if (IsCollected) return;
         IsCollected = true;
-        
+
         Renderer.OnCollect();
         Game.ObjectPool.CollectNote(this);
         Game.onGameUpdate.RemoveListener(OnGameUpdate);
@@ -127,7 +127,7 @@ public abstract class Note : MonoBehaviour
         {
             // Update position
             gameObject.transform.localPosition = Model.CalculatePosition(Game.Chart);
-            
+
             // Autoplay
             if (IsAutoEnabled())
             {

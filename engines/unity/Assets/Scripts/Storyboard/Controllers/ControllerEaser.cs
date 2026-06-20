@@ -8,7 +8,7 @@ namespace Storyboard.Controllers
     {
 
         private List<StoryboardRendererEaser<ControllerState>> children;
-        
+
         public ControllerEaser(StoryboardRenderer renderer) : base(renderer)
         {
             children = new List<StoryboardRendererEaser<ControllerState>>

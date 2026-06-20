@@ -10,20 +10,20 @@ public class GameTooltipText : MonoBehaviour
 
     public Game game;
     public TextMeshProUGUI tmp;
-    
+
     public float fadeDuration = 0.4f;
     public Ease ease = Ease.OutCirc;
-    
+
     public GameMessage CurrentMessage { get; protected set; }
 
     private readonly List<Sequence> sequences = new List<Sequence>();
-    
+
     protected void Awake()
     {
         game.onGameSpeedUp.AddListener(_ => Animate(new GameMessage
         {
-            Type = GameMessage.AnimationType.Expand, 
-            Color = Scanner.SpeedUpColor, 
+            Type = GameMessage.AnimationType.Expand,
+            Color = Scanner.SpeedUpColor,
             TextFunction = () => "GAME_SPEED_UP".Get()
         }));
         game.onGameSpeedDown.AddListener(_ => Animate(new GameMessage
@@ -109,7 +109,7 @@ public class GameMessage
     public Func<string> TextFunction;
     public float MaxSpacing = 192f;
     public float MinSpacing;
-    
+
     public enum AnimationType
     {
         Expand, Shrink, None

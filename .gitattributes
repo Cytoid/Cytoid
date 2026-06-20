@@ -1,0 +1,87 @@
+# Default: normalize line endings to LF in the repo.
+# Working-tree endings are also LF on all platforms; editors and Unity honor this.
+* text=auto eol=lf
+
+# ---- Text files: explicit LF (subset of the auto rule, declared for clarity) ----
+# Source code
+*.cs      text eol=lf
+*.dart    text eol=lf
+*.js      text eol=lf
+*.ts      text eol=lf
+*.json    text eol=lf
+*.xml     text eol=lf
+*.XML     text eol=lf
+*.yaml    text eol=lf
+*.yml     text eol=lf
+*.toml    text eol=lf
+*.md      text eol=lf
+*.txt     text eol=lf
+*.sh      text eol=lf
+*.gradle  text eol=lf
+*.kts     text eol=lf
+*.swift   text eol=lf
+*.java    text eol=lf
+*.kt      text eol=lf
+
+# Unity text-serialized assets
+*.meta      text eol=lf
+*.shader    text eol=lf
+*.cginc     text eol=lf
+*.hlsl      text eol=lf
+*.mat       text eol=lf
+*.unity     text eol=lf
+*.prefab    text eol=lf
+*.asset     text eol=lf
+*.asmdef    text eol=lf
+*.cg        text eol=lf
+
+# Generated/IDE
+*.csproj    text eol=lf
+*.unityproj text eol=lf
+*.sln       text eol=lf
+
+# ---- Binary files: never normalize (explicit to guard against text=auto misdetection) ----
+# Images (SVG is XML text, intentionally not listed here)
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.bmp   binary
+*.tga   binary
+*.psd   binary
+*.exr   binary
+*.tif   binary
+*.tiff  binary
+
+# Audio
+*.wav   binary
+*.mp3   binary
+*.ogg   binary
+*.aiff  binary
+*.aif   binary
+
+# Fonts
+*.ttf   binary
+*.otf   binary
+*.woff  binary
+*.woff2 binary
+
+# Native libraries / archives
+*.dll   binary
+*.so    binary
+*.dylib binary
+*.aar   binary
+*.jar   binary
+*.zip   binary
+*.tar   binary
+*.gz    binary
+*.framework binary
+*.xcframework binary
+
+# Unity binary assets
+*.cubemap binary
+*.fontalias binary
+
+# Misc
+*.pdf   binary

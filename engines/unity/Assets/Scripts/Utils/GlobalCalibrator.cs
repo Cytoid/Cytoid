@@ -24,14 +24,14 @@ public class GlobalCalibrator
 
     private readonly CancellationTokenSource cancelSource = new CancellationTokenSource();
     private readonly CancellationTokenSource canExitSource = new CancellationTokenSource();
-    
+
     public GlobalCalibrator(Game game)
     {
         this.game = game;
         beatPulseVisualizer = GameObjectProvider.Instance.beatPulseVisualizer;
         progressIndicator = GameObjectProvider.Instance.circleProgressIndicator;
         messageText = GameObjectProvider.Instance.messageText;
-        
+
         // Reset offset
         Context.Player.Settings.BaseNoteOffset = 0;
         game.Level.Record.RelativeNoteOffset = 0;
@@ -79,7 +79,7 @@ public class GlobalCalibrator
 
             messageText.Enqueue("OFFSET_SETUP_WIZARD_4".Get());
             await UniTask.WaitUntil(() => needRetry || calibrationCompleted, cancellationToken: cancelSource.Token);
-            
+
             if (needRetry)
             {
                 calibratedFourMeasures = false;
@@ -90,7 +90,7 @@ public class GlobalCalibrator
         {
         }
     }
-    
+
     private async void DetectCanSkipCalibration()
     {
         try

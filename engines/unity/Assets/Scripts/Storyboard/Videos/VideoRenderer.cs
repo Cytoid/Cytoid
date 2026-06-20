@@ -13,17 +13,17 @@ namespace Cytoid.Storyboard.Videos
         public VideoPlayer VideoPlayer { get; private set; }
 
         public RawImage RawImage { get; private set; }
-        
+
         public RenderTexture RenderTexture { get; private set; }
-        
+
         public RectTransform RectTransform { get; private set; }
-        
+
         public Canvas Canvas { get; private set; }
-        
+
         public override Transform Transform => RectTransform;
 
         public override bool IsOnCanvas => true;
-        
+
         public VideoRenderer(StoryboardRenderer mainRenderer, Video component) : base(mainRenderer, component)
         {
         }
@@ -50,9 +50,9 @@ namespace Cytoid.Storyboard.Videos
                 Canvas = RawImage.GetComponent<Canvas>();
                 Canvas.overrideSorting = true;
                 Canvas.sortingLayerName = "Storyboard1";
-            
+
                 Clear();
-            
+
                 var videoPath = Component.States[0].Path;
                 if (videoPath == null && Component.States.Count > 1) videoPath = Component.States[1].Path;
                 if (videoPath == null)
@@ -108,7 +108,7 @@ namespace Cytoid.Storyboard.Videos
             Destroy(RawImage.gameObject);
             Destroy(RenderTexture);
         }
-        
+
         public override void Update(VideoState fromState, VideoState toState)
         {
             base.Update(fromState, toState);

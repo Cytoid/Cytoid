@@ -14,20 +14,20 @@ using UnityEngine.UI;
 
 public static class CommonExtensions
 {
-    
+
     public static IEnumerable<(TFirst, TSecond)> Zip<TFirst, TSecond>(
         this IEnumerable<TFirst> first,
         IEnumerable<TSecond> second)
     {
         return first.Zip(second, (a, b) => (a, b));
     }
-    
+
     public static void Deconstruct<T1, T2>(this KeyValuePair<T1, T2> tuple, out T1 key, out T2 value)
     {
         key = tuple.Key;
         value = tuple.Value;
     }
-    
+
     public static IEnumerable<T> Flatten<T>(this IEnumerable<T> source, Func<T, IEnumerable<T>> selector)
     {
         var list = source.ToList();
@@ -41,7 +41,7 @@ public static class CommonExtensions
         var1 = array[0];
         var2 = array[1];
     }
-    
+
     public static void Split(this string str, char separator, out string var1, out string var2, out string var3)
     {
         var array = str.Split(separator);
@@ -50,7 +50,7 @@ public static class CommonExtensions
         var2 = array[1];
         var3 = array[2];
     }
-    
+
     public static void Split(this string str, char separator, out string var1, out string var2, out string var3, out string var4)
     {
         var array = str.Split(separator);
@@ -105,52 +105,52 @@ public static class CommonExtensions
         var years = Convert.ToInt32(Math.Floor((double)ts.Days / 365));
         return years == 1 ? "RELATIVE_TIME_YEAR_AGO_X".Get(years) : "RELATIVE_TIME_YEARS_AGO_X".Get(years);
     }
-    
+
     public static Dictionary<TK, TV> WithOverrides<TK, TV>(this Dictionary<TK, TV> baseDictionary, Dictionary<TK, TV> overrideDictionary)
     {
         baseDictionary = new Dictionary<TK, TV>(baseDictionary);
         overrideDictionary.ToList().ForEach(x => baseDictionary[x.Key] = x.Value);
         return baseDictionary;
     }
-    
+
     public static void SetListener(this UnityEvent unityEvent, UnityAction call)
     {
         unityEvent.RemoveAllListeners();
         unityEvent.AddListener(call);
     }
-    
+
     public static void SetListener<T>(this UnityEvent<T> unityEvent, UnityAction<T> call)
     {
         unityEvent.RemoveAllListeners();
         unityEvent.AddListener(call);
     }
-    
+
     public static void SetListener<T1, T2>(this UnityEvent<T1, T2> unityEvent, UnityAction<T1, T2> call)
     {
         unityEvent.RemoveAllListeners();
         unityEvent.AddListener(call);
     }
-    
+
     public static IEnumerable<T> Flatten<T>(this IEnumerable<IEnumerable<T>> source)
     {
         return source.SelectMany(x => x);
     }
-    
+
     public static float Clamp(this float f, float min, float max)
     {
         return Mathf.Max(min, Math.Min(max, f));
     }
-    
+
     public static float Clamp01(this float f)
     {
         return Clamp(f, 0, 1);
     }
-    
+
     public static HashSet<TSource> ToHashSet<TSource>(this IEnumerable<TSource> source)
     {
         return new HashSet<TSource>(source);
     }
-    
+
     public static List<(TK, TV)> RemoveAll<TK, TV>(this IDictionary<TK, TV> dictionary, Func<TV, bool> valuePredicate)
     {
         var removals = new List<(TK, TV)>();
@@ -161,7 +161,7 @@ public static class CommonExtensions
         }
         return removals;
     }
-    
+
     public static List<(TK, TV)> RemoveAll<TK, TV>(this IDictionary<TK, TV> dictionary, Func<TK, bool> valuePredicate)
     {
         var removals = new List<(TK, TV)>();
@@ -242,7 +242,7 @@ public static class CommonExtensions
         return Enumerable.Range(0, int.MaxValue)
             .Zip(source, (index, it) => (selector(it), index, it)).Min().Item3;
     }
-    
+
     public static TSource MaxBy<TSource, TMin>(
         this IEnumerable<TSource> source,
         Func<TSource, TMin> selector)
@@ -328,7 +328,7 @@ public static class CommonExtensions
     }
 
     // Credits: https://stackoverflow.com/a/11124118/2706176
-    // Returns the human-readable file size for an arbitrary, 64-bit file size 
+    // Returns the human-readable file size for an arbitrary, 64-bit file size
     // The default format is "0.### XB", e.g. "4.2 KB" or "1.434 GB"
     public static string ToHumanReadableFileSize(this ulong bytes)
     {
@@ -481,22 +481,22 @@ public static class CommonExtensions
     {
         LayoutRebuilder.ForceRebuildLayoutImmediate(transform as RectTransform);
     }
-    
+
     public static void SetLeft(this RectTransform rt, float left)
     {
         rt.offsetMin = new Vector2(left, rt.offsetMin.y);
     }
- 
+
     public static void SetRight(this RectTransform rt, float right)
     {
         rt.offsetMax = new Vector2(-right, rt.offsetMax.y);
     }
- 
+
     public static void SetTop(this RectTransform rt, float top)
     {
         rt.offsetMax = new Vector2(rt.offsetMax.x, -top);
     }
- 
+
     public static void SetBottom(this RectTransform rt, float bottom)
     {
         rt.offsetMin = new Vector2(rt.offsetMin.x, bottom);
@@ -547,7 +547,7 @@ public static class CommonExtensions
             new Vector3(rect.xMax - rect.xMin, rect.yMax - rect.yMin, 0)
         );
     }
-    
+
     public static void SetSize(this RectTransform rectTransform, Vector2 newSize)
     {
         var oldSize = rectTransform.rect.size;
@@ -642,7 +642,7 @@ public static class CommonExtensions
     {
         action(on);
     }
-    
+
     public static void Let<T>(this T on, Action<T> action)
     {
         action(on);
@@ -673,7 +673,7 @@ public static class CommonExtensions
         position = new Vector3(position.x, position.y, z);
         transform.position = position;
     }
-    
+
     public static void SetAnchoredX(this RectTransform transform, float x)
     {
         var position = transform.anchoredPosition;
@@ -687,7 +687,7 @@ public static class CommonExtensions
         position = new Vector2(position.x, y);
         transform.anchoredPosition = position;
     }
-    
+
     public static void DeltaX(this Transform transform, float dx)
     {
         var position = transform.position;
@@ -745,28 +745,28 @@ public static class CommonExtensions
         localPosition = new Vector3(localPosition.x, y, localPosition.z);
         transform.localPosition = localPosition;
     }
-    
+
     public static void SetLocalZ(this Transform transform, float z)
     {
         var localPosition = transform.localPosition;
         localPosition = new Vector3(localPosition.x, localPosition.y, z);
         transform.localPosition = localPosition;
     }
-    
+
     public static void SetLocalEulerAnglesX(this Transform transform, float x)
     {
         var eulerAngles = transform.localEulerAngles;
         eulerAngles = new Vector3(x, eulerAngles.y, eulerAngles.z);
         transform.localEulerAngles = eulerAngles;
     }
-    
+
     public static void SetLocalEulerAnglesY(this Transform transform, float y)
     {
         var eulerAngles = transform.localEulerAngles;
         eulerAngles = new Vector3(eulerAngles.x, y, eulerAngles.z);
         transform.localEulerAngles = eulerAngles;
     }
-    
+
     public static void SetLocalEulerAnglesZ(this Transform transform, float z)
     {
         var eulerAngles = transform.localEulerAngles;

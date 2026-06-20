@@ -4,7 +4,7 @@ public class PromiseTask<T>
 {
     public T Result { get; private set; }
     public bool IsDone { get; private set; }
-    
+
     public UniTask<T>.Awaiter GetAwaiter()
     {
         return UniTask.WaitUntil(() => IsDone).ContinueWith(() => Result).GetAwaiter();

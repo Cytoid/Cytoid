@@ -10,5 +10,5 @@ public class SoftButton : InteractableMonoBehavior
         get => text.text;
         set => text.text = value;
     }
-    
+
 }

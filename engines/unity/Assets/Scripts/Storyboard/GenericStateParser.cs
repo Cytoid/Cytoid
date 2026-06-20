@@ -9,8 +9,8 @@ namespace Cytoid.Storyboard
     {
         public abstract void Parse(ObjectState state, JObject json, ObjectState baseState);
     }
-    
-    public abstract class GenericStateParser<TS> : StateParser where TS : ObjectState 
+
+    public abstract class GenericStateParser<TS> : StateParser where TS : ObjectState
     {
         public Storyboard Storyboard { get; }
 
@@ -25,7 +25,7 @@ namespace Cytoid.Storyboard
         {
             Parse((TS) state, json, (TS) baseState);
         }
-        
+
         protected void ParseObjectState(ObjectState state, JObject json, ObjectState baseState)
         {
             var token = json.SelectToken("time");
@@ -36,7 +36,7 @@ namespace Cytoid.Storyboard
                 : EasingFunction.Ease.Linear;
             state.Destroy = (bool?) json.SelectToken("destroy") ?? state.Destroy;
         }
-        
+
         protected void ParseStageObjectState(StageObjectState state, JObject json, StageObjectState baseState)
         {
             ParseObjectState(state, json, baseState);
@@ -79,7 +79,7 @@ namespace Cytoid.Storyboard
             state.Layer = (int?) json.SelectToken("layer") ?? state.Layer;
             state.Order = (int?) json.SelectToken("order") ?? state.Order;
         }
-        
+
         protected UnitFloat ParseUnitFloat(JToken token, ReferenceUnit defaultUnit, bool scaleToCanvas, bool span, float? defaultValue = null)
         {
             if (token == null)
@@ -106,11 +106,11 @@ namespace Cytoid.Storyboard
             }
         }
     }
-    
+
     public enum ReferenceUnit
     {
         World,
-        StageX, StageY, // Canvas: 800 x 600 
+        StageX, StageY, // Canvas: 800 x 600
         NoteX, NoteY, // Notes: 1 x 1
         CameraX, CameraY, // Orthographic
     }
@@ -119,7 +119,7 @@ namespace Cytoid.Storyboard
     public class UnitFloat
     {
         [JsonIgnore] public static Storyboard Storyboard;
-        
+
         public float Value;
         public ReferenceUnit Unit;
         public bool ScaleToCanvas;
@@ -216,7 +216,7 @@ namespace Cytoid.Storyboard
         {
             return JsonConvert.SerializeObject(this);
         }
-        
+
     }
 
 }

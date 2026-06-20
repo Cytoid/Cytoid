@@ -44,5 +44,5 @@ public class NLayerLoader
         createdFiles.ForEach(it => it.Dispose());
         file = null;
     }
-    
+
 }

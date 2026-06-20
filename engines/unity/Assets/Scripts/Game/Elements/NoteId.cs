@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class NoteId : MonoBehaviour
 {
-    
+
     public bool Visible
     {
         get => visible;
@@ -14,10 +14,10 @@ public class NoteId : MonoBehaviour
             text.color = text.color.WithAlpha(visible ? 1 : 0);
         }
     }
-    
+
     public TextMeshPro text;
     private bool visible;
-    
+
     public void SetModel(ChartModel.Note note)
     {
         text.text = note.id.ToString();

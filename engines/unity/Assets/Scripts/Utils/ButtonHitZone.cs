@@ -43,7 +43,7 @@ public class ButtonHitZone : MonoBehaviour
         // create transparent graphic
         // Image image = gobj.AddComponent<Image>();
         // image.color = new Color(0, 0, 0, 0);
-        
+
         // Add CanvasRenderer first, then EmptyGraphic
         gobj.AddComponent<CanvasRenderer>();
         gobj.AddComponent<EmptyGraphic>();

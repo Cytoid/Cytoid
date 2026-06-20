@@ -4,22 +4,22 @@ using UnityEngine.UI;
 public class LayoutStaticizer : MonoBehaviour, ScreenBecameActiveListener
 {
     public bool staticizeOnScreenBecameActive = false;
-    
+
     private void Start()
     {
         if (!staticizeOnScreenBecameActive) Staticize(transform);
     }
-    
+
     public void OnScreenBecameActive()
     {
         if (staticizeOnScreenBecameActive) Staticize(transform);
     }
-    
+
     public static void Staticize(Transform transform)
     {
         var ignore = transform.GetComponent<LayoutStaticizerIgnore>();
         if (ignore != null) return;
-        
+
         var gameObject = transform.gameObject;
         foreach (Transform child in gameObject.transform)
         {
@@ -36,7 +36,7 @@ public class LayoutStaticizer : MonoBehaviour, ScreenBecameActiveListener
             layoutGroup.enabled = false;
         }
     }
-    
+
     public static void Activate(Transform transform)
     {
         var gameObject = transform.gameObject;
@@ -47,7 +47,7 @@ public class LayoutStaticizer : MonoBehaviour, ScreenBecameActiveListener
 
         var ignore = gameObject.GetComponent<LayoutStaticizerIgnore>();
         if (ignore != null) return;
-        
+
         var contentSizeFitter = gameObject.GetComponent<ContentSizeFitter>();
         if (contentSizeFitter != null)
         {
@@ -59,5 +59,5 @@ public class LayoutStaticizer : MonoBehaviour, ScreenBecameActiveListener
             layoutGroup.enabled = true;
         }
     }
-    
+
 }

@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class StartupLogger : SingletonMonoBehavior<StartupLogger>
 {
-    
+
     private readonly List<string> entries = new List<string>();
     private bool isInitialized;
 
@@ -66,5 +66,5 @@ public class StartupLogger : SingletonMonoBehavior<StartupLogger>
             Debug.LogError("Failed to write startup log");
         }
     }
-    
+
 }

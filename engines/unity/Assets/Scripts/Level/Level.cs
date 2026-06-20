@@ -10,7 +10,7 @@ public class Level
 
     public LevelMeta Meta;
     public LevelRecord Record;
-    
+
     public string Id => Meta.id;
 
     public string Path;
@@ -29,7 +29,7 @@ public class Level
             Record = new LevelRecord {LevelId = meta.id}
         };
     }
-    
+
     public static Level FromRemote(LevelType type, LevelMeta meta)
     {
         return new Level {

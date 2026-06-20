@@ -21,7 +21,7 @@ public class RectTransformEditor : Editor
         var center = rectTransform.GetScreenSpaceCenter();
         var bounds = rectTransform.GetScreenSpaceBounds();
         GUILayout.Label($"Screen space: centerX={center.x}, centerY={center.y}, minX={bounds.min.x}, maxX={bounds.max.x}, minY={bounds.min.y}, maxY={bounds.max.y}");
-        
+
         EditorUtility.SetDirty(target);
     }
 }

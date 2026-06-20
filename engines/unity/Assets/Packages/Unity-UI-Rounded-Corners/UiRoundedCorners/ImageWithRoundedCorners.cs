@@ -15,7 +15,7 @@ public class ImageWithRoundedCorners : MonoBehaviour {
 	void OnRectTransformDimensionsChange(){
 		Refresh();
 	}
-	
+
 	private void OnValidate(){
 		Refresh();
 	}

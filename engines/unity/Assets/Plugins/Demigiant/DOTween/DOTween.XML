@@ -508,7 +508,7 @@
             instead of being destroyed, they will be put in a pool and reused instead of creating new tweens. This option allows you to avoid
             GC allocations by reusing tweens, but you will have to take care of tween references, since they might result active
             even if they were killed (since they might have been respawned and are now being used for other tweens).
-            <para>If you want to automatically set your tween references to NULL when a tween is killed 
+            <para>If you want to automatically set your tween references to NULL when a tween is killed
             you can use the OnKill callback like this:</para>
             <code>.OnKill(()=> myTweenReference = null)</code>
             <para>You can change this setting at any time by changing the static <see cref="F:DG.Tweening.DOTween.defaultRecyclable"/> property,
@@ -554,7 +554,7 @@
             <summary>
             Checks all active tweens to find and remove eventually invalid ones (usually because their targets became NULL)
             and returns the total number of invalid tweens found and removed.
-            IMPORTANT: this will cause an error on UWP platform, so don't use it there 
+            IMPORTANT: this will cause an error on UWP platform, so don't use it there
             BEWARE: this is a slightly expensive operation so use it with care
             </summary>
         </member>
@@ -706,7 +706,7 @@
             <param name="endValue">The end value to reach</param><param name="duration">The tween's duration</param>
         </member>
         <member name="M:DG.Tweening.DOTween.To(DG.Tweening.Core.DOSetter{System.Single},System.Single,System.Single,System.Single)">
-            <summary>Tweens a virtual property from the given start to the given end value 
+            <summary>Tweens a virtual property from the given start to the given end value
             and implements a setter that allows to use that value with an external method or a lambda
             <para>Example:</para>
             <code>To(MyMethod, 0, 12, 0.5f);</code>
@@ -741,7 +741,7 @@
             <param name="duration">The duration of the tween</param>
             <param name="strength">The shake strength</param>
             <param name="vibrato">Indicates how much will the shake vibrate</param>
-            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware). 
+            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware).
             Setting it to 0 will shake along a single direction and behave like a random punch.</param>
             <param name="ignoreZAxis">If TRUE only shakes on the X Y axis (looks better with things like cameras).</param>
             <param name="fadeOut">If TRUE the shake will automatically fadeOut smoothly within the tween's duration, otherwise it will not</param>
@@ -756,7 +756,7 @@
             <param name="duration">The duration of the tween</param>
             <param name="strength">The shake strength on each axis</param>
             <param name="vibrato">Indicates how much will the shake vibrate</param>
-            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware). 
+            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware).
             Setting it to 0 will shake along a single direction and behave like a random punch.</param>
             <param name="fadeOut">If TRUE the shake will automatically fadeOut smoothly within the tween's duration, otherwise it will not</param>
             <param name="randomnessMode">Randomness mode</param>
@@ -1670,7 +1670,7 @@
             <param name="duration">The duration of the tween</param>
             <param name="strength">The shake strength</param>
             <param name="vibrato">Indicates how much will the shake vibrate</param>
-            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware). 
+            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware).
             Setting it to 0 will shake along a single direction.</param>
             <param name="fadeOut">If TRUE the shake will automatically fadeOut smoothly within the tween's duration, otherwise it will not</param>
             <param name="randomnessMode">Randomness mode</param>
@@ -1681,7 +1681,7 @@
             <param name="duration">The duration of the tween</param>
             <param name="strength">The shake strength on each axis</param>
             <param name="vibrato">Indicates how much will the shake vibrate</param>
-            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware). 
+            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware).
             Setting it to 0 will shake along a single direction.</param>
             <param name="fadeOut">If TRUE the shake will automatically fadeOut smoothly within the tween's duration, otherwise it will not</param>
             <param name="randomnessMode">Randomness mode</param>
@@ -1692,7 +1692,7 @@
             <param name="duration">The duration of the tween</param>
             <param name="strength">The shake strength</param>
             <param name="vibrato">Indicates how much will the shake vibrate</param>
-            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware). 
+            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware).
             Setting it to 0 will shake along a single direction.</param>
             <param name="fadeOut">If TRUE the shake will automatically fadeOut smoothly within the tween's duration, otherwise it will not</param>
             <param name="randomnessMode">Randomness mode</param>
@@ -1703,7 +1703,7 @@
             <param name="duration">The duration of the tween</param>
             <param name="strength">The shake strength on each axis</param>
             <param name="vibrato">Indicates how much will the shake vibrate</param>
-            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware). 
+            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware).
             Setting it to 0 will shake along a single direction.</param>
             <param name="fadeOut">If TRUE the shake will automatically fadeOut smoothly within the tween's duration, otherwise it will not</param>
             <param name="randomnessMode">Randomness mode</param>
@@ -1726,7 +1726,7 @@
         <member name="M:DG.Tweening.ShortcutExtensions.DOColor(UnityEngine.LineRenderer,DG.Tweening.Color2,DG.Tweening.Color2,System.Single)">
             <summary>Tweens a LineRenderer's color to the given value.
             Also stores the LineRenderer as the tween's target so it can be used for filtered operations.
-            <para>Note that this method requires to also insert the start colors for the tween, 
+            <para>Note that this method requires to also insert the start colors for the tween,
             since LineRenderers have no way to get them.</para></summary>
             <param name="startValue">The start value to tween from</param>
             <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
@@ -1992,7 +1992,7 @@
             <param name="duration">The duration of the tween</param>
             <param name="strength">The shake strength</param>
             <param name="vibrato">Indicates how much will the shake vibrate</param>
-            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware). 
+            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware).
             Setting it to 0 will shake along a single direction.</param>
             <param name="snapping">If TRUE the tween will smoothly snap all values to integers</param>
             <param name="fadeOut">If TRUE the shake will automatically fadeOut smoothly within the tween's duration, otherwise it will not</param>
@@ -2003,7 +2003,7 @@
             <param name="duration">The duration of the tween</param>
             <param name="strength">The shake strength on each axis</param>
             <param name="vibrato">Indicates how much will the shake vibrate</param>
-            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware). 
+            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware).
             Setting it to 0 will shake along a single direction.</param>
             <param name="snapping">If TRUE the tween will smoothly snap all values to integers</param>
             <param name="fadeOut">If TRUE the shake will automatically fadeOut smoothly within the tween's duration, otherwise it will not</param>
@@ -2014,7 +2014,7 @@
             <param name="duration">The duration of the tween</param>
             <param name="strength">The shake strength</param>
             <param name="vibrato">Indicates how much will the shake vibrate</param>
-            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware). 
+            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware).
             Setting it to 0 will shake along a single direction.</param>
             <param name="fadeOut">If TRUE the shake will automatically fadeOut smoothly within the tween's duration, otherwise it will not</param>
             <param name="randomnessMode">Randomness mode</param>
@@ -2024,7 +2024,7 @@
             <param name="duration">The duration of the tween</param>
             <param name="strength">The shake strength on each axis</param>
             <param name="vibrato">Indicates how much will the shake vibrate</param>
-            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware). 
+            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware).
             Setting it to 0 will shake along a single direction.</param>
             <param name="fadeOut">If TRUE the shake will automatically fadeOut smoothly within the tween's duration, otherwise it will not</param>
             <param name="randomnessMode">Randomness mode</param>
@@ -2034,7 +2034,7 @@
             <param name="duration">The duration of the tween</param>
             <param name="strength">The shake strength</param>
             <param name="vibrato">Indicates how much will the shake vibrate</param>
-            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware). 
+            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware).
             Setting it to 0 will shake along a single direction.</param>
             <param name="fadeOut">If TRUE the shake will automatically fadeOut smoothly within the tween's duration, otherwise it will not</param>
             <param name="randomnessMode">Randomness mode</param>
@@ -2044,7 +2044,7 @@
             <param name="duration">The duration of the tween</param>
             <param name="strength">The shake strength on each axis</param>
             <param name="vibrato">Indicates how much will the shake vibrate</param>
-            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware). 
+            <param name="randomness">Indicates how much the shake will be random (0 to 180 - values higher than 90 kind of suck, so beware).
             Setting it to 0 will shake along a single direction.</param>
             <param name="fadeOut">If TRUE the shake will automatically fadeOut smoothly within the tween's duration, otherwise it will not</param>
             <param name="randomnessMode">Randomness mode</param>
@@ -2395,7 +2395,7 @@
             so it can be reused without instantiating another one</summary>
         </member>
         <member name="M:DG.Tweening.TweenParams.SetAutoKill(System.Boolean)">
-            <summary>Sets the autoKill behaviour of the tween. 
+            <summary>Sets the autoKill behaviour of the tween.
             Has no effect if the tween has already started</summary>
             <param name="autoKillOnCompletion">If TRUE the tween will be automatically killed when complete</param>
         </member>
@@ -2419,7 +2419,7 @@
             <param name="target">The target to assign to this tween. Can be an int, a string, an object or anything else.</param>
         </member>
         <member name="M:DG.Tweening.TweenParams.SetLoops(System.Int32,System.Nullable{DG.Tweening.LoopType})">
-            <summary>Sets the looping options for the tween. 
+            <summary>Sets the looping options for the tween.
             Has no effect if the tween has already started</summary>
             <param name="loops">Number of cycles to play (-1 for infinite - will be converted to 1 in case the tween is nested in a Sequence)</param>
             <param name="loopType">Loop behaviour type (default: LoopType.Restart)</param>
@@ -2507,11 +2507,11 @@
             </summary>
         </member>
         <member name="M:DG.Tweening.TweenSettingsExtensions.SetAutoKill``1(``0)">
-            <summary>Sets the autoKill behaviour of the tween to TRUE. 
+            <summary>Sets the autoKill behaviour of the tween to TRUE.
             <code>Has no effect</code> if the tween has already started or if it's added to a Sequence</summary>
         </member>
         <member name="M:DG.Tweening.TweenSettingsExtensions.SetAutoKill``1(``0,System.Boolean)">
-            <summary>Sets the autoKill behaviour of the tween. 
+            <summary>Sets the autoKill behaviour of the tween.
             <code>Has no effect</code> if the tween has already started or if it's added to a Sequence</summary>
             <param name="autoKillOnCompletion">If TRUE the tween will be automatically killed when complete</param>
         </member>
@@ -2550,12 +2550,12 @@
             <param name="target">The target to assign to this tween. Can be an int, a string, an object or anything else.</param>
         </member>
         <member name="M:DG.Tweening.TweenSettingsExtensions.SetLoops``1(``0,System.Int32)">
-            <summary>Sets the looping options for the tween. 
+            <summary>Sets the looping options for the tween.
             Has no effect if the tween has already started</summary>
             <param name="loops">Number of cycles to play (-1 for infinite - will be converted to 1 in case the tween is nested in a Sequence)</param>
         </member>
         <member name="M:DG.Tweening.TweenSettingsExtensions.SetLoops``1(``0,System.Int32,DG.Tweening.LoopType)">
-            <summary>Sets the looping options for the tween. 
+            <summary>Sets the looping options for the tween.
             Has no effect if the tween has already started</summary>
             <param name="loops">Number of cycles to play (-1 for infinite - will be converted to 1 in case the tween is nested in a Sequence)</param>
             <param name="loopType">Loop behaviour type (default: LoopType.Restart)</param>
@@ -2615,12 +2615,12 @@
         </member>
         <member name="M:DG.Tweening.TweenSettingsExtensions.SetInverted``1(``0)">
             <summary>EXPERIMENTAL: inverts this tween, so that it will play from the end to the beginning
-            (playing it backwards will actually play it from the beginning to the end). 
+            (playing it backwards will actually play it from the beginning to the end).
             <code>Has no effect</code> if the tween has already started or if it's added to a Sequence</summary>
         </member>
         <member name="M:DG.Tweening.TweenSettingsExtensions.SetInverted``1(``0,System.Boolean)">
             <summary>EXPERIMENTAL: inverts this tween, so that it will play from the end to the beginning
-            (playing it backwards will actually play it from the beginning to the end). 
+            (playing it backwards will actually play it from the beginning to the end).
             <code>Has no effect</code> if the tween has already started or if it's added to a Sequence</summary>
             <param name="inverted">If TRUE the tween will be inverted, otherwise it won't</param>
         </member>
@@ -2677,12 +2677,12 @@
             <param name="tweenParams">TweenParams from which to copy the parameters</param>
         </member>
         <member name="M:DG.Tweening.TweenSettingsExtensions.Append(DG.Tweening.Sequence,DG.Tweening.Tween)">
-            <summary>Adds the given tween to the end of the Sequence. 
+            <summary>Adds the given tween to the end of the Sequence.
             Has no effect if the Sequence has already started</summary>
             <param name="t">The tween to append</param>
         </member>
         <member name="M:DG.Tweening.TweenSettingsExtensions.Prepend(DG.Tweening.Sequence,DG.Tweening.Tween)">
-            <summary>Adds the given tween to the beginning of the Sequence, pushing forward the other nested content. 
+            <summary>Adds the given tween to the beginning of the Sequence, pushing forward the other nested content.
             Has no effect if the Sequence has already started</summary>
             <param name="t">The tween to prepend</param>
         </member>
@@ -2693,28 +2693,28 @@
         </member>
         <member name="M:DG.Tweening.TweenSettingsExtensions.Insert(DG.Tweening.Sequence,System.Single,DG.Tweening.Tween)">
             <summary>Inserts the given tween at the given time position in the Sequence,
-            automatically adding an interval if needed. 
+            automatically adding an interval if needed.
             Has no effect if the Sequence has already started</summary>
             <param name="atPosition">The time position where the tween will be placed</param>
             <param name="t">The tween to insert</param>
         </member>
         <member name="M:DG.Tweening.TweenSettingsExtensions.AppendInterval(DG.Tweening.Sequence,System.Single)">
-            <summary>Adds the given interval to the end of the Sequence. 
+            <summary>Adds the given interval to the end of the Sequence.
             Has no effect if the Sequence has already started</summary>
             <param name="interval">The interval duration</param>
         </member>
         <member name="M:DG.Tweening.TweenSettingsExtensions.PrependInterval(DG.Tweening.Sequence,System.Single)">
-            <summary>Adds the given interval to the beginning of the Sequence, pushing forward the other nested content. 
+            <summary>Adds the given interval to the beginning of the Sequence, pushing forward the other nested content.
             Has no effect if the Sequence has already started</summary>
             <param name="interval">The interval duration</param>
         </member>
         <member name="M:DG.Tweening.TweenSettingsExtensions.AppendCallback(DG.Tweening.Sequence,DG.Tweening.TweenCallback)">
-            <summary>Adds the given callback to the end of the Sequence. 
+            <summary>Adds the given callback to the end of the Sequence.
             Has no effect if the Sequence has already started</summary>
             <param name="callback">The callback to append</param>
         </member>
         <member name="M:DG.Tweening.TweenSettingsExtensions.PrependCallback(DG.Tweening.Sequence,DG.Tweening.TweenCallback)">
-            <summary>Adds the given callback to the beginning of the Sequence, pushing forward the other nested content. 
+            <summary>Adds the given callback to the beginning of the Sequence, pushing forward the other nested content.
             Has no effect if the Sequence has already started</summary>
             <param name="callback">The callback to prepend</param>
         </member>
@@ -2726,7 +2726,7 @@
         </member>
         <member name="M:DG.Tweening.TweenSettingsExtensions.InsertCallback(DG.Tweening.Sequence,System.Single,DG.Tweening.TweenCallback)">
             <summary>Inserts the given callback at the given time position in the Sequence,
-            automatically adding an interval if needed. 
+            automatically adding an interval if needed.
             Has no effect if the Sequence has already started</summary>
             <param name="atPosition">The time position where the callback will be placed</param>
             <param name="callback">The callback to insert</param>

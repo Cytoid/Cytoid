@@ -8,4 +8,5 @@
 # logical diff; skipping them restores blame attribution to the real authors.
 
 # chore: normalize line endings to LF + strip trailing whitespace (354 files, pure ws)
-3f2580b260fd47489acb0dbdc3c9eb2c7e171b56
+# Note: SHA is the post-rebase-merge SHA on main (rebase merge rewrites SHAs).
+7ff69df6d1028fc567abdbc3b859917726f7c530

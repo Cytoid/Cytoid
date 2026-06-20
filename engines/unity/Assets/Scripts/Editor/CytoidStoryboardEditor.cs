@@ -19,7 +19,9 @@ public static class CytoidStoryboardEditor
                                 .Select(a => a.GetType(BootstrapTypeName))
                                 .FirstOrDefault(t => t != null);
         var complete = VendorStoryboardInstall.IsComplete();
+        var onDisk = VendorStoryboardInstall.FilesPresentOnDisk();
         Debug.Log($"[Cytoid] Vendor install complete: {complete} ({VendorStoryboardInstall.StoryboardFiltersRelative})");
+        Debug.Log($"[Cytoid] Vendor files on disk: {onDisk}");
         Debug.Log($"[Cytoid] Vendor bootstrap type loaded: {bootstrapType != null} ({bootstrapType?.Assembly.GetName().Name ?? "not found"})");
         Debug.Log($"[Cytoid] Active backend: {(StoryboardEffects.Current != null ? StoryboardEffects.Current.GetType().Name : "(none yet — enter Play mode)")}");
     }

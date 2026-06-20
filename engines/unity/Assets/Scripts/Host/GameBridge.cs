@@ -132,36 +132,48 @@ public class GameBridge : MonoBehaviour
             return;
         }
 
-        await ShowHandoffOverlay();
-        var playId = sessionState.ActivePlayId;
-        sessionState.MarkPlayRouteEnded();
-        var envelope = CytoidGameCoreEnvelope.Create(
-            playId,
-            WireMessageTypes.GamePlayEnded,
-            new JObject {["ended"] = true});
-        NativeBridgeMessenger.Send(envelope.ToJsonString());
-        GamePlayEventRecorder.End();
+        try
+        {
+            await ShowHandoffOverlay();
+            var playId = sessionState.ActivePlayId;
+            sessionState.MarkPlayRouteEnded();
+            var envelope = CytoidGameCoreEnvelope.Create(
+                playId,
+                WireMessageTypes.GamePlayEnded,
+                new JObject {["ended"] = true});
+            NativeBridgeMessenger.Send(envelope.ToJsonString());
+        }
+        finally
+        {
+            GamePlayEventRecorder.End();
+        }
     }
 
     private async void OnGameResultJson(string resultJson)
     {
-        JObject payload;
         try
         {
-            payload = JObject.Parse(resultJson);
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"[GameBridge] Failed to parse game result JSON: {e.Message}");
-            return;
-        }
+            JObject payload;
+            try
+            {
+                payload = JObject.Parse(resultJson);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[GameBridge] Failed to parse game result JSON: {e.Message}");
+                return;
+            }
 
-        await ShowHandoffOverlay();
-        var playId = sessionState.ActivePlayId ?? Guid.NewGuid().ToString();
-        var envelope = CytoidGameCoreEnvelope.Create(playId, WireMessageTypes.GamePlayResult, payload);
-        NativeBridgeMessenger.Send(envelope.ToJsonString());
-        sessionState.ClearActivePlay();
-        GamePlayEventRecorder.End();
+            await ShowHandoffOverlay();
+            var playId = sessionState.ActivePlayId ?? Guid.NewGuid().ToString();
+            var envelope = CytoidGameCoreEnvelope.Create(playId, WireMessageTypes.GamePlayResult, payload);
+            NativeBridgeMessenger.Send(envelope.ToJsonString());
+            sessionState.ClearActivePlay();
+        }
+        finally
+        {
+            GamePlayEventRecorder.End();
+        }
     }
 
     internal static async UniTask ShowHandoffOverlay()

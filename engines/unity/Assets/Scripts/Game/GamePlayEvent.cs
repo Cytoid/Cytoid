@@ -63,6 +63,7 @@ public static class GamePlayEventRecorder
     {
         isRecording = false;
         game = null;
+        events.Clear();
         lastEventsByFinger.Clear();
         Unsubscribe();
     }

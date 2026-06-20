@@ -50,4 +50,15 @@
         <type fullname="ImageWithRoundedCorners" preserve="all"/>
         <type fullname="ImageWithIndependentRoundedCorners" preserve="all"/>
     </assembly>
+    <!--
+        VendorStoryboardEffectsBootstrap is discovered only via reflection
+        (StoryboardVendorEffectsLoader / VendorStoryboardInstall use a string
+        literal; there is no static reference). Anchor it so IL2CPP managed
+        code stripping cannot remove it at higher stripping levels and silently
+        disable the vendor storyboard backend. Tracked here because
+        Assets/Vendor/ itself is gitignored.
+    -->
+    <assembly fullname="Assembly-CSharp">
+        <type fullname="Cytoid.Storyboard.Vendor.VendorStoryboardEffectsBootstrap" preserve="all"/>
+    </assembly>
 </linker>

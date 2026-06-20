@@ -1,8 +1,11 @@
+import 'dart:typed_data';
+
+import 'play_event_binary_codec.dart';
 import 'tier_play_result.dart';
 
 /// Outcome of a gameplay session emitted by the game core.
 class GameResultPayload {
-  const GameResultPayload({
+  GameResultPayload({
     required this.completed,
     required this.failed,
     required this.usedAutoMod,
@@ -25,6 +28,7 @@ class GameResultPayload {
     this.late,
     this.averageTimingError,
     this.standardTimingError,
+    this.playEvents = const <Map<String, Object?>>[],
   });
 
   final bool completed;
@@ -49,6 +53,20 @@ class GameResultPayload {
   final int? late;
   final double? averageTimingError;
   final double? standardTimingError;
+  final List<Map<String, Object?>> playEvents;
+
+  /// Compact binary representation of [playEvents]. Computed on first access
+  /// so payloads that never inspect telemetry (the common case in production
+  /// upload paths) pay nothing for encoding.
+  late final Uint8List playEventBinary =
+      PlayEventBinaryCodec.encode(playEvents);
+
+  /// UTF-8 byte length of [playEvents] serialized as JSON.
+  late final int playEventJsonBytes =
+      PlayEventBinaryCodec.jsonByteLength(playEvents);
+
+  /// Byte length of [playEventBinary], exposed for upload-size comparison.
+  late final int playEventBinaryBytes = playEventBinary.length;
 
   factory GameResultPayload.fromJson(Map<String, dynamic> json) {
     return GameResultPayload(
@@ -76,6 +94,7 @@ class GameResultPayload {
       late: _readInt(json, 'late'),
       averageTimingError: _readDouble(json, 'averageTimingError'),
       standardTimingError: _readDouble(json, 'standardTimingError'),
+      playEvents: _readPlayEvents(json['playEvents']),
     );
   }
 
@@ -106,6 +125,7 @@ class GameResultPayload {
       if (averageTimingError != null) 'averageTimingError': averageTimingError,
       if (standardTimingError != null)
         'standardTimingError': standardTimingError,
+      if (playEvents.isNotEmpty) 'playEvents': playEvents,
     };
   }
 
@@ -141,5 +161,22 @@ class GameResultPayload {
     return value.map(
       (key, raw) => MapEntry(key.toString(), (raw as num).toInt()),
     );
+  }
+
+  static List<Map<String, Object?>> _readPlayEvents(Object? value) {
+    if (value == null) {
+      return const <Map<String, Object?>>[];
+    }
+    if (value is! List) {
+      throw const FormatException('playEvents must be an array.');
+    }
+    return value
+        .map((event) {
+          if (event is! Map) {
+            throw const FormatException('playEvents entries must be objects.');
+          }
+          return event.map((key, raw) => MapEntry(key.toString(), raw));
+        })
+        .toList(growable: false);
   }
 }

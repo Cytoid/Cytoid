@@ -342,6 +342,7 @@ public class Game : MonoBehaviour
         GameStartedOrResumedTimestamp = UnityEngine.Time.realtimeSinceStartup;
         State.IsStarted = true;
         State.IsPlaying = true;
+        GamePlayEventRecorder.Begin(this);
         LayoutStaticizer.Staticize(levelInfoParent.transform);
         LayoutStaticizer.Staticize(modHolderParent.transform);
         onGameStarted.Invoke(this);
@@ -512,6 +513,7 @@ public class Game : MonoBehaviour
         UnpauseCountdown = 0;
         State.IsPlaying = false;
         AudioListener.pause = true;
+        GamePlayEventRecorder.Suspend();
 
         if (State.Mode == GameMode.Tier)
         {
@@ -572,6 +574,7 @@ public class Game : MonoBehaviour
         GameStartedOrResumedTimestamp = UnityEngine.Time.realtimeSinceStartup;
         AudioListener.pause = false;
         State.IsPlaying = true;
+        GamePlayEventRecorder.Resume();
 
         onGameUnpaused.Invoke(this);
     }

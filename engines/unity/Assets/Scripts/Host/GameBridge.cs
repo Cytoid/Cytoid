@@ -140,6 +140,7 @@ public class GameBridge : MonoBehaviour
             WireMessageTypes.GamePlayEnded,
             new JObject {["ended"] = true});
         NativeBridgeMessenger.Send(envelope.ToJsonString());
+        GamePlayEventRecorder.End();
     }
 
     private async void OnGameResultJson(string resultJson)
@@ -160,6 +161,7 @@ public class GameBridge : MonoBehaviour
         var envelope = CytoidGameCoreEnvelope.Create(playId, WireMessageTypes.GamePlayResult, payload);
         NativeBridgeMessenger.Send(envelope.ToJsonString());
         sessionState.ClearActivePlay();
+        GamePlayEventRecorder.End();
     }
 
     internal static async UniTask ShowHandoffOverlay()

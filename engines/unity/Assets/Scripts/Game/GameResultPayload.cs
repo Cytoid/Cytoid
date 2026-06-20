@@ -13,6 +13,7 @@ public class GameResultPayload : LastPlayResult
     public float? calibratedLevelNoteOffset;
     public TierPlayResult tierPlay;
     public string tierRetry;
+    public GamePlayEvent[] playEvents;
 
     public static GameResultPayload FromGameState(
         GameState state,
@@ -25,7 +26,8 @@ public class GameResultPayload : LastPlayResult
             failed = state != null && state.IsFailed,
             usedAutoMod = state != null && GameResultBridge.HasAutoMod(state),
             error = error,
-            gameMode = state?.Mode.ToString()
+            gameMode = state?.Mode.ToString(),
+            playEvents = GamePlayEventRecorder.Snapshot()
         };
 
         if (state == null)

@@ -350,6 +350,7 @@ Extends score fields from `LastPlayResult`.
 | `standardTimingError` | double? | Std dev of timing error (ms). |
 | `tierPlay` | object? | Present when `gameMode` is `"Tier"` and the stage finishes in-engine. See [TierPlayResult](#tierplayresult). |
 | `tierRetry` | string? | Host retry hint for Tier. When set, Flutter should dismiss the play route and re-issue `bridge.play.start` for the same stage (Unity does not retry Tier in-engine). |
+| `playEvents` | array<object> | Unity-emitted gameplay touch events. Each event uses `{t, f, p, x, y}` where `t` is song time in milliseconds, `f` is finger index, `p` is `down` / `move` / `up`, and `x` / `y` are normalized screen coordinates from 0 to 65535. Flutter keeps this JSON payload and derives a compact binary representation for upload-size comparison. |
 
 **Tier host routing**
 

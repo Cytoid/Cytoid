@@ -79,6 +79,25 @@ void main() {
     expect(result.gradeCounts, {'perfect': 10});
   });
 
+  test('reads play events and reports json and binary sizes', () {
+    final result = GameResultPayload.fromJson({
+      'completed': true,
+      'failed': false,
+      'usedAutoMod': false,
+      'playEvents': [
+        {'t': 1000, 'f': 0, 'p': 'down', 'x': 32768, 'y': 16384},
+        {'t': 1016, 'f': 0, 'p': 'move', 'x': 33000, 'y': 16400},
+        {'t': 1048, 'f': 0, 'p': 'up', 'x': 33120, 'y': 16480},
+      ],
+    });
+
+    expect(result.playEvents, hasLength(3));
+    expect(result.playEventJsonBytes, greaterThan(0));
+    expect(result.playEventBinaryBytes, greaterThan(0));
+    expect(result.playEventBinaryBytes, lessThan(result.playEventJsonBytes));
+    expect(result.toJson()['playEvents'], result.playEvents);
+  });
+
   test('rejects missing or malformed launch assets', () {
     expect(
       () => GameLaunchPayload.fromJson({

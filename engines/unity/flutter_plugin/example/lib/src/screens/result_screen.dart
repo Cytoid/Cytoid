@@ -79,6 +79,7 @@ class ResultScreen extends StatelessWidget {
                     ),
                   ],
                   _ScoreBlock(result: result),
+                  _EventTelemetryBlock(result: result),
                   const SizedBox(height: 16),
                   FilledButton.icon(
                     onPressed: () => Navigator.of(context).pop(),
@@ -91,6 +92,35 @@ class ResultScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _EventTelemetryBlock extends StatelessWidget {
+  const _EventTelemetryBlock({required this.result});
+
+  final GameResultPayload result;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _ResultTile(
+          icon: Icons.touch_app,
+          label: 'Play events',
+          value: '${result.playEvents.length}',
+        ),
+        _ResultTile(
+          icon: Icons.data_object,
+          label: 'Event JSON size',
+          value: _formatBytes(result.playEventJsonBytes),
+        ),
+        _ResultTile(
+          icon: Icons.compress,
+          label: 'Event binary size',
+          value: _formatBytes(result.playEventBinaryBytes),
+        ),
+      ],
     );
   }
 }
@@ -205,4 +235,15 @@ class _ResultTile extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatBytes(int bytes) {
+  if (bytes < 1024) {
+    return '$bytes B';
+  }
+  final kib = bytes / 1024;
+  if (kib < 1024) {
+    return '${kib.toStringAsFixed(1)} KiB';
+  }
+  return '${(kib / 1024).toStringAsFixed(2)} MiB';
 }

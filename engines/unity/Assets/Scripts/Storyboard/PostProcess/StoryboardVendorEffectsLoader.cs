@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using Cytoid.Storyboard;
 
@@ -10,7 +11,14 @@ namespace Cytoid.Storyboard.PostProcess
 
         public static bool TryRegister(StoryboardRendererProvider provider)
         {
-            var type = Type.GetType(BootstrapTypeName);
+            // Type.GetType with a bare name searches only the calling assembly and
+            // mscorlib, which fails for cross-assembly lookups in built players
+            // (IL2CPP/AOT). Fall back to an AppDomain scan so the vendor backend is
+            // resolved consistently in Editor Play Mode and in exported plugins.
+            var type = Type.GetType(BootstrapTypeName)
+                       ?? AppDomain.CurrentDomain.GetAssemblies()
+                           .Select(a => a.GetType(BootstrapTypeName))
+                           .FirstOrDefault(t => t != null);
             if (type == null)
                 return false;
 

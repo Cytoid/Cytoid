@@ -47,9 +47,7 @@ class PlayEventBinaryCodec {
       'down' => 1,
       'move' => 2,
       'up' => 3,
-      'cancel' => 4,
-      'hit' => 5,
-      _ => 0,
+      _ => throw FormatException('Unknown play event phase: $value'),
     };
   }
 

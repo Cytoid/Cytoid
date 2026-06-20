@@ -10,7 +10,11 @@ public static class GameResultBridge
 
     public static void Emit(GameState state, TierPlaySession tierPlaySession = null, string error = null)
     {
-        var payload = GameResultPayload.FromGameState(state, tierPlaySession, error);
+        var payload = GameResultPayload.FromGameState(
+            state,
+            tierPlaySession,
+            error,
+            GamePlayEventRecorder.Snapshot());
         LastResultJson = payload.ToJson();
         Debug.Log($"[GameResultBridge] {LastResultJson}");
         OnResultJson.Invoke(LastResultJson);

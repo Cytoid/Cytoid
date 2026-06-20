@@ -18,7 +18,8 @@ public class GameResultPayload : LastPlayResult
     public static GameResultPayload FromGameState(
         GameState state,
         TierPlaySession tierPlaySession = null,
-        string error = null)
+        string error = null,
+        GamePlayEvent[] playEvents = null)
     {
         var result = new GameResultPayload
         {
@@ -27,7 +28,7 @@ public class GameResultPayload : LastPlayResult
             usedAutoMod = state != null && GameResultBridge.HasAutoMod(state),
             error = error,
             gameMode = state?.Mode.ToString(),
-            playEvents = GamePlayEventRecorder.Snapshot()
+            playEvents = playEvents ?? Array.Empty<GamePlayEvent>()
         };
 
         if (state == null)

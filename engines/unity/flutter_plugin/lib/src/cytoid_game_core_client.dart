@@ -8,6 +8,7 @@ import 'cytoid_game_core_envelope.dart';
 import 'cytoid_game_core_lost_exception.dart';
 import 'cytoid_game_core_liveness_config.dart';
 import 'cytoid_game_core_play_route_ended_exception.dart';
+import 'cytoid_game_core_timeout_exception.dart';
 import 'game_runtime_status.dart';
 import 'models/cytoid_game_core_log_entry.dart';
 import 'models/game_launch_payload.dart';
@@ -19,19 +20,32 @@ import 'wire_message_type.dart';
 class CytoidGameCoreClient {
   CytoidGameCoreClient({
     MethodChannel? methodChannel,
+    MethodChannel? waitForReadyMethodChannel,
     EventChannel? eventChannel,
     Stream<dynamic>? eventStream,
     CytoidGameCoreLivenessConfig? livenessConfig,
   }) : _methodChannel =
            methodChannel ?? const MethodChannel(_methodChannelName),
+       _waitForReadyChannel = waitForReadyMethodChannel ??
+           const MethodChannel(_waitForReadyChannelName),
        _eventChannel = eventChannel ?? const EventChannel(_eventChannelName),
        _eventStream = eventStream,
        _livenessConfig = livenessConfig ?? const CytoidGameCoreLivenessConfig();
 
   static const _methodChannelName = 'cytoid/game_core';
   static const _eventChannelName = 'cytoid/game_core/events';
+  static const _waitForReadyChannelName = 'cytoid_game_core/waitForReady';
+
+  /// Default `waitForReady` timeout, matching the iOS native default
+  /// (`CytoidGameCoreBridge.waitForReadyDefaultTimeout`).
+  static const defaultReadyTimeout = Duration(seconds: 30);
+
+  // FlutterError codes returned by the iOS `cytoid_game_core/waitForReady`
+  // method channel helper (registered by T6).
+  static const _waitForReadyTimeoutErrorCode = 'waitForReadyTimeout';
 
   final MethodChannel _methodChannel;
+  final MethodChannel _waitForReadyChannel;
   final EventChannel _eventChannel;
   final Stream<dynamic>? _eventStream;
   final CytoidGameCoreLivenessConfig _livenessConfig;
@@ -80,6 +94,63 @@ class CytoidGameCoreClient {
 
   Future<void> hideGameSurface() async {
     await _methodChannel.invokeMethod<void>('hideGameSurface');
+  }
+
+  /// Waits for the engine to acknowledge readiness.
+  ///
+  /// Calls [ensureRuntimeStarted] first, then either:
+  /// - (a) on iOS, calls the `cytoid_game_core/waitForReady` method channel
+  ///   helper registered by T6, which is state-machine-aware (handles
+  ///   already-failed runtimes and native timeouts); or
+  /// - (b) on Android (and any platform without the iOS helper), subscribes
+  ///   to [readyEvents] until the first ready event arrives.
+  ///
+  /// Throws [CytoidGameCoreTimeoutException] on timeout. NEVER silently
+  /// continues — callers cannot fall through to `session.start` against an
+  /// engine that has not acknowledged readiness.
+  ///
+  /// On iOS, `PlatformException` codes other than `waitForReadyTimeout`
+  /// (e.g. `runtime_unavailable`, `waitForReadyFailed`) are rethrown verbatim
+  /// so the host can branch on the typed failure.
+  Future<void> waitForReady({Duration? timeout}) async {
+    await ensureRuntimeStarted();
+
+    final effectiveTimeout = timeout ?? defaultReadyTimeout;
+
+    try {
+      final timeoutSeconds = effectiveTimeout.inSeconds;
+      await _waitForReadyChannel.invokeMethod<void>(
+        'waitForReady',
+        timeoutSeconds,
+      );
+    } on MissingPluginException {
+      // No native helper registered (Android, tests, or pre-T6 iOS). Fall
+      // back to subscribing the engine-ready event stream.
+      await _awaitReadyEvent(effectiveTimeout);
+    } on PlatformException catch (e) {
+      if (e.code == _waitForReadyTimeoutErrorCode) {
+        throw CytoidGameCoreTimeoutException(
+          'iOS waitForReady helper timed out after '
+          '${effectiveTimeout.inSeconds}s.',
+          timeout: effectiveTimeout,
+        );
+      }
+      // alreadyFailed / waitForReadyFailed carry their own typed codes;
+      // surface them so the host can branch on the runtime failure.
+      rethrow;
+    }
+  }
+
+  Future<void> _awaitReadyEvent(Duration timeout) async {
+    try {
+      await readyEvents.first.timeout(timeout);
+    } on TimeoutException {
+      throw CytoidGameCoreTimeoutException(
+        'Engine did not emit a ready event within '
+        '${timeout.inSeconds}s.',
+        timeout: timeout,
+      );
+    }
   }
 
   Future<void> send(CytoidGameCoreEnvelope envelope) async {

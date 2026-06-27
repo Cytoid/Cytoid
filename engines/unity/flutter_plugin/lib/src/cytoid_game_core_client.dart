@@ -141,17 +141,34 @@ class CytoidGameCoreClient {
     }
   }
 
+  /// Android (and any platform without the iOS `waitForReady` helper) cannot
+  /// rely on a fresh engine-ready event: the warm-resident runtime stays
+  /// initialized across sessions, and an `Activity` resume after
+  /// `showGameSurface` transitions SUSPENDED→READY without re-emitting
+  /// `engine.ready`. The runtime snapshot is the only reliable signal, so we
+  /// poll [queryStatus] until it reports ready or the deadline elapses.
   Future<void> _awaitReadyEvent(Duration timeout) async {
-    try {
-      await readyEvents.first.timeout(timeout);
-    } on TimeoutException {
-      throw CytoidGameCoreTimeoutException(
-        'Engine did not emit a ready event within '
-        '${timeout.inSeconds}s.',
-        timeout: timeout,
-      );
+    final deadline = DateTime.now().add(timeout);
+    while (true) {
+      final status = await queryStatus();
+      if (status.isReady) {
+        return;
+      }
+      if (DateTime.now().isAfter(deadline)) {
+        throw CytoidGameCoreTimeoutException(
+          'Engine did not reach the ready state within '
+          '${timeout.inMilliseconds}ms.',
+          timeout: timeout,
+        );
+      }
+      await Future<void>.delayed(_readyPollInterval);
     }
   }
+
+  /// Interval between [queryStatus] probes while awaiting readiness on
+  /// platforms without a native ready-wait helper. Bounds the worst-case
+  /// latency to observe a resume→ready transition that fires no event.
+  static const _readyPollInterval = Duration(milliseconds: 200);
 
   Future<void> send(CytoidGameCoreEnvelope envelope) async {
     await _methodChannel.invokeMethod<void>('send', envelope.toJsonString());

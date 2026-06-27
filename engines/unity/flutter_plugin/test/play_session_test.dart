@@ -33,11 +33,16 @@ void main() {
   late StreamController<dynamic> events;
   late List<MethodCall> primaryCalls;
   late List<MethodCall> readyCalls;
+  // Mutable runtime state returned by the mock queryRuntimeStatus handler.
+  // Defaults to 'ready' (warm-resident); tests override to simulate
+  // cold-start (starting) or never-ready (timeout).
+  late String statusState;
 
   setUp(() {
     events = StreamController<dynamic>.broadcast();
     primaryCalls = <MethodCall>[];
     readyCalls = <MethodCall>[];
+    statusState = 'ready';
 
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(primaryChannel, (call) async {
@@ -51,7 +56,12 @@ void main() {
         case 'getEngineMode':
           return 'mock';
         case 'queryRuntimeStatus':
-          return <String, Object?>{'state': 'ready', 'engine': 'mock'};
+          return <String, Object?>{
+            'state': statusState,
+            'engine': 'mock',
+            'mode': 'mock',
+            'generation': 1,
+          };
       }
       throw PlatformException(code: 'not_implemented');
     });
@@ -93,32 +103,26 @@ void main() {
   }
 
   group('PlaySession.run happy path', () {
-    test('Android readyEvents fallback completes on session.result', () async {
-      // No iOS helper registered → MissingPluginException → readyEvents path.
-      final client = CytoidGameCoreClient(
-        methodChannel: primaryChannel,
-        eventStream: events.stream,
-      );
-      final session = PlaySession(client);
+    test(
+      'Android warm-resident ready: resolves via queryStatus with no '
+      'engine.ready event (second-session regression)',
+      () async {
+        // Reproduces the second-session timeout: the warm-resident runtime
+        // is already READY after Activity resume, which fires NO engine.ready
+        // event. The Android fallback must consult queryStatus rather than
+        // wait on an event that will never arrive.
+        // (setUp leaves statusState = 'ready'.)
+        final client = CytoidGameCoreClient(
+          methodChannel: primaryChannel,
+          eventStream: events.stream,
+        );
+        final session = PlaySession(client);
 
-      // Repeatedly offer engine.ready so the first readyEvents subscriber
-      // sees it regardless of when subscription happens relative to the
-      // layered awaits in run().
-      final readyEnvelope = CytoidGameCoreEnvelope.create(
-        id: 'ready-1',
-        type: WireMessageType.gameReady,
-      ).toJsonString();
-      final readyOffer = Timer.periodic(
-        const Duration(milliseconds: 5),
-        (_) => events.add(readyEnvelope),
-      );
+        final runFuture = session.run(
+          launch: _buildTestLaunch(),
+          readyTimeout: const Duration(seconds: 2),
+        );
 
-      final runFuture = session.run(
-        launch: _buildTestLaunch(),
-        readyTimeout: const Duration(seconds: 2),
-      );
-
-      try {
         final startEnvelope =
             await awaitSentEnvelope(WireMessageType.sessionStart);
         expect(startEnvelope.v, 2);
@@ -135,23 +139,81 @@ void main() {
             v: 2,
           ).toJsonString(),
         );
-      } finally {
-        readyOffer.cancel();
-      }
 
-      final result = await runFuture.timeout(
-        const Duration(seconds: 2),
-        onTimeout: () => throw TimeoutException('run() never returned'),
-      );
-      expect(result.outcome.kind, OutcomePayload.completedKind);
-      expect(result.mode, 'ranked');
+        final result = await runFuture.timeout(
+          const Duration(seconds: 2),
+          onTimeout: () => throw TimeoutException('run() never returned'),
+        );
+        expect(result.outcome.kind, OutcomePayload.completedKind);
+        expect(result.mode, 'ranked');
 
-      // hideGameSurface MUST be called in the finally block.
-      expect(
-        primaryCalls.map((c) => c.method),
-        contains('hideGameSurface'),
-      );
-    });
+        // No engine.ready was emitted — readiness came from queryStatus.
+        expect(
+          sentEnvelopeOfType(WireMessageType.gameReady),
+          isNull,
+        );
+        // hideGameSurface MUST be called in the finally block.
+        expect(
+          primaryCalls.map((c) => c.method),
+          contains('hideGameSurface'),
+        );
+      },
+    );
+
+    test(
+      'Android cold-start: queryStatus poll loop observes starting→ready',
+      () async {
+        // First-session cold start: the engine takes a moment to boot. The
+        // poll loop must keep probing until queryStatus flips to ready.
+        statusState = 'starting';
+        final readyFlip = Timer(
+          const Duration(milliseconds: 350),
+          () => statusState = 'ready',
+        );
+
+        final client = CytoidGameCoreClient(
+          methodChannel: primaryChannel,
+          eventStream: events.stream,
+        );
+        final session = PlaySession(client);
+
+        final runFuture = session.run(
+          launch: _buildTestLaunch(),
+          readyTimeout: const Duration(seconds: 5),
+        );
+
+        try {
+          final startEnvelope =
+              await awaitSentEnvelope(WireMessageType.sessionStart);
+
+          final resultJson =
+              _loadFixture('session_result_payload.valid.json');
+          resultJson['sessionId'] = startEnvelope.id;
+          events.add(
+            CytoidGameCoreEnvelope.create(
+              id: startEnvelope.id,
+              type: WireMessageType.sessionResult,
+              payload: resultJson,
+              v: 2,
+            ).toJsonString(),
+          );
+
+          final result = await runFuture.timeout(
+            const Duration(seconds: 5),
+            onTimeout: () => throw TimeoutException('run() never returned'),
+          );
+          expect(result.outcome.kind, OutcomePayload.completedKind);
+
+          // queryStatus was polled more than once before readiness.
+          final queryCount = primaryCalls
+              .where((c) => c.method == 'queryRuntimeStatus')
+              .length;
+          expect(queryCount, greaterThan(1));
+        } finally {
+          readyFlip.cancel();
+        }
+      },
+    );
 
     test('iOS waitForReady helper channel completes on session.result',
         () async {
@@ -228,9 +290,10 @@ void main() {
 
   group('PlaySession.run ready timeout', () {
     test(
-        'Android readyEvents path throws CytoidGameCoreTimeoutException '
+        'Android poll path throws CytoidGameCoreTimeoutException '
         'AND hides the surface', () async {
-      // No iOS helper → readyEvents path. No engine.ready ever emitted.
+      // Runtime never reaches ready — poll loops until the deadline.
+      statusState = 'starting';
       final client = CytoidGameCoreClient(
         methodChannel: primaryChannel,
         eventStream: events.stream,

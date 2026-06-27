@@ -284,13 +284,16 @@ final class UnityGameCoreRuntime: NSObject, UnityFrameworkListener {
     messageQueueTimer = nil
   }
 
-  private func handleMessageQueueTimeout() {
-    cancelMessageQueueTimer()
-    guard !isEmbedded, !pendingOutboundMessages.isEmpty else { return }
-    let handler = messageQueueTimeoutHandler
-    pendingMessagesEnqueuedAt = nil
-    handler?()
-  }
+    private func handleMessageQueueTimeout() {
+        cancelMessageQueueTimer()
+        guard !isEmbedded, !pendingOutboundMessages.isEmpty else { return }
+        let handler = messageQueueTimeoutHandler
+        // Drop the queued messages: they were never delivered and must not be
+        // flushed later if the runtime eventually embeds (stale dispatch).
+        pendingOutboundMessages.removeAll()
+        pendingMessagesEnqueuedAt = nil
+        handler?()
+    }
 
   private func resolveFrameworkPath() -> String? {
     if let bundledPath = Bundle.main.path(

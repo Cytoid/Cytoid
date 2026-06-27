@@ -193,7 +193,12 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
       runtimeState.onSessionStarted(sessionId: id)
     } else if type == "session.start", let id = messageId(jsonString) {
       runtimeState.onSessionStarted(sessionId: id)
-    } else if type == "bridge.play.end" || type == "session.cancel" {
+    } else if type == "bridge.play.end" {
+      // v1 terminal. NOTE: session.cancel is intentionally NOT a terminal
+      // trigger — v2 § session.cancel is a request whose terminal outcome
+      // is the later session.result (handled in onUnityMessage). Ending the
+      // session here would let a runtime-side failure after cancel be
+      // reported as engine.error instead of the active-session session.result.
       runtimeState.onSessionEnded()
     }
 

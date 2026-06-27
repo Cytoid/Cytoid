@@ -14,16 +14,27 @@ final class MockGameCoreBridge {
   }
 
   func ensureRuntimeStarted() {
-    guard runtimeState.state == .unavailable || runtimeState.state == .starting else {
+    // Only schedule emitHostReady on the unavailable→starting transition;
+    // repeated calls during startup (e.g. showGameSurface re-entering) must
+    // not stack a second delayed ready emission.
+    let isFirstStart = runtimeState.state == .unavailable
+    guard isFirstStart || runtimeState.state == .starting else {
       return
     }
     runtimeState.onRequestStart()
-    DispatchQueue.main.asyncAfter(deadline: .now() + hostReadyDelay) { [weak self] in
-      self?.emitHostReady()
+    if isFirstStart {
+      DispatchQueue.main.asyncAfter(deadline: .now() + hostReadyDelay) { [weak self] in
+        self?.emitHostReady()
+      }
     }
   }
 
   func showGameSurface() {
+    // Resume a suspended mock so handleGameStart can re-enter busy;
+    // ensureRuntimeStarted alone no-ops outside starting.
+    if runtimeState.state == .suspended {
+      runtimeState.onResume()
+    }
     ensureRuntimeStarted()
   }
 
@@ -161,13 +172,10 @@ final class MockGameCoreBridge {
     guard let id = envelope["id"] as? String else {
       return
     }
-    var payload: [String: Any] = [
-      "state": runtimeState.state.wireName,
-      "engine": "mock",
-    ]
-    if let activeSessionId = runtimeState.activeSessionId {
-      payload["activePlayId"] = activeSessionId
-    }
+    // v2 runtime-status snapshot shape (engine/mode/state/generation +
+    // conditional activeSessionId/error), replacing the legacy
+    // {state, engine, activePlayId} payload.
+    let payload = runtimeState.snapshot(engine: "mock", mode: "mock")
     emit([
       "v": 1,
       "id": id,

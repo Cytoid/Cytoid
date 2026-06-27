@@ -83,11 +83,20 @@ public final class RuntimeStateMachine {
         }
     }
 
-    /// busy → ready. Clears `activeSessionId`. No-op outside busy.
+    /// busy → ready. Clears `activeSessionId`. No-op outside busy/suspended.
     public func onSessionEnded() {
-        if state == .busy {
+        switch state {
+        case .busy:
             activeSessionId = nil
             state = .ready
+        case .suspended:
+            // Session ended while suspended (cancel/result during
+            // backgrounding): clear the active session and neutralize the
+            // resume target so onResume lands in ready, not stale busy.
+            activeSessionId = nil
+            priorStateForResume = .ready
+        default:
+            break
         }
     }
 

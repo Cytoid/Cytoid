@@ -29,10 +29,18 @@ public struct GameCoreError: Equatable {
     }
 
     /// Parse from a v2 wire object, or nil if the shape is invalid.
+    ///
+    /// `details`, when present, MUST be a dictionary. A present-but-non-dict
+    /// `details` is treated as malformed (returns nil) rather than silently
+    /// dropped — the spec (`docs/host-protocol-v2.md:1336-1340`) defines
+    /// `details` as an object.
     public static func from(map value: Any?) -> GameCoreError? {
         guard let dict = value as? [String: Any] else { return nil }
         guard let code = dict["code"] as? String else { return nil }
         guard let message = dict["message"] as? String else { return nil }
+        if let detailsValue = dict["details"], !(detailsValue is [String: Any]) {
+            return nil
+        }
         let details = dict["details"] as? [String: Any]
         return GameCoreError(code: code, message: message, details: details)
     }

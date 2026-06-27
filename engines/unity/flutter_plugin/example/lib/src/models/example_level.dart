@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:cytoid_game_core/cytoid_game_core.dart';
 import 'package:flutter/services.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
-import '../services/level_vfs_materializer.dart';
 import 'example_settings.dart';
 import 'example_mods.dart';
 
@@ -16,6 +18,7 @@ const exampleLevelAssetRoot = 'assets/levels';
 class ExampleLevel {
   const ExampleLevel({
     required this.id,
+    required this.version,
     required this.title,
     required this.artist,
     required this.charter,
@@ -26,6 +29,7 @@ class ExampleLevel {
   });
 
   final String id;
+  final String version;
   final String title;
   final String artist;
   final String charter;
@@ -46,14 +50,36 @@ class ExampleLevel {
     ExampleMods? mods,
     TierPlayLaunch? tierPlay,
   }) async {
-    final assets = await vfsMaterializer.materializeFolder(
+    final assetBundle = rootBundle;
+    final manifestKeys = listFolderAssetKeys(
+      (await AssetManifest.loadFromAssetBundle(assetBundle)).listAssets(),
+      baseAssetPath,
+    );
+
+    // Read each asset once to capture its byte length for the cache key.
+    // The plugin re-reads on a cache miss; this is acceptable for the
+    // example app since per-level payloads are small.
+    final assetKeyLengths = <String, int>{};
+    for (final fullKey in manifestKeys) {
+      final data = await assetBundle.load(fullKey);
+      assetKeyLengths[fullKey.substring(baseAssetPath.length + 1)] =
+          data.lengthInBytes;
+    }
+
+    final vfsRootPath = await vfsMaterializer.materialize(
       levelId: id,
-      folderAssetPath: baseAssetPath,
+      version: version,
+      assetKeys: assetKeyLengths,
+      bundle: assetBundle,
+    );
+
+    final assets = GameLaunchAssets(
+      vfsUri: Uri.file(vfsRootPath, windows: false).toString(),
       chartPath: difficulty.chartAsset,
       musicPath: musicAsset,
       storyboardPath: difficulty.storyboardAsset,
     );
-    final metaJson = await rootBundle.loadString(metaAsset);
+    final metaJson = await assetBundle.loadString(metaAsset);
 
     return GameLaunchPayload(
       levelMetaJson: metaJson,
@@ -118,7 +144,7 @@ class ExampleLevelRepository {
       // Hidden level may not be bundled in this build.
     }
     try {
-      await LevelVfsMaterializer.pruneOrphanedLevels(activeIds);
+      await _pruneOrphanedLevels(activeIds);
     } on Object {
       // Swallow: GC failure is non-fatal.
     }
@@ -165,6 +191,7 @@ class ExampleLevelRepository {
 
     return ExampleLevel(
       id: meta['id'] as String,
+      version: _readVersion(meta),
       title: meta['title'] as String,
       artist: meta['artist'] as String,
       charter: meta['charter'] as String,
@@ -175,6 +202,15 @@ class ExampleLevelRepository {
     );
   }
 
+  static String _readVersion(Map<String, dynamic> meta) {
+    final value = meta['version'];
+    if (value is int) return value.toString();
+    if (value is String) return value;
+    // Fall back to a stable constant so unknown-version levels still get a
+    // usable cache key rather than throwing at launch time.
+    return '0';
+  }
+
   static String _difficultyLabel(String type) {
     return switch (type) {
       'easy' => 'Easy',
@@ -182,6 +218,40 @@ class ExampleLevelRepository {
       'extreme' => 'Extreme',
       _ => type,
     };
+  }
+}
+
+/// Asset keys directly under [folderAssetPath]
+/// (e.g. `assets/levels/foo/bar.txt`).
+List<String> listFolderAssetKeys(
+  Iterable<String> assetKeys,
+  String folderAssetPath,
+) {
+  final prefix = '$folderAssetPath/';
+  return assetKeys.where((key) => key.startsWith(prefix)).toList()..sort();
+}
+
+/// Deletes VFS cache directories for levels no longer present in the asset
+/// bundle. Walks `<temp>/cytoid/levels/<levelId>/` so all version + hash
+/// subdirectories of an orphaned level are reclaimed together.
+///
+/// Best-effort: individual deletion failures are swallowed so that one
+/// stuck directory does not prevent cleanup of the rest.
+Future<void> _pruneOrphanedLevels(Set<String> activeLevelIds) async {
+  final cacheRoot = await getTemporaryDirectory();
+  final levelsRoot = Directory(p.join(cacheRoot.path, 'cytoid', 'levels'));
+
+  if (!levelsRoot.existsSync()) return;
+
+  await for (final entry in levelsRoot.list()) {
+    if (entry is! Directory) continue;
+    final name = p.basename(entry.path);
+    if (activeLevelIds.contains(name)) continue;
+    try {
+      await entry.delete(recursive: true);
+    } on FileSystemException {
+      // Best-effort: skip directories we cannot remove.
+    }
   }
 }
 

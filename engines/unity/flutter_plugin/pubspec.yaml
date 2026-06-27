@@ -1,6 +1,6 @@
 name: cytoid_game_core
 description: "CytoidGameCore bridge ↔ Unity game protocol and fullscreen runtime."
-version: 0.0.1
+version: 0.1.0
 homepage:
 
 environment:
@@ -8,8 +8,11 @@ environment:
   flutter: '>=3.44.0'
 
 dependencies:
+  crypto: ^3.0.6
   flutter:
     sdk: flutter
+  path: ^1.9.1
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:

@@ -86,5 +86,10 @@ internal var probeUnityAvailable: () -> Boolean = {
         true
     } catch (_: ClassNotFoundException) {
         false
+    } catch (_: LinkageError) {
+        // Class present but unloadable (UnsatisfiedLinkError /
+        // ExceptionInInitializerError / ABI mismatch): route to mock rather
+        // than letting the linkage failure escape and crash the caller.
+        false
     }
 }

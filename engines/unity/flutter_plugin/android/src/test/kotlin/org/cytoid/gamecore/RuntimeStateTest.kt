@@ -342,4 +342,28 @@ class RuntimeStateTest {
         assertEquals(RuntimeState.SUSPENDED, sm.state)
         assertEquals(generationBefore, sm.generation)
     }
+
+    // --- Session end while suspended (cancel/result during backgrounding) ---
+
+    @Test
+    fun `onSessionEnded while SUSPENDED clears session and resumes to READY`() {
+        val sm = RuntimeStateMachine()
+        sm.onRequestStart()
+        sm.onEngineReady()
+        sm.onSessionStarted("S1")
+        sm.onSuspend()
+        assertEquals(RuntimeState.SUSPENDED, sm.state)
+        assertEquals("S1", sm.activeSessionId)
+
+        // session.cancel / session.result arrives while suspended.
+        sm.onSessionEnded()
+
+        assertEquals(RuntimeState.SUSPENDED, sm.state)
+        assertNull("activeSessionId cleared even while suspended", sm.activeSessionId)
+
+        // Resume must land in READY (not stale BUSY) with no session id.
+        sm.onResume()
+        assertEquals(RuntimeState.READY, sm.state)
+        assertNull(sm.activeSessionId)
+    }
 }

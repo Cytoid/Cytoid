@@ -1,6 +1,7 @@
 package org.cytoid.gamecore
 
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
@@ -151,6 +152,39 @@ class CytoidNativeConfigTest {
         } catch (_: ClassNotFoundException) {
             // expected
         }
+    }
+
+    // --- Exact-value contract: pins every identifier literal so a rename
+    //     within the allowed shape (e.g. a different UnityPlayer* class or a
+    //     changed bridge method) cannot slip through the shape/prefix tests
+    //     above. Values MUST match CytoidNativeConfig.kt and AGENTS.md. ---
+
+    @Test
+    fun contract_pinsExactIdentifierLiterals() {
+        assertEquals(
+            "com.unity3d.player.UnityPlayerForActivityOrService",
+            CytoidNativeConfig.UNITY_PLAYER_FOR_ACTIVITY_CLASS,
+        )
+        assertEquals(
+            "com.unity3d.player.UnityPlayer",
+            CytoidNativeConfig.UNITY_PLAYER_CLASS,
+        )
+        assertEquals(
+            "me.tigerhix.cytoid.CytoidPluginActivity",
+            CytoidNativeConfig.UNITY_GAMEPLAY_ACTIVITY,
+        )
+        assertEquals("GameBridge", CytoidNativeConfig.UNITY_BRIDGE_OBJECT)
+        assertEquals("OnBridgeMessage", CytoidNativeConfig.UNITY_BRIDGE_METHOD)
+        assertEquals("me.tigerhix.cytoid", CytoidNativeConfig.PRODUCTION_APPLICATION_ID)
+        assertEquals(
+            "com.example.cytoid_flutter.unity",
+            CytoidNativeConfig.FLUTTER_UNITY_LIBRARY_PACKAGE_ID,
+        )
+        assertEquals(
+            "com.example.cytoid_flutter",
+            CytoidNativeConfig.FLUTTER_EXAMPLE_PACKAGE_ID,
+        )
+        assertEquals("org.cytoid.gamecore", CytoidNativeConfig.PLUGIN_NAMESPACE)
     }
 
     private companion object {

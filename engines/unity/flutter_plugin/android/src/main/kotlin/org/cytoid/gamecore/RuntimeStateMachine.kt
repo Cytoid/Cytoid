@@ -100,12 +100,23 @@ class RuntimeStateMachine {
         }
     }
 
-    /** BUSY → READY. Clears [activeSessionId]. No-op outside BUSY. */
+    /** BUSY → READY. Clears [activeSessionId]. No-op outside BUSY/SUSPENDED. */
     @VisibleForTesting
     fun onSessionEnded() {
-        if (state == RuntimeState.BUSY) {
-            activeSessionId = null
-            state = RuntimeState.READY
+        when (state) {
+            RuntimeState.BUSY -> {
+                activeSessionId = null
+                state = RuntimeState.READY
+            }
+            RuntimeState.SUSPENDED -> {
+                // Session ended while suspended (e.g. session.cancel / session.result
+                // arrived during backgrounding): clear the active session and
+                // neutralize the resume target so onResume lands in READY, not
+                // stale BUSY with a dead sessionId.
+                activeSessionId = null
+                priorStateForResume = RuntimeState.READY
+            }
+            else -> Unit
         }
     }
 

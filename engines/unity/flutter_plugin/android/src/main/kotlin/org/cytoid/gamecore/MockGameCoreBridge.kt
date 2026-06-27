@@ -30,6 +30,11 @@ class MockGameCoreBridge(
     }
 
     fun showGameSurface() {
+        // Resume a suspended mock so handleGameStart can re-enter BUSY;
+        // ensureRuntimeStarted alone no-ops outside STARTING.
+        if (runtimeState.state == RuntimeState.SUSPENDED) {
+            runtimeState.onResume()
+        }
         ensureRuntimeStarted()
     }
 
@@ -152,11 +157,10 @@ class MockGameCoreBridge(
     }
 
     private fun handleStatus(envelope: JSONObject) {
-        val payload =
-            JSONObject()
-                .put("state", runtimeState.state.wireName)
-                .put("engine", "mock")
-        runtimeState.activeSessionId?.let { payload.put("activePlayId", it) }
+        // v2 runtime-status snapshot shape (engine/mode/state/generation +
+        // conditional activeSessionId/error), replacing the legacy
+        // {state, engine, activePlayId} payload.
+        val payload = JSONObject(runtimeState.snapshot(engine = "mock", mode = "mock"))
         val status =
             JSONObject()
                 .put("v", PROTOCOL_VERSION)

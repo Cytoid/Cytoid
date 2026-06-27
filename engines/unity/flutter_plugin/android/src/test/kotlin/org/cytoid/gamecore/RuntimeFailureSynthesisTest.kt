@@ -35,14 +35,21 @@ import org.junit.Test
  */
 class RuntimeFailureSynthesisTest {
 
+    // Saved in @Before, restored in @After so the global probe mutation
+    // does not leak into other test classes sharing the JVM.
+    private var previousProbe: (() -> Boolean)? = null
+
     @Before
     fun resetBridgeInstance() {
         setCompanionInstance(null)
+        previousProbe = probeUnityAvailable
         probeUnityAvailable = { false }
     }
 
     @After
     fun restoreBridgeInstance() {
+        previousProbe?.let { probeUnityAvailable = it }
+        previousProbe = null
         setCompanionInstance(null)
     }
 

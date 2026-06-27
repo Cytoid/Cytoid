@@ -20,13 +20,22 @@ data class GameCoreError(
     }
 
     companion object {
-        /** Parse from a v2 wire object, or null if the shape is invalid. */
+        /**
+         * Parse from a v2 wire object, or null if the shape is invalid.
+         *
+         * `details`, when present, MUST be a Map. A present-but-non-Map
+         * `details` is treated as malformed (returns null) rather than
+         * silently dropped — the spec (`docs/host-protocol-v2.md:1336-1340`)
+         * defines `details` as an object.
+         */
         fun fromMap(value: Any?): GameCoreError? {
             if (value !is Map<*, *>) return null
             val code = value["code"] as? String ?: return null
             val message = value["message"] as? String ?: return null
+            val detailsRaw = value["details"]
+            if (detailsRaw != null && detailsRaw !is Map<*, *>) return null
             @Suppress("UNCHECKED_CAST")
-            val details = value["details"] as? Map<String, Any?>
+            val details = detailsRaw as? Map<String, Any?>
             return GameCoreError(code = code, message = message, details = details)
         }
     }

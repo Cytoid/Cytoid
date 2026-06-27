@@ -133,7 +133,15 @@ public class AssetMemory
                         request.SetRequestHeader("User-Agent", $"CytoidClient/{Context.VersionIdentifier}");
                         request.downloadHandler =
                             new DownloadHandlerFile(cachePath).Also(it => it.removeFileOnAbort = true);
-                        await request.SendWebRequest();
+                        try
+                        {
+                            await request.SendWebRequest();
+                        }
+                        catch (UnityWebRequestException)
+                        {
+                            // Suppress: the isNetworkError/isHttpError check below handles cleanup
+                            // (including isLoading.Remove) and returns default.
+                        }
                         if (cancellationToken != default && cancellationToken.IsCancellationRequested)
                         {
                             isLoading.Remove(path);
@@ -183,7 +191,15 @@ public class AssetMemory
             using (var request = UnityWebRequest.Get(loadPath))
             {
                 request.SetRequestHeader("User-Agent", $"CytoidClient/{Context.VersionIdentifier}");
-                await request.SendWebRequest();
+                try
+                {
+                    await request.SendWebRequest();
+                }
+                catch (UnityWebRequestException)
+                {
+                    // Suppress: the isNetworkError/isHttpError check below handles cleanup
+                    // (including isLoading.Remove) and returns default.
+                }
 
                 if (cancellationToken != default && cancellationToken.IsCancellationRequested)
                 {

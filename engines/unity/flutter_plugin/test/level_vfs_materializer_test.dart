@@ -47,15 +47,21 @@ String _hashFor(Map<String, int> assetKeys) {
   return sha256.convert(utf8.encode(payload)).toString();
 }
 
+const folderAssetPath = 'assets/levels/foo';
+
 void main() {
   late Directory cacheRoot;
   late _CountingAssetBundle bundle;
 
   setUp(() async {
     cacheRoot = await Directory.systemTemp.createTemp('vfs_materializer_');
+    // Bundle stores assets under FULL keys, mirroring how Flutter's
+    // rootBundle namespaces level assets (assets/levels/<id>/<relative>).
+    // The materializer must combine [folderAssetPath] + relative key to
+    // resolve these; loading the bare relative key must fail.
     bundle = _CountingAssetBundle({
-      'charts/hard.json': Uint8List.fromList([1, 2, 3, 4]),
-      'audio/song.ogg': Uint8List.fromList([10, 20, 30]),
+      '$folderAssetPath/charts/hard.json': Uint8List.fromList([1, 2, 3, 4]),
+      '$folderAssetPath/audio/song.ogg': Uint8List.fromList([10, 20, 30]),
     });
   });
 
@@ -77,6 +83,7 @@ void main() {
       final vfsPath = await materializer.materialize(
         levelId: 'level.foo',
         version: 'v1',
+        folderAssetPath: folderAssetPath,
         assetKeys: assetKeys,
         bundle: bundle,
         cacheRootOverride: cacheRoot,
@@ -105,6 +112,7 @@ void main() {
       await materializer.materialize(
         levelId: 'level.foo',
         version: 'v1',
+        folderAssetPath: folderAssetPath,
         assetKeys: assetKeys,
         bundle: bundle,
         cacheRootOverride: cacheRoot,
@@ -114,6 +122,7 @@ void main() {
       final secondPath = await materializer.materialize(
         levelId: 'level.foo',
         version: 'v1',
+        folderAssetPath: folderAssetPath,
         assetKeys: assetKeys,
         bundle: bundle,
         cacheRootOverride: cacheRoot,
@@ -146,6 +155,7 @@ void main() {
     final firstPath = await materializer.materialize(
       levelId: 'level.foo',
       version: 'v1',
+      folderAssetPath: folderAssetPath,
       assetKeys: assetKeys,
       bundle: bundle,
       cacheRootOverride: cacheRoot,
@@ -155,6 +165,7 @@ void main() {
     final secondPath = await materializer.materialize(
       levelId: 'level.foo',
       version: 'v2',
+      folderAssetPath: folderAssetPath,
       assetKeys: assetKeys,
       bundle: bundle,
       cacheRootOverride: cacheRoot,
@@ -168,6 +179,77 @@ void main() {
     expect(Directory(firstPath).existsSync(), isTrue);
     expect(Directory(secondPath).existsSync(), isTrue);
   });
+
+  test(
+    '(f) regression: resolves assets via folderAssetPath + relative key '
+    '(production rootBundle namespacing)',
+    () async {
+      // Reproduces the reported Android bug: the materializer was loading
+      // assets by their bare VFS-relative key, which rootBundle cannot
+      // resolve. It must combine folderAssetPath + relative key.
+      const materializer = LevelVfsMaterializer();
+      final assetKeys = {'ex.txt': 7};
+
+      final vfsPath = await materializer.materialize(
+        levelId: 'level.bar',
+        version: 'v1',
+        folderAssetPath: folderAssetPath,
+        assetKeys: assetKeys,
+        bundle: _CountingAssetBundle({
+          '$folderAssetPath/ex.txt': Uint8List.fromList([1, 2, 3, 4, 5, 6, 7]),
+        }),
+        cacheRootOverride: cacheRoot,
+      );
+
+      final chartFile = File(p.join(vfsPath, 'ex.txt'));
+      expect(chartFile.existsSync(), isTrue, reason: 'chart file must exist');
+      expect(chartFile.readAsBytesSync(), [1, 2, 3, 4, 5, 6, 7]);
+    },
+  );
+
+  test(
+    '(g) regression: a stale empty cache directory is re-materialized, not '
+    'treated as a cache hit',
+    () async {
+      // Reproduces the cascade symptom: a previous failed materialization
+      // left an empty cache directory on disk; the directory's bare
+      // existence must NOT be trusted as a hit.
+      const materializer = LevelVfsMaterializer();
+      final assetKeys = {'ex.txt': 3};
+      final fullBundle = _CountingAssetBundle({
+        '$folderAssetPath/ex.txt': Uint8List.fromList([10, 20, 30]),
+      });
+
+      // Pre-create the cache directory exactly where the materializer
+      // expects it, but leave it empty (simulating a prior failed run).
+      final cacheDir = Directory(
+        p.join(
+          cacheRoot.path,
+          'cytoid',
+          'levels',
+          'level.bar',
+          'v1',
+          _hashFor(assetKeys),
+        ),
+      );
+      await cacheDir.create(recursive: true);
+      expect(cacheDir.listSync(), isEmpty);
+
+      final vfsPath = await materializer.materialize(
+        levelId: 'level.bar',
+        version: 'v1',
+        folderAssetPath: folderAssetPath,
+        assetKeys: assetKeys,
+        bundle: fullBundle,
+        cacheRootOverride: cacheRoot,
+      );
+
+      expect(vfsPath, '${cacheDir.path}${p.separator}');
+      final chartFile = File(p.join(vfsPath, 'ex.txt'));
+      expect(chartFile.existsSync(), isTrue);
+      expect(chartFile.readAsBytesSync(), [10, 20, 30]);
+    },
+  );
 
   test('(d) canonicalizeVfsPath rejects absolute paths', () {
     expect(

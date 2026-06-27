@@ -22,13 +22,22 @@ class LevelVfsMaterializer {
   /// [assetKeys] maps each VFS-relative path (e.g. `charts/hard.json`,
   /// `audio/song.ogg`) to its source byte length, used only as input to
   /// the cache key hash. The bytes are re-read from [bundle] (defaulting
-  /// to [rootBundle]) on a cache miss.
+  /// to [rootBundle]) on a cache miss by combining [folderAssetPath] with
+  /// each relative key: `AssetBundle.load` resolves level assets under
+  /// their full key (`<folderAssetPath>/<relativeKey>`), not the bare
+  /// relative key.
+  ///
+  /// Cache completeness is guarded by a `.materialized` sentinel file
+  /// written last: a directory left behind by a previously failed or
+  /// interrupted materialization (empty or partial) is detected and
+  /// rebuilt rather than trusted as a hit.
   ///
   /// Returns the materialized VFS root directory path, terminated with a
   /// platform path separator so it can be used directly as a path prefix.
   Future<String> materialize({
     required String levelId,
     required String version,
+    required String folderAssetPath,
     required Map<String, int> assetKeys,
     AssetBundle? bundle,
     Directory? cacheRootOverride,
@@ -39,16 +48,23 @@ class LevelVfsMaterializer {
     final cacheDir = Directory(
       p.join(cacheRoot.path, 'cytoid', 'levels', levelId, version, contentHash),
     );
+    final sentinel = File(p.join(cacheDir.path, _kSentinelName));
 
-    if (cacheDir.existsSync()) {
+    if (cacheDir.existsSync() && sentinel.existsSync()) {
       return _withTrailingSeparator(cacheDir.path);
     }
 
+    // Discard any stale directory left by a prior failed or interrupted
+    // materialization before rebuilding.
+    if (cacheDir.existsSync()) {
+      await cacheDir.delete(recursive: true);
+    }
     await cacheDir.create(recursive: true);
 
     final sortedKeys = assetKeys.keys.toList()..sort();
     for (final assetKey in sortedKeys) {
-      final data = await assetBundle.load(assetKey);
+      final sourceKey = '$folderAssetPath/$assetKey';
+      final data = await assetBundle.load(sourceKey);
       final output = File(p.joinAll([
         cacheDir.path,
         ...assetKey.split('/'),
@@ -58,6 +74,9 @@ class LevelVfsMaterializer {
         data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
       );
     }
+
+    // Written last so a directory's existence implies a complete write.
+    await sentinel.writeAsBytes(const []);
 
     return _withTrailingSeparator(cacheDir.path);
   }
@@ -83,6 +102,11 @@ class LevelVfsMaterializer {
     final payload = sortedKeys.map((k) => '$k:${assetKeys[k]}').join('\n');
     return sha256.convert(utf8.encode(payload)).toString();
   }
+
+  /// Name of the sentinel file written last during materialization. A cache
+  /// directory is only treated as a hit when this file is present, so an
+  /// empty or partial directory left by a failed/interrupted run is rebuilt.
+  static const _kSentinelName = '.materialized';
 
   static String _withTrailingSeparator(String path) {
     return path.endsWith(Platform.pathSeparator)

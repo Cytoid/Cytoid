@@ -69,6 +69,7 @@ class ExampleLevel {
     final vfsRootPath = await vfsMaterializer.materialize(
       levelId: id,
       version: version,
+      folderAssetPath: baseAssetPath,
       assetKeys: assetKeyLengths,
       bundle: assetBundle,
     );

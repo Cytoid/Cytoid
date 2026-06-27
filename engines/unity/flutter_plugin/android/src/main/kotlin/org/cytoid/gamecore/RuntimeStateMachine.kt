@@ -75,14 +75,18 @@ class RuntimeStateMachine {
 
     /**
      * STARTING → READY (or FAILED → READY on recovery). Bumps [generation]
-     * when entering READY from STARTING or FAILED, per v2 § Active-Session
-     * Runtime Failure ("next engine.ready MUST carry an incremented generation").
+     * when entering READY, per v2 § Active-Session Runtime Failure ("next
+     * engine.ready MUST carry an incremented generation"). No-op from any
+     * other state: a duplicate or late ready arriving while BUSY or
+     * SUSPENDED must not reset state and corrupt the active session or the
+     * suspend invariant.
      */
     @VisibleForTesting
     fun onEngineReady() {
-        if (state == RuntimeState.STARTING || state == RuntimeState.FAILED) {
-            generation += 1
+        if (state != RuntimeState.STARTING && state != RuntimeState.FAILED) {
+            return
         }
+        generation += 1
         state = RuntimeState.READY
         lastError = null
     }

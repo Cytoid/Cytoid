@@ -61,12 +61,16 @@ public final class RuntimeStateMachine {
     }
 
     /// starting → ready (or failed → ready on recovery). Bumps `generation`
-    /// when entering ready from starting or failed, per v2 § Active-Session
-    /// Runtime Failure ("next engine.ready MUST carry an incremented generation").
+    /// when entering ready, per v2 § Active-Session Runtime Failure ("next
+    /// engine.ready MUST carry an incremented generation"). No-op from any
+    /// other state: a duplicate or late ready arriving while busy or
+    /// suspended must not reset state and corrupt the active session or the
+    /// suspend invariant.
     public func onEngineReady() {
-        if state == .starting || state == .failed {
-            generation += 1
+        if state != .starting && state != .failed {
+            return
         }
+        generation += 1
         state = .ready
         lastError = nil
     }

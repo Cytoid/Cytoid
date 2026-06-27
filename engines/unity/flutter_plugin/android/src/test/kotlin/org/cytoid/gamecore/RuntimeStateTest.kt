@@ -297,4 +297,49 @@ class RuntimeStateTest {
             sm.activeSessionId,
         )
     }
+
+    // --- onEngineReady hardening (no-op outside starting/failed) ---
+
+    @Test
+    fun `onEngineReady is no-op when already READY and preserves generation`() {
+        val sm = RuntimeStateMachine()
+        sm.onRequestStart()
+        sm.onEngineReady()
+        assertEquals(RuntimeState.READY, sm.state)
+        val generationBefore = sm.generation
+
+        sm.onEngineReady()
+
+        assertEquals(RuntimeState.READY, sm.state)
+        assertEquals(generationBefore, sm.generation)
+    }
+
+    @Test
+    fun `onEngineReady during BUSY preserves the active session`() {
+        val sm = RuntimeStateMachine()
+        sm.onRequestStart()
+        sm.onEngineReady()
+        sm.onSessionStarted("S1")
+        val generationBefore = sm.generation
+
+        sm.onEngineReady()
+
+        assertEquals(RuntimeState.BUSY, sm.state)
+        assertEquals("S1", sm.activeSessionId)
+        assertEquals(generationBefore, sm.generation)
+    }
+
+    @Test
+    fun `onEngineReady during SUSPENDED preserves suspended state`() {
+        val sm = RuntimeStateMachine()
+        sm.onRequestStart()
+        sm.onEngineReady()
+        sm.onSuspend()
+        val generationBefore = sm.generation
+
+        sm.onEngineReady()
+
+        assertEquals(RuntimeState.SUSPENDED, sm.state)
+        assertEquals(generationBefore, sm.generation)
+    }
 }

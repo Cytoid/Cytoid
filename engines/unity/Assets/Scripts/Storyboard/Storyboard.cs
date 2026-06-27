@@ -128,6 +128,7 @@ namespace Cytoid.Storyboard
 
         public void Dispose()
         {
+            Renderer.Dispose();
             Texts.Clear();
             Sprites.Clear();
             Controllers.Clear();

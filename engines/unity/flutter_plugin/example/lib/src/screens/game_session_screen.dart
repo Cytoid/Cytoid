@@ -7,6 +7,20 @@ import 'package:flutter/services.dart';
 
 import '../game_routes.dart';
 
+/// Handoff screen that orchestrates a single gameplay session.
+///
+/// Flutter owns the handoff UI (black overlay + status text). The Unity-side
+/// overlay may flash briefly on surface transitions (show/hide) — this is
+/// known and accepted per the v2 handoff-ownership decision.
+///
+/// Session readiness uses [CytoidGameCoreClient.waitForReady], the same
+/// primitive that [PlaySession.run] composes. The full [PlaySession.run]
+/// lifecycle (v2 `session.start` / `session.result`) requires engine-side v2
+/// protocol support; the mock engine and current Unity core still speak v1
+/// during the migration window (plan line 38: "Unity-side v2 protocol
+/// implementation is a separate body of work tracked outside this plan").
+/// Until the engine migrates, the play start/result path stays on the v1
+/// `startPlay` API so the example remains functional.
 class GameSessionScreen extends StatefulWidget {
   const GameSessionScreen({super.key, required this.args});
 
@@ -27,11 +41,11 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(_runGame());
+      unawaited(_startSession());
     });
   }
 
-  Future<void> _runGame() async {
+  Future<void> _startSession() async {
     GameResultPayload? result;
 
     try {
@@ -54,23 +68,21 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
       if (!mounted) return;
       setState(() => _status = 'Opening surface');
 
-      debugPrint('[CYTOID-DBG] calling showGameSurface');
       await _client.showGameSurface();
       _surfaceVisible = true;
-      debugPrint('[CYTOID-DBG] showGameSurface returned, awaiting host ready');
-      await _awaitHostReady();
-      unawaited(
-        _client
-            .updateSettings(widget.args.settings.toLaunchSettings())
-            .catchError((_) {}),
-      );
+
+      // waitForReady is the readiness gate that PlaySession.run() composes.
+      // Throws CytoidGameCoreTimeoutException on timeout — never silently
+      // continues (replaces the former manual ready-wait deadline loop).
+      await _client.waitForReady(timeout: const Duration(seconds: 20));
+
+      // Fire-and-forget v1 settings update; does not block the session.
+      unawaited(_applySettings());
 
       if (!mounted) return;
       setState(() => _status = 'Loading chart');
 
-      debugPrint('[CYTOID-DBG] calling startPlay');
       result = await _client.startPlay(payload);
-      debugPrint('[CYTOID-DBG] startPlay returned: failed=${result.failed} completed=${result.completed}');
       widget.args.onCalibrationResult?.call(result);
       await _hideSurface();
     } on CytoidGameCorePlayRouteEndedException {
@@ -124,11 +136,25 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
     return gameMode == 'calibration' || gameMode == 'globalcalibration';
   }
 
+  /// Applies v1 launch settings without blocking the session. Errors are
+  /// logged but do not abort — settings are best-effort pre-play.
+  Future<void> _applySettings() async {
+    try {
+      await _client.updateSettings(widget.args.settings.toLaunchSettings());
+    } catch (error) {
+      debugPrint('[GameSession] settings update failed: $error');
+    }
+  }
+
   Future<void> _cancelAndPop() async {
     if (_leaving) return;
     _leaving = true;
     setState(() => _status = 'Closing');
-    await _client.endPlayRoute().catchError((_) {});
+    try {
+      await _client.endPlayRoute();
+    } catch (error) {
+      debugPrint('[GameSession] endPlayRoute failed: $error');
+    }
     await _hideSurface();
     await _restorePresentation();
     if (mounted) {
@@ -136,55 +162,18 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
     }
   }
 
-  Future<void> _awaitHostReady() async {
-    debugPrint('[CYTOID-DBG] _awaitHostReady enter');
-    final readyCompleter = Completer<void>();
-    late StreamSubscription<CytoidGameCoreEnvelope> readySubscription;
-    readySubscription = _client.readyEvents.listen((_) {
-      if (!readyCompleter.isCompleted) {
-        debugPrint('[CYTOID-DBG] _awaitHostReady: game.ready event received');
-        readyCompleter.complete();
-      }
-    });
-
-    try {
-      final deadline = DateTime.now().add(const Duration(seconds: 20));
-      while (!readyCompleter.isCompleted) {
-        final status = await _client.queryStatus();
-        if (status.state == GameRuntimeStatus.ready) {
-          debugPrint('[CYTOID-DBG] _awaitHostReady: status=ready, returning');
-          return;
-        }
-        unawaited(_pingReady());
-        final remaining = deadline.difference(DateTime.now());
-        if (remaining <= Duration.zero) {
-          debugPrint('[CYTOID-DBG] _awaitHostReady: DEADLINE HIT — returning without ready!');
-          return;
-        }
-        await Future.any<void>([
-          readyCompleter.future,
-          Future<void>.delayed(
-            remaining < const Duration(milliseconds: 500)
-                ? remaining
-                : const Duration(milliseconds: 500),
-          ),
-        ]);
-      }
-    } finally {
-      await readySubscription.cancel();
-    }
-  }
-
-  Future<void> _pingReady() async {
-    try {
-      await _client.ping(text: 'ready?');
-    } catch (_) {}
-  }
-
+  /// Hides the game surface if currently visible. Guarded against double-hide
+  /// via [_surfaceVisible]. Used in non-PlaySession paths (cancel, error
+  /// recovery); when PlaySession.run is adopted, its finally block will own
+  /// the hide and this guard becomes redundant.
   Future<void> _hideSurface() async {
     if (!_surfaceVisible) return;
     _surfaceVisible = false;
-    await _client.hideGameSurface().catchError((_) {});
+    try {
+      await _client.hideGameSurface();
+    } catch (error) {
+      debugPrint('[GameSession] hideGameSurface failed: $error');
+    }
   }
 
   Future<void> _restorePresentation() async {

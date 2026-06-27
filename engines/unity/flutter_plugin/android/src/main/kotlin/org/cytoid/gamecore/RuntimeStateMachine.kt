@@ -155,4 +155,22 @@ class RuntimeStateMachine {
     fun clearActiveSessionForCancellation() {
         activeSessionId = null
     }
+
+    /**
+     * Reset to [RuntimeState.UNAVAILABLE]. Called when the runtime surface is
+     * destroyed without an active session (e.g. the OS reclaimed the Unity
+     * Activity). The host MUST call `startRuntime()` again before launching a
+     * new session.
+     *
+     * Does NOT reset [generation]: the next `onEngineReady` bumps it naturally
+     * from STARTING. [activeSessionId] is already null by contract (the caller
+     * only invokes this when no session is active). [lastError] and the resume
+     * slot are cleared to give the host a clean slate on restart.
+     */
+    @VisibleForTesting
+    fun reset() {
+        state = RuntimeState.UNAVAILABLE
+        lastError = null
+        priorStateForResume = null
+    }
 }

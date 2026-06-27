@@ -67,6 +67,17 @@ Protocol spec: `engines/unity/flutter_plugin/example/docs/host-protocol.md` (sha
 - `activeSessionId == null` → `engine.error` envelope via the EventChannel, `error.code = "runtime_exception"`, message sanitized to `"<ExceptionClassSimpleName>: <first message line>"` (no raw stack trace).
 - `activeSessionId != null` → synthesized `session.result` with `outcome.kind = "runtimeFailed"` and `error.code = "runtime_unreachable"` via the T4 primitive. Never both — active-session failures use `session.result` ONLY.
 
+**Android Unity Activity lifecycle (warm-resident):** the exclusive Unity Activity (`me.tigerhix.cytoid.CytoidPluginActivity`) is NOT `finish()`-ed on session end. `hideGameSurface()` brings the Flutter Activity to front via `FLAG_ACTIVITY_REORDER_TO_FRONT | FLAG_ACTIVITY_SINGLE_TOP` and leaves the Unity Activity warm-resident in the back stack. This keeps Unity/IL2CPP/GL state alive across the typical play loop (select level → play → result → select next), eliminating the 5–15s cold-start tax on every session.
+
+Activity lifecycle callbacks drive the T3 state machine:
+- `onActivityPaused` (Unity Activity) → `runtimeState.onSuspend()` (READY|BUSY → SUSPENDED; single-slot prior state preserved).
+- `onActivityResumed` → `runtimeState.onResume()` (SUSPENDED → prior state).
+- `onActivityDestroyed` → if `activeSessionId != null`, T4's `synthesizeRuntimeFailure(SURFACE_LOST, sessionId)` fires (emits `session.result` with `error.code = "runtime_surface_lost"`, transitions to FAILED); otherwise `runtimeState.reset()` returns to UNAVAILABLE (caller must `startRuntime()` again).
+
+A `@VisibleForTesting unityActivityInstanceCount` counter tracks live Unity Activity instances. In the warm-resident policy this counter MUST stay at 0 or 1 across arbitrary session cycles; a value > 1 indicates Activity accumulation (memory leak). The memory regression test runs 10 sequential session cycles via low-level primitives and asserts the counter never exceeds 1.
+
+The Unity Activity source lives in the AAR and is NOT editable from this repo. Lifecycle integration is exclusively via `Application.ActivityLifecycleCallbacks` registered in `CytoidGameCoreBridge.attachActivity`.
+
 ---
 
 ## Build & Debug

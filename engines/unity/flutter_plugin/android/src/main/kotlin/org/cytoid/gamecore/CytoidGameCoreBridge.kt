@@ -63,6 +63,20 @@ class CytoidGameCoreBridge private constructor(
     @VisibleForTesting
     internal var invokeReturnToFlutter: (() -> Unit)? = null
 
+    // Memory regression counter (v2 § Warm-resident). Tracks the number of
+    // live Unity Activity instances observed via ActivityLifecycleCallbacks.
+    // In the warm-resident policy the Activity is NOT finished on session end,
+    // so this counter MUST stay at 0 or 1 across arbitrary session cycles.
+    // A value > 1 indicates Activity accumulation (memory leak).
+    //
+    // @VisibleForTesting: production code does not read this; tests assert on
+    // it to verify no accumulation across 10 sequential session cycles. It is
+    // incremented in onActivityCreated and decremented in onActivityDestroyed
+    // when the activity class matches CytoidNativeConfig.UNITY_GAMEPLAY_ACTIVITY.
+    @VisibleForTesting
+    internal var unityActivityInstanceCount: Int = 0
+        private set
+
     // Tracks one-shot Application callback registration so attachActivity can
     // be called multiple times (config changes) without double-registering.
     private var lifecycleRegistered = false
@@ -72,6 +86,7 @@ class CytoidGameCoreBridge private constructor(
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
                 if (isUnityGameplayActivity(activity)) {
                     exclusiveUnityActivity = activity
+                    unityActivityInstanceCount++
                     runtimeState.onEngineReady()
                     Log.i(TAG, "Exclusive game core activity created: ${activity.javaClass.name}")
                 }
@@ -103,6 +118,7 @@ class CytoidGameCoreBridge private constructor(
                 if (exclusiveUnityActivity === activity) {
                     Log.i(TAG, "[CYTOID-DBG] Unity activity DESTROYED")
                     exclusiveUnityActivity = null
+                    unityActivityInstanceCount--
                     // SURFACE_LOST trigger (v2 § Active-Session Runtime Failure):
                     // capture activeSessionId BEFORE any state cleanup so the
                     // primitive's idempotency gate sees the live value.
@@ -112,6 +128,12 @@ class CytoidGameCoreBridge private constructor(
                             RuntimeFailureTrigger.SURFACE_LOST,
                             activeSession,
                         )
+                    } else {
+                        // Surface destroyed without an active session: the
+                        // runtime needs a full restart. Reset to UNAVAILABLE so
+                        // the host knows to call startRuntime() again before
+                        // launching a new session.
+                        runtimeState.reset()
                     }
                 }
             }

@@ -208,3 +208,69 @@ jobs:
           name: cytoid-game-core-flutter-plugin
           path: ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/dist/cytoid_game_core-*.zip
           if-no-files-found: error
+
+  # Build-level smoke test: links the AAR produced by `android` into the
+  # example app and asserts `flutter build apk --release` succeeds. This
+  # catches ABI/linkage regressions that `flutter-package`'s `flutter analyze`
+  # + `flutter test` cannot see (those steps do not build a host APK).
+  #
+  # SCOPE GUARD: this job is BUILD-LEVEL ONLY. It does NOT start an Android
+  # emulator and does NOT exercise the runtime path. Real-device smoke
+  # (kill-Unity-mid-session, send-failure, framework-load-failure, 10-session
+  # memory regression, backgrounded-session resume, refresh-rate restoration)
+  # is human-gated via F3 — see
+  # engines/unity/flutter_plugin/example/docs/real-device-smoke.md for the
+  # checklist that F3 follows. Per Fork 3=B and Fork 5=A, real-device CI
+  # runners and emulator boot are explicitly out of scope.
+  #
+  # Trigger remains workflow_dispatch only (no PR gating).
+  flutter-smoke:
+    name: Flutter host smoke (build-level)
+    runs-on: ubuntu-latest
+    needs:
+      - android
+      - flutter-package
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Download Android artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: cytoid-game-core-android
+          path: ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts/unity/android
+
+      # Manifest is also in the cytoid-game-core-android artifact. The download
+      # step places it under the android/ subdir; move it to its canonical
+      # location next to the AARs so check_engine_mode.sh finds it.
+      - name: Restore manifest location
+        run: |
+          src="${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts/unity/android/manifest.android.json"
+          dst="${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts/manifest.android.json"
+          if [[ -f "$src" && ! -f "$dst" ]]; then
+            mv "$src" "$dst"
+          elif [[ -f "$src" && -f "$dst" ]]; then
+            rm -f "$src"
+          fi
+
+      # Info-only: prints "unity" when both manifest + AAR are present,
+      # "mock" otherwise. Always exits 0. This is the smoke distinguisher.
+      - name: Report engine mode
+        run: |
+          mode="$(bash ${{ env.FLUTTER_PLUGIN_PATH }}/android/scripts/check_engine_mode.sh)"
+          echo "ENGINE_MODE=$mode"
+          echo "::notice::flutter-smoke ENGINE_MODE=$mode"
+
+      - name: Flutter pub get
+        working-directory: ${{ env.FLUTTER_PLUGIN_PATH }}/example
+        run: flutter pub get
+
+      - name: Build example APK
+        working-directory: ${{ env.FLUTTER_PLUGIN_PATH }}/example
+        run: flutter build apk --release

@@ -323,6 +323,40 @@ void main() {
     });
 
     test(
+      'Android poll surfaces a failed runtime immediately instead of '
+      'burning the timeout',
+      () async {
+        // Runtime is FAILED: the poll must throw the typed failure right
+        // away, not wait for the deadline and report a misleading timeout.
+        statusState = 'failed';
+        final client = CytoidGameCoreClient(
+          methodChannel: primaryChannel,
+          eventStream: events.stream,
+        );
+        final session = PlaySession(client);
+
+        final runFuture = session.run(
+          launch: _buildTestLaunch(),
+          readyTimeout: const Duration(seconds: 30),
+        );
+
+        await expectLater(
+          runFuture,
+          throwsA(isA<PlatformException>()),
+        );
+
+        expect(
+          primaryCalls.map((c) => c.method),
+          contains('hideGameSurface'),
+        );
+        expect(
+          sentEnvelopeOfType(WireMessageType.sessionStart),
+          isNull,
+        );
+      },
+    );
+
+    test(
         'iOS waitForReady helper timeout rethrows as '
         'CytoidGameCoreTimeoutException', () async {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger

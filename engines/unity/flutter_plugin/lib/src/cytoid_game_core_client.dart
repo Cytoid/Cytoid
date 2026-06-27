@@ -118,7 +118,9 @@ class CytoidGameCoreClient {
     final effectiveTimeout = timeout ?? defaultReadyTimeout;
 
     try {
-      final timeoutSeconds = effectiveTimeout.inSeconds;
+      // Fractional seconds: the iOS helper accepts TimeInterval (Double), and
+      // truncating to whole seconds would collapse sub-second durations to 0.
+      final timeoutSeconds = effectiveTimeout.inMilliseconds / 1000.0;
       await _waitForReadyChannel.invokeMethod<void>(
         'waitForReady',
         timeoutSeconds,
@@ -131,7 +133,7 @@ class CytoidGameCoreClient {
       if (e.code == _waitForReadyTimeoutErrorCode) {
         throw CytoidGameCoreTimeoutException(
           'iOS waitForReady helper timed out after '
-          '${effectiveTimeout.inSeconds}s.',
+          '${effectiveTimeout.inMilliseconds}ms.',
           timeout: effectiveTimeout,
         );
       }
@@ -146,13 +148,27 @@ class CytoidGameCoreClient {
   /// initialized across sessions, and an `Activity` resume after
   /// `showGameSurface` transitions SUSPENDED→READY without re-emitting
   /// `engine.ready`. The runtime snapshot is the only reliable signal, so we
-  /// poll [queryStatus] until it reports ready or the deadline elapses.
+  /// poll [queryStatus] until it reports ready, the runtime fails, or the
+  /// deadline elapses.
   Future<void> _awaitReadyEvent(Duration timeout) async {
     final deadline = DateTime.now().add(timeout);
     while (true) {
       final status = await queryStatus();
       if (status.isReady) {
         return;
+      }
+      // Surface the real failure immediately instead of burning the full
+      // timeout. Mirrors the iOS helper's alreadyFailed path and
+      // ensureRuntimeStarted's unavailable handling.
+      if (status.isFailed) {
+        throw PlatformException(
+          code: status.error?.code ?? 'runtime_failed',
+          message: status.error?.message ?? 'Runtime is in a failed state.',
+          details: status.error?.toJson(),
+        );
+      }
+      if (status.isUnavailable) {
+        throw CytoidGameCoreLostException('Game core runtime is unavailable.');
       }
       if (DateTime.now().isAfter(deadline)) {
         throw CytoidGameCoreTimeoutException(

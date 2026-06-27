@@ -4,7 +4,10 @@ import Foundation
 final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   private lazy var mockBridge: MockGameCoreBridge = {
     MockGameCoreBridge { [weak self] json in
-      self?.emitEvent(json)
+      // Route mock emissions through onUnityMessage so the OUTER runtimeState
+      // sees game.ready / session.started / session.result and waitForReady
+      // resolves in mock mode. Emitting straight to emitEvent bypassed state.
+      self?.onUnityMessage(json)
     }
   }()
 
@@ -205,17 +208,13 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   }
 
   func onUnityMessage(_ jsonString: String) {
-    emitEvent(jsonString)
-
     let type = messageType(jsonString)
-    // v2 engine.ready or v1 fallback game.ready both complete the
-    // starting→ready transition.
+
+    // GENERATION_CHANGE must run BEFORE the engine.ready envelope is
+    // forwarded: the spec requires the prior session's `runtime_recreated`
+    // session.result to reach the host before the next engine.ready (v2 §
+    // Active-Session Runtime Failure ordering).
     if type == "engine.ready" || type == "game.ready" {
-      // GENERATION_CHANGE trigger (v2 § Active-Session Runtime Failure):
-      // if a session was active AND generation is now >1, the prior
-      // session belongs to a stale engine instance. Capture before
-      // onEngineReady (which doesn't clear activeSessionId, but the
-      // capture makes the intent explicit and survives future edits).
       let wasActiveSession = runtimeState.activeSessionId
       runtimeState.onEngineReady()
       if let wasActiveSession, runtimeState.generation > 1 {
@@ -223,6 +222,9 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
       }
       resumeReadyWaiters()
     }
+
+    emitEvent(jsonString)
+
     // v2 session.started: explicit ready→busy signal carries the sessionId.
     if type == "session.started", let id = messageId(jsonString) {
       runtimeState.onSessionStarted(sessionId: id)

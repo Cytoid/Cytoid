@@ -48,6 +48,21 @@ class CytoidGameCoreBridge private constructor(
     @VisibleForTesting
     internal var emitOverride: ((String) -> Unit)? = null
 
+    // Testability seam for [sendToUnity]: when non-null, replaces the reflective
+    // `UnitySendMessage` invocation. JVM unit tests cannot load the real Unity
+    // player class, so they swap this to drive the failure routing in a
+    // controlled way (`{ throw RuntimeException(...) }`) or to simulate the
+    // happy path (`{ /* no-op */ }`). Production leaves this null.
+    @VisibleForTesting
+    internal var invokeUnitySend: ((String) -> Unit)? = null
+
+    // Testability seam for [returnToFlutterActivity]: when non-null, replaces
+    // the `activity.startActivity(intent)` call. Same rationale as
+    // [invokeUnitySend] — JVM tests cannot meaningfully drive the stubbed
+    // android.jar `startActivity`, so they swap this to inject failures.
+    @VisibleForTesting
+    internal var invokeReturnToFlutter: (() -> Unit)? = null
+
     // Tracks one-shot Application callback registration so attachActivity can
     // be called multiple times (config changes) without double-registering.
     private var lifecycleRegistered = false
@@ -266,16 +281,21 @@ class CytoidGameCoreBridge private constructor(
         }
     }
 
-    private fun returnToFlutterActivity() {
-        val intent =
-            Intent(activity, activity.javaClass)
-                .addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-                .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-
-        runCatching {
-            activity.startActivity(intent)
-        }.onFailure { error ->
-            Log.e(TAG, "Failed to return to Flutter activity", error)
+    @VisibleForTesting
+    internal fun returnToFlutterActivity() {
+        try {
+            val invoker = invokeReturnToFlutter
+            if (invoker != null) {
+                invoker()
+            } else {
+                val intent =
+                    Intent(activity, activity.javaClass)
+                        .addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                        .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                activity.startActivity(intent)
+            }
+        } catch (error: Throwable) {
+            reportNativeSendFailure(error)
         }
     }
 
@@ -428,26 +448,81 @@ class CytoidGameCoreBridge private constructor(
         return envelope
     }
 
-    private fun sendToUnity(jsonString: String) {
-        runCatching {
-            Class.forName(CytoidNativeConfig.UNITY_PLAYER_CLASS)
-                .getMethod(
-                    "UnitySendMessage",
-                    String::class.java,
-                    String::class.java,
-                    String::class.java,
-                )
-                .invoke(
-                    null,
-                    CytoidNativeConfig.UNITY_BRIDGE_OBJECT,
-                    CytoidNativeConfig.UNITY_BRIDGE_METHOD,
-                    jsonString,
-                )
-        }.onFailure { error ->
-            Log.e(TAG, "[CYTOID-DBG] UnitySendMessage FAILED (Unity not loaded yet?): ${error.javaClass.simpleName}: ${error.message}")
-        }.onSuccess {
-            Log.i(TAG, "[CYTOID-DBG] UnitySendMessage OK")
+    @VisibleForTesting
+    internal fun sendToUnity(jsonString: String) {
+        try {
+            val invoker = invokeUnitySend
+            if (invoker != null) {
+                invoker(jsonString)
+            } else {
+                Class.forName(CytoidNativeConfig.UNITY_PLAYER_CLASS)
+                    .getMethod(
+                        "UnitySendMessage",
+                        String::class.java,
+                        String::class.java,
+                        String::class.java,
+                    )
+                    .invoke(
+                        null,
+                        CytoidNativeConfig.UNITY_BRIDGE_OBJECT,
+                        CytoidNativeConfig.UNITY_BRIDGE_METHOD,
+                        jsonString,
+                    )
+            }
+        } catch (error: Throwable) {
+            reportNativeSendFailure(error)
         }
+    }
+
+    /**
+     * Route a native-side send failure (UnitySendMessage, startActivity back to
+     * Flutter) to the v2 envelope the spec requires, based on whether a session
+     * is currently active. The active-session routing rule is mandatory (v2 §
+     * Active-Session Runtime Failure): `engine.error` is not used for active
+     * sessions; the synthesized `session.result` carries the terminal outcome.
+     *
+     * Contract:
+     *  - `activeSessionId != null` → ONLY `synthesizeRuntimeFailure(UNREACHABLE, …)`
+     *    (T4 primitive emits `session.result`, NEVER `engine.error`).
+     *  - `activeSessionId == null` → ONLY an `engine.error` envelope via [emit]
+     *    with `error.code = "runtime_exception"` and a sanitized message.
+     *  - Never both. Never rethrows — caller ([sendToUnity], [returnToFlutterActivity])
+     *    keeps its original "returns normally" contract so `send()` on the Dart
+     *    side resolves even when Unity-side dispatch throws.
+     *  - Never leaks raw stack traces. The sanitized message is
+     *    `"<ExceptionClassSimpleName>: <first line of message>"`.
+     */
+    private fun reportNativeSendFailure(error: Throwable) {
+        val activeSessionId = runtimeState.activeSessionId
+        if (activeSessionId != null) {
+            synthesizeRuntimeFailure(
+                RuntimeFailureTrigger.UNREACHABLE,
+                activeSessionId,
+            )
+            return
+        }
+        val sanitized = sanitizeExceptionMessage(error)
+        val envelope = JSONObject()
+            .put("v", PROTOCOL_VERSION_V2)
+            .put("id", NATIVE_BRIDGE_ERROR_ID)
+            .put("type", "engine.error")
+            .put(
+                "payload",
+                JSONObject().put(
+                    "error",
+                    JSONObject()
+                        .put("code", "runtime_exception")
+                        .put("message", sanitized),
+                ),
+            )
+            .toString()
+        emit(envelope)
+    }
+
+    private fun sanitizeExceptionMessage(error: Throwable): String {
+        val simpleName = error.javaClass.simpleName.ifEmpty { "Throwable" }
+        val firstLine = (error.message ?: "").substringBefore('\n').trim()
+        return "$simpleName: $firstLine"
     }
 
     private fun emit(json: String) {
@@ -481,6 +556,7 @@ class CytoidGameCoreBridge private constructor(
         private const val ENGINE_MODE_MOCK = "mock"
         private const val REFRESH_RATE_APPLY_DELAY_MS = 1500L
         private const val PROTOCOL_VERSION_V2 = 2
+        private const val NATIVE_BRIDGE_ERROR_ID = "native-bridge"
 
         @Volatile
         var instance: CytoidGameCoreBridge? = null

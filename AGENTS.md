@@ -62,6 +62,11 @@ Protocol spec: `engines/unity/flutter_plugin/example/docs/host-protocol.md` (sha
 
 **JNI / native callback (Android):** Unity C# → `NativeHostMessenger` → `org.cytoid.gamecore.UnityHostCallback.onMessage` (implemented in `engines/unity/flutter_plugin/android/`). Not the legacy `com.example.cytoid_flutter.host.UnityHostCallback` string in older README text.
 
+**Native send failures (Android `sendToUnity` / `returnToFlutterActivity`):** when the reflective `UnitySendMessage` call or the `startActivity` back to the Flutter Activity throws, the failure is NOT surfaced as a synchronous `PlatformException` from `send()`. `send()` returns `Future<void>` and callers have no wait point to convert the exception. Instead, the bridge routes the failure asynchronously via the v2 § Active-Session Runtime Failure contract:
+
+- `activeSessionId == null` → `engine.error` envelope via the EventChannel, `error.code = "runtime_exception"`, message sanitized to `"<ExceptionClassSimpleName>: <first message line>"` (no raw stack trace).
+- `activeSessionId != null` → synthesized `session.result` with `outcome.kind = "runtimeFailed"` and `error.code = "runtime_unreachable"` via the T4 primitive. Never both — active-session failures use `session.result` ONLY.
+
 ---
 
 ## Build & Debug

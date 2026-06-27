@@ -1,0 +1,4 @@
+{
+  "_comment": "Round-trip expectation for logs_batch_payload.invalid.json: parser MUST throw.",
+  "throws": true
+}

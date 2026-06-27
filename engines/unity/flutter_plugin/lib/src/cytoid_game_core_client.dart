@@ -205,7 +205,7 @@ class CytoidGameCoreClient {
         var alive = false;
         try {
           final status = await queryStatus();
-          alive = status.isBusy || status.activePlayId == playId;
+          alive = status.isBusy || status.activeSessionId == playId;
         } catch (_) {
           alive = false;
         }

@@ -1,0 +1,4 @@
+{
+  "_comment": "Round-trip expectation for error_payload.valid.json: bag of variants. See test/v2_models_test.dart for per-variant expectations.",
+  "variantBag": true
+}

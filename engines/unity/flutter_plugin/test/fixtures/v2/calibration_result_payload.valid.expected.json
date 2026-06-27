@@ -1,0 +1,4 @@
+{
+  "_comment": "Round-trip expectation for calibration_result_payload.valid.json: parser must succeed; fromJson(toJson(x)) must be structurally equal to fromJson(input).",
+  "throws": false
+}

@@ -1,0 +1,12 @@
+{
+  "_comment": "Valid ErrorPayload examples — one minimal, one with details.",
+  "minimal": {
+    "code": "invalid_payload",
+    "message": "level.selectedDifficulty does not exist in level.meta."
+  },
+  "withDetails": {
+    "code": "missing_asset",
+    "message": "VFS path does not exist.",
+    "details": { "path": "charts/hard.json", "vfsUri": "file:///x/" }
+  }
+}

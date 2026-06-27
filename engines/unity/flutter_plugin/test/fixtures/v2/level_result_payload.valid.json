@@ -1,0 +1,7 @@
+{
+  "_comment": "Valid LevelResultPayload.",
+  "id": "example.level",
+  "title": "Example Level",
+  "difficulty": "hard",
+  "difficultyLevel": 14
+}

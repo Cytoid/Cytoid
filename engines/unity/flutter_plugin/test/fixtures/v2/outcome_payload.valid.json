@@ -1,0 +1,12 @@
+{
+  "_comment": "Valid OutcomePayload variants. Each top-level key is one variant; the value is the JSON for that variant. Round-trip each through fromJson(toJson(x)).",
+  "completed": { "kind": "completed" },
+  "failed_hpDepleted": { "kind": "failed", "reason": "hpDepleted" },
+  "failed_manualFail": { "kind": "failed", "reason": "manualFail" },
+  "cancelled_userBack": { "kind": "cancelled", "reason": "userBack" },
+  "cancelled_appBackgrounded": { "kind": "cancelled", "reason": "appBackgrounded" },
+  "rejected": { "kind": "rejected" },
+  "tierRetry": { "kind": "tierRetry", "tierId": "tier.example", "stageIndex": 1 },
+  "calibration": { "kind": "calibration" },
+  "runtimeFailed": { "kind": "runtimeFailed" }
+}

@@ -14,23 +14,27 @@ class MockGameCoreBridge(
     private val emit: (String) -> Unit,
     private val mainHandler: Handler = Handler(Looper.getMainLooper()),
 ) {
-    private var runtimeStarted = false
-    private var surfaceVisible = false
-    private var activePlayId: String? = null
+    // v2 runtime state mirror. The mock bridge keeps its own state machine so
+    // bridge.status responses reflect the same lifecycle as the real bridge,
+    // satisfying "Mock runtimes must implement the same protocol semantics".
+    private val runtimeState: RuntimeStateMachine = RuntimeStateMachine()
 
     fun ensureRuntimeStarted() {
-        if (runtimeStarted) return
-        runtimeStarted = true
-        mainHandler.postDelayed({ emitHostReady() }, HOST_READY_DELAY_MS)
+        runtimeState.onRequestStart()
+        if (runtimeState.state != RuntimeState.STARTING && runtimeState.state != RuntimeState.READY) {
+            return
+        }
+        if (runtimeState.state == RuntimeState.STARTING) {
+            mainHandler.postDelayed({ emitHostReady() }, HOST_READY_DELAY_MS)
+        }
     }
 
     fun showGameSurface() {
         ensureRuntimeStarted()
-        surfaceVisible = true
     }
 
     fun hideGameSurface() {
-        surfaceVisible = false
+        runtimeState.onSuspend()
     }
 
     fun onOutboundMessage(jsonString: String) {
@@ -62,7 +66,7 @@ class MockGameCoreBridge(
 
     private fun handleGameStart(envelope: JSONObject) {
         val playId = envelope.getString("id")
-        activePlayId = playId
+        runtimeState.onSessionStarted(playId)
         val launchPayload = envelope.optJSONObject("payload") ?: JSONObject()
         val gameMode = launchPayload.optString("gameMode", "")
         val tierPlay = launchPayload.optJSONObject("tierPlay")
@@ -89,7 +93,7 @@ class MockGameCoreBridge(
                 .put("payload", resultPayload)
 
         mainHandler.postDelayed({
-            activePlayId = null
+            runtimeState.onSessionEnded()
             emitEnvelope(result.toString())
         }, MOCK_GAME_RESULT_DELAY_MS)
     }
@@ -127,7 +131,7 @@ class MockGameCoreBridge(
 
     private fun handleSessionEnd(envelope: JSONObject) {
         Log.i(TAG, "bridge.play.end received")
-        activePlayId = null
+        runtimeState.onSessionEnded()
         val ended =
             JSONObject()
                 .put("v", PROTOCOL_VERSION)
@@ -148,17 +152,11 @@ class MockGameCoreBridge(
     }
 
     private fun handleStatus(envelope: JSONObject) {
-        val state =
-            when {
-                activePlayId != null -> "busy"
-                runtimeStarted || surfaceVisible -> "ready"
-                else -> "unavailable"
-            }
         val payload =
             JSONObject()
-                .put("state", state)
+                .put("state", runtimeState.state.wireName)
                 .put("engine", "mock")
-        activePlayId?.let { payload.put("activePlayId", it) }
+        runtimeState.activeSessionId?.let { payload.put("activePlayId", it) }
         val status =
             JSONObject()
                 .put("v", PROTOCOL_VERSION)
@@ -207,6 +205,7 @@ class MockGameCoreBridge(
     }
 
     private fun emitHostReady() {
+        runtimeState.onEngineReady()
         val ready =
             JSONObject()
                 .put("v", PROTOCOL_VERSION)

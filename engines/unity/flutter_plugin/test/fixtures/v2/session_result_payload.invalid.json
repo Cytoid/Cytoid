@@ -1,0 +1,10 @@
+{
+  "_comment": "Invalid SessionResultPayload — rejected outcome but no error block. Parser must throw.",
+  "sessionId": "session-bad",
+  "mode": "ranked",
+  "mods": [],
+  "outcome": { "kind": "rejected" },
+  "flags": { "usedAutoMod": false },
+  "telemetry": { "available": false, "eventsRecorded": 0, "bytes": 0 },
+  "timestamp": 1782148803000
+}

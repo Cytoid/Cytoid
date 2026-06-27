@@ -1,0 +1,4 @@
+{
+  "_comment": "Round-trip expectation for session_result_payload.invalid.json: parser MUST throw.",
+  "throws": true
+}

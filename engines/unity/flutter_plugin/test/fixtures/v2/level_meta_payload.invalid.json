@@ -1,0 +1,12 @@
+{
+  "_comment": "Invalid LevelMetaPayload — empty id, no chart with type in {easy,hard,extreme}. Parser must throw.",
+  "schema_version": 1,
+  "version": 1,
+  "id": "",
+  "title": "Empty id",
+  "artist": "X",
+  "music": { "path": "music.ogg" },
+  "charts": [
+    { "type": "invalid_difficulty", "difficulty": 1, "path": "charts/x.json" }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "_comment": "Valid SessionResultPayload — tier mode with tierRetry outcome. tier block is required even though gameplay was interrupted.",
+  "sessionId": "tier-session-9",
+  "mode": "tier",
+  "mods": [],
+  "outcome": {
+    "kind": "tierRetry",
+    "tierId": "tier.example",
+    "stageIndex": 1
+  },
+  "level": {
+    "id": "tier.stage2",
+    "title": "Stage 2",
+    "difficulty": "extreme",
+    "difficultyLevel": 16
+  },
+  "tier": {
+    "tierId": "tier.example",
+    "stageIndex": 1,
+    "stageCount": 3,
+    "health": 580.0,
+    "maxHealth": 1000.0,
+    "combo": 412
+  },
+  "flags": { "usedAutoMod": false },
+  "telemetry": { "available": false, "eventsRecorded": 0, "bytes": 0 },
+  "timestamp": 1782148801000
+}

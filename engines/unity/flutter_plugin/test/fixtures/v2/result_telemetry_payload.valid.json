@@ -1,0 +1,6 @@
+{
+  "_comment": "Valid ResultTelemetryPayload — available true (events recorded).",
+  "available": true,
+  "eventsRecorded": 1234,
+  "bytes": 45678
+}

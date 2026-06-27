@@ -1,0 +1,17 @@
+{
+  "_comment": "Valid ScorePayload with all required + optional fields populated.",
+  "score": 998765,
+  "accuracy": 0.9987,
+  "maxCombo": 1234,
+  "gradeCounts": {
+    "perfect": 1200,
+    "great": 20,
+    "good": 0,
+    "bad": 0,
+    "miss": 0
+  },
+  "early": 12,
+  "late": 8,
+  "averageTimingError": -1.2,
+  "standardTimingError": 14.5
+}

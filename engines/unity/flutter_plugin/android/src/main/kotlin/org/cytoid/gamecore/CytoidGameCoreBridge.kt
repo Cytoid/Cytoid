@@ -8,6 +8,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.View
+import androidx.annotation.VisibleForTesting
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 import org.json.JSONObject
@@ -23,10 +24,15 @@ class CytoidGameCoreBridge private constructor(
     private val mockBridge: MockGameCoreBridge by lazy { MockGameCoreBridge(::emit, mainHandler) }
     private var eventSink: EventChannel.EventSink? = null
     private var exclusiveUnityActivity: Activity? = null
-    private var runtimeStarted = false
-    private var engineReady = false
-    private var surfaceVisible = false
-    private var activePlayId: String? = null
+
+    // v2 runtime state. Replaces the v1 ad-hoc boolean tracking (startup
+    // requested, engine acknowledgement, surface shown) with a single source
+    // of truth that also tracks generation, activeSessionId, and lastError.
+    // The flag→state migration table from the plan is encoded by the initial
+    // UNAVAILABLE state plus the @VisibleForTesting transition methods driven
+    // by lifecycle events below.
+    private val runtimeState: RuntimeStateMachine = RuntimeStateMachine()
+
     // Tracks one-shot Application callback registration so attachActivity can
     // be called multiple times (config changes) without double-registering.
     private var lifecycleRegistered = false
@@ -36,8 +42,7 @@ class CytoidGameCoreBridge private constructor(
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
                 if (isUnityGameplayActivity(activity)) {
                     exclusiveUnityActivity = activity
-                    surfaceVisible = true
-                    runtimeStarted = true
+                    runtimeState.onEngineReady()
                     Log.i(TAG, "Exclusive game core activity created: ${activity.javaClass.name}")
                 }
             }
@@ -47,13 +52,20 @@ class CytoidGameCoreBridge private constructor(
             override fun onActivityResumed(activity: Activity) {
                 if (isUnityGameplayActivity(activity)) {
                     Log.i(TAG, "[CYTOID-DBG] Unity activity RESUMED (lifecycle)")
+                    runtimeState.onResume()
                     mainHandler.postDelayed({
                         applyExclusiveDisplayRefreshRate(activity)
                     }, REFRESH_RATE_APPLY_DELAY_MS)
                 }
             }
 
-            override fun onActivityPaused(activity: Activity) = Unit
+            override fun onActivityPaused(activity: Activity) {
+                if (isUnityGameplayActivity(activity)) {
+                    Log.i(TAG, "[CYTOID-DBG] Unity activity PAUSED (lifecycle)")
+                    runtimeState.onSuspend()
+                }
+            }
+
             override fun onActivityStopped(activity: Activity) = Unit
             override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
 
@@ -61,12 +73,14 @@ class CytoidGameCoreBridge private constructor(
                 if (exclusiveUnityActivity === activity) {
                     Log.i(TAG, "[CYTOID-DBG] Unity activity DESTROYED")
                     exclusiveUnityActivity = null
-                    surfaceVisible = false
                 }
             }
         }
 
     val engineMode: String
+        get() = if (useUnityRuntime) ENGINE_MODE_UNITY else ENGINE_MODE_MOCK
+
+    val mode: String
         get() = if (useUnityRuntime) ENGINE_MODE_UNITY else ENGINE_MODE_MOCK
 
     private val useUnityRuntime: Boolean
@@ -95,7 +109,7 @@ class CytoidGameCoreBridge private constructor(
     fun detachActivity() = Unit
 
     fun ensureRuntimeStarted() {
-        runtimeStarted = true
+        runtimeState.onRequestStart()
         if (!useUnityRuntime) {
             mockBridge.ensureRuntimeStarted()
         }
@@ -107,7 +121,7 @@ class CytoidGameCoreBridge private constructor(
                 "Unity artifacts not loaded. Run setup_unity_artifacts.sh then flutter clean.",
             )
         }
-        runtimeStarted = true
+        runtimeState.onRequestStart()
         Log.i(TAG, "[CYTOID-DBG] showGameSurface called: useUnityRuntime=$useUnityRuntime exclusiveUnityActivity=$exclusiveUnityActivity")
 
         if (useUnityRuntime) {
@@ -118,7 +132,6 @@ class CytoidGameCoreBridge private constructor(
                     .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
             runCatching {
                 activity.startActivity(intent)
-                surfaceVisible = true
                 Log.i(TAG, "[CYTOID-DBG] showGameSurface: startActivity OK (REORDER_TO_FRONT|SINGLE_TOP)")
                 result.success(null)
             }.onFailure { error ->
@@ -132,14 +145,12 @@ class CytoidGameCoreBridge private constructor(
             return
         }
 
-        surfaceVisible = true
         mockBridge.showGameSurface()
         result.success(null)
     }
 
     fun hideGameSurface() {
-        Log.i(TAG, "[CYTOID-DBG] hideGameSurface called: surfaceVisible=$surfaceVisible exclusiveUnityActivity=$exclusiveUnityActivity")
-        surfaceVisible = false
+        Log.i(TAG, "[CYTOID-DBG] hideGameSurface called: state=${runtimeState.state} exclusiveUnityActivity=$exclusiveUnityActivity")
         DisplayRefreshRateHelper.restoreDefaultRefreshRate(activity)
 
         if (exclusiveUnityActivity != null) {
@@ -160,13 +171,23 @@ class CytoidGameCoreBridge private constructor(
 
     fun onOutboundMessage(jsonString: String) {
         val type = runCatching { JSONObject(jsonString).optString("type") }.getOrDefault("")
-        Log.i(TAG, "[CYTOID-DBG] -> Unity: type=$type engineReady=$engineReady activePlayId=$activePlayId")
+        Log.i(TAG, "[CYTOID-DBG] -> Unity: type=$type state=${runtimeState.state} activeSessionId=${runtimeState.activeSessionId}")
 
-        if (isGameStartMessage(jsonString)) {
-            activePlayId = JSONObject(jsonString).optString("id").takeIf { it.isNotEmpty() }
-        }
-        if (isSessionEndMessage(jsonString)) {
-            activePlayId = null
+        when {
+            isSessionStartMessage(jsonString) -> {
+                runtimeState.onSessionStarted(JSONObject(jsonString).optString("id"))
+            }
+            isSessionEndMessage(jsonString) -> {
+                runtimeState.onSessionEnded()
+            }
+            isGameStartMessage(jsonString) -> {
+                // v1 fallback: bridge.play.start arrives without v2 session.started,
+                // so treat it as READY→BUSY using the envelope id.
+                runtimeState.onSessionStarted(JSONObject(jsonString).optString("id"))
+            }
+            isSessionEndMessageV1(jsonString) -> {
+                runtimeState.onSessionEnded()
+            }
         }
 
         if (useUnityRuntime) {
@@ -178,17 +199,25 @@ class CytoidGameCoreBridge private constructor(
 
     fun onUnityMessage(jsonString: String) {
         val type = runCatching { JSONObject(jsonString).optString("type") }.getOrDefault("")
-        Log.i(TAG, "[CYTOID-DBG] <- Unity: type=$type engineReady=$engineReady activePlayId=$activePlayId")
+        Log.i(TAG, "[CYTOID-DBG] <- Unity: type=$type state=${runtimeState.state} activeSessionId=${runtimeState.activeSessionId}")
 
         emit(jsonString)
 
-        if (isHostReadyMessage(jsonString)) {
-            engineReady = true
-            runtimeStarted = true
-            Log.i(TAG, "[CYTOID-DBG] <- Unity: game.ready received — engineReady now true")
+        // v2 engine.ready or v1 fallback game.ready both complete the
+        // STARTING→READY transition (single-slot resume memory preserved).
+        if (isEngineReadyMessage(jsonString) || isHostReadyMessage(jsonString)) {
+            runtimeState.onEngineReady()
+            Log.i(TAG, "[CYTOID-DBG] <- Unity: ready received — state=${runtimeState.state}")
         }
-        if (isGameResultMessage(jsonString)) {
-            activePlayId = null
+        // v2 session.started: explicit READY→BUSY signal carries the sessionId.
+        if (isSessionStartedMessage(jsonString)) {
+            val sessionId = JSONObject(jsonString).optString("id")
+            if (sessionId.isNotEmpty()) {
+                runtimeState.onSessionStarted(sessionId)
+            }
+        }
+        if (isSessionResultMessage(jsonString) || isGameResultMessage(jsonString)) {
+            runtimeState.onSessionEnded()
         }
     }
 
@@ -242,9 +271,21 @@ class CytoidGameCoreBridge private constructor(
         }.getOrDefault(false)
     }
 
+    private fun isSessionResultMessage(jsonString: String): Boolean {
+        return runCatching {
+            JSONObject(jsonString).getString("type") == "session.result"
+        }.getOrDefault(false)
+    }
+
     private fun isHostReadyMessage(jsonString: String): Boolean {
         return runCatching {
             JSONObject(jsonString).getString("type") == "game.ready"
+        }.getOrDefault(false)
+    }
+
+    private fun isEngineReadyMessage(jsonString: String): Boolean {
+        return runCatching {
+            JSONObject(jsonString).getString("type") == "engine.ready"
         }.getOrDefault(false)
     }
 
@@ -254,7 +295,25 @@ class CytoidGameCoreBridge private constructor(
         }.getOrDefault(false)
     }
 
+    private fun isSessionStartMessage(jsonString: String): Boolean {
+        return runCatching {
+            JSONObject(jsonString).getString("type") == "session.start"
+        }.getOrDefault(false)
+    }
+
+    private fun isSessionStartedMessage(jsonString: String): Boolean {
+        return runCatching {
+            JSONObject(jsonString).getString("type") == "session.started"
+        }.getOrDefault(false)
+    }
+
     private fun isSessionEndMessage(jsonString: String): Boolean {
+        return runCatching {
+            JSONObject(jsonString).getString("type") == "session.cancel"
+        }.getOrDefault(false)
+    }
+
+    private fun isSessionEndMessageV1(jsonString: String): Boolean {
         return runCatching {
             JSONObject(jsonString).getString("type") == "bridge.play.end"
         }.getOrDefault(false)
@@ -266,26 +325,19 @@ class CytoidGameCoreBridge private constructor(
         }.getOrDefault(false)
     }
 
+    /**
+     * v2 runtime snapshot. Conditional optionality per spec:
+     * required keys `engine`, `mode`, `state`, `generation` always present;
+     * `activeSessionId` only when `state = busy`; `error` only when
+     * `state = failed`.
+     */
     fun runtimeStatus(): Map<String, Any?> {
-        val state =
-            when {
-                !runtimeStarted && !useUnityRuntime -> RUNTIME_UNAVAILABLE
-                activePlayId != null -> RUNTIME_BUSY
-                engineReady -> RUNTIME_READY
-                runtimeStarted || surfaceVisible || useUnityRuntime -> RUNTIME_STARTING
-                else -> RUNTIME_UNAVAILABLE
-            }
+        val snapshot = runtimeState.snapshot(engine = engineMode, mode = mode)
         Log.i(
             TAG,
-            "[CYTOID-DBG] runtimeStatus(): state=$state engineReady=$engineReady " +
-                "runtimeStarted=$runtimeStarted surfaceVisible=$surfaceVisible " +
-                "useUnityRuntime=$useUnityRuntime activePlayId=$activePlayId"
+            "[CYTOID-DBG] runtimeStatus(): $snapshot",
         )
-        return mapOf(
-            "state" to state,
-            "engine" to engineMode,
-            "activePlayId" to activePlayId,
-        )
+        return snapshot
     }
 
     private fun sendToUnity(jsonString: String) {
@@ -311,8 +363,11 @@ class CytoidGameCoreBridge private constructor(
     }
 
     private fun emit(json: String) {
-        if (isGameResultMessage(json) || isSessionEndedMessage(json)) {
-            activePlayId = null
+        if (isSessionResultMessage(jsonString = json) ||
+            isGameResultMessage(json) ||
+            isSessionEndedMessage(json)
+        ) {
+            runtimeState.onSessionEnded()
         }
         mainHandler.post {
             eventSink?.success(json)
@@ -331,10 +386,6 @@ class CytoidGameCoreBridge private constructor(
         private const val TAG = "CytoidGameCoreBridge"
         private const val ENGINE_MODE_UNITY = "unity"
         private const val ENGINE_MODE_MOCK = "mock"
-        private const val RUNTIME_UNAVAILABLE = "unavailable"
-        private const val RUNTIME_STARTING = "starting"
-        private const val RUNTIME_READY = "ready"
-        private const val RUNTIME_BUSY = "busy"
         private const val REFRESH_RATE_APPLY_DELAY_MS = 1500L
 
         @Volatile
@@ -346,3 +397,4 @@ class CytoidGameCoreBridge private constructor(
         }
     }
 }
+

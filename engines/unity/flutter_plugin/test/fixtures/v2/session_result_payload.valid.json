@@ -1,0 +1,30 @@
+{
+  "_comment": "Valid SessionResultPayload — completed ranked session, no error.",
+  "sessionId": "session-123",
+  "mode": "ranked",
+  "mods": ["fast"],
+  "outcome": { "kind": "completed" },
+  "level": {
+    "id": "example.level",
+    "title": "Example Level",
+    "difficulty": "hard",
+    "difficultyLevel": 14
+  },
+  "score": {
+    "score": 998765,
+    "accuracy": 0.9987,
+    "maxCombo": 1234,
+    "gradeCounts": { "perfect": 1200, "great": 20, "good": 0, "bad": 0, "miss": 0 },
+    "early": 12,
+    "late": 8,
+    "averageTimingError": -1.2,
+    "standardTimingError": 14.5
+  },
+  "flags": { "usedAutoMod": false },
+  "telemetry": {
+    "available": true,
+    "eventsRecorded": 1234,
+    "bytes": 45678
+  },
+  "timestamp": 1782148800000
+}

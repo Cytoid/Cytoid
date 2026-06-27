@@ -1,0 +1,16 @@
+{
+  "_comment": "Valid LogsBatchPayload — triggered by an error log. One entry bound to a session.",
+  "reason": "trigger",
+  "triggerLevel": "error",
+  "timestamp": 1782148800000,
+  "truncated": false,
+  "logs": [
+    {
+      "level": "error",
+      "message": "Failed to load chart.",
+      "stackTrace": "NullReferenceException at ChartLoader:42",
+      "timestamp": 1782148799000,
+      "sessionId": "session-123"
+    }
+  ]
+}

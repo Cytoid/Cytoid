@@ -1,0 +1,36 @@
+{
+  "_comment": "Invalid SessionLaunchPayload — tier mode but no tier block. Parser must throw.",
+  "mode": "tier",
+  "level": {
+    "meta": {
+      "schema_version": 1,
+      "version": 1,
+      "id": "example.level",
+      "title": "Example Level",
+      "artist": "Artist",
+      "music": { "path": "music.ogg" },
+      "charts": [{ "type": "hard", "difficulty": 14, "path": "charts/hard.json" }]
+    },
+    "selectedDifficulty": "hard",
+    "assets": {
+      "vfsUri": "file:///x/",
+      "chartPath": "charts/hard.json",
+      "musicPath": "music.ogg"
+    }
+  },
+  "mods": [],
+  "settings": {
+    "profile": { "language": "en", "baseNoteOffset": 0, "headsetNoteOffset": 0, "judgmentOffset": 0, "hitTapticFeedback": false, "menuTapticFeedback": false },
+    "runtime": { "musicVolume": 1.0, "soundEffectsVolume": 1.0 },
+    "visual": { "noteSize": 0, "horizontalMargin": 1, "verticalMargin": 1, "restrictPlayAreaAspectRatio": true, "coverOpacity": 0.1, "displayStoryboardEffects": false, "displayBoundaries": false, "skipMusicOnCompletion": false, "displayEarlyLateIndicators": false, "displayNoteIds": false, "useExperimentalNoteAr": false, "useExperimentalNoteAnimations": false, "clearEffectsSize": 1.0, "displayProfiler": false, "adaptOverlayToSafeArea": true, "graphicsQuality": "high" },
+    "audio": { "hitSound": "click1", "holdHitSoundTiming": "both", "useNativeAudio": false, "androidDspBufferSize": -1 },
+    "noteStyle": {
+      "hitboxSizes": { "click": "large", "hold": "large", "longHold": "large", "dragHead": "large", "dragChild": "large", "flick": "large", "cDragHead": "large", "cDragChild": "large" },
+      "ringColors": { "click": "#FFF", "hold": "#FFF", "longHold": "#FFF", "dragHead": "#FFF", "dragChild": "#FFF", "flick": "#FFF", "cDragHead": "#FFF", "cDragChild": "#FFF" },
+      "fillColors": { "click": "#FFF", "hold": "#FFF", "longHold": "#FFF", "dragHead": "#FFF", "dragChild": "#FFF", "flick": "#FFF", "cDragHead": "#FFF", "cDragChild": "#FFF" },
+      "fillColorsAlt": { "click": "#FFF", "hold": "#FFF", "longHold": "#FFF", "dragHead": "#FFF", "dragChild": "#FFF", "flick": "#FFF", "cDragHead": "#FFF", "cDragChild": "#FFF" },
+      "useFillColorForDragChildNodes": false
+    }
+  },
+  "options": { "recordPlayEvents": false }
+}

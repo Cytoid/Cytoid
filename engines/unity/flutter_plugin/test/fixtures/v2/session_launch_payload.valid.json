@@ -1,0 +1,84 @@
+{
+  "_comment": "Valid SessionLaunchPayload — ranked session with full settings snapshot. Matches v2 § session.start example structure.",
+  "mode": "ranked",
+  "level": {
+    "meta": {
+      "schema_version": 1,
+      "version": 1,
+      "id": "example.level",
+      "title": "Example Level",
+      "artist": "Example Artist",
+      "music": { "path": "music.ogg" },
+      "charts": [
+        { "type": "hard", "difficulty": 14, "path": "charts/hard.json" }
+      ]
+    },
+    "selectedDifficulty": "hard",
+    "assets": {
+      "vfsUri": "file:///data/user/0/org.cytoid/cache/levels/example.level/",
+      "chartPath": "charts/hard.json",
+      "musicPath": "music.ogg",
+      "storyboardPath": "storyboard.json"
+    }
+  },
+  "mods": ["fast"],
+  "settings": {
+    "profile": {
+      "language": "zh-CN",
+      "baseNoteOffset": 0,
+      "headsetNoteOffset": -0.05,
+      "judgmentOffset": 0,
+      "hitTapticFeedback": true,
+      "menuTapticFeedback": true
+    },
+    "runtime": { "musicVolume": 0.85, "soundEffectsVolume": 1.0 },
+    "visual": {
+      "noteSize": 0,
+      "horizontalMargin": 1,
+      "verticalMargin": 1,
+      "restrictPlayAreaAspectRatio": true,
+      "coverOpacity": 0.15,
+      "displayStoryboardEffects": true,
+      "displayBoundaries": false,
+      "skipMusicOnCompletion": false,
+      "displayEarlyLateIndicators": true,
+      "displayNoteIds": false,
+      "useExperimentalNoteAr": false,
+      "useExperimentalNoteAnimations": false,
+      "clearEffectsSize": 1.0,
+      "displayProfiler": false,
+      "adaptOverlayToSafeArea": true,
+      "graphicsQuality": "high"
+    },
+    "audio": {
+      "hitSound": "click1",
+      "holdHitSoundTiming": "both",
+      "useNativeAudio": false,
+      "androidDspBufferSize": -1
+    },
+    "noteStyle": {
+      "hitboxSizes": {
+        "click": "large", "hold": "large", "longHold": "large",
+        "dragHead": "large", "dragChild": "large", "flick": "medium",
+        "cDragHead": "large", "cDragChild": "large"
+      },
+      "ringColors": {
+        "click": "#FFFFFF", "hold": "#FFFFFF", "longHold": "#FFFFFF",
+        "dragHead": "#FFFFFF", "dragChild": "#FFFFFF", "flick": "#FFFFFF",
+        "cDragHead": "#FFFFFF", "cDragChild": "#FFFFFF"
+      },
+      "fillColors": {
+        "click": "#35A7FF", "hold": "#35A7FF", "longHold": "#F2C85A",
+        "dragHead": "#39E59E", "dragChild": "#39E59E", "flick": "#35A7FF",
+        "cDragHead": "#39E59E", "cDragChild": "#39E59E"
+      },
+      "fillColorsAlt": {
+        "click": "#FF5964", "hold": "#FF5964", "longHold": "#F2C85A",
+        "dragHead": "#39E59E", "dragChild": "#39E59E", "flick": "#FF5964",
+        "cDragHead": "#39E59E", "cDragChild": "#39E59E"
+      },
+      "useFillColorForDragChildNodes": true
+    }
+  },
+  "options": { "recordPlayEvents": true }
+}

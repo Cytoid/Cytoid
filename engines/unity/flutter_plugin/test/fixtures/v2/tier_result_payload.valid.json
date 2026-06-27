@@ -1,0 +1,9 @@
+{
+  "_comment": "Valid TierResultPayload — mid-stage ending state.",
+  "tierId": "tier.example",
+  "stageIndex": 1,
+  "stageCount": 3,
+  "health": 580.0,
+  "maxHealth": 1000.0,
+  "combo": 412
+}

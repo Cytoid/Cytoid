@@ -1,0 +1,8 @@
+{
+  "_comment": "Invalid OutcomePayload examples. Each must throw on parse.",
+  "unknown_kind": { "kind": "paused" },
+  "failed_bad_reason": { "kind": "failed", "reason": "notARealReason" },
+  "cancelled_bad_reason": { "kind": "cancelled", "reason": "userCancel" },
+  "tierRetry_missing_tierId": { "kind": "tierRetry", "stageIndex": 0 },
+  "tierRetry_missing_stageIndex": { "kind": "tierRetry", "tierId": "tier.x" }
+}

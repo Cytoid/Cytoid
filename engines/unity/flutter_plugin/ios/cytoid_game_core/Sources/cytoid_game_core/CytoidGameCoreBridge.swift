@@ -9,10 +9,14 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   }()
 
   private var eventSink: FlutterEventSink?
-  private var runtimeStarted = false
-  private var engineReady = false
-  private var surfaceVisible = false
-  private var activePlayId: String?
+
+  // v2 runtime state. Replaces the v1 ad-hoc boolean tracking (startup
+  // requested, engine acknowledgement, surface shown) with a single source
+  // of truth that also tracks generation, activeSessionId, and lastError.
+  // The flag→state migration table from the plan is encoded by the initial
+  // .unavailable state plus the transition methods driven by lifecycle
+  // events below.
+  private let runtimeState = RuntimeStateMachine()
 
   var engineMode: String {
 #if CYTOID_UNITY_FRAMEWORK_AVAILABLE
@@ -21,6 +25,8 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
     return "mock"
 #endif
   }
+
+  var mode: String { engineMode }
 
   private var shouldUseUnityRuntime: Bool {
 #if CYTOID_UNITY_FRAMEWORK_AVAILABLE
@@ -31,7 +37,7 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   }
 
   func ensureRuntimeStarted() {
-    runtimeStarted = true
+    runtimeState.onRequestStart()
 
 #if CYTOID_UNITY_FRAMEWORK_AVAILABLE
     if shouldUseUnityRuntime {
@@ -46,7 +52,7 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   }
 
   func showGameSurface(result: @escaping FlutterResult) {
-    runtimeStarted = true
+    runtimeState.onRequestStart()
 
 #if CYTOID_UNITY_FRAMEWORK_AVAILABLE
     if shouldUseUnityRuntime {
@@ -57,7 +63,6 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
 
         let presented = UnityGameCoreRuntime.shared.presentExclusiveFullscreen()
         if presented {
-          self.surfaceVisible = true
           result(nil)
           return
         }
@@ -74,29 +79,33 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
     }
 #endif
 
-    surfaceVisible = true
     mockBridge.showGameSurface()
     result(nil)
   }
 
   func hideGameSurface() {
-    surfaceVisible = false
 #if CYTOID_UNITY_FRAMEWORK_AVAILABLE
     if shouldUseUnityRuntime {
       UnityGameCoreRuntime.shared.dismissExclusiveFullscreen()
+      runtimeState.onSuspend()
       return
     }
 #endif
     mockBridge.hideGameSurface()
+    runtimeState.onSuspend()
   }
 
   func onOutboundMessage(_ jsonString: String) {
-    if let type = messageType(jsonString) {
-      if type == "bridge.play.start" {
-        activePlayId = messageId(jsonString)
-      } else if type == "bridge.play.end" {
-        activePlayId = nil
-      }
+    let type = messageType(jsonString)
+
+    // v1 fallback: bridge.play.start arrives without v2 session.started, so
+    // treat it as ready→busy using the envelope id.
+    if type == "bridge.play.start", let id = messageId(jsonString) {
+      runtimeState.onSessionStarted(sessionId: id)
+    } else if type == "session.start", let id = messageId(jsonString) {
+      runtimeState.onSessionStarted(sessionId: id)
+    } else if type == "bridge.play.end" || type == "session.cancel" {
+      runtimeState.onSessionEnded()
     }
 
 #if CYTOID_UNITY_FRAMEWORK_AVAILABLE
@@ -112,34 +121,37 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   func onUnityMessage(_ jsonString: String) {
     emitEvent(jsonString)
 
-    if messageType(jsonString) == "game.ready" {
-      engineReady = true
-      runtimeStarted = true
+    let type = messageType(jsonString)
+    // v2 engine.ready or v1 fallback game.ready both complete the
+    // starting→ready transition.
+    if type == "engine.ready" || type == "game.ready" {
+      runtimeState.onEngineReady()
     }
-    if isGameResultMessage(jsonString) {
-      activePlayId = nil
+    // v2 session.started: explicit ready→busy signal carries the sessionId.
+    if type == "session.started", let id = messageId(jsonString) {
+      runtimeState.onSessionStarted(sessionId: id)
+    }
+    if type == "session.result" || isGameResultMessage(jsonString) {
+      runtimeState.onSessionEnded()
     }
   }
 
+  func onAppWillResignActive() {
+    runtimeState.onSuspend()
+  }
+
+  func onAppDidBecomeActive() {
+    runtimeState.onResume()
+  }
+
+  /**
+   * v2 runtime snapshot. Conditional optionality per spec:
+   * required keys `engine`, `mode`, `state`, `generation` always present;
+   * `activeSessionId` only when `state = busy`; `error` only when
+   * `state = failed`.
+   */
   func runtimeStatus() -> [String: Any] {
-    let state: String
-    if activePlayId != nil {
-      state = "busy"
-    } else if engineReady {
-      state = "ready"
-    } else if runtimeStarted || surfaceVisible || shouldUseUnityRuntime {
-      state = "starting"
-    } else {
-      state = "unavailable"
-    }
-    var payload: [String: Any] = [
-      "state": state,
-      "engine": engineMode,
-    ]
-    if let activePlayId {
-      payload["activePlayId"] = activePlayId
-    }
-    return payload
+    return runtimeState.snapshot(engine: engineMode, mode: mode)
   }
 
   private func isGameResultMessage(_ jsonString: String) -> Bool {
@@ -177,8 +189,9 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   }
 
   private func emitEvent(_ jsonString: String) {
-    if isGameResultMessage(jsonString) || messageType(jsonString) == "game.play.ended" {
-      activePlayId = nil
+    let type = messageType(jsonString)
+    if type == "session.result" || type == "game.play.result" || type == "game.play.ended" {
+      runtimeState.onSessionEnded()
     }
 
     if Thread.isMainThread {

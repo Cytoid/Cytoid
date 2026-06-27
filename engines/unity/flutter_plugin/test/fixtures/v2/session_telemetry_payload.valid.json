@@ -1,0 +1,11 @@
+{
+  "_comment": "Valid SessionTelemetryPayload wrapping a PlayEventsPayload with 2 events (one down, one up).",
+  "sessionId": "session-123",
+  "playEvents": {
+    "format": "json.v1",
+    "events": [
+      { "t": 1234, "f": 0, "p": "down", "x": 32000, "y": 44000 },
+      { "t": 1290, "f": 0, "p": "up", "x": 32010, "y": 44100 }
+    ]
+  }
+}

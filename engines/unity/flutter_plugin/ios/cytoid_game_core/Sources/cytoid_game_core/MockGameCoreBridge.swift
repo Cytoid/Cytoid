@@ -3,19 +3,21 @@ import Foundation
 final class MockGameCoreBridge {
   private let emit: (String) -> Void
   private let hostReadyDelay: TimeInterval = 0.3
-  private var runtimeStarted = false
-  private var surfaceVisible = false
-  private var activePlayId: String?
+
+  // v2 runtime state mirror. The mock bridge keeps its own state machine so
+  // bridge.status responses reflect the same lifecycle as the real bridge,
+  // satisfying "Mock runtimes must implement the same protocol semantics".
+  private let runtimeState = RuntimeStateMachine()
 
   init(emit: @escaping (String) -> Void) {
     self.emit = emit
   }
 
   func ensureRuntimeStarted() {
-    if runtimeStarted {
+    guard runtimeState.state == .unavailable || runtimeState.state == .starting else {
       return
     }
-    runtimeStarted = true
+    runtimeState.onRequestStart()
     DispatchQueue.main.asyncAfter(deadline: .now() + hostReadyDelay) { [weak self] in
       self?.emitHostReady()
     }
@@ -23,11 +25,10 @@ final class MockGameCoreBridge {
 
   func showGameSurface() {
     ensureRuntimeStarted()
-    surfaceVisible = true
   }
 
   func hideGameSurface() {
-    surfaceVisible = false
+    runtimeState.onSuspend()
   }
 
   func onOutboundMessage(_ jsonString: String) {
@@ -73,7 +74,7 @@ final class MockGameCoreBridge {
     guard let id = envelope["id"] as? String else {
       return
     }
-    activePlayId = id
+    runtimeState.onSessionStarted(sessionId: id)
     emitSampleGameLogs(playId: id)
 
     let launchPayload = envelope["payload"] as? [String: Any] ?? [:]
@@ -93,7 +94,7 @@ final class MockGameCoreBridge {
     }
 
     DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-      self?.activePlayId = nil
+      self?.runtimeState.onSessionEnded()
       self?.emit([
         "v": 1,
         "id": id,
@@ -135,7 +136,7 @@ final class MockGameCoreBridge {
       return
     }
     NSLog("[CytoidGameCore] bridge.play.end received")
-    activePlayId = nil
+    runtimeState.onSessionEnded()
     emit([
       "v": 1,
       "id": id,
@@ -161,11 +162,11 @@ final class MockGameCoreBridge {
       return
     }
     var payload: [String: Any] = [
-      "state": activePlayId == nil ? (runtimeStarted || surfaceVisible ? "ready" : "unavailable") : "busy",
+      "state": runtimeState.state.wireName,
       "engine": "mock",
     ]
-    if let activePlayId {
-      payload["activePlayId"] = activePlayId
+    if let activeSessionId = runtimeState.activeSessionId {
+      payload["activePlayId"] = activeSessionId
     }
     emit([
       "v": 1,
@@ -212,6 +213,7 @@ final class MockGameCoreBridge {
   }
 
   private func emitHostReady() {
+    runtimeState.onEngineReady()
     emit([
       "v": 1,
       "id": UUID().uuidString,

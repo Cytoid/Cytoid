@@ -16,4 +16,5 @@ export 'src/models/game_mod.dart';
 export 'src/models/game_result_payload.dart';
 export 'src/models/tier_play_launch.dart';
 export 'src/models/tier_play_result.dart';
+export 'src/models/v2/v2.dart';
 export 'src/wire_message_type.dart';

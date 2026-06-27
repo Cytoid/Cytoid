@@ -1,0 +1,7 @@
+{
+  "_comment": "Invalid LogsBatchPayload — reason='trigger' but triggerLevel missing. Parser must throw.",
+  "reason": "trigger",
+  "timestamp": 1782148800000,
+  "truncated": false,
+  "logs": []
+}

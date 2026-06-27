@@ -1,4 +1,5 @@
-import 'package:cytoid_game_core/cytoid_game_core.dart';
+import 'package:cytoid_game_core/cytoid_game_core.dart'
+    hide GraphicsQuality, HoldHitSoundTiming, HitboxSize, NoteType;
 import 'package:flutter/foundation.dart';
 
 import 'note_type_wire.dart';

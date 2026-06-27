@@ -1,0 +1,5 @@
+{
+  "_comment": "Valid CalibrationResultPayload — both offsets populated.",
+  "baseNoteOffset": -0.05,
+  "levelNoteOffset": 0.02
+}

@@ -1,0 +1,22 @@
+{
+  "_comment": "Valid LevelMetaPayload — happy path. Covers all required fields plus optional localized strings.",
+  "schema_version": 1,
+  "version": 3,
+  "id": "example.level",
+  "title": "Example Level",
+  "title_localized": "示例谱面",
+  "artist": "Example Artist",
+  "artist_localized": "示例作者",
+  "artist_source": "https://example.com/artist",
+  "illustrator": "Example Illustrator",
+  "illustrator_source": "https://example.com/art",
+  "charter": "Example Charter",
+  "storyboarder": "Example Storyboarder",
+  "music": { "path": "music.ogg" },
+  "music_preview": { "path": "preview.ogg" },
+  "background": { "path": "background.png" },
+  "charts": [
+    { "type": "easy", "difficulty": 5, "path": "charts/easy.json" },
+    { "type": "hard", "name": "Hard 14", "difficulty": 14, "path": "charts/hard.json" }
+  ]
+}

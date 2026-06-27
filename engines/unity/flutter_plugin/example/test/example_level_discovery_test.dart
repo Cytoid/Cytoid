@@ -7,8 +7,8 @@ void main() {
   group('discoverPlayableLevelFolderRoots', () {
     test('includes folders with level.json except offset_guide', () {
       final keys = [
-        'assets/levels/8bit_adventurer/level.json',
-        'assets/levels/8bit_adventurer/music.mp3',
+        'assets/levels/io.cytoid.8bit_adventurer/level.json',
+        'assets/levels/io.cytoid.8bit_adventurer/music.mp3',
         'assets/levels/offset_guide/level.json',
         'assets/levels/my_demo/level.json',
       ];
@@ -16,7 +16,7 @@ void main() {
       expect(
         discoverPlayableLevelFolderRoots(keys),
         [
-          'assets/levels/8bit_adventurer',
+          'assets/levels/io.cytoid.8bit_adventurer',
           'assets/levels/my_demo',
         ],
       );

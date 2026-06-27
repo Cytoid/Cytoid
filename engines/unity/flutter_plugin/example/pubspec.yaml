@@ -62,7 +62,7 @@ flutter:
   uses-material-design: true
   assets:
     # BEGIN example_level_assets (manual: dart run tool/sync_level_assets.dart)
-    - assets/levels/8bit_adventurer/
+    - assets/levels/io.cytoid.8bit_adventurer/
     - assets/levels/offset_guide/
     # END example_level_assets
 

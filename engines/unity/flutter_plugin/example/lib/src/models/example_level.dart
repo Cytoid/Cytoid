@@ -103,7 +103,20 @@ class ExampleLevelRepository {
 
     // Reclaim temp space from removed/renamed levels before the user starts
     // playing. Best-effort — failures here do not block level loading.
+    //
+    // Include the hidden calibration guide's ID so its cache survives pruning;
+    // otherwise it would be deleted on every startup and rebuilt on next use.
     final activeIds = levels.map((l) => l.id).toSet();
+    try {
+      final guideMeta = jsonDecode(
+        await rootBundle.loadString(
+          '$exampleLevelAssetRoot/$exampleHiddenLevelFolderName/level.json',
+        ),
+      ) as Map<String, dynamic>;
+      activeIds.add(guideMeta['id'] as String);
+    } on Object {
+      // Hidden level may not be bundled in this build.
+    }
     try {
       await LevelVfsMaterializer.pruneOrphanedLevels(activeIds);
     } on Object {

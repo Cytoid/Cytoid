@@ -214,6 +214,42 @@ class RuntimeFailureSynthesisTest {
         assertEquals("exactly one envelope, not two", 1, captured.size)
     }
 
+    @Test
+    fun `onUnityMessage engine_ready emits runtime_recreated session result before engine_ready envelope`() {
+        val bridge = newBridgeWithCapture()
+        val captured = mutableListOf<String>()
+        bridge.emitOverride = { captured.add(it) }
+
+        // Drive to READY gen=1, BUSY(S1), then FAILED (clears activeSessionId),
+        // then restore S1 via reflection to simulate the safety-net case.
+        bridge.runtimeState.onRequestStart()
+        bridge.runtimeState.onEngineReady()
+        bridge.runtimeState.onSessionStarted("S1")
+        bridge.runtimeState.onFailure(
+            GameCoreError(code = "prior_failure", message = "prior"),
+        )
+        setBusinessActiveSessionForTest(bridge, "S1")
+
+        // engine.ready arrives through onUnityMessage: gen FAILED→READY (1→2),
+        // GENERATION_CHANGE synth must fire, THEN the engine.ready envelope.
+        bridge.onUnityMessage(
+            """{"v":2,"id":"r1","type":"engine.ready","payload":{}}""",
+        )
+
+        assertEquals("expected synth + engine.ready, in that order", 2, captured.size)
+
+        val first = JSONObject(captured[0])
+        assertEquals("first emitted must be the stale session result", "session.result", first.getString("type"))
+        assertEquals("S1", first.getString("id"))
+        assertEquals(
+            "runtime_recreated",
+            first.getJSONObject("payload").getJSONObject("error").getString("code"),
+        )
+
+        val second = JSONObject(captured[1])
+        assertEquals("second emitted must be the engine.ready itself", "engine.ready", second.getString("type"))
+    }
+
     private fun newBridgeWithCapture(): CytoidGameCoreBridge =
         CytoidGameCoreBridge.getOrCreate(Activity())
 

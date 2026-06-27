@@ -184,8 +184,9 @@ class ActivityLifecycleSynthesisTest {
         bridge.runtimeState.onRequestStart()
         assertEquals(RuntimeState.STARTING, bridge.runtimeState.state)
 
-        // Create Activity → READY, counter = 1.
+        // Create Activity (counter=1, state still STARTING) → game.ready ack → READY.
         fireOnActivityCreated(activity)
+        bridge.runtimeState.onEngineReady()
         assertEquals(RuntimeState.READY, bridge.runtimeState.state)
         assertEquals(1, bridge.unityActivityInstanceCount)
 
@@ -303,6 +304,8 @@ class ActivityLifecycleSynthesisTest {
     private fun driveToReady(bridge: CytoidGameCoreBridge, activity: Activity) {
         bridge.runtimeState.onRequestStart()
         fireOnActivityCreated(activity)
+        // Simulate the engine.ready ack; Activity creation no longer sets READY.
+        bridge.runtimeState.onEngineReady()
     }
 
     private fun getLifecycleCallbacks(): Application.ActivityLifecycleCallbacks {

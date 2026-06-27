@@ -21,7 +21,7 @@ class CytoidGameCoreBridge private constructor(
     // makes the bridge cheap to construct in JVM unit tests that exercise
     // fail-fast before any Handler use.
     private val mainHandler: Handler by lazy { Handler(Looper.getMainLooper()) }
-    private val mockBridge: MockGameCoreBridge by lazy { MockGameCoreBridge(::emit, mainHandler) }
+    private val mockBridge: MockGameCoreBridge by lazy { MockGameCoreBridge(::onUnityMessage, mainHandler) }
     private var eventSink: EventChannel.EventSink? = null
     private var exclusiveUnityActivity: Activity? = null
 
@@ -87,7 +87,10 @@ class CytoidGameCoreBridge private constructor(
                 if (isUnityGameplayActivity(activity)) {
                     exclusiveUnityActivity = activity
                     unityActivityInstanceCount++
-                    runtimeState.onEngineReady()
+                    // Readiness is backed only by engine.ready / game.ready in
+                    // onUnityMessage — NOT by Activity creation. Setting READY
+                    // here lets waitForReady resolve before Unity's C# runtime
+                    // has booted (P0 contract violation).
                     Log.i(TAG, "Exclusive game core activity created: ${activity.javaClass.name}")
                 }
             }
@@ -156,11 +159,9 @@ class CytoidGameCoreBridge private constructor(
     }
 
     fun attachActivity(activity: Activity) {
-        if (!probeUnityAvailable()) {
-            throw IllegalStateException(
-                "Unity artifacts not loaded. Run setup_unity_artifacts.sh then flutter clean.",
-            )
-        }
+        // Missing Unity artifacts is NOT an error: the bridge falls back to
+        // the mock runtime (docs/mock-engine.md, AGENTS.md). Fail-fast belongs
+        // only on the real-Unity paths that actually need the artifacts.
         this.activity = activity
         if (!lifecycleRegistered) {
             activity.application.registerActivityLifecycleCallbacks(unityActivityLifecycleCallbacks)
@@ -178,11 +179,6 @@ class CytoidGameCoreBridge private constructor(
     }
 
     fun showGameSurface(result: MethodChannel.Result) {
-        if (!probeUnityAvailable()) {
-            throw IllegalStateException(
-                "Unity artifacts not loaded. Run setup_unity_artifacts.sh then flutter clean.",
-            )
-        }
         runtimeState.onRequestStart()
         Log.i(TAG, "[CYTOID-DBG] showGameSurface called: useUnityRuntime=$useUnityRuntime exclusiveUnityActivity=$exclusiveUnityActivity")
 
@@ -263,16 +259,12 @@ class CytoidGameCoreBridge private constructor(
         val type = runCatching { JSONObject(jsonString).optString("type") }.getOrDefault("")
         Log.i(TAG, "[CYTOID-DBG] <- Unity: type=$type state=${runtimeState.state} activeSessionId=${runtimeState.activeSessionId}")
 
-        emit(jsonString)
-
-        // v2 engine.ready or v1 fallback game.ready both complete the
-        // STARTING→READY transition (single-slot resume memory preserved).
+        // GENERATION_CHANGE must run BEFORE the engine.ready envelope is
+        // forwarded: if the engine recreated with an active session, the spec
+        // requires the prior session's `runtime_recreated` session.result to
+        // reach the host before the next engine.ready (v2 § Active-Session
+        // Runtime Failure ordering).
         if (isEngineReadyMessage(jsonString) || isHostReadyMessage(jsonString)) {
-            // GENERATION_CHANGE trigger (v2 § Active-Session Runtime Failure):
-            // if a session was active AND generation is now >1, the prior
-            // session belongs to a stale engine instance. Capture before
-            // onEngineReady (which doesn't clear activeSessionId, but the
-            // capture makes the intent explicit and survives future edits).
             val wasActiveSession = runtimeState.activeSessionId
             runtimeState.onEngineReady()
             Log.i(TAG, "[CYTOID-DBG] <- Unity: ready received — state=${runtimeState.state}")
@@ -283,6 +275,9 @@ class CytoidGameCoreBridge private constructor(
                 )
             }
         }
+
+        emit(jsonString)
+
         // v2 session.started: explicit READY→BUSY signal carries the sessionId.
         if (isSessionStartedMessage(jsonString)) {
             val sessionId = JSONObject(jsonString).optString("id")

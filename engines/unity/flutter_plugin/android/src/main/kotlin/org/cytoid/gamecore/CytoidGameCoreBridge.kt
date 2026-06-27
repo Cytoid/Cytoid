@@ -39,6 +39,7 @@ class CytoidGameCoreBridge private constructor(
 
             override fun onActivityResumed(activity: Activity) {
                 if (isUnityGameplayActivity(activity)) {
+                    Log.i(TAG, "[CYTOID-DBG] Unity activity RESUMED (lifecycle)")
                     mainHandler.postDelayed({
                         applyExclusiveDisplayRefreshRate(activity)
                     }, REFRESH_RATE_APPLY_DELAY_MS)
@@ -51,6 +52,7 @@ class CytoidGameCoreBridge private constructor(
 
             override fun onActivityDestroyed(activity: Activity) {
                 if (exclusiveUnityActivity === activity) {
+                    Log.i(TAG, "[CYTOID-DBG] Unity activity DESTROYED")
                     exclusiveUnityActivity = null
                     surfaceVisible = false
                 }
@@ -86,6 +88,7 @@ class CytoidGameCoreBridge private constructor(
 
     fun showGameSurface(result: MethodChannel.Result) {
         runtimeStarted = true
+        Log.i(TAG, "[CYTOID-DBG] showGameSurface called: useUnityRuntime=$useUnityRuntime exclusiveUnityActivity=$exclusiveUnityActivity")
 
         if (useUnityRuntime) {
             val intent =
@@ -96,8 +99,10 @@ class CytoidGameCoreBridge private constructor(
             runCatching {
                 activity.startActivity(intent)
                 surfaceVisible = true
+                Log.i(TAG, "[CYTOID-DBG] showGameSurface: startActivity OK (REORDER_TO_FRONT|SINGLE_TOP)")
                 result.success(null)
             }.onFailure { error ->
+                Log.e(TAG, "[CYTOID-DBG] showGameSurface: startActivity FAILED", error)
                 result.error(
                     "unity_launch_failed",
                     error.message ?: "Failed to launch exclusive Unity activity.",
@@ -113,6 +118,7 @@ class CytoidGameCoreBridge private constructor(
     }
 
     fun hideGameSurface() {
+        Log.i(TAG, "[CYTOID-DBG] hideGameSurface called: surfaceVisible=$surfaceVisible exclusiveUnityActivity=$exclusiveUnityActivity")
         surfaceVisible = false
         DisplayRefreshRateHelper.restoreDefaultRefreshRate(activity)
 
@@ -133,6 +139,9 @@ class CytoidGameCoreBridge private constructor(
     }
 
     fun onOutboundMessage(jsonString: String) {
+        val type = runCatching { JSONObject(jsonString).optString("type") }.getOrDefault("")
+        Log.i(TAG, "[CYTOID-DBG] -> Unity: type=$type engineReady=$engineReady activePlayId=$activePlayId")
+
         if (isGameStartMessage(jsonString)) {
             activePlayId = JSONObject(jsonString).optString("id").takeIf { it.isNotEmpty() }
         }
@@ -148,11 +157,15 @@ class CytoidGameCoreBridge private constructor(
     }
 
     fun onUnityMessage(jsonString: String) {
+        val type = runCatching { JSONObject(jsonString).optString("type") }.getOrDefault("")
+        Log.i(TAG, "[CYTOID-DBG] <- Unity: type=$type engineReady=$engineReady activePlayId=$activePlayId")
+
         emit(jsonString)
 
         if (isHostReadyMessage(jsonString)) {
             engineReady = true
             runtimeStarted = true
+            Log.i(TAG, "[CYTOID-DBG] <- Unity: game.ready received — engineReady now true")
         }
         if (isGameResultMessage(jsonString)) {
             activePlayId = null
@@ -242,6 +255,12 @@ class CytoidGameCoreBridge private constructor(
                 runtimeStarted || surfaceVisible || useUnityRuntime -> RUNTIME_STARTING
                 else -> RUNTIME_UNAVAILABLE
             }
+        Log.i(
+            TAG,
+            "[CYTOID-DBG] runtimeStatus(): state=$state engineReady=$engineReady " +
+                "runtimeStarted=$runtimeStarted surfaceVisible=$surfaceVisible " +
+                "useUnityRuntime=$useUnityRuntime activePlayId=$activePlayId"
+        )
         return mapOf(
             "state" to state,
             "engine" to engineMode,
@@ -260,7 +279,9 @@ class CytoidGameCoreBridge private constructor(
                 )
                 .invoke(null, UNITY_BRIDGE_OBJECT, UNITY_BRIDGE_METHOD, jsonString)
         }.onFailure { error ->
-            Log.e(TAG, "UnitySendMessage failed", error)
+            Log.e(TAG, "[CYTOID-DBG] UnitySendMessage FAILED (Unity not loaded yet?): ${error.javaClass.simpleName}: ${error.message}")
+        }.onSuccess {
+            Log.i(TAG, "[CYTOID-DBG] UnitySendMessage OK")
         }
     }
 

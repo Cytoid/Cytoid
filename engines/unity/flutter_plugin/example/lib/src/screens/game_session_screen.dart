@@ -54,8 +54,10 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
       if (!mounted) return;
       setState(() => _status = 'Opening surface');
 
+      debugPrint('[CYTOID-DBG] calling showGameSurface');
       await _client.showGameSurface();
       _surfaceVisible = true;
+      debugPrint('[CYTOID-DBG] showGameSurface returned, awaiting host ready');
       await _awaitHostReady();
       unawaited(
         _client
@@ -66,7 +68,9 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
       if (!mounted) return;
       setState(() => _status = 'Loading chart');
 
+      debugPrint('[CYTOID-DBG] calling startPlay');
       result = await _client.startPlay(payload);
+      debugPrint('[CYTOID-DBG] startPlay returned: failed=${result.failed} completed=${result.completed}');
       widget.args.onCalibrationResult?.call(result);
       await _hideSurface();
     } on CytoidGameCorePlayRouteEndedException {
@@ -133,10 +137,12 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
   }
 
   Future<void> _awaitHostReady() async {
+    debugPrint('[CYTOID-DBG] _awaitHostReady enter');
     final readyCompleter = Completer<void>();
     late StreamSubscription<CytoidGameCoreEnvelope> readySubscription;
     readySubscription = _client.readyEvents.listen((_) {
       if (!readyCompleter.isCompleted) {
+        debugPrint('[CYTOID-DBG] _awaitHostReady: game.ready event received');
         readyCompleter.complete();
       }
     });
@@ -146,11 +152,13 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
       while (!readyCompleter.isCompleted) {
         final status = await _client.queryStatus();
         if (status.state == GameRuntimeStatus.ready) {
+          debugPrint('[CYTOID-DBG] _awaitHostReady: status=ready, returning');
           return;
         }
         unawaited(_pingReady());
         final remaining = deadline.difference(DateTime.now());
         if (remaining <= Duration.zero) {
+          debugPrint('[CYTOID-DBG] _awaitHostReady: DEADLINE HIT — returning without ready!');
           return;
         }
         await Future.any<void>([

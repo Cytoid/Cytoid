@@ -92,6 +92,16 @@ unzip -q "$TMP_DIR/UnityFramework.xcframework.zip" -d "$ARTIFACT_ROOT/ios"
 verify_checksum "$ARTIFACT_ROOT/android/cytoid-unity-core.aar"
 printf '%s\n' "$VERSION" > "$VERSION_FILE"
 
+# Write typed manifests alongside the legacy VERSION file. Both android and
+# ios manifests are emitted because setup_unity_artifacts.sh installs both
+# platform artifacts in one pass.
+MANIFEST_PLATFORM=android \
+MANIFEST_VERSION="$VERSION" \
+  bash "$ROOT_DIR/tool/write_manifest.sh"
+MANIFEST_PLATFORM=ios \
+MANIFEST_VERSION="$VERSION" \
+  bash "$ROOT_DIR/tool/write_manifest.sh"
+
 echo "Cytoid game core Unity artifacts installed:"
 echo "  Android: $ARTIFACT_ROOT/android"
 echo "  iOS:     $ARTIFACT_ROOT/ios/UnityFramework.xcframework"

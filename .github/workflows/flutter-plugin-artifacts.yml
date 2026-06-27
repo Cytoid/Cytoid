@@ -62,11 +62,19 @@ jobs:
           buildMethod: CytoidCoreBuild.ExportAndroidLibraryForFlutter
           allowDirtyBuild: true
 
+      - name: Write artifact manifest
+        env:
+          MANIFEST_PLATFORM: android
+          MANIFEST_VERSION: '0.1.0'
+        run: ${{ env.FLUTTER_PLUGIN_PATH }}/tool/write_manifest.sh
+
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
         with:
           name: cytoid-game-core-android
-          path: ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts/unity/android/
+          path: |
+            ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts/unity/android/
+            ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts/manifest.android.json
           if-no-files-found: error
 
   ios-export:
@@ -141,6 +149,12 @@ jobs:
       - name: Zip XCFramework
         run: ditto -c -k --sequesterRsrc --keepParent ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts/unity/ios/UnityFramework.xcframework ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts/unity/ios/UnityFramework.xcframework.zip
 
+      - name: Write artifact manifest
+        env:
+          MANIFEST_PLATFORM: ios
+          MANIFEST_VERSION: '0.1.0'
+        run: ${{ env.FLUTTER_PLUGIN_PATH }}/tool/write_manifest.sh
+
       - name: Upload iOS artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -149,6 +163,7 @@ jobs:
             ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts/unity/ios/UnityFramework.framework/
             ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts/unity/ios/UnityFramework.xcframework/
             ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts/unity/ios/UnityFramework.xcframework.zip
+            ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts/manifest.ios.json
           if-no-files-found: error
 
   flutter-package:

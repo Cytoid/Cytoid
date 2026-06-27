@@ -83,10 +83,12 @@ public class GameBridge : MonoBehaviour
     {
         if (sessionState.IsReadyForBridge)
         {
+            Debug.Log("[CYTOID-DBG] SendReadyToBridge: skipped (already ready)");
             return;
         }
 
         sessionState.IsReadyForBridge = true;
+        Debug.Log("[CYTOID-DBG] SendReadyToBridge: sending game.ready envelope");
 
         SyncTargetFrameRateToDisplay();
 
@@ -110,6 +112,8 @@ public class GameBridge : MonoBehaviour
             return;
         }
 
+        Debug.Log("[CYTOID-DBG] ReannounceReadyToBridge: re-sending game.ready");
+
         SyncTargetFrameRateToDisplay();
 
         var payload = new JObject
@@ -129,14 +133,17 @@ public class GameBridge : MonoBehaviour
     {
         if (!GameEmbedMode.IsBridgeEmbedded || sessionState == null || !sessionState.HasActivePlay)
         {
+            Debug.Log($"[CYTOID-DBG] EndActivePlayFromGame: skipped (HasActivePlay={sessionState?.HasActivePlay})");
             return;
         }
 
+        Debug.Log($"[CYTOID-DBG] EndActivePlayFromGame ENTER: ActivePlayId={sessionState.ActivePlayId}");
         try
         {
             await ShowHandoffOverlay();
             var playId = sessionState.ActivePlayId;
             sessionState.MarkPlayRouteEnded();
+            Debug.Log($"[CYTOID-DBG] EndActivePlayFromGame: MarkPlayRouteEnded cleared, playId={playId}");
             var envelope = CytoidGameCoreEnvelope.Create(
                 playId,
                 WireMessageTypes.GamePlayEnded,
@@ -164,11 +171,16 @@ public class GameBridge : MonoBehaviour
                 return;
             }
 
+            Debug.Log($"[CYTOID-DBG] OnGameResultJson ENTER: HasActivePlay={sessionState.HasActivePlay} ActivePlayId={sessionState.ActivePlayId}");
+            Debug.Log("[CYTOID-DBG] OnGameResultJson: BEFORE await ShowHandoffOverlay (0.2s window starts)");
             await ShowHandoffOverlay();
+            Debug.Log($"[CYTOID-DBG] OnGameResultJson: AFTER await ShowHandoffOverlay — HasActivePlay still={sessionState.HasActivePlay} (race window ends)");
             var playId = sessionState.ActivePlayId ?? Guid.NewGuid().ToString();
             var envelope = CytoidGameCoreEnvelope.Create(playId, WireMessageTypes.GamePlayResult, payload);
             NativeBridgeMessenger.Send(envelope.ToJsonString());
+            Debug.Log("[CYTOID-DBG] OnGameResultJson: BEFORE ClearActivePlay");
             sessionState.ClearActivePlay();
+            Debug.Log($"[CYTOID-DBG] OnGameResultJson EXIT: HasActivePlay={sessionState.HasActivePlay}");
         }
         finally
         {
@@ -179,17 +191,20 @@ public class GameBridge : MonoBehaviour
     internal static async UniTask ShowHandoffOverlay()
     {
         EnsureHandoffOverlay();
+        Debug.Log($"[CYTOID-DBG] ShowHandoffOverlay: alpha before={handoffCanvasGroup.alpha} enabled={handoffCanvas.enabled}");
         handoffCanvas.enabled = true;
         handoffCanvasGroup.blocksRaycasts = true;
         handoffCanvasGroup.interactable = true;
         handoffCanvasGroup.DOKill();
         handoffCanvasGroup.DOFade(1, 0.2f).SetEase(Ease.OutCubic);
         await UniTask.Delay(TimeSpan.FromSeconds(0.2f));
+        Debug.Log($"[CYTOID-DBG] ShowHandoffOverlay: alpha after={handoffCanvasGroup.alpha}");
     }
 
     internal static void HideHandoffOverlay()
     {
         EnsureHandoffOverlay();
+        Debug.Log($"[CYTOID-DBG] HideHandoffOverlay: alpha before={handoffCanvasGroup.alpha} enabled={handoffCanvas.enabled}");
         handoffCanvasGroup.blocksRaycasts = false;
         handoffCanvasGroup.interactable = false;
         handoffCanvasGroup.DOKill();
@@ -199,6 +214,11 @@ public class GameBridge : MonoBehaviour
             if (handoffCanvasGroup != null && handoffCanvasGroup.alpha <= 0.01f)
             {
                 handoffCanvas.enabled = false;
+                Debug.Log("[CYTOID-DBG] HideHandoffOverlay: canvas disabled (faded out fully)");
+            }
+            else
+            {
+                Debug.Log($"[CYTOID-DBG] HideHandoffOverlay: deferred check alpha={handoffCanvasGroup?.alpha} (kept visible — race with ShowHandoffOverlay!)");
             }
         });
     }

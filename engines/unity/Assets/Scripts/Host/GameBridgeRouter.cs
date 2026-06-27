@@ -79,8 +79,11 @@ public class GameBridgeRouter
 
     private void HandleGameStart(CytoidGameCoreEnvelope envelope)
     {
+        Debug.Log($"[CYTOID-DBG] HandleGameStart ENTER: id={envelope.Id} HasActivePlay={sessionState.HasActivePlay} ActivePlayId={sessionState.ActivePlayId} IsReadyForBridge={sessionState.IsReadyForBridge}");
+
         if (sessionState.HasActivePlay)
         {
+            Debug.LogWarning($"[CYTOID-DBG] HandleGameStart: REJECTING as Overlapping (current ActivePlayId={sessionState.ActivePlayId})");
             EmitRejectedGameStart(envelope.Id,
                 $"Overlapping {WireMessageTypes.BridgePlayStart}: session {sessionState.ActivePlayId} is still active.");
             return;
@@ -88,6 +91,7 @@ public class GameBridgeRouter
 
         if (envelope.Payload == null || envelope.Payload.Type == JTokenType.Null)
         {
+            Debug.LogWarning("[CYTOID-DBG] HandleGameStart: REJECTING (payload required)");
             EmitRejectedGameStart(envelope.Id, $"{WireMessageTypes.BridgePlayStart} payload is required.");
             return;
         }
@@ -95,11 +99,13 @@ public class GameBridgeRouter
         var payload = envelope.Payload as JObject;
         if (payload == null)
         {
+            Debug.LogWarning("[CYTOID-DBG] HandleGameStart: REJECTING (payload not object)");
             EmitRejectedGameStart(envelope.Id, $"{WireMessageTypes.BridgePlayStart} payload must be an object.");
             return;
         }
 
         sessionState.SetActivePlay(envelope.Id);
+        Debug.Log($"[CYTOID-DBG] HandleGameStart: SetActivePlay({envelope.Id}) — HasActivePlay now={sessionState.HasActivePlay}");
         ApplyPendingSettings(payload);
         var launchJson = payload.ToString();
         Debug.Log($"[GameBridge] Starting play {envelope.Id}");
@@ -108,6 +114,7 @@ public class GameBridgeRouter
 
     private async void HandleSessionEnd(CytoidGameCoreEnvelope envelope)
     {
+        Debug.Log($"[CYTOID-DBG] HandleSessionEnd ENTER: id={envelope.Id} HasActivePlay={sessionState.HasActivePlay} ActivePlayId={sessionState.ActivePlayId}");
         Debug.Log($"[GameBridge] {WireMessageTypes.BridgePlayEnd} received (id={envelope.Id}).");
         await GameBridge.ShowHandoffOverlay();
         var emittedCalibrationResult = AbortCurrentExternalGame();
@@ -116,6 +123,7 @@ public class GameBridgeRouter
             await UniTask.Delay(TimeSpan.FromSeconds(0.25));
         }
         sessionState.MarkPlayRouteEnded();
+        Debug.Log($"[CYTOID-DBG] HandleSessionEnd: MarkPlayRouteEnded cleared — HasActivePlay now={sessionState.HasActivePlay}");
         EmitPlayRouteEnded(envelope.Id);
     }
 

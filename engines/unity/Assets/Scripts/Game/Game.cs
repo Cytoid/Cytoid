@@ -262,19 +262,25 @@ public class Game : MonoBehaviour
         StoryboardPath = contentProvider.IsExternal ? null : Level.Path + (chartMeta.storyboard?.path ?? "storyboard.json");
         if (!string.IsNullOrEmpty(storyboardText))
         {
+            Debug.Log($"[CYTOID-DBG] Game.Initialize: loading storyboard (text length={storyboardText.Length})");
             // Initialize storyboard
             try
             {
                 Storyboard = new Cytoid.Storyboard.Storyboard(this, storyboardText);
                 Storyboard.Parse();
                 await Storyboard.Initialize();
+                Debug.Log("[CYTOID-DBG] Game.Initialize: storyboard loaded OK");
                 print(contentProvider.IsExternal ? "Loaded storyboard from external payload" : $"Loaded storyboard from {StoryboardPath}");
             }
             catch (Exception e)
             {
-                Debug.LogError(e);
+                Debug.LogError($"[CYTOID-DBG] Game.Initialize: STORYBOARD LOAD FAILED: {e}");
                 Debug.LogError("Could not load storyboard.");
             }
+        }
+        else
+        {
+            Debug.Log("[CYTOID-DBG] Game.Initialize: storyboard text empty/null — skipping");
         }
 
         // Load hit sound
@@ -314,6 +320,7 @@ public class Game : MonoBehaviour
         onGameLoaded.Invoke(this);
         if (GameEmbedMode.IsBridgeEmbedded)
         {
+            Debug.Log("[CYTOID-DBG] Game.Initialize complete — calling HideHandoffOverlay");
             GameBridge.HideHandoffOverlay();
         }
 

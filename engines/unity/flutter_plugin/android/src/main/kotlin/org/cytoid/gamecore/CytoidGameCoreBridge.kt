@@ -235,15 +235,18 @@ class CytoidGameCoreBridge private constructor(
             isSessionStartMessage(jsonString) -> {
                 runtimeState.onSessionStarted(JSONObject(jsonString).optString("id"))
             }
-            isSessionEndMessage(jsonString) -> {
-                runtimeState.onSessionEnded()
-            }
             isGameStartMessage(jsonString) -> {
                 // v1 fallback: bridge.play.start arrives without v2 session.started,
                 // so treat it as READY→BUSY using the envelope id.
                 runtimeState.onSessionStarted(JSONObject(jsonString).optString("id"))
             }
             isSessionEndMessageV1(jsonString) -> {
+                // v1 terminal (bridge.play.end). NOTE: session.cancel is
+                // intentionally NOT a terminal trigger here — v2 § session.cancel
+                // is a request whose terminal outcome is the later session.result
+                // (handled in onUnityMessage). Ending the session on cancel would
+                // let a post-cancel runtime failure route as engine.error instead
+                // of the active-session session.result.
                 runtimeState.onSessionEnded()
             }
         }

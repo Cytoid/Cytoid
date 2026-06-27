@@ -46,9 +46,7 @@ class ScorePayload {
       score: _readInt(json, 'score'),
       accuracy: _readDouble(json, 'accuracy'),
       maxCombo: _readInt(json, 'maxCombo'),
-      gradeCounts: Map<String, int>.from(
-        (gradeCounts).map((k, v) => MapEntry(k.toString(), (v as num).toInt())),
-      ),
+      gradeCounts: _readGradeCounts(gradeCounts),
       early: _readInt(json, 'early'),
       late: _readInt(json, 'late'),
       averageTimingError: _readDoubleOrNull(json, 'averageTimingError'),
@@ -67,6 +65,29 @@ class ScorePayload {
       if (averageTimingError != null) 'averageTimingError': averageTimingError,
       if (standardTimingError != null) 'standardTimingError': standardTimingError,
     };
+  }
+
+  static Map<String, int> _readGradeCounts(Object raw) {
+    final result = <String, int>{};
+    for (final entry in (raw as Map).entries) {
+      final key = entry.key;
+      if (key is! String) {
+        throw FormatException(
+          'ScorePayload.fromJson: "gradeCounts" keys must be strings.',
+        );
+      }
+      final v = entry.value;
+      if (v is int) {
+        result[key] = v;
+      } else if (v is num && v % 1 == 0) {
+        result[key] = v.toInt();
+      } else {
+        throw FormatException(
+          'ScorePayload.fromJson: "gradeCounts" values must be integers.',
+        );
+      }
+    }
+    return result;
   }
 
   static int _readInt(Map<String, dynamic> json, String key) {

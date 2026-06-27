@@ -24,14 +24,18 @@ import org.junit.Test
  */
 class AttachActivityMockFallbackTest {
 
+    private var previousProbe: (() -> Boolean)? = null
+
     @Before
     fun resetInstanceCompanion() {
         setCompanionInstance(null)
+        previousProbe = probeUnityAvailable
     }
 
     @After
     fun restoreProbeAndClearInstance() {
-        probeUnityAvailable = DEFAULT_PROBE
+        previousProbe?.let { probeUnityAvailable = it }
+        previousProbe = null
         setCompanionInstance(null)
     }
 

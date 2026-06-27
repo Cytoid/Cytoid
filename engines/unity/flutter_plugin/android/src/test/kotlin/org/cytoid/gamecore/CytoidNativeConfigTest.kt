@@ -5,6 +5,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
+import org.junit.Before
 import org.junit.Test
 
 /**
@@ -17,9 +18,17 @@ import org.junit.Test
  */
 class CytoidNativeConfigTest {
 
+    private var previousProbe: (() -> Boolean)? = null
+
+    @Before
+    fun saveProbe() {
+        previousProbe = probeUnityAvailable
+    }
+
     @After
     fun tearDown() {
-        probeUnityAvailable = DEFAULT_PROBE
+        previousProbe?.let { probeUnityAvailable = it }
+        previousProbe = null
     }
 
     @Test

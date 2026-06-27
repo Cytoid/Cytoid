@@ -1,3 +1,5 @@
+import '_validators.dart';
+
 /// `tier` field on `session.result` when `mode = "tier"`
 /// (v2 § TierResultPayload).
 class TierResultPayload {
@@ -31,11 +33,11 @@ class TierResultPayload {
   factory TierResultPayload.fromJson(Map<String, dynamic> json) {
     return TierResultPayload(
       tierId: json['tierId'] as String,
-      stageIndex: (json['stageIndex'] as num).toInt(),
-      stageCount: (json['stageCount'] as num).toInt(),
+      stageIndex: readRequiredInt(json, 'stageIndex', 'TierResultPayload.fromJson'),
+      stageCount: readRequiredInt(json, 'stageCount', 'TierResultPayload.fromJson'),
       health: (json['health'] as num).toDouble(),
       maxHealth: (json['maxHealth'] as num).toDouble(),
-      combo: (json['combo'] as num).toInt(),
+      combo: readRequiredInt(json, 'combo', 'TierResultPayload.fromJson'),
     );
   }
 

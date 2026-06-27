@@ -147,6 +147,8 @@ flutter run
 
 ### iOS Bridge-embedded
 
+> **iOS Simulator runs mock-only because the current Unity artifact is device-only. Real-device testing is required for Unity verification.**
+
 - Batch or **Cytoid → Build iOS Plugin Artifacts**: `CytoidCoreBuild.ExportIOSLibraryForFlutter`
   exports to `engines/unity/flutter_plugin/.cytoid_game_core/exports/ios/UnityLibrary`, then runs
   `engines/unity/flutter_plugin/tool/build_unity_ios_framework.sh` (requires macOS + Xcode) to write

@@ -44,3 +44,31 @@ Built-in demo levels live under `assets/levels/`. After adding a level folder, r
 
 When Unity artifacts are absent, the plugin runs a mock fullscreen session. Install
 real artifacts from `../tool/setup_unity_artifacts.sh` to launch the Unity core.
+
+## Running on iOS Simulator
+
+iOS Simulator runs mock-only because the current Unity artifact is device-only.
+Real-device testing is required for Unity verification.
+
+The shipped `UnityFramework.xcframework` lacks a simulator slice, so the plugin
+falls back to the mock runtime when the example app targets an iOS Simulator
+destination. This is true even after `./tool/setup_unity_artifacts.sh` has
+downloaded artifacts — the device slice is present, but the simulator loader
+cannot link it.
+
+To distinguish mock from Unity at a glance, the example app shows a
+`MOCK ENGINE` chip at the top of the game session screen in debug builds
+whenever `CytoidGameCoreClient.getEngineMode()` reports `'mock'`. The badge
+is hidden in release builds and whenever the real Unity runtime is mounted.
+
+To verify Unity startup, VFS loading, scene rendering, callbacks, and the
+native lifecycle path:
+
+1. Build and run on a physical iOS device after installing artifacts.
+2. Confirm the `MOCK ENGINE` chip is absent.
+3. Call `CytoidGameCoreClient.getEngineMode()` and expect `'unity'`.
+
+Producing a simulator-capable artifact requires adding a simulator slice to
+`UnityFramework.xcframework` (a Unity export configuration change tracked
+outside this example app — see `docs/unity-ios-export.md` in `cytoid_flutter`).
+

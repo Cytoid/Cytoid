@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../game_routes.dart';
+import '../widgets/mock_engine_badge.dart';
 
 /// Handoff screen that orchestrates a single gameplay session.
 ///
@@ -203,6 +204,14 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
                 duration: const Duration(milliseconds: 160),
                 child: _HandoffStatus(key: ValueKey(_status), status: _status),
               ),
+            ),
+            // Debug-only mock-engine indicator. Hidden in release builds and
+            // whenever the real Unity runtime is mounted. See MockEngineBadge.
+            Positioned(
+              top: 18,
+              left: 0,
+              right: 0,
+              child: Center(child: MockEngineBadge(client: _client)),
             ),
           ],
         ),

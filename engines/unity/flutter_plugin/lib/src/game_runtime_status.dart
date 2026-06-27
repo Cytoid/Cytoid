@@ -47,8 +47,7 @@ class GameRuntimeStatus {
   /// True when the runtime is initialized and either idle or running a
   /// session or briefly suspended. Suspended means "still initialized, just
   /// hidden" — the runtime has not been torn down.
-  bool get isRuntimeUp =>
-      state == ready || state == busy || state == suspended;
+  bool get isRuntimeUp => state == ready || state == busy || state == suspended;
 
   /// Backwards-compatible v1 alias: the runtime can be interacted with.
   /// Equivalent to v1's "state is one of {ready, busy, hidden}" semantics.
@@ -74,22 +73,36 @@ class GameRuntimeStatus {
     final state = json['state'];
     final engine = json['engine'];
     if (state is! String) {
-      throw const FormatException(
-        'Runtime status "state" must be a string.',
-      );
+      throw const FormatException('Runtime status "state" must be a string.');
     }
     if (engine is! String) {
-      throw const FormatException(
-        'Runtime status "engine" must be a string.',
+      throw const FormatException('Runtime status "engine" must be a string.');
+    }
+    if (!allStates.contains(state)) {
+      throw FormatException(
+        'Runtime status "state" must be one of $allStates.',
       );
     }
     // v2 requires `mode` and `generation`; v1 (mock bridge.status reply) omits
     // them. Default v1 inputs to the v1-equivalent value so the migration is
     // non-breaking while the v2 path stays strict on the native snapshot.
-    final mode = (json['mode'] is String) ? json['mode'] as String : engine;
+    final modeRaw = json['mode'];
+    if (json.containsKey('mode') && modeRaw is! String) {
+      throw const FormatException(
+        'Runtime status "mode" must be a string when present.',
+      );
+    }
+    final mode = modeRaw as String? ?? engine;
     final generationRaw = json['generation'];
-    final generation =
-        (generationRaw is int) ? generationRaw : (generationRaw is num ? generationRaw.toInt() : 0);
+    if (json.containsKey('generation') &&
+        (generationRaw is! num || generationRaw % 1 != 0)) {
+      throw const FormatException(
+        'Runtime status "generation" must be an integer when present.',
+      );
+    }
+    final generation = generationRaw == null
+        ? 0
+        : (generationRaw as num).toInt();
 
     // v2 wire name is `activeSessionId`; v1 used `activePlayId`. Accept either.
     final activeSessionId = json['activeSessionId'] ?? json['activePlayId'];
@@ -107,8 +120,17 @@ class GameRuntimeStatus {
           'Runtime status "error" must be an object when present.',
         );
       }
-      error = GameCoreError.fromJson(
-        Map<String, dynamic>.from(errorJson),
+      error = GameCoreError.fromJson(Map<String, dynamic>.from(errorJson));
+    }
+
+    if (state == busy && activeSessionId == null) {
+      throw const FormatException(
+        'Runtime status "activeSessionId" is required when state is busy.',
+      );
+    }
+    if (state == failed && error == null) {
+      throw const FormatException(
+        'Runtime status "error" is required when state is failed.',
       );
     }
 

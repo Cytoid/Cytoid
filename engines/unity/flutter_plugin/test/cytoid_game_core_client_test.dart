@@ -21,7 +21,11 @@ void main() {
             case 'getEngineMode':
               return 'mock';
             case 'queryRuntimeStatus':
-              return <String, Object?>{'state': 'busy', 'engine': 'mock'};
+              return <String, Object?>{
+                'state': 'busy',
+                'engine': 'mock',
+                'activeSessionId': 'session-active',
+              };
             case 'send':
             case 'ensureRuntimeStarted':
             case 'showGameSurface':

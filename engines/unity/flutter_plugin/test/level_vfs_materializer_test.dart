@@ -75,10 +75,7 @@ void main() {
     '(a) first call materializes assets into a fresh cache directory',
     () async {
       const materializer = LevelVfsMaterializer();
-      final assetKeys = {
-        'charts/hard.json': 4,
-        'audio/song.ogg': 3,
-      };
+      final assetKeys = {'charts/hard.json': 4, 'audio/song.ogg': 3};
 
       final vfsPath = await materializer.materialize(
         levelId: 'level.foo',
@@ -104,10 +101,7 @@ void main() {
     '(b) second call with same version reuses the cache without reload',
     () async {
       const materializer = LevelVfsMaterializer();
-      final assetKeys = {
-        'charts/hard.json': 4,
-        'audio/song.ogg': 3,
-      };
+      final assetKeys = {'charts/hard.json': 4, 'audio/song.ogg': 3};
 
       await materializer.materialize(
         levelId: 'level.foo',
@@ -133,24 +127,14 @@ void main() {
       // Pinned cache directory path.
       expect(
         secondPath,
-        '${p.join(
-          cacheRoot.path,
-          'cytoid',
-          'levels',
-          'level.foo',
-          'v1',
-          _hashFor(assetKeys),
-        )}${p.separator}',
+        '${p.join(cacheRoot.path, 'cytoid', 'levels', 'level.foo', 'v1', _hashFor(assetKeys))}${p.separator}',
       );
     },
   );
 
   test('(c) second call with a new version re-materializes', () async {
     const materializer = LevelVfsMaterializer();
-    final assetKeys = {
-      'charts/hard.json': 4,
-      'audio/song.ogg': 3,
-    };
+    final assetKeys = {'charts/hard.json': 4, 'audio/song.ogg': 3};
 
     final firstPath = await materializer.materialize(
       levelId: 'level.foo',
@@ -180,76 +164,70 @@ void main() {
     expect(Directory(secondPath).existsSync(), isTrue);
   });
 
-  test(
-    '(f) regression: resolves assets via folderAssetPath + relative key '
-    '(production rootBundle namespacing)',
-    () async {
-      // Reproduces the reported Android bug: the materializer was loading
-      // assets by their bare VFS-relative key, which rootBundle cannot
-      // resolve. It must combine folderAssetPath + relative key.
-      const materializer = LevelVfsMaterializer();
-      final assetKeys = {'ex.txt': 7};
+  test('(f) regression: resolves assets via folderAssetPath + relative key '
+      '(production rootBundle namespacing)', () async {
+    // Reproduces the reported Android bug: the materializer was loading
+    // assets by their bare VFS-relative key, which rootBundle cannot
+    // resolve. It must combine folderAssetPath + relative key.
+    const materializer = LevelVfsMaterializer();
+    final assetKeys = {'ex.txt': 7};
 
-      final vfsPath = await materializer.materialize(
-        levelId: 'level.bar',
-        version: 'v1',
-        folderAssetPath: folderAssetPath,
-        assetKeys: assetKeys,
-        bundle: _CountingAssetBundle({
-          '$folderAssetPath/ex.txt': Uint8List.fromList([1, 2, 3, 4, 5, 6, 7]),
-        }),
-        cacheRootOverride: cacheRoot,
-      );
+    final vfsPath = await materializer.materialize(
+      levelId: 'level.bar',
+      version: 'v1',
+      folderAssetPath: folderAssetPath,
+      assetKeys: assetKeys,
+      bundle: _CountingAssetBundle({
+        '$folderAssetPath/ex.txt': Uint8List.fromList([1, 2, 3, 4, 5, 6, 7]),
+      }),
+      cacheRootOverride: cacheRoot,
+    );
 
-      final chartFile = File(p.join(vfsPath, 'ex.txt'));
-      expect(chartFile.existsSync(), isTrue, reason: 'chart file must exist');
-      expect(chartFile.readAsBytesSync(), [1, 2, 3, 4, 5, 6, 7]);
-    },
-  );
+    final chartFile = File(p.join(vfsPath, 'ex.txt'));
+    expect(chartFile.existsSync(), isTrue, reason: 'chart file must exist');
+    expect(chartFile.readAsBytesSync(), [1, 2, 3, 4, 5, 6, 7]);
+  });
 
-  test(
-    '(g) regression: a stale empty cache directory is re-materialized, not '
-    'treated as a cache hit',
-    () async {
-      // Reproduces the cascade symptom: a previous failed materialization
-      // left an empty cache directory on disk; the directory's bare
-      // existence must NOT be trusted as a hit.
-      const materializer = LevelVfsMaterializer();
-      final assetKeys = {'ex.txt': 3};
-      final fullBundle = _CountingAssetBundle({
-        '$folderAssetPath/ex.txt': Uint8List.fromList([10, 20, 30]),
-      });
+  test('(g) regression: a stale empty cache directory is re-materialized, not '
+      'treated as a cache hit', () async {
+    // Reproduces the cascade symptom: a previous failed materialization
+    // left an empty cache directory on disk; the directory's bare
+    // existence must NOT be trusted as a hit.
+    const materializer = LevelVfsMaterializer();
+    final assetKeys = {'ex.txt': 3};
+    final fullBundle = _CountingAssetBundle({
+      '$folderAssetPath/ex.txt': Uint8List.fromList([10, 20, 30]),
+    });
 
-      // Pre-create the cache directory exactly where the materializer
-      // expects it, but leave it empty (simulating a prior failed run).
-      final cacheDir = Directory(
-        p.join(
-          cacheRoot.path,
-          'cytoid',
-          'levels',
-          'level.bar',
-          'v1',
-          _hashFor(assetKeys),
-        ),
-      );
-      await cacheDir.create(recursive: true);
-      expect(cacheDir.listSync(), isEmpty);
+    // Pre-create the cache directory exactly where the materializer
+    // expects it, but leave it empty (simulating a prior failed run).
+    final cacheDir = Directory(
+      p.join(
+        cacheRoot.path,
+        'cytoid',
+        'levels',
+        'level.bar',
+        'v1',
+        _hashFor(assetKeys),
+      ),
+    );
+    await cacheDir.create(recursive: true);
+    expect(cacheDir.listSync(), isEmpty);
 
-      final vfsPath = await materializer.materialize(
-        levelId: 'level.bar',
-        version: 'v1',
-        folderAssetPath: folderAssetPath,
-        assetKeys: assetKeys,
-        bundle: fullBundle,
-        cacheRootOverride: cacheRoot,
-      );
+    final vfsPath = await materializer.materialize(
+      levelId: 'level.bar',
+      version: 'v1',
+      folderAssetPath: folderAssetPath,
+      assetKeys: assetKeys,
+      bundle: fullBundle,
+      cacheRootOverride: cacheRoot,
+    );
 
-      expect(vfsPath, '${cacheDir.path}${p.separator}');
-      final chartFile = File(p.join(vfsPath, 'ex.txt'));
-      expect(chartFile.existsSync(), isTrue);
-      expect(chartFile.readAsBytesSync(), [10, 20, 30]);
-    },
-  );
+    expect(vfsPath, '${cacheDir.path}${p.separator}');
+    final chartFile = File(p.join(vfsPath, 'ex.txt'));
+    expect(chartFile.existsSync(), isTrue);
+    expect(chartFile.readAsBytesSync(), [10, 20, 30]);
+  });
 
   test('(d) canonicalizeVfsPath rejects absolute paths', () {
     expect(
@@ -264,4 +242,30 @@ void main() {
       throwsA(isA<ArgumentError>()),
     );
   });
+
+  test(
+    '(h) materialize rejects unsafe asset keys before bundle load',
+    () async {
+      const materializer = LevelVfsMaterializer();
+      for (final assetKey in [
+        '../escape.txt',
+        '/absolute.txt',
+        r'..\escape.txt',
+      ]) {
+        final rejectingBundle = _CountingAssetBundle({});
+        await expectLater(
+          materializer.materialize(
+            levelId: 'level.bad',
+            version: 'v1',
+            folderAssetPath: folderAssetPath,
+            assetKeys: {assetKey: 1},
+            bundle: rejectingBundle,
+            cacheRootOverride: cacheRoot,
+          ),
+          throwsA(isA<ArgumentError>()),
+        );
+        expect(rejectingBundle.loadCount, 0);
+      }
+    },
+  );
 }

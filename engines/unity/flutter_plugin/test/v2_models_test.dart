@@ -12,8 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// `variantBag` fixtures (outcome, error) hold multiple cases keyed by a
 /// top-level name; each variant is exercised independently.
 
-final _fixturesDir =
-    Directory('${Directory.current.path}/test/fixtures/v2');
+final _fixturesDir = Directory('${Directory.current.path}/test/fixtures/v2');
 
 void main() {
   group('v2 models — round-trip fixtures', () {
@@ -25,8 +24,11 @@ void main() {
           .where((f) => f.path.endsWith('.json'))
           .where((f) => !f.path.endsWith('.expected.json'))
           .toList();
-      expect(jsonFiles.length, greaterThanOrEqualTo(10),
-          reason: 'Spec requires ≥10 fixture files');
+      expect(
+        jsonFiles.length,
+        greaterThanOrEqualTo(10),
+        reason: 'Spec requires ≥10 fixture files',
+      );
     });
 
     test('GameCoreError round-trips', () {
@@ -188,10 +190,146 @@ void main() {
     });
   });
 
+  group('v2 models — strict validation regressions', () {
+    test('integer fields reject fractional numbers', () {
+      expect(
+        () => TierLaunchPayload.fromJson({
+          'tierId': 'tier.example',
+          'stageIndex': 1.5,
+          'stageCount': 3,
+          'maxHealth': 100.0,
+          'initialHealth': 100.0,
+          'initialCombo': 0,
+        }),
+        throwsA(isA<FormatException>()),
+      );
+      expect(
+        () => LevelResultPayload.fromJson({
+          'id': 'level.example',
+          'title': 'Example',
+          'difficulty': 'hard',
+          'difficultyLevel': 14.5,
+        }),
+        throwsA(isA<FormatException>()),
+      );
+
+      final meta = _validLevelMeta();
+      meta['schema_version'] = 1.5;
+      expect(
+        () => LevelMetaPayload.fromJson(meta),
+        throwsA(isA<FormatException>()),
+      );
+
+      final chartMeta = _validLevelMeta();
+      (chartMeta['charts'] as List).first['difficulty'] = 14.5;
+      expect(
+        () => LevelMetaPayload.fromJson(chartMeta),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('LevelMetaPayload rejects malformed optional nested objects', () {
+      final musicOverride = _validLevelMeta();
+      (musicOverride['charts'] as List).first['music_override'] = 'music.ogg';
+      expect(
+        () => LevelMetaPayload.fromJson(musicOverride),
+        throwsA(isA<FormatException>()),
+      );
+
+      final storyboard = _validLevelMeta();
+      (storyboard['charts'] as List).first['storyboard'] = 'storyboard.json';
+      expect(
+        () => LevelMetaPayload.fromJson(storyboard),
+        throwsA(isA<FormatException>()),
+      );
+
+      final localization = _validLevelMeta();
+      (localization['charts'] as List).first['storyboard'] = {
+        'path': 'storyboard.json',
+        'localizations': {'en': 1},
+      };
+      expect(
+        () => LevelMetaPayload.fromJson(localization),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('SettingsPayload rejects non-string note style map entries', () {
+      final launch = _validSessionLaunch();
+      final settings = launch['settings'] as Map<String, dynamic>;
+      final noteStyle = settings['noteStyle'] as Map<String, dynamic>;
+      final ringColors = noteStyle['ringColors'] as Map;
+      ringColors['click'] = 7;
+
+      expect(
+        () => SettingsPayload.fromJson(settings),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test(
+      'SessionResultPayload rejects malformed nested objects and missing tier',
+      () {
+        final malformedLevel = _validSessionResult();
+        malformedLevel['level'] = 'level.example';
+        expect(
+          () => SessionResultPayload.fromJson(malformedLevel),
+          throwsA(isA<FormatException>()),
+        );
+
+        final missingTier = _validSessionResult();
+        missingTier['mode'] = 'tier';
+        missingTier.remove('tier');
+        expect(
+          () => SessionResultPayload.fromJson(missingTier),
+          throwsA(isA<FormatException>()),
+        );
+      },
+    );
+
+    test('GameRuntimeStatus enforces v2 invariants', () {
+      expect(
+        () => GameRuntimeStatus.fromJson({'state': 'bogus', 'engine': 'mock'}),
+        throwsA(isA<FormatException>()),
+      );
+      expect(
+        () => GameRuntimeStatus.fromJson({
+          'state': GameRuntimeStatus.busy,
+          'engine': 'mock',
+        }),
+        throwsA(isA<FormatException>()),
+      );
+      expect(
+        () => GameRuntimeStatus.fromJson({
+          'state': GameRuntimeStatus.failed,
+          'engine': 'mock',
+        }),
+        throwsA(isA<FormatException>()),
+      );
+      expect(
+        () => GameRuntimeStatus.fromJson({
+          'state': GameRuntimeStatus.ready,
+          'engine': 'mock',
+          'mode': 1,
+        }),
+        throwsA(isA<FormatException>()),
+      );
+      expect(
+        () => GameRuntimeStatus.fromJson({
+          'state': GameRuntimeStatus.ready,
+          'engine': 'mock',
+          'generation': 1.5,
+        }),
+        throwsA(isA<FormatException>()),
+      );
+    });
+  });
+
   group('v2 models — directional serialization', () {
     test('SessionLaunchPayload serializes mods using v2 wire names', () {
       final payload = SessionLaunchPayload.fromJson(
-        _decodeJson('session_launch_payload.valid.json') as Map<String, dynamic>,
+        _decodeJson('session_launch_payload.valid.json')
+            as Map<String, dynamic>,
       );
       expect(payload.mods, [GameMod.fast]);
       expect(payload.toJson()['mods'], ['fast']);
@@ -199,7 +337,8 @@ void main() {
 
     test('SessionLaunchPayload echoes mode as v2 wire name', () {
       final payload = SessionLaunchPayload.fromJson(
-        _decodeJson('session_launch_payload.valid.json') as Map<String, dynamic>,
+        _decodeJson('session_launch_payload.valid.json')
+            as Map<String, dynamic>,
       );
       expect(payload.mode, SessionMode.ranked);
       expect(payload.toJson()['mode'], 'ranked');
@@ -242,11 +381,29 @@ Map<String, Object?> _loadExpected(String fixtureName) {
 
 Map<String, Object> _loadVariantBag(String name) {
   final file = File('${_fixturesDir.path}/$name.json');
-  final raw = Map<String, Object>.from(json.decode(file.readAsStringSync()) as Map);
+  final raw = Map<String, Object>.from(
+    json.decode(file.readAsStringSync()) as Map,
+  );
   // Variant-bag fixtures carry a `_comment` top-level key with a String value;
   // strip it so iteration yields only real cases.
   raw.remove('_comment');
   return raw;
+}
+
+Map<String, dynamic> _validSessionLaunch() {
+  final raw = _decodeJson('session_launch_payload.valid.json');
+  return Map<String, dynamic>.from(raw as Map)..remove('_comment');
+}
+
+Map<String, dynamic> _validLevelMeta() {
+  final launch = _validSessionLaunch();
+  final level = launch['level'] as Map<String, dynamic>;
+  return Map<String, dynamic>.from(level['meta'] as Map);
+}
+
+Map<String, dynamic> _validSessionResult() {
+  final raw = _decodeJson('session_result_payload.valid.json');
+  return Map<String, dynamic>.from(raw as Map)..remove('_comment');
 }
 
 void _roundTripFile<T>(
@@ -255,8 +412,11 @@ void _roundTripFile<T>(
   Map<String, dynamic> Function(T) toJson,
 ) {
   final raw = _decodeJson(filename);
-  expect(raw, isA<Map>(),
-      reason: 'fixture $filename must hold a single object');
+  expect(
+    raw,
+    isA<Map>(),
+    reason: 'fixture $filename must hold a single object',
+  );
   _expectRoundTrip(Map<String, dynamic>.from(raw as Map), fromJson, toJson);
 }
 
@@ -279,8 +439,11 @@ void _expectRoundTrip<T>(
     equals(_normalize(reencoded)),
     reason: 'round-trip JSON must be stable$reason',
   );
-  expect(_normalize(encoded), isNot(contains('_comment')),
-      reason: 'serialized output must never contain fixture comments');
+  expect(
+    _normalize(encoded),
+    isNot(contains('_comment')),
+    reason: 'serialized output must never contain fixture comments',
+  );
 }
 
 void _expectThrows(String filename) {
@@ -290,8 +453,11 @@ void _expectThrows(String filename) {
   // any model. The model parsers reject unknown fields by way of typed casts.
   final json = Map<String, dynamic>.from(raw as Map)..remove('_comment');
   final expected = _loadExpected(filename.replaceAll('.json', ''));
-  expect(expected['throws'], isTrue,
-      reason: '$filename.expected.json must declare throws=true');
+  expect(
+    expected['throws'],
+    isTrue,
+    reason: '$filename.expected.json must declare throws=true',
+  );
 
   // We do not know which model the fixture is for, but every fixture filename
   // encodes its target type, so we route via the filename prefix.

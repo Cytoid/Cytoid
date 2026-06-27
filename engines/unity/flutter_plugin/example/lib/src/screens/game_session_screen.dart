@@ -169,9 +169,9 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
   /// the hide and this guard becomes redundant.
   Future<void> _hideSurface() async {
     if (!_surfaceVisible) return;
-    _surfaceVisible = false;
     try {
       await _client.hideGameSurface();
+      _surfaceVisible = false;
     } catch (error) {
       debugPrint('[GameSession] hideGameSurface failed: $error');
     }

@@ -63,12 +63,10 @@ class LevelVfsMaterializer {
 
     final sortedKeys = assetKeys.keys.toList()..sort();
     for (final assetKey in sortedKeys) {
+      final pathSegments = _validateAssetKey(assetKey);
       final sourceKey = '$folderAssetPath/$assetKey';
       final data = await assetBundle.load(sourceKey);
-      final output = File(p.joinAll([
-        cacheDir.path,
-        ...assetKey.split('/'),
-      ]));
+      final output = File(p.joinAll([cacheDir.path, ...pathSegments]));
       await output.parent.create(recursive: true);
       await output.writeAsBytes(
         data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
@@ -112,6 +110,29 @@ class LevelVfsMaterializer {
     return path.endsWith(Platform.pathSeparator)
         ? path
         : '$path${Platform.pathSeparator}';
+  }
+
+  static List<String> _validateAssetKey(String assetKey) {
+    if (assetKey.isEmpty) {
+      throw ArgumentError.value(assetKey, 'assetKey', 'must not be empty');
+    }
+    final firstChar = assetKey.codeUnitAt(0);
+    if (firstChar == 0x2F || firstChar == 0x5C) {
+      throw ArgumentError.value(
+        assetKey,
+        'assetKey',
+        'must be relative, not absolute',
+      );
+    }
+    final segments = assetKey.split(RegExp(r'[/\\]'));
+    if (segments.contains('..')) {
+      throw ArgumentError.value(
+        assetKey,
+        'assetKey',
+        'must not contain parent-traversal (..) segments',
+      );
+    }
+    return segments;
   }
 }
 

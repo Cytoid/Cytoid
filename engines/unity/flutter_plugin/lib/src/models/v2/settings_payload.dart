@@ -1,5 +1,7 @@
 import 'style_enums.dart';
 
+import '_validators.dart';
+
 /// `session.start.settings` payload (v2 § SettingsPayload). All 5 groups are
 /// required in `session.start`; `settings.apply` allows partial updates.
 class SettingsPayload {
@@ -349,13 +351,7 @@ Map<String, dynamic> _readMap(
 }
 
 Map<String, String> _readStringMap(Map<String, dynamic> json, String key) {
-  final v = json[key];
-  if (v is! Map) {
-    throw FormatException('Settings: "$key" must be an object.');
-  }
-  final map = Map<String, String>.from(
-    v.map((k, val) => MapEntry(k.toString(), val.toString())),
-  );
+  final map = readStringMapEntries(json[key], key, 'Settings');
   final missing = NoteType.requiredKeys.difference(map.keys.toSet());
   if (missing.isNotEmpty) {
     throw FormatException(

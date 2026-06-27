@@ -1,3 +1,4 @@
+import '_validators.dart';
 import 'calibration_result_payload.dart';
 import 'error_payload.dart';
 import 'flags_payload.dart';
@@ -65,9 +66,7 @@ class SessionResultPayload {
   final int timestamp;
 
   factory SessionResultPayload.fromJson(Map<String, dynamic> json) {
-    final outcome = OutcomePayload.fromJson(
-      _asMap(json, 'outcome'),
-    );
+    final outcome = OutcomePayload.fromJson(_asMap(json, 'outcome'));
     final kind = outcome.kind;
     final errorJson = json['error'];
 
@@ -96,20 +95,45 @@ class SessionResultPayload {
         );
       }
     }
+    if (json['mode'] == 'tier' && json['tier'] is! Map) {
+      throw FormatException(
+        'SessionResultPayload.fromJson: "tier" is required when mode="tier".',
+      );
+    }
 
     return SessionResultPayload(
       sessionId: json['sessionId'] as String,
       mode: json['mode'] as String,
       mods: _readStringList(json['mods']),
       outcome: outcome,
-      level: _optional(json['level'], LevelResultPayload.fromJson),
-      score: _optional(json['score'], ScorePayload.fromJson),
-      calibration: _optional(json['calibration'], CalibrationResultPayload.fromJson),
-      tier: _optional(json['tier'], TierResultPayload.fromJson),
+      level: readOptionalObject(
+        json,
+        'level',
+        'SessionResultPayload.fromJson',
+        LevelResultPayload.fromJson,
+      ),
+      score: readOptionalObject(
+        json,
+        'score',
+        'SessionResultPayload.fromJson',
+        ScorePayload.fromJson,
+      ),
+      calibration: readOptionalObject(
+        json,
+        'calibration',
+        'SessionResultPayload.fromJson',
+        CalibrationResultPayload.fromJson,
+      ),
+      tier: readOptionalObject(
+        json,
+        'tier',
+        'SessionResultPayload.fromJson',
+        TierResultPayload.fromJson,
+      ),
       flags: FlagsPayload.fromJson(_asMap(json, 'flags')),
       telemetry: ResultTelemetryPayload.fromJson(_asMap(json, 'telemetry')),
       error: error,
-      timestamp: (json['timestamp'] as num).toInt(),
+      timestamp: readRequiredInt(json, 'timestamp', 'SessionResultPayload'),
     );
   }
 
@@ -138,14 +162,6 @@ class SessionResultPayload {
       );
     }
     return Map<String, dynamic>.from(v);
-  }
-
-  static T? _optional<T>(
-    Object? v,
-    T Function(Map<String, dynamic>) fromJson,
-  ) {
-    if (v is! Map) return null;
-    return fromJson(Map<String, dynamic>.from(v));
   }
 
   static List<String> _readStringList(Object? value) {

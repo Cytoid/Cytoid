@@ -28,6 +28,7 @@ class PlaySession {
   final CytoidGameCoreClient client;
 
   int _sessionIdCounter = 0;
+  String? _activeSessionId;
 
   /// Runs a full v2 session lifecycle and returns the typed terminal result.
   ///
@@ -43,6 +44,7 @@ class PlaySession {
     Duration? readyTimeout,
   }) async {
     final sessionId = _nextSessionId();
+    _activeSessionId = sessionId;
     try {
       await client.ensureRuntimeStarted();
       await client.showGameSurface();
@@ -63,7 +65,13 @@ class PlaySession {
         await resultWait.cancelSubscription();
       }
     } finally {
-      await client.hideGameSurface();
+      try {
+        await client.hideGameSurface();
+      } finally {
+        if (_activeSessionId == sessionId) {
+          _activeSessionId = null;
+        }
+      }
     }
   }
 
@@ -78,13 +86,14 @@ class PlaySession {
   ///
   /// Allowed `reason` values per v2 spec: `userBack`, `hostNavigation`,
   /// `appBackgrounded`, `surfaceLost`, `unknown`.
-  Future<void> cancel({
-    required String sessionId,
-    required String reason,
-  }) async {
+  Future<void> cancel({String? sessionId, String reason = 'userBack'}) async {
+    final id = sessionId ?? _activeSessionId;
+    if (id == null) {
+      throw StateError('No active session id is available to cancel.');
+    }
     await client.send(
       CytoidGameCoreEnvelope.create(
-        id: sessionId,
+        id: id,
         type: WireMessageType.sessionCancel,
         payload: {'reason': reason},
         v: 2,
@@ -98,25 +107,22 @@ class PlaySession {
   _SessionResultWait _awaitSessionResult(String sessionId) {
     final completer = Completer<SessionResultPayload>();
     late StreamSubscription<dynamic> subscription;
-    subscription = client.events.listen(
-      (envelope) {
-        if (envelope.id != sessionId ||
-            envelope.type != WireMessageType.sessionResult ||
-            completer.isCompleted) {
-          return;
-        }
-        try {
-          completer.complete(
-            SessionResultPayload.fromJson(
-              Map<String, dynamic>.from(envelope.payload),
-            ),
-          );
-        } catch (e, st) {
-          completer.completeError(e, st);
-        }
-      },
-      onError: completer.completeError,
-    );
+    subscription = client.events.listen((envelope) {
+      if (envelope.id != sessionId ||
+          envelope.type != WireMessageType.sessionResult ||
+          completer.isCompleted) {
+        return;
+      }
+      try {
+        completer.complete(
+          SessionResultPayload.fromJson(
+            Map<String, dynamic>.from(envelope.payload),
+          ),
+        );
+      } catch (e, st) {
+        completer.completeError(e, st);
+      }
+    }, onError: completer.completeError);
 
     return _SessionResultWait(
       future: completer.future,

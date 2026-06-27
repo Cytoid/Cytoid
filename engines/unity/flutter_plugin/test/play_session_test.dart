@@ -46,25 +46,30 @@ void main() {
 
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(primaryChannel, (call) async {
-      primaryCalls.add(call);
-      switch (call.method) {
-        case 'ensureRuntimeStarted':
-        case 'showGameSurface':
-        case 'hideGameSurface':
-        case 'send':
-          return null;
-        case 'getEngineMode':
-          return 'mock';
-        case 'queryRuntimeStatus':
-          return <String, Object?>{
-            'state': statusState,
-            'engine': 'mock',
-            'mode': 'mock',
-            'generation': 1,
-          };
-      }
-      throw PlatformException(code: 'not_implemented');
-    });
+          primaryCalls.add(call);
+          switch (call.method) {
+            case 'ensureRuntimeStarted':
+            case 'showGameSurface':
+            case 'hideGameSurface':
+            case 'send':
+              return null;
+            case 'getEngineMode':
+              return 'mock';
+            case 'queryRuntimeStatus':
+              return <String, Object?>{
+                'state': statusState,
+                'engine': 'mock',
+                'mode': 'mock',
+                'generation': 1,
+                if (statusState == 'failed')
+                  'error': {
+                    'code': 'runtime_failed',
+                    'message': 'Runtime failed',
+                  },
+              };
+          }
+          throw PlatformException(code: 'not_implemented');
+        });
   });
 
   tearDown(() async {
@@ -103,62 +108,54 @@ void main() {
   }
 
   group('PlaySession.run happy path', () {
-    test(
-      'Android warm-resident ready: resolves via queryStatus with no '
-      'engine.ready event (second-session regression)',
-      () async {
-        // Reproduces the second-session timeout: the warm-resident runtime
-        // is already READY after Activity resume, which fires NO engine.ready
-        // event. The Android fallback must consult queryStatus rather than
-        // wait on an event that will never arrive.
-        // (setUp leaves statusState = 'ready'.)
-        final client = CytoidGameCoreClient(
-          methodChannel: primaryChannel,
-          eventStream: events.stream,
-        );
-        final session = PlaySession(client);
+    test('Android warm-resident ready: resolves via queryStatus with no '
+        'engine.ready event (second-session regression)', () async {
+      // Reproduces the second-session timeout: the warm-resident runtime
+      // is already READY after Activity resume, which fires NO engine.ready
+      // event. The Android fallback must consult queryStatus rather than
+      // wait on an event that will never arrive.
+      // (setUp leaves statusState = 'ready'.)
+      final client = CytoidGameCoreClient(
+        methodChannel: primaryChannel,
+        eventStream: events.stream,
+      );
+      final session = PlaySession(client);
 
-        final runFuture = session.run(
-          launch: _buildTestLaunch(),
-          readyTimeout: const Duration(seconds: 2),
-        );
+      final runFuture = session.run(
+        launch: _buildTestLaunch(),
+        readyTimeout: const Duration(seconds: 2),
+      );
 
-        final startEnvelope =
-            await awaitSentEnvelope(WireMessageType.sessionStart);
-        expect(startEnvelope.v, 2);
-        expect(startEnvelope.payload['mode'], 'ranked');
+      final startEnvelope = await awaitSentEnvelope(
+        WireMessageType.sessionStart,
+      );
+      expect(startEnvelope.v, 2);
+      expect(startEnvelope.payload['mode'], 'ranked');
 
-        // Engine returns a typed completed result with matching session id.
-        final resultJson = _loadFixture('session_result_payload.valid.json');
-        resultJson['sessionId'] = startEnvelope.id;
-        events.add(
-          CytoidGameCoreEnvelope.create(
-            id: startEnvelope.id,
-            type: WireMessageType.sessionResult,
-            payload: resultJson,
-            v: 2,
-          ).toJsonString(),
-        );
+      // Engine returns a typed completed result with matching session id.
+      final resultJson = _loadFixture('session_result_payload.valid.json');
+      resultJson['sessionId'] = startEnvelope.id;
+      events.add(
+        CytoidGameCoreEnvelope.create(
+          id: startEnvelope.id,
+          type: WireMessageType.sessionResult,
+          payload: resultJson,
+          v: 2,
+        ).toJsonString(),
+      );
 
-        final result = await runFuture.timeout(
-          const Duration(seconds: 2),
-          onTimeout: () => throw TimeoutException('run() never returned'),
-        );
-        expect(result.outcome.kind, OutcomePayload.completedKind);
-        expect(result.mode, 'ranked');
+      final result = await runFuture.timeout(
+        const Duration(seconds: 2),
+        onTimeout: () => throw TimeoutException('run() never returned'),
+      );
+      expect(result.outcome.kind, OutcomePayload.completedKind);
+      expect(result.mode, 'ranked');
 
-        // No engine.ready was emitted — readiness came from queryStatus.
-        expect(
-          sentEnvelopeOfType(WireMessageType.gameReady),
-          isNull,
-        );
-        // hideGameSurface MUST be called in the finally block.
-        expect(
-          primaryCalls.map((c) => c.method),
-          contains('hideGameSurface'),
-        );
-      },
-    );
+      // No engine.ready was emitted — readiness came from queryStatus.
+      expect(sentEnvelopeOfType(WireMessageType.gameReady), isNull);
+      // hideGameSurface MUST be called in the finally block.
+      expect(primaryCalls.map((c) => c.method), contains('hideGameSurface'));
+    });
 
     test(
       'Android cold-start: queryStatus poll loop observes starting→ready',
@@ -183,11 +180,11 @@ void main() {
         );
 
         try {
-          final startEnvelope =
-              await awaitSentEnvelope(WireMessageType.sessionStart);
+          final startEnvelope = await awaitSentEnvelope(
+            WireMessageType.sessionStart,
+          );
 
-          final resultJson =
-              _loadFixture('session_result_payload.valid.json');
+          final resultJson = _loadFixture('session_result_payload.valid.json');
           resultJson['sessionId'] = startEnvelope.id;
           events.add(
             CytoidGameCoreEnvelope.create(
@@ -215,17 +212,16 @@ void main() {
       },
     );
 
-    test('iOS waitForReady helper channel completes on session.result',
-        () async {
+    test('iOS waitForReady helper channel completes on session.result', () async {
       // Register a mock iOS helper that returns success.
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(readyChannel, (call) async {
-        readyCalls.add(call);
-        if (call.method == 'waitForReady') {
-          return null; // success
-        }
-        throw PlatformException(code: 'not_implemented');
-      });
+            readyCalls.add(call);
+            if (call.method == 'waitForReady') {
+              return null; // success
+            }
+            throw PlatformException(code: 'not_implemented');
+          });
 
       final client = CytoidGameCoreClient(
         methodChannel: primaryChannel,
@@ -238,8 +234,9 @@ void main() {
         readyTimeout: const Duration(seconds: 5),
       );
 
-      final startEnvelope =
-          await awaitSentEnvelope(WireMessageType.sessionStart);
+      final startEnvelope = await awaitSentEnvelope(
+        WireMessageType.sessionStart,
+      );
 
       // iOS helper was invoked with the timeout in seconds.
       expect(readyCalls.single.method, 'waitForReady');
@@ -263,10 +260,7 @@ void main() {
       expect(result.outcome.kind, OutcomePayload.completedKind);
 
       // No engine.ready event was emitted; iOS path did not consult readyEvents.
-      expect(
-        primaryCalls.map((c) => c.method),
-        contains('hideGameSurface'),
-      );
+      expect(primaryCalls.map((c) => c.method), contains('hideGameSurface'));
     });
   });
 
@@ -286,11 +280,46 @@ void main() {
       expect(cancelEnvelope.v, 2);
       expect(cancelEnvelope.payload, {'reason': 'userBack'});
     });
+
+    test('cancel without id cancels the active run session', () async {
+      final client = CytoidGameCoreClient(
+        methodChannel: primaryChannel,
+        eventStream: events.stream,
+      );
+      final session = PlaySession(client);
+
+      final runFuture = session.run(
+        launch: _buildTestLaunch(),
+        readyTimeout: const Duration(seconds: 2),
+      );
+
+      final startEnvelope = await awaitSentEnvelope(
+        WireMessageType.sessionStart,
+      );
+      await session.cancel(reason: 'hostNavigation');
+
+      final cancelEnvelope = sentEnvelopeOfType(WireMessageType.sessionCancel);
+      expect(cancelEnvelope, isNotNull);
+      expect(cancelEnvelope!.id, startEnvelope.id);
+      expect(cancelEnvelope.payload, {'reason': 'hostNavigation'});
+
+      final resultJson = _loadFixture('session_result_payload.valid.json');
+      resultJson['sessionId'] = startEnvelope.id;
+      events.add(
+        CytoidGameCoreEnvelope.create(
+          id: startEnvelope.id,
+          type: WireMessageType.sessionResult,
+          payload: resultJson,
+          v: 2,
+        ).toJsonString(),
+      );
+
+      await runFuture.timeout(const Duration(seconds: 2));
+    });
   });
 
   group('PlaySession.run ready timeout', () {
-    test(
-        'Android poll path throws CytoidGameCoreTimeoutException '
+    test('Android poll path throws CytoidGameCoreTimeoutException '
         'AND hides the surface', () async {
       // Runtime never reaches ready — poll loops until the deadline.
       statusState = 'starting';
@@ -311,65 +340,46 @@ void main() {
       );
 
       // The surface MUST be hidden despite the ready wait throwing.
-      expect(
-        primaryCalls.map((c) => c.method),
-        contains('hideGameSurface'),
-      );
+      expect(primaryCalls.map((c) => c.method), contains('hideGameSurface'));
       // session.start MUST NOT have been sent.
-      expect(
-        sentEnvelopeOfType(WireMessageType.sessionStart),
-        isNull,
-      );
+      expect(sentEnvelopeOfType(WireMessageType.sessionStart), isNull);
     });
 
-    test(
-      'Android poll surfaces a failed runtime immediately instead of '
-      'burning the timeout',
-      () async {
-        // Runtime is FAILED: the poll must throw the typed failure right
-        // away, not wait for the deadline and report a misleading timeout.
-        statusState = 'failed';
-        final client = CytoidGameCoreClient(
-          methodChannel: primaryChannel,
-          eventStream: events.stream,
-        );
-        final session = PlaySession(client);
+    test('Android poll surfaces a failed runtime immediately instead of '
+        'burning the timeout', () async {
+      // Runtime is FAILED: the poll must throw the typed failure right
+      // away, not wait for the deadline and report a misleading timeout.
+      statusState = 'failed';
+      final client = CytoidGameCoreClient(
+        methodChannel: primaryChannel,
+        eventStream: events.stream,
+      );
+      final session = PlaySession(client);
 
-        final runFuture = session.run(
-          launch: _buildTestLaunch(),
-          readyTimeout: const Duration(seconds: 30),
-        );
+      final runFuture = session.run(
+        launch: _buildTestLaunch(),
+        readyTimeout: const Duration(seconds: 30),
+      );
 
-        await expectLater(
-          runFuture,
-          throwsA(isA<PlatformException>()),
-        );
+      await expectLater(runFuture, throwsA(isA<PlatformException>()));
 
-        expect(
-          primaryCalls.map((c) => c.method),
-          contains('hideGameSurface'),
-        );
-        expect(
-          sentEnvelopeOfType(WireMessageType.sessionStart),
-          isNull,
-        );
-      },
-    );
+      expect(primaryCalls.map((c) => c.method), contains('hideGameSurface'));
+      expect(sentEnvelopeOfType(WireMessageType.sessionStart), isNull);
+    });
 
-    test(
-        'iOS waitForReady helper timeout rethrows as '
+    test('iOS waitForReady helper timeout rethrows as '
         'CytoidGameCoreTimeoutException', () async {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(readyChannel, (call) async {
-        readyCalls.add(call);
-        if (call.method == 'waitForReady') {
-          throw PlatformException(
-            code: 'waitForReadyTimeout',
-            message: 'deadline elapsed',
-          );
-        }
-        throw PlatformException(code: 'not_implemented');
-      });
+            readyCalls.add(call);
+            if (call.method == 'waitForReady') {
+              throw PlatformException(
+                code: 'waitForReadyTimeout',
+                message: 'deadline elapsed',
+              );
+            }
+            throw PlatformException(code: 'not_implemented');
+          });
 
       final client = CytoidGameCoreClient(
         methodChannel: primaryChannel,
@@ -393,10 +403,7 @@ void main() {
         ),
       );
 
-      expect(
-        primaryCalls.map((c) => c.method),
-        contains('hideGameSurface'),
-      );
+      expect(primaryCalls.map((c) => c.method), contains('hideGameSurface'));
     });
   });
 }

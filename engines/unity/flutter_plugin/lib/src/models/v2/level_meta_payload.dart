@@ -1,3 +1,5 @@
+import '_validators.dart';
+
 /// `level.meta` block (v2 § LevelMetaPayload) plus nested
 /// [MusicSection], [ChartSection], [StoryboardSection].
 ///
@@ -63,8 +65,12 @@ class LevelMetaPayload {
       );
     }
     return LevelMetaPayload(
-      schemaVersion: (json['schema_version'] as num).toInt(),
-      version: (json['version'] as num).toInt(),
+      schemaVersion: readRequiredInt(
+        json,
+        'schema_version',
+        'LevelMetaPayload',
+      ),
+      version: readRequiredInt(json, 'version', 'LevelMetaPayload'),
       id: id,
       title: json['title'] as String,
       titleLocalized: json['title_localized'] as String?,
@@ -183,19 +189,23 @@ class ChartSection {
         'ChartSection.fromJson: "path" must be a non-empty string.',
       );
     }
-    final musicOverride = json['music_override'];
-    final storyboard = json['storyboard'];
     return ChartSection(
       type: type,
       name: json['name'] as String?,
-      difficulty: (json['difficulty'] as num).toInt(),
+      difficulty: readRequiredInt(json, 'difficulty', 'ChartSection'),
       path: path,
-      musicOverride: musicOverride is Map
-          ? MusicSection.fromJson(Map<String, dynamic>.from(musicOverride))
-          : null,
-      storyboard: storyboard is Map
-          ? StoryboardSection.fromJson(Map<String, dynamic>.from(storyboard))
-          : null,
+      musicOverride: readOptionalObject(
+        json,
+        'music_override',
+        'ChartSection',
+        MusicSection.fromJson,
+      ),
+      storyboard: readOptionalObject(
+        json,
+        'storyboard',
+        'ChartSection',
+        StoryboardSection.fromJson,
+      ),
     );
   }
 
@@ -238,16 +248,15 @@ class StoryboardSection {
     }
     return StoryboardSection(
       path: path,
-      localizations: Map<String, String>.from(
-        locRaw.map((k, v) => MapEntry(k.toString(), v.toString())),
+      localizations: readStringMapEntries(
+        locRaw,
+        'localizations',
+        'StoryboardSection',
       ),
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'path': path,
-      'localizations': localizations,
-    };
+    return {'path': path, 'localizations': localizations};
   }
 }

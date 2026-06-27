@@ -1,3 +1,5 @@
+import '_validators.dart';
+
 /// `level` echo on `session.result` (v2 § LevelResultPayload).
 class LevelResultPayload {
   const LevelResultPayload({
@@ -24,7 +26,11 @@ class LevelResultPayload {
       id: json['id'] as String,
       title: json['title'] as String,
       difficulty: json['difficulty'] as String,
-      difficultyLevel: (json['difficultyLevel'] as num).toInt(),
+      difficultyLevel: readRequiredInt(
+        json,
+        'difficultyLevel',
+        'LevelResultPayload',
+      ),
     );
   }
 

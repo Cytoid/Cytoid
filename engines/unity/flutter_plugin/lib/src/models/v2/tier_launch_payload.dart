@@ -1,3 +1,5 @@
+import '_validators.dart';
+
 /// `session.start.tier` block (v2 § TierLaunchPayload). Required when
 /// `mode = "tier"`.
 class TierLaunchPayload {
@@ -22,11 +24,11 @@ class TierLaunchPayload {
   factory TierLaunchPayload.fromJson(Map<String, dynamic> json) {
     return TierLaunchPayload(
       tierId: json['tierId'] as String,
-      stageIndex: (json['stageIndex'] as num).toInt(),
-      stageCount: (json['stageCount'] as num).toInt(),
+      stageIndex: readRequiredInt(json, 'stageIndex', 'TierLaunchPayload'),
+      stageCount: readRequiredInt(json, 'stageCount', 'TierLaunchPayload'),
       maxHealth: (json['maxHealth'] as num).toDouble(),
       initialHealth: (json['initialHealth'] as num).toDouble(),
-      initialCombo: (json['initialCombo'] as num).toInt(),
+      initialCombo: readRequiredInt(json, 'initialCombo', 'TierLaunchPayload'),
       introLabel: json['introLabel'] as String?,
     );
   }

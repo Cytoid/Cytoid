@@ -14,6 +14,14 @@ final class UnityGameCoreRuntime: NSObject, UnityFrameworkListener {
   private var pendingOutboundMessages: [String] = []
   private(set) var loadedFrameworkPath: String?
 
+  // SURFACE_LOST notification seam (v2 § Active-Session Runtime Failure):
+  // invoked from unityDidUnload BEFORE the runtime clears its own state, so
+  // the bridge can capture the live activeSessionId and synthesize a
+  // session.result with error.code = "runtime_surface_lost". The bridge
+  // installs this once; production code never reaches unityDidUnload without
+  // the bridge having wired it (the runtime is only loaded via bridge calls).
+  var surfaceLostHandler: (() -> Void)?
+
   var isFrameworkPresent: Bool {
     resolveFrameworkPath() != nil
   }
@@ -134,6 +142,12 @@ final class UnityGameCoreRuntime: NSObject, UnityFrameworkListener {
   }
 
   func unityDidUnload(_ notification: Notification!) {
+    // Notify the bridge BEFORE clearing local state so it can capture the
+    // live activeSessionId from its own runtimeState and synthesize the
+    // SURFACE_LOST envelope. The handler is a one-shot notification; the
+    // bridge's synthesizeRuntimeFailure is idempotent so duplicate calls
+    // are safe.
+    surfaceLostHandler?()
     unityFramework = nil
     isEmbedded = false
     isExclusivePresented = false

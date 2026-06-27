@@ -16,7 +16,20 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   // The flag→state migration table from the plan is encoded by the initial
   // .unavailable state plus the transition methods driven by lifecycle
   // events below.
-  private let runtimeState = RuntimeStateMachine()
+  //
+  // internal (not private): the GENERATION_CHANGE trigger fires only when
+  // generation > 1, a state unreachable through the public bridge API
+  // without a prior onFailure (T6 wires that). Tests drive the state
+  // machine directly to set up that condition.
+  internal let runtimeState = RuntimeStateMachine()
+
+  // Testability seam for emitEvent(): isolated SwiftPM sandbox tests cannot
+  // reach the real FlutterEventSink (the Flutter module isn't bootstrapped),
+  // so the default eventSink path is unreachable. When non-nil, emitEvent()
+  // calls this override directly with the JSON string — letting tests
+  // capture synthesized envelopes without a real sink. Production leaves
+  // this nil and uses the eventSink path.
+  internal var emitOverride: ((String) -> Void)?
 
   var engineMode: String {
 #if CYTOID_UNITY_FRAMEWORK_AVAILABLE
@@ -39,14 +52,15 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   func ensureRuntimeStarted() {
     runtimeState.onRequestStart()
 
-#if CYTOID_UNITY_FRAMEWORK_AVAILABLE
+    #if CYTOID_UNITY_FRAMEWORK_AVAILABLE
+    wireUnityRuntimeSurfaceLostHandlerIfNeeded()
     if shouldUseUnityRuntime {
       DispatchQueue.main.async {
         _ = UnityGameCoreRuntime.shared.loadIfNeeded()
       }
       return
     }
-#endif
+    #endif
 
     mockBridge.ensureRuntimeStarted()
   }
@@ -54,7 +68,8 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   func showGameSurface(result: @escaping FlutterResult) {
     runtimeState.onRequestStart()
 
-#if CYTOID_UNITY_FRAMEWORK_AVAILABLE
+    #if CYTOID_UNITY_FRAMEWORK_AVAILABLE
+    wireUnityRuntimeSurfaceLostHandlerIfNeeded()
     if shouldUseUnityRuntime {
       DispatchQueue.main.async { [weak self] in
         guard let self else {
@@ -125,7 +140,16 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
     // v2 engine.ready or v1 fallback game.ready both complete the
     // starting→ready transition.
     if type == "engine.ready" || type == "game.ready" {
+      // GENERATION_CHANGE trigger (v2 § Active-Session Runtime Failure):
+      // if a session was active AND generation is now >1, the prior
+      // session belongs to a stale engine instance. Capture before
+      // onEngineReady (which doesn't clear activeSessionId, but the
+      // capture makes the intent explicit and survives future edits).
+      let wasActiveSession = runtimeState.activeSessionId
       runtimeState.onEngineReady()
+      if let wasActiveSession, runtimeState.generation > 1 {
+        _ = synthesizeRuntimeFailure(trigger: .generationChange, sessionId: wasActiveSession)
+      }
     }
     // v2 session.started: explicit ready→busy signal carries the sessionId.
     if type == "session.started", let id = messageId(jsonString) {
@@ -144,6 +168,24 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
     runtimeState.onResume()
   }
 
+  #if CYTOID_UNITY_FRAMEWORK_AVAILABLE
+  private var surfaceLostHandlerInstalled = false
+
+  // Install the SURFACE_LOST notification handler on UnityGameCoreRuntime
+  // exactly once. Subsequent calls are no-ops, so re-entry through
+  // ensureRuntimeStarted / showGameSurface is safe.
+  private func wireUnityRuntimeSurfaceLostHandlerIfNeeded() {
+    guard !surfaceLostHandlerInstalled else { return }
+    surfaceLostHandlerInstalled = true
+    UnityGameCoreRuntime.shared.surfaceLostHandler = { [weak self] in
+      guard let self else { return }
+      let activeSession = self.runtimeState.activeSessionId
+      guard let activeSession else { return }
+      _ = self.synthesizeRuntimeFailure(trigger: .surfaceLost, sessionId: activeSession)
+    }
+  }
+  #endif
+
   /**
    * v2 runtime snapshot. Conditional optionality per spec:
    * required keys `engine`, `mode`, `state`, `generation` always present;
@@ -153,6 +195,67 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   func runtimeStatus() -> [String: Any] {
     return runtimeState.snapshot(engine: engineMode, mode: mode)
   }
+
+  /**
+   * Synthesize a v2 `session.result` envelope with
+   * `outcome.kind = "runtimeFailed"` for an active session killed by a
+   * runtime-side event the engine itself cannot report (v2 § Active-Session
+   * Runtime Failure).
+   *
+   * Contract:
+   *  - Idempotent: gated on `activeSessionId == sessionId`. If the session
+   *    already terminated (activeSessionId is nil or a different id), this
+   *    is a no-op and returns nil. At most one synthesized result per session.
+   *  - On success: transitions runtimeState to .failed via onFailure (which
+   *    clears activeSessionId), emits the envelope via emitEvent, returns
+   *    the JSON string.
+   *  - Active-session failures use `session.result`, NEVER `engine.error`.
+   *
+   * Returns the emitted JSON envelope string, or nil if the gate suppressed
+   * the synthesis (idempotency).
+   */
+  @discardableResult
+  func synthesizeRuntimeFailure(
+    trigger: RuntimeFailureTrigger,
+    sessionId: String
+  ) -> String? {
+    guard let currentSessionId = runtimeState.activeSessionId else { return nil }
+    guard currentSessionId == sessionId else { return nil }
+
+    let error = GameCoreError(
+      code: trigger.errorCode,
+      message: trigger.defaultMessage
+    )
+
+    let payload: [String: Any] = [
+      "sessionId": sessionId,
+      "outcome": ["kind": "runtimeFailed"],
+      "error": error.toMap(),
+    ]
+    let envelope: [String: Any] = [
+      "v": Self.protocolVersionV2,
+      "id": sessionId,
+      "type": "session.result",
+      "payload": payload,
+    ]
+
+    // onFailure clears activeSessionId AFTER transitioning to .failed;
+    // we already captured it above, so order is safe. This is the
+    // idempotency seam: a second call sees activeSessionId == nil.
+    runtimeState.onFailure(error: error)
+
+    guard
+      let data = try? JSONSerialization.data(withJSONObject: envelope),
+      let jsonString = String(data: data, encoding: .utf8)
+    else {
+      return nil
+    }
+
+    emitEvent(jsonString)
+    return jsonString
+  }
+
+  private static let protocolVersionV2 = 2
 
   private func isGameResultMessage(_ jsonString: String) -> Bool {
     guard
@@ -192,6 +295,11 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
     let type = messageType(jsonString)
     if type == "session.result" || type == "game.play.result" || type == "game.play.ended" {
       runtimeState.onSessionEnded()
+    }
+
+    if let emitOverride {
+      emitOverride(jsonString)
+      return
     }
 
     if Thread.isMainThread {

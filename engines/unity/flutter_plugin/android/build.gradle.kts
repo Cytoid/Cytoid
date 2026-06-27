@@ -88,6 +88,10 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("io.mockk:mockk:1.13.10")
+    // Real org.json for JVM unit tests. android.jar ships stubbed org.json
+    // classes that return null from put()/toString() under
+    // isReturnDefaultValues=true, which breaks JSON-building assertions.
+    testImplementation("org.json:json:20240303")
 }
 
 rootProject.subprojects {

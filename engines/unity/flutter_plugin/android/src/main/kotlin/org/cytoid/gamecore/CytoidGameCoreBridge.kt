@@ -31,7 +31,22 @@ class CytoidGameCoreBridge private constructor(
     // The flag→state migration table from the plan is encoded by the initial
     // UNAVAILABLE state plus the @VisibleForTesting transition methods driven
     // by lifecycle events below.
-    private val runtimeState: RuntimeStateMachine = RuntimeStateMachine()
+    //
+    // VisibleForTesting: the GENERATION_CHANGE trigger fires only when
+    // generation > 1, a state unreachable through the public bridge API
+    // without a prior onFailure (which T5/T6 wire). Tests drive the state
+    // machine directly to set up that condition.
+    @VisibleForTesting
+    internal val runtimeState: RuntimeStateMachine = RuntimeStateMachine()
+
+    // Testability seam for emit(): JVM unit tests cannot touch the Android
+    // main Handler (Looper.getMainLooper() returns null in the stub jar),
+    // so the default mainHandler.post path NPEs. When non-null, emit() calls
+    // this override directly with the JSON string — letting tests capture
+    // synthesized envelopes without a real EventSink. Production leaves this
+    // null and uses the mainHandler path.
+    @VisibleForTesting
+    internal var emitOverride: ((String) -> Unit)? = null
 
     // Tracks one-shot Application callback registration so attachActivity can
     // be called multiple times (config changes) without double-registering.
@@ -73,6 +88,16 @@ class CytoidGameCoreBridge private constructor(
                 if (exclusiveUnityActivity === activity) {
                     Log.i(TAG, "[CYTOID-DBG] Unity activity DESTROYED")
                     exclusiveUnityActivity = null
+                    // SURFACE_LOST trigger (v2 § Active-Session Runtime Failure):
+                    // capture activeSessionId BEFORE any state cleanup so the
+                    // primitive's idempotency gate sees the live value.
+                    val activeSession = runtimeState.activeSessionId
+                    if (activeSession != null) {
+                        synthesizeRuntimeFailure(
+                            RuntimeFailureTrigger.SURFACE_LOST,
+                            activeSession,
+                        )
+                    }
                 }
             }
         }
@@ -206,8 +231,20 @@ class CytoidGameCoreBridge private constructor(
         // v2 engine.ready or v1 fallback game.ready both complete the
         // STARTING→READY transition (single-slot resume memory preserved).
         if (isEngineReadyMessage(jsonString) || isHostReadyMessage(jsonString)) {
+            // GENERATION_CHANGE trigger (v2 § Active-Session Runtime Failure):
+            // if a session was active AND generation is now >1, the prior
+            // session belongs to a stale engine instance. Capture before
+            // onEngineReady (which doesn't clear activeSessionId, but the
+            // capture makes the intent explicit and survives future edits).
+            val wasActiveSession = runtimeState.activeSessionId
             runtimeState.onEngineReady()
             Log.i(TAG, "[CYTOID-DBG] <- Unity: ready received — state=${runtimeState.state}")
+            if (wasActiveSession != null && runtimeState.generation > 1) {
+                synthesizeRuntimeFailure(
+                    RuntimeFailureTrigger.GENERATION_CHANGE,
+                    wasActiveSession,
+                )
+            }
         }
         // v2 session.started: explicit READY→BUSY signal carries the sessionId.
         if (isSessionStartedMessage(jsonString)) {
@@ -340,6 +377,57 @@ class CytoidGameCoreBridge private constructor(
         return snapshot
     }
 
+    /**
+     * Synthesize a v2 `session.result` envelope with
+     * `outcome.kind = "runtimeFailed"` for an active session killed by a
+     * runtime-side event the engine itself cannot report (v2 § Active-Session
+     * Runtime Failure).
+     *
+     * Contract:
+     *  - Idempotent: gated on `activeSessionId == sessionId`. If the session
+     *    already terminated (activeSessionId is null or a different id), this
+     *    is a no-op and returns null. At most one synthesized result per session.
+     *  - On success: transitions runtimeState to FAILED via onFailure (which
+     *    clears activeSessionId), emits the envelope via [emit], returns the
+     *    JSON string.
+     *  - Active-session failures use `session.result`, NEVER `engine.error`.
+     *
+     * Returns the emitted JSON envelope string, or null if the gate suppressed
+     * the synthesis (idempotency).
+     */
+    @VisibleForTesting
+    internal fun synthesizeRuntimeFailure(
+        trigger: RuntimeFailureTrigger,
+        sessionId: String,
+    ): String? {
+        val currentSessionId = runtimeState.activeSessionId ?: return null
+        if (currentSessionId != sessionId) return null
+
+        val error = GameCoreError(
+            code = trigger.errorCode,
+            message = trigger.defaultMessage,
+        )
+        val envelope = JSONObject()
+            .put("v", PROTOCOL_VERSION_V2)
+            .put("id", sessionId)
+            .put("type", "session.result")
+            .put(
+                "payload",
+                JSONObject()
+                    .put("sessionId", sessionId)
+                    .put("outcome", JSONObject().put("kind", "runtimeFailed"))
+                    .put("error", JSONObject(error.toMap())),
+            )
+            .toString()
+
+        // onFailure clears activeSessionId AFTER transitioning to FAILED;
+        // we already captured it above, so order is safe. This is the
+        // idempotency seam: a second call sees activeSessionId == null.
+        runtimeState.onFailure(error)
+        emit(envelope)
+        return envelope
+    }
+
     private fun sendToUnity(jsonString: String) {
         runCatching {
             Class.forName(CytoidNativeConfig.UNITY_PLAYER_CLASS)
@@ -369,8 +457,13 @@ class CytoidGameCoreBridge private constructor(
         ) {
             runtimeState.onSessionEnded()
         }
-        mainHandler.post {
-            eventSink?.success(json)
+        val override = emitOverride
+        if (override != null) {
+            override(json)
+        } else {
+            mainHandler.post {
+                eventSink?.success(json)
+            }
         }
     }
 
@@ -387,6 +480,7 @@ class CytoidGameCoreBridge private constructor(
         private const val ENGINE_MODE_UNITY = "unity"
         private const val ENGINE_MODE_MOCK = "mock"
         private const val REFRESH_RATE_APPLY_DELAY_MS = 1500L
+        private const val PROTOCOL_VERSION_V2 = 2
 
         @Volatile
         var instance: CytoidGameCoreBridge? = null

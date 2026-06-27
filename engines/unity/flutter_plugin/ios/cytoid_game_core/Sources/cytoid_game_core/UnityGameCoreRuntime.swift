@@ -1,18 +1,67 @@
 import Foundation
-import MachO
-import UIKit
+
+/// Typed failure reason for `UnityGameCoreRuntime.loadIfNeeded`. Lives
+/// outside the `CYTOID_UNITY_FRAMEWORK_AVAILABLE` flag so SwiftPM sandbox
+/// tests can simulate framework-load failures without the real binary. The
+/// bridge converts these into `engine.error` envelopes (no active session)
+/// or routes via T4's `synthesizeRuntimeFailure(.unreachable, …)` (active
+/// session). `pathDescription` surfaces into
+/// `engine.error.payload.error.details.frameworkPath` for host-side
+/// diagnostics.
+enum FrameworkLoadError: Error {
+  case frameworkNotFound
+  case bundleOpenFailed(path: String)
+  case principalClassUnavailable(path: String)
+
+  var pathDescription: String? {
+    switch self {
+    case .frameworkNotFound: return nil
+    case .bundleOpenFailed(let path): return path
+    case .principalClassUnavailable(let path): return path
+    }
+  }
+}
+
+extension FrameworkLoadError: LocalizedError {
+  var errorDescription: String? {
+    switch self {
+    case .frameworkNotFound:
+      return "UnityFramework.framework not found in the app bundle's Frameworks directory."
+    case .bundleOpenFailed(let path):
+      return "Unable to open UnityFramework bundle at \(path)."
+    case .principalClassUnavailable(let path):
+      return "UnityFramework principal class unavailable at \(path)."
+    }
+  }
+}
 
 #if CYTOID_UNITY_FRAMEWORK_AVAILABLE
+import MachO
+import UIKit
 import UnityFramework
 
 final class UnityGameCoreRuntime: NSObject, UnityFrameworkListener {
   static let shared = UnityGameCoreRuntime()
+
+  /// Fixed timeout (v2 spec): if `sendMessage` queues an outbound message
+  /// for this many seconds without the framework loading and the engine
+  /// embedding, the runtime fires `messageQueueTimeoutHandler` so the bridge
+  /// can emit `engine.error` (no active session) or call T4's
+  /// `synthesizeRuntimeFailure(.unreachable, …)` (active session). Internal
+  /// `var` so isolated SwiftPM tests can shorten the deadline; production
+  /// callers never write to it.
+  internal var messageQueueTimeoutSeconds: TimeInterval = 30.0
 
   private var unityFramework: UnityFramework?
   private var isEmbedded = false
   private var isExclusivePresented = false
   private var pendingOutboundMessages: [String] = []
   private(set) var loadedFrameworkPath: String?
+
+  // Timestamp of the first still-pending outbound message. Cleared on flush
+  // or when the queue drains via embed. Nil whenever the queue is empty.
+  private var pendingMessagesEnqueuedAt: Date?
+  private var messageQueueTimer: DispatchSourceTimer?
 
   // SURFACE_LOST notification seam (v2 § Active-Session Runtime Failure):
   // invoked from unityDidUnload BEFORE the runtime clears its own state, so
@@ -22,6 +71,12 @@ final class UnityGameCoreRuntime: NSObject, UnityFrameworkListener {
   // the bridge having wired it (the runtime is only loaded via bridge calls).
   var surfaceLostHandler: (() -> Void)?
 
+  // Framework-load failure / pending-queue timeout seam (T6). The runtime
+  // owns only the timing + detection; the bridge owns routing (engine.error
+  // vs session.result via T4 primitive) based on the live `activeSessionId`.
+  // Fired at most once per queue cycle; cleared when the queue flushes.
+  var messageQueueTimeoutHandler: (() -> Void)?
+
   var isFrameworkPresent: Bool {
     resolveFrameworkPath() != nil
   }
@@ -30,20 +85,21 @@ final class UnityGameCoreRuntime: NSObject, UnityFrameworkListener {
     isExclusivePresented && isEmbedded && unityFramework != nil
   }
 
+  /// Load (or reuse) `UnityFramework`. Returns `Result<Void, Error>` so the
+  /// bridge can convert each failure mode into a structured v2 envelope
+  /// (replaces the silent `NSLog` + `Bool` paths T6 removed).
   @discardableResult
-  func loadIfNeeded() -> Bool {
+  func loadIfNeeded() -> Result<Void, Error> {
     if unityFramework != nil {
-      return true
+      return .success(())
     }
 
     guard let frameworkPath = resolveFrameworkPath() else {
-      NSLog("[CytoidGameCore] UnityFramework.framework not found.")
-      return false
+      return .failure(FrameworkLoadError.frameworkNotFound)
     }
 
     guard let bundle = Bundle(path: frameworkPath) else {
-      NSLog("[CytoidGameCore] Unable to open UnityFramework bundle at \(frameworkPath).")
-      return false
+      return .failure(FrameworkLoadError.bundleOpenFailed(path: frameworkPath))
     }
 
     if !bundle.isLoaded {
@@ -54,15 +110,14 @@ final class UnityGameCoreRuntime: NSObject, UnityFrameworkListener {
       let principalClass = bundle.principalClass as? UnityFramework.Type,
       let instance = principalClass.getInstance()
     else {
-      NSLog("[CytoidGameCore] UnityFramework principal class unavailable.")
-      return false
+      return .failure(FrameworkLoadError.principalClassUnavailable(path: frameworkPath))
     }
 
     loadedFrameworkPath = frameworkPath
     unityFramework = instance
     instance.setDataBundleId("com.unity3d.framework")
     UnityGameCoreCallback.installLegacyNativeHandlerIfNeeded()
-    return true
+    return .success(())
   }
 
   @discardableResult
@@ -75,7 +130,11 @@ final class UnityGameCoreRuntime: NSObject, UnityFrameworkListener {
       return unityFramework != nil
     }
 
-    guard loadIfNeeded(), let unityFramework else {
+    // startEmbeddedIfNeeded's core flow is unchanged (per T6 MUST NOT): on
+    // load failure it still returns false. Only loadIfNeeded's error
+    // reporting changed; here we discard the typed error and preserve the
+    // historical boolean contract for presentExclusiveFullscreen.
+    guard case .success = loadIfNeeded(), let unityFramework else {
       return false
     }
 
@@ -134,6 +193,10 @@ final class UnityGameCoreRuntime: NSObject, UnityFrameworkListener {
 
   func sendMessage(_ json: String) {
     if !isEmbedded {
+      if pendingOutboundMessages.isEmpty {
+        pendingMessagesEnqueuedAt = Date()
+        scheduleMessageQueueTimeout()
+      }
       pendingOutboundMessages.append(json)
       return
     }
@@ -195,11 +258,38 @@ final class UnityGameCoreRuntime: NSObject, UnityFrameworkListener {
       return
     }
 
+    cancelMessageQueueTimer()
+    pendingMessagesEnqueuedAt = nil
+
     let messages = pendingOutboundMessages
     pendingOutboundMessages.removeAll()
     for message in messages {
       deliverMessage(message)
     }
+  }
+
+  private func scheduleMessageQueueTimeout() {
+    cancelMessageQueueTimer()
+    let timer = DispatchSource.makeTimerSource(queue: .main)
+    timer.schedule(deadline: .now() + messageQueueTimeoutSeconds)
+    timer.setEventHandler { [weak self] in
+      self?.handleMessageQueueTimeout()
+    }
+    timer.resume()
+    messageQueueTimer = timer
+  }
+
+  private func cancelMessageQueueTimer() {
+    messageQueueTimer?.cancel()
+    messageQueueTimer = nil
+  }
+
+  private func handleMessageQueueTimeout() {
+    cancelMessageQueueTimer()
+    guard !isEmbedded, !pendingOutboundMessages.isEmpty else { return }
+    let handler = messageQueueTimeoutHandler
+    pendingMessagesEnqueuedAt = nil
+    handler?()
   }
 
   private func resolveFrameworkPath() -> String? {

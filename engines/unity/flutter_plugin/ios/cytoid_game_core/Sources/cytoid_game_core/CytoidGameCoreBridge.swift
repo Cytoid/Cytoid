@@ -31,6 +31,22 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   // this nil and uses the eventSink path.
   internal var emitOverride: ((String) -> Void)?
 
+  // Testability seam for framework load (T6): when non-nil, replaces
+  // `UnityGameCoreRuntime.shared.loadIfNeeded()` inside ensureRuntimeStarted
+  // so SwiftPM-sandbox tests can simulate `runtime_unavailable` failures
+  // without the real UnityFramework binary.
+  internal var loadFrameworkOverride: (() -> Result<Void, Error>)?
+
+  // v2 waitForReady continuations (T6). Parked until state -> .ready or .failed.
+  private var readyWaiters: [ReadyWaiter] = []
+
+  internal static let waitForReadyDefaultTimeout: TimeInterval = 30.0
+
+  enum WaitForReadyError: Error, Equatable {
+    case timeout
+    case alreadyFailed(code: String)
+  }
+
   var engineMode: String {
 #if CYTOID_UNITY_FRAMEWORK_AVAILABLE
     return UnityGameCoreRuntime.shared.isFrameworkPresent ? "unity" : "mock"
@@ -52,24 +68,51 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   func ensureRuntimeStarted() {
     runtimeState.onRequestStart()
 
-    #if CYTOID_UNITY_FRAMEWORK_AVAILABLE
-    wireUnityRuntimeSurfaceLostHandlerIfNeeded()
-    if shouldUseUnityRuntime {
-      DispatchQueue.main.async {
-        _ = UnityGameCoreRuntime.shared.loadIfNeeded()
+    switch attemptFrameworkLoad() {
+    case .success:
+      #if CYTOID_UNITY_FRAMEWORK_AVAILABLE
+      wireUnityRuntimeSurfaceLostHandlerIfNeeded()
+      wireMessageQueueTimeoutHandlerIfNeeded()
+      if shouldUseUnityRuntime {
+        return
       }
-      return
+      #endif
+      mockBridge.ensureRuntimeStarted()
+    case .failure(let error):
+      // Framework-load failure at startup is ALWAYS pre-session (no active
+      // session at this point) → engine.error ONLY, never session.result.
+      let path = (error as? FrameworkLoadError)?.pathDescription
+        ?? (error as NSError).userInfo["frameworkPath"] as? String
+      let details: [String: Any]? = path.map { ["frameworkPath": $0] }
+      let coreError = GameCoreError(
+        code: "runtime_unavailable",
+        message: "UnityFramework load failed: \(error.localizedDescription)",
+        details: details
+      )
+      runtimeState.onFailure(error: coreError)
+      failReadyWaiters(.alreadyFailed(code: coreError.code))
+      emitEngineError(coreError)
     }
-    #endif
-
-    mockBridge.ensureRuntimeStarted()
   }
 
   func showGameSurface(result: @escaping FlutterResult) {
-    runtimeState.onRequestStart()
+    // Atomic check-then-act: ensureRuntimeStarted runs synchronously, so the
+    // .failed check below observes the post-load state with no interleaving.
+    ensureRuntimeStarted()
+
+    if runtimeState.state == .failed {
+      let error = runtimeState.lastError
+      result(
+        FlutterError(
+          code: error?.code ?? "runtime_unavailable",
+          message: error?.message ?? "Runtime is in a failed state.",
+          details: nil
+        )
+      )
+      return
+    }
 
     #if CYTOID_UNITY_FRAMEWORK_AVAILABLE
-    wireUnityRuntimeSurfaceLostHandlerIfNeeded()
     if shouldUseUnityRuntime {
       DispatchQueue.main.async { [weak self] in
         guard let self else {
@@ -96,6 +139,36 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
 
     mockBridge.showGameSurface()
     result(nil)
+  }
+
+  private func attemptFrameworkLoad() -> Result<Void, Error> {
+    if let loadFrameworkOverride {
+      return loadFrameworkOverride()
+    }
+    #if CYTOID_UNITY_FRAMEWORK_AVAILABLE
+    wireUnityRuntimeSurfaceLostHandlerIfNeeded()
+    wireMessageQueueTimeoutHandlerIfNeeded()
+    if shouldUseUnityRuntime {
+      return UnityGameCoreRuntime.shared.loadIfNeeded()
+    }
+    #endif
+    return .success(())
+  }
+
+  // Non-session runtime failure envelope (v2 § engine.error). Active-session
+  // failures route via synthesizeRuntimeFailure instead — never both.
+  private func emitEngineError(_ error: GameCoreError) {
+    let envelope: [String: Any] = [
+      "v": Self.protocolVersionV2,
+      "id": UUID().uuidString,
+      "type": "engine.error",
+      "payload": ["error": error.toMap()],
+    ]
+    guard
+      let data = try? JSONSerialization.data(withJSONObject: envelope),
+      let jsonString = String(data: data, encoding: .utf8)
+    else { return }
+    emitEvent(jsonString)
   }
 
   func hideGameSurface() {
@@ -150,6 +223,7 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
       if let wasActiveSession, runtimeState.generation > 1 {
         _ = synthesizeRuntimeFailure(trigger: .generationChange, sessionId: wasActiveSession)
       }
+      resumeReadyWaiters()
     }
     // v2 session.started: explicit ready→busy signal carries the sessionId.
     if type == "session.started", let id = messageId(jsonString) {
@@ -170,6 +244,7 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
 
   #if CYTOID_UNITY_FRAMEWORK_AVAILABLE
   private var surfaceLostHandlerInstalled = false
+  private var messageQueueTimeoutHandlerInstalled = false
 
   // Install the SURFACE_LOST notification handler on UnityGameCoreRuntime
   // exactly once. Subsequent calls are no-ops, so re-entry through
@@ -184,7 +259,96 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
       _ = self.synthesizeRuntimeFailure(trigger: .surfaceLost, sessionId: activeSession)
     }
   }
+
+  // Install the message-queue timeout handler exactly once. Routes per the
+  // v2 active-session routing rule: active → session.result via T4 primitive
+  // ONLY; no active session → engine.error ONLY. Never both.
+  private func wireMessageQueueTimeoutHandlerIfNeeded() {
+    guard !messageQueueTimeoutHandlerInstalled else { return }
+    messageQueueTimeoutHandlerInstalled = true
+    UnityGameCoreRuntime.shared.messageQueueTimeoutHandler = { [weak self] in
+      self?.handleMessageQueueTimeoutRouting()
+    }
+  }
   #endif
+
+  /// Route a message-queue timeout (framework load never completed within
+  /// `MessageQueueTimeoutSeconds`). The active-session routing rule (v2 §
+  /// Active-Session Runtime Failure) decides the envelope:
+  ///   activeSessionId == nil → engine.error ONLY
+  ///   activeSessionId != null → session.result via T4 primitive ONLY
+  /// Exposed internal so SwiftPM-sandbox tests can invoke it directly without
+  /// the real UnityGameCoreRuntime.
+  internal func handleMessageQueueTimeoutRouting() {
+    // Capture BEFORE any state mutation (T4 handoff pattern).
+    let activeSession = runtimeState.activeSessionId
+    if let activeSession {
+      _ = synthesizeRuntimeFailure(trigger: .unreachable, sessionId: activeSession)
+    } else {
+      let error = GameCoreError(
+        code: "runtime_unavailable",
+        message: "UnityFramework not loaded after pending message queue timeout."
+      )
+      runtimeState.onFailure(error: error)
+      failReadyWaiters(.alreadyFailed(code: error.code))
+      emitEngineError(error)
+    }
+  }
+
+  /// Wait until the runtime reaches `.ready` (engine.ready / game.ready
+  /// fallback) or fail. Returns immediately if already `.ready`; throws
+  /// `WaitForReadyError.alreadyFailed` if already `.failed`; throws
+  /// `WaitForReadyError.timeout` if `timeout` seconds elapse without either.
+  func waitForReady(timeout: TimeInterval = waitForReadyDefaultTimeout) async throws {
+    if runtimeState.state == .ready { return }
+    if runtimeState.state == .failed {
+      let code = runtimeState.lastError?.code ?? "runtime_unavailable"
+      throw WaitForReadyError.alreadyFailed(code: code)
+    }
+
+    try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+      let waiter = ReadyWaiter(continuation)
+      readyWaiters.append(waiter)
+      let delay = max(0, timeout)
+      DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+        self?.timeoutReadyWaiter(waiter)
+      }
+    }
+  }
+
+  private func resumeReadyWaiters() {
+    let waiters = readyWaiters
+    readyWaiters.removeAll()
+    for waiter in waiters {
+      waiter.continuation.resume(returning: ())
+    }
+  }
+
+  private func failReadyWaiters(_ error: WaitForReadyError) {
+    let waiters = readyWaiters
+    readyWaiters.removeAll()
+    for waiter in waiters {
+      waiter.continuation.resume(throwing: error)
+    }
+  }
+
+  // Single-waiter timeout. If the waiter was already resumed by
+  // resumeReadyWaiters / failReadyWaiters, the firstIndex lookup misses and
+  // this is a no-op — that is the idempotency seam.
+  private func timeoutReadyWaiter(_ waiter: ReadyWaiter) {
+    guard let index = readyWaiters.firstIndex(where: { $0 === waiter }) else { return }
+    readyWaiters.remove(at: index)
+    waiter.continuation.resume(throwing: WaitForReadyError.timeout)
+  }
+
+  // Class wrapping a continuation so we can use referential identity
+  // (`===`) to find/remove a specific waiter when its timeout fires.
+  private final class ReadyWaiter {
+    let continuation: CheckedContinuation<Void, Error>
+    init(_ continuation: CheckedContinuation<Void, Error>) {
+      self.continuation = continuation
+    }
+  }
 
   /**
    * v2 runtime snapshot. Conditional optionality per spec:

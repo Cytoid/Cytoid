@@ -1,6 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     <application android:extractNativeLibs="true">
+        <!--
+          The activity class name MUST match `CytoidNativeConfig.UNITY_GAMEPLAY_ACTIVITY`
+          in `src/main/kotlin/org/cytoid/gamecore/CytoidNativeConfig.kt`. AAPT requires
+          a literal here; the Kotlin constant is the single source of truth and this
+          value is verified by `CytoidNativeConfigTest`.
+        -->
         <activity
             android:name="me.tigerhix.cytoid.CytoidPluginActivity"
             android:excludeFromRecents="true"

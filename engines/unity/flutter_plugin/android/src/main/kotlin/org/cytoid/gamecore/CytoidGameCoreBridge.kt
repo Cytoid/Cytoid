@@ -15,14 +15,21 @@ import org.json.JSONObject
 class CytoidGameCoreBridge private constructor(
     private var activity: Activity,
 ) : EventChannel.StreamHandler {
-    private val mainHandler = Handler(Looper.getMainLooper())
-    private val mockBridge = MockGameCoreBridge(::emit)
+    // Lazy so the constructor does not touch the Android Looper before
+    // attachActivity has confirmed Unity artifacts are available. This also
+    // makes the bridge cheap to construct in JVM unit tests that exercise
+    // fail-fast before any Handler use.
+    private val mainHandler: Handler by lazy { Handler(Looper.getMainLooper()) }
+    private val mockBridge: MockGameCoreBridge by lazy { MockGameCoreBridge(::emit, mainHandler) }
     private var eventSink: EventChannel.EventSink? = null
     private var exclusiveUnityActivity: Activity? = null
     private var runtimeStarted = false
     private var engineReady = false
     private var surfaceVisible = false
     private var activePlayId: String? = null
+    // Tracks one-shot Application callback registration so attachActivity can
+    // be called multiple times (config changes) without double-registering.
+    private var lifecycleRegistered = false
 
     private val unityActivityLifecycleCallbacks =
         object : Application.ActivityLifecycleCallbacks {
@@ -63,18 +70,26 @@ class CytoidGameCoreBridge private constructor(
         get() = if (useUnityRuntime) ENGINE_MODE_UNITY else ENGINE_MODE_MOCK
 
     private val useUnityRuntime: Boolean
-        get() = BuildConfig.UNITY_ARTIFACT_AVAILABLE && unityPlayerClass != null
+        get() = probeUnityAvailable()
 
     init {
         instance = this
-        activity.application.registerActivityLifecycleCallbacks(unityActivityLifecycleCallbacks)
         if (!useUnityRuntime) {
             Log.i(TAG, "Unity artifact missing, using mock game core")
         }
     }
 
     fun attachActivity(activity: Activity) {
+        if (!probeUnityAvailable()) {
+            throw IllegalStateException(
+                "Unity artifacts not loaded. Run setup_unity_artifacts.sh then flutter clean.",
+            )
+        }
         this.activity = activity
+        if (!lifecycleRegistered) {
+            activity.application.registerActivityLifecycleCallbacks(unityActivityLifecycleCallbacks)
+            lifecycleRegistered = true
+        }
     }
 
     fun detachActivity() = Unit
@@ -87,13 +102,18 @@ class CytoidGameCoreBridge private constructor(
     }
 
     fun showGameSurface(result: MethodChannel.Result) {
+        if (!probeUnityAvailable()) {
+            throw IllegalStateException(
+                "Unity artifacts not loaded. Run setup_unity_artifacts.sh then flutter clean.",
+            )
+        }
         runtimeStarted = true
         Log.i(TAG, "[CYTOID-DBG] showGameSurface called: useUnityRuntime=$useUnityRuntime exclusiveUnityActivity=$exclusiveUnityActivity")
 
         if (useUnityRuntime) {
             val intent =
                 Intent()
-                    .setClassName(activity.packageName, UNITY_GAMEPLAY_ACTIVITY)
+                    .setClassName(activity.packageName, CytoidNativeConfig.UNITY_GAMEPLAY_ACTIVITY)
                     .addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
                     .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
             runCatching {
@@ -194,7 +214,7 @@ class CytoidGameCoreBridge private constructor(
     }
 
     private fun isUnityGameplayActivity(activity: Activity): Boolean {
-        return activity.javaClass.name == UNITY_GAMEPLAY_ACTIVITY
+        return activity.javaClass.name == CytoidNativeConfig.UNITY_GAMEPLAY_ACTIVITY
     }
 
     private fun resolveUnityRootView(gameplayActivity: Activity): View? {
@@ -270,14 +290,19 @@ class CytoidGameCoreBridge private constructor(
 
     private fun sendToUnity(jsonString: String) {
         runCatching {
-            Class.forName(UNITY_PLAYER_CLASS)
+            Class.forName(CytoidNativeConfig.UNITY_PLAYER_CLASS)
                 .getMethod(
                     "UnitySendMessage",
                     String::class.java,
                     String::class.java,
                     String::class.java,
                 )
-                .invoke(null, UNITY_BRIDGE_OBJECT, UNITY_BRIDGE_METHOD, jsonString)
+                .invoke(
+                    null,
+                    CytoidNativeConfig.UNITY_BRIDGE_OBJECT,
+                    CytoidNativeConfig.UNITY_BRIDGE_METHOD,
+                    jsonString,
+                )
         }.onFailure { error ->
             Log.e(TAG, "[CYTOID-DBG] UnitySendMessage FAILED (Unity not loaded yet?): ${error.javaClass.simpleName}: ${error.message}")
         }.onSuccess {
@@ -311,12 +336,6 @@ class CytoidGameCoreBridge private constructor(
         private const val RUNTIME_READY = "ready"
         private const val RUNTIME_BUSY = "busy"
         private const val REFRESH_RATE_APPLY_DELAY_MS = 1500L
-        private const val UNITY_BRIDGE_OBJECT = "GameBridge"
-        private const val UNITY_BRIDGE_METHOD = "OnBridgeMessage"
-        private const val UNITY_PLAYER_CLASS = "com.unity3d.player.UnityPlayer"
-        private const val UNITY_PLAYER_FOR_ACTIVITY_CLASS =
-            "com.unity3d.player.UnityPlayerForActivityOrService"
-        private const val UNITY_GAMEPLAY_ACTIVITY = "me.tigerhix.cytoid.CytoidPluginActivity"
 
         @Volatile
         var instance: CytoidGameCoreBridge? = null
@@ -325,12 +344,5 @@ class CytoidGameCoreBridge private constructor(
         fun getOrCreate(activity: Activity): CytoidGameCoreBridge {
             return instance ?: CytoidGameCoreBridge(activity)
         }
-
-        private val unityPlayerClass: Class<*>? =
-            runCatching {
-                Class.forName(UNITY_PLAYER_FOR_ACTIVITY_CLASS)
-            }.getOrElse {
-                runCatching { Class.forName(UNITY_PLAYER_CLASS) }.getOrNull()
-            }
     }
 }

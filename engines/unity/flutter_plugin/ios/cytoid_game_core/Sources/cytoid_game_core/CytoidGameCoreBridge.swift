@@ -175,12 +175,10 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
 #if CYTOID_UNITY_FRAMEWORK_AVAILABLE
     if shouldUseUnityRuntime {
       UnityGameCoreRuntime.shared.dismissExclusiveFullscreen()
-      runtimeState.onSuspend()
       return
     }
 #endif
     mockBridge.hideGameSurface()
-    runtimeState.onSuspend()
   }
 
   func onOutboundMessage(_ jsonString: String) {

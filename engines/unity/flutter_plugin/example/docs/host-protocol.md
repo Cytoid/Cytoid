@@ -1,3 +1,5 @@
+**DEPRECATED.** v1 protocol. Current spec: `docs/host-protocol-v2.md`.
+
 # CytoidGameCore Protocol
 
 Bridge ↔ game communication between the **CytoidGameCore** Flutter plugin and the embedded Unity gameplay core (Godot in the future).

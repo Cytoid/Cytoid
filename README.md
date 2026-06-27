@@ -10,6 +10,18 @@ A community-driven touchscreen music game available on [App Store](https://itune
 
 The Unity gameplay core lives at `engines/unity/` and is built with [Unity 6000.0.75f1 (Personal)](https://unity3d.com).
 
+### Flutter Integration
+
+The Unity core is embedded via the `cytoid_game_core` Flutter plugin at `engines/unity/flutter_plugin/`. The plugin provides an engine-agnostic JSON host protocol.
+
+**Runtime presentation:**
+- **Android:** Exclusive Unity Activity (not a platform view fragment)
+- **iOS:** Exclusive Unity window (not a platform view)
+
+See `engines/unity/flutter_plugin/example/docs/host-protocol-v2.md` for the current protocol specification.
+
+### Unity Assets
+
 Licensed Unity packages are optional: unzip a maintainer **`Assets/Vendor/`** bundle at `engines/unity/`. See [docs/vendor.md](docs/vendor.md). Without it, in-repo fallbacks (e.g. storyboard shaders) are used.
 
 You also need to install Native Audio (free since 2025-09-22) from the Asset Store.

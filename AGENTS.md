@@ -212,7 +212,6 @@ Append new rows when architecture or default paths change.
 
 | Topic | Location |
 |-------|----------|
-| External dependencies inventory | `DEPENDENCIES.md` |
 | Build menu / batchmode | `engines/unity/Assets/Scripts/Editor/CytoidCoreBuild.cs` |
 | CI plugin artifacts | `.github/workflows/flutter-plugin-artifacts.yml` |
 | Vendor asset install | `engines/unity/flutter_plugin/tool/install_vendor_from_archive.sh`, `docs/vendor.md` |

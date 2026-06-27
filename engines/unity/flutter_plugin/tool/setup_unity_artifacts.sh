@@ -74,7 +74,7 @@ download_first_available \
   "$BASE_URL/$VERSION/cytoid-unity-core.aar" \
   "$BASE_URL/$VERSION/android/cytoid-unity-core.aar"
 
-for aar in NativeAudio.aar IngameDebugConsole.aar lunar-console.aar CytoidPlugin.aar; do
+for aar in NativeAudio.aar IngameDebugConsole.aar CytoidPlugin.aar; do
   if curl -fIL "$BASE_URL/$VERSION/$aar" >/dev/null 2>&1; then
     download "$BASE_URL/$VERSION/$aar" "$ARTIFACT_ROOT/android/$aar"
   elif curl -fIL "$BASE_URL/$VERSION/android/$aar" >/dev/null 2>&1; then

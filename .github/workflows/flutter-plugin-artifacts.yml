@@ -244,26 +244,24 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: cytoid-game-core-android
-          path: ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts/unity/android
+          # Canonical artifact ROOT, not the android leaf. The upload step
+          # preserves the relative layout (artifacts/unity/android/... +
+          # manifest.android.json); downloading to the leaf doubles the
+          # `unity/android` prefix and silently pushes the build into mock.
+          path: ${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts
 
-      # Manifest is also in the cytoid-game-core-android artifact. The download
-      # step places it under the android/ subdir; move it to its canonical
-      # location next to the AARs so check_engine_mode.sh finds it.
-      - name: Restore manifest location
-        run: |
-          src="${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts/unity/android/manifest.android.json"
-          dst="${{ env.FLUTTER_PLUGIN_PATH }}/.cytoid_game_core/artifacts/manifest.android.json"
-          if [[ -f "$src" && ! -f "$dst" ]]; then
-            mv "$src" "$dst"
-          elif [[ -f "$src" && -f "$dst" ]]; then
-            rm -f "$src"
-          fi
+      # Assert the AAR + manifest landed at the canonical paths (non-empty
+      # AAR, v2 schema, platform=android). Fails on the nested-path failure
+      # mode that download-to-leaf would produce.
+      - name: Verify Android Unity artifacts
+        run: ${{ env.FLUTTER_PLUGIN_PATH }}/android/scripts/verify_artifacts.sh
 
-      # Info-only: prints "unity" when both manifest + AAR are present,
-      # "mock" otherwise. Always exits 0. This is the smoke distinguisher.
-      - name: Report engine mode
+      # Strict: this job exists to prove Flutter hosts the REAL Unity core.
+      # A mock pass here is a silent regression. EXPECTED_ENGINE_MODE=unity
+      # makes check_engine_mode.sh exit non-zero on mock.
+      - name: Assert Unity engine mode
         run: |
-          mode="$(bash ${{ env.FLUTTER_PLUGIN_PATH }}/android/scripts/check_engine_mode.sh)"
+          mode="$(EXPECTED_ENGINE_MODE=unity bash ${{ env.FLUTTER_PLUGIN_PATH }}/android/scripts/check_engine_mode.sh)"
           echo "ENGINE_MODE=$mode"
           echo "::notice::flutter-smoke ENGINE_MODE=$mode"
 

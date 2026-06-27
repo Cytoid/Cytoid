@@ -3,14 +3,18 @@
 # Unity core artifact AND the v2 manifest are present on disk.
 #
 # This script is the CI smoke distinguisher. Every smoke step that prints
-# ENGINE_MODE=<value> sources this script. It NEVER fails the build:
+# ENGINE_MODE=<value> sources this script. By default it NEVER fails the
+# build (exit 0) so dev/local runs treat mock as the documented fallback.
+#
+# Opt-in strict mode: set EXPECTED_ENGINE_MODE=unity (or mock) to make the
+# script exit non-zero when the detected mode differs. Used by the
+# flutter-smoke CI job, whose purpose is to verify Flutter hosts the real
+# Unity core — a mock pass there is a silent regression, not a success.
+#
 #   - "unity"  → manifest present AND protocolSchema = "cytoid.game-core.v2"
-#                AND cytoid-unity-core.aar present.
+#                AND cytoid-unity-core.aar present and non-empty.
 #   - "mock"   → any of the above missing. The Flutter example app falls back
 #                to the mock engine at build/runtime (host protocol still works).
-#
-# Exit code is ALWAYS 0. The runtime probe in CytoidGameCoreBridge.attachActivity
-# is the authoritative fail-fast path (T1); this script is informational only.
 #
 # Output: stdout = single lower-case word "unity" or "mock".
 set -euo pipefail
@@ -36,8 +40,15 @@ is_unity_mode() {
 }
 
 if is_unity_mode; then
-    echo "unity"
+    mode="unity"
 else
-    echo "mock"
+    mode="mock"
+fi
+echo "$mode"
+
+if [[ -n "${EXPECTED_ENGINE_MODE:-}" && "$mode" != "$EXPECTED_ENGINE_MODE" ]]; then
+    echo "::error::check_engine_mode: expected '$EXPECTED_ENGINE_MODE' but detected '$mode'" >&2
+    echo "::error::artifact layout or manifest is broken; flutter-smoke would test mock, not Unity" >&2
+    exit 1
 fi
 exit 0

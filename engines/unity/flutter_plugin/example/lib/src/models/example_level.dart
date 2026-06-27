@@ -100,6 +100,16 @@ class ExampleLevelRepository {
     }
 
     levels.sort((a, b) => a.title.compareTo(b.title));
+
+    // Reclaim temp space from removed/renamed levels before the user starts
+    // playing. Best-effort — failures here do not block level loading.
+    final activeIds = levels.map((l) => l.id).toSet();
+    try {
+      await LevelVfsMaterializer.pruneOrphanedLevels(activeIds);
+    } on Object {
+      // Swallow: GC failure is non-fatal.
+    }
+
     return levels;
   }
 

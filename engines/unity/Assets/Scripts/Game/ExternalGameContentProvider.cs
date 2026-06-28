@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 public sealed class ExternalGameContentProvider : IGameContentProvider
@@ -229,6 +230,308 @@ public sealed class ExternalGameContentProvider : IGameContentProvider
 
     public static ExternalGameContentProvider FromJson(string launchJson)
     {
-        return new ExternalGameContentProvider(JsonConvert.DeserializeObject<GameLaunchPayload>(launchJson));
+        var payloadObj = JObject.Parse(launchJson);
+        var levelObj = RequireObject(payloadObj, "level");
+        var settingsObj = RequireObject(payloadObj, "settings");
+        var mode = RequireString(payloadObj, "mode");
+
+        var payload = new GameLaunchPayload
+        {
+            levelMetaJson = JsonConvert.SerializeObject(RequireToken(levelObj, "meta")),
+            selectedDifficulty = RequireString(levelObj, "selectedDifficulty"),
+            assets = RequireObject(levelObj, "assets").ToObject<GameLaunchAssets>(),
+            mods = payloadObj["mods"]?.ToObject<List<string>>() ?? new List<string>(),
+            gameMode = FlattenGameMode(mode).ToString(),
+            settings = FlattenLaunchSettings(settingsObj, requireFullSnapshot: true)
+        };
+
+        if (string.Equals(mode, "tier", StringComparison.OrdinalIgnoreCase))
+        {
+            payload.tierPlay = FlattenTierLaunch(RequireObject(payloadObj, "tier"));
+        }
+
+        return new ExternalGameContentProvider(payload);
     }
+
+    internal static GameLaunchSettings FlattenLaunchSettings(JObject settingsObj, bool requireFullSnapshot)
+    {
+        if (settingsObj == null) throw new ArgumentException("invalid_payload: settings is required");
+
+        var profile = GetSettingsGroup(settingsObj, "profile", requireFullSnapshot);
+        var runtime = GetSettingsGroup(settingsObj, "runtime", requireFullSnapshot);
+        var visual = GetSettingsGroup(settingsObj, "visual", requireFullSnapshot);
+        var audio = GetSettingsGroup(settingsObj, "audio", requireFullSnapshot);
+        var noteStyle = GetSettingsGroup(settingsObj, "noteStyle", requireFullSnapshot);
+
+        var settings = new GameLaunchSettings();
+        ApplyProfileSettings(settings, profile);
+        ApplyRuntimeSettings(settings, runtime);
+        ApplyVisualSettings(settings, visual);
+        ApplyAudioSettings(settings, audio);
+        ApplyNoteStyleSettings(settings, noteStyle);
+        return settings;
+    }
+
+    internal static GameLaunchSettings FlattenSettingsPatch(
+        JObject settingsObj,
+        out List<string> appliedFields,
+        out List<string> deferredFields,
+        out List<string> rejectedFields)
+    {
+        appliedFields = new List<string>();
+        deferredFields = new List<string>();
+        rejectedFields = new List<string>();
+
+        if (settingsObj == null) throw new ArgumentException("invalid_payload: settings payload is required");
+
+        var settings = FlattenLaunchSettings(settingsObj, requireFullSnapshot: false);
+        CollectSettingsFields(settingsObj, appliedFields, rejectedFields);
+        return settings;
+    }
+
+    internal static TierPlayLaunch FlattenTierLaunch(JObject tierObj)
+    {
+        if (tierObj == null) throw new ArgumentException("invalid_payload: tier is required for tier mode");
+
+        var tierPlay = new TierPlayLaunch
+        {
+            tierId = RequireString(tierObj, "tierId"),
+            stageIndex = RequireInt(tierObj, "stageIndex"),
+            stageCount = RequireInt(tierObj, "stageCount"),
+            maxHealth = RequireDouble(tierObj, "maxHealth"),
+            initialHealth = RequireDouble(tierObj, "initialHealth"),
+            initialCombo = RequireInt(tierObj, "initialCombo"),
+            introLabel = tierObj["introLabel"]?.Type == JTokenType.String ? tierObj["introLabel"]?.Value<string>() : null
+        };
+        tierPlay.Validate();
+        return tierPlay;
+    }
+
+    private static GameMode FlattenGameMode(string mode)
+    {
+        switch (mode?.ToLowerInvariant())
+        {
+            case "ranked":
+                return GameMode.Standard;
+            case "practice":
+                return GameMode.Practice;
+            case "calibration":
+                return GameMode.Calibration;
+            case "globalcalibration":
+                return GameMode.GlobalCalibration;
+            case "tier":
+                return GameMode.Tier;
+            default:
+                throw new ArgumentException($"unsupported_mode: {mode}");
+        }
+    }
+
+    private static JObject GetSettingsGroup(JObject settingsObj, string groupName, bool requireFullSnapshot)
+    {
+        var token = settingsObj[groupName];
+        if (token == null || token.Type == JTokenType.Null)
+        {
+            if (requireFullSnapshot) throw new ArgumentException($"invalid_payload: settings.{groupName} is required");
+            return null;
+        }
+        if (token.Type != JTokenType.Object)
+        {
+            throw new ArgumentException($"invalid_payload: settings.{groupName} must be an object");
+        }
+        return (JObject) token;
+    }
+
+    private static void ApplyProfileSettings(GameLaunchSettings settings, JObject profile)
+    {
+        if (profile == null) return;
+        settings.baseNoteOffset = OptionalFloat(profile, "baseNoteOffset");
+        settings.levelNoteOffset = OptionalFloat(profile, "levelNoteOffset");
+        settings.headsetNoteOffset = OptionalFloat(profile, "headsetNoteOffset");
+        settings.judgmentOffset = OptionalFloat(profile, "judgmentOffset");
+        settings.hitTapticFeedback = OptionalBool(profile, "hitTapticFeedback");
+        // profile.language and profile.menuTapticFeedback have no flat GameLaunchSettings equivalent.
+    }
+
+    private static void ApplyRuntimeSettings(GameLaunchSettings settings, JObject runtime)
+    {
+        if (runtime == null) return;
+        settings.musicVolume = OptionalFloat(runtime, "musicVolume");
+        settings.soundEffectsVolume = OptionalFloat(runtime, "soundEffectsVolume");
+    }
+
+    private static void ApplyVisualSettings(GameLaunchSettings settings, JObject visual)
+    {
+        if (visual == null) return;
+        settings.noteSize = OptionalFloat(visual, "noteSize");
+        settings.horizontalMargin = OptionalInt(visual, "horizontalMargin");
+        settings.verticalMargin = OptionalInt(visual, "verticalMargin");
+        settings.restrictPlayAreaAspectRatio = OptionalBool(visual, "restrictPlayAreaAspectRatio");
+        settings.coverOpacity = OptionalFloat(visual, "coverOpacity");
+        settings.displayStoryboardEffects = OptionalBool(visual, "displayStoryboardEffects");
+        settings.displayBoundaries = OptionalBool(visual, "displayBoundaries");
+        settings.skipMusicOnCompletion = OptionalBool(visual, "skipMusicOnCompletion");
+        settings.displayEarlyLateIndicators = OptionalBool(visual, "displayEarlyLateIndicators");
+        settings.displayNoteIds = OptionalBool(visual, "displayNoteIds");
+        settings.useExperimentalNoteAr = OptionalBool(visual, "useExperimentalNoteAr");
+        settings.useExperimentalNoteAnimations = OptionalBool(visual, "useExperimentalNoteAnimations");
+        settings.clearEffectsSize = OptionalFloat(visual, "clearEffectsSize");
+        settings.displayProfiler = OptionalBool(visual, "displayProfiler");
+        settings.adaptOverlayToSafeArea = OptionalBool(visual, "adaptOverlayToSafeArea");
+        settings.graphicsQuality = OptionalString(visual, "graphicsQuality");
+    }
+
+    private static void ApplyAudioSettings(GameLaunchSettings settings, JObject audio)
+    {
+        if (audio == null) return;
+        settings.hitSound = OptionalString(audio, "hitSound");
+        settings.holdHitSoundTiming = OptionalString(audio, "holdHitSoundTiming");
+        settings.useNativeAudio = OptionalBool(audio, "useNativeAudio");
+        settings.androidDspBufferSize = OptionalInt(audio, "androidDspBufferSize");
+    }
+
+    private static void ApplyNoteStyleSettings(GameLaunchSettings settings, JObject noteStyle)
+    {
+        if (noteStyle == null) return;
+        settings.hitboxSizes = FlattenHitboxSizes(noteStyle["hitboxSizes"] as JObject, "settings.noteStyle.hitboxSizes");
+        settings.noteRingColors = FlattenNoteTypeStringMap(noteStyle["ringColors"] as JObject, "settings.noteStyle.ringColors");
+        settings.noteFillColors = FlattenNoteTypeStringMap(noteStyle["fillColors"] as JObject, "settings.noteStyle.fillColors");
+        settings.noteFillColorsAlt = FlattenNoteTypeStringMap(noteStyle["fillColorsAlt"] as JObject, "settings.noteStyle.fillColorsAlt");
+        settings.useFillColorForDragChildNodes = OptionalBool(noteStyle, "useFillColorForDragChildNodes");
+    }
+
+    private static Dictionary<string, int> FlattenHitboxSizes(JObject source, string path)
+    {
+        RequireCompleteNoteStyleMap(source, path);
+        var result = new Dictionary<string, int>();
+        foreach (var pair in NoteTypeWireKeys)
+        {
+            result[((int) pair.Value).ToString()] = HitboxSizeToInt(RequireString(source, pair.Key));
+        }
+        return result;
+    }
+
+    private static Dictionary<string, string> FlattenNoteTypeStringMap(JObject source, string path)
+    {
+        RequireCompleteNoteStyleMap(source, path);
+        var result = new Dictionary<string, string>();
+        foreach (var pair in NoteTypeWireKeys)
+        {
+            result[((int) pair.Value).ToString()] = RequireString(source, pair.Key);
+        }
+        return result;
+    }
+
+    private static void RequireCompleteNoteStyleMap(JObject source, string path)
+    {
+        if (source == null) throw new ArgumentException($"invalid_payload: {path} is required");
+        foreach (var key in NoteTypeWireKeys.Keys)
+        {
+            if (source[key] == null || source[key].Type == JTokenType.Null)
+            {
+                throw new ArgumentException($"invalid_payload: {path}.{key} is required");
+            }
+        }
+    }
+
+    private static int HitboxSizeToInt(string value)
+    {
+        switch (value)
+        {
+            case "small": return 0;
+            case "medium": return 1;
+            case "large": return 2;
+            default: throw new ArgumentException($"invalid_payload: unsupported hitbox size {value}");
+        }
+    }
+
+    private static void CollectSettingsFields(JObject settingsObj, List<string> appliedFields, List<string> rejectedFields)
+    {
+        foreach (var group in settingsObj.Properties())
+        {
+            if (!(group.Value is JObject groupObj))
+            {
+                rejectedFields.Add(group.Name);
+                continue;
+            }
+
+            foreach (var field in groupObj.Properties())
+            {
+                appliedFields.Add($"{group.Name}.{field.Name}");
+            }
+        }
+    }
+
+    private static JToken RequireToken(JObject obj, string field)
+    {
+        var token = obj[field];
+        if (token == null || token.Type == JTokenType.Null) throw new ArgumentException($"invalid_payload: {field} is required");
+        return token;
+    }
+
+    private static JObject RequireObject(JObject obj, string field)
+    {
+        var token = RequireToken(obj, field);
+        if (token.Type != JTokenType.Object) throw new ArgumentException($"invalid_payload: {field} must be an object");
+        return (JObject) token;
+    }
+
+    private static string RequireString(JObject obj, string field)
+    {
+        var token = RequireToken(obj, field);
+        if (token.Type != JTokenType.String) throw new ArgumentException($"invalid_payload: {field} must be a string");
+        return token.Value<string>();
+    }
+
+    private static int RequireInt(JObject obj, string field)
+    {
+        var token = RequireToken(obj, field);
+        if (token.Type != JTokenType.Integer) throw new ArgumentException($"invalid_payload: {field} must be an int");
+        return token.Value<int>();
+    }
+
+    private static double RequireDouble(JObject obj, string field)
+    {
+        var token = RequireToken(obj, field);
+        if (token.Type != JTokenType.Integer && token.Type != JTokenType.Float)
+        {
+            throw new ArgumentException($"invalid_payload: {field} must be a number");
+        }
+        return token.Value<double>();
+    }
+
+    private static string OptionalString(JObject obj, string field)
+    {
+        var token = obj[field];
+        return token == null || token.Type == JTokenType.Null ? null : token.Value<string>();
+    }
+
+    private static bool? OptionalBool(JObject obj, string field)
+    {
+        var token = obj[field];
+        return token == null || token.Type == JTokenType.Null ? (bool?) null : token.Value<bool>();
+    }
+
+    private static int? OptionalInt(JObject obj, string field)
+    {
+        var token = obj[field];
+        return token == null || token.Type == JTokenType.Null ? (int?) null : token.Value<int>();
+    }
+
+    private static float? OptionalFloat(JObject obj, string field)
+    {
+        var token = obj[field];
+        return token == null || token.Type == JTokenType.Null ? (float?) null : token.Value<float>();
+    }
+
+    private static readonly Dictionary<string, NoteType> NoteTypeWireKeys = new Dictionary<string, NoteType>
+    {
+        ["click"] = NoteType.Click,
+        ["hold"] = NoteType.Hold,
+        ["longHold"] = NoteType.LongHold,
+        ["dragHead"] = NoteType.DragHead,
+        ["dragChild"] = NoteType.DragChild,
+        ["flick"] = NoteType.Flick,
+        ["cDragHead"] = NoteType.CDragHead,
+        ["cDragChild"] = NoteType.CDragChild
+    };
 }

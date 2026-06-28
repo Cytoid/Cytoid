@@ -4,17 +4,17 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('HealthCheckWatchdogConfig', () {
     test('const default has expected timeouts', () {
-      const config = HealthCheckWatchdogConfig();
+      final config = HealthCheckWatchdogConfig();
       expect(config.firstResponseTimeout, const Duration(seconds: 30));
       expect(config.steadyResponseTimeout, const Duration(seconds: 10));
       expect(config.pollInterval, const Duration(seconds: 10));
     });
 
     test('custom values round-trip through fields', () {
-      const config = HealthCheckWatchdogConfig(
-        firstResponseTimeout: Duration(seconds: 5),
-        steadyResponseTimeout: Duration(seconds: 2),
-        pollInterval: Duration(seconds: 1),
+      final config = HealthCheckWatchdogConfig(
+        firstResponseTimeout: const Duration(seconds: 5),
+        steadyResponseTimeout: const Duration(seconds: 2),
+        pollInterval: const Duration(seconds: 1),
       );
       expect(config.firstResponseTimeout, const Duration(seconds: 5));
       expect(config.steadyResponseTimeout, const Duration(seconds: 2));
@@ -22,9 +22,26 @@ void main() {
     });
 
     test('identical const instances', () {
-      const a = HealthCheckWatchdogConfig();
-      const b = HealthCheckWatchdogConfig();
-      expect(identical(a, b), isTrue);
+      final a = HealthCheckWatchdogConfig();
+      final b = HealthCheckWatchdogConfig();
+      expect(identical(a, b), isFalse);
+    });
+
+    test('rejects non-positive durations with AssertionError', () {
+      expect(
+        () => HealthCheckWatchdogConfig(pollInterval: Duration.zero),
+        throwsA(isA<AssertionError>()),
+      );
+      expect(
+        () => HealthCheckWatchdogConfig(
+          firstResponseTimeout: Duration(seconds: -1),
+        ),
+        throwsA(isA<AssertionError>()),
+      );
+      expect(
+        () => HealthCheckWatchdogConfig(steadyResponseTimeout: Duration.zero),
+        throwsA(isA<AssertionError>()),
+      );
     });
   });
 }

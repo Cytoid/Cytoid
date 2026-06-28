@@ -707,10 +707,10 @@ void main() {
   // Millisecond-scale watchdog config for deterministic tests (NOT real 30s;
   // NOT FakeAsync — the latter is scope-OUT per the plan). Hundreds of ms, not
   // single-digit ms, to avoid CI flakiness.
-  const msConfig = HealthCheckWatchdogConfig(
-    firstResponseTimeout: Duration(milliseconds: 2000),
-    steadyResponseTimeout: Duration(milliseconds: 200),
-    pollInterval: Duration(milliseconds: 100),
+  final msConfig = HealthCheckWatchdogConfig(
+    firstResponseTimeout: const Duration(milliseconds: 2000),
+    steadyResponseTimeout: const Duration(milliseconds: 200),
+    pollInterval: const Duration(milliseconds: 100),
   );
 
   group('PlaySession.run health.check watchdog', () {
@@ -1147,6 +1147,8 @@ void main() {
       // HealthCheckWatchdogConfig(). A regression that flipped the default to
       // null would make this test fail (no health.check ever sent).
       final session = PlaySession(client);
+      expect(session.watchdogConfig, isNotNull,
+          reason: 'default constructor must set a non-null config (default-on)');
 
       final runFuture = session.run(
         launch: _buildTestLaunch(),
@@ -1195,6 +1197,8 @@ void main() {
         eventStream: events.stream,
       );
       final session = PlaySession(client, watchdogConfig: null);
+      expect(session.watchdogConfig, isNull,
+          reason: 'null watchdogConfig must leave the field null (opt-out)');
 
       final runFuture = session.run(
         launch: _buildTestLaunch(),

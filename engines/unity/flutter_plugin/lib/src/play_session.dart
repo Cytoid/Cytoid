@@ -27,7 +27,7 @@ import 'wire_message_type.dart';
 class PlaySession {
   PlaySession(
     this.client, {
-    this.watchdogConfig = const HealthCheckWatchdogConfig(),
+    this.watchdogConfig = HealthCheckWatchdogConfig.defaults,
   });
 
   /// The low-level client used to drive runtime, surface, and envelope I/O.

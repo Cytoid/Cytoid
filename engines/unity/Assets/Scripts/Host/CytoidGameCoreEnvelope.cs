@@ -3,8 +3,10 @@ using Newtonsoft.Json.Linq;
 
 public class CytoidGameCoreEnvelope
 {
-    [JsonProperty("v")]
-    public int Version { get; set; } = 1;
+    public const string CurrentSchema = "cytoid.game-core.v2";
+
+    [JsonProperty("schema")]
+    public string Schema { get; set; } = CurrentSchema;
 
     [JsonProperty("id")]
     public string Id { get; set; }
@@ -24,7 +26,7 @@ public class CytoidGameCoreEnvelope
     {
         return new CytoidGameCoreEnvelope
         {
-            Version = 1,
+            Schema = CurrentSchema,
             Id = id,
             Type = type,
             Payload = payload ?? new JObject()

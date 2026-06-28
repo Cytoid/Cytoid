@@ -1,15 +1,16 @@
 public static class WireMessageTypes
 {
-    public const string GameReady = "game.ready";
-    public const string BridgeStatus = "bridge.status";
-    public const string GameStatus = "game.status";
-    public const string BridgePing = "bridge.ping";
-    public const string GamePong = "game.pong";
-    public const string GameLogsBatch = "game.logs.batch";
-    public const string BridgeSettingsUpdate = "bridge.settings.update";
-    public const string GameSettingsUpdated = "game.settings.updated";
-    public const string BridgePlayStart = "bridge.play.start";
-    public const string GamePlayResult = "game.play.result";
-    public const string BridgePlayEnd = "bridge.play.end";
-    public const string GamePlayEnded = "game.play.ended";
+    public const string EngineReady = "engine.ready";
+    public const string EngineError = "engine.error";
+    public const string HealthCheck = "health.check";
+    public const string HealthOk = "health.ok";
+    public const string SettingsApply = "settings.apply";
+    public const string SettingsApplied = "settings.applied";
+    public const string SessionStart = "session.start";
+    public const string SessionStarted = "session.started";
+    public const string SessionCancel = "session.cancel";
+    public const string SessionTelemetry = "session.telemetry";
+    public const string SessionResult = "session.result";
+    public const string SessionFailed = "session.failed";
+    public const string LogsBatch = "logs.batch";
 }

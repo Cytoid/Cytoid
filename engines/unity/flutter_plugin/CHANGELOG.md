@@ -1,3 +1,16 @@
+## Unreleased
+
+### Added
+
+- `HealthCheckWatchdogConfig` (`lib/src/health_check_watchdog_config.dart`) and a
+  `health.check` watchdog wired into `PlaySession._awaitSessionResult`. During an
+  active session the watchdog sends `health.check` every `pollInterval` (default
+  10s); the first response timeout is 30s, subsequent 10s. A check is skipped
+  when a non-terminal engine envelope arrived within the last `pollInterval`. On
+  timeout, `PlaySession.run` throws
+  `CytoidGameCoreSessionFailedException(code: 'runtime_unreachable')`. Default-on;
+  pass `watchdogConfig: null` to opt out.
+
 ## 0.1.0 - 2026-06-27
 
 First public release on the v2 host protocol track. The Dart plugin now ships

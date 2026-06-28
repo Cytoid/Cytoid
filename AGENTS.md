@@ -67,6 +67,8 @@ Protocol spec: `docs/host-protocol-v2.md` (v1 doc at `engines/unity/flutter_plug
 - `activeSessionId == null` → `engine.error` envelope via the EventChannel, `error.code = "runtime_exception"`, message sanitized to `"<ExceptionClassSimpleName>: <first message line>"` (no raw stack trace).
 - `activeSessionId != null` → synthesized `session.failed` with `error.code = "runtime_unreachable"` via the T4 primitive. Never both — active-session failures use `session.failed` ONLY; `engine.error` is for non-session failures.
 
+**Host-side `health.check` watchdog (Dart):** `PlaySession._awaitSessionResult` arms a self-scheduling watchdog that sends `health.check` every `pollInterval` (default 10s). First response timeout = 30s, subsequent = 10s. A check is skipped when a non-terminal engine envelope arrived within the last `pollInterval`. On response timeout, the watchdog completes the session completer with `CytoidGameCoreSessionFailedException(code: 'runtime_unreachable')` — the same code the native bridge uses for send-failure synthesis, distinguished by the `message` field. This fills the gap the native synthesis paths don't cover: Unity main loop frozen with the process alive (storyboard death-spiral, GC stall). The C# handler is at `engines/unity/Assets/Scripts/Host/GameBridgeRouter.cs` (`HandleHealthCheck`, returns `health.ok` with `engine` / `generation` / `state` / `activeSessionId`).
+
 **Android Unity Activity lifecycle (warm-resident):** the exclusive Unity Activity (`me.tigerhix.cytoid.CytoidPluginActivity`) is NOT `finish()`-ed on session end. `hideGameSurface()` brings the Flutter Activity to front via `FLAG_ACTIVITY_REORDER_TO_FRONT | FLAG_ACTIVITY_SINGLE_TOP` and leaves the Unity Activity warm-resident in the back stack. This keeps Unity/IL2CPP/GL state alive across the typical play loop (select level → play → result → select next), eliminating the 5–15s cold-start tax on every session.
 
 Activity lifecycle callbacks drive the T3 state machine:
@@ -221,6 +223,7 @@ If you change envelope types or payloads:
 | 2026-05 | No Unity disk persistence (LiteDB removed) | Settings/records/scores live in Flutter; core uses in-memory `LocalPlayerSettings`, `LevelRecord`, `GameLaunchSettings` |
 | 2026-05 | Lunar Console removed; `game.log` forwarding | Bridge-embedded receives Unity logs; Graphy retained for in-engine profiler overlay |
 | 2026-05 | Cytoid top-level menu = plugin builds only | Flat `Cytoid/…` items; no Core Build submenu; exports use `PluginBuildScenes` + `CYTOID_FLUTTER_HOST` |
+| 2026-06 | Host-side `health.check` watchdog in `PlaySession` | Detects Unity main-loop freeze with process alive — the gap the native bridge synthesis paths don't cover. Reuses `runtime_unreachable`; provenance in `message`. C# handler: `GameBridgeRouter.HandleHealthCheck` |
 
 Append new rows when architecture or default paths change.
 

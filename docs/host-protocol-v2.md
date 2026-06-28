@@ -154,7 +154,7 @@ payload value outside the documented enum sets. Rejections caused by
 | `session.cancel` | Flutter -> Engine | Request cancellation of the active session. |
 | `session.telemetry` | Engine -> Flutter | Optional telemetry stream when requested by launch options. |
 | `session.result` | Engine -> Flutter | Terminal gameplay outcome message (engine-active outcomes). Runtime death uses `session.failed`. |
-| `session.failed` | Engine -> Flutter | Terminal runtime-failure message for an active session (native-bridge synthesis). |
+| `session.failed` | Engine -> Flutter | Terminal runtime-failure message for an active session (native-bridge or host-side watchdog synthesis). |
 | `logs.batch` | Engine -> Flutter | Buffered engine logs. |
 
 Removed v1 message types:
@@ -1242,7 +1242,9 @@ runtime itself may be dead or unreachable, the NATIVE BRIDGE synthesizes a
 `session.failed` envelope for the active session — never a `session.result`.
 The engine does not emit `session.failed`; the C# engine in particular is
 v1-only on the wire and emits no v2 outcomes at all. The bridge's
-`synthesizeRuntimeFailure` primitive is the sole producer of this envelope.
+`synthesizeRuntimeFailure` primitive is the producer on the native-bridge
+side (the host-side health.check watchdog is a separate producer — see
+the next paragraph and the runtime-failure table below).
 
 The host-side health.check watchdog is a SEPARATE producer of `session.failed` from the native bridge; both use `runtime_unreachable` because the host cannot distinguish a frozen main loop from a process-level unreachable — the `message` field carries the provenance.
 

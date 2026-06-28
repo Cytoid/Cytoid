@@ -135,6 +135,13 @@ class PlaySession {
     final completer = Completer<SessionResultPayload>();
     DateTime? lastInboundAt;
     Timer? watchdogTimer;
+    // In-flight per-check resources lifted to the outer scope so the
+    // session-cancel path can release them immediately. Without this, a
+    // session that completes via session.result / session.failed / stream
+    // error while runCheck is inside sendAndAwaitHealthOk would leave a
+    // passive listener + pending timer lingering for up to firstResponseTimeout.
+    Timer? inFlightCheckTimer;
+    StreamSubscription<dynamic>? inFlightCheckSub;
     var isFirstCheck = true;
     var disposed = false;
 
@@ -209,16 +216,29 @@ class PlaySession {
     // causing a false-positive timeout.
     Future<bool> sendAndAwaitHealthOk(String checkId, Duration timeout) async {
       final okCompleter = Completer<bool>();
-      late StreamSubscription<dynamic> okSub;
-      okSub = client.events.listen((envelope) {
-        if (!completer.isCompleted &&
-            envelope.id == checkId &&
-            envelope.type == WireMessageType.healthOk &&
-            !okCompleter.isCompleted) {
-          okCompleter.complete(true);
-        }
-      });
-      final timer = Timer(timeout, () {
+      // Assign to the OUTER inFlight* locals (not local finals) so the
+      // session-cancel closure can release these resources immediately if
+      // the session completes via another path while we're awaiting. The
+      // local finally block below still cancels them on normal completion.
+      inFlightCheckSub = client.events.listen(
+        (envelope) {
+          if (!completer.isCompleted &&
+              envelope.id == checkId &&
+              envelope.type == WireMessageType.healthOk &&
+              !okCompleter.isCompleted) {
+            okCompleter.complete(true);
+          }
+        },
+        onError: (Object _, StackTrace _) {
+          // Silently ignore stream errors on the per-check listener. Stream
+          // errors are delivered to EVERY subscription on a broadcast stream;
+          // the MAIN subscription owns stream-error completion of the session
+          // completer (with the isCompleted guard). This listener's only job
+          // is to match health.ok — without this no-op onError, a stream
+          // error would surface as an uncaught async error on this listener.
+        },
+      );
+      inFlightCheckTimer = Timer(timeout, () {
         if (!okCompleter.isCompleted) okCompleter.complete(false);
       });
       try {
@@ -238,8 +258,10 @@ class PlaySession {
         }
         return await okCompleter.future;
       } finally {
-        timer.cancel();
-        await okSub.cancel();
+        inFlightCheckTimer?.cancel();
+        inFlightCheckTimer = null;
+        await inFlightCheckSub?.cancel();
+        inFlightCheckSub = null;
       }
     }
 
@@ -317,6 +339,12 @@ class PlaySession {
         // (its runCheck continuation early-returns on the disposed guard).
         disposed = true;
         watchdogTimer?.cancel();
+        // Release in-flight per-check resources too — covers the race where
+        // session.result / session.failed / stream error completes the
+        // session while runCheck is inside sendAndAwaitHealthOk. Cancel is
+        // idempotent (no-op on already-cancelled sub/timer).
+        inFlightCheckTimer?.cancel();
+        await inFlightCheckSub?.cancel();
         await subscription.cancel();
       },
     );

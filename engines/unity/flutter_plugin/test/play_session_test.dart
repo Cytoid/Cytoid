@@ -1124,5 +1124,123 @@ void main() {
       expect(healthCheckSendCount(), 1);
       expect(primaryCalls.map((c) => c.method), contains('hideGameSurface'));
     });
+
+    test('watchdog: default constructor arms the watchdog — health.check is '
+        'sent (no watchdogConfig kwarg)', () async {
+      // Verify the default `PlaySession(client)` ctor ENABLES the watchdog.
+      // The default pollInterval is 10s — use a generous deadline on
+      // awaitSentEnvelope so the test still bounds total runtime while
+      // accommodating the real default cadence.
+      installSendInterceptor(
+        onSend: (env) {
+          if (env.type == WireMessageType.healthCheck) {
+            Future.microtask(() => emitHealthOk(env.id));
+          }
+        },
+      );
+
+      final client = CytoidGameCoreClient(
+        methodChannel: primaryChannel,
+        eventStream: events.stream,
+      );
+      // NO watchdogConfig kwarg — relies on the default = const
+      // HealthCheckWatchdogConfig(). A regression that flipped the default to
+      // null would make this test fail (no health.check ever sent).
+      final session = PlaySession(client);
+
+      final runFuture = session.run(
+        launch: _buildTestLaunch(),
+        readyTimeout: const Duration(seconds: 2),
+      );
+
+      final startEnvelope = await awaitSentEnvelope(
+        WireMessageType.sessionStart,
+      );
+
+      // Default pollInterval is 10s — wait up to 15s for the first check.
+      await awaitSentEnvelope(
+        WireMessageType.healthCheck,
+        deadline: const Duration(seconds: 15),
+      );
+
+      // Cleanup: emit session.result so run() completes cleanly.
+      final resultJson = _loadFixture('session_result_payload.valid.json');
+      resultJson['sessionId'] = startEnvelope.id;
+      events.add(
+        CytoidGameCoreEnvelope.create(
+          id: startEnvelope.id,
+          type: WireMessageType.sessionResult,
+          payload: resultJson,
+        ).toJsonString(),
+      );
+
+      final result = await runFuture.timeout(
+        const Duration(seconds: 2),
+        onTimeout: () => throw TimeoutException('run() never returned'),
+      );
+      expect(result.outcome.kind, OutcomePayload.completedKind);
+      expect(healthCheckSendCount(), greaterThanOrEqualTo(1));
+      expect(primaryCalls.map((c) => c.method), contains('hideGameSurface'));
+    });
+
+    test('watchdog: null watchdogConfig disables the watchdog — no '
+        'health.check sent', () async {
+      // Verify the OPT-OUT escape hatch. Passing watchdogConfig: null MUST
+      // disable the watchdog entirely — no health.check envelopes are sent
+      // regardless of how long the session runs.
+      installSendInterceptor(onSend: (_) {});
+
+      final client = CytoidGameCoreClient(
+        methodChannel: primaryChannel,
+        eventStream: events.stream,
+      );
+      final session = PlaySession(client, watchdogConfig: null);
+
+      final runFuture = session.run(
+        launch: _buildTestLaunch(),
+        readyTimeout: const Duration(seconds: 2),
+      );
+
+      final startEnvelope = await awaitSentEnvelope(
+        WireMessageType.sessionStart,
+      );
+
+      // Emit session.started + session.result promptly so the run completes.
+      events.add(
+        CytoidGameCoreEnvelope.create(
+          id: startEnvelope.id,
+          type: WireMessageType.sessionStarted,
+          payload: {'sessionId': startEnvelope.id},
+        ).toJsonString(),
+      );
+      final resultJson = _loadFixture('session_result_payload.valid.json');
+      resultJson['sessionId'] = startEnvelope.id;
+      events.add(
+        CytoidGameCoreEnvelope.create(
+          id: startEnvelope.id,
+          type: WireMessageType.sessionResult,
+          payload: resultJson,
+        ).toJsonString(),
+      );
+
+      final result = await runFuture.timeout(
+        const Duration(seconds: 2),
+        onTimeout: () => throw TimeoutException('run() never returned'),
+      );
+      expect(result.outcome.kind, OutcomePayload.completedKind);
+
+      // Wait past what would have been the first pollInterval if the watchdog
+      // were armed with msConfig (100ms). 300ms gives comfortable margin.
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+
+      // ZERO health.check envelopes — the watchdog was disabled.
+      expect(healthCheckSendCount(), 0);
+      expect(
+        sentEnvelopeOfType(WireMessageType.healthCheck),
+        isNull,
+        reason: 'watchdogConfig: null MUST disable health.check sends',
+      );
+      expect(primaryCalls.map((c) => c.method), contains('hideGameSurface'));
+    });
   });
 }

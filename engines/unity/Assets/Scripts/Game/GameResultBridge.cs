@@ -113,7 +113,9 @@ public static class GameResultBridge
             Tier = state?.Mode == GameMode.Tier ? BuildTierPayload(state, tierPlaySession) : null,
             Flags = new FlagsWirePayload {UsedAutoMod = state != null && HasAutoMod(state)},
             Telemetry = telemetry,
-            Error = outcome.Kind == "rejected" ? new ErrorWirePayload {Code = "runtime_exception", Message = error} : null,
+            Error = (outcome.Kind == "rejected" || (outcome.Kind == "failed" && !string.IsNullOrEmpty(error)))
+                ? new ErrorWirePayload {Code = "runtime_exception", Message = error}
+                : null,
             Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
         };
 
@@ -138,6 +140,10 @@ public static class GameResultBridge
         if (state != null && state.IsFailed)
         {
             return new OutcomeWirePayload {Kind = "failed", Reason = state.Mode == GameMode.Tier ? "tierHpDepleted" : "hpDepleted"};
+        }
+        if (!string.IsNullOrEmpty(error))
+        {
+            return new OutcomeWirePayload {Kind = "failed", Reason = "unknown"};
         }
         return new OutcomeWirePayload {Kind = "completed"};
     }

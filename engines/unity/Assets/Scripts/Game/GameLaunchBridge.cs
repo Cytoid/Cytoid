@@ -66,15 +66,14 @@ public static class GameLaunchBridge
 
     internal static IGameContentProvider PrepareLaunchProvider(string launchJson)
     {
-        var provider = ExternalGameContentProvider.FromJson(launchJson);
-        PrepareProviderContext(provider);
-        return provider;
+        return ExternalGameContentProvider.FromJson(launchJson);
     }
 
     internal static async UniTask LoadGameScene(IGameContentProvider provider)
     {
         try
         {
+            PrepareProviderContext(provider);
             var sceneLoader = new SceneLoader("Game");
             await sceneLoader.Load();
             sceneLoader.Activate();

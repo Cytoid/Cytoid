@@ -1,9 +1,8 @@
 import Foundation
 
-/// Trigger reasons for synthesizing a v2 `session.result` envelope with
-/// `outcome.kind = "runtimeFailed"` when an active session is killed by a
-/// runtime-side event the engine itself cannot report (v2 § Active-Session
-/// Runtime Failure).
+/// Trigger reasons for synthesizing a v2 `session.failed` envelope when an
+/// active session is killed by a runtime-side event the engine itself cannot
+/// report (v2 § Active-Session Runtime Failure).
 ///
 /// Each trigger maps to a `runtime_*` error code per the v2 spec table.
 ///

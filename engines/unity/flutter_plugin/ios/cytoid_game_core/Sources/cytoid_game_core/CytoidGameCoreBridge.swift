@@ -217,7 +217,7 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
 
     // GENERATION_CHANGE must run BEFORE the engine.ready envelope is
     // forwarded: the spec requires the prior session's `runtime_recreated`
-    // session.result to reach the host before the next engine.ready (v2 §
+    // session.failed to reach the host before the next engine.ready (v2 §
     // Active-Session Runtime Failure ordering).
     if type == "engine.ready" || type == "game.ready" {
       let wasActiveSession = runtimeState.activeSessionId
@@ -234,7 +234,7 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
     if type == "session.started", let id = messageId(jsonString) {
       runtimeState.onSessionStarted(sessionId: id)
     }
-    if type == "session.result" || isGameResultMessage(jsonString) {
+    if type == "session.result" || type == "session.failed" || isGameResultMessage(jsonString) {
       runtimeState.onSessionEnded()
     }
   }
@@ -266,7 +266,7 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   }
 
   // Install the message-queue timeout handler exactly once. Routes per the
-  // v2 active-session routing rule: active → session.result via T4 primitive
+  // v2 active-session routing rule: active → session.failed via T4 primitive
   // ONLY; no active session → engine.error ONLY. Never both.
   private func wireMessageQueueTimeoutHandlerIfNeeded() {
     guard !messageQueueTimeoutHandlerInstalled else { return }
@@ -281,7 +281,7 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   /// `MessageQueueTimeoutSeconds`). The active-session routing rule (v2 §
   /// Active-Session Runtime Failure) decides the envelope:
   ///   activeSessionId == nil → engine.error ONLY
-  ///   activeSessionId != null → session.result via T4 primitive ONLY
+  ///   activeSessionId != null → session.failed via T4 primitive ONLY
   /// Exposed internal so SwiftPM-sandbox tests can invoke it directly without
   /// the real UnityGameCoreRuntime.
   internal func handleMessageQueueTimeoutRouting() {
@@ -366,19 +366,20 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   }
 
   /**
-   * Synthesize a v2 `session.result` envelope with
-   * `outcome.kind = "runtimeFailed"` for an active session killed by a
-   * runtime-side event the engine itself cannot report (v2 § Active-Session
-   * Runtime Failure).
+   * Synthesize a v2 `session.failed` envelope for an active session killed
+   * by a runtime-side event the engine itself cannot report (v2 §
+   * Active-Session Runtime Failure).
    *
    * Contract:
    *  - Idempotent: gated on `activeSessionId == sessionId`. If the session
    *    already terminated (activeSessionId is nil or a different id), this
-   *    is a no-op and returns nil. At most one synthesized result per session.
+   *    is a no-op and returns nil. At most one synthesized failure per session.
    *  - On success: transitions runtimeState to .failed via onFailure (which
    *    clears activeSessionId), emits the envelope via emitEvent, returns
    *    the JSON string.
-   *  - Active-session failures use `session.result`, NEVER `engine.error`.
+   *  - Active-session failures use `session.failed`, NEVER `engine.error`.
+   *  - Payload is minimal: `{sessionId, error, timestamp}`. The `outcome`
+   *    field MUST be absent (runtime death is not a gameplay result).
    *
    * Returns the emitted JSON envelope string, or nil if the gate suppressed
    * the synthesis (idempotency).
@@ -398,13 +399,13 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
 
     let payload: [String: Any] = [
       "sessionId": sessionId,
-      "outcome": ["kind": "runtimeFailed"],
       "error": error.toMap(),
+      "timestamp": Int(Date().timeIntervalSince1970 * 1000),
     ]
     let envelope: [String: Any] = [
       "v": Self.protocolVersionV2,
       "id": sessionId,
-      "type": "session.result",
+      "type": "session.failed",
       "payload": payload,
     ]
 
@@ -462,7 +463,7 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
 
   private func emitEvent(_ jsonString: String) {
     let type = messageType(jsonString)
-    if type == "session.result" || type == "game.play.result" || type == "game.play.ended" {
+    if type == "session.result" || type == "session.failed" || type == "game.play.result" || type == "game.play.ended" {
       runtimeState.onSessionEnded()
     }
 

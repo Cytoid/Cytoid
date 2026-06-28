@@ -7,8 +7,8 @@ import XCTest
 /// v2 active-session routing rule:
 ///
 ///   activeSessionId == nil  → `engine.error` ONLY (code = `runtime_unavailable`)
-///   activeSessionId != nil  → `session.result` via T4 primitive ONLY
-///                              (code = `runtime_unreachable`, kind = runtimeFailed)
+///   activeSessionId != nil  → `session.failed` via T4 primitive ONLY
+///                              (code = `runtime_unreachable`)
 ///
 /// Never both. The bridge's handler is invoked directly here — the runtime's
 /// real timer firing is verified by code inspection; in the SwiftPM sandbox
@@ -55,18 +55,23 @@ final class MessageQueueTimeoutTests: XCTestCase {
 
         bridge.handleMessageQueueTimeoutRouting()
 
-        XCTAssertEqual(captured.values.count, 1, "exactly one session.result envelope")
+        XCTAssertEqual(captured.values.count, 1, "exactly one session.failed envelope")
         let envelope = try XCTUnwrap(
             JSONSerialization.jsonObject(with: Data(captured.values[0].utf8)) as? [String: Any]
         )
-        XCTAssertEqual(envelope["type"] as? String, "session.result")
+        XCTAssertEqual(envelope["type"] as? String, "session.failed")
         XCTAssertEqual(envelope["id"] as? String, "session-active")
         let payload = try XCTUnwrap(envelope["payload"] as? [String: Any])
         XCTAssertEqual(payload["sessionId"] as? String, "session-active")
-        let outcome = try XCTUnwrap(payload["outcome"] as? [String: Any])
-        XCTAssertEqual(outcome["kind"] as? String, "runtimeFailed")
+        XCTAssertNil(payload["outcome"], "session.failed payload MUST NOT carry an outcome")
         let error = try XCTUnwrap(payload["error"] as? [String: Any])
         XCTAssertEqual(error["code"] as? String, "runtime_unreachable")
+        let timestamp = try XCTUnwrap(payload["timestamp"] as? NSNumber)
+        XCTAssertGreaterThan(
+            timestamp.intValue,
+            0,
+            "timestamp must be a non-zero epoch-millis value"
+        )
 
         // After T4 synthesis: state is .failed, activeSessionId cleared.
         XCTAssertEqual(bridge.runtimeState.state, .failed)
@@ -96,7 +101,7 @@ final class MessageQueueTimeoutTests: XCTestCase {
     func testActiveSessionRoutesViaPrimitiveExactlyOncePerSession() {
         // Idempotency: the T4 primitive's gate (activeSessionId == sessionId)
         // ensures a second invocation after the first failure (which clears
-        // activeSessionId) is a no-op — no second session.result.
+        // activeSessionId) is a no-op — no second session.failed.
         let bridge = CytoidGameCoreBridge()
         let captured = CapturedEmits()
         bridge.emitOverride = { captured.append($0) }
@@ -112,7 +117,7 @@ final class MessageQueueTimeoutTests: XCTestCase {
         bridge.handleMessageQueueTimeoutRouting()
         // After the first routing, activeSessionId is cleared (T4's onFailure),
         // so the second call routes to engine.error instead of duplicating
-        // the session.result.
+        // the session.failed.
         XCTAssertEqual(captured.values.count, 2)
         let secondEnvelope = try? JSONSerialization.jsonObject(
             with: Data(captured.values[1].utf8)

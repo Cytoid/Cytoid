@@ -14,9 +14,8 @@ import Foundation
 /// Pause during `starting` stays `starting` — no transition.
 ///
 /// The machine owns only the lifecycle bookkeeping. Downstream tasks (T4/T5/T6)
-/// are responsible for synthesising `session.result` with
-/// `outcome.kind = "runtimeFailed"` when `onFailure` fires with a non-null
-/// `activeSessionId`; see `.omo/notepads/v2-host-impl/decisions.md`.
+/// are responsible for synthesising `session.failed` when `onFailure` fires
+/// with a non-null `activeSessionId`; see `.omo/notepads/v2-host-impl/decisions.md`.
 public final class RuntimeStateMachine {
     public private(set) var state: RuntimeState = .unavailable
     public private(set) var generation: Int = 0

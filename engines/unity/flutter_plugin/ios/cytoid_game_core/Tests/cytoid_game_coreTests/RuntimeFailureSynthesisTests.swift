@@ -55,13 +55,12 @@ final class RuntimeFailureSynthesisTests: XCTestCase {
             JSONSerialization.jsonObject(with: Data(envelope.utf8)) as? [String: Any]
         )
         XCTAssertEqual(parsed["id"] as? String, "S1")
-        XCTAssertEqual(parsed["type"] as? String, "session.result")
+        XCTAssertEqual(parsed["type"] as? String, "session.failed")
         XCTAssertEqual(parsed["v"] as? Int, 2)
 
         let payload = try XCTUnwrap(parsed["payload"] as? [String: Any])
         XCTAssertEqual(payload["sessionId"] as? String, "S1")
-        let outcome = try XCTUnwrap(payload["outcome"] as? [String: Any])
-        XCTAssertEqual(outcome["kind"] as? String, "runtimeFailed")
+        XCTAssertNil(payload["outcome"], "session.failed payload MUST NOT carry an outcome")
 
         let error = try XCTUnwrap(payload["error"] as? [String: Any])
         XCTAssertEqual(error["code"] as? String, "runtime_recreated")
@@ -69,6 +68,13 @@ final class RuntimeFailureSynthesisTests: XCTestCase {
         XCTAssertTrue(
             message.lowercased().contains("recreated"),
             "error message must mention recreation; was: \(message)"
+        )
+
+        let timestamp = try XCTUnwrap(payload["timestamp"] as? NSNumber)
+        XCTAssertGreaterThan(
+            timestamp.intValue,
+            0,
+            "timestamp must be a non-zero epoch-millis value"
         )
 
         XCTAssertNil(bridge.runtimeState.activeSessionId)
@@ -121,12 +127,18 @@ final class RuntimeFailureSynthesisTests: XCTestCase {
             JSONSerialization.jsonObject(with: Data(envelope.utf8)) as? [String: Any]
         )
         XCTAssertEqual(parsed["id"] as? String, "S2")
-        XCTAssertEqual(parsed["type"] as? String, "session.result")
+        XCTAssertEqual(parsed["type"] as? String, "session.failed")
         let payload = try XCTUnwrap(parsed["payload"] as? [String: Any])
-        let outcome = try XCTUnwrap(payload["outcome"] as? [String: Any])
-        XCTAssertEqual(outcome["kind"] as? String, "runtimeFailed")
+        XCTAssertEqual(payload["sessionId"] as? String, "S2")
+        XCTAssertNil(payload["outcome"], "session.failed payload MUST NOT carry an outcome")
         let error = try XCTUnwrap(payload["error"] as? [String: Any])
         XCTAssertEqual(error["code"] as? String, "runtime_surface_lost")
+        let timestamp = try XCTUnwrap(payload["timestamp"] as? NSNumber)
+        XCTAssertGreaterThan(
+            timestamp.intValue,
+            0,
+            "timestamp must be a non-zero epoch-millis value"
+        )
 
         XCTAssertNil(bridge.runtimeState.activeSessionId)
     }

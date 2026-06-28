@@ -4,8 +4,8 @@ import Foundation
 /// outside the `CYTOID_UNITY_FRAMEWORK_AVAILABLE` flag so SwiftPM sandbox
 /// tests can simulate framework-load failures without the real binary. The
 /// bridge converts these into `engine.error` envelopes (no active session)
-/// or routes via T4's `synthesizeRuntimeFailure(.unreachable, …)` (active
-/// session). `pathDescription` surfaces into
+/// or routes via T4's `synthesizeRuntimeFailure(.unreachable, …)`
+/// (active session, emits `session.failed`). `pathDescription` surfaces into
 /// `engine.error.payload.error.details.frameworkPath` for host-side
 /// diagnostics.
 enum FrameworkLoadError: Error {
@@ -47,9 +47,9 @@ final class UnityGameCoreRuntime: NSObject, UnityFrameworkListener {
   /// for this many seconds without the framework loading and the engine
   /// embedding, the runtime fires `messageQueueTimeoutHandler` so the bridge
   /// can emit `engine.error` (no active session) or call T4's
-  /// `synthesizeRuntimeFailure(.unreachable, …)` (active session). Internal
-  /// `var` so isolated SwiftPM tests can shorten the deadline; production
-  /// callers never write to it.
+  /// `synthesizeRuntimeFailure(.unreachable, …)` (active session, emits
+  /// `session.failed`). Internal `var` so isolated SwiftPM tests can shorten
+  /// the deadline; production callers never write to it.
   internal var messageQueueTimeoutSeconds: TimeInterval = 30.0
 
   private var unityFramework: UnityFramework?

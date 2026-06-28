@@ -9,6 +9,7 @@ final class MockGameCoreBridge {
   // Protocol smoke fake: it never emits session.telemetry; results always carry
   // a false/0/0 telemetry summary, including sessions with auto-class mods.
   private let runtimeState = RuntimeStateMachine()
+  private var pendingResultWorkItem: DispatchWorkItem?
 
   init(emit: @escaping (String) -> Void) {
     self.emit = emit
@@ -73,10 +74,14 @@ final class MockGameCoreBridge {
 
     let resultPayload = buildDefaultResult(
       sessionId: sessionId, mode: mode, mods: mods, usedAutoMod: usedAutoMod, launchPayload: launchPayload)
-    DispatchQueue.main.asyncAfter(deadline: .now() + resultDelay) { [weak self] in
-      self?.runtimeState.onSessionEnded()
-      self?.emitSessionResult(sessionId: sessionId, payload: resultPayload)
+    let workItem = DispatchWorkItem { [weak self] in
+      guard let self else { return }
+      guard self.runtimeState.activeSessionId == sessionId else { return }
+      self.runtimeState.onSessionEnded()
+      self.emitSessionResult(sessionId: sessionId, payload: resultPayload)
     }
+    pendingResultWorkItem = workItem
+    DispatchQueue.main.asyncAfter(deadline: .now() + resultDelay, execute: workItem)
   }
 
   private func buildDefaultResult(
@@ -118,6 +123,9 @@ final class MockGameCoreBridge {
 
   private func handleSessionCancel(_ envelope: [String: Any]) {
     guard let sessionId = envelope["id"] as? String else { return }
+    guard runtimeState.activeSessionId == sessionId else { return }
+    pendingResultWorkItem?.cancel()
+    pendingResultWorkItem = nil
     let payload = envelope["payload"] as? [String: Any] ?? [:]
     let mode = payload["mode"] as? String ?? "ranked"
     let mods = stringArray(payload["mods"])

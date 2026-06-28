@@ -1,5 +1,5 @@
 using System;
-using Cysharp.Threading.Tasks;
+using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -33,28 +33,25 @@ public class GameBridgeRouter
             return;
         }
 
-        if (envelope.Version != 1)
+        if (envelope.Schema != CytoidGameCoreEnvelope.CurrentSchema)
         {
-            Debug.LogWarning($"[GameBridge] Unsupported envelope version: {envelope.Version}");
+            Debug.LogWarning($"[GameBridge] Unsupported envelope schema: {envelope.Schema}");
             return;
         }
 
         switch (envelope.Type)
         {
-            case WireMessageTypes.BridgeStatus:
-                HandleHostStatus(envelope);
+            case WireMessageTypes.HealthCheck:
+                HandleHealthCheck(envelope);
                 break;
-            case WireMessageTypes.BridgePing:
-                HandleHostPing(envelope);
+            case WireMessageTypes.SessionStart:
+                HandleSessionStart(envelope);
                 break;
-            case WireMessageTypes.BridgePlayStart:
-                HandleGameStart(envelope);
+            case WireMessageTypes.SessionCancel:
+                HandleSessionCancel(envelope);
                 break;
-            case WireMessageTypes.BridgeSettingsUpdate:
-                HandleSettingsUpdate(envelope);
-                break;
-            case WireMessageTypes.BridgePlayEnd:
-                HandleSessionEnd(envelope);
+            case WireMessageTypes.SettingsApply:
+                HandleSettingsApply(envelope);
                 break;
             default:
                 Debug.LogWarning($"[GameBridge] Unhandled host message type: {envelope.Type}");
@@ -62,83 +59,104 @@ public class GameBridgeRouter
         }
     }
 
-    private void HandleHostPing(CytoidGameCoreEnvelope envelope)
+    private void HandleHealthCheck(CytoidGameCoreEnvelope envelope)
     {
-        // During gameplay, heartbeat pings must only receive game.pong — not another game.ready.
-        if (!sessionState.HasActivePlay)
+        var payload = new JObject
         {
-            GameBridge.Instance?.ReannounceReadyToBridge();
+            ["engine"] = "unity",
+            ["generation"] = GameBridge.Generation,
+            ["state"] = sessionState.HasActivePlay ? "busy" : sessionState.IsReadyForBridge ? "ready" : "starting"
+        };
+        if (sessionState.HasActivePlay)
+        {
+            payload["activeSessionId"] = sessionState.ActivePlayId;
         }
 
-        var response = CytoidGameCoreEnvelope.Create(
-            envelope.Id,
-            WireMessageTypes.GamePong,
-            envelope.Payload ?? new JObject());
+        var response = CytoidGameCoreEnvelope.Create(envelope.Id, WireMessageTypes.HealthOk, payload);
         NativeBridgeMessenger.Send(response.ToJsonString());
     }
 
-    private void HandleGameStart(CytoidGameCoreEnvelope envelope)
+    private void HandleSessionStart(CytoidGameCoreEnvelope envelope)
     {
-        Debug.Log($"[CYTOID-DBG] HandleGameStart ENTER: id={envelope.Id} HasActivePlay={sessionState.HasActivePlay} ActivePlayId={sessionState.ActivePlayId} IsReadyForBridge={sessionState.IsReadyForBridge}");
-
         if (sessionState.HasActivePlay)
         {
-            Debug.LogWarning($"[CYTOID-DBG] HandleGameStart: REJECTING as Overlapping (current ActivePlayId={sessionState.ActivePlayId})");
-            EmitRejectedGameStart(envelope.Id,
-                $"Overlapping {WireMessageTypes.BridgePlayStart}: session {sessionState.ActivePlayId} is still active.");
+            EmitRejectedSessionStart(envelope.Id, "overlapping_session", $"Session {sessionState.ActivePlayId} is still active.");
             return;
         }
 
-        if (envelope.Payload == null || envelope.Payload.Type == JTokenType.Null)
+        if (!(envelope.Payload is JObject payload))
         {
-            Debug.LogWarning("[CYTOID-DBG] HandleGameStart: REJECTING (payload required)");
-            EmitRejectedGameStart(envelope.Id, $"{WireMessageTypes.BridgePlayStart} payload is required.");
+            EmitRejectedSessionStart(envelope.Id, "invalid_payload", "session.start payload must be an object.");
             return;
         }
 
-        var payload = envelope.Payload as JObject;
-        if (payload == null)
+        IGameContentProvider provider;
+        try
         {
-            Debug.LogWarning("[CYTOID-DBG] HandleGameStart: REJECTING (payload not object)");
-            EmitRejectedGameStart(envelope.Id, $"{WireMessageTypes.BridgePlayStart} payload must be an object.");
+            ApplyPendingSettings(payload);
+            provider = GameLaunchBridge.PrepareLaunchProvider(payload.ToString());
+        }
+        catch (Exception e)
+        {
+            EmitRejectedSessionStart(envelope.Id, "invalid_payload", e.Message);
             return;
         }
 
         sessionState.SetActivePlay(envelope.Id);
-        Debug.Log($"[CYTOID-DBG] HandleGameStart: SetActivePlay({envelope.Id}) — HasActivePlay now={sessionState.HasActivePlay}");
-        ApplyPendingSettings(payload);
-        var launchJson = payload.ToString();
-        Debug.Log($"[GameBridge] Starting play {envelope.Id}");
-        GameLaunchBridge.StartGame(launchJson);
-    }
-
-    private async void HandleSessionEnd(CytoidGameCoreEnvelope envelope)
-    {
-        Debug.Log($"[CYTOID-DBG] HandleSessionEnd ENTER: id={envelope.Id} HasActivePlay={sessionState.HasActivePlay} ActivePlayId={sessionState.ActivePlayId}");
-        Debug.Log($"[GameBridge] {WireMessageTypes.BridgePlayEnd} received (id={envelope.Id}).");
-        await GameBridge.ShowHandoffOverlay();
-        var emittedCalibrationResult = AbortCurrentExternalGame();
-        if (emittedCalibrationResult)
+        if (provider is ExternalGameContentProvider externalProvider)
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(0.25));
+            GameResultBridge.ActiveSessionRecordPlayEvents = externalProvider.Payload.settings?.recordPlayEvents;
         }
-        sessionState.MarkPlayRouteEnded();
-        Debug.Log($"[CYTOID-DBG] HandleSessionEnd: MarkPlayRouteEnded cleared — HasActivePlay now={sessionState.HasActivePlay}");
-        EmitPlayRouteEnded(envelope.Id);
+
+        EmitSessionStarted(envelope.Id, payload["mode"]?.Value<string>() ?? "ranked");
+        GameLaunchBridge.LoadGameScene(provider).Forget();
     }
 
-    private void HandleSettingsUpdate(CytoidGameCoreEnvelope envelope)
+    private async void HandleSessionCancel(CytoidGameCoreEnvelope envelope)
     {
-        var settings = envelope.Payload?.ToObject<GameLaunchSettings>();
-        if (settings != null)
+        if (!sessionState.HasActivePlay)
         {
+            EmitEngineError(envelope.Id, "not_active", "No active session to cancel.");
+            return;
+        }
+        if (envelope.Id != sessionState.ActivePlayId)
+        {
+            EmitEngineError(envelope.Id, "unknown_session", $"Active session is {sessionState.ActivePlayId}.");
+            return;
+        }
+
+        var reason = envelope.Payload?["reason"]?.Value<string>() ?? "unknown";
+        await GameBridge.ShowHandoffOverlay();
+        AbortCurrentExternalGame(suppressCalibrationResult: true);
+        sessionState.MarkPlayRouteEnded();
+        GameResultBridge.EmitCancelled(envelope.Id, reason);
+    }
+
+    private void HandleSettingsApply(CytoidGameCoreEnvelope envelope)
+    {
+        var appliedFields = new List<string>();
+        var deferredFields = new List<string>();
+        var rejectedFields = new List<string>();
+        var errors = new JArray();
+
+        try
+        {
+            if (!(envelope.Payload is JObject settingsObj))
+            {
+                throw new ArgumentException("settings.apply payload must be an object.");
+            }
+
+            var settings = ExternalGameContentProvider.FlattenSettingsPatch(
+                settingsObj,
+                out appliedFields,
+                out deferredFields,
+                out rejectedFields);
+
             if (sessionState.HasActivePlay)
             {
+                MoveDeferredFieldsForActiveSession(appliedFields, deferredFields);
                 pendingSettings = settings;
-                var calibrationSession = Context.GameState != null &&
-                                         (Context.GameState.Mode == GameMode.Calibration ||
-                                          Context.GameState.Mode == GameMode.GlobalCalibration);
-                ExternalGameContentProvider.ApplySettings(settings, realtimeVolumeOnly: !calibrationSession);
+                ExternalGameContentProvider.ApplySettings(settings, realtimeVolumeOnly: true);
             }
             else
             {
@@ -146,28 +164,21 @@ public class GameBridgeRouter
                 ExternalGameContentProvider.ApplySettings(settings);
             }
         }
-
-        var response = CytoidGameCoreEnvelope.Create(
-            envelope.Id,
-            WireMessageTypes.GameSettingsUpdated,
-            new JObject {["applied"] = true});
-        NativeBridgeMessenger.Send(response.ToJsonString());
-    }
-
-    private void HandleHostStatus(CytoidGameCoreEnvelope envelope)
-    {
-        var state = sessionState.HasActivePlay ? "busy" : sessionState.IsReadyForBridge ? "ready" : "starting";
-        var payload = new JObject
+        catch (Exception e)
         {
-            ["state"] = state,
-            ["engine"] = "unity"
-        };
-        if (sessionState.HasActivePlay)
-        {
-            payload["activePlayId"] = sessionState.ActivePlayId;
+            rejectedFields.Add("payload");
+            errors.Add(BuildError("invalid_payload", e.Message));
         }
 
-        var response = CytoidGameCoreEnvelope.Create(envelope.Id, WireMessageTypes.GameStatus, payload);
+        var responsePayload = new JObject
+        {
+            ["applied"] = rejectedFields.Count == 0,
+            ["appliedFields"] = JArray.FromObject(appliedFields),
+            ["deferredFields"] = JArray.FromObject(deferredFields),
+            ["rejectedFields"] = JArray.FromObject(rejectedFields),
+            ["errors"] = errors
+        };
+        var response = CytoidGameCoreEnvelope.Create(envelope.Id, WireMessageTypes.SettingsApplied, responsePayload);
         NativeBridgeMessenger.Send(response.ToJsonString());
     }
 
@@ -176,48 +187,64 @@ public class GameBridgeRouter
         if (pendingSettings == null) return;
         if (payload["settings"] == null || payload["settings"].Type == JTokenType.Null)
         {
-            payload["settings"] = JObject.FromObject(pendingSettings);
+            return;
         }
         ExternalGameContentProvider.ApplySettings(pendingSettings);
     }
 
-    private static bool AbortCurrentExternalGame()
+    private static void MoveDeferredFieldsForActiveSession(List<string> appliedFields, List<string> deferredFields)
     {
-        if (SceneManager.GetActiveScene().name != "Game") return false;
-        var game = UnityEngine.Object.FindObjectOfType<Game>();
-        if (game == null || !game.UsesExternalContent) return false;
-        var emittedCalibrationResult = Context.GameState != null &&
-                                       (Context.GameState.Mode == GameMode.Calibration ||
-                                        Context.GameState.Mode == GameMode.GlobalCalibration);
-        game.AbortExternalSession();
-        return emittedCalibrationResult;
-    }
-
-    private static void EmitRejectedGameStart(string playId, string error)
-    {
-        Debug.LogWarning($"[GameBridge] Rejecting {WireMessageTypes.BridgePlayStart}: {error}");
-
-        var payload = new GameResultPayload
+        for (var i = appliedFields.Count - 1; i >= 0; i--)
         {
-            timestamp = DateTimeOffset.UtcNow.ToString("o"),
-            completed = false,
-            failed = true,
-            error = error
-        };
+            var field = appliedFields[i];
+            if (field == "runtime.musicVolume" || field == "runtime.soundEffectsVolume") continue;
+            appliedFields.RemoveAt(i);
+            deferredFields.Add(field);
+        }
+    }
 
+    private static void AbortCurrentExternalGame(bool suppressCalibrationResult)
+    {
+        if (SceneManager.GetActiveScene().name != "Game") return;
+        var game = UnityEngine.Object.FindObjectOfType<Game>();
+        if (game == null || !game.UsesExternalContent) return;
+        game.AbortExternalSession(!suppressCalibrationResult);
+    }
+
+    private static void EmitSessionStarted(string sessionId, string mode)
+    {
         var envelope = CytoidGameCoreEnvelope.Create(
-            playId,
-            WireMessageTypes.GamePlayResult,
-            JObject.Parse(payload.ToJson()));
+            sessionId,
+            WireMessageTypes.SessionStarted,
+            new JObject
+            {
+                ["sessionId"] = sessionId,
+                ["mode"] = mode,
+                ["generation"] = GameBridge.Generation
+            });
         NativeBridgeMessenger.Send(envelope.ToJsonString());
     }
 
-    private static void EmitPlayRouteEnded(string playId)
+    private static void EmitRejectedSessionStart(string sessionId, string code, string message)
+    {
+        GameResultBridge.EmitRejected(sessionId, code, message);
+    }
+
+    private static void EmitEngineError(string id, string code, string message)
     {
         var envelope = CytoidGameCoreEnvelope.Create(
-            playId,
-            WireMessageTypes.GamePlayEnded,
-            new JObject {["ended"] = true});
+            id,
+            WireMessageTypes.EngineError,
+            new JObject { ["error"] = BuildError(code, message) });
         NativeBridgeMessenger.Send(envelope.ToJsonString());
+    }
+
+    private static JObject BuildError(string code, string message)
+    {
+        return new JObject
+        {
+            ["code"] = code,
+            ["message"] = message
+        };
     }
 }

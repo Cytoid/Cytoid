@@ -8,7 +8,7 @@ public static class GameLaunchBridge
     {
         try
         {
-            StartGameWithProvider(ExternalGameContentProvider.FromJson(launchJson)).Forget();
+            LoadGameScene(PrepareLaunchProvider(launchJson)).Forget();
         }
         catch (Exception e)
         {
@@ -20,7 +20,7 @@ public static class GameLaunchBridge
     {
         try
         {
-            StartGameWithProvider(new ExternalGameContentProvider(payload)).Forget();
+            LoadGameScene(new ExternalGameContentProvider(payload)).Forget();
         }
         catch (Exception e)
         {
@@ -30,7 +30,7 @@ public static class GameLaunchBridge
 
     public static void StartDebugGame(Level level, Difficulty difficulty)
     {
-        StartGameWithProvider(new FileGameContentProvider(level, difficulty)).Forget();
+        LoadGameScene(new FileGameContentProvider(level, difficulty)).Forget();
     }
 
     public static void StartDebugGameAsExternalPayload(Level level, Difficulty difficulty)
@@ -64,44 +64,17 @@ public static class GameLaunchBridge
         }
     }
 
-    private static async UniTask StartGameWithProvider(IGameContentProvider provider)
+    internal static IGameContentProvider PrepareLaunchProvider(string launchJson)
+    {
+        var provider = ExternalGameContentProvider.FromJson(launchJson);
+        PrepareProviderContext(provider);
+        return provider;
+    }
+
+    internal static async UniTask LoadGameScene(IGameContentProvider provider)
     {
         try
         {
-            Context.GameContentProvider?.Dispose();
-            Context.GameContentProvider = provider;
-            Context.SelectedLevel = provider.Level;
-            Context.SelectedDifficulty = provider.Difficulty;
-            Context.SelectedGameMode = GameMode.Standard;
-            Context.SelectedMods.Clear();
-            Context.PendingTierPlay = null;
-            Context.ActiveTierPlaySession = null;
-
-            if (provider is ExternalGameContentProvider externalProvider)
-            {
-                var gameModeStr = externalProvider.Payload.gameMode;
-                if (!string.IsNullOrEmpty(gameModeStr) &&
-                    Enum.TryParse(gameModeStr, true, out GameMode parsedMode))
-                {
-                    Context.SelectedGameMode = parsedMode;
-                }
-                Context.SelectedMods.UnionWith(externalProvider.ParseMods());
-                externalProvider.ApplySettings();
-
-                if (Context.SelectedGameMode == GameMode.Tier)
-                {
-                    if (externalProvider.Payload.tierPlay == null)
-                    {
-                        throw new ArgumentException("tierPlay is required when gameMode is Tier");
-                    }
-
-                    Context.PendingTierPlay = externalProvider.Payload.tierPlay;
-                }
-            }
-
-            Context.GameState = null;
-            Context.GameErrorState = null;
-
             var sceneLoader = new SceneLoader("Game");
             await sceneLoader.Load();
             sceneLoader.Activate();
@@ -115,5 +88,42 @@ public static class GameLaunchBridge
             }
             GameResultBridge.EmitError(e);
         }
+    }
+
+    private static void PrepareProviderContext(IGameContentProvider provider)
+    {
+        Context.GameContentProvider?.Dispose();
+        Context.GameContentProvider = provider;
+        Context.SelectedLevel = provider.Level;
+        Context.SelectedDifficulty = provider.Difficulty;
+        Context.SelectedGameMode = GameMode.Standard;
+        Context.SelectedMods.Clear();
+        Context.PendingTierPlay = null;
+        Context.ActiveTierPlaySession = null;
+
+        if (provider is ExternalGameContentProvider externalProvider)
+        {
+            var gameModeStr = externalProvider.Payload.gameMode;
+            if (!string.IsNullOrEmpty(gameModeStr) &&
+                Enum.TryParse(gameModeStr, true, out GameMode parsedMode))
+            {
+                Context.SelectedGameMode = parsedMode;
+            }
+            Context.SelectedMods.UnionWith(externalProvider.ParseMods());
+            externalProvider.ApplySettings();
+
+            if (Context.SelectedGameMode == GameMode.Tier)
+            {
+                if (externalProvider.Payload.tierPlay == null)
+                {
+                    throw new ArgumentException("tierPlay is required when gameMode is Tier");
+                }
+
+                Context.PendingTierPlay = externalProvider.Payload.tierPlay;
+            }
+        }
+
+        Context.GameState = null;
+        Context.GameErrorState = null;
     }
 }

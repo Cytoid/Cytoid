@@ -58,7 +58,7 @@ Dart models in `engines/unity/flutter_plugin/lib/src/models/` mirror C#:
 - `engines/unity/Assets/Scripts/Game/GameResultPayload.cs`
 - `engines/unity/Assets/Scripts/Game/GameLaunchBridge.cs` / `GameResultBridge.cs`
 
-Protocol spec: `engines/unity/flutter_plugin/example/docs/host-protocol.md` (shared with `cytoid_flutter/docs/host-protocol.md`).
+Protocol spec: `docs/host-protocol-v2.md` (v1 doc at `engines/unity/flutter_plugin/example/docs/host-protocol.md` is DEPRECATED; keep `cytoid_flutter/docs/host-protocol.md` in sync).
 
 **JNI / native callback (Android):** Unity C# → `NativeHostMessenger` → `org.cytoid.gamecore.UnityHostCallback.onMessage` (implemented in `engines/unity/flutter_plugin/android/`). Not the legacy `com.example.cytoid_flutter.host.UnityHostCallback` string in older README text.
 
@@ -196,7 +196,7 @@ If you change envelope types or payloads:
 
 1. Update C# (`engines/unity/Assets/Scripts/Host/`, `GameLaunchPayload`, `GameResultBridge`, …).
 2. Update Dart models in `engines/unity/flutter_plugin/lib/`.
-3. Update `engines/unity/flutter_plugin/example/docs/host-protocol.md` and keep `cytoid_flutter/docs/host-protocol.md` in sync if the contract changed.
+3. Update `docs/host-protocol-v2.md` and keep `cytoid_flutter/docs/host-protocol.md` in sync if the contract changed.
 
 ### Testing on device
 

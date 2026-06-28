@@ -7,7 +7,7 @@ import androidx.annotation.VisibleForTesting
  * [MockGameCoreBridge]. Encodes the v2 host protocol transitions:
  *
  *   UNAVAILABLE → STARTING            (host requested startup)
- *   STARTING    → READY               (engine.ready / game.ready fallback)
+ *   STARTING    → READY               (engine.ready)
  *   READY       → BUSY                (session.started; sets activeSessionId)
  *   BUSY        → READY               (session.result; clears activeSessionId)
  *   READY|BUSY  → SUSPENDED           (app backgrounded; saves prior state)

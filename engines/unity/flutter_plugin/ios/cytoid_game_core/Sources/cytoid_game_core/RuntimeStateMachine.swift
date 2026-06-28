@@ -4,7 +4,7 @@ import Foundation
 /// `MockGameCoreBridge`. Encodes the v2 host protocol transitions:
 ///
 ///   unavailable → starting          (host requested startup)
-///   starting    → ready             (engine.ready / game.ready fallback)
+///   starting    → ready             (engine.ready)
 ///   ready       → busy              (session.started; sets activeSessionId)
 ///   busy        → ready             (session.result; clears activeSessionId)
 ///   ready|busy  → suspended         (app backgrounded; saves prior state)

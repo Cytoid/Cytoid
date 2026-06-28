@@ -25,6 +25,7 @@ public static class GameResultBridge
 
     public static void EmitTierRetry(TierPlaySession tierPlaySession)
     {
+        if (tierPlaySession == null) throw new ArgumentNullException(nameof(tierPlaySession), "EmitTierRetry requires a non-null TierPlaySession.");
         var sessionId = ResolveSessionId(null);
         var payload = new SessionResultWirePayload
         {

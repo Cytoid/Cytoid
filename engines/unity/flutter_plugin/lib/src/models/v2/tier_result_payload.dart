@@ -6,10 +6,10 @@ class TierResultPayload {
   const TierResultPayload({
     required this.tierId,
     required this.stageIndex,
-    required this.stageCount,
-    required this.health,
     required this.maxHealth,
     required this.combo,
+    this.health,
+    this.stageCount,
   });
 
   /// Host-defined tier id.
@@ -18,11 +18,11 @@ class TierResultPayload {
   /// 0-based stage index.
   final int stageIndex;
 
-  /// Total stage count for UI/echo.
-  final int stageCount;
+  /// Total stage count for UI/echo (may be null on mid-stage retry).
+  final int? stageCount;
 
-  /// Ending health.
-  final double health;
+  /// Ending health (may be null on mid-stage retry).
+  final double? health;
 
   /// HP cap.
   final double maxHealth;
@@ -34,21 +34,26 @@ class TierResultPayload {
     return TierResultPayload(
       tierId: json['tierId'] as String,
       stageIndex: readRequiredInt(json, 'stageIndex', 'TierResultPayload.fromJson'),
-      stageCount: readRequiredInt(json, 'stageCount', 'TierResultPayload.fromJson'),
-      health: (json['health'] as num).toDouble(),
+      stageCount: json['stageCount'] is int ? json['stageCount'] as int : null,
+      health: json['health'] is num ? (json['health'] as num).toDouble() : null,
       maxHealth: (json['maxHealth'] as num).toDouble(),
       combo: readRequiredInt(json, 'combo', 'TierResultPayload.fromJson'),
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    final json = <String, dynamic>{
       'tierId': tierId,
       'stageIndex': stageIndex,
-      'stageCount': stageCount,
-      'health': health,
       'maxHealth': maxHealth,
       'combo': combo,
     };
+    if (stageCount != null) {
+      json['stageCount'] = stageCount;
+    }
+    if (health != null) {
+      json['health'] = health;
+    }
+    return json;
   }
 }

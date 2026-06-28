@@ -71,4 +71,3 @@ native lifecycle path:
 Producing a simulator-capable artifact requires adding a simulator slice to
 `UnityFramework.xcframework` (a Unity export configuration change tracked
 outside this example app — see `docs/unity-ios-export.md` in `cytoid_flutter`).
-

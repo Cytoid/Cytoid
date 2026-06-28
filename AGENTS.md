@@ -241,5 +241,5 @@ Append new rows when architecture or default paths change.
 | Flutter plugin (Kotlin) | `engines/unity/flutter_plugin/android/src/main/kotlin/org/cytoid/gamecore/` |
 | Flutter plugin (iOS Swift / SPM) | `engines/unity/flutter_plugin/ios/cytoid_game_core/` |
 | Flutter Dart API | `engines/unity/flutter_plugin/lib/src/cytoid_game_core_client.dart` |
-| Protocol doc | `engines/unity/flutter_plugin/example/docs/host-protocol.md` |
+| Protocol doc | `docs/host-protocol-v2.md` (v1 doc at engines/unity/flutter_plugin/example/docs/host-protocol.md is DEPRECATED) |
 | Legacy architecture notes | `engines/unity/flutter_plugin/example/docs/old-architecture/` |

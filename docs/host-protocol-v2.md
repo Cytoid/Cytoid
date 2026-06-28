@@ -1336,8 +1336,8 @@ local grade enums.
 |-------|------|----------|-------------|
 | `tierId` | string | yes | Host-defined tier id. |
 | `stageIndex` | int | yes | Stage index. |
-| `stageCount` | int | yes | Total stage count. |
-| `health` | number | yes | Ending health. |
+| `stageCount` | int? | conditional | Total stage count. May be omitted on tier-retry outcomes where partial-stage state is unavailable. |
+| `health` | number? | conditional | Ending health. May be omitted on tier-retry outcomes where partial-stage state is unavailable. |
 | `maxHealth` | number | yes | HP cap. |
 | `combo` | int | yes | Ending cumulative combo. |
 

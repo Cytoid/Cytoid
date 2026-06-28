@@ -89,5 +89,3 @@ class AttachActivityMockFallbackTest {
         }
     }
 }
-
-

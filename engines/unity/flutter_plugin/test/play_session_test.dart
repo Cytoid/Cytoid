@@ -231,7 +231,9 @@ void main() {
         );
 
         // Let the first run complete so it doesn't dangle into sibling tests.
-        final startEnvelope = await awaitSentEnvelope(WireMessageType.sessionStart);
+        final startEnvelope = await awaitSentEnvelope(
+          WireMessageType.sessionStart,
+        );
         final resultJson = _loadFixture('session_result_payload.valid.json');
         resultJson['sessionId'] = startEnvelope.id;
         events.add(
@@ -279,11 +281,11 @@ void main() {
       resultJson['sessionId'] = startEnvelope.id;
       events.add(
         CytoidGameCoreEnvelope.create(
-            id: startEnvelope.id,
-            type: WireMessageType.sessionResult,
-            payload: resultJson,
-          ).toJsonString(),
-        );
+          id: startEnvelope.id,
+          type: WireMessageType.sessionResult,
+          payload: resultJson,
+        ).toJsonString(),
+      );
 
       final result = await runFuture.timeout(
         const Duration(seconds: 2),
@@ -339,11 +341,11 @@ void main() {
       resultJson['sessionId'] = startEnvelope.id;
       events.add(
         CytoidGameCoreEnvelope.create(
-            id: startEnvelope.id,
-            type: WireMessageType.sessionResult,
-            payload: resultJson,
-          ).toJsonString(),
-        );
+          id: startEnvelope.id,
+          type: WireMessageType.sessionResult,
+          payload: resultJson,
+        ).toJsonString(),
+      );
 
       await runFuture.timeout(const Duration(seconds: 2));
     });
@@ -442,17 +444,17 @@ void main() {
     // Helper: emit a `session.failed` envelope on the broadcast event stream
     // matching the supplied session id. Mirrors how the native bridge
     // synthesizes a runtime-death envelope for an active session.
-    void emitSessionFailed(String sessionId, {String code = 'runtime_unreachable'}) {
+    void emitSessionFailed(
+      String sessionId, {
+      String code = 'runtime_unreachable',
+    }) {
       events.add(
         CytoidGameCoreEnvelope.create(
           id: sessionId,
           type: WireMessageType.sessionFailed,
           payload: {
             'sessionId': sessionId,
-            'error': {
-              'code': code,
-              'message': 'Unity process gone',
-            },
+            'error': {'code': code, 'message': 'Unity process gone'},
             'timestamp': DateTime.now().millisecondsSinceEpoch,
           },
         ).toJsonString(),
@@ -599,10 +601,528 @@ void main() {
           onTimeout: () => throw TimeoutException('run() never threw'),
         ),
         throwsA(
-          isA<CytoidGameCoreSessionFailedException>()
-              .having((e) => e.code, 'code', 'runtime_unreachable'),
+          isA<CytoidGameCoreSessionFailedException>().having(
+            (e) => e.code,
+            'code',
+            'runtime_unreachable',
+          ),
         ),
       );
+    });
+  });
+
+  group('PlaySession.run stream error lockstep', () {
+    // Regression: the main subscription's onError MUST guard against
+    // completer.isCompleted. A stream error arriving after session.result /
+    // session.failed / watchdog-timeout completed the completer MUST be
+    // silently dropped — calling completeError on an already-completed
+    // completer throws StateError, which would propagate out of run() and
+    // mask the real result/failure.
+    //
+    // Triggering the race deterministically requires a SYNC broadcast
+    // controller: with sync=true, events.addError dispatches to listeners
+    // SYNCHRONOUSLY (not via microtask). Combined with events.add firing
+    // onData synchronously, we can deliver session.result (completing the
+    // completer) and then immediately an error in the SAME synchronous
+    // call frame — before run()'s finally block has a chance to cancel the
+    // subscription. Without the production guard, the synchronous
+    // completeError-on-completed-completer throws StateError out of
+    // events.addError; with the guard, the error is silently dropped.
+    test('late stream error after session.result is silently dropped — '
+        'no StateError', () async {
+      // Local sync broadcast controller — does NOT replace the suite-level
+      // `events` (which tearDown still owns). Bypasses async microtask
+      // reordering that would otherwise cancel S1 before M2 fires.
+      final syncEvents = StreamController<dynamic>.broadcast(sync: true);
+      addTearDown(syncEvents.close);
+
+      final client = CytoidGameCoreClient(
+        methodChannel: primaryChannel,
+        eventStream: syncEvents.stream,
+      );
+      final session = PlaySession(client);
+
+      final runFuture = session.run(
+        launch: _buildTestLaunch(),
+        readyTimeout: const Duration(seconds: 2),
+      );
+
+      final startEnvelope = await awaitSentEnvelope(
+        WireMessageType.sessionStart,
+      );
+
+      // Complete the session cleanly with a valid session.result. add() on a
+      // SYNC broadcast controller delivers onData IMMEDIATELY — the
+      // subscription's onData fires synchronously here, completing the
+      // completer before this line returns.
+      final resultJson = _loadFixture('session_result_payload.valid.json');
+      resultJson['sessionId'] = startEnvelope.id;
+      syncEvents.add(
+        CytoidGameCoreEnvelope.create(
+          id: startEnvelope.id,
+          type: WireMessageType.sessionResult,
+          payload: resultJson,
+        ).toJsonString(),
+      );
+
+      // Inject a stream error in the SAME synchronous call frame. The
+      // subscription is STILL alive (run()'s finally block hasn't run yet
+      // — it's scheduled as a microtask continuation of completer.future).
+      // Without the production guard, this throws StateError out of addError.
+      Object? addErrorThrown;
+      try {
+        syncEvents.addError(StateError('late stream error after completion'));
+      } catch (e) {
+        addErrorThrown = e;
+      }
+
+      // The error from inside the listener dispatcher is NOT propagated via
+      // addError's synchronous return (the dispatcher catches it and routes
+      // to the subscription's zone). Drain any microtasks so a deferred
+      // StateError reaches the test framework's uncaught-error sink.
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(
+        addErrorThrown,
+        isNull,
+        reason:
+            'stream listener dispatcher must not propagate the '
+            'completeError-on-completed StateError synchronously; got: '
+            '$addErrorThrown',
+      );
+
+      // run() must return the result cleanly, NOT a StateError. Without the
+      // guard, the uncaught StateError masks the result.
+      final result = await runFuture.timeout(
+        const Duration(seconds: 2),
+        onTimeout: () => throw TimeoutException('run() never returned'),
+      );
+      expect(result.outcome.kind, OutcomePayload.completedKind);
+
+      // Surface MUST still be hidden via the finally block.
+      expect(primaryCalls.map((c) => c.method), contains('hideGameSurface'));
+    });
+  });
+
+  // Millisecond-scale watchdog config for deterministic tests (NOT real 30s;
+  // NOT FakeAsync — the latter is scope-OUT per the plan). Hundreds of ms, not
+  // single-digit ms, to avoid CI flakiness.
+  const msConfig = HealthCheckWatchdogConfig(
+    firstResponseTimeout: Duration(milliseconds: 2000),
+    steadyResponseTimeout: Duration(milliseconds: 200),
+    pollInterval: Duration(milliseconds: 100),
+  );
+
+  group('PlaySession.run health.check watchdog', () {
+    /// Replaces the default mock `primaryChannel` handler with one that
+    /// delegates the standard setUp behavior but additionally routes every
+    /// `send` envelope through [onSend]. Tests use this to intercept
+    /// `health.check` envelopes and decide whether to emit a matching
+    /// `health.ok` (or to record timing).
+    void installSendInterceptor({
+      required void Function(CytoidGameCoreEnvelope env) onSend,
+    }) {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(primaryChannel, (call) async {
+            primaryCalls.add(call);
+            switch (call.method) {
+              case 'ensureRuntimeStarted':
+              case 'showGameSurface':
+              case 'hideGameSurface':
+                return null;
+              case 'send':
+                final env = CytoidGameCoreEnvelope.fromJsonString(
+                  call.arguments as String,
+                );
+                onSend(env);
+                return null;
+              case 'getEngineMode':
+                return 'mock';
+              case 'queryRuntimeStatus':
+                return <String, Object?>{
+                  'state': statusState,
+                  'engine': 'mock',
+                  'mode': 'mock',
+                  'generation': 1,
+                  if (statusState == 'failed')
+                    'error': {
+                      'code': 'runtime_failed',
+                      'message': 'Runtime failed',
+                    },
+                };
+            }
+            throw PlatformException(code: 'not_implemented');
+          });
+    }
+
+    int healthCheckSendCount() {
+      var count = 0;
+      for (final call in primaryCalls) {
+        if (call.method != 'send') continue;
+        final env = CytoidGameCoreEnvelope.fromJsonString(
+          call.arguments as String,
+        );
+        if (env.type == WireMessageType.healthCheck) count += 1;
+      }
+      return count;
+    }
+
+    Future<void> waitForHealthCheckCount(
+      int target, {
+      Duration deadline = const Duration(seconds: 2),
+    }) async {
+      final end = DateTime.now().add(deadline);
+      while (DateTime.now().isBefore(end)) {
+        if (healthCheckSendCount() >= target) return;
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+      }
+      throw TimeoutException(
+        'Never saw $target health.check envelopes within $deadline',
+      );
+    }
+
+    void emitHealthOk(String checkId) {
+      events.add(
+        CytoidGameCoreEnvelope.create(
+          id: checkId,
+          type: WireMessageType.healthOk,
+          payload: const {'state': 'ready'},
+        ).toJsonString(),
+      );
+    }
+
+    test('watchdog: first check sends, engine responds, then session.result '
+        'completes', () async {
+      installSendInterceptor(
+        onSend: (env) {
+          if (env.type == WireMessageType.healthCheck) {
+            Future.microtask(() => emitHealthOk(env.id));
+          }
+        },
+      );
+
+      final client = CytoidGameCoreClient(
+        methodChannel: primaryChannel,
+        eventStream: events.stream,
+      );
+      final session = PlaySession(client, watchdogConfig: msConfig);
+
+      final runFuture = session.run(
+        launch: _buildTestLaunch(),
+        readyTimeout: const Duration(seconds: 2),
+      );
+
+      final startEnvelope = await awaitSentEnvelope(
+        WireMessageType.sessionStart,
+      );
+
+      // Engine acknowledges session start (non-terminal — fresh lastInboundAt).
+      events.add(
+        CytoidGameCoreEnvelope.create(
+          id: startEnvelope.id,
+          type: WireMessageType.sessionStarted,
+          payload: {'sessionId': startEnvelope.id},
+        ).toJsonString(),
+      );
+
+      // Wait for the first health.check; the mock auto-emits health.ok.
+      await awaitSentEnvelope(WireMessageType.healthCheck);
+
+      // Emit session.result to complete the run before any unskipped second
+      // check could fire.
+      final resultJson = _loadFixture('session_result_payload.valid.json');
+      resultJson['sessionId'] = startEnvelope.id;
+      events.add(
+        CytoidGameCoreEnvelope.create(
+          id: startEnvelope.id,
+          type: WireMessageType.sessionResult,
+          payload: resultJson,
+        ).toJsonString(),
+      );
+
+      final result = await runFuture.timeout(
+        const Duration(seconds: 2),
+        onTimeout: () => throw TimeoutException('run() never returned'),
+      );
+      expect(result.outcome.kind, OutcomePayload.completedKind);
+
+      // Exactly ONE health.check was sent. After the first response, the next
+      // scheduled check is skipped via the last-message shortcut (session.started
+      // and health.ok keep lastInboundAt fresh); session.result terminates
+      // before any unskipped second fire.
+      expect(healthCheckSendCount(), 1);
+
+      // hideGameSurface MUST be called in the finally block.
+      expect(primaryCalls.map((c) => c.method), contains('hideGameSurface'));
+    });
+
+    test(
+      'watchdog: first check response timeout throws '
+      'CytoidGameCoreSessionFailedException(code=runtime_unreachable)',
+      () async {
+        // No health.ok response — the watchdog's first check will time out.
+        installSendInterceptor(onSend: (_) {});
+
+        final client = CytoidGameCoreClient(
+          methodChannel: primaryChannel,
+          eventStream: events.stream,
+        );
+        final session = PlaySession(client, watchdogConfig: msConfig);
+
+        final runFuture = session.run(
+          launch: _buildTestLaunch(),
+          readyTimeout: const Duration(seconds: 2),
+        );
+
+        // Wait for the first health.check to confirm the watchdog armed and ran.
+        await awaitSentEnvelope(WireMessageType.sessionStart);
+        await awaitSentEnvelope(WireMessageType.healthCheck);
+
+        await expectLater(
+          runFuture.timeout(
+            const Duration(seconds: 5),
+            onTimeout: () => throw TimeoutException('run() never threw'),
+          ),
+          throwsA(
+            isA<CytoidGameCoreSessionFailedException>()
+                .having((e) => e.code, 'code', 'runtime_unreachable')
+                .having(
+                  (e) => e.message,
+                  'message mentions health.check',
+                  contains('health.check'),
+                )
+                .having(
+                  (e) => e.message,
+                  'message mentions watchdog',
+                  contains('watchdog'),
+                ),
+          ),
+        );
+
+        // hideGameSurface MUST be called in the finally block.
+        expect(primaryCalls.map((c) => c.method), contains('hideGameSurface'));
+      },
+    );
+
+    test(
+      'watchdog: last-message shortcut skips health.check while logs.flow',
+      () async {
+        installSendInterceptor(
+          onSend: (env) {
+            if (env.type == WireMessageType.healthCheck) {
+              Future.microtask(() => emitHealthOk(env.id));
+            }
+          },
+        );
+
+        final client = CytoidGameCoreClient(
+          methodChannel: primaryChannel,
+          eventStream: events.stream,
+        );
+        final session = PlaySession(client, watchdogConfig: msConfig);
+
+        final runFuture = session.run(
+          launch: _buildTestLaunch(),
+          readyTimeout: const Duration(seconds: 2),
+        );
+
+        final startEnvelope = await awaitSentEnvelope(
+          WireMessageType.sessionStart,
+        );
+        events.add(
+          CytoidGameCoreEnvelope.create(
+            id: startEnvelope.id,
+            type: WireMessageType.sessionStarted,
+            payload: {'sessionId': startEnvelope.id},
+          ).toJsonString(),
+        );
+
+        // First health.check fires at pollInterval (~100ms) and is NEVER skipped.
+        await awaitSentEnvelope(WireMessageType.healthCheck);
+        // Let the mock's microtask health.ok land + scheduleNextCheck arm.
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        // Emit logs.batch every 50ms (faster than pollInterval=100ms) — this
+        // keeps lastInboundAt fresh and forces every subsequent scheduled check
+        // to be skipped via the last-message shortcut.
+        //
+        // CRITICAL: real logs.batch envelopes carry a fresh UUID id emitted by
+        // GameLogBridge.cs (NOT the sessionId). Using startEnvelope.id here
+        // would bypass the production code path: lastInboundAt must refresh
+        // from ANY non-terminal envelope regardless of its id. The UUID id
+        // proves the shortcut works against real envelope shapes.
+        var logsBatchCounter = 0;
+        final logsTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
+          logsBatchCounter += 1;
+          events.add(
+            CytoidGameCoreEnvelope.create(
+              id:
+                  'log-batch-$logsBatchCounter-'
+                  '${DateTime.now().microsecondsSinceEpoch}',
+              type: WireMessageType.logsBatch,
+              payload: const {'entries': []},
+            ).toJsonString(),
+          );
+        });
+
+        try {
+          // 4x pollInterval elapsed with logs flowing — only the FIRST check
+          // should have been sent; all subsequent scheduled checks were skipped.
+          await Future<void>.delayed(const Duration(milliseconds: 400));
+          expect(healthCheckSendCount(), 1);
+        } finally {
+          logsTimer.cancel();
+        }
+
+        // Logs stopped — the next scheduled check is no longer skipped because
+        // lastInboundAt is now staler than pollInterval.
+        await waitForHealthCheckCount(2);
+
+        // Cleanup: emit session.result so run() completes cleanly.
+        final resultJson = _loadFixture('session_result_payload.valid.json');
+        resultJson['sessionId'] = startEnvelope.id;
+        events.add(
+          CytoidGameCoreEnvelope.create(
+            id: startEnvelope.id,
+            type: WireMessageType.sessionResult,
+            payload: resultJson,
+          ).toJsonString(),
+        );
+        await runFuture.timeout(
+          const Duration(seconds: 2),
+          onTimeout: () => throw TimeoutException('run() never returned'),
+        );
+      },
+    );
+
+    test('watchdog: second check uses steadyResponseTimeout (shorter) not '
+        'firstResponseTimeout', () async {
+      var healthCheckCount = 0;
+      DateTime? secondCheckSentAt;
+      installSendInterceptor(
+        onSend: (env) {
+          if (env.type != WireMessageType.healthCheck) return;
+          healthCheckCount += 1;
+          if (healthCheckCount == 1) {
+            // Respond promptly to mark the first check as completed — subsequent
+            // checks use steadyResponseTimeout.
+            Future.microtask(() => emitHealthOk(env.id));
+          } else {
+            // Second check: record send time, do NOT respond. The watchdog's
+            // steadyResponseTimeout timer will fire and complete the session
+            // with runtime_unreachable.
+            secondCheckSentAt ??= DateTime.now();
+          }
+        },
+      );
+
+      final client = CytoidGameCoreClient(
+        methodChannel: primaryChannel,
+        eventStream: events.stream,
+      );
+      final session = PlaySession(client, watchdogConfig: msConfig);
+
+      final runFuture = session.run(
+        launch: _buildTestLaunch(),
+        readyTimeout: const Duration(seconds: 2),
+      );
+
+      await awaitSentEnvelope(WireMessageType.sessionStart);
+      // First check fires at ~pollInterval; respond promptly.
+      await waitForHealthCheckCount(1);
+      // Second check fires ~pollInterval after the first response — do not
+      // respond. secondCheckSentAt is now set inside the interceptor closure.
+      await waitForHealthCheckCount(2);
+
+      Object? caught;
+      try {
+        await runFuture;
+      } catch (e) {
+        caught = e;
+      }
+      final throwAt = DateTime.now();
+
+      expect(caught, isA<CytoidGameCoreSessionFailedException>());
+
+      final elapsedMs = throwAt.difference(secondCheckSentAt!).inMilliseconds;
+      // steadyResponseTimeout=200ms. The throw should land in
+      // [0.8*steady, 3*steady] and well below firstResponseTimeout=2000ms.
+      expect(
+        elapsedMs,
+        greaterThanOrEqualTo(160),
+        reason: 'should not fire faster than 0.8*steadyResponseTimeout',
+      );
+      expect(
+        elapsedMs,
+        lessThan(1500),
+        reason: 'should fire well before firstResponseTimeout',
+      );
+    });
+
+    test('watchdog: terminal session.result cancels pending watchdog, no late '
+        'session.failed fires', () async {
+      installSendInterceptor(
+        onSend: (env) {
+          if (env.type == WireMessageType.healthCheck) {
+            Future.microtask(() => emitHealthOk(env.id));
+          }
+        },
+      );
+
+      final client = CytoidGameCoreClient(
+        methodChannel: primaryChannel,
+        eventStream: events.stream,
+      );
+      final session = PlaySession(client, watchdogConfig: msConfig);
+
+      final runFuture = session.run(
+        launch: _buildTestLaunch(),
+        readyTimeout: const Duration(seconds: 2),
+      );
+
+      final startEnvelope = await awaitSentEnvelope(
+        WireMessageType.sessionStart,
+      );
+      events.add(
+        CytoidGameCoreEnvelope.create(
+          id: startEnvelope.id,
+          type: WireMessageType.sessionStarted,
+          payload: {'sessionId': startEnvelope.id},
+        ).toJsonString(),
+      );
+
+      // Wait for first health.check (and let mock respond with health.ok).
+      await awaitSentEnvelope(WireMessageType.healthCheck);
+      // Let the response land and scheduleNextCheck arm the second check.
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      // Emit session.result BEFORE the second check would fire (pollInterval=
+      // 100ms). The watchdog's cancelSubscription closure sets disposed=true
+      // and cancels watchdogTimer.
+      final resultJson = _loadFixture('session_result_payload.valid.json');
+      resultJson['sessionId'] = startEnvelope.id;
+      events.add(
+        CytoidGameCoreEnvelope.create(
+          id: startEnvelope.id,
+          type: WireMessageType.sessionResult,
+          payload: resultJson,
+        ).toJsonString(),
+      );
+
+      final result = await runFuture.timeout(
+        const Duration(seconds: 2),
+        onTimeout: () => throw TimeoutException('run() never returned'),
+      );
+      expect(result.outcome.kind, OutcomePayload.completedKind);
+
+      // Wait past what would have been the second check window — if disposal
+      // didn't cancel the timer, a second health.check would have fired by now.
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+
+      // Exactly ONE health.check was sent — the disposed/completer.isCompleted
+      // guard cancelled the scheduled second check before it could run.
+      expect(healthCheckSendCount(), 1);
+      expect(primaryCalls.map((c) => c.method), contains('hideGameSurface'));
     });
   });
 }

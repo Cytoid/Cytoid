@@ -5,7 +5,7 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   private lazy var mockBridge: MockGameCoreBridge = {
     MockGameCoreBridge { [weak self] json in
       // Route mock emissions through onUnityMessage so the OUTER runtimeState
-      // sees game.ready / session.started / session.result and waitForReady
+      // sees engine.ready / session.started / session.result and waitForReady
       // resolves in mock mode. Emitting straight to emitEvent bypassed state.
       self?.onUnityMessage(json)
     }
@@ -162,7 +162,7 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   // failures route via synthesizeRuntimeFailure instead — never both.
   private func emitEngineError(_ error: GameCoreError) {
     let envelope: [String: Any] = [
-      "v": Self.protocolVersionV2,
+      "schema": Self.protocolSchemaV2,
       "id": UUID().uuidString,
       "type": "engine.error",
       "payload": ["error": error.toMap()],
@@ -185,21 +185,12 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   }
 
   func onOutboundMessage(_ jsonString: String) {
+    guard isProtocolV2Envelope(jsonString) else { return }
+
     let type = messageType(jsonString)
 
-    // v1 fallback: bridge.play.start arrives without v2 session.started, so
-    // treat it as ready→busy using the envelope id.
-    if type == "bridge.play.start", let id = messageId(jsonString) {
+    if type == "session.start", let id = messageId(jsonString) {
       runtimeState.onSessionStarted(sessionId: id)
-    } else if type == "session.start", let id = messageId(jsonString) {
-      runtimeState.onSessionStarted(sessionId: id)
-    } else if type == "bridge.play.end" {
-      // v1 terminal. NOTE: session.cancel is intentionally NOT a terminal
-      // trigger — v2 § session.cancel is a request whose terminal outcome
-      // is the later session.result (handled in onUnityMessage). Ending the
-      // session here would let a runtime-side failure after cancel be
-      // reported as engine.error instead of the active-session session.result.
-      runtimeState.onSessionEnded()
     }
 
 #if CYTOID_UNITY_FRAMEWORK_AVAILABLE
@@ -213,13 +204,15 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   }
 
   func onUnityMessage(_ jsonString: String) {
+    guard isProtocolV2Envelope(jsonString) else { return }
+
     let type = messageType(jsonString)
 
     // GENERATION_CHANGE must run BEFORE the engine.ready envelope is
     // forwarded: the spec requires the prior session's `runtime_recreated`
     // session.failed to reach the host before the next engine.ready (v2 §
     // Active-Session Runtime Failure ordering).
-    if type == "engine.ready" || type == "game.ready" {
+    if type == "engine.ready" {
       let wasActiveSession = runtimeState.activeSessionId
       runtimeState.onEngineReady()
       if let wasActiveSession, runtimeState.generation > 1 {
@@ -234,9 +227,7 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
     if type == "session.started", let id = messageId(jsonString) {
       runtimeState.onSessionStarted(sessionId: id)
     }
-    if type == "session.result" || isGameResultMessage(jsonString) {
-      runtimeState.onSessionEnded()
-    } else if type == "session.failed" {
+    if type == "session.failed" {
       // Apply the envelope's error → .failed. Synth already did onFailure
       // before emit; onSessionEnded here would downgrade busy/suspended →
       // ready and drop the error block from runtimeStatus().
@@ -312,8 +303,8 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
     }
   }
 
-  /// Wait until the runtime reaches `.ready` (engine.ready / game.ready
-  /// fallback) or fail. Returns immediately if already `.ready`; throws
+  /// Wait until the runtime reaches `.ready` (engine.ready) or fail. Returns
+  /// immediately if already `.ready`; throws
   /// `WaitForReadyError.alreadyFailed` if already `.failed`; throws
   /// `WaitForReadyError.timeout` if `timeout` seconds elapse without either.
   func waitForReady(timeout: TimeInterval = waitForReadyDefaultTimeout) async throws {
@@ -415,7 +406,7 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
       "timestamp": Int(Date().timeIntervalSince1970 * 1000),
     ]
     let envelope: [String: Any] = [
-      "v": Self.protocolVersionV2,
+      "schema": Self.protocolSchemaV2,
       "id": sessionId,
       "type": "session.failed",
       "payload": payload,
@@ -437,18 +428,17 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
     return jsonString
   }
 
-  private static let protocolVersionV2 = 2
+  private static let protocolSchemaV2 = "cytoid.game-core.v2"
 
-  private func isGameResultMessage(_ jsonString: String) -> Bool {
+  private func isProtocolV2Envelope(_ jsonString: String) -> Bool {
     guard
       let data = jsonString.data(using: .utf8),
-      let envelope = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-      let type = envelope["type"] as? String
+      let envelope = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
     else {
       return false
     }
 
-    return type == "game.play.result"
+    return envelope["schema"] as? String == Self.protocolSchemaV2
   }
 
   private func messageType(_ jsonString: String) -> String? {
@@ -474,8 +464,10 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   }
 
   private func emitEvent(_ jsonString: String) {
+    guard isProtocolV2Envelope(jsonString) else { return }
+
     let type = messageType(jsonString)
-    if type == "session.result" || type == "session.failed" || type == "game.play.result" || type == "game.play.ended" {
+    if type == "session.result" {
       runtimeState.onSessionEnded()
     }
 

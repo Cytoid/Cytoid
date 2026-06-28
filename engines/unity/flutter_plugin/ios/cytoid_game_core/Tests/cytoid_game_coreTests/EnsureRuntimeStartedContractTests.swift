@@ -39,7 +39,7 @@ final class EnsureRuntimeStartedContractTests: XCTestCase {
             JSONSerialization.jsonObject(with: Data(captured.values[0].utf8)) as? [String: Any]
         )
         XCTAssertEqual(envelope["type"] as? String, "engine.error")
-        XCTAssertEqual(envelope["v"] as? Int, 2)
+        XCTAssertEqual(envelope["schema"] as? String, "cytoid.game-core.v2")
 
         let payload = try XCTUnwrap(envelope["payload"] as? [String: Any])
         let error = try XCTUnwrap(payload["error"] as? [String: Any])
@@ -63,7 +63,7 @@ final class EnsureRuntimeStartedContractTests: XCTestCase {
 
         // Simulate the engine.ready arrival — the bridge drives onEngineReady
         // and resumes any parked waitForReady waiters.
-        let readyEnvelope = "{\"v\":2,\"id\":\"ready-1\",\"type\":\"engine.ready\",\"payload\":{\"engine\":\"mock\"}}"
+        let readyEnvelope = "{\"schema\":\"cytoid.game-core.v2\",\"id\":\"ready-1\",\"type\":\"engine.ready\",\"payload\":{\"engine\":\"mock\"}}"
         bridge.onUnityMessage(readyEnvelope)
 
         XCTAssertEqual(bridge.runtimeState.state, .ready)

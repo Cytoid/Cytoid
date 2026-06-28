@@ -56,7 +56,7 @@ final class RuntimeFailureSynthesisTests: XCTestCase {
         )
         XCTAssertEqual(parsed["id"] as? String, "S1")
         XCTAssertEqual(parsed["type"] as? String, "session.failed")
-        XCTAssertEqual(parsed["v"] as? Int, 2)
+        XCTAssertEqual(parsed["schema"] as? String, "cytoid.game-core.v2")
 
         let payload = try XCTUnwrap(parsed["payload"] as? [String: Any])
         XCTAssertEqual(payload["sessionId"] as? String, "S1")

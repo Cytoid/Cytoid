@@ -55,7 +55,7 @@ final class WaitForReadyTests: XCTestCase {
         // Yield once so the Task above parks in the continuation before we
         // drive the ready transition. 50ms is plenty on a modern CPU.
         try? await Task.sleep(nanoseconds: 50_000_000)
-        let readyEnvelope = "{\"v\":2,\"id\":\"r-1\",\"type\":\"engine.ready\",\"payload\":{}}"
+        let readyEnvelope = "{\"schema\":\"cytoid.game-core.v2\",\"id\":\"r-1\",\"type\":\"engine.ready\",\"payload\":{}}"
         bridge.onUnityMessage(readyEnvelope)
 
         await fulfillment(of: [expectation], timeout: 1.0)

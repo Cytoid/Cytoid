@@ -31,7 +31,7 @@ final class MessageQueueTimeoutTests: XCTestCase {
             JSONSerialization.jsonObject(with: Data(captured.values[0].utf8)) as? [String: Any]
         )
         XCTAssertEqual(envelope["type"] as? String, "engine.error")
-        XCTAssertEqual(envelope["v"] as? Int, 2)
+        XCTAssertEqual(envelope["schema"] as? String, "cytoid.game-core.v2")
         let payload = try XCTUnwrap(envelope["payload"] as? [String: Any])
         let error = try XCTUnwrap(payload["error"] as? [String: Any])
         XCTAssertEqual(error["code"] as? String, "runtime_unavailable")

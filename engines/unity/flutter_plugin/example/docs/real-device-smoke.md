@@ -178,7 +178,7 @@ suppress it completely.
 
 - [ ] Launch a session with `options.recordPlayEvents: true` and NO auto-class
       mods. Confirm:
-      - `type: "session.telemetry` arrives BEFORE `session.result`
+      - `type: "session.telemetry"` arrives BEFORE `session.result`
       - `payload.playEvents.format: "json.v1"`
       - `payload.playEvents.events` is a non-empty array of touch events
       - Each event has short-name fields: `t` (int, ms), `f` (int, finger),

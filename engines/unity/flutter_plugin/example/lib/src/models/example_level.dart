@@ -43,7 +43,7 @@ class ExampleLevel {
 
   ExampleDifficulty get defaultDifficulty => difficulties.last;
 
-  Future<GameLaunchPayload> createLaunchPayload({
+  Future<SessionLaunchPayload> createLaunchPayload({
     required ExampleDifficulty difficulty,
     required ExampleSettings settings,
     LevelVfsMaterializer vfsMaterializer = const LevelVfsMaterializer(),
@@ -74,24 +74,43 @@ class ExampleLevel {
       bundle: assetBundle,
     );
 
-    final assets = GameLaunchAssets(
+    final assets = AssetPayload(
       vfsUri: Uri.file(vfsRootPath, windows: false).toString(),
       chartPath: difficulty.chartAsset,
       musicPath: musicAsset,
       storyboardPath: difficulty.storyboardAsset,
     );
-    final metaJson = await assetBundle.loadString(metaAsset);
+    final meta = LevelMetaPayload.fromJson(
+      jsonDecode(await assetBundle.loadString(metaAsset)) as Map<String, dynamic>,
+    );
+    final mode = tierPlay != null
+        ? SessionMode.tier
+        : mods?.toSessionMode() ?? SessionMode.ranked;
 
-    return GameLaunchPayload(
-      levelMetaJson: metaJson,
-      selectedDifficulty: difficulty.type,
-      assets: assets,
-      settings: settings.toLaunchSettings(),
-      mods: mods?.toModStringList() ?? const [],
-      gameMode: tierPlay != null ? GameMode.tier : mods?.gameMode,
-      tierPlay: tierPlay,
+    return SessionLaunchPayload(
+      mode: mode,
+      level: LevelPayload(
+        meta: meta,
+        selectedDifficulty: difficulty.type,
+        assets: assets,
+      ),
+      mods: mods?.toGameModList() ?? const [],
+      settings: settings.toSettingsPayload(),
+      options: const SessionOptions(recordPlayEvents: true),
+      tier: tierPlay == null
+          ? null
+          : TierLaunchPayload(
+              tierId: tierPlay.tierId ?? 'example-tier',
+              stageIndex: tierPlay.stageIndex,
+              stageCount: tierPlay.stageCount ?? 1,
+              maxHealth: tierPlay.maxHealth,
+              initialHealth: tierPlay.initialHealth ?? tierPlay.maxHealth,
+              initialCombo: tierPlay.initialCombo ?? 0,
+              introLabel: tierPlay.introLabel,
+            ),
     );
   }
+
 }
 
 class ExampleDifficulty {

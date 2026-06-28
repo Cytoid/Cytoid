@@ -1,5 +1,4 @@
-import 'package:cytoid_game_core/cytoid_game_core.dart'
-    hide GraphicsQuality, HoldHitSoundTiming, HitboxSize, NoteType;
+import 'package:cytoid_game_core/cytoid_game_core.dart' as core;
 import 'package:flutter/foundation.dart';
 
 import 'note_type_wire.dart';
@@ -270,8 +269,102 @@ class ExampleSettings {
     NoteTypeWire.flick: flickFillAlt,
   };
 
-  GameLaunchSettings toLaunchSettings() {
-    return GameLaunchSettings(
+  Map<String, core.HitboxSize> get _v2HitboxSizes => {
+    'click': _hitboxSize(hitboxClick),
+    'hold': _hitboxSize(hitboxHold),
+    'longHold': _hitboxSize(hitboxHold),
+    'dragHead': _hitboxSize(hitboxDrag),
+    'dragChild': _hitboxSize(hitboxDrag),
+    'flick': _hitboxSize(hitboxFlick),
+    'cDragHead': _hitboxSize(hitboxDrag),
+    'cDragChild': _hitboxSize(hitboxDrag),
+  };
+
+  Map<String, String> get _v2RingColors => {
+    'click': ringColor,
+    'hold': ringColor,
+    'longHold': ringColor,
+    'dragHead': ringColor,
+    'dragChild': ringColor,
+    'flick': ringColor,
+    'cDragHead': ringColor,
+    'cDragChild': ringColor,
+  };
+
+  Map<String, String> get _v2FillColors => {
+    'click': clickFill,
+    'hold': holdFill,
+    'longHold': longHoldFill,
+    'dragHead': dragFill,
+    'dragChild': dragFill,
+    'flick': flickFill,
+    'cDragHead': cDragFill,
+    'cDragChild': cDragFill,
+  };
+
+  Map<String, String> get _v2FillColorsAlt => {
+    'click': clickFillAlt,
+    'hold': holdFillAlt,
+    'longHold': longHoldFillAlt,
+    'dragHead': dragFillAlt,
+    'dragChild': dragFillAlt,
+    'flick': flickFillAlt,
+    'cDragHead': cDragFillAlt,
+    'cDragChild': cDragFillAlt,
+  };
+
+  core.SettingsPayload toSettingsPayload() {
+    return core.SettingsPayload(
+      profile: core.ProfileSettings(
+        language: 'en',
+        baseNoteOffset: baseNoteOffset,
+        levelNoteOffset: levelNoteOffset,
+        headsetNoteOffset: headsetNoteOffset,
+        judgmentOffset: judgmentOffset,
+        hitTapticFeedback: hitTapticFeedback,
+        menuTapticFeedback: hitTapticFeedback,
+      ),
+      runtime: core.RuntimeSettings(
+        musicVolume: musicVolume,
+        soundEffectsVolume: soundEffectsVolume,
+      ),
+      visual: core.VisualSettings(
+        noteSize: noteSize,
+        horizontalMargin: horizontalMargin,
+        verticalMargin: verticalMargin,
+        restrictPlayAreaAspectRatio: restrictPlayAreaAspectRatio,
+        coverOpacity: coverOpacity,
+        displayStoryboardEffects: displayStoryboardEffects,
+        displayBoundaries: displayBoundaries,
+        skipMusicOnCompletion: skipMusicOnCompletion,
+        displayEarlyLateIndicators: displayEarlyLateIndicators,
+        displayNoteIds: displayNoteIds,
+        useExperimentalNoteAr: useExperimentalNoteAr,
+        useExperimentalNoteAnimations: useExperimentalNoteAnimations,
+        clearEffectsSize: clearEffectsSize,
+        displayProfiler: displayProfiler,
+        adaptOverlayToSafeArea: adaptOverlayToSafeArea,
+        graphicsQuality: _v2GraphicsQuality(graphicsQuality),
+      ),
+      audio: core.AudioSettings(
+        hitSound: hitSound,
+        holdHitSoundTiming: _v2HoldHitSoundTiming(holdHitSoundTiming),
+        useNativeAudio: useNativeAudio,
+        androidDspBufferSize: androidDspBufferSize,
+      ),
+      noteStyle: core.NoteStyleSettings(
+        hitboxSizes: _v2HitboxSizes,
+        ringColors: _v2RingColors,
+        fillColors: _v2FillColors,
+        fillColorsAlt: _v2FillColorsAlt,
+        useFillColorForDragChildNodes: useFillColorForDragChildNodes,
+      ),
+    );
+  }
+
+  @Deprecated('Use toSettingsPayload() for v2 session.start payloads.')
+  core.GameLaunchSettings toLaunchSettings() {
+    return core.GameLaunchSettings(
       baseNoteOffset: baseNoteOffset,
       levelNoteOffset: levelNoteOffset,
       headsetNoteOffset: headsetNoteOffset,
@@ -305,5 +398,31 @@ class ExampleSettings {
       useNativeAudio: useNativeAudio,
       androidDspBufferSize: androidDspBufferSize,
     );
+  }
+
+  core.HitboxSize _hitboxSize(int value) {
+    return switch (value) {
+      0 => core.HitboxSize.small,
+      1 => core.HitboxSize.medium,
+      _ => core.HitboxSize.large,
+    };
+  }
+
+  core.HoldHitSoundTiming _v2HoldHitSoundTiming(HoldHitSoundTiming value) {
+    return switch (value) {
+      HoldHitSoundTiming.begin => core.HoldHitSoundTiming.begin,
+      HoldHitSoundTiming.end => core.HoldHitSoundTiming.end,
+      HoldHitSoundTiming.both => core.HoldHitSoundTiming.both,
+    };
+  }
+
+  core.GraphicsQuality _v2GraphicsQuality(GraphicsQuality value) {
+    return switch (value) {
+      GraphicsQuality.veryLow => core.GraphicsQuality.veryLow,
+      GraphicsQuality.low => core.GraphicsQuality.low,
+      GraphicsQuality.medium => core.GraphicsQuality.medium,
+      GraphicsQuality.high => core.GraphicsQuality.high,
+      GraphicsQuality.ultra => core.GraphicsQuality.ultra,
+    };
   }
 }

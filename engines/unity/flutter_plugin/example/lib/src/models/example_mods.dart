@@ -24,4 +24,18 @@ class ExampleMods {
   List<String> toModStringList() {
     return enabledMods.map((m) => m.wireName).toList();
   }
+
+  List<GameMod> toGameModList() {
+    return enabledMods.toList(growable: false);
+  }
+
+  SessionMode toSessionMode() {
+    return switch (gameMode) {
+      GameMode.standard => SessionMode.ranked,
+      GameMode.practice => SessionMode.practice,
+      GameMode.calibration => SessionMode.calibration,
+      GameMode.globalCalibration => SessionMode.globalCalibration,
+      GameMode.tier => SessionMode.tier,
+    };
+  }
 }

@@ -27,20 +27,20 @@ void main() {
       expect(identical(a, b), isFalse);
     });
 
-    test('rejects non-positive durations with AssertionError', () {
+    test('rejects non-positive durations with ArgumentError', () {
       expect(
         () => HealthCheckWatchdogConfig(pollInterval: Duration.zero),
-        throwsA(isA<AssertionError>()),
+        throwsA(isA<ArgumentError>()),
       );
       expect(
         () => HealthCheckWatchdogConfig(
           firstResponseTimeout: Duration(seconds: -1),
         ),
-        throwsA(isA<AssertionError>()),
+        throwsA(isA<ArgumentError>()),
       );
       expect(
         () => HealthCheckWatchdogConfig(steadyResponseTimeout: Duration.zero),
-        throwsA(isA<AssertionError>()),
+        throwsA(isA<ArgumentError>()),
       );
     });
   });

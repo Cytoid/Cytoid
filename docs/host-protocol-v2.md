@@ -228,7 +228,7 @@ The Flutter client should use this single check for long-running liveness. A
 healthy active session is represented by `state = "busy"` and the matching
 `activeSessionId`.
 
-The host SHOULD arm a self-scheduling health.check watchdog after `session.start`. The watchdog sends `health.check` every `pollInterval`; the FIRST check's `health.ok` response timeout is 30s (the engine may be cold/loading assets), and SUBSEQUENT checks use a 10s response timeout (steady-state play). The host MAY skip a check when a non-terminal engine-originated envelope (`session.started`, `logs.batch`, `settings.applied`, `engine.error`, or a prior `health.ok`) arrived within the last `pollInterval` — a responsive engine has already proven its liveness. On response timeout, the host terminates the session by throwing an exception carrying `error.code = "runtime_unreachable"` (this is the host-side equivalent of `session.failed` — unlike the native bridge, the host does NOT inject a synthetic `session.failed` envelope onto the event stream; the failure is delivered via the `PlaySession.run` future throwing). See [Active-Session Runtime Failure](#active-session-runtime-failure); the host cannot distinguish a frozen main loop from a process-level unreachable at this layer, so the `message` carries the watchdog provenance for debugging.
+The host SHOULD arm a self-scheduling health.check watchdog after `session.start`. The watchdog sends `health.check` every `pollInterval`; the FIRST check's `health.ok` response timeout defaults to 30s (the engine may be cold/loading assets), and SUBSEQUENT checks default to 10s (steady-state play); these are `HealthCheckWatchdogConfig` defaults and hosts MAY tune them. The host MAY skip a check when a non-terminal engine-originated envelope (`session.started`, `logs.batch`, `settings.applied`, `engine.error`, or a prior `health.ok`) arrived within the last `pollInterval` — a responsive engine has already proven its liveness. On response timeout, the host terminates the session by throwing an exception carrying `error.code = "runtime_unreachable"` (this is the host-side equivalent of `session.failed` — unlike the native bridge, the host does NOT inject a synthetic `session.failed` envelope onto the event stream; the failure is delivered via the `PlaySession.run` future throwing). See [Active-Session Runtime Failure](#active-session-runtime-failure); the host cannot distinguish a frozen main loop from a process-level unreachable at this layer, so the `message` carries the watchdog provenance for debugging.
 
 ## `engine.ready`
 
@@ -1246,7 +1246,7 @@ v1-only on the wire and emits no v2 outcomes at all. The bridge's
 side (the host-side health.check watchdog is a separate producer — see
 the next paragraph and the runtime-failure table below).
 
-The host-side health.check watchdog is a SEPARATE producer of `session.failed` from the native bridge; both use `runtime_unreachable` because the host cannot distinguish a frozen main loop from a process-level unreachable — the `message` field carries the provenance.
+The host-side health.check watchdog can also terminate a session with `error.code = "runtime_unreachable"` — via a thrown exception (`CytoidGameCoreSessionFailedException`), NOT via a `session.failed` envelope. Both the native bridge and the host use `runtime_unreachable` because the host cannot distinguish a frozen main loop from a process-level unreachable; the `message` field carries the provenance.
 
 | Scenario | Required behavior |
 |---|---|

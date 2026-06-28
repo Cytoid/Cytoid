@@ -21,18 +21,21 @@ class HealthCheckWatchdogConfig {
     final timeout = firstResponseTimeout ?? const Duration(seconds: 30);
     final steady = steadyResponseTimeout ?? const Duration(seconds: 10);
     final interval = pollInterval ?? const Duration(seconds: 10);
-    assert(
-      timeout.inMicroseconds > 0,
-      'firstResponseTimeout must be strictly positive',
-    );
-    assert(
-      steady.inMicroseconds > 0,
-      'steadyResponseTimeout must be strictly positive',
-    );
-    assert(
-      interval.inMicroseconds > 0,
-      'pollInterval must be strictly positive',
-    );
+    if (timeout.inMicroseconds <= 0) {
+      throw ArgumentError(
+        'firstResponseTimeout must be strictly positive, got $timeout',
+      );
+    }
+    if (steady.inMicroseconds <= 0) {
+      throw ArgumentError(
+        'steadyResponseTimeout must be strictly positive, got $steady',
+      );
+    }
+    if (interval.inMicroseconds <= 0) {
+      throw ArgumentError(
+        'pollInterval must be strictly positive, got $interval',
+      );
+    }
     return HealthCheckWatchdogConfig._(
       firstResponseTimeout: timeout,
       steadyResponseTimeout: steady,

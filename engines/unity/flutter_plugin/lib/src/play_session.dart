@@ -77,6 +77,7 @@ class PlaySession {
             payload: launch.toJson(),
           ),
         );
+        resultWait.armWatchdog?.call();
         return await resultWait.future;
       } finally {
         await resultWait.cancelSubscription();
@@ -326,12 +327,6 @@ class PlaySession {
       scheduleNextCheck();
     };
 
-    // Arm the first check. The first fire is pollInterval after arming — well
-    // after session.start (which is sent by run() after this method returns).
-    if (watchdogConfig != null) {
-      scheduleNextCheck();
-    }
-
     return _SessionResultWait(
       future: completer.future,
       cancelSubscription: () async {
@@ -347,6 +342,7 @@ class PlaySession {
         await inFlightCheckSub?.cancel();
         await subscription.cancel();
       },
+      armWatchdog: watchdogConfig != null ? scheduleNextCheck : null,
     );
   }
 
@@ -369,8 +365,15 @@ class _SessionResultWait {
   const _SessionResultWait({
     required this.future,
     required this.cancelSubscription,
+    this.armWatchdog,
   });
 
   final Future<SessionResultPayload> future;
   final Future<void> Function() cancelSubscription;
+
+  /// Called by `run()` AFTER `session.start` is sent, to arm the first
+  /// health.check. Null when the watchdog is disabled (watchdogConfig == null).
+  /// Splitting setup from arming prevents the watchdog from firing before the
+  /// engine has received `session.start` (CodeRabbit finding on PR #179).
+  final void Function()? armWatchdog;
 }

@@ -18,7 +18,7 @@ The Unity core is embedded via the `cytoid_game_core` Flutter plugin at `engines
 - **Android:** Exclusive Unity Activity (not a platform view fragment)
 - **iOS:** Exclusive Unity window (not a platform view)
 
-See `engines/unity/flutter_plugin/example/docs/host-protocol-v2.md` for the current protocol specification.
+See `docs/host-protocol-v2.md` for the current protocol specification.
 
 ### Unity Assets
 

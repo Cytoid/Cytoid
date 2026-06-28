@@ -64,7 +64,7 @@ class ResultScreen extends StatelessWidget {
                       icon: Icons.favorite,
                       label: 'Final health',
                       value:
-                          '${result.tier!.health.toStringAsFixed(1)} / ${result.tier!.maxHealth.toStringAsFixed(0)}',
+                          '${result.tier!.health?.toStringAsFixed(1) ?? '—'} / ${result.tier!.maxHealth.toStringAsFixed(0)}',
                     ),
                     _ResultTile(
                       icon: Icons.bolt,

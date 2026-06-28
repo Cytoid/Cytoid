@@ -15,7 +15,7 @@ public class GameBridge : MonoBehaviour
     public static GameBridge Instance => instance;
     public static readonly UnityEvent<string> OnTelemetryJson = new UnityEvent<string>();
     public static int Generation { get; private set; }
-    internal static string ActiveSessionId => instance?.sessionState?.ActivePlayId;
+    internal static string ActiveSessionId => instance?.sessionState?.ActiveSessionId;
 
     private GamePlayState sessionState;
     private GameBridgeRouter router;
@@ -112,17 +112,17 @@ public class GameBridge : MonoBehaviour
 
     internal async UniTask EndActivePlayFromGame()
     {
-        if (!GameEmbedMode.IsBridgeEmbedded || sessionState == null || !sessionState.HasActivePlay)
+        if (!GameEmbedMode.IsBridgeEmbedded || sessionState == null || !sessionState.HasActiveSession)
         {
-            Debug.Log($"[CYTOID-DBG] EndActivePlayFromGame: skipped (HasActivePlay={sessionState?.HasActivePlay})");
+            Debug.Log($"[CYTOID-DBG] EndActivePlayFromGame: skipped (HasActiveSession={sessionState?.HasActiveSession})");
             return;
         }
 
-        Debug.Log($"[CYTOID-DBG] EndActivePlayFromGame ENTER: ActivePlayId={sessionState.ActivePlayId}");
+        Debug.Log($"[CYTOID-DBG] EndActivePlayFromGame ENTER: ActiveSessionId={sessionState.ActiveSessionId}");
         try
         {
             await ShowHandoffOverlay();
-            var sessionId = sessionState.ActivePlayId;
+            var sessionId = sessionState.ActiveSessionId;
             sessionState.MarkPlayRouteEnded();
             Debug.Log($"[CYTOID-DBG] EndActivePlayFromGame: MarkPlayRouteEnded cleared, sessionId={sessionId}");
             // Engine-initiated abort has no v2 route-ended primitive; report a terminal cancelled result.
@@ -143,15 +143,15 @@ public class GameBridge : MonoBehaviour
     {
         try
         {
-            Debug.Log($"[CYTOID-DBG] OnGameResultJson ENTER: HasActivePlay={sessionState.HasActivePlay} ActivePlayId={sessionState.ActivePlayId}");
+            Debug.Log($"[CYTOID-DBG] OnGameResultJson ENTER: HasActiveSession={sessionState.HasActiveSession} ActiveSessionId={sessionState.ActiveSessionId}");
             Debug.Log("[CYTOID-DBG] OnGameResultJson: BEFORE await ShowHandoffOverlay (0.2s window starts)");
             await ShowHandoffOverlay();
-            Debug.Log($"[CYTOID-DBG] OnGameResultJson: AFTER await ShowHandoffOverlay — HasActivePlay still={sessionState.HasActivePlay} (race window ends)");
+            Debug.Log($"[CYTOID-DBG] OnGameResultJson: AFTER await ShowHandoffOverlay — HasActiveSession still={sessionState.HasActiveSession} (race window ends)");
             NativeBridgeMessenger.Send(resultJson);
-            Debug.Log("[CYTOID-DBG] OnGameResultJson: BEFORE ClearActivePlay");
-            sessionState.ClearActivePlay();
+            Debug.Log("[CYTOID-DBG] OnGameResultJson: BEFORE ClearActiveSession");
+            sessionState.ClearActiveSession();
             GameResultBridge.ActiveSessionRecordPlayEvents = null;
-            Debug.Log($"[CYTOID-DBG] OnGameResultJson EXIT: HasActivePlay={sessionState.HasActivePlay}");
+            Debug.Log($"[CYTOID-DBG] OnGameResultJson EXIT: HasActiveSession={sessionState.HasActiveSession}");
         }
         finally
         {

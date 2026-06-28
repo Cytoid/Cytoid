@@ -168,8 +168,8 @@ public class GameLogBridge : MonoBehaviour
             stackTrace = stackTrace.Substring(0, MaxMessageLength);
         }
 
-        var sessionId = sessionState != null && sessionState.HasActivePlay
-            ? sessionState.ActivePlayId
+        var sessionId = sessionState != null && sessionState.HasActiveSession
+            ? sessionState.ActiveSessionId
             : null;
 
         return GameLogPayload.Create(MapLevel(type), message, stackTrace, sessionId);

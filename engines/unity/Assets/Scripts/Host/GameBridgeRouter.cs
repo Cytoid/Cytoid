@@ -66,11 +66,11 @@ public class GameBridgeRouter
         {
             ["engine"] = "unity",
             ["generation"] = GameBridge.Generation,
-            ["state"] = sessionState.HasActivePlay ? "busy" : sessionState.IsReadyForBridge ? "ready" : "starting"
+            ["state"] = sessionState.HasActiveSession ? "busy" : sessionState.IsReadyForBridge ? "ready" : "starting"
         };
-        if (sessionState.HasActivePlay)
+        if (sessionState.HasActiveSession)
         {
-            payload["activeSessionId"] = sessionState.ActivePlayId;
+            payload["activeSessionId"] = sessionState.ActiveSessionId;
         }
 
         var response = CytoidGameCoreEnvelope.Create(envelope.Id, WireMessageTypes.HealthOk, payload);
@@ -79,9 +79,9 @@ public class GameBridgeRouter
 
     private void HandleSessionStart(CytoidGameCoreEnvelope envelope)
     {
-        if (sessionState.HasActivePlay)
+        if (sessionState.HasActiveSession)
         {
-            EmitRejectedSessionStart(envelope.Id, "overlapping_session", $"Session {sessionState.ActivePlayId} is still active.");
+            EmitRejectedSessionStart(envelope.Id, "overlapping_session", $"Session {sessionState.ActiveSessionId} is still active.");
             return;
         }
 
@@ -103,7 +103,7 @@ public class GameBridgeRouter
             return;
         }
 
-        sessionState.SetActivePlay(envelope.Id);
+        sessionState.SetActiveSession(envelope.Id);
         if (provider is ExternalGameContentProvider externalProvider)
         {
             GameResultBridge.ActiveSessionRecordPlayEvents = externalProvider.Payload.settings?.recordPlayEvents;
@@ -115,14 +115,14 @@ public class GameBridgeRouter
 
     private async void HandleSessionCancel(CytoidGameCoreEnvelope envelope)
     {
-        if (!sessionState.HasActivePlay)
+        if (!sessionState.HasActiveSession)
         {
             EmitEngineError(envelope.Id, "not_active", "No active session to cancel.");
             return;
         }
-        if (envelope.Id != sessionState.ActivePlayId)
+        if (envelope.Id != sessionState.ActiveSessionId)
         {
-            EmitEngineError(envelope.Id, "unknown_session", $"Active session is {sessionState.ActivePlayId}.");
+            EmitEngineError(envelope.Id, "unknown_session", $"Active session is {sessionState.ActiveSessionId}.");
             return;
         }
 
@@ -153,7 +153,7 @@ public class GameBridgeRouter
                 out deferredFields,
                 out rejectedFields);
 
-            if (sessionState.HasActivePlay)
+            if (sessionState.HasActiveSession)
             {
                 MoveDeferredFieldsForActiveSession(appliedFields, deferredFields);
                 pendingSettings = settings;

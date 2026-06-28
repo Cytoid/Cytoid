@@ -1,27 +1,27 @@
 public class GamePlayState
 {
-    public string ActivePlayId { get; private set; }
+    public string ActiveSessionId { get; private set; }
 
     public bool IsReadyForBridge { get; set; }
 
     public bool IsPlayRoutePaused { get; private set; }
 
-    public bool HasActivePlay => !string.IsNullOrEmpty(ActivePlayId);
+    public bool HasActiveSession => !string.IsNullOrEmpty(ActiveSessionId);
 
-    public void SetActivePlay(string sessionId)
+    public void SetActiveSession(string sessionId)
     {
-        ActivePlayId = sessionId;
+        ActiveSessionId = sessionId;
         IsPlayRoutePaused = false;
     }
 
-    public void ClearActivePlay()
+    public void ClearActiveSession()
     {
-        ActivePlayId = null;
+        ActiveSessionId = null;
     }
 
     public void MarkPlayRouteEnded()
     {
         IsPlayRoutePaused = true;
-        ClearActivePlay();
+        ClearActiveSession();
     }
 }

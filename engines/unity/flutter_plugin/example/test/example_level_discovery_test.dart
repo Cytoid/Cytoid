@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import '../lib/src/models/example_level.dart';
+import 'package:cytoid_flutter/src/models/example_level.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

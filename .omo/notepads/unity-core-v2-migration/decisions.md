@@ -7,3 +7,6 @@ Atlas session opencode:ses_0f32b302affeTDCXz6xb574DV0 began executing plan.
 
 ## 2026-06-28 T3 — calibration cancel terminal ownership
 Chose the suppress-calibration-emission variant for host-driven `session.cancel`: `Game.AbortExternalSession(bool emitCalibrationResult = true)` keeps existing direct abort behavior by default, while the router can call `AbortExternalSession(false)` before emitting the single `session.result(outcome.kind="cancelled")` terminal envelope.
+
+## 2026-06-28 T4 — engine-initiated stop mapping
+Kept the plan's spec-interpretation default for `EndActivePlayFromGame`: there is no v2 `game.play.ended`, so engine-side abort/recovery emits `session.result` with `outcome.kind="cancelled"` and `reason="unknown"` through the normal GameResultBridge/GameBridge single-owner send path.

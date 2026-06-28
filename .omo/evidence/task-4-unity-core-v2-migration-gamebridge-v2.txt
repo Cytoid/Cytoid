@@ -1,0 +1,26 @@
+T4 grep acceptance evidence
+
+Command: grep -n 'GameReady\|WireMessageTypes.GameReady' engines/unity/Assets/Scripts/Host/GameBridge.cs
+Output: <no matches>
+
+Command: grep -n 'EngineReady\|Generation' engines/unity/Assets/Scripts/Host/GameBridge.cs
+Output:
+17:    public static int Generation { get; private set; }
+97:        Generation++;
+99:        SendEngineReadyEnvelope();
+110:        SendEngineReadyEnvelope();
+162:    private static void SendEngineReadyEnvelope()
+169:            ["generation"] = Generation,
+177:        var envelope = CytoidGameCoreEnvelope.Create($"ready-{Generation}", WireMessageTypes.EngineReady, payload);
+
+Command: grep -n 'GamePlayEnded' engines/unity/Assets/Scripts/Host/GameBridge.cs
+Output: <no matches>
+
+Command: grep -n 'OnTelemetryJson\|ActiveSessionId\|ActiveSessionRecordPlayEvents' engines/unity/Assets/Scripts/Host/GameBridge.cs
+Output:
+16:    public static readonly UnityEvent<string> OnTelemetryJson = new UnityEvent<string>();
+18:    internal static string ActiveSessionId => instance?.sessionState?.ActivePlayId;
+50:        OnTelemetryJson.AddListener(OnTelemetryJsonReceived);
+72:        OnTelemetryJson.RemoveListener(OnTelemetryJsonReceived);
+137:    private static void OnTelemetryJsonReceived(string telemetryJson)
+153:            GameResultBridge.ActiveSessionRecordPlayEvents = null;

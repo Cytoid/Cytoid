@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 public class GameBridge : MonoBehaviour
@@ -12,6 +13,9 @@ public class GameBridge : MonoBehaviour
     private static CanvasGroup handoffCanvasGroup;
 
     public static GameBridge Instance => instance;
+    public static readonly UnityEvent<string> OnTelemetryJson = new UnityEvent<string>();
+    public static int Generation { get; private set; }
+    internal static string ActiveSessionId => instance?.sessionState?.ActivePlayId;
 
     private GamePlayState sessionState;
     private GameBridgeRouter router;
@@ -43,6 +47,7 @@ public class GameBridge : MonoBehaviour
 
         Debug.Log("[GameBridge] Bridge-embedded mode active.");
         FlutterBridgeNavigationShell.Apply();
+        OnTelemetryJson.AddListener(OnTelemetryJsonReceived);
         GameResultBridge.OnResultJson.AddListener(OnGameResultJson);
         Context.OnApplicationInitialized.AddListener(SendReadyToBridge);
 
@@ -64,6 +69,7 @@ public class GameBridge : MonoBehaviour
             return;
         }
 
+        OnTelemetryJson.RemoveListener(OnTelemetryJsonReceived);
         GameResultBridge.OnResultJson.RemoveListener(OnGameResultJson);
         Context.OnApplicationInitialized.RemoveListener(SendReadyToBridge);
     }
@@ -88,21 +94,9 @@ public class GameBridge : MonoBehaviour
         }
 
         sessionState.IsReadyForBridge = true;
-        Debug.Log("[CYTOID-DBG] SendReadyToBridge: sending game.ready envelope");
-
-        SyncTargetFrameRateToDisplay();
-
-        var payload = new JObject
-        {
-            ["initialized"] = true,
-            ["engine"] = "unity",
-            ["engineVersion"] = Application.unityVersion,
-            ["targetFrameRate"] = Application.targetFrameRate,
-            ["screenRefreshRate"] = GetScreenRefreshRateHz()
-        };
-
-        var envelope = CytoidGameCoreEnvelope.Create(Guid.NewGuid().ToString(), WireMessageTypes.GameReady, payload);
-        NativeBridgeMessenger.Send(envelope.ToJsonString());
+        Generation++;
+        Debug.Log("[CYTOID-DBG] SendReadyToBridge: sending engine.ready envelope");
+        SendEngineReadyEnvelope();
     }
 
     internal void ReannounceReadyToBridge()
@@ -112,21 +106,8 @@ public class GameBridge : MonoBehaviour
             return;
         }
 
-        Debug.Log("[CYTOID-DBG] ReannounceReadyToBridge: re-sending game.ready");
-
-        SyncTargetFrameRateToDisplay();
-
-        var payload = new JObject
-        {
-            ["initialized"] = true,
-            ["engine"] = "unity",
-            ["engineVersion"] = Application.unityVersion,
-            ["targetFrameRate"] = Application.targetFrameRate,
-            ["screenRefreshRate"] = GetScreenRefreshRateHz()
-        };
-
-        var envelope = CytoidGameCoreEnvelope.Create(Guid.NewGuid().ToString(), WireMessageTypes.GameReady, payload);
-        NativeBridgeMessenger.Send(envelope.ToJsonString());
+        Debug.Log("[CYTOID-DBG] ReannounceReadyToBridge: re-sending engine.ready without generation bump");
+        SendEngineReadyEnvelope();
     }
 
     internal async UniTask EndActivePlayFromGame()
@@ -144,11 +125,8 @@ public class GameBridge : MonoBehaviour
             var playId = sessionState.ActivePlayId;
             sessionState.MarkPlayRouteEnded();
             Debug.Log($"[CYTOID-DBG] EndActivePlayFromGame: MarkPlayRouteEnded cleared, playId={playId}");
-            var envelope = CytoidGameCoreEnvelope.Create(
-                playId,
-                WireMessageTypes.GamePlayEnded,
-                new JObject {["ended"] = true});
-            NativeBridgeMessenger.Send(envelope.ToJsonString());
+            // Engine-initiated abort has no v2 route-ended primitive; report a terminal cancelled result.
+            GameResultBridge.EmitCancelled(playId, "unknown");
         }
         finally
         {
@@ -156,36 +134,48 @@ public class GameBridge : MonoBehaviour
         }
     }
 
+    private static void OnTelemetryJsonReceived(string telemetryJson)
+    {
+        NativeBridgeMessenger.Send(telemetryJson);
+    }
+
     private async void OnGameResultJson(string resultJson)
     {
         try
         {
-            JObject payload;
-            try
-            {
-                payload = JObject.Parse(resultJson);
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"[GameBridge] Failed to parse game result JSON: {e.Message}");
-                return;
-            }
-
             Debug.Log($"[CYTOID-DBG] OnGameResultJson ENTER: HasActivePlay={sessionState.HasActivePlay} ActivePlayId={sessionState.ActivePlayId}");
             Debug.Log("[CYTOID-DBG] OnGameResultJson: BEFORE await ShowHandoffOverlay (0.2s window starts)");
             await ShowHandoffOverlay();
             Debug.Log($"[CYTOID-DBG] OnGameResultJson: AFTER await ShowHandoffOverlay — HasActivePlay still={sessionState.HasActivePlay} (race window ends)");
-            var playId = sessionState.ActivePlayId ?? Guid.NewGuid().ToString();
-            var envelope = CytoidGameCoreEnvelope.Create(playId, WireMessageTypes.GamePlayResult, payload);
-            NativeBridgeMessenger.Send(envelope.ToJsonString());
+            NativeBridgeMessenger.Send(resultJson);
             Debug.Log("[CYTOID-DBG] OnGameResultJson: BEFORE ClearActivePlay");
             sessionState.ClearActivePlay();
+            GameResultBridge.ActiveSessionRecordPlayEvents = null;
             Debug.Log($"[CYTOID-DBG] OnGameResultJson EXIT: HasActivePlay={sessionState.HasActivePlay}");
         }
         finally
         {
             GamePlayEventRecorder.End();
         }
+    }
+
+    private static void SendEngineReadyEnvelope()
+    {
+        SyncTargetFrameRateToDisplay();
+        var payload = new JObject
+        {
+            ["engine"] = "unity",
+            ["engineVersion"] = Application.unityVersion,
+            ["generation"] = Generation,
+            ["display"] = new JObject
+            {
+                ["targetFrameRate"] = Application.targetFrameRate,
+                ["screenRefreshRate"] = GetScreenRefreshRateHz()
+            }
+        };
+
+        var envelope = CytoidGameCoreEnvelope.Create($"ready-{Generation}", WireMessageTypes.EngineReady, payload);
+        NativeBridgeMessenger.Send(envelope.ToJsonString());
     }
 
     internal static async UniTask ShowHandoffOverlay()

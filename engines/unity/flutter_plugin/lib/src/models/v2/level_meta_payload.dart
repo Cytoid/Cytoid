@@ -241,15 +241,13 @@ class StoryboardSection {
       );
     }
     final locRaw = json['localizations'];
-    if (locRaw is! Map) {
-      throw FormatException(
-        'StoryboardSection.fromJson: "localizations" must be an object.',
-      );
-    }
+    final Map<String, dynamic> locMap = locRaw is Map
+        ? Map<String, dynamic>.from(locRaw)
+        : {}; // spec: "Empty object if no localizations" — absent/null treated as empty.
     return StoryboardSection(
       path: path,
       localizations: readStringMapEntries(
-        locRaw,
+        locMap,
         'localizations',
         'StoryboardSection',
       ),

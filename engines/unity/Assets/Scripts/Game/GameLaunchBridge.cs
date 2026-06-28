@@ -69,7 +69,7 @@ public static class GameLaunchBridge
         return ExternalGameContentProvider.FromJson(launchJson);
     }
 
-    internal static async UniTask LoadGameScene(IGameContentProvider provider)
+    internal static async UniTask LoadGameScene(IGameContentProvider provider, Action onLaunchFailed = null)
     {
         try
         {
@@ -85,6 +85,7 @@ public static class GameLaunchBridge
             {
                 Context.GameContentProvider = null;
             }
+            onLaunchFailed?.Invoke();
             GameResultBridge.EmitError(e);
         }
     }

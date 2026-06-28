@@ -110,7 +110,11 @@ public class GameBridgeRouter
         }
 
         EmitSessionStarted(envelope.Id, payload["mode"]?.Value<string>() ?? "ranked");
-        GameLaunchBridge.LoadGameScene(provider).Forget();
+        GameLaunchBridge.LoadGameScene(provider, onLaunchFailed: () =>
+        {
+            sessionState.ClearActiveSession();
+            GameResultBridge.ActiveSessionRecordPlayEvents = null;
+        }).Forget();
     }
 
     private async void HandleSessionCancel(CytoidGameCoreEnvelope envelope)

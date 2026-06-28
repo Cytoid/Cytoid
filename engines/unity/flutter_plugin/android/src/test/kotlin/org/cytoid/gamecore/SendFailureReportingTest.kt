@@ -66,7 +66,7 @@ class SendFailureReportingTest {
         assertEquals("expected exactly one emitted envelope", 1, captured.size)
 
         val envelope = JSONObject(captured.first())
-        assertEquals(2, envelope.getInt("v"))
+        assertEquals("cytoid.game-core.v2", envelope.getString("schema"))
         assertEquals("engine.error", envelope.getString("type"))
 
         val error = envelope.getJSONObject("payload").getJSONObject("error")
@@ -117,7 +117,7 @@ class SendFailureReportingTest {
         assertEquals("expected exactly one emitted envelope", 1, captured.size)
 
         val envelope = JSONObject(captured.first())
-        assertEquals(2, envelope.getInt("v"))
+        assertEquals("cytoid.game-core.v2", envelope.getString("schema"))
         assertEquals("session.failed", envelope.getString("type"))
         assertEquals("S1", envelope.getString("id"))
 

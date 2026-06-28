@@ -87,7 +87,7 @@ class CytoidGameCoreBridge private constructor(
                 if (isUnityGameplayActivity(activity)) {
                     exclusiveUnityActivity = activity
                     unityActivityInstanceCount++
-                    // Readiness is backed only by engine.ready / game.ready in
+                    // Readiness is backed only by engine.ready in
                     // onUnityMessage — NOT by Activity creation. Setting READY
                     // here lets waitForReady resolve before Unity's C# runtime
                     // has booted (P0 contract violation).
@@ -231,23 +231,14 @@ class CytoidGameCoreBridge private constructor(
         val type = runCatching { JSONObject(jsonString).optString("type") }.getOrDefault("")
         Log.i(TAG, "[CYTOID-DBG] -> Unity: type=$type state=${runtimeState.state} activeSessionId=${runtimeState.activeSessionId}")
 
+        if (!hasProtocolSchemaV2(jsonString)) {
+            Log.w(TAG, "[CYTOID-DBG] -> Unity: dropping schema-invalid envelope type=$type")
+            return
+        }
+
         when {
             isSessionStartMessage(jsonString) -> {
                 runtimeState.onSessionStarted(JSONObject(jsonString).optString("id"))
-            }
-            isGameStartMessage(jsonString) -> {
-                // v1 fallback: bridge.play.start arrives without v2 session.started,
-                // so treat it as READY→BUSY using the envelope id.
-                runtimeState.onSessionStarted(JSONObject(jsonString).optString("id"))
-            }
-            isSessionEndMessageV1(jsonString) -> {
-                // v1 terminal (bridge.play.end). NOTE: session.cancel is
-                // intentionally NOT a terminal trigger here — v2 § session.cancel
-                // is a request whose terminal outcome is the later session.result
-                // (handled in onUnityMessage). Ending the session on cancel would
-                // let a post-cancel runtime failure route as engine.error instead
-                // of the active-session session.result.
-                runtimeState.onSessionEnded()
             }
         }
 
@@ -262,12 +253,17 @@ class CytoidGameCoreBridge private constructor(
         val type = runCatching { JSONObject(jsonString).optString("type") }.getOrDefault("")
         Log.i(TAG, "[CYTOID-DBG] <- Unity: type=$type state=${runtimeState.state} activeSessionId=${runtimeState.activeSessionId}")
 
+        if (!hasProtocolSchemaV2(jsonString)) {
+            Log.w(TAG, "[CYTOID-DBG] <- Unity: dropping schema-invalid envelope type=$type")
+            return
+        }
+
         // GENERATION_CHANGE must run BEFORE the engine.ready envelope is
         // forwarded: if the engine recreated with an active session, the spec
         // requires the prior session's `runtime_recreated` session.result to
         // reach the host before the next engine.ready (v2 § Active-Session
         // Runtime Failure ordering).
-        if (isEngineReadyMessage(jsonString) || isHostReadyMessage(jsonString)) {
+        if (isEngineReadyMessage(jsonString)) {
             val wasActiveSession = runtimeState.activeSessionId
             runtimeState.onEngineReady()
             Log.i(TAG, "[CYTOID-DBG] <- Unity: ready received — state=${runtimeState.state}")
@@ -287,9 +283,6 @@ class CytoidGameCoreBridge private constructor(
             if (sessionId.isNotEmpty()) {
                 runtimeState.onSessionStarted(sessionId)
             }
-        }
-        if (isSessionResultMessage(jsonString) || isGameResultMessage(jsonString)) {
-            runtimeState.onSessionEnded()
         }
         // Inbound session.failed (engine reports its own unrecoverable failure):
         // apply the envelope's error so runtimeState → FAILED and queryRuntimeStatus
@@ -356,45 +349,35 @@ class CytoidGameCoreBridge private constructor(
         }.getOrNull()
     }
 
-    private fun isGameResultMessage(jsonString: String): Boolean {
-        return runCatching {
-            JSONObject(jsonString).getString("type") == "game.play.result"
-        }.getOrDefault(false)
-    }
-
     private fun isSessionResultMessage(jsonString: String): Boolean {
         return runCatching {
-            JSONObject(jsonString).getString("type") == "session.result"
-        }.getOrDefault(false)
-    }
-
-    private fun isHostReadyMessage(jsonString: String): Boolean {
-        return runCatching {
-            JSONObject(jsonString).getString("type") == "game.ready"
+            val json = JSONObject(jsonString)
+            json.getString("schema") == PROTOCOL_SCHEMA_V2 &&
+                json.getString("type") == "session.result"
         }.getOrDefault(false)
     }
 
     private fun isEngineReadyMessage(jsonString: String): Boolean {
         return runCatching {
-            JSONObject(jsonString).getString("type") == "engine.ready"
-        }.getOrDefault(false)
-    }
-
-    private fun isGameStartMessage(jsonString: String): Boolean {
-        return runCatching {
-            JSONObject(jsonString).getString("type") == "bridge.play.start"
+            val json = JSONObject(jsonString)
+            json.getString("schema") == PROTOCOL_SCHEMA_V2 &&
+                json.getString("type") == "engine.ready"
         }.getOrDefault(false)
     }
 
     private fun isSessionStartMessage(jsonString: String): Boolean {
         return runCatching {
-            JSONObject(jsonString).getString("type") == "session.start"
+            val json = JSONObject(jsonString)
+            json.getString("schema") == PROTOCOL_SCHEMA_V2 &&
+                json.getString("type") == "session.start"
         }.getOrDefault(false)
     }
 
     private fun isSessionStartedMessage(jsonString: String): Boolean {
         return runCatching {
-            JSONObject(jsonString).getString("type") == "session.started"
+            val json = JSONObject(jsonString)
+            json.getString("schema") == PROTOCOL_SCHEMA_V2 &&
+                json.getString("type") == "session.started"
         }.getOrDefault(false)
     }
 
@@ -404,21 +387,17 @@ class CytoidGameCoreBridge private constructor(
         }.getOrDefault(false)
     }
 
-    private fun isSessionEndMessageV1(jsonString: String): Boolean {
-        return runCatching {
-            JSONObject(jsonString).getString("type") == "bridge.play.end"
-        }.getOrDefault(false)
-    }
-
-    private fun isSessionEndedMessage(jsonString: String): Boolean {
-        return runCatching {
-            JSONObject(jsonString).getString("type") == "game.play.ended"
-        }.getOrDefault(false)
-    }
-
     private fun isSessionFailedMessage(jsonString: String): Boolean {
         return runCatching {
-            JSONObject(jsonString).getString("type") == "session.failed"
+            val json = JSONObject(jsonString)
+            json.getString("schema") == PROTOCOL_SCHEMA_V2 &&
+                json.getString("type") == "session.failed"
+        }.getOrDefault(false)
+    }
+
+    private fun hasProtocolSchemaV2(jsonString: String): Boolean {
+        return runCatching {
+            JSONObject(jsonString).getString("schema") == PROTOCOL_SCHEMA_V2
         }.getOrDefault(false)
     }
 
@@ -472,7 +451,7 @@ class CytoidGameCoreBridge private constructor(
             message = trigger.defaultMessage,
         )
         val envelope = JSONObject()
-            .put("v", PROTOCOL_VERSION_V2)
+            .put("schema", PROTOCOL_SCHEMA_V2)
             .put("id", sessionId)
             .put("type", "session.failed")
             .put(
@@ -547,7 +526,7 @@ class CytoidGameCoreBridge private constructor(
         }
         val sanitized = sanitizeExceptionMessage(error)
         val envelope = JSONObject()
-            .put("v", PROTOCOL_VERSION_V2)
+            .put("schema", PROTOCOL_SCHEMA_V2)
             .put("id", NATIVE_BRIDGE_ERROR_ID)
             .put("type", "engine.error")
             .put(
@@ -574,10 +553,7 @@ class CytoidGameCoreBridge private constructor(
         // before emit, and inbound session.failed is handled in onUnityMessage.
         // Including it here would downgrade BUSY/SUSPENDED → READY and drop the
         // error block from runtimeStatus().
-        if (isSessionResultMessage(jsonString = json) ||
-            isGameResultMessage(json) ||
-            isSessionEndedMessage(json)
-        ) {
+        if (isSessionResultMessage(jsonString = json)) {
             runtimeState.onSessionEnded()
         }
         val override = emitOverride
@@ -603,7 +579,7 @@ class CytoidGameCoreBridge private constructor(
         private const val ENGINE_MODE_UNITY = "unity"
         private const val ENGINE_MODE_MOCK = "mock"
         private const val REFRESH_RATE_APPLY_DELAY_MS = 1500L
-        private const val PROTOCOL_VERSION_V2 = 2
+        private const val PROTOCOL_SCHEMA_V2 = "cytoid.game-core.v2"
         private const val NATIVE_BRIDGE_ERROR_ID = "native-bridge"
 
         @Volatile
@@ -615,4 +591,3 @@ class CytoidGameCoreBridge private constructor(
         }
     }
 }
-

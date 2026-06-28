@@ -96,7 +96,7 @@ class RuntimeFailureSynthesisTest {
         val envelope = JSONObject(captured.first())
         assertEquals("S1", envelope.getString("id"))
         assertEquals("session.failed", envelope.getString("type"))
-        assertEquals(2, envelope.getInt("v"))
+        assertEquals("cytoid.game-core.v2", envelope.getString("schema"))
 
         val payload = envelope.getJSONObject("payload")
         assertEquals("S1", payload.getString("sessionId"))
@@ -170,7 +170,7 @@ class RuntimeFailureSynthesisTest {
         val envelope = JSONObject(captured.first())
         assertEquals("S2", envelope.getString("id"))
         assertEquals("session.failed", envelope.getString("type"))
-        assertEquals(2, envelope.getInt("v"))
+        assertEquals("cytoid.game-core.v2", envelope.getString("schema"))
         val payload = envelope.getJSONObject("payload")
         assertEquals("S2", payload.getString("sessionId"))
         assertFalse("payload must not carry outcome", payload.has("outcome"))
@@ -247,7 +247,7 @@ class RuntimeFailureSynthesisTest {
         // engine.ready arrives through onUnityMessage: gen FAILED→READY (1→2),
         // GENERATION_CHANGE synth must fire, THEN the engine.ready envelope.
         bridge.onUnityMessage(
-            """{"v":2,"id":"r1","type":"engine.ready","payload":{}}""",
+            """{"schema":"cytoid.game-core.v2","id":"r1","type":"engine.ready","payload":{}}""",
         )
 
         assertEquals("expected synth + engine.ready, in that order", 2, captured.size)
@@ -283,7 +283,7 @@ class RuntimeFailureSynthesisTest {
         // Engine delivers a real session.failed envelope (not native-synthesized).
         bridge.onUnityMessage(
             """
-            {"v":2,"id":"S1","type":"session.failed",
+            {"schema":"cytoid.game-core.v2","id":"S1","type":"session.failed",
              "payload":{"sessionId":"S1","timestamp":1782148800000,
                "error":{"code":"engine_crashed","message":"engine died"}}}
             """.trimIndent(),
@@ -297,8 +297,54 @@ class RuntimeFailureSynthesisTest {
         assertEquals("engine_crashed", error?.code)
     }
 
+    @Test
+    fun `emit session_result transitions active session to READY once`() {
+        val bridge = newBridgeWithCapture()
+        val captured = mutableListOf<String>()
+        bridge.emitOverride = { captured.add(it) }
+
+        bridge.runtimeState.onRequestStart()
+        bridge.runtimeState.onEngineReady()
+        bridge.runtimeState.onSessionStarted("S1")
+        assertEquals(RuntimeState.BUSY, bridge.runtimeState.state)
+
+        invokeEmit(
+            bridge,
+            """{"schema":"cytoid.game-core.v2","id":"S1","type":"session.result","payload":{"sessionId":"S1","outcome":{"kind":"completed"}}}""",
+        )
+
+        assertEquals(RuntimeState.READY, bridge.runtimeState.state)
+        assertNull(bridge.runtimeState.activeSessionId)
+        assertEquals("session.result is forwarded exactly once", 1, captured.size)
+    }
+
+    @Test
+    fun `schema invalid envelopes are ignored by native transition entry points`() {
+        val bridge = newBridgeWithCapture()
+        val captured = mutableListOf<String>()
+        bridge.emitOverride = { captured.add(it) }
+
+        bridge.runtimeState.onRequestStart()
+        bridge.runtimeState.onEngineReady()
+
+        bridge.onOutboundMessage("""{"id":"S1","type":"session.start","payload":{}}""")
+        assertEquals(RuntimeState.READY, bridge.runtimeState.state)
+
+        bridge.runtimeState.onSessionStarted("S1")
+        bridge.onUnityMessage("""{"schema":"wrong","id":"S1","type":"session.result","payload":{}}""")
+
+        assertEquals(RuntimeState.BUSY, bridge.runtimeState.state)
+        assertEquals("schema-invalid inbound envelope must not be forwarded", 0, captured.size)
+    }
+
     private fun newBridgeWithCapture(): CytoidGameCoreBridge =
         CytoidGameCoreBridge.getOrCreate(Activity())
+
+    private fun invokeEmit(bridge: CytoidGameCoreBridge, jsonString: String) {
+        val method = CytoidGameCoreBridge::class.java.getDeclaredMethod("emit", String::class.java)
+        method.isAccessible = true
+        method.invoke(bridge, jsonString)
+    }
 
     private fun setCompanionInstance(value: CytoidGameCoreBridge?) {
         val field = CytoidGameCoreBridge::class.java.getDeclaredField("instance")

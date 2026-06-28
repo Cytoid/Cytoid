@@ -137,7 +137,7 @@ class ActivityLifecycleSynthesisTest {
         assertEquals("expected exactly one emitted envelope", 1, captured.size)
 
         val envelope = JSONObject(captured.first())
-        assertEquals(2, envelope.getInt("v"))
+        assertEquals("cytoid.game-core.v2", envelope.getString("schema"))
         assertEquals("session.failed", envelope.getString("type"))
         assertEquals("S1", envelope.getString("id"))
 
@@ -192,7 +192,7 @@ class ActivityLifecycleSynthesisTest {
         bridge.runtimeState.onRequestStart()
         assertEquals(RuntimeState.STARTING, bridge.runtimeState.state)
 
-        // Create Activity (counter=1, state still STARTING) → game.ready ack → READY.
+        // Create Activity (counter=1, state still STARTING) → engine.ready ack → READY.
         fireOnActivityCreated(activity)
         bridge.runtimeState.onEngineReady()
         assertEquals(RuntimeState.READY, bridge.runtimeState.state)
@@ -201,22 +201,23 @@ class ActivityLifecycleSynthesisTest {
         // 10 sequential session cycles via low-level primitives.
         // Warm-resident: hideGameSurface does NOT destroy the Activity.
         for (cycle in 1..10) {
-            // Start session (bridge.play.start → BUSY).
             bridge.onOutboundMessage(
-                """{"v":2,"id":"S$cycle","type":"bridge.play.start","payload":{}}""",
+                """{"schema":"cytoid.game-core.v2","id":"S$cycle","type":"session.start","payload":{}}""",
             )
             assertEquals(
-                "cycle $cycle: state must be BUSY after play.start",
+                "cycle $cycle: state must be BUSY after session.start",
                 RuntimeState.BUSY,
                 bridge.runtimeState.state,
             )
 
-            // End session (bridge.play.end → READY).
             bridge.onOutboundMessage(
-                """{"v":2,"id":"S$cycle","type":"bridge.play.end","payload":{}}""",
+                """{"schema":"cytoid.game-core.v2","id":"S$cycle","type":"session.cancel","payload":{"sessionId":"S$cycle"}}""",
+            )
+            bridge.onUnityMessage(
+                """{"schema":"cytoid.game-core.v2","id":"S$cycle","type":"session.result","payload":{"sessionId":"S$cycle","outcome":{"kind":"cancelled","reason":"userBack"}}}""",
             )
             assertEquals(
-                "cycle $cycle: state must be READY after play.end",
+                "cycle $cycle: state must be READY after terminal session.result",
                 RuntimeState.READY,
                 bridge.runtimeState.state,
             )

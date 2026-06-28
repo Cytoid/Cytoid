@@ -48,7 +48,8 @@ class MockGameCoreBridge(
         val mods = launch?.optJSONArray("mods") ?: JSONArray()
 
         if (!isValidLaunch(launch, mode)) {
-            scheduleResult(sessionId, rejectedResult(sessionId, mode, mods))
+            val rejectedEnvelope = envelope(sessionId, "session.result", rejectedResult(sessionId, mode, mods)).toString()
+            emit(rejectedEnvelope)
             return
         }
 

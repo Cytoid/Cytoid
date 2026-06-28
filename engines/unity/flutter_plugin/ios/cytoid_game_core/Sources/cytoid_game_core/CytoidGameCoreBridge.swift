@@ -468,7 +468,14 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
 
     let type = messageType(jsonString)
     if type == "session.result" {
-      runtimeState.onSessionEnded()
+      let resultId = messageId(jsonString)
+      let outcomeKind = outcomeKind(jsonString)
+      let isRejected = outcomeKind == "rejected"
+      if resultId == nil || resultId == runtimeState.activeSessionId {
+        if !isRejected {
+          runtimeState.onSessionEnded()
+        }
+      }
     }
 
     if let emitOverride {
@@ -484,6 +491,18 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
     DispatchQueue.main.async { [weak self] in
       self?.eventSink?(jsonString)
     }
+  }
+
+  private func outcomeKind(_ jsonString: String) -> String? {
+    guard
+      let data = jsonString.data(using: .utf8),
+      let envelope = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+      let payload = envelope["payload"] as? [String: Any],
+      let outcome = payload["outcome"] as? [String: Any]
+    else {
+      return nil
+    }
+    return outcome["kind"] as? String
   }
 
   func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {

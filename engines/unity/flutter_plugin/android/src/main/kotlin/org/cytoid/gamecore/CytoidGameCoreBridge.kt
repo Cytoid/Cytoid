@@ -549,12 +549,16 @@ class CytoidGameCoreBridge private constructor(
     }
 
     private fun emit(json: String) {
-        // session.failed is intentionally excluded: synth already did onFailure
-        // before emit, and inbound session.failed is handled in onUnityMessage.
-        // Including it here would downgrade BUSY/SUSPENDED → READY and drop the
-        // error block from runtimeStatus().
         if (isSessionResultMessage(jsonString = json)) {
-            runtimeState.onSessionEnded()
+            val resultId = runCatching { JSONObject(json).getString("id") }.getOrNull()
+            val payload = runCatching { JSONObject(json).optJSONObject("payload") }.getOrNull()
+            val outcomeKind = payload?.optJSONObject("outcome")?.optString("kind")
+            val isRejected = outcomeKind == "rejected"
+            if (resultId == null || resultId == runtimeState.activeSessionId) {
+                if (!isRejected) {
+                    runtimeState.onSessionEnded()
+                }
+            }
         }
         val override = emitOverride
         if (override != null) {

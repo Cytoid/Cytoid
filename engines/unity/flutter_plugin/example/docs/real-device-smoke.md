@@ -124,6 +124,174 @@ The interaction between T9's SUSPENDED state and T7's `PlaySession.run()` /
       (via T9's SURFACE_LOST trigger) rather than hanging until the
       `waitForReady` timeout.
 
+## C# Wave v2 Contracts
+
+The following sections verify the C# engine-side v2 contracts introduced in
+the migration plan. Each test is performed on both Android and iOS real devices.
+
+### T-engine.ready — startup payload shape and generation
+
+Verify the engine emits a properly shaped `engine.ready` envelope after startup
+and that the generation counter increments across engine recreations.
+
+- [ ] After cold app launch, verify the host receives `engine.ready` with:
+      - `schema: "cytoid.game-core.v2"`
+      - `payload.engine: "unity"`
+      - `payload.engineVersion: "6000.0.75f1"` (or current Unity version)
+      - `payload.generation: 1` (int, starts at 1)
+      - Optional `payload.display` object with `targetFrameRate` and
+        `screenRefreshRate` (may be omitted on some devices)
+- [ ] Force-quit the Unity Activity/process mid-session and relaunch. Verify
+      the next `engine.ready` carries `generation: 2` (incremented).
+- [ ] Repeat the recreation cycle once more. Verify `generation: 3`.
+- [ ] Confirm no `engine.ready` emits twice without a failure/recreation in
+      between (generation is idempotent within a single runtime lifecycle).
+
+Reference: `docs/host-protocol-v2.md:231-260`.
+
+### T-session.started — session acknowledgment ordering
+
+Verify `session.started` is emitted after successful `session.start` validation,
+before any `session.result`, and carries the correct echo payload.
+
+- [ ] Send a valid `session.start` with `mode: "ranked"` and a complete level.
+      Confirm the host receives:
+      - `type: "session.started"` with the same `id` as the request
+      - `payload.sessionId` matching the envelope `id`
+      - `payload.mode` echoing `"ranked"`
+      - `payload.generation` matching the current `engine.ready` generation
+- [ ] Verify `session.started` arrives BEFORE any `session.result` or
+      `session.telemetry` for that session.
+- [ ] Send a malformed `session.start` (missing `level` field). Confirm the
+      host receives `session.result` with `outcome.kind = "rejected"` and NO
+      `session.started` is emitted (rejection bypasses the ack).
+- [ ] Send a `session.start` while another session is active. Confirm the
+      response is `session.result` with `outcome.kind = "rejected"`,
+      `error.code = "overlapping_session"` and NO `session.started`.
+
+Reference: `docs/host-protocol-v2.md:908-937`.
+
+### T-session.telemetry — opt-in recording and auto-mod suppression
+
+Verify telemetry is emitted only when requested and that auto-class mods
+suppress it completely.
+
+- [ ] Launch a session with `options.recordPlayEvents: true` and NO auto-class
+      mods. Confirm:
+      - `type: "session.telemetry` arrives BEFORE `session.result`
+      - `payload.playEvents.format: "json.v1"`
+      - `payload.playEvents.events` is a non-empty array of touch events
+      - Each event has short-name fields: `t` (int, ms), `f` (int, finger),
+        `p` (string: "down"/"move"/"up"), `x` (int, 0-65535), `y` (int, 0-65535)
+- [ ] Verify `session.result` telemetry summary carries:
+      - `telemetry.available: true`
+      - `telemetry.eventsRecorded` > 0
+      - `telemetry.bytes` > 0 (approximate uncompressed size)
+- [ ] Launch a session with `options.recordPlayEvents: true` AND an auto-class
+      mod (e.g., `mods: ["auto"]`). Confirm:
+      - NO `session.telemetry` envelope arrives
+      - `session.result.telemetry.available: false`
+      - `session.result.telemetry.eventsRecorded: 0`
+      - `session.result.telemetry.bytes: 0`
+      - `session.result.flags.usedAutoMod: true`
+- [ ] Launch a session with `options.recordPlayEvents: false`. Confirm:
+      - NO `session.telemetry` envelope arrives
+      - `session.result.telemetry.available: false`
+
+Reference: `docs/host-protocol-v2.md:974-1014, 866-881`.
+
+### T-session.result-outcomes — all outcome kinds
+
+Verify each outcome kind produces the correct `session.result` shape.
+
+#### completed — normal finish
+
+- [ ] Play a level normally and let it finish. Verify:
+      - `outcome.kind: "completed"`
+      - `level` object present: `id`, `title`, `difficulty`, `difficultyLevel`
+      - `score` object present with full breakdown
+      - `flags.usedAutoMod: false` (no auto-mod active)
+      - `mode` and `mods` echo the launch request
+      - `timestamp` is a Unix epoch millisecond integer
+
+#### failed/hpDepleted — HP depletion
+
+- [ ] Drain HP to zero during play (easy chart, miss repeatedly). Verify:
+      - `outcome.kind: "failed"`
+      - `outcome.reason: "hpDepleted"`
+      - `score` object present (partial score data)
+      - No `calibration` or `tier` payloads (not a calibration/tier session)
+
+#### cancelled/userBack — host-initiated cancellation
+
+- [ ] Start a session and send `session.cancel` with `reason: "userBack"` mid-play.
+      Verify:
+      - `outcome.kind: "cancelled"`
+      - `outcome.reason: "userBack"` (echoes the cancel request)
+      - No `score` object (cancelled mid-game, no meaningful completion data)
+      - `sessionId` matches the cancelled session
+
+#### tierRetry — engine-side retry (if tier mode is reachable)
+
+- [ ] If tier mode is reachable from the example app, start a tier session and
+      trigger an engine-side retry (e.g., in-engine retry affordance). Verify:
+      - `outcome.kind: "tierRetry"`
+      - `outcome.tierId` present (from the tier launch payload)
+      - `outcome.stageIndex` present (stage that triggered retry)
+      - `tier` object still present with partial stage state:
+        `tierId`, `stageIndex`, `stageCount`, `health`, `maxHealth`, `combo`
+
+#### calibration — calibration mode completion
+
+- [ ] Run a calibration session. Verify:
+      - `outcome.kind: "calibration"`
+      - `calibration` object present with optional:
+        `baseNoteOffset` (global calibrated offset)
+        `levelNoteOffset` (level-specific calibrated offset)
+      - No `score` object (calibration does not produce scoring data)
+
+#### rejected — malformed session.start
+
+- [ ] Send a malformed `session.start` (e.g., missing `level` field). Verify:
+      - `outcome.kind: "rejected"`
+      - `error` object present:
+        `error.code` (e.g., `"invalid_payload"`)
+        `error.message` (human-readable diagnostic)
+        Optional `error.details` with structured debug info
+      - NO `session.started` was emitted (rejection bypasses ack)
+      - `sessionId` matches the rejected request id
+
+Reference: `docs/host-protocol-v2.md:1054-1233`.
+
+### T-settings.applied — realtime vs deferred field classification
+
+Verify that `settings.apply` correctly classifies fields as applied, deferred, or
+rejected based on realtime-safety rules and session state.
+
+- [ ] During active play, send `settings.apply` with a realtime-safe field:
+      `runtime.musicVolume: 0.5`. Verify:
+      - `settings.applied` envelope arrives
+      - `payload.applied: true`
+      - `payload.appliedFields` contains `"runtime.musicVolume"`
+      - `payload.deferredFields` is empty (or does not contain the realtime field)
+      - `payload.rejectedFields` is empty
+- [ ] During active play, send `settings.apply` with a non-realtime field:
+      `visual.noteSize: 1`. Verify:
+      - `payload.appliedFields` does NOT contain `"visual.noteSize"`
+      - `payload.deferredFields` contains `"visual.noteSize"` (deferred to next
+        `session.start`)
+- [ ] During active play, send `settings.apply` with both a realtime field
+      (`runtime.musicVolume`) and a non-realtime field (`visual.noteSize`).
+      Verify:
+      - `payload.appliedFields` contains `"runtime.musicVolume"`
+      - `payload.deferredFields` contains `"visual.noteSize"`
+- [ ] While idle (no active session), send `settings.apply` with
+      `visual.noteSize: 1`. Verify:
+      - `payload.appliedFields` contains `"visual.noteSize"` (applied immediately)
+      - `payload.deferredFields` is empty
+
+Reference: `docs/host-protocol-v2.md:386-417, 740-750`.
+
 ## Sign-off
 
 Record the following for each release candidate:

@@ -13,3 +13,6 @@ Kept the plan's spec-interpretation default for `EndActivePlayFromGame`: there i
 
 ## 2026-06-28 T6 — Unity exception log severity
 Mapped Unity `LogType.Exception` to v2 log `level="error"` instead of `fatal`; Unity exceptions are common recoverable script/runtime diagnostics in this bridge, while v2 `fatal` is better reserved for future crash/runtime-death batches.
+
+## 2026-06-28 Wave 4 — example settings propagation
+Removed the example's eager settings push on settings changes. Settings now flow as a full five-group `SettingsPayload` inside each `SessionLaunchPayload`; standalone `settings.apply` is no longer used by the example UI.

@@ -273,7 +273,7 @@ public sealed class ExternalGameContentProvider : IGameContentProvider
         ApplyRuntimeSettings(settings, runtime);
         ApplyVisualSettings(settings, visual);
         ApplyAudioSettings(settings, audio);
-        ApplyNoteStyleSettings(settings, noteStyle);
+        ApplyNoteStyleSettings(settings, noteStyle, requireFullSnapshot);
         return settings;
     }
 
@@ -394,13 +394,34 @@ public sealed class ExternalGameContentProvider : IGameContentProvider
         settings.androidDspBufferSize = OptionalInt(audio, "androidDspBufferSize");
     }
 
-    private static void ApplyNoteStyleSettings(GameLaunchSettings settings, JObject noteStyle)
+    private static void ApplyNoteStyleSettings(GameLaunchSettings settings, JObject noteStyle, bool requireFullSnapshot)
     {
         if (noteStyle == null) return;
-        settings.hitboxSizes = FlattenHitboxSizes(noteStyle["hitboxSizes"] as JObject, "settings.noteStyle.hitboxSizes");
-        settings.noteRingColors = FlattenNoteTypeStringMap(noteStyle["ringColors"] as JObject, "settings.noteStyle.ringColors");
-        settings.noteFillColors = FlattenNoteTypeStringMap(noteStyle["fillColors"] as JObject, "settings.noteStyle.fillColors");
-        settings.noteFillColorsAlt = FlattenNoteTypeStringMap(noteStyle["fillColorsAlt"] as JObject, "settings.noteStyle.fillColorsAlt");
+
+        var hitboxSizesToken = noteStyle["hitboxSizes"];
+        if (requireFullSnapshot || (hitboxSizesToken != null && hitboxSizesToken.Type != JTokenType.Null))
+        {
+            settings.hitboxSizes = FlattenHitboxSizes(hitboxSizesToken as JObject, "settings.noteStyle.hitboxSizes");
+        }
+
+        var ringColorsToken = noteStyle["ringColors"];
+        if (requireFullSnapshot || (ringColorsToken != null && ringColorsToken.Type != JTokenType.Null))
+        {
+            settings.noteRingColors = FlattenNoteTypeStringMap(ringColorsToken as JObject, "settings.noteStyle.ringColors");
+        }
+
+        var fillColorsToken = noteStyle["fillColors"];
+        if (requireFullSnapshot || (fillColorsToken != null && fillColorsToken.Type != JTokenType.Null))
+        {
+            settings.noteFillColors = FlattenNoteTypeStringMap(fillColorsToken as JObject, "settings.noteStyle.fillColors");
+        }
+
+        var fillColorsAltToken = noteStyle["fillColorsAlt"];
+        if (requireFullSnapshot || (fillColorsAltToken != null && fillColorsAltToken.Type != JTokenType.Null))
+        {
+            settings.noteFillColorsAlt = FlattenNoteTypeStringMap(fillColorsAltToken as JObject, "settings.noteStyle.fillColorsAlt");
+        }
+
         settings.useFillColorForDragChildNodes = OptionalBool(noteStyle, "useFillColorForDragChildNodes");
     }
 
@@ -461,7 +482,15 @@ public sealed class ExternalGameContentProvider : IGameContentProvider
 
             foreach (var field in groupObj.Properties())
             {
-                appliedFields.Add($"{group.Name}.{field.Name}");
+                var fullPath = $"{group.Name}.{field.Name}";
+                if (KnownAppliedFields.Contains(fullPath))
+                {
+                    appliedFields.Add(fullPath);
+                }
+                else
+                {
+                    rejectedFields.Add(fullPath);
+                }
             }
         }
     }
@@ -538,5 +567,46 @@ public sealed class ExternalGameContentProvider : IGameContentProvider
         ["flick"] = NoteType.Flick,
         ["cDragHead"] = NoteType.CDragHead,
         ["cDragChild"] = NoteType.CDragChild
+    };
+
+    private static readonly HashSet<string> KnownAppliedFields = new HashSet<string>
+    {
+        // profile
+        "profile.baseNoteOffset",
+        "profile.levelNoteOffset",
+        "profile.headsetNoteOffset",
+        "profile.judgmentOffset",
+        "profile.hitTapticFeedback",
+        // runtime
+        "runtime.musicVolume",
+        "runtime.soundEffectsVolume",
+        // visual
+        "visual.noteSize",
+        "visual.horizontalMargin",
+        "visual.verticalMargin",
+        "visual.restrictPlayAreaAspectRatio",
+        "visual.coverOpacity",
+        "visual.displayStoryboardEffects",
+        "visual.displayBoundaries",
+        "visual.skipMusicOnCompletion",
+        "visual.displayEarlyLateIndicators",
+        "visual.displayNoteIds",
+        "visual.useExperimentalNoteAr",
+        "visual.useExperimentalNoteAnimations",
+        "visual.clearEffectsSize",
+        "visual.displayProfiler",
+        "visual.adaptOverlayToSafeArea",
+        "visual.graphicsQuality",
+        // audio
+        "audio.hitSound",
+        "audio.holdHitSoundTiming",
+        "audio.useNativeAudio",
+        "audio.androidDspBufferSize",
+        // noteStyle
+        "noteStyle.hitboxSizes",
+        "noteStyle.ringColors",
+        "noteStyle.fillColors",
+        "noteStyle.fillColorsAlt",
+        "noteStyle.useFillColorForDragChildNodes"
     };
 }

@@ -228,6 +228,8 @@ The Flutter client should use this single check for long-running liveness. A
 healthy active session is represented by `state = "busy"` and the matching
 `activeSessionId`.
 
+The host SHOULD arm a self-scheduling health.check watchdog after `session.start`. The watchdog sends `health.check` every `pollInterval`; the FIRST check's `health.ok` response timeout is 30s (the engine may be cold/loading assets), and SUBSEQUENT checks use a 10s response timeout (steady-state play). The host MAY skip a check when a non-terminal engine-originated envelope (`session.started`, `logs.batch`, `settings.applied`, `engine.error`, or a prior `health.ok`) arrived within the last `pollInterval` — a responsive engine has already proven its liveness. On response timeout, the host synthesizes `session.failed` with `error.code = "runtime_unreachable"` (see [Active-Session Runtime Failure](#active-session-runtime-failure)); the host cannot distinguish a frozen main loop from a process-level unreachable at this layer, so the `message` carries the watchdog provenance for debugging.
+
 ## `engine.ready`
 
 Engine -> Flutter.
@@ -1242,12 +1244,15 @@ The engine does not emit `session.failed`; the C# engine in particular is
 v1-only on the wire and emits no v2 outcomes at all. The bridge's
 `synthesizeRuntimeFailure` primitive is the sole producer of this envelope.
 
+The host-side health.check watchdog is a SEPARATE producer of `session.failed` from the native bridge; both use `runtime_unreachable` because the host cannot distinguish a frozen main loop from a process-level unreachable — the `message` field carries the provenance.
+
 | Scenario | Required behavior |
 |---|---|
 | Engine exception during active session | Native bridge synthesizes `session.failed` with `error.code = "runtime_exception"`. |
 | Native bridge cannot deliver messages (Unity process gone) | Native bridge synthesizes `session.failed` with `error.code = "runtime_unreachable"`. |
 | Engine generation increments while `activeSessionId` is non-null | Native bridge synthesizes `session.failed` for the active session with `error.code = "runtime_recreated"`, BEFORE emitting the next `engine.ready`. |
 | Surface loss during active play | Native bridge synthesizes `session.failed` with `error.code = "runtime_surface_lost"`. |
+| Host-side health.check watchdog timeout | Host (Dart) synthesizes `session.failed` with `error.code = "runtime_unreachable"`. |
 
 After any runtime-failed termination:
 
@@ -1372,7 +1377,7 @@ Recommended error codes:
 | `runtime_unavailable` | Engine not initialized or no artifact available. | `engine.error`, or `session.result` with `outcome.kind = "rejected"` if a session was requested. |
 | `runtime_not_ready` | Engine exists but has not emitted `engine.ready` for the current generation. | `engine.error`, or `session.result` with `outcome.kind = "rejected"`. |
 | `runtime_recreated` | Engine generation incremented while a session was active. | `session.failed`. |
-| `runtime_unreachable` | Native bridge cannot reach the engine process. | `session.failed`. |
+| `runtime_unreachable` | Native bridge cannot reach the engine process, OR host-side health.check watchdog detected the engine stopped responding. Producer (native bridge vs host) is distinguished by the error `message`. | `session.failed`. |
 | `runtime_surface_lost` | Engine surface was lost during active play. | `session.failed`. |
 | `runtime_exception` | Unhandled engine exception during a session. | `session.failed`. |
 | `overlapping_session` | A `session.start` arrived while another session was active. | `session.result` with `outcome.kind = "rejected"`. |

@@ -15,8 +15,8 @@ on them.
   are changed together. There is no requirement to support older protocol
   versions at runtime.
 - **One session, one terminal outcome:** every `session.start` must end with
-  exactly one `session.result`, including failure, cancellation, rejection, tier
-  retry, and calibration.
+  exactly one of `session.result` or `session.failed`, including failure,
+  cancellation, rejection, tier retry, calibration, and runtime death.
 - **Readiness is acknowledged by the engine:** artifact presence does not imply
   readiness. The host must wait for `engine.ready` or an equivalent native API
   that is backed by engine acknowledgement.
@@ -144,7 +144,7 @@ payload value outside the documented enum sets. Rejections caused by
 | Type | Direction | Description |
 |------|-----------|-------------|
 | `engine.ready` | Engine -> Flutter | Engine initialized and can accept a session. |
-| `engine.error` | Engine -> Flutter | Non-session runtime error. Session-specific errors use `session.result`. |
+| `engine.error` | Engine -> Flutter | Non-session runtime error. Active-session runtime death uses `session.failed`; other session errors use `session.result`. |
 | `health.check` | Flutter -> Engine | Single liveness/state check during startup or active play. |
 | `health.ok` | Engine -> Flutter | Response to `health.check`. |
 | `settings.apply` | Flutter -> Engine | Apply runtime/profile settings outside a launch payload. |
@@ -153,7 +153,8 @@ payload value outside the documented enum sets. Rejections caused by
 | `session.started` | Engine -> Flutter | Acknowledgement that `session.start` was accepted and gameplay is beginning. Not emitted on rejection. |
 | `session.cancel` | Flutter -> Engine | Request cancellation of the active session. |
 | `session.telemetry` | Engine -> Flutter | Optional telemetry stream when requested by launch options. |
-| `session.result` | Engine -> Flutter | The only terminal gameplay message for a session. |
+| `session.result` | Engine -> Flutter | Terminal gameplay outcome message (engine-active outcomes). Runtime death uses `session.failed`. |
+| `session.failed` | Engine -> Flutter | Terminal runtime-failure message for an active session (native-bridge synthesis). |
 | `logs.batch` | Engine -> Flutter | Buffered engine logs. |
 
 Removed v1 message types:
@@ -268,7 +269,7 @@ engine MUST route errors into the matching response type when one exists:
 |---|---|
 | `session.start` payload validation | `session.result` with `outcome.kind = "rejected"` |
 | `settings.apply` field validation | `settings.applied` with `rejectedFields` / `errors` |
-| Active session runtime failure | `session.result` with `outcome.kind = "runtimeFailed"` (see [Active-Session Runtime Failure](#active-session-runtime-failure)) |
+| Active session runtime failure | `session.failed` (see [Active-Session Runtime Failure](#active-session-runtime-failure)) |
 | Mismatched / stale / duplicate `session.cancel` | `engine.error` with the relevant `code` (see [Cancel Edge Cases](#cancel-edge-cases)) |
 | Other background runtime errors | `engine.error` |
 
@@ -1117,7 +1118,7 @@ Fields:
 | `tier` | object | conditional | Required when `mode = "tier"`, regardless of outcome kind. Carries the per-stage ending state. |
 | `flags` | object | yes | See [FlagsPayload](#flagspayload). |
 | `telemetry` | object | yes | See [ResultTelemetryPayload](#resulttelemetrypayload). |
-| `error` | object | conditional | Required when `outcome.kind = "rejected"` or when the result reports a runtime failure path. See [ErrorPayload](#errorpayload). |
+| `error` | object | conditional | Required when `outcome.kind = "rejected"`. See [ErrorPayload](#errorpayload). |
 | `timestamp` | int | yes | Unix epoch milliseconds. |
 
 ### FlagsPayload
@@ -1231,35 +1232,22 @@ Calibration session completed with calibrated offsets.
 
 `calibration` must be present on the result payload.
 
-#### Runtime Failed
-
-The session terminated because the runtime failed, not because of gameplay.
-Examples: engine exception, native bridge death, surface loss, or runtime
-recreation (generation change) while the session was active.
-
-```json
-{
-  "kind": "runtimeFailed"
-}
-```
-
-`error` must be present on the result payload. The code SHOULD be from the
-`runtime_*` family (`runtime_recreated`, `runtime_exception`,
-`runtime_surface_lost`, `runtime_unreachable`) when the failure is a pure
-runtime issue; specific failure types MAY use a more precise code (for example
-`asset_load_failed` when an asset failed to load mid-play).
-
 ### Active-Session Runtime Failure
 
 When the engine runtime fails or is recreated while a session is active, the
-session MUST still terminate with exactly one `session.result`. The contract:
+session MUST still terminate with exactly one terminal envelope. Because the
+runtime itself may be dead or unreachable, the NATIVE BRIDGE synthesizes a
+`session.failed` envelope for the active session — never a `session.result`.
+The engine does not emit `session.failed`; the C# engine in particular is
+v1-only on the wire and emits no v2 outcomes at all. The bridge's
+`synthesizeRuntimeFailure` primitive is the sole producer of this envelope.
 
 | Scenario | Required behavior |
 |---|---|
-| Engine exception during active session | Engine (or native bridge) emits `session.result` with `outcome.kind = "runtimeFailed"` and `error.code = "runtime_exception"`. |
-| Native bridge cannot deliver messages (Unity process gone) | Native bridge synthesizes `session.result` with `outcome.kind = "runtimeFailed"` and `error.code = "runtime_unreachable"`. |
-| Engine generation increments while `activeSessionId` is non-null | Native bridge synthesizes `session.result` for the active session with `outcome.kind = "runtimeFailed"` and `error.code = "runtime_recreated"`, BEFORE emitting the next `engine.ready`. |
-| Surface loss during active play | Engine emits `session.result` with `outcome.kind = "runtimeFailed"` and `error.code = "runtime_surface_lost"`. |
+| Engine exception during active session | Native bridge synthesizes `session.failed` with `error.code = "runtime_exception"`. |
+| Native bridge cannot deliver messages (Unity process gone) | Native bridge synthesizes `session.failed` with `error.code = "runtime_unreachable"`. |
+| Engine generation increments while `activeSessionId` is non-null | Native bridge synthesizes `session.failed` for the active session with `error.code = "runtime_recreated"`, BEFORE emitting the next `engine.ready`. |
+| Surface loss during active play | Native bridge synthesizes `session.failed` with `error.code = "runtime_surface_lost"`. |
 
 After any runtime-failed termination:
 
@@ -1269,8 +1257,46 @@ After any runtime-failed termination:
 - `activeSessionId` MUST be cleared.
 - The next `engine.ready` (if any) MUST carry an incremented `generation`.
 
-`engine.error` is not used for these paths; the `session.result` carries the
-terminal outcome so the host's session promise is preserved.
+`engine.error` is not used for active-session failures; `session.failed`
+carries the terminal outcome so the host's session promise is preserved.
+
+### `session.failed`
+
+Engine -> Flutter. Synthesized by the NATIVE BRIDGE (never the engine) when a
+session is killed by a runtime-side event the engine itself cannot report. The
+engine's own terminal outcomes use `session.result`; `session.failed` carries
+ONLY the failure — the runtime is dead and cannot produce score, flags, or
+telemetry, so those fields are absent by design.
+
+```json
+{
+  "schema": "cytoid.game-core.v2",
+  "id": "<sessionId>",
+  "type": "session.failed",
+  "payload": {
+    "sessionId": "<sessionId>",
+    "error": {
+      "code": "runtime_unreachable",
+      "message": "Native bridge cannot deliver messages to the engine.",
+      "details": {}
+    },
+    "timestamp": 1782148800000
+  }
+}
+```
+
+Fields:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `sessionId` | string | yes | Same as envelope `id`. The session that failed. |
+| `error` | object | yes | See [ErrorPayload](#errorpayload). `code` is from the `runtime_*` family (`runtime_recreated`, `runtime_unreachable`, `runtime_surface_lost`, `runtime_exception`); specific failure types MAY use a more precise code (e.g. `asset_load_failed` mid-play). |
+| `timestamp` | int | yes | Unix epoch milliseconds. |
+
+This envelope carries NO `outcome`, `flags`, `telemetry`, `mode`, `level`,
+`score`, `calibration`, or `tier` field. The envelope's existence IS the
+runtime-failure signal; the previous `session.result` runtime-death outcome
+shape is removed.
 
 ### LevelResultPayload
 
@@ -1345,10 +1371,10 @@ Recommended error codes:
 |---|---|---|
 | `runtime_unavailable` | Engine not initialized or no artifact available. | `engine.error`, or `session.result` with `outcome.kind = "rejected"` if a session was requested. |
 | `runtime_not_ready` | Engine exists but has not emitted `engine.ready` for the current generation. | `engine.error`, or `session.result` with `outcome.kind = "rejected"`. |
-| `runtime_recreated` | Engine generation incremented while a session was active. | `session.result` with `outcome.kind = "runtimeFailed"`. |
-| `runtime_unreachable` | Native bridge cannot reach the engine process. | `session.result` with `outcome.kind = "runtimeFailed"`. |
-| `runtime_surface_lost` | Engine surface was lost during active play. | `session.result` with `outcome.kind = "runtimeFailed"`. |
-| `runtime_exception` | Unhandled engine exception during a session. | `session.result` with `outcome.kind = "runtimeFailed"`. |
+| `runtime_recreated` | Engine generation incremented while a session was active. | `session.failed`. |
+| `runtime_unreachable` | Native bridge cannot reach the engine process. | `session.failed`. |
+| `runtime_surface_lost` | Engine surface was lost during active play. | `session.failed`. |
+| `runtime_exception` | Unhandled engine exception during a session. | `session.failed`. |
 | `overlapping_session` | A `session.start` arrived while another session was active. | `session.result` with `outcome.kind = "rejected"`. |
 | `unknown_session` | `session.cancel` referenced an unknown session id. | `engine.error`. |
 | `not_active` | `session.cancel` arrived after the session had already terminated. | `engine.error`. |
@@ -1358,7 +1384,7 @@ Recommended error codes:
 | `invalid_mods` | Mod list failed validation (unknown id or conflict). | `session.result` with `outcome.kind = "rejected"`. |
 | `invalid_level_meta` | `level.meta` failed schema validation. | `session.result` with `outcome.kind = "rejected"`. |
 | `missing_asset` | Referenced VFS path does not exist. | `session.result` with `outcome.kind = "rejected"`. |
-| `asset_load_failed` | VFS path exists but content could not be parsed/loaded. | `session.result` with `outcome.kind = "rejected"` (pre-play) or `outcome.kind = "runtimeFailed"` (mid-play). |
+| `asset_load_failed` | VFS path exists but content could not be parsed/loaded. | `session.result` with `outcome.kind = "rejected"` (pre-play) or `session.failed` (mid-play). |
 | `unsupported_mode` | `mode` is not a known session mode. | `session.result` with `outcome.kind = "rejected"`. |
 | `engine_exception` | Unhandled engine exception outside any session. | `engine.error`. |
 

@@ -307,9 +307,8 @@ Expected behavior:
 
 - health checks stop responding or return `failed` after a configured point.
 - if a session was active at the failure point, the mock MUST synthesize
-  `session.result` with `outcome.kind = "runtimeFailed"` and `error.code` from
-  the `runtime_*` family (typically `runtime_unreachable`), matching the
-  primary spec's [Active-Session Runtime Failure](host-protocol-v2.md#active-session-runtime-failure)
+  `session.failed` with `error.code` from the `runtime_*` family (typically
+  `runtime_unreachable`), matching the primary spec's [Active-Session Runtime Failure](host-protocol-v2.md#active-session-runtime-failure)
   contract.
 
 ### `autoModSuppressesRecording`
@@ -350,7 +349,7 @@ Required v2 behavior:
 - `settings.apply` / `settings.applied`
 - `session.start` → `session.started` (accept ack) or `session.result` (reject with `outcome.kind = "rejected"`)
 - `session.cancel` → `session.result` with `outcome.kind = "cancelled"`
-- active-session runtime failure → `session.result` with `outcome.kind = "runtimeFailed"` (see `engineLost` scenario)
+- active-session runtime failure → `session.failed` (see `engineLost` scenario)
 - optional `session.telemetry` (suppressed when auto-class mod is active)
 - `logs.batch`
 

@@ -20,17 +20,16 @@ can cross-reference the expected envelope shape.
 ## T4 — Runtime failure synthesis primitive
 
 Verify the active-session routing rule: a synthesized runtime failure MUST
-arrive as `session.result` with `outcome.kind = "runtimeFailed"`, NEVER as
-`engine.error`, when a session is active.
+arrive as `session.failed`, NEVER as `engine.error`, when a session is active.
 
 - [ ] Force the engine into a `generationChange` recovery mid-session on
       Android (e.g., trigger Unity Activity recreation while a play session is
-      active). Confirm the host receives exactly one `session.result` envelope
-      with `outcome.kind = "runtimeFailed"` and `error.code = "runtime_recreated"`.
+      active). Confirm the host receives exactly one `session.failed` envelope
+      with `error.code = "runtime_recreated"`.
 - [ ] Verify no `engine.error` envelope is emitted for the same session —
       the active-session routing rule forbids both.
 - [ ] iOS analog: trigger `unityDidUnload` while a session is active. Confirm
-      `error.code = "runtime_surface_lost"` arrives via `session.result` only.
+      `error.code = "runtime_surface_lost"` arrives via `session.failed` only.
 
 Reference: `.omo/evidence/task-4-v2-host-impl-failure.json` is the contract
 fixture for the synthesized envelope shape.
@@ -47,8 +46,8 @@ Failure contract, with the sanitized `error.message` form.
       `"<ExceptionClassSimpleName>: <first message line>"`, and NO
       `details.stackTrace` field.
 - [ ] With an active session (`activeSessionId != null`), force the same
-      failure. Confirm the host receives `session.result` ONLY
-      (`error.code = "runtime_unreachable"`, `outcome.kind = "runtimeFailed"`),
+      failure. Confirm the host receives `session.failed` ONLY
+      (`error.code = "runtime_unreachable"`),
       and receives NO `engine.error` envelope.
 - [ ] Repeat both cases for `returnToFlutterActivity` failure. Same routing.
 
@@ -58,7 +57,7 @@ fixture for the active-session send-failure envelope.
 ## T6 — iOS framework-load failure
 
 Verify that iOS framework-load failure at startup emits `engine.error`
-(pre-session routing — NEVER `session.result`) with the typed `error.code`
+(pre-session routing — NEVER `session.failed`) with the typed `error.code`
 and `details.frameworkPath`.
 
 - [ ] Force `bundleOpenFailed(path:)` by shipping a build with a corrupt or
@@ -66,7 +65,7 @@ and `details.frameworkPath`.
       `engine.error` with `error.code = "runtime_unavailable"`,
       `error.details.frameworkPath` populated, and `state = failed` in the
       next `queryRuntime` snapshot.
-- [ ] Confirm NO `session.result` envelope is synthesized — pre-session
+- [ ] Confirm NO `session.failed` envelope is synthesized — pre-session
       failures use `engine.error` exclusively.
 - [ ] Verify `showGameSurface` short-circuits with the same `error.code`
       (`runtime_unavailable`) when called after the failure, and does NOT
@@ -88,7 +87,7 @@ cycles and that the `unityActivityInstanceCount` counter never exceeds 1.
       fires (READY|BUSY → SUSPENDED) and the single-slot prior state is
       preserved.
 - [ ] Resume the app. Confirm `runtimeState.onResume()` restores the prior
-      state and the session continues (or receives `session.result` if the
+      state and the session continues (or receives `session.failed` if the
       engine reclaimed the surface — see T4).
 - [ ] Force-stop the Unity Activity while a session is active
       (`adb shell am force-stop me.tigerhix.cytoid` on the Unity process).
@@ -97,7 +96,7 @@ cycles and that the `unityActivityInstanceCount` counter never exceeds 1.
       FAILED.
 - [ ] Force-stop the Unity Activity with NO active session. Confirm the
       runtime transitions to UNAVAILABLE (caller must `startRuntime()` again),
-      NOT to FAILED — no phantom `session.result` should be synthesized.
+      NOT to FAILED — no phantom `session.failed` should be synthesized.
 
 Reference: `.omo/evidence/task-9-v2-host-impl-failure.json` is the contract
 fixture for the SURFACE_LOST envelope.
@@ -121,7 +120,7 @@ The interaction between T9's SUSPENDED state and T7's `PlaySession.run()` /
       `session.result`. Confirm the continuation is preserved across the
       suspend/resume (no premature `CytoidGameCoreTimeoutException`).
 - [ ] If the engine reclaims the surface during background, confirm the host
-      observes `session.result` with `outcome.kind = "runtimeFailed"`
+      observes `session.failed` with `error.code = "runtime_surface_lost"`
       (via T9's SURFACE_LOST trigger) rather than hanging until the
       `waitForReady` timeout.
 

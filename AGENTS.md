@@ -65,14 +65,14 @@ Protocol spec: `engines/unity/flutter_plugin/example/docs/host-protocol.md` (sha
 **Native send failures (Android `sendToUnity` / `returnToFlutterActivity`):** when the reflective `UnitySendMessage` call or the `startActivity` back to the Flutter Activity throws, the failure is NOT surfaced as a synchronous `PlatformException` from `send()`. `send()` returns `Future<void>` and callers have no wait point to convert the exception. Instead, the bridge routes the failure asynchronously via the v2 § Active-Session Runtime Failure contract:
 
 - `activeSessionId == null` → `engine.error` envelope via the EventChannel, `error.code = "runtime_exception"`, message sanitized to `"<ExceptionClassSimpleName>: <first message line>"` (no raw stack trace).
-- `activeSessionId != null` → synthesized `session.result` with `outcome.kind = "runtimeFailed"` and `error.code = "runtime_unreachable"` via the T4 primitive. Never both — active-session failures use `session.result` ONLY.
+- `activeSessionId != null` → synthesized `session.failed` with `error.code = "runtime_unreachable"` via the T4 primitive. Never both — active-session failures use `session.failed` ONLY; `engine.error` is for non-session failures.
 
 **Android Unity Activity lifecycle (warm-resident):** the exclusive Unity Activity (`me.tigerhix.cytoid.CytoidPluginActivity`) is NOT `finish()`-ed on session end. `hideGameSurface()` brings the Flutter Activity to front via `FLAG_ACTIVITY_REORDER_TO_FRONT | FLAG_ACTIVITY_SINGLE_TOP` and leaves the Unity Activity warm-resident in the back stack. This keeps Unity/IL2CPP/GL state alive across the typical play loop (select level → play → result → select next), eliminating the 5–15s cold-start tax on every session.
 
 Activity lifecycle callbacks drive the T3 state machine:
 - `onActivityPaused` (Unity Activity) → `runtimeState.onSuspend()` (READY|BUSY → SUSPENDED; single-slot prior state preserved).
 - `onActivityResumed` → `runtimeState.onResume()` (SUSPENDED → prior state).
-- `onActivityDestroyed` → if `activeSessionId != null`, T4's `synthesizeRuntimeFailure(SURFACE_LOST, sessionId)` fires (emits `session.result` with `error.code = "runtime_surface_lost"`, transitions to FAILED); otherwise `runtimeState.reset()` returns to UNAVAILABLE (caller must `startRuntime()` again).
+- `onActivityDestroyed` → if `activeSessionId != null`, T4's `synthesizeRuntimeFailure(SURFACE_LOST, sessionId)` fires (emits `session.failed` with `error.code = "runtime_surface_lost"`, transitions to FAILED); otherwise `runtimeState.reset()` returns to UNAVAILABLE (caller must `startRuntime()` again).
 
 A `@VisibleForTesting unityActivityInstanceCount` counter tracks live Unity Activity instances. In the warm-resident policy this counter MUST stay at 0 or 1 across arbitrary session cycles; a value > 1 indicates Activity accumulation (memory leak). The memory regression test runs 10 sequential session cycles via low-level primitives and asserts the counter never exceeds 1.
 

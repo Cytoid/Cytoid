@@ -1,7 +1,8 @@
 export 'src/cytoid_game_core_client.dart';
 export 'src/cytoid_game_core_envelope.dart';
-export 'src/cytoid_game_core_lost_exception.dart';
 export 'src/cytoid_game_core_liveness_config.dart';
+export 'src/health_check_watchdog_config.dart';
+export 'src/cytoid_game_core_lost_exception.dart';
 export 'src/cytoid_game_core_session_failed_exception.dart';
 export 'src/cytoid_game_core_timeout_exception.dart';
 export 'src/game_runtime_status.dart';

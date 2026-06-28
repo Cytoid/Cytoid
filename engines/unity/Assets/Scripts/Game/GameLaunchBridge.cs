@@ -85,8 +85,8 @@ public static class GameLaunchBridge
             {
                 Context.GameContentProvider = null;
             }
-            onLaunchFailed?.Invoke();
             GameResultBridge.EmitError(e);
+            onLaunchFailed?.Invoke();
         }
     }
 

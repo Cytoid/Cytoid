@@ -234,8 +234,20 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
     if type == "session.started", let id = messageId(jsonString) {
       runtimeState.onSessionStarted(sessionId: id)
     }
-    if type == "session.result" || type == "session.failed" || isGameResultMessage(jsonString) {
+    if type == "session.result" || isGameResultMessage(jsonString) {
       runtimeState.onSessionEnded()
+    } else if type == "session.failed" {
+      // Apply the envelope's error → .failed. Synth already did onFailure
+      // before emit; onSessionEnded here would downgrade busy/suspended →
+      // ready and drop the error block from runtimeStatus().
+      if let data = jsonString.data(using: .utf8),
+         let envelope = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+         let payload = envelope["payload"] as? [String: Any],
+         let error = GameCoreError.from(map: payload["error"]) {
+        runtimeState.onFailure(error: error)
+      } else {
+        runtimeState.onSessionEnded()
+      }
     }
   }
 

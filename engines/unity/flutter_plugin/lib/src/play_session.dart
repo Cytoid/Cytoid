@@ -45,11 +45,16 @@ class PlaySession {
     required SessionLaunchPayload launch,
     Duration? readyTimeout,
   }) async {
+    if (_activeSessionId != null) {
+      throw StateError('A session is already active on this PlaySession.');
+    }
     final sessionId = _nextSessionId();
     _activeSessionId = sessionId;
+    var surfaceShown = false;
     try {
       await client.ensureRuntimeStarted();
       await client.showGameSurface();
+      surfaceShown = true;
       await client.waitForReady(timeout: readyTimeout);
 
       final resultWait = _awaitSessionResult(sessionId);
@@ -68,7 +73,11 @@ class PlaySession {
       }
     } finally {
       try {
-        await client.hideGameSurface();
+        // Only hide if the surface was actually shown — otherwise a hide
+        // failure here could mask the real startup error.
+        if (surfaceShown) {
+          await client.hideGameSurface();
+        }
       } finally {
         if (_activeSessionId == sessionId) {
           _activeSessionId = null;

@@ -212,6 +212,42 @@ void main() {
       },
     );
 
+    test(
+      'run rejects a second concurrent run with StateError (single active slot)',
+      () async {
+        final client = CytoidGameCoreClient(
+          methodChannel: primaryChannel,
+          eventStream: events.stream,
+        );
+        final session = PlaySession(client);
+
+        // _activeSessionId is set synchronously before the first await.
+        final first = session.run(
+          launch: _buildTestLaunch(),
+          readyTimeout: const Duration(seconds: 5),
+        );
+
+        await expectLater(
+          () => session.run(launch: _buildTestLaunch()),
+          throwsA(isA<StateError>()),
+        );
+
+        // Let the first run complete so it doesn't dangle into sibling tests.
+        final startEnvelope = await awaitSentEnvelope(WireMessageType.sessionStart);
+        final resultJson = _loadFixture('session_result_payload.valid.json');
+        resultJson['sessionId'] = startEnvelope.id;
+        events.add(
+          CytoidGameCoreEnvelope.create(
+            id: startEnvelope.id,
+            type: WireMessageType.sessionResult,
+            payload: resultJson,
+            v: 2,
+          ).toJsonString(),
+        );
+        await first.timeout(const Duration(seconds: 2));
+      },
+    );
+
     test('iOS waitForReady helper channel completes on session.result', () async {
       // Register a mock iOS helper that returns success.
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger

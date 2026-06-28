@@ -269,6 +269,34 @@ class RuntimeFailureSynthesisTest {
         assertEquals("second emitted must be the engine.ready itself", "engine.ready", second.getString("type"))
     }
 
+    @Test
+    fun `inbound session failed via onUnityMessage transitions to FAILED and preserves error`() {
+        val bridge = newBridgeWithCapture()
+        bridge.emitOverride = { /* forward-only; ignore */ }
+
+        // Drive to BUSY(S1) — an active session the engine will report dead.
+        bridge.runtimeState.onRequestStart()
+        bridge.runtimeState.onEngineReady()
+        bridge.runtimeState.onSessionStarted("S1")
+        assertEquals(RuntimeState.BUSY, bridge.runtimeState.state)
+
+        // Engine delivers a real session.failed envelope (not native-synthesized).
+        bridge.onUnityMessage(
+            """
+            {"v":2,"id":"S1","type":"session.failed",
+             "payload":{"sessionId":"S1","timestamp":1782148800000,
+               "error":{"code":"engine_crashed","message":"engine died"}}}
+            """.trimIndent(),
+        )
+
+        // State must be FAILED (NOT downgraded to READY) and the error preserved.
+        assertEquals(RuntimeState.FAILED, bridge.runtimeState.state)
+        assertNull("activeSessionId cleared on failure", bridge.runtimeState.activeSessionId)
+        val error = bridge.runtimeState.lastError
+        assertNotNull("error captured from inbound session.failed", error)
+        assertEquals("engine_crashed", error?.code)
+    }
+
     private fun newBridgeWithCapture(): CytoidGameCoreBridge =
         CytoidGameCoreBridge.getOrCreate(Activity())
 

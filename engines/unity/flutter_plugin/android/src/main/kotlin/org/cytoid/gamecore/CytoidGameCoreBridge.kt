@@ -291,6 +291,20 @@ class CytoidGameCoreBridge private constructor(
         if (isSessionResultMessage(jsonString) || isGameResultMessage(jsonString)) {
             runtimeState.onSessionEnded()
         }
+        // Inbound session.failed (engine reports its own unrecoverable failure):
+        // apply the envelope's error so runtimeState → FAILED and queryRuntimeStatus
+        // reports it. Synthesized failures never reach here (they go through
+        // synthesizeRuntimeFailure, which calls onFailure before emit).
+        if (isSessionFailedMessage(jsonString)) {
+            val errorJson = JSONObject(jsonString).optJSONObject("payload")?.optJSONObject("error")
+            val code = errorJson?.optString("code") ?: ""
+            val message = errorJson?.optString("message") ?: ""
+            if (code.isNotEmpty() && message.isNotEmpty()) {
+                runtimeState.onFailure(GameCoreError(code = code, message = message))
+            } else {
+                runtimeState.onSessionEnded()
+            }
+        }
     }
 
     fun dispose() {
@@ -556,10 +570,13 @@ class CytoidGameCoreBridge private constructor(
     }
 
     private fun emit(json: String) {
+        // session.failed is intentionally excluded: synth already did onFailure
+        // before emit, and inbound session.failed is handled in onUnityMessage.
+        // Including it here would downgrade BUSY/SUSPENDED → READY and drop the
+        // error block from runtimeStatus().
         if (isSessionResultMessage(jsonString = json) ||
             isGameResultMessage(json) ||
-            isSessionEndedMessage(json) ||
-            isSessionFailedMessage(json)
+            isSessionEndedMessage(json)
         ) {
             runtimeState.onSessionEnded()
         }

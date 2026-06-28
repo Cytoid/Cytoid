@@ -26,7 +26,7 @@ class LevelMetaPayload {
   });
 
   final int schemaVersion;
-  final int version;
+  final int  version;
   final String id;
   final String title;
   final String? titleLocalized;

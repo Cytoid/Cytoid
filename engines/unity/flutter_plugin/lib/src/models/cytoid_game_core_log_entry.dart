@@ -2,41 +2,46 @@ import '../cytoid_game_core_envelope.dart';
 import '../wire_message_type.dart';
 
 enum CytoidGameCoreLogLevel {
-  log,
+  debug,
+  info,
   warning,
   error,
-  exception;
+  fatal;
 
   static CytoidGameCoreLogLevel fromString(String value) {
     switch (value) {
+      case 'debug':
+        return CytoidGameCoreLogLevel.debug;
+      case 'info':
+        return CytoidGameCoreLogLevel.info;
       case 'warning':
         return CytoidGameCoreLogLevel.warning;
       case 'error':
         return CytoidGameCoreLogLevel.error;
-      case 'exception':
-        return CytoidGameCoreLogLevel.exception;
+      case 'fatal':
+        return CytoidGameCoreLogLevel.fatal;
       default:
-        return CytoidGameCoreLogLevel.log;
+        throw FormatException('Unknown game-core log level "$value".');
     }
   }
 }
 
-/// A single game-core log line carried inside [WireMessageType.gameLogsBatch].
+/// A single game-core log line carried inside [WireMessageType.logsBatch].
 class CytoidGameCoreLogEntry {
   const CytoidGameCoreLogEntry({
     required this.level,
     required this.message,
+    required this.timestamp,
     this.stackTrace,
-    this.timestamp,
-    this.playId,
+    this.sessionId,
     this.envelopeId,
   });
 
   final CytoidGameCoreLogLevel level;
   final String message;
   final String? stackTrace;
-  final String? timestamp;
-  final String? playId;
+  final int timestamp;
+  final String? sessionId;
   final String? envelopeId;
 }
 
@@ -44,52 +49,65 @@ class CytoidGameCoreLogEntry {
 class CytoidGameCoreLogBatch {
   const CytoidGameCoreLogBatch({
     required this.reason,
+    required this.timestamp,
     required this.logs,
     this.triggerLevel,
-    this.timestamp,
     this.truncated = false,
     this.envelopeId,
   });
 
   final String reason;
   final CytoidGameCoreLogLevel? triggerLevel;
-  final String? timestamp;
+  final int timestamp;
   final bool truncated;
   final List<CytoidGameCoreLogEntry> logs;
   final String? envelopeId;
 
+  static const validReasons = {'periodic', 'trigger', 'flush', 'crash'};
+
   factory CytoidGameCoreLogBatch.fromEnvelope(CytoidGameCoreEnvelope envelope) {
-    if (envelope.type != WireMessageType.gameLogsBatch) {
+    if (envelope.type != WireMessageType.logsBatch) {
       throw FormatException(
-        'Expected game.logs.batch envelope, got ${envelope.type}.',
+        'Expected logs.batch envelope, got ${envelope.type}.',
       );
     }
 
     final payload = envelope.payload;
     final reason = payload['reason'];
+    final timestamp = payload['timestamp'];
     final logsRaw = payload['logs'];
-    if (reason is! String) {
+    if (reason is! String || !validReasons.contains(reason)) {
       throw FormatException(
-        'game.logs.batch payload "reason" must be a string.',
+        'logs.batch payload "reason" must be one of $validReasons.',
+      );
+    }
+    if (timestamp is! int) {
+      throw FormatException(
+        'logs.batch payload "timestamp" must be an integer.',
       );
     }
     if (logsRaw is! List) {
-      throw FormatException('game.logs.batch payload "logs" must be a list.');
+      throw FormatException('logs.batch payload "logs" must be a list.');
     }
 
     final triggerLevelRaw = payload['triggerLevel'];
+    if (reason == 'trigger' && triggerLevelRaw is! String) {
+      throw FormatException(
+        'logs.batch payload "triggerLevel" is required for trigger batches.',
+      );
+    }
     return CytoidGameCoreLogBatch(
       reason: reason,
+      timestamp: timestamp,
       triggerLevel: triggerLevelRaw is String
           ? CytoidGameCoreLogLevel.fromString(triggerLevelRaw)
           : null,
-      timestamp: payload['timestamp'] as String?,
       truncated: payload['truncated'] == true,
       logs: logsRaw
           .map((entry) {
             if (entry is! Map) {
               throw FormatException(
-                'game.logs.batch payload "logs" entries must be objects.',
+                'logs.batch payload "logs" entries must be objects.',
               );
             }
             return _logEntryFromPayload(
@@ -109,19 +127,23 @@ CytoidGameCoreLogEntry _logEntryFromPayload(
 }) {
   final levelRaw = payload['level'];
   final message = payload['message'];
+  final timestamp = payload['timestamp'];
   if (levelRaw is! String) {
     throw FormatException('game log payload "level" must be a string.');
   }
   if (message is! String) {
     throw FormatException('game log payload "message" must be a string.');
   }
+  if (timestamp is! int) {
+    throw FormatException('game log payload "timestamp" must be an integer.');
+  }
 
   return CytoidGameCoreLogEntry(
     level: CytoidGameCoreLogLevel.fromString(levelRaw),
     message: message,
     stackTrace: payload['stackTrace'] as String?,
-    timestamp: payload['timestamp'] as String?,
-    playId: payload['playId'] as String?,
+    timestamp: timestamp,
+    sessionId: payload['sessionId'] as String?,
     envelopeId: envelopeId,
   );
 }

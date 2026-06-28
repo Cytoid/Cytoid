@@ -1,4 +1,5 @@
-/// How [CytoidGameCoreClient] monitors the game core while waiting for [game.play.result].
+/// Legacy liveness tuning retained for hosts that still construct the client
+/// with a config object. v2 session liveness is reported through `session.failed`.
 class CytoidGameCoreLivenessConfig {
   const CytoidGameCoreLivenessConfig({
     this.checkInterval = const Duration(seconds: 5),

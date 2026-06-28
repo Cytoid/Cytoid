@@ -61,15 +61,14 @@ class UnityLogStore extends ChangeNotifier {
   }
 
   DateTime _entryTime(CytoidGameCoreLogEntry entry) {
-    return DateTime.tryParse(entry.timestamp ?? '') ??
-        DateTime.fromMillisecondsSinceEpoch(0);
+    return DateTime.fromMillisecondsSinceEpoch(entry.timestamp);
   }
 
   String _entryKey(CytoidGameCoreLogEntry entry) {
     return [
-      entry.timestamp ?? '',
+      entry.timestamp.toString(),
       entry.level.name,
-      entry.playId ?? '',
+      entry.sessionId ?? '',
       entry.message,
       entry.stackTrace ?? '',
     ].join('\u{1f}');

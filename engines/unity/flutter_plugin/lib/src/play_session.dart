@@ -64,7 +64,6 @@ class PlaySession {
             id: sessionId,
             type: WireMessageType.sessionStart,
             payload: launch.toJson(),
-            v: 2,
           ),
         );
         return await resultWait.future;
@@ -107,7 +106,6 @@ class PlaySession {
         id: id,
         type: WireMessageType.sessionCancel,
         payload: {'reason': reason},
-        v: 2,
       ),
     );
   }

@@ -146,18 +146,6 @@ void main() {
       expect(decoded.error!.details?['at'], 1234);
     });
 
-    test('v1 activePlayId is accepted as a fallback for activeSessionId', () {
-      final json = {
-        'engine': 'mock',
-        'state': 'busy',
-        // No `mode`/`generation` (v1 shape) — defaults must apply.
-        'activePlayId': 'legacy-play-1',
-      };
-      final decoded = GameRuntimeStatus.fromJson(json);
-      expect(decoded.activeSessionId, 'legacy-play-1');
-      expect(decoded.generation, 0);
-      expect(decoded.mode, 'mock');
-    });
   });
 
   group('GameRuntimeStatus — spec snapshot shape', () {

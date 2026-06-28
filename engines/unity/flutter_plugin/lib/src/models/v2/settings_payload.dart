@@ -144,7 +144,7 @@ class VisualSettings {
 
   final double noteSize;
   final int horizontalMargin;
-  final int verticalMargin;
+  final int  verticalMargin;
   final bool restrictPlayAreaAspectRatio;
   final double coverOpacity;
   final bool displayStoryboardEffects;

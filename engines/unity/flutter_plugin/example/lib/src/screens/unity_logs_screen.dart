@@ -67,7 +67,9 @@ class _LogTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _levelColor(context, entry.level);
-    final timestamp = entry.timestamp ?? '';
+    final timestamp = DateTime.fromMillisecondsSinceEpoch(
+      entry.timestamp,
+    ).toIso8601String();
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -95,16 +97,14 @@ class _LogTile extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (timestamp.isNotEmpty) ...[
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      timestamp,
-                      style: Theme.of(context).textTheme.bodySmall,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    timestamp,
+                    style: Theme.of(context).textTheme.bodySmall,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ],
+                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -131,9 +131,10 @@ class _LogTile extends StatelessWidget {
       case CytoidGameCoreLogLevel.warning:
         return Colors.orange;
       case CytoidGameCoreLogLevel.error:
-      case CytoidGameCoreLogLevel.exception:
+      case CytoidGameCoreLogLevel.fatal:
         return scheme.error;
-      case CytoidGameCoreLogLevel.log:
+      case CytoidGameCoreLogLevel.debug:
+      case CytoidGameCoreLogLevel.info:
         return scheme.outline;
     }
   }

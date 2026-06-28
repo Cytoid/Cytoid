@@ -24,6 +24,8 @@ void main() {
               return <String, Object?>{
                 'state': 'busy',
                 'engine': 'mock',
+                'mode': 'mock',
+                'generation': 1,
                 'activeSessionId': 'session-active',
               };
             case 'send':
@@ -55,7 +57,8 @@ void main() {
     await client.send(
       CytoidGameCoreEnvelope.create(
         id: '1',
-        type: WireMessageType.bridgePlayEnd,
+        type: WireMessageType.sessionCancel,
+        payload: {'reason': 'userBack'},
       ),
     );
 
@@ -77,7 +80,12 @@ void main() {
             case 'ensureRuntimeStarted':
               return null;
             case 'queryRuntimeStatus':
-              return <String, Object?>{'state': 'starting', 'engine': 'mock'};
+              return <String, Object?>{
+                'state': 'starting',
+                'engine': 'mock',
+                'mode': 'mock',
+                'generation': 1,
+              };
           }
           return null;
         });
@@ -88,218 +96,6 @@ void main() {
     );
 
     await client.ensureRuntimeStarted();
-  });
-
-  test('ping waits for matching pong', () async {
-    final client = CytoidGameCoreClient(
-      methodChannel: channel,
-      eventStream: events.stream,
-      livenessConfig: const CytoidGameCoreLivenessConfig(
-        pingTimeout: Duration(seconds: 1),
-      ),
-    );
-
-    final pingFuture = client.ping(text: 'hello');
-    await Future<void>.delayed(Duration.zero);
-    final sent = CytoidGameCoreEnvelope.fromJsonString(
-      calls.single.arguments as String,
-    );
-
-    events.add(
-      CytoidGameCoreEnvelope.create(
-        id: sent.id,
-        type: WireMessageType.gamePong,
-        payload: {'text': 'hello'},
-      ).toJsonString(),
-    );
-
-    final pong = await pingFuture;
-    expect(pong.id, sent.id);
-    expect(pong.payload, {'text': 'hello'});
-  });
-
-  test('startPlay waits for matching result', () async {
-    final client = CytoidGameCoreClient(
-      methodChannel: channel,
-      eventStream: events.stream,
-      livenessConfig: const CytoidGameCoreLivenessConfig(
-        checkInterval: Duration(hours: 1),
-        pingTimeout: Duration(seconds: 1),
-      ),
-    );
-
-    final resultFuture = client.startPlay(
-      GameLaunchPayload(
-        levelMetaJson: '{}',
-        selectedDifficulty: 'easy',
-        assets: const GameLaunchAssets(
-          vfsUri: 'file:///levels/test/',
-          chartPath: 'chart.json',
-          musicPath: 'music.mp3',
-        ),
-      ),
-    );
-    await Future<void>.delayed(Duration.zero);
-    final sent = CytoidGameCoreEnvelope.fromJsonString(
-      calls.single.arguments as String,
-    );
-
-    events.add(
-      CytoidGameCoreEnvelope.create(
-        id: sent.id,
-        type: WireMessageType.gamePlayResult,
-        payload: const {
-          'completed': true,
-          'failed': false,
-          'usedAutoMod': false,
-          'score': 7,
-        },
-      ).toJsonString(),
-    );
-
-    final result = await resultFuture;
-    expect(result.completed, isTrue);
-    expect(result.score, 7);
-  });
-
-  test('startPlay ends when session.ended arrives', () async {
-    final client = CytoidGameCoreClient(
-      methodChannel: channel,
-      eventStream: events.stream,
-      livenessConfig: const CytoidGameCoreLivenessConfig(
-        checkInterval: Duration(hours: 1),
-        pingTimeout: Duration(seconds: 1),
-      ),
-    );
-
-    final resultFuture = client.startPlay(
-      GameLaunchPayload(
-        levelMetaJson: '{}',
-        selectedDifficulty: 'easy',
-        assets: const GameLaunchAssets(
-          vfsUri: 'file:///levels/test/',
-          chartPath: 'chart.json',
-          musicPath: 'music.mp3',
-        ),
-      ),
-    );
-    await Future<void>.delayed(Duration.zero);
-    final sent = CytoidGameCoreEnvelope.fromJsonString(
-      calls.single.arguments as String,
-    );
-
-    events.add(
-      CytoidGameCoreEnvelope.create(
-        id: sent.id,
-        type: WireMessageType.gamePlayEnded,
-        payload: {'ended': true},
-      ).toJsonString(),
-    );
-
-    await expectLater(
-      resultFuture,
-      throwsA(isA<CytoidGameCorePlayRouteEndedException>()),
-    );
-  });
-
-  test('startPlay fails when game stops responding', () async {
-    var runtimeState = 'busy';
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(channel, (call) async {
-          calls.add(call);
-          switch (call.method) {
-            case 'getEngineMode':
-              return 'mock';
-            case 'queryRuntimeStatus':
-              return <String, Object?>{'state': runtimeState, 'engine': 'mock'};
-            case 'send':
-            case 'ensureRuntimeStarted':
-            case 'showGameSurface':
-            case 'hideGameSurface':
-              return null;
-          }
-          throw PlatformException(code: 'not_implemented');
-        });
-
-    final client = CytoidGameCoreClient(
-      methodChannel: channel,
-      eventStream: events.stream,
-      livenessConfig: const CytoidGameCoreLivenessConfig(
-        checkInterval: Duration(milliseconds: 20),
-        pingTimeout: Duration(milliseconds: 50),
-        maxConsecutiveFailures: 2,
-      ),
-    );
-
-    final resultFuture = client.startPlay(
-      GameLaunchPayload(
-        levelMetaJson: '{}',
-        selectedDifficulty: 'easy',
-        assets: const GameLaunchAssets(
-          vfsUri: 'file:///levels/test/',
-          chartPath: 'chart.json',
-          musicPath: 'music.mp3',
-        ),
-      ),
-    );
-    await Future<void>.delayed(Duration.zero);
-
-    runtimeState = 'ready';
-
-    await expectLater(
-      resultFuture,
-      throwsA(isA<CytoidGameCoreLostException>()),
-    );
-  });
-
-  test('endPlayRoute waits for matching session.ended', () async {
-    final client = CytoidGameCoreClient(
-      methodChannel: channel,
-      eventStream: events.stream,
-    );
-
-    final endFuture = client.endPlayRoute();
-    await Future<void>.delayed(Duration.zero);
-    final sent = CytoidGameCoreEnvelope.fromJsonString(
-      calls.single.arguments as String,
-    );
-
-    events.add(
-      CytoidGameCoreEnvelope.create(
-        id: sent.id,
-        type: WireMessageType.gamePlayEnded,
-        payload: {'ended': true},
-      ).toJsonString(),
-    );
-
-    await endFuture;
-  });
-
-  test('updateSettings sends settings.update and waits for ack', () async {
-    final client = CytoidGameCoreClient(
-      methodChannel: channel,
-      eventStream: events.stream,
-    );
-
-    final updateFuture = client.updateSettings(
-      const GameLaunchSettings(musicVolume: 0.4),
-    );
-    await Future<void>.delayed(Duration.zero);
-    final sent = CytoidGameCoreEnvelope.fromJsonString(
-      calls.single.arguments as String,
-    );
-    expect(sent.type, WireMessageType.bridgeSettingsUpdate);
-    expect(sent.payload['musicVolume'], 0.4);
-
-    events.add(
-      CytoidGameCoreEnvelope.create(
-        id: sent.id,
-        type: WireMessageType.gameSettingsUpdated,
-        payload: {'applied': true},
-      ).toJsonString(),
-    );
-
-    await updateFuture;
   });
 
   test('filters log batch events', () async {
@@ -340,14 +136,25 @@ void main() {
     events.add(
       CytoidGameCoreEnvelope.create(
         id: 'batch-1',
-        type: WireMessageType.gameLogsBatch,
+        type: WireMessageType.logsBatch,
         payload: {
           'reason': 'trigger',
           'triggerLevel': 'error',
+          'timestamp': 1782148800000,
           'truncated': true,
           'logs': [
-            {'level': 'log', 'message': 'before error'},
-            {'level': 'warning', 'message': 'careful'},
+            {
+              'level': 'info',
+              'message': 'before error',
+              'timestamp': 1782148799000,
+              'sessionId': 'session-1',
+            },
+            {
+              'level': 'warning',
+              'message': 'careful',
+              'timestamp': 1782148799500,
+              'sessionId': 'session-1',
+            },
           ],
         },
       ).toJsonString(),

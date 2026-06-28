@@ -129,7 +129,7 @@ void main() {
       final startEnvelope = await awaitSentEnvelope(
         WireMessageType.sessionStart,
       );
-      expect(startEnvelope.v, 2);
+      expect(startEnvelope.schema, CytoidGameCoreEnvelope.currentSchema);
       expect(startEnvelope.payload['mode'], 'ranked');
 
       // Engine returns a typed completed result with matching session id.
@@ -140,7 +140,6 @@ void main() {
           id: startEnvelope.id,
           type: WireMessageType.sessionResult,
           payload: resultJson,
-          v: 2,
         ).toJsonString(),
       );
 
@@ -152,7 +151,7 @@ void main() {
       expect(result.mode, 'ranked');
 
       // No engine.ready was emitted — readiness came from queryStatus.
-      expect(sentEnvelopeOfType(WireMessageType.gameReady), isNull);
+      expect(sentEnvelopeOfType(WireMessageType.engineReady), isNull);
       // hideGameSurface MUST be called in the finally block.
       expect(primaryCalls.map((c) => c.method), contains('hideGameSurface'));
     });
@@ -191,7 +190,6 @@ void main() {
               id: startEnvelope.id,
               type: WireMessageType.sessionResult,
               payload: resultJson,
-              v: 2,
             ).toJsonString(),
           );
 
@@ -241,7 +239,6 @@ void main() {
             id: startEnvelope.id,
             type: WireMessageType.sessionResult,
             payload: resultJson,
-            v: 2,
           ).toJsonString(),
         );
         await first.timeout(const Duration(seconds: 2));
@@ -282,12 +279,11 @@ void main() {
       resultJson['sessionId'] = startEnvelope.id;
       events.add(
         CytoidGameCoreEnvelope.create(
-          id: startEnvelope.id,
-          type: WireMessageType.sessionResult,
-          payload: resultJson,
-          v: 2,
-        ).toJsonString(),
-      );
+            id: startEnvelope.id,
+            type: WireMessageType.sessionResult,
+            payload: resultJson,
+          ).toJsonString(),
+        );
 
       final result = await runFuture.timeout(
         const Duration(seconds: 2),
@@ -313,7 +309,7 @@ void main() {
       final cancelEnvelope = sentEnvelopeOfType(WireMessageType.sessionCancel);
       expect(cancelEnvelope, isNotNull);
       expect(cancelEnvelope!.id, 'session-xyz');
-      expect(cancelEnvelope.v, 2);
+      expect(cancelEnvelope.schema, CytoidGameCoreEnvelope.currentSchema);
       expect(cancelEnvelope.payload, {'reason': 'userBack'});
     });
 
@@ -343,12 +339,11 @@ void main() {
       resultJson['sessionId'] = startEnvelope.id;
       events.add(
         CytoidGameCoreEnvelope.create(
-          id: startEnvelope.id,
-          type: WireMessageType.sessionResult,
-          payload: resultJson,
-          v: 2,
-        ).toJsonString(),
-      );
+            id: startEnvelope.id,
+            type: WireMessageType.sessionResult,
+            payload: resultJson,
+          ).toJsonString(),
+        );
 
       await runFuture.timeout(const Duration(seconds: 2));
     });
@@ -460,7 +455,6 @@ void main() {
             },
             'timestamp': DateTime.now().millisecondsSinceEpoch,
           },
-          v: 2,
         ).toJsonString(),
       );
     }
@@ -596,7 +590,6 @@ void main() {
           id: startEnvelope.id,
           type: WireMessageType.sessionResult,
           payload: resultJson,
-          v: 2,
         ).toJsonString(),
       );
 

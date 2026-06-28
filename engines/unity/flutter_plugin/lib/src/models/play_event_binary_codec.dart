@@ -51,11 +51,11 @@ class PlayEventBinaryCodec {
     };
   }
 
-  static void _writeVarInt(List<int> target, int value) {
+  static void _writeVarInt(List<int> target, int  value) {
     _writeVarUint(target, (value << 1) ^ (value >> 31));
   }
 
-  static void _writeVarUint(List<int> target, int value) {
+  static void _writeVarUint(List<int> target, int  value) {
     var remaining = value;
     while (remaining >= 0x80) {
       target.add((remaining & 0x7f) | 0x80);

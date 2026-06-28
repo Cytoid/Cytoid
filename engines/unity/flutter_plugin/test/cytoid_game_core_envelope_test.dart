@@ -5,7 +5,7 @@ void main() {
   test('encodes and decodes envelopes', () {
     final envelope = CytoidGameCoreEnvelope.create(
       id: 'abc',
-      type: WireMessageType.bridgePing,
+      type: WireMessageType.healthCheck,
       payload: {'text': 'hello'},
     );
 
@@ -13,9 +13,9 @@ void main() {
       envelope.toJsonString(),
     );
 
-    expect(decoded.v, CytoidGameCoreEnvelope.currentVersion);
+    expect(decoded.schema, CytoidGameCoreEnvelope.currentSchema);
     expect(decoded.id, 'abc');
-    expect(decoded.type, WireMessageType.bridgePing);
+    expect(decoded.type, WireMessageType.healthCheck);
     expect(decoded.payload, {'text': 'hello'});
   });
 
@@ -26,9 +26,9 @@ void main() {
     );
     expect(
       () => CytoidGameCoreEnvelope.fromJson({
-        'v': '1',
+        'schema': 'cytoid.game-core.v1',
         'id': 'abc',
-        'type': 'game.ready',
+        'type': 'engine.ready',
         'payload': <String, Object?>{},
       }),
       throwsA(isA<FormatException>()),

@@ -83,29 +83,21 @@ class GameRuntimeStatus {
         'Runtime status "state" must be one of $allStates.',
       );
     }
-    // v2 requires `mode` and `generation`; v1 (mock bridge.status reply) omits
-    // them. Default v1 inputs to the v1-equivalent value so the migration is
-    // non-breaking while the v2 path stays strict on the native snapshot.
     final modeRaw = json['mode'];
-    if (json.containsKey('mode') && modeRaw is! String) {
+    if (modeRaw is! String) {
       throw const FormatException(
-        'Runtime status "mode" must be a string when present.',
+        'Runtime status "mode" must be a string.',
       );
     }
-    final mode = modeRaw as String? ?? engine;
     final generationRaw = json['generation'];
-    if (json.containsKey('generation') &&
-        (generationRaw is! num || generationRaw % 1 != 0)) {
+    if (generationRaw is! num || generationRaw % 1 != 0) {
       throw const FormatException(
-        'Runtime status "generation" must be an integer when present.',
+        'Runtime status "generation" must be an integer.',
       );
     }
-    final generation = generationRaw == null
-        ? 0
-        : (generationRaw as num).toInt();
+    final generation = generationRaw.toInt();
 
-    // v2 wire name is `activeSessionId`; v1 used `activePlayId`. Accept either.
-    final activeSessionId = json['activeSessionId'] ?? json['activePlayId'];
+    final activeSessionId = json['activeSessionId'];
     if (activeSessionId != null && activeSessionId is! String) {
       throw const FormatException(
         'Runtime status "activeSessionId" must be a string when present.',
@@ -137,7 +129,7 @@ class GameRuntimeStatus {
     return GameRuntimeStatus(
       state: state,
       engine: engine,
-      mode: mode,
+      mode: modeRaw,
       generation: generation,
       activeSessionId: activeSessionId as String?,
       error: error,

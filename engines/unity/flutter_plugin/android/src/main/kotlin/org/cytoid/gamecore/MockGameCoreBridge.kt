@@ -68,6 +68,7 @@ class MockGameCoreBridge(
 
     private fun scheduleResult(sessionId: String, payload: JSONObject) {
         mainHandler.postDelayed({
+            if (runtimeState.activeSessionId != sessionId) return@postDelayed
             runtimeState.onSessionEnded()
             emitEnvelope(envelope(sessionId, "session.result", payload).toString())
         }, MOCK_GAME_RESULT_DELAY_MS)
@@ -88,7 +89,7 @@ class MockGameCoreBridge(
                 .put("tier", tierResult(launch.getJSONObject("tier")))
             "calibration", "globalCalibration" -> payload.put(
                 "calibration",
-                obj("profileBaseNoteOffset" to 0.0, "profileHeadsetNoteOffset" to 0.0, "levelNoteOffset" to 0.0),
+                obj("baseNoteOffset" to 0.0, "levelNoteOffset" to 0.0),
             )
         }
         return payload

@@ -105,7 +105,7 @@ void main() {
       _expectThrows('level_meta_payload.invalid.json');
     });
 
-    test('OutcomePayload — all 9 variants round-trip', () {
+    test('OutcomePayload — all 8 variants round-trip', () {
       final variants = _loadVariantBag('outcome_payload.valid');
       for (final entry in variants.entries) {
         _expectRoundTrip(
@@ -165,11 +165,21 @@ void main() {
       );
     });
 
-    test('SessionResultPayload — runtimeFailed round-trips with error', () {
+    test('SessionFailedPayload — round-trips with error', () {
       _roundTripFile(
-        'session_result_payload.runtime_failed.valid.json',
-        SessionResultPayload.fromJson,
+        'session_failed.valid.json',
+        SessionFailedPayload.fromJson,
         (x) => x.toJson(),
+      );
+    });
+
+    test('OutcomePayload rejects runtimeFailed kind (split to session.failed)', () {
+      expect(
+        () => OutcomePayload.fromJson({'kind': 'runtimeFailed'}),
+        throwsA(isA<FormatException>()),
+        reason:
+            'runtimeFailed was split into the session.failed envelope; '
+            'OutcomePayload must no longer accept it.',
       );
     });
 

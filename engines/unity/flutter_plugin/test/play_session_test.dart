@@ -406,4 +406,174 @@ void main() {
       expect(primaryCalls.map((c) => c.method), contains('hideGameSurface'));
     });
   });
+
+  group('PlaySession.run session.failed', () {
+    // Helper: emit a `session.failed` envelope on the broadcast event stream
+    // matching the supplied session id. Mirrors how the native bridge
+    // synthesizes a runtime-death envelope for an active session.
+    void emitSessionFailed(String sessionId, {String code = 'runtime_unreachable'}) {
+      events.add(
+        CytoidGameCoreEnvelope.create(
+          id: sessionId,
+          type: WireMessageType.sessionFailed,
+          payload: {
+            'sessionId': sessionId,
+            'error': {
+              'code': code,
+              'message': 'Unity process gone',
+            },
+            'timestamp': DateTime.now().millisecondsSinceEpoch,
+          },
+          v: 2,
+        ).toJsonString(),
+      );
+    }
+
+    test('throws CytoidGameCoreSessionFailedException when session.failed '
+        'envelope arrives for the active session', () async {
+      final client = CytoidGameCoreClient(
+        methodChannel: primaryChannel,
+        eventStream: events.stream,
+      );
+      final session = PlaySession(client);
+
+      final runFuture = session.run(
+        launch: _buildTestLaunch(),
+        readyTimeout: const Duration(seconds: 2),
+      );
+
+      final startEnvelope = await awaitSentEnvelope(
+        WireMessageType.sessionStart,
+      );
+
+      emitSessionFailed(startEnvelope.id);
+
+      await expectLater(
+        runFuture.timeout(
+          const Duration(seconds: 2),
+          onTimeout: () => throw TimeoutException('run() never threw'),
+        ),
+        throwsA(
+          isA<CytoidGameCoreSessionFailedException>()
+              .having((e) => e.sessionId, 'sessionId', startEnvelope.id)
+              .having((e) => e.code, 'code', 'runtime_unreachable')
+              .having((e) => e.message, 'message', 'Unity process gone'),
+        ),
+      );
+    });
+
+    test('finally block still hides the surface when run throws on '
+        'session.failed', () async {
+      final client = CytoidGameCoreClient(
+        methodChannel: primaryChannel,
+        eventStream: events.stream,
+      );
+      final session = PlaySession(client);
+
+      final runFuture = session.run(
+        launch: _buildTestLaunch(),
+        readyTimeout: const Duration(seconds: 2),
+      );
+
+      final startEnvelope = await awaitSentEnvelope(
+        WireMessageType.sessionStart,
+      );
+
+      emitSessionFailed(startEnvelope.id);
+
+      await expectLater(
+        runFuture.timeout(
+          const Duration(seconds: 2),
+          onTimeout: () => throw TimeoutException('run() never threw'),
+        ),
+        throwsA(isA<CytoidGameCoreSessionFailedException>()),
+      );
+
+      // The outer finally at play_session.dart L67-75 fires even when run
+      // throws; the surface MUST be hidden.
+      expect(primaryCalls.map((c) => c.method), contains('hideGameSurface'));
+    });
+
+    test('active session id is cleared after the throw — cancel() without '
+        'explicit id throws StateError', () async {
+      final client = CytoidGameCoreClient(
+        methodChannel: primaryChannel,
+        eventStream: events.stream,
+      );
+      final session = PlaySession(client);
+
+      final runFuture = session.run(
+        launch: _buildTestLaunch(),
+        readyTimeout: const Duration(seconds: 2),
+      );
+
+      final startEnvelope = await awaitSentEnvelope(
+        WireMessageType.sessionStart,
+      );
+
+      emitSessionFailed(startEnvelope.id);
+
+      await expectLater(
+        runFuture.timeout(
+          const Duration(seconds: 2),
+          onTimeout: () => throw TimeoutException('run() never threw'),
+        ),
+        throwsA(isA<CytoidGameCoreSessionFailedException>()),
+      );
+
+      // The inner finally at play_session.dart L70-74 clears
+      // _activeSessionId. There is no public getter, so verify indirectly:
+      // cancel() without an explicit sessionId throws StateError iff no
+      // session is active.
+      await expectLater(
+        session.cancel(reason: 'surfaceLost'),
+        throwsA(isA<StateError>()),
+      );
+    });
+
+    test('lockstep: late session.result after session.failed is ignored — '
+        'exactly one terminal fires', () async {
+      final client = CytoidGameCoreClient(
+        methodChannel: primaryChannel,
+        eventStream: events.stream,
+      );
+      final session = PlaySession(client);
+
+      final runFuture = session.run(
+        launch: _buildTestLaunch(),
+        readyTimeout: const Duration(seconds: 2),
+      );
+
+      final startEnvelope = await awaitSentEnvelope(
+        WireMessageType.sessionStart,
+      );
+
+      // session.failed fires FIRST — completes the future with the error.
+      emitSessionFailed(startEnvelope.id);
+      // Late session.result for the SAME session id arrives afterwards. The
+      // `!completer.isCompleted` guard at play_session.dart must drop it; the
+      // outcome stays a session.failed throw, never a successful result.
+      final resultJson = _loadFixture('session_result_payload.valid.json');
+      resultJson['sessionId'] = startEnvelope.id;
+      events.add(
+        CytoidGameCoreEnvelope.create(
+          id: startEnvelope.id,
+          type: WireMessageType.sessionResult,
+          payload: resultJson,
+          v: 2,
+        ).toJsonString(),
+      );
+
+      await expectLater(
+        runFuture.timeout(
+          const Duration(seconds: 2),
+          onTimeout: () => throw TimeoutException('run() never threw'),
+        ),
+        throwsA(
+          isA<CytoidGameCoreSessionFailedException>()
+              .having((e) => e.code, 'code', 'runtime_unreachable'),
+        ),
+      );
+    });
+  });
 }

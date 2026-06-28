@@ -7,6 +7,5 @@
   "cancelled_appBackgrounded": { "kind": "cancelled", "reason": "appBackgrounded" },
   "rejected": { "kind": "rejected" },
   "tierRetry": { "kind": "tierRetry", "tierId": "tier.example", "stageIndex": 1 },
-  "calibration": { "kind": "calibration" },
-  "runtimeFailed": { "kind": "runtimeFailed" }
+  "calibration": { "kind": "calibration" }
 }

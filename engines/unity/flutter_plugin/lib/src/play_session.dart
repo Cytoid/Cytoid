@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'cytoid_game_core_client.dart';
 import 'cytoid_game_core_envelope.dart';
+import 'cytoid_game_core_session_failed_exception.dart';
+import 'models/v2/session_failed_payload.dart';
 import 'models/v2/session_launch_payload.dart';
 import 'models/v2/session_result_payload.dart';
 import 'wire_message_type.dart';
@@ -13,7 +15,7 @@ import 'wire_message_type.dart';
 /// 2. show the game surface,
 /// 3. wait for the engine to acknowledge readiness,
 /// 4. send a typed v2 `session.start` envelope,
-/// 5. await the matching `session.result`,
+/// 5. await the matching `session.result` OR `session.failed`,
 /// 6. ALWAYS hide the surface, even when an earlier step throws.
 ///
 /// v2 envelopes are composed here from the T3 typed payload models so callers
@@ -102,25 +104,48 @@ class PlaySession {
   }
 
   /// Subscribes to [CytoidGameCoreClient.events] and completes with the
-  /// [SessionResultPayload] for [sessionId]. Errors during payload parsing
-  /// propagate via the returned future.
+  /// [SessionResultPayload] for [sessionId], OR completes with an error when
+  /// a matching `session.failed` envelope arrives. The first terminal envelope
+  /// of either type wins; a late duplicate of the other type is ignored
+  /// (enforced by the [Completer.isCompleted] guard — the v2 "exactly one of
+  /// result OR failed, never both" lockstep invariant). Errors during payload
+  /// parsing propagate via the returned future.
   _SessionResultWait _awaitSessionResult(String sessionId) {
     final completer = Completer<SessionResultPayload>();
     late StreamSubscription<dynamic> subscription;
     subscription = client.events.listen((envelope) {
-      if (envelope.id != sessionId ||
-          envelope.type != WireMessageType.sessionResult ||
-          completer.isCompleted) {
+      if (envelope.id != sessionId || completer.isCompleted) {
         return;
       }
-      try {
-        completer.complete(
-          SessionResultPayload.fromJson(
+      if (envelope.type == WireMessageType.sessionResult) {
+        try {
+          completer.complete(
+            SessionResultPayload.fromJson(
+              Map<String, dynamic>.from(envelope.payload),
+            ),
+          );
+        } catch (e, st) {
+          completer.completeError(e, st);
+        }
+        return;
+      }
+      if (envelope.type == WireMessageType.sessionFailed) {
+        try {
+          final failed = SessionFailedPayload.fromJson(
             Map<String, dynamic>.from(envelope.payload),
-          ),
-        );
-      } catch (e, st) {
-        completer.completeError(e, st);
+          );
+          completer.completeError(
+            CytoidGameCoreSessionFailedException(
+              sessionId: sessionId,
+              code: failed.error.code,
+              message: failed.error.message,
+              details: failed.error.details,
+            ),
+          );
+        } catch (e, st) {
+          completer.completeError(e, st);
+        }
+        return;
       }
     }, onError: completer.completeError);
 

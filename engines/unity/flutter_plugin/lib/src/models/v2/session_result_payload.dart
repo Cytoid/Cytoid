@@ -58,8 +58,7 @@ class SessionResultPayload {
   /// Telemetry summary carried on every result.
   final ResultTelemetryPayload telemetry;
 
-  /// Required when `outcome.kind = "rejected"` or when the result reports a
-  /// runtime failure path.
+  /// Required when `outcome.kind = "rejected"`.
   final GameCoreError? error;
 
   /// Unix epoch milliseconds.
@@ -78,8 +77,7 @@ class SessionResultPayload {
         'SessionResultPayload.fromJson: "error" must be an object when present.',
       );
     }
-    if (kind == OutcomePayload.rejectedKind ||
-        kind == OutcomePayload.runtimeFailedKind) {
+    if (kind == OutcomePayload.rejectedKind) {
       if (error == null) {
         throw FormatException(
           'SessionResultPayload.fromJson: "error" is required when '

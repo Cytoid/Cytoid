@@ -19,6 +19,7 @@ export 'play_event_payload.dart';
 export 'play_events_payload.dart';
 export 'result_telemetry_payload.dart';
 export 'score_payload.dart';
+export 'session_failed_payload.dart';
 export 'session_launch_payload.dart';
 export 'session_mode.dart';
 export 'session_options.dart';

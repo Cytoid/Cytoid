@@ -21,4 +21,5 @@ abstract final class WireMessageType {
   static const sessionStarted = 'session.started';
   static const sessionCancel = 'session.cancel';
   static const sessionResult = 'session.result';
+  static const sessionFailed = 'session.failed';
 }

@@ -8,7 +8,6 @@
 /// - [rejected] — engine rejected `session.start` before play.
 /// - [tierRetry] — engine-side retry during a tier stage.
 /// - [calibration] — calibration session completed with offsets.
-/// - [runtimeFailed] — runtime failure (exception, surface loss, etc).
 class OutcomePayload {
   const OutcomePayload._({
     required this.kind,
@@ -39,7 +38,6 @@ class OutcomePayload {
   static const rejectedKind = 'rejected';
   static const tierRetryKind = 'tierRetry';
   static const calibrationKind = 'calibration';
-  static const runtimeFailedKind = 'runtimeFailed';
 
   static const validKinds = {
     completedKind,
@@ -48,7 +46,6 @@ class OutcomePayload {
     rejectedKind,
     tierRetryKind,
     calibrationKind,
-    runtimeFailedKind,
   };
 
   static const validFailedReasons = {
@@ -83,8 +80,6 @@ class OutcomePayload {
       : this._(kind: tierRetryKind, tierId: tierId, stageIndex: stageIndex);
 
   const OutcomePayload.calibration() : this._(kind: calibrationKind);
-
-  const OutcomePayload.runtimeFailed() : this._(kind: runtimeFailedKind);
 
   static String _validate(
     String reason,
@@ -132,8 +127,6 @@ class OutcomePayload {
         return OutcomePayload.tierRetry(tierId: tierId, stageIndex: stageIndex);
       case calibrationKind:
         return const OutcomePayload.calibration();
-      case runtimeFailedKind:
-        return const OutcomePayload.runtimeFailed();
     }
     // Unreachable: validKinds check above guards every branch.
     throw FormatException('OutcomePayload.fromJson: unreachable kind "$kind".');
@@ -145,7 +138,6 @@ class OutcomePayload {
       case completedKind:
       case rejectedKind:
       case calibrationKind:
-      case runtimeFailedKind:
         break;
       case failedKind:
       case cancelledKind:

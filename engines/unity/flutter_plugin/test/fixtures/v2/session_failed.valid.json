@@ -1,0 +1,10 @@
+{
+  "_comment": "Valid SessionFailedPayload — minimal runtime-death envelope. The runtime is dead, so no outcome/flags/telemetry/mode/score are carried.",
+  "sessionId": "session-777",
+  "error": {
+    "code": "runtime_unreachable",
+    "message": "Native bridge cannot deliver messages to the engine.",
+    "details": { "stage": "sendToUnity" }
+  },
+  "timestamp": 1782148802000
+}

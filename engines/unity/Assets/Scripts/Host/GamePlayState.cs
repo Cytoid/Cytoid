@@ -8,9 +8,9 @@ public class GamePlayState
 
     public bool HasActivePlay => !string.IsNullOrEmpty(ActivePlayId);
 
-    public void SetActivePlay(string playId)
+    public void SetActivePlay(string sessionId)
     {
-        ActivePlayId = playId;
+        ActivePlayId = sessionId;
         IsPlayRoutePaused = false;
     }
 

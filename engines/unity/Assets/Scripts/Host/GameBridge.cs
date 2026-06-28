@@ -122,11 +122,11 @@ public class GameBridge : MonoBehaviour
         try
         {
             await ShowHandoffOverlay();
-            var playId = sessionState.ActivePlayId;
+            var sessionId = sessionState.ActivePlayId;
             sessionState.MarkPlayRouteEnded();
-            Debug.Log($"[CYTOID-DBG] EndActivePlayFromGame: MarkPlayRouteEnded cleared, playId={playId}");
+            Debug.Log($"[CYTOID-DBG] EndActivePlayFromGame: MarkPlayRouteEnded cleared, sessionId={sessionId}");
             // Engine-initiated abort has no v2 route-ended primitive; report a terminal cancelled result.
-            GameResultBridge.EmitCancelled(playId, "unknown");
+            GameResultBridge.EmitCancelled(sessionId, "unknown");
         }
         finally
         {

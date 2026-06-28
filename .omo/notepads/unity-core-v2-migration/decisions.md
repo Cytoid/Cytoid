@@ -10,3 +10,6 @@ Chose the suppress-calibration-emission variant for host-driven `session.cancel`
 
 ## 2026-06-28 T4 — engine-initiated stop mapping
 Kept the plan's spec-interpretation default for `EndActivePlayFromGame`: there is no v2 `game.play.ended`, so engine-side abort/recovery emits `session.result` with `outcome.kind="cancelled"` and `reason="unknown"` through the normal GameResultBridge/GameBridge single-owner send path.
+
+## 2026-06-28 T6 — Unity exception log severity
+Mapped Unity `LogType.Exception` to v2 log `level="error"` instead of `fatal`; Unity exceptions are common recoverable script/runtime diagnostics in this bridge, while v2 `fatal` is better reserved for future crash/runtime-death batches.

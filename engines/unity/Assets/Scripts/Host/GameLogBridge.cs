@@ -60,7 +60,7 @@ public class GameLogBridge : MonoBehaviour
 
         if (bufferedCount >= BatchSizeThreshold)
         {
-            EmitLogBatch("count", type);
+            EmitLogBatch("periodic", type);
         }
     }
 
@@ -71,7 +71,7 @@ public class GameLogBridge : MonoBehaviour
             return;
         }
 
-        EmitLogBatch("interval", LogType.Log);
+        EmitLogBatch("periodic", LogType.Log);
     }
 
     private static bool ShouldIgnoreMessage(string message)
@@ -151,7 +151,7 @@ public class GameLogBridge : MonoBehaviour
         var payload = GameLogBatchPayload.Create(reason, MapLevel(triggerType), truncated, snapshot);
         var envelope = CytoidGameCoreEnvelope.Create(
             Guid.NewGuid().ToString(),
-            WireMessageTypes.GameLogsBatch,
+            WireMessageTypes.LogsBatch,
             JObject.Parse(payload.ToJson()));
         NativeBridgeMessenger.Send(envelope.ToJsonString());
     }
@@ -168,11 +168,11 @@ public class GameLogBridge : MonoBehaviour
             stackTrace = stackTrace.Substring(0, MaxMessageLength);
         }
 
-        var playId = sessionState != null && sessionState.HasActivePlay
+        var sessionId = sessionState != null && sessionState.HasActivePlay
             ? sessionState.ActivePlayId
             : null;
 
-        return GameLogPayload.Create(MapLevel(type), message, stackTrace, playId);
+        return GameLogPayload.Create(MapLevel(type), message, stackTrace, sessionId);
     }
 
     private static string MapLevel(LogType type)
@@ -185,9 +185,9 @@ public class GameLogBridge : MonoBehaviour
             case LogType.Assert:
                 return "error";
             case LogType.Exception:
-                return "exception";
+                return "error";
             default:
-                return "log";
+                return "debug";
         }
     }
 }

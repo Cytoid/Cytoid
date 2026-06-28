@@ -627,7 +627,7 @@ public class Game : MonoBehaviour
         sceneLoader.Activate();
     }
 
-    public virtual void AbortExternalSession()
+    public virtual void AbortExternalSession(bool emitCalibrationResult = true)
     {
         print("External game session aborted");
 
@@ -641,7 +641,7 @@ public class Game : MonoBehaviour
         Context.AudioManager.Unload("Level");
 
         onGameAborted.Invoke(this);
-        if (shouldEmitCalibrationResult)
+        if (emitCalibrationResult && shouldEmitCalibrationResult)
         {
             GameResultBridge.Emit(State);
         }

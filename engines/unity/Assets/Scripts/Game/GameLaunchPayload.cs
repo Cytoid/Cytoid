@@ -62,4 +62,5 @@ public class GameLaunchSettings
     public bool? hitTapticFeedback;
     public bool? useNativeAudio;
     public int? androidDspBufferSize;
+    public bool? recordPlayEvents;
 }

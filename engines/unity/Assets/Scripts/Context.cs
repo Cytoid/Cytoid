@@ -324,38 +324,19 @@ public class Context : SingletonMonoBehavior<Context>
     {
         if (GameState == null) return;
 
-        if (GameState.Mode == GameMode.Calibration || GameState.Mode == GameMode.GlobalCalibration)
-        {
-            GameResultBridge.Emit(GameState, ActiveTierPlaySession);
-            GameState = null;
-            PendingTierPlay = null;
-            ActiveTierPlaySession = null;
-            return;
-        }
-
-        if (GameState.Mode == GameMode.Tier)
-        {
-            GameResultBridge.Emit(GameState, ActiveTierPlaySession);
-            GameState = null;
-            PendingTierPlay = null;
-            ActiveTierPlaySession = null;
-            return;
-        }
+        GameResultBridge.Emit(GameState, ActiveTierPlaySession);
 
         var usedAuto = GameResultBridge.HasAutoMod(GameState);
-        if (!GameState.IsCompleted || GameState.Mode != GameMode.Standard || usedAuto)
+        if (GameState.IsCompleted && GameState.Mode == GameMode.Standard && !usedAuto)
         {
-            GameState = null;
-            PendingTierPlay = null;
-            return;
+            var lastPlayResult = LastPlayResult.FromGameState(GameState);
+            LastPlayResult.Save(lastPlayResult);
+            Debug.Log($"[DebugNavigation] Last play result cached: {lastPlayResult.ToJson()}");
         }
 
-        GameResultBridge.Emit(GameState);
-
-        var lastPlayResult = LastPlayResult.FromGameState(GameState);
-        LastPlayResult.Save(lastPlayResult);
-        Debug.Log($"[DebugNavigation] Last play result cached: {lastPlayResult.ToJson()}");
         GameState = null;
+        PendingTierPlay = null;
+        ActiveTierPlaySession = null;
     }
 
     public static void Haptic(HapticTypes type, bool menu)

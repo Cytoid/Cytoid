@@ -59,6 +59,11 @@ public static class GamePlayEventRecorder
         return events.ToArray();
     }
 
+    public static GamePlayEvent[] SnapshotAsWireObjects()
+    {
+        return Snapshot();
+    }
+
     public static void End()
     {
         isRecording = false;

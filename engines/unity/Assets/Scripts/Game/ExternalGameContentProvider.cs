@@ -244,6 +244,11 @@ public sealed class ExternalGameContentProvider : IGameContentProvider
             gameMode = FlattenGameMode(mode).ToString(),
             settings = FlattenLaunchSettings(settingsObj, requireFullSnapshot: true)
         };
+        var optionsObj = payloadObj["options"] as JObject;
+        if (optionsObj != null)
+        {
+            payload.settings.recordPlayEvents = OptionalBool(optionsObj, "recordPlayEvents");
+        }
 
         if (string.Equals(mode, "tier", StringComparison.OrdinalIgnoreCase))
         {

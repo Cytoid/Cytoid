@@ -7,6 +7,7 @@ import me.tigerhix.cytoid.CytoidPluginActivity
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -137,12 +138,14 @@ class ActivityLifecycleSynthesisTest {
 
         val envelope = JSONObject(captured.first())
         assertEquals(2, envelope.getInt("v"))
-        assertEquals("session.result", envelope.getString("type"))
+        assertEquals("session.failed", envelope.getString("type"))
         assertEquals("S1", envelope.getString("id"))
 
         val payload = envelope.getJSONObject("payload")
         assertEquals("S1", payload.getString("sessionId"))
-        assertEquals("runtimeFailed", payload.getJSONObject("outcome").getString("kind"))
+        assertFalse("payload must not carry outcome", payload.has("outcome"))
+        // timestamp present and parseable as Long.
+        payload.getLong("timestamp")
         assertEquals(
             "runtime_surface_lost",
             payload.getJSONObject("error").getString("code"),

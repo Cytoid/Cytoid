@@ -17,9 +17,8 @@ import androidx.annotation.VisibleForTesting
  * Pause during STARTING stays STARTING — no transition.
  *
  * The machine owns only the lifecycle bookkeeping. Downstream tasks (T4/T5/T6)
- * are responsible for synthesising `session.result` with
- * `outcome.kind = "runtimeFailed"` when [onFailure] fires with a non-null
- * [activeSessionId]; see `.omo/notepads/v2-host-impl/decisions.md`.
+ * are responsible for synthesising `session.failed` when [onFailure] fires
+ * with a non-null [activeSessionId]; see `.omo/notepads/v2-host-impl/decisions.md`.
  */
 class RuntimeStateMachine {
     @Volatile

@@ -4,6 +4,7 @@ import android.app.Activity
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -94,12 +95,14 @@ class RuntimeFailureSynthesisTest {
         assertEquals("expected exactly one emitted envelope", 1, captured.size)
         val envelope = JSONObject(captured.first())
         assertEquals("S1", envelope.getString("id"))
-        assertEquals("session.result", envelope.getString("type"))
+        assertEquals("session.failed", envelope.getString("type"))
         assertEquals(2, envelope.getInt("v"))
 
         val payload = envelope.getJSONObject("payload")
         assertEquals("S1", payload.getString("sessionId"))
-        assertEquals("runtimeFailed", payload.getJSONObject("outcome").getString("kind"))
+        assertFalse("payload must not carry outcome", payload.has("outcome"))
+        // timestamp present and parseable as Long.
+        payload.getLong("timestamp")
 
         val error = payload.getJSONObject("error")
         assertEquals("runtime_recreated", error.getString("code"))
@@ -166,9 +169,13 @@ class RuntimeFailureSynthesisTest {
 
         val envelope = JSONObject(captured.first())
         assertEquals("S2", envelope.getString("id"))
-        assertEquals("session.result", envelope.getString("type"))
+        assertEquals("session.failed", envelope.getString("type"))
+        assertEquals(2, envelope.getInt("v"))
         val payload = envelope.getJSONObject("payload")
-        assertEquals("runtimeFailed", payload.getJSONObject("outcome").getString("kind"))
+        assertEquals("S2", payload.getString("sessionId"))
+        assertFalse("payload must not carry outcome", payload.has("outcome"))
+        // timestamp present and parseable as Long.
+        payload.getLong("timestamp")
         assertEquals(
             "runtime_surface_lost",
             payload.getJSONObject("error").getString("code"),
@@ -246,11 +253,16 @@ class RuntimeFailureSynthesisTest {
         assertEquals("expected synth + engine.ready, in that order", 2, captured.size)
 
         val first = JSONObject(captured[0])
-        assertEquals("first emitted must be the stale session result", "session.result", first.getString("type"))
+        assertEquals("first emitted must be the synthesized session.failed", "session.failed", first.getString("type"))
         assertEquals("S1", first.getString("id"))
+        val firstPayload = first.getJSONObject("payload")
+        assertEquals("S1", firstPayload.getString("sessionId"))
+        assertFalse("payload must not carry outcome", firstPayload.has("outcome"))
+        // timestamp present and parseable as Long.
+        firstPayload.getLong("timestamp")
         assertEquals(
             "runtime_recreated",
-            first.getJSONObject("payload").getJSONObject("error").getString("code"),
+            firstPayload.getJSONObject("error").getString("code"),
         )
 
         val second = JSONObject(captured[1])

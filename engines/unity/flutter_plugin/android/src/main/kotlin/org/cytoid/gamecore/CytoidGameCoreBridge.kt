@@ -402,6 +402,12 @@ class CytoidGameCoreBridge private constructor(
         }.getOrDefault(false)
     }
 
+    private fun isSessionFailedMessage(jsonString: String): Boolean {
+        return runCatching {
+            JSONObject(jsonString).getString("type") == "session.failed"
+        }.getOrDefault(false)
+    }
+
     /**
      * v2 runtime snapshot. Conditional optionality per spec:
      * required keys `engine`, `mode`, `state`, `generation` always present;
@@ -418,10 +424,14 @@ class CytoidGameCoreBridge private constructor(
     }
 
     /**
-     * Synthesize a v2 `session.result` envelope with
-     * `outcome.kind = "runtimeFailed"` for an active session killed by a
-     * runtime-side event the engine itself cannot report (v2 § Active-Session
-     * Runtime Failure).
+     * Synthesize a v2 `session.failed` envelope for an active session killed
+     * by a runtime-side event the engine itself cannot report (v2 §
+     * Active-Session Runtime Failure).
+     *
+     * Payload shape (minimal — no `outcome`):
+     *  - `sessionId`: the terminated session id.
+     *  - `error`: `{code, message}` from [RuntimeFailureTrigger].
+     *  - `timestamp`: wall-clock millis at synthesis time.
      *
      * Contract:
      *  - Idempotent: gated on `activeSessionId == sessionId`. If the session
@@ -430,7 +440,7 @@ class CytoidGameCoreBridge private constructor(
      *  - On success: transitions runtimeState to FAILED via onFailure (which
      *    clears activeSessionId), emits the envelope via [emit], returns the
      *    JSON string.
-     *  - Active-session failures use `session.result`, NEVER `engine.error`.
+     *  - Active-session failures use `session.failed`, NEVER `engine.error`.
      *
      * Returns the emitted JSON envelope string, or null if the gate suppressed
      * the synthesis (idempotency).
@@ -450,13 +460,13 @@ class CytoidGameCoreBridge private constructor(
         val envelope = JSONObject()
             .put("v", PROTOCOL_VERSION_V2)
             .put("id", sessionId)
-            .put("type", "session.result")
+            .put("type", "session.failed")
             .put(
                 "payload",
                 JSONObject()
                     .put("sessionId", sessionId)
-                    .put("outcome", JSONObject().put("kind", "runtimeFailed"))
-                    .put("error", JSONObject(error.toMap())),
+                    .put("error", JSONObject(error.toMap()))
+                    .put("timestamp", System.currentTimeMillis()),
             )
             .toString()
 
@@ -499,11 +509,11 @@ class CytoidGameCoreBridge private constructor(
      * Flutter) to the v2 envelope the spec requires, based on whether a session
      * is currently active. The active-session routing rule is mandatory (v2 §
      * Active-Session Runtime Failure): `engine.error` is not used for active
-     * sessions; the synthesized `session.result` carries the terminal outcome.
+     * sessions; the synthesized `session.failed` carries the terminal failure.
      *
      * Contract:
      *  - `activeSessionId != null` → ONLY `synthesizeRuntimeFailure(UNREACHABLE, …)`
-     *    (T4 primitive emits `session.result`, NEVER `engine.error`).
+     *    (T4 primitive emits `session.failed`, NEVER `engine.error`).
      *  - `activeSessionId == null` → ONLY an `engine.error` envelope via [emit]
      *    with `error.code = "runtime_exception"` and a sanitized message.
      *  - Never both. Never rethrows — caller ([sendToUnity], [returnToFlutterActivity])
@@ -548,7 +558,8 @@ class CytoidGameCoreBridge private constructor(
     private fun emit(json: String) {
         if (isSessionResultMessage(jsonString = json) ||
             isGameResultMessage(json) ||
-            isSessionEndedMessage(json)
+            isSessionEndedMessage(json) ||
+            isSessionFailedMessage(json)
         ) {
             runtimeState.onSessionEnded()
         }

@@ -5,6 +5,7 @@ import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
@@ -16,11 +17,11 @@ import org.junit.Test
  *
  *  - `activeSessionId == null` → ONLY `engine.error` with
  *    `error.code = "runtime_exception"`, sanitized message, NO stack trace.
- *  - `activeSessionId != null` → ONLY synthesized `session.result` via the
+ *  - `activeSessionId != null` → ONLY synthesized `session.failed` via the
  *    T4 primitive with `error.code = "runtime_unreachable"`.
  *
  * The active-session routing rule is the trickiest invariant in the v2 plan:
- * active-session failures use `session.result` ONLY, never `engine.error`.
+ * active-session failures use `session.failed` ONLY, never `engine.error`.
  * Pre-session failures use `engine.error` ONLY. These tests lock both halves.
  *
  * The bridge is constructed via [CytoidGameCoreBridge.getOrCreate] in a pure
@@ -85,11 +86,15 @@ class SendFailureReportingTest {
             error.getString("message").contains("at org.", ignoreCase = true),
         )
 
-        // Spec compliance: NO session.result emitted for pre-session failure.
+        // Spec compliance: NO session.result OR session.failed emitted for pre-session failure.
         val sessionResults = captured.count {
             runCatching { JSONObject(it).getString("type") }.getOrNull() == "session.result"
         }
         assertEquals("pre-session failure must not emit session.result", 0, sessionResults)
+        val sessionFailedCount = captured.count {
+            runCatching { JSONObject(it).getString("type") }.getOrNull() == "session.failed"
+        }
+        assertEquals("pre-session failure must not emit session.failed", 0, sessionFailedCount)
     }
 
     @Test
@@ -108,20 +113,23 @@ class SendFailureReportingTest {
         // When: sendToUnity throws during the active session.
         bridge.sendToUnity("{\"type\":\"test\"}")
 
-        // Then: exactly one envelope, of type session.result (NOT engine.error).
+        // Then: exactly one envelope, of type session.failed (NOT engine.error).
         assertEquals("expected exactly one emitted envelope", 1, captured.size)
 
         val envelope = JSONObject(captured.first())
         assertEquals(2, envelope.getInt("v"))
-        assertEquals("session.result", envelope.getString("type"))
+        assertEquals("session.failed", envelope.getString("type"))
         assertEquals("S1", envelope.getString("id"))
 
         val payload = envelope.getJSONObject("payload")
         assertEquals("S1", payload.getString("sessionId"))
-        assertEquals("runtimeFailed", payload.getJSONObject("outcome").getString("kind"))
+        assertFalse("payload must not carry outcome", payload.has("outcome"))
+        // timestamp present and parseable as Long.
+        payload.getLong("timestamp")
 
         val error = payload.getJSONObject("error")
         assertEquals("runtime_unreachable", error.getString("code"))
+        assertNotNull(error.getString("message"))
 
         // Spec compliance (the trickiest rule): NO engine.error for active-session failure.
         val engineErrors = captured.count {
@@ -160,11 +168,15 @@ class SendFailureReportingTest {
         )
         assertFalse("engine.error must not leak stack trace", error.has("details"))
 
-        // Spec compliance: NO session.result for pre-session failure.
+        // Spec compliance: NO session.result OR session.failed for pre-session failure.
         val sessionResults = captured.count {
             runCatching { JSONObject(it).getString("type") }.getOrNull() == "session.result"
         }
         assertEquals("pre-session failure must not emit session.result", 0, sessionResults)
+        val sessionFailedCount = captured.count {
+            runCatching { JSONObject(it).getString("type") }.getOrNull() == "session.failed"
+        }
+        assertEquals("pre-session failure must not emit session.failed", 0, sessionFailedCount)
     }
 
     private fun newBridge(): CytoidGameCoreBridge =

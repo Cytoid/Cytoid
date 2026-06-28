@@ -18,9 +18,12 @@ class HealthCheckWatchdogConfig {
     Duration? steadyResponseTimeout,
     Duration? pollInterval,
   }) {
-    final timeout = firstResponseTimeout ?? const Duration(seconds: 30);
-    final steady = steadyResponseTimeout ?? const Duration(seconds: 10);
-    final interval = pollInterval ?? const Duration(seconds: 10);
+    final timeout =
+        firstResponseTimeout ?? HealthCheckWatchdogConfig.defaults.firstResponseTimeout;
+    final steady =
+        steadyResponseTimeout ?? HealthCheckWatchdogConfig.defaults.steadyResponseTimeout;
+    final interval =
+        pollInterval ?? HealthCheckWatchdogConfig.defaults.pollInterval;
     if (timeout.inMicroseconds <= 0) {
       throw ArgumentError(
         'firstResponseTimeout must be strictly positive, got $timeout',

@@ -21,10 +21,20 @@ void main() {
       expect(config.pollInterval, const Duration(seconds: 1));
     });
 
-    test('identical const instances', () {
-      final a = HealthCheckWatchdogConfig();
-      final b = HealthCheckWatchdogConfig();
-      expect(identical(a, b), isFalse);
+    test('factory default matches defaults constant', () {
+      final fromFactory = HealthCheckWatchdogConfig();
+      expect(
+        fromFactory.firstResponseTimeout,
+        HealthCheckWatchdogConfig.defaults.firstResponseTimeout,
+      );
+      expect(
+        fromFactory.steadyResponseTimeout,
+        HealthCheckWatchdogConfig.defaults.steadyResponseTimeout,
+      );
+      expect(
+        fromFactory.pollInterval,
+        HealthCheckWatchdogConfig.defaults.pollInterval,
+      );
     });
 
     test('rejects non-positive durations with ArgumentError', () {

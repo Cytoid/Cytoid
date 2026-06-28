@@ -100,7 +100,8 @@ class _TierStageDebugScreenState extends State<TierStageDebugScreen> {
       ),
     );
     if (!mounted) return;
-    if (returned is GameResultPayload && returned.tierRetry != null) {
+    if (returned is SessionResultPayload &&
+        returned.outcome.kind == OutcomePayload.tierRetryKind) {
       _showMessage('User want to retry the tier.');
     }
   }

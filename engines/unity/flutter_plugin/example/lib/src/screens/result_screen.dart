@@ -11,7 +11,7 @@ class ResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final result = args.result;
-    final success = result.completed && !result.failed;
+    final success = result.outcome.kind == OutcomePayload.completedKind;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Result'),
@@ -34,48 +34,52 @@ class ResultScreen extends StatelessWidget {
               flex: 4,
               child: ListView(
                 children: [
+                  _ResultTile(
+                    icon: Icons.flag_circle_outlined,
+                    label: 'Outcome',
+                    value: result.outcome.kind,
+                  ),
                   if (result.error != null)
                     _ResultTile(
                       icon: Icons.error_outline,
                       label: 'Error',
-                      value: result.error!,
+                      value: result.error!.message,
                     ),
-                  if (result.calibratedBaseNoteOffset != null)
+                  if (result.calibration?.baseNoteOffset != null)
                     _ResultTile(
                       icon: Icons.timer,
                       label: 'Base note offset',
                       value:
-                          '${result.calibratedBaseNoteOffset!.toStringAsFixed(3)} s',
+                          '${result.calibration!.baseNoteOffset!.toStringAsFixed(3)} s',
                     ),
-                  if (result.calibratedLevelNoteOffset != null)
+                  if (result.calibration?.levelNoteOffset != null)
                     _ResultTile(
                       icon: Icons.tune,
                       label: 'Level note offset',
                       value:
-                          '${result.calibratedLevelNoteOffset!.toStringAsFixed(2)} s',
+                          '${result.calibration!.levelNoteOffset!.toStringAsFixed(2)} s',
                     ),
-                  if (result.tierPlay != null) ...[
+                  if (result.tier != null) ...[
                     _ResultTile(
                       icon: Icons.favorite,
                       label: 'Final health',
                       value:
-                          '${result.tierPlay!.finalHealth.toStringAsFixed(1)} / ${result.tierPlay!.maxHealth.toStringAsFixed(0)}',
+                          '${result.tier!.health.toStringAsFixed(1)} / ${result.tier!.maxHealth.toStringAsFixed(0)}',
                     ),
                     _ResultTile(
                       icon: Icons.bolt,
                       label: 'Ending combo',
-                      value: '${result.tierPlay!.endingCombo}',
+                      value: '${result.tier!.combo}',
                     ),
-                    if (result.tierPlay!.tierId != null)
-                      _ResultTile(
-                        icon: Icons.military_tech,
-                        label: 'Tier id',
-                        value: result.tierPlay!.tierId!,
-                      ),
+                    _ResultTile(
+                      icon: Icons.military_tech,
+                      label: 'Tier id',
+                      value: result.tier!.tierId,
+                    ),
                     _ResultTile(
                       icon: Icons.looks_one,
                       label: 'Stage index',
-                      value: '${result.tierPlay!.stageIndex}',
+                      value: '${result.tier!.stageIndex}',
                     ),
                   ],
                   _ScoreBlock(result: result),
@@ -99,7 +103,7 @@ class ResultScreen extends StatelessWidget {
 class _EventTelemetryBlock extends StatelessWidget {
   const _EventTelemetryBlock({required this.result});
 
-  final GameResultPayload result;
+  final SessionResultPayload result;
 
   @override
   Widget build(BuildContext context) {
@@ -108,17 +112,12 @@ class _EventTelemetryBlock extends StatelessWidget {
         _ResultTile(
           icon: Icons.touch_app,
           label: 'Play events',
-          value: '${result.playEvents.length}',
+          value: '${result.telemetry.eventsRecorded}',
         ),
         _ResultTile(
           icon: Icons.data_object,
-          label: 'Event JSON size',
-          value: _formatBytes(result.playEventJsonBytes),
-        ),
-        _ResultTile(
-          icon: Icons.compress,
-          label: 'Event binary size',
-          value: _formatBytes(result.playEventBinaryBytes),
+          label: 'Telemetry bytes',
+          value: _formatBytes(result.telemetry.bytes),
         ),
       ],
     );
@@ -177,14 +176,14 @@ class _ResultHero extends StatelessWidget {
 class _ScoreBlock extends StatelessWidget {
   const _ScoreBlock({required this.result});
 
-  final GameResultPayload result;
+  final SessionResultPayload result;
 
   @override
   Widget build(BuildContext context) {
-    final score = result.score?.toString().padLeft(6, '0') ?? '-';
-    final accuracy = result.accuracy == null
+    final score = result.score?.score.toString().padLeft(6, '0') ?? '-';
+    final accuracy = result.score?.accuracy == null
         ? '-'
-        : '${result.accuracy!.toStringAsFixed(2)}%';
+        : '${(result.score!.accuracy * 100).toStringAsFixed(2)}%';
     return Column(
       children: [
         _ResultTile(icon: Icons.score, label: 'Score', value: score),
@@ -192,14 +191,14 @@ class _ScoreBlock extends StatelessWidget {
         _ResultTile(
           icon: Icons.local_fire_department,
           label: 'Max combo',
-          value: result.maxCombo?.toString() ?? '-',
+          value: result.score?.maxCombo.toString() ?? '-',
         ),
         _ResultTile(
           icon: Icons.timer_outlined,
           label: 'Average timing',
-          value: result.averageTimingError == null
+          value: result.score?.averageTimingError == null
               ? '-'
-              : '${result.averageTimingError!.toStringAsFixed(2)} ms',
+              : '${result.score!.averageTimingError!.toStringAsFixed(2)} ms',
         ),
       ],
     );

@@ -57,11 +57,6 @@ class _CytoidExampleAppState extends State<CytoidExampleApp> {
           setState(() {
             _settings = settings;
           });
-          unawaited(
-            _client
-                .updateSettings(settings.toLaunchSettings())
-                .catchError((_) {}),
-          );
         },
         onModsChanged: (mods) {
           setState(() {
@@ -238,9 +233,9 @@ class _ExampleHomeState extends State<_ExampleHome> {
     );
   }
 
-  void _handleCalibrationResult(GameResultPayload result) {
-    final baseOffset = result.calibratedBaseNoteOffset;
-    final levelOffset = result.calibratedLevelNoteOffset;
+  void _handleCalibrationResult(SessionResultPayload result) {
+    final baseOffset = result.calibration?.baseNoteOffset;
+    final levelOffset = result.calibration?.levelNoteOffset;
     String? message;
 
     if (baseOffset != null) {

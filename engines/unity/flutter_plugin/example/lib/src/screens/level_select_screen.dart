@@ -20,7 +20,7 @@ class LevelSelectScreen extends StatelessWidget {
   final ExampleSettings settings;
   final ExampleMods mods;
   final CytoidGameCoreClient client;
-  final ValueChanged<GameResultPayload> onCalibrationResult;
+  final ValueChanged<SessionResultPayload> onCalibrationResult;
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +96,7 @@ class _LevelCard extends StatelessWidget {
   final ExampleSettings settings;
   final ExampleMods mods;
   final CytoidGameCoreClient client;
-  final ValueChanged<GameResultPayload> onCalibrationResult;
+  final ValueChanged<SessionResultPayload> onCalibrationResult;
 
   @override
   Widget build(BuildContext context) {

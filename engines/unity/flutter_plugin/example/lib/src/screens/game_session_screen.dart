@@ -10,18 +10,8 @@ import '../widgets/mock_engine_badge.dart';
 
 /// Handoff screen that orchestrates a single gameplay session.
 ///
-/// Flutter owns the handoff UI (black overlay + status text). The Unity-side
-/// overlay may flash briefly on surface transitions (show/hide) — this is
-/// known and accepted per the v2 handoff-ownership decision.
-///
-/// Session readiness uses [CytoidGameCoreClient.waitForReady], the same
-/// primitive that [PlaySession.run] composes. The full [PlaySession.run]
-/// lifecycle (v2 `session.start` / `session.result`) requires engine-side v2
-/// protocol support; the mock engine and current Unity core still speak v1
-/// during the migration window (plan line 38: "Unity-side v2 protocol
-/// implementation is a separate body of work tracked outside this plan").
-/// Until the engine migrates, the play start/result path stays on the v1
-/// `startPlay` API so the example remains functional.
+/// Flutter owns the handoff UI; v2 gameplay orchestration is delegated to
+/// [PlaySession.run].
 class GameSessionScreen extends StatefulWidget {
   const GameSessionScreen({super.key, required this.args});
 
@@ -34,9 +24,9 @@ class GameSessionScreen extends StatefulWidget {
 class _GameSessionScreenState extends State<GameSessionScreen> {
   String _status = 'Preparing';
   bool _leaving = false;
-  bool _surfaceVisible = false;
 
   CytoidGameCoreClient get _client => widget.args.client;
+  late final PlaySession _playSession = PlaySession(_client);
 
   @override
   void initState() {
@@ -47,10 +37,11 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
   }
 
   Future<void> _startSession() async {
-    GameResultPayload? result;
+    SessionLaunchPayload? payload;
+    SessionResultPayload? result;
 
     try {
-      final payload = await widget.args.level.createLaunchPayload(
+      payload = await widget.args.level.createLaunchPayload(
         difficulty: widget.args.difficulty,
         settings: widget.args.settings,
         mods: widget.args.mods,
@@ -64,45 +55,18 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
         await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
       }
 
-      await _client.ensureRuntimeStarted();
-
-      if (!mounted) return;
-      setState(() => _status = 'Opening surface');
-
-      await _client.showGameSurface();
-      _surfaceVisible = true;
-
-      // waitForReady is the readiness gate that PlaySession.run() composes.
-      // Throws CytoidGameCoreTimeoutException on timeout — never silently
-      // continues (replaces the former manual ready-wait deadline loop).
-      await _client.waitForReady(timeout: const Duration(seconds: 20));
-
-      // Fire-and-forget v1 settings update; does not block the session.
-      unawaited(_applySettings());
-
       if (!mounted) return;
       setState(() => _status = 'Loading chart');
 
-      result = await _client.startPlay(payload);
-      widget.args.onCalibrationResult?.call(result);
-      await _hideSurface();
-    } on CytoidGameCorePlayRouteEndedException {
-      await _hideSurface();
-      await _restorePresentation();
-      if (mounted && !_leaving) {
-        _leaving = true;
-        Navigator.of(context).pop();
-      }
-      return;
-    } on Object catch (error) {
-      result = GameResultPayload(
-        completed: false,
-        failed: true,
-        usedAutoMod: false,
-        error: error.toString(),
-        timestamp: DateTime.now().toIso8601String(),
+      result = await _playSession.run(
+        launch: payload,
+        readyTimeout: const Duration(seconds: 20),
       );
-      await _hideSurface();
+      if (_isCalibrationResult(result)) {
+        widget.args.onCalibrationResult?.call(result);
+      }
+    } on Object catch (error) {
+      result = _errorResult(error, payload);
     } finally {
       await _restorePresentation();
     }
@@ -114,7 +78,7 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
       return;
     }
 
-    if (result.tierRetry != null) {
+    if (result.outcome.kind == OutcomePayload.tierRetryKind) {
       _leaving = true;
       Navigator.of(context).pop(result);
       return;
@@ -132,19 +96,8 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
     );
   }
 
-  bool _isCalibrationResult(GameResultPayload? result) {
-    final gameMode = result?.gameMode?.toLowerCase();
-    return gameMode == 'calibration' || gameMode == 'globalcalibration';
-  }
-
-  /// Applies v1 launch settings without blocking the session. Errors are
-  /// logged but do not abort — settings are best-effort pre-play.
-  Future<void> _applySettings() async {
-    try {
-      await _client.updateSettings(widget.args.settings.toLaunchSettings());
-    } catch (error) {
-      debugPrint('[GameSession] settings update failed: $error');
-    }
+  bool _isCalibrationResult(SessionResultPayload result) {
+    return result.outcome.kind == OutcomePayload.calibrationKind;
   }
 
   Future<void> _cancelAndPop() async {
@@ -152,33 +105,41 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
     _leaving = true;
     setState(() => _status = 'Closing');
     try {
-      await _client.endPlayRoute();
+      await _playSession.cancel(reason: 'userBack');
+    } on StateError {
+      // No active session id exists yet; the route can still close.
     } catch (error) {
-      debugPrint('[GameSession] endPlayRoute failed: $error');
+      debugPrint('[GameSession] session.cancel failed: $error');
     }
-    await _hideSurface();
     await _restorePresentation();
     if (mounted) {
       Navigator.of(context).pop();
     }
   }
 
-  /// Hides the game surface if currently visible. Guarded against double-hide
-  /// via [_surfaceVisible]. Used in non-PlaySession paths (cancel, error
-  /// recovery); when PlaySession.run is adopted, its finally block will own
-  /// the hide and this guard becomes redundant.
-  Future<void> _hideSurface() async {
-    if (!_surfaceVisible) return;
-    try {
-      await _client.hideGameSurface();
-      _surfaceVisible = false;
-    } catch (error) {
-      debugPrint('[GameSession] hideGameSurface failed: $error');
-    }
-  }
-
   Future<void> _restorePresentation() async {
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  }
+
+  SessionResultPayload _errorResult(
+    Object error,
+    SessionLaunchPayload? payload,
+  ) {
+    return SessionResultPayload(
+      sessionId: 'example-error-${DateTime.now().microsecondsSinceEpoch}',
+      mode: payload?.mode.wireName ?? SessionMode.ranked.wireName,
+      mods: payload?.mods.map((mod) => mod.v2WireName).toList(growable: false) ??
+          const [],
+      outcome: const OutcomePayload.rejected(),
+      flags: const FlagsPayload(usedAutoMod: false),
+      telemetry: const ResultTelemetryPayload(
+        available: false,
+        eventsRecorded: 0,
+        bytes: 0,
+      ),
+      timestamp: DateTime.now().millisecondsSinceEpoch,
+      error: GameCoreError(code: 'example_session_error', message: '$error'),
+    );
   }
 
   @override

@@ -28,7 +28,7 @@ class GameRouteArgs {
   final ExampleSettings settings;
   final ExampleMods? mods;
   final TierPlayLaunch? tierPlay;
-  final ValueChanged<GameResultPayload>? onCalibrationResult;
+  final ValueChanged<SessionResultPayload>? onCalibrationResult;
 }
 
 class ResultRouteArgs {
@@ -40,5 +40,5 @@ class ResultRouteArgs {
 
   final ExampleLevel level;
   final ExampleDifficulty difficulty;
-  final GameResultPayload result;
+  final SessionResultPayload result;
 }

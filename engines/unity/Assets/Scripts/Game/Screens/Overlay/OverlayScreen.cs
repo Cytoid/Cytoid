@@ -90,10 +90,8 @@ public class OverlayScreen : Screen
     {
         var left = safeArea.xMin / canvasScale;
         var right = (UnityEngine.Screen.width - safeArea.xMax) / canvasScale;
-        var top = (UnityEngine.Screen.height - safeArea.yMax) / canvasScale;
-        var bottom = safeArea.yMin / canvasScale;
         var horizontal = Mathf.Min(Mathf.Max(left, right), UnityEngine.Screen.width * 0.5f / canvasScale);
-        return new Vector4(horizontal, bottom, horizontal, top);
+        return new Vector4(horizontal, 0, horizontal, 0);
     }
 
     private float GetCanvasScale()

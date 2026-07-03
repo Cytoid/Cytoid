@@ -28,11 +28,25 @@ public class ChartModel
     public bool? skip_music_on_completion;
     
     [Serializable]
+    public class PagePositionFunction
+    {
+        public int Type;
+        public double[] Arguments;
+    }
+
+    [Serializable]
     public class Page
     {
         public double start_tick;
         public double end_tick;
         public int scan_line_direction;
+
+        [JsonProperty("PositionFunction")]
+        public PagePositionFunction position_function;
+
+        // Resolved at chart load; not part of c2 JSON.
+        public float position_arg_a = 1f;
+        public float position_arg_b;
 
         public float start_time;
         public float end_time;

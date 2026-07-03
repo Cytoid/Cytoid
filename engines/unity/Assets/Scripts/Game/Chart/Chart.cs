@@ -119,6 +119,7 @@ public class Chart
             }
 
             if (isVerticallyInverted) page.scan_line_direction = page.scan_line_direction == 1 ? -1 : 1;
+            PositionFunction.BakeArgs(page);
         }
 
         var pageNoteCountsByType = new Dictionary<NoteType, int[]>();
@@ -192,10 +193,7 @@ public class Chart
                 ConvertChartTickToScreenY((float) (note.tick + note.hold_tick))
             );
 
-            note.holdlength = (float) (verticalRatio * 2.0f * baseSize *
-                                       note.hold_tick /
-                                       (page.end_tick -
-                                        page.start_tick));
+            note.holdlength = GetHoldScreenLength(page, (float) note.tick, (float) (note.tick + note.hold_tick));
 
             if (note.type == (int) NoteType.DragHead || note.type == (int) NoteType.DragChild || 
                 note.type == (int) NoteType.CDragHead || note.type == (int) NoteType.CDragChild)
@@ -324,18 +322,69 @@ public class Chart
                + verticalOffset;
     }
 
+    float PageDisplayYToScreenY(ChartModel.Page page, float yDisplay)
+    {
+        return verticalRatio * (yDisplay * baseSize) + verticalOffset;
+    }
+
+    static float GetPageProgressByTick(ChartModel.Page page, float tick)
+    {
+        var span = (float) (page.end_tick - page.start_tick);
+        if (span <= 0f) return 0f;
+        return (tick - (float) page.start_tick) / span;
+    }
+
+    static float GetPageProgressByTime(ChartModel.Page page, float time)
+    {
+        var span = page.end_time - page.start_time;
+        if (span <= 0f) return 0f;
+        return (time - page.start_time) / span;
+    }
+
+    public int FindPageIndexByTime(float time)
+    {
+        for (var i = 0; i < Model.page_list.Count; i++)
+        {
+            if (time < Model.page_list[i].end_time) return i;
+        }
+
+        return Model.page_list.Count;
+    }
+
+    public int FindPageIndexByTick(float tick)
+    {
+        for (var i = 0; i < Model.page_list.Count; i++)
+        {
+            if (tick <= Model.page_list[i].end_tick) return i;
+        }
+
+        return Model.page_list.Count;
+    }
+
+    float GetNoteScreenYAtTick(ChartModel.Page page, float tick)
+    {
+        var t = GetPageProgressByTick(page, tick);
+        return PageDisplayYToScreenY(page, PositionFunction.EvaluateDisplayY(page, t));
+    }
+
+    float GetHoldScreenLength(ChartModel.Page page, float startTick, float endTick)
+    {
+        var t0 = GetPageProgressByTick(page, startTick);
+        var t1 = GetPageProgressByTick(page, endTick);
+        var y0 = PositionFunction.EvaluateDisplayY(page, t0);
+        var y1 = PositionFunction.EvaluateDisplayY(page, t1);
+        return verticalRatio * baseSize * Mathf.Abs(y1 - y0);
+    }
+
     public float GetNoteScreenY(ChartModel.Note note)
     {
-        var page = Model.page_list[note.page_index];
-        return (float) (
-            verticalRatio * page.scan_line_direction *
-            (-baseSize + 2.0f *
-                baseSize *
-                (note.tick - page.start_tick) * 1.0f /
-                (page.end_tick - page.start_tick))
-            + verticalOffset);
+        return GetNoteScreenYAtTick(Model.page_list[note.page_index], (float) note.tick);
     }
-    
+
+    /// <summary>
+    /// Legacy chart Y for Storyboard overrides (<see cref="ChartModel.Note.CalculatePosition"/>).
+    /// Intentionally linear in tick progress; not PageFunction-aware.
+    /// </summary>
     public float GetNoteChartY(ChartModel.Note note)
     {
         var page = Model.page_list[note.page_index];
@@ -345,71 +394,32 @@ public class Chart
 
     public float ConvertChartTickToScreenY(float tick)
     {
-        var targetPageId = 0;
-        while (targetPageId < Model.page_list.Count && tick > Model.page_list[targetPageId].end_tick)
-            targetPageId++;
-
-        if (targetPageId == Model.page_list.Count)
-            return (float) (
-                -verticalRatio * Model.page_list[targetPageId - 1].scan_line_direction *
-                (-baseSize + 2.0f *
-                 baseSize *
-                 (tick - Model.page_list[targetPageId - 1].end_tick) *
-                 1.0f / (Model.page_list[targetPageId - 1].end_tick -
-                         Model.page_list[targetPageId - 1].start_tick))
-                + verticalOffset);
-
-        return (float) (
-            verticalRatio * Model.page_list[targetPageId].scan_line_direction *
-            (-baseSize + 2.0f *
-             baseSize * (tick - Model.page_list[targetPageId].start_tick) *
-             1.0f / (Model.page_list[targetPageId].end_tick - Model.page_list[targetPageId].start_tick))
-            + verticalOffset);
+        var pageId = FindPageIndexByTick(tick);
+        var page = Model.page_list[pageId == Model.page_list.Count ? pageId - 1 : pageId];
+        return GetNoteScreenYAtTick(page, tick);
     }
 
     public float GetScannerPositionY(float time, bool useScannerSmoothing)
     {
-        CurrentPageId = 0;
-        while (CurrentPageId < Model.page_list.Count && time > Model.page_list[CurrentPageId].end_time)
-            CurrentPageId++;
-        if (CurrentPageId == Model.page_list.Count)
-        {
-            if (useScannerSmoothing)
-                return (float) (-verticalRatio * Model.page_list[CurrentPageId - 1].scan_line_direction *
-                                (-baseSize + 2.0f *
-                                 baseSize *
-                                 (ConvertToTick(time) - Model.page_list[CurrentPageId - 1].end_tick) *
-                                 1.0f / (Model.page_list[CurrentPageId - 1].end_tick -
-                                         Model.page_list[CurrentPageId - 1].start_tick))
-                                + verticalOffset);
-            return -verticalRatio * Model.page_list[CurrentPageId - 1].scan_line_direction *
-                   (-baseSize + 2.0f *
-                    baseSize *
-                    (time - Model.page_list[CurrentPageId - 1].end_time) *
-                    1.0f / (Model.page_list[CurrentPageId - 1].end_time -
-                            Model.page_list[CurrentPageId - 1].start_time))
-                   + verticalOffset;
-        }
-
-        if (useScannerSmoothing)
-            return (float) (verticalRatio * Model.page_list[CurrentPageId].scan_line_direction *
-                            (-baseSize + 2.0f *
-                             baseSize *
-                             (ConvertToTick(time) - Model.page_list[CurrentPageId].start_tick) *
-                             1.0f / (Model.page_list[CurrentPageId].end_tick -
-                                     Model.page_list[CurrentPageId].start_tick))
-                            + verticalOffset);
-        return verticalRatio * Model.page_list[CurrentPageId].scan_line_direction *
-               (-baseSize + 2.0f *
-                baseSize *
-                (time - Model.page_list[CurrentPageId].start_time) *
-                1.0f / (Model.page_list[CurrentPageId].end_time - Model.page_list[CurrentPageId].start_time))
-               + verticalOffset;
+        var pageId = FindPageIndexByTime(time);
+        var page = Model.page_list[pageId == Model.page_list.Count ? pageId - 1 : pageId];
+        var progress = useScannerSmoothing
+            ? GetPageProgressByTick(page, ConvertToTick(time))
+            : GetPageProgressByTime(page, time);
+        return PageDisplayYToScreenY(page, PositionFunction.EvaluateDisplayY(page, progress));
     }
 
     public float GetScanlinePosition01(float percentage)
     {
         return ConvertChartYToScreenY(percentage);
+    }
+
+    public float GetPageBoundaryScreenY(int pageId, bool bottom)
+    {
+        pageId = Mathf.Clamp(pageId, 0, Model.page_list.Count - 1);
+        var page = Model.page_list[pageId];
+        PositionFunction.GetVisibleBand(page, out var low, out var high);
+        return PageDisplayYToScreenY(page, bottom ? low : high);
     }
 
     public float GetBoundaryPosition(bool bottom)

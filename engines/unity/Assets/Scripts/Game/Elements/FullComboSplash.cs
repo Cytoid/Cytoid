@@ -17,7 +17,7 @@ public class FullComboSplash : CleanTitleTransitionElement
         {
             text.text = game.State.Combo + "x";
             game.BeforeExitTasks.Add(Animate());
-            Context.AudioManager.Get("LevelFullCombo").Play();
+            Context.AudioManager.GetSfx("LevelFullCombo").Play();
         }
     }
 }

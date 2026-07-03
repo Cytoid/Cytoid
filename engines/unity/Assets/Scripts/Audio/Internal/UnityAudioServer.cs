@@ -15,7 +15,7 @@ public class UnityAudioServer : IAudioServer
     private float musicVolume;
     private float sfxVolume;
 
-    private class RoundRobinIndex
+    internal class RoundRobinIndex
     {
         public int Value;
         public int PoolSize;

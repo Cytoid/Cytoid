@@ -114,9 +114,9 @@ public abstract class Note : MonoBehaviour
 
     public virtual void PlayHitSound()
     {
-        if (Context.AudioManager.IsLoaded("HitSound"))
+        if (Context.AudioManager.IsSfxLoaded("HitSound"))
         {
-            Context.AudioManager.Get("HitSound").Play();
+            Context.AudioManager.GetSfx("HitSound").Play();
         }
         Context.Haptic(HapticTypes.LightImpact, false);
     }

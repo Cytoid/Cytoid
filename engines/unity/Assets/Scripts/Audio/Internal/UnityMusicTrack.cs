@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 /// <summary>
@@ -87,7 +88,7 @@ public class UnityMusicTrack : IMusicTrack
 
             if (!isResource)
             {
-                Object.Destroy(audioClip);
+                UnityEngine.Object.Destroy(audioClip);
             }
             else
             {

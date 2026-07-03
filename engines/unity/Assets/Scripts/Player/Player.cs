@@ -48,7 +48,7 @@ public class Player
 #elif UNITY_ANDROID
         if (Context.Distribution == Distribution.TapTap)
         {
-            Context.AudioManager.Get("ActionSuccess").Play();
+            Context.AudioManager.GetSfx("ActionSuccess").Play();
             Application.OpenURL("https://www.taptap.com/app/158749");
         }
 #endif

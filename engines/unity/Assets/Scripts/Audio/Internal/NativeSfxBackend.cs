@@ -52,6 +52,8 @@ internal class NativeSfxBackend
 
     public ISoundEffect LoadSfx(string id, AudioClip clip, bool isResource, bool isPreloaded)
     {
+        if (sfx.TryGetValue(id, out var existing))
+            existing.Unload();
         var effect = new NativeSoundEffect(this, clip, isPreloaded);
         sfx[id] = effect;
         return effect;

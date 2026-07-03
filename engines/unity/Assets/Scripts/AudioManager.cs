@@ -78,5 +78,8 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
     public double AudioClockSeconds => _server.AudioClockSeconds;
 
     public void UpdateVolumes()
-        => _server.UpdateVolumes(Context.Player.Settings.MusicVolume, Context.Player.Settings.SoundEffectsVolume);
+    {
+        if (!IsInitialized || _server == null) return;
+        _server.UpdateVolumes(Context.Player.Settings.MusicVolume, Context.Player.Settings.SoundEffectsVolume);
+    }
 }

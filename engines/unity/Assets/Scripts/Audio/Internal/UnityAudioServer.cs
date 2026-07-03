@@ -85,6 +85,8 @@ public class UnityAudioServer : IAudioServer
 
     public ISoundEffect LoadSfx(string id, AudioClip clip, bool isResource, bool isPreloaded = false)
     {
+        if (sfx.TryGetValue(id, out var existing))
+            existing.Unload();
         var effect = new UnitySoundEffect(sfxPool, sfxRoundRobin, clip, isResource, isPreloaded);
         sfx[id] = effect;
         return effect;

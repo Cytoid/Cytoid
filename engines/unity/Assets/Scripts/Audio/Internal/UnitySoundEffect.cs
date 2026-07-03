@@ -52,6 +52,12 @@ public class UnitySoundEffect : ISoundEffect
 
     public void Unload()
     {
+        if (lastIndex >= 0 && pool[lastIndex].clip == audioClip)
+        {
+            pool[lastIndex].Stop();
+            pool[lastIndex].clip = null;
+        }
+
         if (audioClip != null)
         {
             try

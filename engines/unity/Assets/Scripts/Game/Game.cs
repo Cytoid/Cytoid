@@ -336,15 +336,12 @@ public class Game : MonoBehaviour
     {
         await UniTask.WhenAll(BeforeStartTasks);
 
-        MusicStartedTimestamp = Music.SchedulePlay(1.0);
+        if (Application.isEditor && EditorMusicInitialPosition > 0)
+            MusicStartedTimestamp = Music.PlayFrom(EditorMusicInitialPosition, 1.0);
+        else
+            MusicStartedTimestamp = Music.SchedulePlay(1.0);
 
         await UniTask.Delay(TimeSpan.FromSeconds(1));
-
-        if (Application.isEditor && EditorMusicInitialPosition > 0)
-        {
-            Music.SourceTimeSeconds = EditorMusicInitialPosition;
-            MusicStartedTimestamp -= EditorMusicInitialPosition;
-        }
 
         GameStartedOrResumedTimestamp = UnityEngine.Time.realtimeSinceStartup;
         State.IsStarted = true;

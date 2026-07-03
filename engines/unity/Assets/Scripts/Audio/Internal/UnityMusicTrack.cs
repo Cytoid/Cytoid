@@ -30,6 +30,18 @@ public class UnityMusicTrack : IMusicTrack
         return time;
     }
 
+    public double PlayFrom(float sourceTimeSeconds, double delaySeconds = 0)
+    {
+        source.Stop();
+        source.clip = audioClip;
+        source.volume = Volume;
+        source.time = sourceTimeSeconds;
+        var time = AudioSettings.dspTime + delaySeconds;
+        source.PlayScheduled(time);
+        scheduledStartTime = time - sourceTimeSeconds;
+        return scheduledStartTime;
+    }
+
     public double ScheduledStartTime => scheduledStartTime;
 
     public float SourceTimeSeconds

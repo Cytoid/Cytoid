@@ -115,18 +115,7 @@ internal class NativeSfxBackend
         public float Volume
         {
             get => volume;
-            set
-            {
-                volume = value;
-                if (source.IsValid)
-                {
-#if UNITY_ANDROID
-                    source.SetVolume(volume >= 0.05f ? volume : float.Epsilon);
-#else
-                    source.SetVolume(volume);
-#endif
-                }
-            }
+            set => volume = Mathf.Clamp01(value);
         }
 
         public bool IsPlaying => isPlaying;
@@ -136,11 +125,8 @@ internal class NativeSfxBackend
             var sourceIndex = parent.GetNextNativeSourceIndex();
             source = NativeAudio.GetNativeSource(sourceIndex);
             source.Play(pointer);
-#if UNITY_ANDROID
+            // Clamp on all platforms: some OpenAL/OpenSL implementations break on very small gain values
             source.SetVolume(volume >= 0.05f ? volume : float.Epsilon);
-#else
-            source.SetVolume(volume);
-#endif
             isPlaying = true;
         }
 

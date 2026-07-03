@@ -25,8 +25,13 @@ internal class NativeSfxBackend
 
     public void Dispose()
     {
-        foreach (var entry in sfx)
-            entry.Value.Stop();
+        if (NativeAudio.Initialized)
+        {
+            // Stop ALL native sources first — ensures no play head is reading any pointer's memory
+            var sourceCount = NativeAudio.GetNativeSourceCount();
+            for (var i = 0; i < sourceCount; i++)
+                NativeAudio.GetNativeSource(i).Stop();
+        }
 
         foreach (var entry in sfx)
             entry.Value.UnloadPointerSync();

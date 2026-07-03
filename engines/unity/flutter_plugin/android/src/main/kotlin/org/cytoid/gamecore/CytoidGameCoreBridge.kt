@@ -550,14 +550,12 @@ class CytoidGameCoreBridge private constructor(
 
     private fun emit(json: String) {
         if (isSessionResultMessage(jsonString = json)) {
+            // v2 § session.result: terminal for ALL outcome kinds including
+            // "rejected" — the host entered BUSY optimistically at session.start
+            // and MUST return to READY so the next session can launch.
             val resultId = runCatching { JSONObject(json).getString("id") }.getOrNull()
-            val payload = runCatching { JSONObject(json).optJSONObject("payload") }.getOrNull()
-            val outcomeKind = payload?.optJSONObject("outcome")?.optString("kind")
-            val isRejected = outcomeKind == "rejected"
             if (resultId == null || resultId == runtimeState.activeSessionId) {
-                if (!isRejected) {
-                    runtimeState.onSessionEnded()
-                }
+                runtimeState.onSessionEnded()
             }
         }
         val override = emitOverride

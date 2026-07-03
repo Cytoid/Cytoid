@@ -29,10 +29,7 @@ internal class NativeSfxBackend
             entry.Value.Stop();
 
         foreach (var entry in sfx)
-        {
-            if (!entry.Value.IsPreloaded)
-                entry.Value.UnloadPointerSync();
-        }
+            entry.Value.UnloadPointerSync();
 
         try { NativeAudio.Dispose(); }
         catch (Exception e) { Debug.LogError($"Error disposing native audio: {e}"); }

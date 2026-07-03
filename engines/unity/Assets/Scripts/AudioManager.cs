@@ -1,7 +1,6 @@
 using System;
 using E7.Native;
 using UnityEngine;
-using UnityEngine.Assertions;
 
 public class AudioManager : SingletonMonoBehavior<AudioManager>
 {
@@ -22,8 +21,9 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
     {
         if (IsInitialized) return;
 
-        // Partition assertion FIRST — fail clearly on bad Inspector wiring before indexing.
-        Assert.AreEqual(7, audioSources.Length, "Expected 1 music + 6 SFX AudioSources");
+        if (audioSources.Length != 7)
+            throw new InvalidOperationException(
+                $"Expected 7 AudioSources (1 music + 6 SFX), got {audioSources.Length}");
 
         var serverType = Context.Player.Settings.AudioServer;
         if (serverType == AudioServerType.Exceed7 && !NativeAudio.OnSupportedPlatform)
@@ -61,21 +61,24 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         _server = null;
     }
 
+    private IAudioServer Server =>
+        _server ?? throw new InvalidOperationException("AudioManager not initialized");
+
     public IMusicTrack LoadMusic(string id, AudioClip clip, bool isResource)
-        => _server.LoadMusic(id, clip, isResource);
+        => Server.LoadMusic(id, clip, isResource);
 
     public ISoundEffect LoadSfx(string id, AudioClip clip, bool isResource, bool isPreloaded = false)
-        => _server.LoadSfx(id, clip, isResource, isPreloaded);
+        => Server.LoadSfx(id, clip, isResource, isPreloaded);
 
-    public ISoundEffect GetSfx(string id) => _server.GetSfx(id);
+    public ISoundEffect GetSfx(string id) => Server.GetSfx(id);
 
-    public bool IsSfxLoaded(string id) => _server.IsSfxLoaded(id);
+    public bool IsSfxLoaded(string id) => Server.IsSfxLoaded(id);
 
-    public void UnloadMusic() => _server.UnloadMusic();
+    public void UnloadMusic() => Server.UnloadMusic();
 
-    public void UnloadSfx(string id) => _server.UnloadSfx(id);
+    public void UnloadSfx(string id) => Server.UnloadSfx(id);
 
-    public double AudioClockSeconds => _server.AudioClockSeconds;
+    public double AudioClockSeconds => Server.AudioClockSeconds;
 
     public void UpdateVolumes()
     {

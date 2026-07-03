@@ -26,26 +26,16 @@ internal class NativeSfxBackend
     public void Dispose()
     {
         foreach (var entry in sfx)
-        {
             entry.Value.Stop();
-        }
 
         foreach (var entry in sfx)
         {
             if (!entry.Value.IsPreloaded)
-            {
-                entry.Value.Unload();
-            }
+                entry.Value.UnloadPointerSync();
         }
 
-        try
-        {
-            NativeAudio.Dispose();
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"Error disposing native audio: {e}");
-        }
+        try { NativeAudio.Dispose(); }
+        catch (Exception e) { Debug.LogError($"Error disposing native audio: {e}"); }
 
         sfx.Clear();
     }
@@ -139,6 +129,12 @@ internal class NativeSfxBackend
                 await UniTask.DelayFrame(10);
                 pointer.Unload();
             });
+        }
+
+        internal void UnloadPointerSync()
+        {
+            Stop();
+            pointer.Unload();
         }
 
         public void Stop()

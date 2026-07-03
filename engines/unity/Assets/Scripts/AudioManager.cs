@@ -37,10 +37,19 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             AudioServerType.Exceed7 => new Exceed7AudioServer(audioSources[0], audioSources[1..]),
             _ => new UnityAudioServer(audioSources[0], audioSources[1..]),
         };
-        server.Initialize();
 
-        foreach (var clip in preloadedAudioClips)
-            server.LoadSfx(clip.name, clip, isResource: false, isPreloaded: true);
+        try
+        {
+            server.Initialize();
+            foreach (var clip in preloadedAudioClips)
+                server.LoadSfx(clip.name, clip, isResource: false, isPreloaded: true);
+        }
+        catch
+        {
+            try { server.Dispose(); }
+            catch { }
+            throw;
+        }
 
         _server = server;
         IsInitialized = true;

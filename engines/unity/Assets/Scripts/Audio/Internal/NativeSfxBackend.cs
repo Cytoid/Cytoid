@@ -125,8 +125,7 @@ internal class NativeSfxBackend
             var sourceIndex = parent.GetNextNativeSourceIndex();
             source = NativeAudio.GetNativeSource(sourceIndex);
             source.Play(pointer);
-            // Clamp on all platforms: some OpenAL/OpenSL implementations break on very small gain values
-            source.SetVolume(volume >= 0.05f ? volume : float.Epsilon);
+            source.SetVolume(volume);
             isPlaying = true;
         }
 

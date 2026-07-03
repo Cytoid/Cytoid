@@ -28,21 +28,21 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         var serverType = Context.Player.Settings.AudioServer;
         if (serverType == AudioServerType.Exceed7 && !NativeAudio.OnSupportedPlatform)
         {
-            Debug.LogWarning("[Audio] Exceed7 requested but Native Audio not supported; falling back to Unity");
+            Debug.LogWarning("[Audio] Exceed7 not supported on this platform; falling back to Unity");
             serverType = AudioServerType.Unity;
         }
-        _server = serverType switch
+
+        var server = serverType switch
         {
-            AudioServerType.Unity   => new UnityAudioServer(audioSources[0], audioSources[1..]),
             AudioServerType.Exceed7 => new Exceed7AudioServer(audioSources[0], audioSources[1..]),
-            _ => throw new NotSupportedException($"AudioServer {serverType} not supported"),
+            _ => new UnityAudioServer(audioSources[0], audioSources[1..]),
         };
-        _server.Initialize();
+        server.Initialize();
 
-        // Preload SFX
         foreach (var clip in preloadedAudioClips)
-            _server.LoadSfx(clip.name, clip, isResource: false, isPreloaded: true);
+            server.LoadSfx(clip.name, clip, isResource: false, isPreloaded: true);
 
+        _server = server;
         IsInitialized = true;
     }
 

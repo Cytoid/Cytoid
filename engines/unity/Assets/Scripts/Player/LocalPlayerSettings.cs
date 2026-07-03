@@ -117,7 +117,7 @@ public class LocalPlayerSettings
     [JsonProperty("display_note_ids")] public bool DisplayNoteIds { get; set; } = false;
     [JsonProperty("local_level_sort")] public LevelSort LocalLevelSort { get; set; } = LevelSort.AddedDate;
 
-    [JsonProperty("use_native_audio")] public bool UseNativeAudio { get; set; } = false;
+    [JsonProperty("audio_server")] public AudioServerType AudioServer { get; set; } = AudioServerType.Unity;
 
     [JsonProperty("android_dsp_buffer_size")]
     public int AndroidDspBufferSize { get; set; } = -1;

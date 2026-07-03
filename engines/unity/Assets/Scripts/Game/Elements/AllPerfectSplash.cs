@@ -13,7 +13,7 @@ public class AllPerfectSplash : CleanTitleTransitionElement
         if (game.State.Mode != GameMode.Calibration && game.State.Score == 1000000 && !game.EditorImmediatelyComplete)
         {
             game.BeforeExitTasks.Add(Animate());
-            Context.AudioManager.Get("LevelMax").Play();
+            Context.AudioManager.GetSfx("LevelMax").Play();
         }
     }
 }

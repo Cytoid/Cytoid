@@ -68,12 +68,12 @@ public class HitSoundSelect : MonoBehaviour, ScreenBecameActiveListener
             if (it != "none")
             {
                 var audioClip = Resources.Load<AudioClip>("Audio/HitSounds/" + it);
-                var hitSound = Context.AudioManager.Load("HitSound", audioClip, isResource: true);
+                var hitSound = Context.AudioManager.LoadSfx("HitSound", audioClip, isResource: true);
                 hitSound.Play();
             }
             else
             {
-                Context.AudioManager.Unload("HitSound");
+                Context.AudioManager.UnloadSfx("HitSound");
             }
         });
     }

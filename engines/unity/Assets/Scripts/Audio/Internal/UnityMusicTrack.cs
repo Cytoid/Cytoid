@@ -22,6 +22,8 @@ public class UnityMusicTrack : IMusicTrack
 
     public double SchedulePlay(double delaySeconds)
     {
+        source.clip = audioClip;
+        source.volume = Volume;
         var time = AudioSettings.dspTime + delaySeconds;
         source.PlayScheduled(time);
         scheduledStartTime = time;

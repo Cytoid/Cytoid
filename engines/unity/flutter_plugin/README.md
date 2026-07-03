@@ -14,11 +14,20 @@ without changing Flutter UI code.
 import 'package:cytoid_game_core/cytoid_game_core.dart';
 
 final client = CytoidGameCoreClient();
-await client.ensureRuntimeStarted();
-await client.showGameSurface();
-final result = await client.startPlay(launchPayload);
-await client.hideGameSurface();
+final session = PlaySession(client);
+final result = await session.run(
+  launch: launchPayload, // SessionLaunchPayload
+);
 ```
+
+`PlaySession.run` owns the full v2 lifecycle: it ensures the runtime is
+started, shows the game surface, waits for `engine.ready`, sends the typed
+`session.start` envelope, awaits the terminal `session.result` /
+`session.failed`, and ALWAYS hides the surface (in a `finally` block, even
+when an earlier step throws). Lower-level primitives
+(`ensureRuntimeStarted`, `showGameSurface`, `hideGameSurface`, `send`,
+`waitForReady`) remain available on `CytoidGameCoreClient` for callers that
+need to deviate from that sequence.
 
 Channels used by the plugin:
 

@@ -17,8 +17,8 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
     private const int RoundRobinEndIndex = 6;
     private int trackCurrentIndex = RoundRobinStartIndex;
 
-    private bool useNativeAudio;
-    private bool isInitialized;
+private bool useNativeAudio;
+public bool IsInitialized { get; private set; }
 
     protected override void Awake()
     {
@@ -28,12 +28,12 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         trackCurrentIndex = RoundRobinStartIndex;
     }
 
-    public void Initialize()
-    {
-        if (isInitialized) return;
-        isInitialized = true;
-        SetUseNativeAudio(Context.Player.Settings.UseNativeAudio);
-        if (useNativeAudio)
+public void Initialize()
+{
+    if (IsInitialized) return;
+    IsInitialized = true;
+    // SetUseNativeAudio(Context.Player.Settings.UseNativeAudio);  // REMOVED: server selection now in Initialize() via AudioServerType (T6)
+    if (useNativeAudio)
         {
             var options = new NativeAudio.InitializationOptions
             {
@@ -57,11 +57,11 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         Dispose();
     }
 
-    public void Dispose()
-    {
-        if (!isInitialized) return;
+public void Dispose()
+{
+    if (!IsInitialized) return;
 
-        isInitialized = false;
+    IsInitialized = false;
 
         // First stop all playing audio
         foreach (var controller in controllers.Values)
@@ -104,10 +104,11 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
         }
     }
 
-    public void SetUseNativeAudio(bool useNativeAudio)
-    {
-        this.useNativeAudio = NativeAudio.OnSupportedPlatform && useNativeAudio;
-    }
+[Obsolete("Use AudioServerType selection in Initialize(). Will be removed in T7.")]
+public void SetUseNativeAudio(bool useNativeAudio)
+{
+    this.useNativeAudio = NativeAudio.OnSupportedPlatform && useNativeAudio;
+}
 
     public Controller Load(string id, AudioClip audioClip, bool? useNativeAudio = null, bool isResource = false, bool isMusic = false, bool isPreloaded = false)
     {

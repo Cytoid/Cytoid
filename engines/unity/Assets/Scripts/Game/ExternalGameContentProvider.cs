@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Cysharp.Threading.Tasks;
+using E7.Native;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
@@ -184,11 +185,20 @@ public sealed class ExternalGameContentProvider : IGameContentProvider
             target.HitTapticFeedback = settings.hitTapticFeedback.Value;
         }
 
-        if (settings.useNativeAudio.HasValue)
-        {
-            target.UseNativeAudio = settings.useNativeAudio.Value;
-            Context.AudioManager?.SetUseNativeAudio(settings.useNativeAudio.Value);
-        }
+if (settings.useNativeAudio.HasValue)
+{
+    // Translate wire protocol bool? to AudioServerType enum (wire field stays bool? for protocol compat)
+    var requested = settings.useNativeAudio.Value ? AudioServerType.Exceed7 : AudioServerType.Unity;
+    var effective = (requested == AudioServerType.Exceed7 && !NativeAudio.OnSupportedPlatform)
+        ? AudioServerType.Unity
+        : requested;
+    if (requested != effective)
+        Debug.LogWarning("[Audio] Exceed7 requested but Native Audio not supported on this platform; falling back to Unity");
+    target.AudioServer = effective;
+    // No runtime server swap — applied at next AudioManager.Initialize()
+    if (Context.AudioManager != null && Context.AudioManager.IsInitialized)
+        Debug.LogWarning("[Audio] AudioServer change deferred to next session");
+}
 
         if (settings.androidDspBufferSize.HasValue)
         {

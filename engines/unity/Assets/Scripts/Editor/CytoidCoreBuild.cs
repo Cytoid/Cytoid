@@ -125,11 +125,19 @@ public static class CytoidCoreBuild
         }
 
         SetPendingBuildState("android", outputDirectory, packageFramework: false, iosSdk: "");
-        SwitchToAndroid();
-        EditorUserBuildSettings.exportAsGoogleAndroidProject = true;
-        EditorUserBuildSettings.buildAppBundle = false;
-        Directory.CreateDirectory(outputDirectory);
-        EditorApplication.update += ContinuePendingBuild;
+        try
+        {
+            SwitchToAndroid();
+            EditorUserBuildSettings.exportAsGoogleAndroidProject = true;
+            EditorUserBuildSettings.buildAppBundle = false;
+            Directory.CreateDirectory(outputDirectory);
+            EditorApplication.update += ContinuePendingBuild;
+        }
+        catch
+        {
+            ClearPendingBuildState();
+            throw;
+        }
     }
 
     private static void ExportIOSLibraryForFlutter(string outputDirectory, bool packageFramework)
@@ -143,9 +151,17 @@ public static class CytoidCoreBuild
 
         var iosSdk = ResolveIosXcodeSdk();
         SetPendingBuildState("ios", outputDirectory, packageFramework, iosSdk);
-        SwitchToIOS();
-        Directory.CreateDirectory(outputDirectory);
-        EditorApplication.update += ContinuePendingBuild;
+        try
+        {
+            SwitchToIOS();
+            Directory.CreateDirectory(outputDirectory);
+            EditorApplication.update += ContinuePendingBuild;
+        }
+        catch
+        {
+            ClearPendingBuildState();
+            throw;
+        }
     }
 
     private static void SwitchToAndroid()
@@ -357,7 +373,18 @@ public static class CytoidCoreBuild
             return;
         }
 
-        var startTicks = long.Parse(EditorPrefs.GetString(PendingBuildStartTicksKey, "0"));
+        var rawStartTicks = EditorPrefs.GetString(PendingBuildStartTicksKey, "0");
+        if (!long.TryParse(rawStartTicks, out var startTicks))
+        {
+            // Without unregister, parse failure would rethrow inside update every tick.
+            ClearPendingBuildState();
+            EditorApplication.update -= ContinuePendingBuild;
+            Debug.LogError(
+                $"[CytoidCoreBuild] Corrupted {PendingBuildStartTicksKey} value '{rawStartTicks}'; "
+                + "cleared pending build state.");
+            if (Application.isBatchMode) EditorApplication.Exit(1);
+            return;
+        }
         var startTime = startTicks > 0 ? new DateTime(startTicks, DateTimeKind.Utc) : DateTime.UtcNow;
         var elapsed = (DateTime.UtcNow - startTime).TotalSeconds;
 

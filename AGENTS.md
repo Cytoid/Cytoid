@@ -105,7 +105,7 @@ Android batchmode:
 UNITY="/Applications/Unity/Hub/Editor/6000.0.75f1/Unity.app/Contents/MacOS/Unity"
 PROJECT="/path/to/Cytoid/engines/unity"
 
-"$UNITY" -batchmode -quit \
+"$UNITY" -batchmode \
   -projectPath "$PROJECT" \
   -executeMethod CytoidCoreBuild.ExportAndroidLibraryForFlutter \
   -logFile "$PROJECT/flutter_plugin/.cytoid_game_core/build/unity-android.log"
@@ -224,6 +224,7 @@ If you change envelope types or payloads:
 | 2026-05 | Lunar Console removed; `game.log` forwarding | Bridge-embedded receives Unity logs; Graphy retained for in-engine profiler overlay |
 | 2026-05 | Cytoid top-level menu = plugin builds only | Flat `Cytoid/…` items; no Core Build submenu; exports use `PluginBuildScenes` + `CYTOID_FLUTTER_HOST` |
 | 2026-06 | Host-side `health.check` watchdog in `PlaySession` | Detects Unity main-loop freeze with process alive — the gap the native bridge synthesis paths don't cover. Reuses `runtime_unreachable`; provenance in `message`. C# handler: `GameBridgeRouter.HandleHealthCheck` |
+| 2026-07 | `CytoidCoreBuild` uses `EditorApplication.update` + explicit `EditorApplication.Exit(0)`; invocation MUST NOT pass `-quit` | Unity 6 batchmode + `-quit` exits the instant executeMethod returns, so `update` callbacks never fire and any async work is silently dropped. Empirically verified: `Thread.Sleep` deadlocks (compiler shares the main thread); `EditorApplication.Step()` is a no-op inside executeMethod (doesn't pump compilation, doesn't advance wall clock); `wantsToQuit` vetoes are ignored under `-quit`. CI uses game-ci/unity-builder `manualExit: true` (added in PR game-ci/unity-builder#574 specifically for this pattern). |
 
 Append new rows when architecture or default paths change.
 

@@ -61,6 +61,9 @@ jobs:
           targetPlatform: Android
           buildMethod: CytoidCoreBuild.ExportAndroidLibraryForFlutter
           allowDirtyBuild: true
+          # CytoidCoreBuild uses EditorApplication.update + EditorApplication.Exit(0)
+          # to pump script compilation async. -quit would exit before that fires.
+          manualExit: true
 
       - name: Write artifact manifest
         env:
@@ -120,6 +123,9 @@ jobs:
           targetPlatform: iOS
           buildMethod: CytoidCoreBuild.ExportIOSLibraryForFlutterWithoutPackaging
           allowDirtyBuild: true
+          # CytoidCoreBuild uses EditorApplication.update + EditorApplication.Exit(0)
+          # to pump script compilation async. -quit would exit before that fires.
+          manualExit: true
 
       - name: Upload iOS Unity export
         uses: actions/upload-artifact@v4

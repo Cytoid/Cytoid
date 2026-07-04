@@ -14,11 +14,20 @@ without changing Flutter UI code.
 import 'package:cytoid_game_core/cytoid_game_core.dart';
 
 final client = CytoidGameCoreClient();
-await client.ensureRuntimeStarted();
-await client.showGameSurface();
-final result = await client.startPlay(launchPayload);
-await client.hideGameSurface();
+final session = PlaySession(client);
+final result = await session.run(
+  launch: launchPayload, // SessionLaunchPayload
+);
 ```
+
+`PlaySession.run` owns the full v2 lifecycle: it ensures the runtime is
+started, shows the game surface, waits for `engine.ready`, sends the typed
+`session.start` envelope, awaits the terminal `session.result` /
+`session.failed`, and ALWAYS hides the surface (in a `finally` block, even
+when an earlier step throws). Lower-level primitives
+(`ensureRuntimeStarted`, `showGameSurface`, `hideGameSurface`, `send`,
+`waitForReady`) remain available on `CytoidGameCoreClient` for callers that
+need to deviate from that sequence.
 
 Channels used by the plugin:
 
@@ -54,6 +63,28 @@ The example iOS app is SPM-only and does not use CocoaPods.
 The Unity iOS export currently produces a device-only framework. With the
 Unity artifact mounted, build and run the example on an iOS device; simulator
 builds require a simulator slice or no Unity artifact so the mock runtime is used.
+
+### Running the Swift test suite locally
+
+The iOS plugin's pure-logic Swift tests (`RuntimeStateTests`,
+`RuntimeFailureSynthesisTests`, `EnsureRuntimeStartedContractTests`,
+`MessageQueueTimeoutTests`, `RejectedSessionResultTransitionTests`,
+`BridgeSchemaValidationTests`, `WaitForReadyTests`) run without the
+`FlutterFramework` SPM package or the `UnityFramework` binary target via an
+isolated SwiftPM sandbox:
+
+```sh
+cd engines/unity/flutter_plugin
+./tool/run_swift_tests_sandboxed.sh           # run the suite
+./tool/run_swift_tests_sandboxed.sh --clean   # wipe sandbox first
+./tool/run_swift_tests_sandboxed.sh --list-tests
+```
+
+The harness symlinks production sources into a sandbox package, generates a
+minimal stub `Flutter` module, and writes a stripped `Package.swift`. Tests
+that assert on real Flutter semantics (`ShowGameSurfaceAtomicityTests`) and
+sources that use UIKit (`CytoidGameCorePlugin.swift`) are excluded — these
+require an Xcode build with the full Flutter + UnityFramework dependencies.
 
 ## Example
 

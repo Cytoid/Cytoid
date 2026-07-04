@@ -200,9 +200,11 @@ class ActivityLifecycleSynthesisTest {
 
         // 10 sequential session cycles via low-level primitives.
         // Warm-resident: hideGameSurface does NOT destroy the Activity.
+        // Payload MUST satisfy MockGameCoreBridge.isValidLaunch — a rejected
+        // session.result returns the runtime to READY before the BUSY check.
         for (cycle in 1..10) {
             bridge.onOutboundMessage(
-                """{"schema":"cytoid.game-core.v2","id":"S$cycle","type":"session.start","payload":{}}""",
+                """{"schema":"cytoid.game-core.v2","id":"S$cycle","type":"session.start","payload":{"mode":"ranked","mods":[],"options":{}}}""",
             )
             assertEquals(
                 "cycle $cycle: state must be BUSY after session.start",

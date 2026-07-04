@@ -1,10 +1,10 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
+using UnityEditor.Callbacks;
 using UnityEngine;
 
 /// <summary>
@@ -54,8 +54,29 @@ public static class CytoidCoreBuild
     private const int MenuPriorityBuildAndroid = 10;
     private const int MenuPriorityBuildIOS = 11;
 
+    /// <summary>Upper bound on waiting for a switch-triggered recompile to finish.</summary>
+    private const int ScriptCompilationTimeoutSeconds = 600;
+
     /// <summary>
-    /// Batchmode: Unity -batchmode -quit -projectPath ... -executeMethod CytoidCoreBuild.ExportAndroidLibraryForFlutter
+    /// Time to wait after a switch before treating "isCompiling=false" as "no compile needed"
+    /// rather than "compile hasn't been scheduled yet" (SwitchActiveBuildTarget is async).
+    /// </summary>
+    private const double ScriptCompilationGracePeriodSeconds = 2.0;
+
+    // Pending-build state keys. Static delegate registrations are wiped by domain reloads
+    // (which SwitchActiveBuildTarget triggers), so we persist build intent in EditorPrefs
+    // and re-register the continuation via [DidReloadScripts].
+    private const string PendingBuildActiveKey     = "CytoidCoreBuild.Pending.Active";
+    private const string PendingBuildPlatformKey   = "CytoidCoreBuild.Pending.Platform";
+    private const string PendingBuildOutputDirKey  = "CytoidCoreBuild.Pending.OutputDir";
+    private const string PendingBuildPackageKey    = "CytoidCoreBuild.Pending.Package";
+    private const string PendingBuildIosSdkKey     = "CytoidCoreBuild.Pending.IosSdk";
+    private const string PendingBuildStartTicksKey = "CytoidCoreBuild.Pending.StartTicks";
+
+    /// <summary>
+    /// Batchmode: Unity -batchmode -projectPath ... -executeMethod CytoidCoreBuild.ExportAndroidLibraryForFlutter
+    /// (do NOT pass -quit; this method calls EditorApplication.Exit(0) after async work completes.
+    /// With -quit, Unity exits before EditorApplication.update fires and no build is produced.)
     /// </summary>
     public static void ExportAndroidLibraryForFlutter()
     {
@@ -63,7 +84,9 @@ public static class CytoidCoreBuild
     }
 
     /// <summary>
-    /// Batchmode: Unity -batchmode -quit -projectPath ... -executeMethod CytoidCoreBuild.ExportIOSLibraryForFlutter
+    /// Batchmode: Unity -batchmode -projectPath ... -executeMethod CytoidCoreBuild.ExportIOSLibraryForFlutter
+    /// (do NOT pass -quit; this method calls EditorApplication.Exit(0) after async work completes.
+    /// With -quit, Unity exits before EditorApplication.update fires and no build is produced.)
     /// </summary>
     public static void ExportIOSLibraryForFlutter()
     {
@@ -73,7 +96,7 @@ public static class CytoidCoreBuild
     /// <summary>
     /// Batchmode: exports the iOS UnityLibrary Xcode project without invoking xcodebuild.
     /// Used by CI when the Unity export runs in GameCI/Linux and framework packaging
-    /// happens later on a macOS runner.
+    /// happens later on a macOS runner. Same -quit contract as above.
     /// </summary>
     public static void ExportIOSLibraryForFlutterWithoutPackaging()
     {
@@ -94,66 +117,51 @@ public static class CytoidCoreBuild
 
     private static void ExportAndroidLibraryForFlutter(string outputDirectory)
     {
-        SwitchToAndroid();
-        EditorUserBuildSettings.exportAsGoogleAndroidProject = true;
-        EditorUserBuildSettings.buildAppBundle = false;
+        if (EditorPrefs.GetBool(PendingBuildActiveKey, false))
+        {
+            throw new InvalidOperationException(
+                "A CytoidCoreBuild export is already in progress. Wait for it to finish "
+                + $"or clear EditorPrefs key '{PendingBuildActiveKey}' manually if stuck.");
+        }
 
-        Directory.CreateDirectory(outputDirectory);
-        RunAfterScriptCompilation(
-            () =>
-                RunAndroidExport(
-                    PluginBuildScenes,
-                    outputDirectory,
-                    FlutterHostLibraryApplicationIdentifier,
-                    builtPath =>
-                    {
-                        Debug.Log(
-                            $"[CytoidCoreBuild] Android export at {builtPath}\n"
-                            + $"  Define: {FlutterHostDefineSymbol}\n"
-                            + $"  Library applicationId: {FlutterHostLibraryApplicationIdentifier}\n"
-                            + $"  Flutter plugin package: {FlutterHostApplicationId}\n"
-                            + "  JNI callback: org.cytoid.gamecore.UnityHostCallback.onMessage");
-                        PackageAndroidLibraryForFlutter();
-                    }),
-            "Android plugin export");
+        SetPendingBuildState("android", outputDirectory, packageFramework: false, iosSdk: "");
+        try
+        {
+            SwitchToAndroid();
+            EditorUserBuildSettings.exportAsGoogleAndroidProject = true;
+            EditorUserBuildSettings.buildAppBundle = false;
+            Directory.CreateDirectory(outputDirectory);
+            EditorApplication.update += ContinuePendingBuild;
+        }
+        catch
+        {
+            ClearPendingBuildState();
+            throw;
+        }
     }
 
     private static void ExportIOSLibraryForFlutter(string outputDirectory, bool packageFramework)
     {
-        SwitchToIOS();
-        Directory.CreateDirectory(outputDirectory);
+        if (EditorPrefs.GetBool(PendingBuildActiveKey, false))
+        {
+            throw new InvalidOperationException(
+                "A CytoidCoreBuild export is already in progress. Wait for it to finish "
+                + $"or clear EditorPrefs key '{PendingBuildActiveKey}' manually if stuck.");
+        }
 
-        RunAfterScriptCompilation(
-            () =>
-            {
-                var iosSdk = ResolveIosXcodeSdk();
-                RunIOSExport(
-                    PluginBuildScenes,
-                    outputDirectory,
-                    FlutterHostLibraryApplicationIdentifier,
-                    iosSdk,
-                    builtPath =>
-                    {
-                        Debug.Log(
-                            $"[CytoidCoreBuild] iOS export at {builtPath}\n"
-                            + $"  Define: {FlutterHostDefineSymbol}\n"
-                            + $"  iOS SDK: {iosSdk} ({ResolveUnityIosSdkVersion(iosSdk)})\n"
-                            + $"  Library bundle id: {FlutterHostLibraryApplicationIdentifier}\n"
-                            + $"  Flutter plugin package: {FlutterHostApplicationId}\n"
-                            + "  Native callback: CytoidHostNative_SetMessageHandler from Flutter host");
-                        if (packageFramework)
-                        {
-                            PackageIOSLibraryForFlutter();
-                        }
-                        else
-                        {
-                            Debug.Log(
-                                "[CytoidCoreBuild] Skipped iOS UnityFramework packaging. "
-                                + "Run flutter_plugin/tool/build_unity_ios_framework.sh on macOS.");
-                        }
-                    });
-            },
-            "iOS plugin export");
+        var iosSdk = ResolveIosXcodeSdk();
+        SetPendingBuildState("ios", outputDirectory, packageFramework, iosSdk);
+        try
+        {
+            SwitchToIOS();
+            Directory.CreateDirectory(outputDirectory);
+            EditorApplication.update += ContinuePendingBuild;
+        }
+        catch
+        {
+            ClearPendingBuildState();
+            throw;
+        }
     }
 
     private static void SwitchToAndroid()
@@ -324,61 +332,168 @@ public static class CytoidCoreBuild
     }
 
     /// <summary>
-    /// Switching build targets triggers an async script recompile. Building before it
-    /// finishes yields BuildResult.Unknown ("Error building Player because scripts are compiling").
+    /// Invoked by Unity after every script recompile (including the one triggered by
+    /// <see cref="SwitchToAndroid"/>/<see cref="SwitchToIOS"/>). Static delegate
+    /// registrations (like our <see cref="EditorApplication.update"/> handler) are
+    /// wiped by the domain reload, so this is the only way to resume the pending build.
     /// </summary>
-    private static void RunAfterScriptCompilation(Action action, string reason)
+    [DidReloadScripts]
+    private static void RestorePendingBuildAfterDomainReload()
     {
-        if (!IsScriptCompilationPending())
-        {
-            action();
-            return;
-        }
-
-        if (Application.isBatchMode)
-        {
-            WaitForScriptCompilationSync(reason);
-            action();
-            return;
-        }
-
-        Debug.Log($"[CytoidCoreBuild] Waiting for script compilation ({reason})...");
-        EditorApplication.delayCall += Deferred;
-
-        void Deferred()
-        {
-            if (IsScriptCompilationPending())
-            {
-                EditorApplication.delayCall += Deferred;
-                return;
-            }
-
-            action();
-        }
+        if (!EditorPrefs.GetBool(PendingBuildActiveKey, false)) return;
+        Debug.Log("[CytoidCoreBuild] Domain reload detected; resuming pending build...");
+        EditorApplication.update += ContinuePendingBuild;
     }
 
-    private static void WaitForScriptCompilationSync(string reason, int timeoutSeconds = 600)
+    /// <summary>
+    /// Update callback that waits for script compilation to finish (or for the grace
+    /// window to elapse if no compile was triggered), then runs the pending export.
+    /// Registered both from the export entry points and from
+    /// <see cref="RestorePendingBuildAfterDomainReload"/> — whoever fires first wins,
+    /// and the unregister on first run prevents double-execution.
+    /// </summary>
+    /// <remarks>
+    /// Empirically verified Unity 6 batchmode pitfalls (do not regress these):
+    /// <list type="bullet">
+    /// <item><description><c>-quit</c> exits the instant executeMethod returns;
+    /// <c>EditorApplication.update</c> callbacks never fire. Invocation MUST omit -quit
+    /// (CI uses game-ci/unity-builder <c>manualExit: true</c>).</description></item>
+    /// <item><description>Static delegate registrations do NOT survive the domain reload
+    /// triggered by <c>SwitchActiveBuildTarget</c>. Pending state must live in
+    /// EditorPrefs and be re-registered via <c>[DidReloadScripts]</c>.</description></item>
+    /// <item><description><c>Thread.Sleep</c> in executeMethod deadlocks — the compiler
+    /// shares the main thread.</description></item>
+    /// </list>
+    /// </remarks>
+    private static void ContinuePendingBuild()
     {
-        if (!IsScriptCompilationPending())
+        if (!EditorPrefs.GetBool(PendingBuildActiveKey, false))
         {
+            EditorApplication.update -= ContinuePendingBuild;
             return;
         }
 
-        Debug.Log($"[CytoidCoreBuild] Waiting for script compilation ({reason})...");
-        var deadline = DateTime.UtcNow.AddSeconds(timeoutSeconds);
-        while (DateTime.UtcNow < deadline)
+        var rawStartTicks = EditorPrefs.GetString(PendingBuildStartTicksKey, "0");
+        if (!long.TryParse(rawStartTicks, out var startTicks))
         {
-            if (!IsScriptCompilationPending())
-            {
-                Debug.Log("[CytoidCoreBuild] Script compilation finished.");
-                return;
-            }
+            // Without unregister, parse failure would rethrow inside update every tick.
+            ClearPendingBuildState();
+            EditorApplication.update -= ContinuePendingBuild;
+            Debug.LogError(
+                $"[CytoidCoreBuild] Corrupted {PendingBuildStartTicksKey} value '{rawStartTicks}'; "
+                + "cleared pending build state.");
+            if (Application.isBatchMode) EditorApplication.Exit(1);
+            return;
+        }
+        var startTime = startTicks > 0 ? new DateTime(startTicks, DateTimeKind.Utc) : DateTime.UtcNow;
+        var elapsed = (DateTime.UtcNow - startTime).TotalSeconds;
 
-            Thread.Sleep(250);
+        var platform = EditorPrefs.GetString(PendingBuildPlatformKey);
+
+        if (elapsed > ScriptCompilationTimeoutSeconds)
+        {
+            ClearPendingBuildState();
+            EditorApplication.update -= ContinuePendingBuild;
+            Debug.LogError(
+                $"[CytoidCoreBuild] Timed out after {ScriptCompilationTimeoutSeconds}s "
+                + $"waiting for script compilation ({platform} plugin export).");
+            if (Application.isBatchMode) EditorApplication.Exit(1);
+            return;
         }
 
-        throw new Exception(
-            $"Timed out after {timeoutSeconds}s waiting for script compilation ({reason}).");
+        if (IsScriptCompilationPending()) return;
+
+        // Post-switch race guard: SwitchActiveBuildTarget returns before isCompiling
+        // flips true. Wait the grace window before treating "not pending" as "done".
+        if (elapsed < ScriptCompilationGracePeriodSeconds) return;
+
+        var outputDir = EditorPrefs.GetString(PendingBuildOutputDirKey);
+        var packageFramework = EditorPrefs.GetBool(PendingBuildPackageKey);
+        var iosSdk = EditorPrefs.GetString(PendingBuildIosSdkKey);
+
+        ClearPendingBuildState();
+        EditorApplication.update -= ContinuePendingBuild;
+
+        Debug.Log($"[CytoidCoreBuild] Script compilation finished ({platform} plugin export).");
+
+        try
+        {
+            if (platform == "android")
+            {
+                RunAndroidExport(
+                    PluginBuildScenes,
+                    outputDir,
+                    FlutterHostLibraryApplicationIdentifier,
+                    builtPath =>
+                    {
+                        Debug.Log(
+                            $"[CytoidCoreBuild] Android export at {builtPath}\n"
+                            + $"  Define: {FlutterHostDefineSymbol}\n"
+                            + $"  Library applicationId: {FlutterHostLibraryApplicationIdentifier}\n"
+                            + $"  Flutter plugin package: {FlutterHostApplicationId}\n"
+                            + "  JNI callback: org.cytoid.gamecore.UnityHostCallback.onMessage");
+                        PackageAndroidLibraryForFlutter();
+                    });
+            }
+            else
+            {
+                RunIOSExport(
+                    PluginBuildScenes,
+                    outputDir,
+                    FlutterHostLibraryApplicationIdentifier,
+                    iosSdk,
+                    builtPath =>
+                    {
+                        Debug.Log(
+                            $"[CytoidCoreBuild] iOS export at {builtPath}\n"
+                            + $"  Define: {FlutterHostDefineSymbol}\n"
+                            + $"  iOS SDK: {iosSdk} ({ResolveUnityIosSdkVersion(iosSdk)})\n"
+                            + $"  Library bundle id: {FlutterHostLibraryApplicationIdentifier}\n"
+                            + $"  Flutter plugin package: {FlutterHostApplicationId}\n"
+                            + "  Native callback: CytoidHostNative_SetMessageHandler from Flutter host");
+                        if (packageFramework)
+                        {
+                            PackageIOSLibraryForFlutter();
+                        }
+                        else
+                        {
+                            Debug.Log(
+                                "[CytoidCoreBuild] Skipped iOS UnityFramework packaging. "
+                                + "Run flutter_plugin/tool/build_unity_ios_framework.sh on macOS.");
+                        }
+                    });
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[CytoidCoreBuild] Export failed: {ex}");
+            if (Application.isBatchMode) EditorApplication.Exit(1);
+            return;
+        }
+
+        // Without -quit (which we now require), Unity stays open after the export.
+        // Exit explicitly so batchmode CI runs terminate.
+        if (Application.isBatchMode) EditorApplication.Exit(0);
+    }
+
+    private static void SetPendingBuildState(string platform, string outputDir, bool packageFramework, string iosSdk)
+    {
+        EditorPrefs.SetBool(PendingBuildActiveKey, true);
+        EditorPrefs.SetString(PendingBuildPlatformKey, platform);
+        EditorPrefs.SetString(PendingBuildOutputDirKey, outputDir);
+        EditorPrefs.SetBool(PendingBuildPackageKey, packageFramework);
+        EditorPrefs.SetString(PendingBuildIosSdkKey, iosSdk);
+        EditorPrefs.SetString(PendingBuildStartTicksKey, DateTime.UtcNow.Ticks.ToString());
+    }
+
+    private static void ClearPendingBuildState()
+    {
+        EditorPrefs.DeleteKey(PendingBuildActiveKey);
+        EditorPrefs.DeleteKey(PendingBuildPlatformKey);
+        EditorPrefs.DeleteKey(PendingBuildOutputDirKey);
+        EditorPrefs.DeleteKey(PendingBuildPackageKey);
+        EditorPrefs.DeleteKey(PendingBuildIosSdkKey);
+        EditorPrefs.DeleteKey(PendingBuildStartTicksKey);
     }
 
     private static void LogBuildReportErrors(BuildReport report, string platformLabel)

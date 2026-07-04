@@ -112,7 +112,7 @@ download_gradle_distribution() {
 
 if [[ ! -d "$EXPORT_ROOT/unityLibrary" ]]; then
   echo "Unity export missing at $EXPORT_ROOT" >&2
-  echo "Run: Unity -batchmode -quit -projectPath <repo> -executeMethod CytoidCoreBuild.ExportAndroidLibraryForFlutter" >&2
+  echo "Run: Unity -batchmode -projectPath <repo> -executeMethod CytoidCoreBuild.ExportAndroidLibraryForFlutter (no -quit; the buildMethod calls EditorApplication.Exit(0) explicitly)" >&2
   exit 1
 fi
 

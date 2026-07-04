@@ -44,3 +44,4 @@ example/ios/Flutter/UnityIntegration.xcconfig
 .cytoid_game_core/build/
 .cytoid_game_core/dist/
 .cytoid_game_core/exports/
+.cytoid_game_core/swift-test-sandbox/

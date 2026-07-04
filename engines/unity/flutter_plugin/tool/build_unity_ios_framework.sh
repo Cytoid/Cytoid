@@ -11,7 +11,7 @@ PROJECT_FILE="$EXPORT_ROOT/Unity-iPhone.xcodeproj/project.pbxproj"
 
 if [[ ! -d "$EXPORT_ROOT/Unity-iPhone.xcodeproj" ]]; then
   echo "Unity iOS export missing at $EXPORT_ROOT" >&2
-  echo "Run: Unity -batchmode -quit -projectPath <repo> -executeMethod CytoidCoreBuild.ExportIOSLibraryForFlutter" >&2
+  echo "Run: Unity -batchmode -projectPath <repo> -executeMethod CytoidCoreBuild.ExportIOSLibraryForFlutter (no -quit; the buildMethod calls EditorApplication.Exit(0) explicitly)" >&2
   exit 1
 fi
 

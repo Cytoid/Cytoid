@@ -105,7 +105,7 @@ Android batchmode:
 UNITY="/Applications/Unity/Hub/Editor/6000.0.75f1/Unity.app/Contents/MacOS/Unity"
 PROJECT="/path/to/Cytoid/engines/unity"
 
-"$UNITY" -batchmode -quit \
+"$UNITY" -batchmode \
   -projectPath "$PROJECT" \
   -executeMethod CytoidCoreBuild.ExportAndroidLibraryForFlutter \
   -logFile "$PROJECT/flutter_plugin/.cytoid_game_core/build/unity-android.log"
@@ -163,6 +163,11 @@ flutter run
 - The current Unity iOS export is device-only. Simulator builds need a simulator
   slice in `UnityFramework.xcframework`, or no mounted Unity artifact so the
   plugin falls back to the mock runtime.
+- Swift test suite: the pure-logic iOS tests run without `FlutterFramework`
+  or `UnityFramework` via `./tool/run_swift_tests_sandboxed.sh` (isolated
+  SwiftPM sandbox with a stub `Flutter` module). Tests asserting on real
+  Flutter semantics (`ShowGameSurfaceAtomicityTests`) require an Xcode build
+  with full dependencies.
 - The Flutter plugin example iOS app is Swift Package Manager only; do not
   re-add `Podfile`, `Podfile.lock`, Pods xcconfig includes, or manual
   UnityFramework link/embed entries to `Runner.xcodeproj`.
@@ -173,7 +178,7 @@ flutter run
 | Method | Purpose |
 |--------|---------|
 | `CytoidCoreBuild.ExportAndroidLibraryForFlutter` | Export Gradle library + AAR artifacts |
-| `CytoidCoreBuild.ExportIOSLibraryForFlutter` | Export Xcode project + UnityFramework.xcframework |
+| `CytoidCoreBuild.ExportIOSLibraryForFlutter` | Export Xcode project + UnityFramework.xcframework (device) |
 | `CytoidCoreBuild.ExportIOSLibraryForFlutterWithoutPackaging` | Export iOS Xcode project only; CI packages on macOS |
 
 ---
@@ -224,6 +229,8 @@ If you change envelope types or payloads:
 | 2026-05 | Lunar Console removed; `game.log` forwarding | Bridge-embedded receives Unity logs; Graphy retained for in-engine profiler overlay |
 | 2026-05 | Cytoid top-level menu = plugin builds only | Flat `Cytoid/…` items; no Core Build submenu; exports use `PluginBuildScenes` + `CYTOID_FLUTTER_HOST` |
 | 2026-06 | Host-side `health.check` watchdog in `PlaySession` | Detects Unity main-loop freeze with process alive — the gap the native bridge synthesis paths don't cover. Reuses `runtime_unreachable`; provenance in `message`. C# handler: `GameBridgeRouter.HandleHealthCheck` |
+| 2026-07 | `CytoidCoreBuild` uses `EditorApplication.update` + explicit `EditorApplication.Exit(0)`; invocation MUST NOT pass `-quit` | Unity 6 batchmode + `-quit` exits the instant executeMethod returns, so `update` callbacks never fire and any async work is silently dropped. Empirically verified: `Thread.Sleep` deadlocks (compiler shares the main thread); `EditorApplication.Step()` is a no-op inside executeMethod (doesn't pump compilation, doesn't advance wall clock); `wantsToQuit` vetoes are ignored under `-quit`. CI uses game-ci/unity-builder `manualExit: true` (added in PR game-ci/unity-builder#574 specifically for this pattern). |
+| 2026-07 | Swift test suite runs in `tool/run_swift_tests_sandboxed.sh` (isolated SwiftPM sandbox with stub `Flutter` module) | The iOS plugin's pure-logic tests must run without the `FlutterFramework` SPM package or `UnityFramework` binary target — neither is available locally. Harness realizes the "isolated SwiftPM sandbox" convention already documented in 5 source files. Excludes `ShowGameSurfaceAtomicityTests` (asserts on real Flutter semantics) and `CytoidGameCorePlugin.swift` (UIKit + Flutter entry point). |
 
 Append new rows when architecture or default paths change.
 
@@ -243,6 +250,7 @@ Append new rows when architecture or default paths change.
 | Native outbound (game → bridge) | `engines/unity/Assets/Scripts/Host/NativeBridgeMessenger.cs` |
 | Flutter plugin (Kotlin) | `engines/unity/flutter_plugin/android/src/main/kotlin/org/cytoid/gamecore/` |
 | Flutter plugin (iOS Swift / SPM) | `engines/unity/flutter_plugin/ios/cytoid_game_core/` |
+| Swift test sandbox harness | `engines/unity/flutter_plugin/tool/run_swift_tests_sandboxed.sh` |
 | Flutter Dart API | `engines/unity/flutter_plugin/lib/src/cytoid_game_core_client.dart` |
 | Protocol doc | `docs/host-protocol-v2.md` (v1 doc at engines/unity/flutter_plugin/example/docs/host-protocol.md is DEPRECATED) |
 | Legacy architecture notes | `engines/unity/flutter_plugin/example/docs/old-architecture/` |

@@ -7,13 +7,21 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 /// Copies level assets into a per-version temp directory for Unity VFS
-/// access, with content-hash-based caching so unchanged levels skip the
+/// access, with metadata-hash-based caching so unchanged levels skip the
 /// rebuild on repeat launches.
 ///
-/// Cache layout: `<temp>/cytoid/levels/<levelId>/<version>/<contentHash>/`.
+/// Cache layout: `<temp>/cytoid/levels/<levelId>/<version>/<metadataHash>/`.
 /// A directory at that path is treated as a hit; the caller trusts the
 /// cache key (level id + version + sorted asset keys with their byte
 /// lengths) to mean "the bytes on disk are identical to the source bundle".
+///
+/// The hash is computed from asset keys and byte lengths only — NOT from
+/// the actual file content. Two asset sets that share `levelId`, `version`,
+/// asset keys, and per-asset byte lengths but differ in bytes will collide
+/// and the stale cache will be served. Callers that republish a level in
+/// place MUST bump `version` whenever any asset's bytes change; the
+/// `levelId + version` prefix is the authoritative identity for cache
+/// freshness, the metadata hash is only a same-version sanity guard.
 class LevelVfsMaterializer {
   const LevelVfsMaterializer();
 

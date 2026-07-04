@@ -26,18 +26,19 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   // machine directly to set up that condition.
   internal let runtimeState = RuntimeStateMachine()
 
-  // Testability seam for emitEvent(): isolated SwiftPM sandbox tests cannot
-  // reach the real FlutterEventSink (the Flutter module isn't bootstrapped),
-  // so the default eventSink path is unreachable. When non-nil, emitEvent()
-  // calls this override directly with the JSON string — letting tests
-  // capture synthesized envelopes without a real sink. Production leaves
-  // this nil and uses the eventSink path.
+  // Testability seam for emitEvent(): the isolated SwiftPM sandbox
+  // (`flutter_plugin/tool/run_swift_tests_sandboxed.sh`) cannot reach the
+  // real FlutterEventSink (a tiny stub module is generated instead), so the
+  // default eventSink path is unreachable. When non-nil, emitEvent() calls
+  // this override directly with the JSON string — letting tests capture
+  // synthesized envelopes without a real sink. Production leaves this nil
+  // and uses the eventSink path.
   internal var emitOverride: ((String) -> Void)?
 
   // Testability seam for framework load (T6): when non-nil, replaces
   // `UnityGameCoreRuntime.shared.loadIfNeeded()` inside ensureRuntimeStarted
-  // so SwiftPM-sandbox tests can simulate `runtime_unavailable` failures
-  // without the real UnityFramework binary.
+  // so the SwiftPM sandbox (`run_swift_tests_sandboxed.sh`) can simulate
+  // `runtime_unavailable` failures without the real UnityFramework binary.
   internal var loadFrameworkOverride: (() -> Result<Void, Error>)?
 
   // v2 waitForReady continuations (T6). Parked until state -> .ready or .failed.
@@ -285,8 +286,8 @@ final class CytoidGameCoreBridge: NSObject, FlutterStreamHandler {
   /// Active-Session Runtime Failure) decides the envelope:
   ///   activeSessionId == nil → engine.error ONLY
   ///   activeSessionId != null → session.failed via T4 primitive ONLY
-  /// Exposed internal so SwiftPM-sandbox tests can invoke it directly without
-  /// the real UnityGameCoreRuntime.
+  /// Exposed internal so the SwiftPM sandbox (`run_swift_tests_sandboxed.sh`)
+  /// can invoke it directly without the real UnityGameCoreRuntime.
   internal func handleMessageQueueTimeoutRouting() {
     // Capture BEFORE any state mutation (T4 handoff pattern).
     let activeSession = runtimeState.activeSessionId

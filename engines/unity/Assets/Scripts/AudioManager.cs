@@ -32,7 +32,7 @@ public class AudioManager : SingletonMonoBehavior<AudioManager>
             serverType = AudioServerType.Unity;
         }
 
-        var server = serverType switch
+        IAudioServer server = serverType switch
         {
             AudioServerType.Exceed7 => new Exceed7AudioServer(audioSources[0], audioSources[1..]),
             _ => new UnityAudioServer(audioSources[0], audioSources[1..]),

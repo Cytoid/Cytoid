@@ -12,8 +12,8 @@ import XCTest
 ///
 /// Never both. The bridge's handler is invoked directly here — the runtime's
 /// real timer firing is verified by code inspection; in the SwiftPM sandbox
-/// the runtime module (inside `#if CYTOID_UNITY_FRAMEWORK_AVAILABLE`) does
-/// not compile.
+/// (`run_swift_tests_sandboxed.sh`) the runtime module (inside
+/// `#if CYTOID_UNITY_FRAMEWORK_AVAILABLE`) does not compile.
 final class MessageQueueTimeoutTests: XCTestCase {
 
     func testNoActiveSessionEmitsEngineErrorOnly() throws {

@@ -11,7 +11,8 @@ import XCTest
 ///
 /// Uses the bridge's `loadFrameworkOverride` test seam — no real
 /// UnityFramework binary is required. Mirrors the SwiftPM sandbox convention
-/// used by T4's `RuntimeFailureSynthesisTests`.
+/// used by T4's `RuntimeFailureSynthesisTests`. Run the suite via
+/// `flutter_plugin/tool/run_swift_tests_sandboxed.sh`.
 final class EnsureRuntimeStartedContractTests: XCTestCase {
 
     func testLoadFailureTransitionsToFailedAndEmitsEngineError() throws {

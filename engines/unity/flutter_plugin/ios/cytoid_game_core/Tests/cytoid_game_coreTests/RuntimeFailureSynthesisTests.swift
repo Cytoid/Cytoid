@@ -22,10 +22,12 @@ import XCTest
 /// (verified by code inspection); this test covers the primitive's behavior
 /// on the happy path + idempotency, which is the per-platform contract.
 ///
-/// Note: when run in the isolated SwiftPM sandbox (FlutterFramework not
-/// bootstrapped), this file is copied verbatim with
-/// `@testable import cytoid_game_core` remapped to the sandbox module name.
-/// The assertions are identical.
+/// Note: this file is exercised by the isolated SwiftPM sandbox at
+/// `engines/unity/flutter_plugin/tool/run_swift_tests_sandboxed.sh`, which
+/// runs without the FlutterFramework SPM package or UnityFramework binary
+/// target. The harness keeps the `cytoid_game_core` target name unchanged
+/// (sources are symlinked, not copied), so `@testable import` works as
+/// written. The assertions are identical to production.
 final class RuntimeFailureSynthesisTests: XCTestCase {
 
     func testGenerationChangeWithActiveSessionEmitsRuntimeRecreatedEnvelope() throws {

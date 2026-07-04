@@ -33,6 +33,21 @@ public static class PositionFunction
 
         var yLow = b - a;
         var yHigh = b + a;
+
+        if (yHigh < -1f)
+        {
+            low = -1f;
+            high = -1f;
+            return;
+        }
+
+        if (yLow > 1f)
+        {
+            low = 1f;
+            high = 1f;
+            return;
+        }
+
         low = Mathf.Max(yLow, -1f);
         high = Mathf.Min(yHigh, 1f);
     }
@@ -54,9 +69,7 @@ public static class PositionFunction
             return yRaw;
 
         var yLow = b - a;
-        var yHigh = b + a;
-        var low = Mathf.Max(yLow, -1f);
-        var high = Mathf.Min(yHigh, 1f);
+        GetVisibleBand(page, out var low, out var high);
         return low + (high - low) * (yRaw - yLow) / (2f * a);
     }
 }

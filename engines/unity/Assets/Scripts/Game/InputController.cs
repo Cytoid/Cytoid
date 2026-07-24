@@ -101,11 +101,9 @@ public class InputController : MonoBehaviour
         // Query drag notes first
         foreach (var note in TouchableDragNotes.Where(note => note != null).Where(note => note.DoesCollide(pressedPosition)))
         {
-            if (note.OnTouch(finger.ScreenPosition))
-            {
-                collidedDrag = true;
-            }
-            break; // Query other notes too!
+            if (!note.OnTouch(finger.ScreenPosition)) continue;
+            collidedDrag = true;
+            break;
         }
 
         foreach (var note in TouchableNormalNotes.Where(note => note != null).Where(note => note.DoesCollide(pressedPosition)))
@@ -148,11 +146,9 @@ public class InputController : MonoBehaviour
         foreach (var note in TouchableDragNotes)
         {
             if (note == null) continue;
-            if (note.DoesCollide(pos))
-            {
-                note.OnTouch(finger.ScreenPosition);
-                break; // Query other notes too!
-            }
+            if (!note.DoesCollide(pos)) continue;
+            if (!note.OnTouch(finger.ScreenPosition)) continue;
+            break;
         }
 
         // If this is a new finger

@@ -16,7 +16,7 @@ public class FlickNote : Note
             : throw new NotSupportedException();
     }
 
-    public override void OnTouch(Vector2 screenPos)
+    public override bool OnTouch(Vector2 screenPos)
     {
         // This method should never be invoked!
         throw new InvalidOperationException();

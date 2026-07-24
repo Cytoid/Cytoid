@@ -101,8 +101,10 @@ public class InputController : MonoBehaviour
         // Query drag notes first
         foreach (var note in TouchableDragNotes.Where(note => note != null).Where(note => note.DoesCollide(pressedPosition)))
         {
-            note.OnTouch(finger.ScreenPosition);
-            collidedDrag = true;
+            if (note.OnTouch(finger.ScreenPosition))
+            {
+                collidedDrag = true;
+            }
             break; // Query other notes too!
         }
 
@@ -121,7 +123,7 @@ public class InputController : MonoBehaviour
                 if (note.Model.page_index > game.Chart.CurrentPageId &&
                     note.Model.start_time - game.Time >
                     game.Chart.Model.page_list[game.Chart.CurrentPageId].Duration * 0.5f) continue;
-                note.OnTouch(finger.ScreenPosition);
+                if (!note.OnTouch(finger.ScreenPosition)) continue;
             }
 
             return;

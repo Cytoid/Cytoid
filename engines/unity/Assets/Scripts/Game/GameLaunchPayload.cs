@@ -28,6 +28,7 @@ public class GameLaunchPayload
 [Serializable]
 public class GameLaunchSettings
 {
+    public string language;
     public float? baseNoteOffset;
     public float? levelNoteOffset;
     public float? headsetNoteOffset;
@@ -60,6 +61,7 @@ public class GameLaunchSettings
     public string holdHitSoundTiming;
     public string graphicsQuality;
     public bool? hitTapticFeedback;
+    public bool? menuTapticFeedback;
     public bool? useNativeAudio;
     public int? androidDspBufferSize;
     public bool? recordPlayEvents;

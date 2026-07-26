@@ -3,423 +3,188 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using Priority_Queue;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.Networking;
 using Object = UnityEngine.Object;
 
+/// <summary>
+/// Session-local cache for engine-rendered sprites.
+/// Asset acquisition and disk caching are owned by Flutter; paths must be local file URIs.
+/// </summary>
 public class AssetMemory
 {
     private static readonly Dictionary<AssetTag, int> TagLimits = new Dictionary<AssetTag, int>
     {
-        {AssetTag.Avatar, 100},
-        {AssetTag.PlayerAvatar, 1},
-        {AssetTag.LocalLevelCoverThumbnail, 30},
-        {AssetTag.RemoteLevelCoverThumbnail, 30},
-        {AssetTag.CollectionCoverThumbnail, 15},
-        {AssetTag.RecordCoverThumbnail, 12},
-        {AssetTag.GameCover, 1},
-        {AssetTag.TierCover, 1},
-        {AssetTag.PreviewMusic, 1},
-        {AssetTag.EventCover, 1},
-        {AssetTag.EventLogo, 1},
-        {AssetTag.Badge, 12},
-        {AssetTag.CollectionCover, 1},
-        {AssetTag.DialogueImage, 1}
+        {AssetTag.GameCover, 1}
     };
 
-    private readonly Dictionary<AssetTag, SimplePriorityQueue<Entry>> taggedMemoryCache =
-        new Dictionary<AssetTag, SimplePriorityQueue<Entry>>();
-
     private readonly Dictionary<string, Entry> memoryCache = new Dictionary<string, Entry>();
-    private readonly HashSet<string> isLoading = new HashSet<string>();
-    private int queuePriority;
+    private readonly HashSet<string> loadingPaths = new HashSet<string>();
 
-    public Entry<T> GetCachedAssetEntry<T>(string path)
+    public static bool PrintDebugMessages;
+
+    public Entry<T> GetCachedAssetEntry<T>(string path) where T : Object
     {
-        if (memoryCache.ContainsKey(path))
-        {
-            var entry = memoryCache[path];
-            if (entry is Entry<T> typedEntry && typedEntry.Asset != null)
-            {
-                // Update priority
-                typedEntry.Tags.ForEach(tag => taggedMemoryCache[tag].UpdatePriority(entry, queuePriority++));
-                return typedEntry;
-            }
-        }
-
-        return default;
+        return memoryCache.TryGetValue(path, out var entry) && entry is Entry<T> typed && typed.Asset != null
+            ? typed
+            : null;
     }
 
-    public bool HasCachedAsset<T>(string path) => GetCachedAssetEntry<T>(path) != null;
+    public bool HasCachedAsset<T>(string path) where T : Object => GetCachedAssetEntry<T>(path) != null;
 
-    public static bool PrintDebugMessages = false;
-
-    public async UniTask<T> LoadAsset<T>(string path, AssetTag tag, CancellationToken cancellationToken = default, 
-        AssetOptions options = default, bool useFileCacheOnly = false) where T : Object
+    public async UniTask<T> LoadAsset<T>(
+        string path,
+        AssetTag tag,
+        CancellationToken cancellationToken = default) where T : Object
     {
-        if (!taggedMemoryCache.ContainsKey(tag)) taggedMemoryCache[tag] = new SimplePriorityQueue<Entry>();
-        
-        var suffix = "";
-        if (typeof(T) == typeof(Sprite))
+        if (typeof(T) != typeof(Sprite))
         {
-            if (options != default)
-            {
-                if (options is SpriteAssetOptions spriteOptions)
-                {
-                    suffix = $".{spriteOptions.FitCropSize[0]}.{spriteOptions.FitCropSize[1]}";
-                }
-            }
+            throw new NotSupportedException($"AssetMemory only loads sprites, not {typeof(T).Name}");
+        }
+        if (!TryResolveLocalPath(path, out var localPath))
+        {
+            throw new ArgumentException("Asset paths must be local file URIs supplied by the host.", nameof(path));
         }
 
-        string variantPath;
-        if (!path.StartsWith("file://"))
+        var cached = GetCachedAssetEntry<T>(path);
+        if (cached != null)
         {
-            variantPath = "file://" + GetCacheFilePath(path) + suffix;
-        }
-        else
-        {
-            variantPath = path + suffix;
-        }
-        var variantExists = File.Exists(variantPath.Substring("file://".Length));
-        
-        var cachedAsset = GetCachedAssetEntry<T>(variantPath);
-        if (cachedAsset != null)
-        {
-            if (PrintDebugMessages) Debug.Log($"AssetMemory: Returning cached asset {variantPath}");
-            cachedAsset.Tags.Add(tag);
-            var taggedMemory = taggedMemoryCache[tag];
-            if (taggedMemory.Contains(cachedAsset))
-            {
-                taggedMemory.UpdatePriority(cachedAsset, queuePriority++);
-            }
-            else
-            {
-                taggedMemory.Enqueue(cachedAsset, queuePriority++);
-            }
-            return cachedAsset.Asset;
+            cached.Tags.Add(tag);
+            return cached.Asset;
         }
 
-        // Currently loading
-        if (isLoading.Contains(path))
+        if (loadingPaths.Contains(path))
         {
-            if (PrintDebugMessages) Debug.Log($"AssetMemory: Already loading {path}. Waiting...");
-            await UniTask.WaitUntil(() => !isLoading.Contains(path), cancellationToken: cancellationToken);
-            if (PrintDebugMessages) Debug.Log($"AssetMemory: Wait {path} complete.");
-            
-            return await LoadAsset<T>(path, tag, cancellationToken, options);
+            await UniTask.WaitUntil(() => !loadingPaths.Contains(path), cancellationToken: cancellationToken);
+            return GetCachedAssetEntry<T>(path)?.Asset;
         }
 
-        CheckIfExceedTagLimit(tag);
-
-        if (PrintDebugMessages) Debug.Log($"AssetMemory: Started loading {path} with variant {suffix}.");
-        isLoading.Add(path);
+        EnforceTagLimit(tag);
+        loadingPaths.Add(path);
         try
         {
-            return await LoadAssetCore<T>(path, tag, cancellationToken, options, useFileCacheOnly, variantPath, variantExists);
+            await UniTask.SwitchToThreadPool();
+            var bytes = File.ReadAllBytes(localPath);
+            await UniTask.SwitchToMainThread();
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var texture = bytes.ToTexture2D();
+            if (texture == null)
+            {
+                throw new InvalidDataException($"Unable to decode image: {localPath}");
+            }
+
+            texture.name = path;
+            var sprite = texture.CreateSprite();
+            var entry = new SpriteEntry(path, tag, sprite);
+            memoryCache[path] = entry;
+            return (T)(Object)sprite;
         }
         finally
         {
-            isLoading.Remove(path);
+            loadingPaths.Remove(path);
         }
-    }
-
-    private async UniTask<T> LoadAssetCore<T>(
-        string path, AssetTag tag, CancellationToken cancellationToken,
-        AssetOptions options, bool useFileCacheOnly, string variantPath, bool variantExists)
-        where T : Object
-    {
-        var time = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-        var loadPath = path;
-        
-        // Cache remote
-        if (!path.StartsWith("file://"))
-        {
-            var cachePath = GetCacheFilePath(path);
-
-            if (!File.Exists(cachePath))
-            {
-                if (!useFileCacheOnly)
-                {
-                    using (var request = UnityWebRequest.Get(path))
-                    {
-                        request.SetRequestHeader("User-Agent", $"CytoidClient/{Context.VersionIdentifier}");
-                        request.downloadHandler =
-                            new DownloadHandlerFile(cachePath).Also(it => it.removeFileOnAbort = true);
-                        await request.SendWebRequest();
-                        if (cancellationToken != default && cancellationToken.IsCancellationRequested)
-                        {
-                            return default;
-                        }
-
-                        if (request.isNetworkError || request.isHttpError)
-                        {
-                            // TODO: Neo, fix your image CDN :)
-                            if (request.responseCode != 422)
-                            {
-                                if (path.Contains("gravatar"))
-                                {
-                                    Debug.LogWarning($"AssetMemory: Failed to download {path}");
-                                    Debug.LogWarning(request.error);
-                                }
-                                else
-                                {
-                                    Debug.LogError($"AssetMemory: Failed to download {path}");
-                                    Debug.LogError(request.error);
-                                }
-                            }
-                            return default;
-                        }
-                       
-                        if (PrintDebugMessages) Debug.Log($"AssetMemory: Saved {path} to {cachePath}");
-                    }
-                }
-                else
-                {
-                    return default;
-                }
-            }
-
-            if (PrintDebugMessages) Debug.Log($"AssetMemory: Cached at {cachePath}");
-            loadPath = "file://" + cachePath;
-        }
-
-        T asset = default;
-        if (typeof(T) == typeof(Sprite))
-        {
-            // Fit crop
-            loadPath = variantExists ? variantPath : loadPath;
-            
-            using (var request = UnityWebRequest.Get(loadPath))
-            {
-                request.SetRequestHeader("User-Agent", $"CytoidClient/{Context.VersionIdentifier}");
-                await request.SendWebRequest();
-
-                if (cancellationToken != default && cancellationToken.IsCancellationRequested)
-                {
-                    return default;
-                }
-
-                if (request.isNetworkError || request.isHttpError)
-                {
-                    // TODO: Neo, fix your image CDN :)
-                    if (request.responseCode != 422)
-                    {
-                        Debug.LogError(
-                            $"AssetMemory: Failed to load {loadPath}");
-                        Debug.LogError(request.error);
-                        return default;
-                    }
-                }
-
-                var bytes = request.downloadHandler.data;
-                if (bytes == null)
-                {
-                    return default;
-                }
-
-                var texture = request.downloadHandler.data.ToTexture2D();
-                texture.name = variantPath;
-                
-                // Fit crop
-                if (!variantExists && options != default)
-                {
-                    if (!(options is SpriteAssetOptions spriteOptions))
-                    {
-                        throw new ArgumentException();
-                    }
-
-                    if (texture.width != spriteOptions.FitCropSize[0] || texture.height != spriteOptions.FitCropSize[1])
-                    {
-                        var croppedTexture = TextureScaler.FitCrop(texture, spriteOptions.FitCropSize[0],
-                            spriteOptions.FitCropSize[1]);
-                        croppedTexture.name = variantPath;
-                        Object.Destroy(texture);
-                        texture = croppedTexture;
-                        bytes = texture.EncodeToJPG();
-
-                        var completed = false;
-                        async void Task()
-                        {
-                            await UniTask.SwitchToThreadPool();
-                            var cleanPath = variantPath.Substring("file://".Length);
-                            Directory.CreateDirectory(Path.GetDirectoryName(cleanPath));
-                            File.WriteAllBytes(cleanPath, bytes);
-                            completed = true;
-                        }
-                        Task();
-                        await UniTask.WaitUntil(() => completed);
-                    }
-                    else
-                    {
-                        var completed = false;
-                        async void Task()
-                        {
-                            await UniTask.SwitchToThreadPool();
-                            var cleanPath = variantPath.Substring("file://".Length);
-                            Directory.CreateDirectory(Path.GetDirectoryName(cleanPath));
-                            File.Copy(loadPath.Substring("file://".Length), cleanPath);
-                            completed = true;
-                        }
-                        Task();
-                        await UniTask.WaitUntil(() => completed);
-                    }
-                }
-
-                var sprite = texture.CreateSprite();
-                memoryCache[variantPath] = new SpriteEntry(variantPath, tag, sprite);
-                asset = (T) Convert.ChangeType(sprite, typeof(T));
-            }
-        }
-        else if (typeof(T) == typeof(AudioClip))
-        {
-            var loader = new AudioClipLoader(variantPath);
-            await loader.Load();
-            
-            if (cancellationToken != default && cancellationToken.IsCancellationRequested)
-            {
-                loader.Unload();
-                return default;
-            }
-            
-            if (loader.Error != null)
-            {
-                Debug.LogError($"AssetMemory: Failed to download audio from {variantPath}");
-                Debug.LogError(loader.Error);
-                return default;
-            }
-
-            var audioClip = loader.AudioClip;
-            memoryCache[variantPath] = new AudioEntry(variantPath, tag, loader);
-            asset = (T) Convert.ChangeType(audioClip, typeof(T));
-        }
-        
-        taggedMemoryCache[tag].Enqueue(memoryCache[variantPath], queuePriority++);
-        
-        time = DateTimeOffset.Now.ToUnixTimeMilliseconds() - time;
-        if (PrintDebugMessages) Debug.Log($"AssetMemory: Loaded {variantPath} in {time}ms");
-
-        return asset;
     }
 
     public bool DisposeAsset(string path, AssetTag tag)
     {
-        if (!memoryCache.ContainsKey(path)) return false;
-        
-        var entry = memoryCache[path];
+        if (!memoryCache.TryGetValue(path, out var entry))
+        {
+            return false;
+        }
+
         entry.Tags.Remove(tag);
         if (entry.Tags.Count == 0)
         {
             entry.Dispose();
-            memoryCache.Remove(entry.Key);
+            memoryCache.Remove(path);
         }
-        taggedMemoryCache[tag].Remove(entry);
-
         return true;
     }
 
     public void DisposeTaggedCacheAssets(AssetTag tag)
     {
-        if (!taggedMemoryCache.ContainsKey(tag)) taggedMemoryCache[tag] = new SimplePriorityQueue<Entry>();
-
-        var removals = new List<string>();
-        foreach (var pair in memoryCache)
+        var removals = memoryCache
+            .Where(pair => pair.Value.Tags.Contains(tag))
+            .Select(pair => pair.Key)
+            .ToList();
+        foreach (var key in removals)
         {
-            var entry = pair.Value;
-            if (entry.Tags.Contains(tag))
-            {
-                entry.Tags.Remove(tag);
-                if (entry.Tags.Count == 0)
-                {
-                    removals.Add(pair.Key);
-                    entry.Dispose();
-                }
-            }
+            DisposeAsset(key, tag);
         }
-
-        removals.ForEach(it => memoryCache.Remove(it));
-        if (PrintDebugMessages) Debug.Log($"AssetMemory: Unloaded {removals.Count} assets with tag {tag}");
-        taggedMemoryCache[tag].Clear();
     }
 
     public void DisposeAllAssets()
     {
-        foreach (var pair in memoryCache)
+        foreach (var entry in memoryCache.Values)
         {
-            pair.Value.Dispose();
+            entry.Dispose();
         }
         memoryCache.Clear();
-        taggedMemoryCache.Clear();
-        isLoading.Clear();
+        loadingPaths.Clear();
     }
 
-    private void CheckIfExceedTagLimit(AssetTag tag)
-    {
-        var taggedMemory = taggedMemoryCache[tag];
-        if (TagLimits.ContainsKey(tag) && taggedMemory.Count > TagLimits[tag])
-        {
-            var exceeded = taggedMemory.Count - TagLimits[tag];
-            if (PrintDebugMessages) Debug.Log($"AssetMemory: Unloading {exceeded} assets due to {tag} limit");
-            for (var i = 0; i < exceeded; i++)
-            {
-                var entry = taggedMemory.Dequeue();
-                entry.Tags.Remove(tag);
-                if (entry.Tags.Count == 0)
-                {
-                    entry.Dispose();
-                    memoryCache.Remove(entry.Key);
-                }
-            }
+    public int CountTagUsage(AssetTag tag) =>
+        memoryCache.Values.Count(entry => entry.Tags.Contains(tag));
 
-            if (PrintDebugMessages) Debug.Log($"AssetMemory: Unloaded {exceeded} assets due to {tag} limit");
+    public int GetTagLimit(AssetTag tag) =>
+        TagLimits.TryGetValue(tag, out var limit) ? limit : -1;
+
+    private void EnforceTagLimit(AssetTag tag)
+    {
+        if (!TagLimits.TryGetValue(tag, out var limit))
+        {
+            return;
+        }
+
+        var taggedKeys = memoryCache
+            .Where(pair => pair.Value.Tags.Contains(tag))
+            .Select(pair => pair.Key)
+            .ToList();
+        while (taggedKeys.Count >= limit && taggedKeys.Count > 0)
+        {
+            var key = taggedKeys[0];
+            taggedKeys.RemoveAt(0);
+            DisposeAsset(key, tag);
         }
     }
 
-    public int CountTagUsage(AssetTag tag)
+    private static bool TryResolveLocalPath(string path, out string localPath)
     {
-        return taggedMemoryCache.ContainsKey(tag) ? taggedMemoryCache[tag].Count : 0;
-    }
+        localPath = null;
+        if (!Uri.TryCreate(path, UriKind.Absolute, out var uri) || !uri.IsFile)
+        {
+            return false;
+        }
 
-    public int GetTagLimit(AssetTag tag)
-    {
-        return TagLimits.ContainsKey(tag) ? TagLimits[tag] : -1;
-    }
-
-    private string GetCacheFilePath(string uri)
-    {
-        uri = uri
-            .Replace("https://", "")
-            .Replace("http://", "")
-            .Replace("?", "~")
-            .Replace("|", ".")
-            .Replace("&", ".")
-            .Replace("%", ".");
-        var path = Application.temporaryCachePath + "/Online/" + uri;
-        var dirPath = Path.GetDirectoryName(path);
-        Directory.CreateDirectory(dirPath ?? throw new Exception());
-        return path;
+        localPath = uri.LocalPath;
+        return File.Exists(localPath);
     }
 
     public abstract class Entry
     {
-        public string Key;
-        public HashSet<AssetTag> Tags = new HashSet<AssetTag>();
-        public abstract void Dispose();
-    }
-
-    public abstract class Entry<T> : Entry
-    {
-        public T Asset;
-        public Entry(string key, AssetTag initialTag, T asset)
+        protected Entry(string key, AssetTag initialTag)
         {
             Key = key;
             Tags.Add(initialTag);
-            Asset = asset;
         }
+
+        public string Key { get; }
+        public HashSet<AssetTag> Tags { get; } = new HashSet<AssetTag>();
+        public abstract void Dispose();
     }
 
-    public class SpriteEntry : Entry<Sprite>
+    public abstract class Entry<T> : Entry where T : Object
+    {
+        protected Entry(string key, AssetTag initialTag, T asset) : base(key, initialTag)
+        {
+            Asset = asset;
+        }
+
+        public T Asset { get; protected set; }
+    }
+
+    private sealed class SpriteEntry : Entry<Sprite>
     {
         public SpriteEntry(string key, AssetTag tag, Sprite sprite) : base(key, tag, sprite)
         {
@@ -427,72 +192,20 @@ public class AssetMemory
 
         public override void Dispose()
         {
-            if (PrintDebugMessages) Debug.Log($"AssetMemory: Disposed {Key} with tag {string.Join(",", Tags.Select(it => Enum.GetName(typeof(AssetTag), it)))}");
-            
-            try
+            if (Asset == null)
             {
-                Object.Destroy(Asset.texture);
-                Object.Destroy(Asset);
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning(e);
+                return;
             }
 
+            Object.Destroy(Asset.texture);
+            Object.Destroy(Asset);
             Asset = null;
         }
     }
-
-    public class AudioEntry : Entry<AudioClip>
-    {
-        public AudioClipLoader Loader;
-
-        public AudioEntry(string key, AssetTag tag, AudioClipLoader loader) : base(key, tag, loader.AudioClip)
-        {
-            Loader = loader;
-        }
-
-        public override void Dispose()
-        {
-            Loader.Unload();
-            Asset = null;
-        }
-    }
-
 }
 
 public enum AssetTag
 {
-    Avatar,
-    PlayerAvatar,
-    LocalLevelCoverThumbnail,
-    RemoteLevelCoverThumbnail,
-    CollectionCoverThumbnail,
-    RecordCoverThumbnail,
     GameCover,
-    TierCover,
-    Storyboard,
-    PreviewMusic,
-    EventCover,
-    EventLogo,
-    Badge,
-    CollectionCover,
-    DialogueImage,
-}
-
-public class AssetOptions
-{
-    protected AssetOptions()
-    {
-    }
-}
-
-public class SpriteAssetOptions : AssetOptions
-{
-    public int[] FitCropSize { get; }
-
-    public SpriteAssetOptions(int[] fitCropSize)
-    {
-        FitCropSize = fitCropSize;
-    }
+    Storyboard
 }

@@ -46,7 +46,6 @@ public class GameBridge : MonoBehaviour
         }
 
         Debug.Log("[GameBridge] Bridge-embedded mode active.");
-        FlutterBridgeNavigationShell.Apply();
         OnTelemetryJson.AddListener(OnTelemetryJsonReceived);
         GameResultBridge.OnResultJson.AddListener(OnGameResultJson);
         Context.OnApplicationInitialized.AddListener(SendReadyToBridge);

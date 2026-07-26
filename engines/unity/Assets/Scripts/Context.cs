@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using DG.Tweening;
 using Newtonsoft.Json;
@@ -10,21 +9,11 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
-#if UNITY_ANDROID
-using UnityEngine.Android;
-#endif
 
 public class Context : SingletonMonoBehavior<Context>
 {
-    public const string VersionIdentifier = "2.1.4";
-    public const string VersionName = "2.1.4 BUILD.1";
-    public const int VersionCode = 123;
-
     public const int ReferenceWidth = 1920;
     public const int ReferenceHeight = 1080;
-
-    public const int LevelThumbnailWidth = 576;
-    public const int LevelThumbnailHeight = 360;
 
     public static int AndroidVersionCode = -1;
 
@@ -33,13 +22,8 @@ public class Context : SingletonMonoBehavior<Context>
     public static readonly UnityEvent OnApplicationInitialized = new UnityEvent();
     public static bool IsInitialized { get; private set; }
 
-    public static readonly LevelEvent
-        OnSelectedLevelChanged = new LevelEvent(); // TODO: This feels definitely unnecessary. Integrate with screen?
-
     public static readonly UnityEvent OnLanguageChanged = new UnityEvent();
 
-    public static string UserDataPath;
-    public static string iOSTemporaryInboxPath;
     public static int InitialWidth;
     public static int InitialHeight;
     public static int DefaultDspBufferSize { get; private set; }
@@ -51,15 +35,7 @@ public class Context : SingletonMonoBehavior<Context>
     public static readonly LevelManager LevelManager = new LevelManager();
     public static readonly AssetMemory AssetMemory = new AssetMemory();
 
-    public static Level SelectedLevel
-    {
-        get => selectedLevel;
-        set
-        {
-            selectedLevel = value;
-            OnSelectedLevelChanged.Invoke(value);
-        }
-    }
+    public static Level SelectedLevel;
 
     public static Difficulty SelectedDifficulty = Difficulty.Easy;
     public static Difficulty PreferredDifficulty = Difficulty.Easy;
@@ -67,7 +43,6 @@ public class Context : SingletonMonoBehavior<Context>
     public static GameMode SelectedGameMode;
     public static IGameContentProvider GameContentProvider;
 
-    public static InitializationState InitializationState;
     public static GameState GameState;
     public static TierPlayLaunch PendingTierPlay;
     public static TierPlaySession ActiveTierPlaySession;
@@ -76,7 +51,6 @@ public class Context : SingletonMonoBehavior<Context>
 
     public static GameErrorState GameErrorState;
 
-    private static Level selectedLevel;
     private static GraphyManager graphyManager;
 
     protected override void Awake()
@@ -111,30 +85,6 @@ public class Context : SingletonMonoBehavior<Context>
                 print("Android version code: " + AndroidVersionCode);
             }
         }
-        InitializationState = new InitializationState();
-
-        UserDataPath = Application.persistentDataPath;
-
-        if (Application.platform == RuntimePlatform.Android)
-        {
-            var dir = GetAndroidStoragePath();
-            if (dir == null)
-            {
-                Application.Quit();
-                return;
-            }
-
-            UserDataPath = dir + "/Cytoid";
-        }
-        else if (Application.platform == RuntimePlatform.IPhonePlayer)
-        {
-            // iOS 13 fix
-            iOSTemporaryInboxPath = UserDataPath
-                .Replace("Documents/", "")
-                .Replace("Documents", "") + "/tmp/me.tigerhix.cytoid-Inbox/";
-        }
-        print("User data path: " + UserDataPath);
-
 #if UNITY_EDITOR
         Application.runInBackground = true;
 #endif
@@ -159,28 +109,6 @@ public class Context : SingletonMonoBehavior<Context>
             ReferenceLoopHandling = ReferenceLoopHandling.Ignore
         };
         FontManager.LoadFonts();
-
-        if (Application.platform == RuntimePlatform.Android)
-        {
-            // Try to write to ensure we have write permissions
-            try
-            {
-                // Create an empty folder if it doesn't already exist
-                Directory.CreateDirectory(UserDataPath);
-                File.Create(UserDataPath + "/.nomedia").Dispose();
-                // Create and delete test file
-                var file = UserDataPath + "/" + Path.GetRandomFileName();
-                File.Create(file);
-                File.Delete(file);
-                Debug.Log("Write permission granted");
-            }
-            catch (Exception e)
-            {
-                Debug.LogError(e);
-                Debug.LogError("Could not start game: write permission check failed.");
-                return;
-            }
-        }
 
         Player.Initialize();
 
@@ -212,7 +140,7 @@ public class Context : SingletonMonoBehavior<Context>
         InitialHeight = UnityEngine.Screen.height;
         UpdateGraphicsQuality();
 
-        SelectedMods = new HashSet<Mod>(Player.Settings.EnabledMods);
+        SelectedMods.Clear();
 
         PreSceneChanged.AddListener(OnPreSceneChanged);
         PostSceneChanged.AddListener(OnPostSceneChanged);
@@ -252,7 +180,6 @@ public class Context : SingletonMonoBehavior<Context>
 
     private static void InitializeDebugNavigation()
     {
-        InitializationState.IsInitialized = true;
         SelectedGameMode = GameMode.Unspecified;
         SelectedLevel = null;
         SelectedDifficulty = Difficulty.Easy;
@@ -263,7 +190,6 @@ public class Context : SingletonMonoBehavior<Context>
 
     private static void InitializeFlutterHost()
     {
-        InitializationState.IsInitialized = true;
         GameContentProvider?.Dispose();
         GameContentProvider = null;
     }
@@ -426,40 +352,6 @@ public class Context : SingletonMonoBehavior<Context>
                 UnityEngine.Screen.autorotateToLandscapeLeft = false;
             if (UnityEngine.Screen.orientation != ScreenOrientation.LandscapeRight)
                 UnityEngine.Screen.autorotateToLandscapeRight = false;
-        }
-    }
-
-    public string GetAndroidStoragePath()
-    {
-#if UNITY_ANDROID
-        if (
-            AndroidVersionCode <= 29
-            && Permission.HasUserAuthorizedPermission(Permission.ExternalStorageRead)
-            && Permission.HasUserAuthorizedPermission(Permission.ExternalStorageWrite)
-        )
-        {
-            return GetAndroidLegacyStoragePath();
-        }
-
-        return Application.persistentDataPath;
-#else
-        return "";
-#endif
-    }
-
-    public string GetAndroidLegacyStoragePath()
-    {
-        try
-        {
-            using var javaClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-            using var activityClass = javaClass.GetStatic<AndroidJavaObject>("currentActivity");
-            return activityClass.Call<AndroidJavaObject>("getAndroidStorageFile")
-                .Call<string>("getAbsolutePath");
-        }
-        catch (Exception e)
-        {
-            Debug.LogError("Could not get Android storage path: " + e.Message);
-            return null;
         }
     }
 

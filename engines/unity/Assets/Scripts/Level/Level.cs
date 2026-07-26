@@ -6,7 +6,6 @@ public class Level
 {
 
     public LevelType Type;
-    public bool IsLocal;
 
     public LevelMeta Meta;
     public LevelRecord Record;
@@ -23,20 +22,9 @@ public class Level
     {
         return new Level {
             Type = type,
-            IsLocal = true,
             Path = path,
             Meta = meta,
-            Record = new LevelRecord {LevelId = meta.id}
-        };
-    }
-
-    public static Level FromRemote(LevelType type, LevelMeta meta)
-    {
-        return new Level {
-            Type = type,
-            IsLocal = false,
-            Meta = meta,
-            Record = new LevelRecord {LevelId = meta.id}
+            Record = new LevelRecord()
         };
     }
 
@@ -44,26 +32,16 @@ public class Level
     {
         return new Level {
             Type = LevelType.Temp,
-            IsLocal = false,
             Path = path ?? string.Empty,
             Meta = meta,
-            Record = new LevelRecord {LevelId = meta.id}
+            Record = new LevelRecord()
         };
-    }
-
-    public void CopyFrom(Level other)
-    {
-        Type = other.Type;
-        IsLocal = other.IsLocal;
-        Meta = other.Meta;
-        Record = other.Record;
-        Path = other.Path;
     }
 
 }
 
 public enum LevelType {
-    User, Tier, BuiltIn, Temp
+    User, BuiltIn, Temp
 }
 
 public static class LevelTypeExtensions {
@@ -72,9 +50,7 @@ public static class LevelTypeExtensions {
         switch (type)
         {
             case LevelType.User:
-                return Context.UserDataPath;
-            case LevelType.Tier:
-                return Path.Combine(Application.temporaryCachePath, "Tiers");
+                return Application.persistentDataPath;
             case LevelType.BuiltIn:
                 return Path.Combine(Application.temporaryCachePath, "Built In");
             case LevelType.Temp:

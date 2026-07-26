@@ -22,11 +22,7 @@ public class StatusText : MonoBehaviour
 
     public void Load()
     {
-        if (Context.InitializationState.IsDuringFirstLaunch())
-        {
-            text.text = "";
-        }
-        else switch (game.State.Mode)
+        switch (game.State.Mode)
         {
             case GameMode.Calibration:
                 text.text = "GAME_CALIBRATION_MODE".Get();

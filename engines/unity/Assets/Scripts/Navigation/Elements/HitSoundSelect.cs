@@ -42,6 +42,12 @@ public class HitSoundSelect : MonoBehaviour, ScreenBecameActiveListener
 
     private void Awake()
     {
+        if (GameEmbedMode.IsBridgeEmbedded)
+        {
+            gameObject.SetActive(false);
+            return;
+        }
+
         select = GetComponentInChildren<CaretSelect>();
         if (game != null)
         {
@@ -51,11 +57,13 @@ public class HitSoundSelect : MonoBehaviour, ScreenBecameActiveListener
 
     public void OnScreenBecameActive()
     {
+        if (GameEmbedMode.IsBridgeEmbedded) return;
         Load();
     }
 
     public void Load()
     {
+        if (GameEmbedMode.IsBridgeEmbedded) return;
         if (select == null) select = GetComponentInChildren<CaretSelect>();
         select.labels = new List<string>(HitSoundNameKeys.Select(it => it.Get()));
         select.values = new List<string>(HitSounds);

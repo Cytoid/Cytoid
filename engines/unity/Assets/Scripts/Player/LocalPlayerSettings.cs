@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Polyglot;
@@ -12,14 +11,7 @@ using JsonWriter = Newtonsoft.Json.JsonWriter;
 [Serializable]
 public class LocalPlayerSettings
 {
-    [JsonProperty("schema_version")] public int SchemaVersion { get; set; }
-
-    [JsonProperty("player_id")] public string PlayerId { get; set; }
-
     [JsonProperty("language")] public int Language { get; set; } = 0;
-    [JsonProperty("play_ranked")] public bool PlayRanked { get; set; } = false;
-
-    [JsonProperty("enabled_mods")] public List<Mod> EnabledMods { get; set; } = new List<Mod>();
 
     [JsonProperty("display_boundaries")] public bool DisplayBoundaries { get; set; } = false;
 
@@ -115,8 +107,6 @@ public class LocalPlayerSettings
     [JsonProperty("display_profiler")] public bool DisplayProfiler { get; set; } = false;
     [JsonProperty("adapt_overlay_to_safe_area")] public bool AdaptOverlayToSafeArea { get; set; } = true;
     [JsonProperty("display_note_ids")] public bool DisplayNoteIds { get; set; } = false;
-    [JsonProperty("local_level_sort")] public LevelSort LocalLevelSort { get; set; } = LevelSort.AddedDate;
-
     [JsonProperty("audio_server")] public AudioServerType AudioServer { get; set; } = AudioServerType.Unity;
 
     [JsonProperty("android_dsp_buffer_size")]
@@ -125,37 +115,7 @@ public class LocalPlayerSettings
     [JsonProperty("use_experimental_note_ar")] public bool UseExperimentalNoteAr { get; set; } = false;
     [JsonProperty("use_experimental_note_animations")] public bool UseExperimentalNoteAnimations { get; set; } = true;
 
-    [JsonProperty("local_level_sort_is_ascending")]
-    public bool LocalLevelSortIsAscending { get; set; } = false;
-
     [JsonProperty("use_menu_transitions")] public bool UseMenuTransitions { get; set; } = true;
-
-    [JsonProperty("performed_one_shots")]
-    public HashSet<string> PerformedOneShots { get; set; } = new HashSet<string>();
-
-    [JsonProperty("set_triggers")]
-    public HashSet<string> SetTriggers { get; set; } = new HashSet<string>();
-
-    [JsonProperty("seen_events")]
-    public HashSet<string> SeenEvents { get; set; } = new HashSet<string>();
-
-    [JsonProperty("read_event_details")]
-    public HashSet<string> ReadEventDetails { get; set; } = new HashSet<string>();
-
-    [JsonProperty("read_event_objectives")]
-    public HashSet<string> ReadEventObjectives { get; set; } = new HashSet<string>();
-
-    [JsonProperty("training_mode_version")]
-    public int TrainingModeVersion { get; set; } = 1;
-
-    [JsonProperty("request_store_review_confidence")]
-    public int RequestStoreReviewConfidence { get; set; } = 0;
-
-    [JsonProperty("requested_for_store_review")]
-    public bool RequestedForStoreReview { get; set; } = false;
-
-    [JsonProperty("total_launches")]
-    public int TotalLaunches { get; set; } = 0;
 
 }
 
@@ -166,36 +126,6 @@ public enum GraphicsQuality
     Medium,
     High,
     Ultra
-}
-
-public class HashSetConverter<TEnum> : JsonConverter where TEnum : Enum
-{
-    public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-    {
-        if (value.GetType() != typeof(HashSet<TEnum>)) throw new InvalidCastException();
-        var type = (HashSet<TEnum>) value;
-        JToken t = new JValue(string.Join(",", type.Select(it => Enum.GetName(typeof(TEnum), it)).ToList()));
-        t.WriteTo(writer);
-    }
-
-    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-    {
-        var data = reader.ReadAsString();
-        try
-        {
-            return data.Split(',').Select(it => (TEnum) Enum.Parse(typeof(TEnum), it)).ToHashSet();
-        }
-        catch
-        {
-            Debug.LogError($"Incorrect data: {data}");
-            return new HashSet<TEnum>();
-        }
-    }
-
-    public override bool CanConvert(Type objectType) => true;
-
-    public override bool CanRead { get; } = true;
-    public override bool CanWrite { get; } = true;
 }
 
 public class NoteTypeDictionaryConverter<T> : JsonConverter

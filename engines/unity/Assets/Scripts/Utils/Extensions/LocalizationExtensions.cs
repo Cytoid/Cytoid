@@ -44,6 +44,29 @@ public static class LocalizationExtensions
                 return "en";
         }
     }
+
+    public static bool TryParseLanguageCode(this string code, out Language language)
+    {
+        switch (code?.Trim().ToLowerInvariant())
+        {
+            case "en": language = Language.English; return true;
+            case "cs": language = Language.Czech; return true;
+            case "es": language = Language.Spanish; return true;
+            case "id": language = Language.Indonesian; return true;
+            case "pt-br": language = Language.Portuguese_Brazil; return true;
+            case "ru": language = Language.Russian; return true;
+            case "fil": language = Language.Filipino; return true;
+            case "vi": language = Language.Vietnamese; return true;
+            case "uk": language = Language.Ukrainian; return true;
+            case "zh-cn": language = Language.Simplified_Chinese; return true;
+            case "zh-tw": language = Language.Traditional_Chinese; return true;
+            case "ja": language = Language.Japanese; return true;
+            case "ko": language = Language.Korean; return true;
+            default:
+                language = default;
+                return false;
+        }
+    }
     
     public static bool ShouldUseNonBreakingSpaces(this Language language)
     {

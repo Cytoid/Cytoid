@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using E7.Native;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Polyglot;
 using UnityEngine;
 
 public sealed class ExternalGameContentProvider : IGameContentProvider
@@ -119,6 +120,17 @@ public sealed class ExternalGameContentProvider : IGameContentProvider
         if (settings == null || Context.Player.Settings == null) return;
 
         var target = Context.Player.Settings;
+        if (!string.IsNullOrEmpty(settings.language))
+        {
+            if (!settings.language.TryParseLanguageCode(out var language))
+            {
+                throw new ArgumentException($"Unsupported profile.language: {settings.language}");
+            }
+
+            target.Language = (int) language;
+            Localization.Instance.SelectLanguage(language);
+            Context.OnLanguageChanged.Invoke();
+        }
         if (settings.musicVolume.HasValue) target.MusicVolume = settings.musicVolume.Value;
         if (settings.soundEffectsVolume.HasValue) target.SoundEffectsVolume = settings.soundEffectsVolume.Value;
         Context.AudioManager?.UpdateVolumes();
@@ -183,6 +195,10 @@ public sealed class ExternalGameContentProvider : IGameContentProvider
         if (settings.hitTapticFeedback.HasValue)
         {
             target.HitTapticFeedback = settings.hitTapticFeedback.Value;
+        }
+        if (settings.menuTapticFeedback.HasValue)
+        {
+            target.MenuTapticFeedback = settings.menuTapticFeedback.Value;
         }
 
         if (settings.useNativeAudio.HasValue)
@@ -359,12 +375,13 @@ public sealed class ExternalGameContentProvider : IGameContentProvider
     private static void ApplyProfileSettings(GameLaunchSettings settings, JObject profile)
     {
         if (profile == null) return;
+        settings.language = OptionalString(profile, "language");
         settings.baseNoteOffset = OptionalFloat(profile, "baseNoteOffset");
         settings.levelNoteOffset = OptionalFloat(profile, "levelNoteOffset");
         settings.headsetNoteOffset = OptionalFloat(profile, "headsetNoteOffset");
         settings.judgmentOffset = OptionalFloat(profile, "judgmentOffset");
         settings.hitTapticFeedback = OptionalBool(profile, "hitTapticFeedback");
-        // profile.language and profile.menuTapticFeedback have no flat GameLaunchSettings equivalent.
+        settings.menuTapticFeedback = OptionalBool(profile, "menuTapticFeedback");
     }
 
     private static void ApplyRuntimeSettings(GameLaunchSettings settings, JObject runtime)

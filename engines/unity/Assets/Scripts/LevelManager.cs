@@ -63,7 +63,10 @@ public class LevelManager
         return packagePaths;
     }
 
-    private async UniTask<List<string>> InstallBuiltInLevels(List<string> packagePaths, LevelType type)
+    private async UniTask<List<string>> InstallBuiltInLevels(
+        List<string> packagePaths,
+        LevelType type,
+        string expectedId)
     {
         var metadataPaths = new List<string>();
         foreach (var packagePath in packagePaths)
@@ -84,9 +87,11 @@ public class LevelManager
                 }
 
                 var meta = JsonConvert.DeserializeObject<LevelMeta>(File.ReadAllText(metadataPath));
-                if (meta == null || string.IsNullOrEmpty(meta.id))
+                if (meta == null || string.IsNullOrEmpty(meta.id) ||
+                    !string.Equals(meta.id, expectedId, StringComparison.Ordinal))
                 {
-                    Debug.LogError($"Invalid level.json in {packagePath}");
+                    Debug.LogError(
+                        $"Invalid level.json in {packagePath}: expected id {expectedId}, got {meta?.id ?? "<missing>"}");
                     continue;
                 }
                 if (!Regex.IsMatch(meta.id, @"^[a-z0-9_]+([-_.][a-z0-9_]+)*$"))
@@ -95,13 +100,42 @@ public class LevelManager
                     continue;
                 }
 
-                var destination = Path.Combine(type.GetDataPath(), meta.id);
+                var destination = Path.Combine(type.GetDataPath(), expectedId);
+                string backup = null;
                 if (Directory.Exists(destination))
                 {
-                    Directory.Delete(destination, true);
+                    backup = destination + ".backup-" + Guid.NewGuid().ToString("N");
+                    Directory.Move(destination, backup);
                 }
 
-                Directory.Move(tempFolder, destination);
+                try
+                {
+                    Directory.Move(tempFolder, destination);
+                }
+                catch
+                {
+                    if (backup != null && Directory.Exists(backup))
+                    {
+                        if (Directory.Exists(destination))
+                        {
+                            Directory.Delete(destination, true);
+                        }
+                        Directory.Move(backup, destination);
+                    }
+                    throw;
+                }
+
+                if (backup != null && Directory.Exists(backup))
+                {
+                    try
+                    {
+                        Directory.Delete(backup, true);
+                    }
+                    catch (Exception exception)
+                    {
+                        Debug.LogWarning($"Failed to remove built-in level backup {backup}: {exception.Message}");
+                    }
+                }
                 metadataPaths.Add(Path.Combine(destination, "level.json"));
             }
             finally
@@ -192,7 +226,7 @@ public class LevelManager
                 return levels[0];
             }
 
-            return LoadedLocalLevels.TryGetValue(id, out var loaded) ? loaded : null;
+            return !forceReload && LoadedLocalLevels.TryGetValue(id, out var loaded) ? loaded : null;
         }
 
         var level = forceInstall ? null : await LoadInstalled();
@@ -202,7 +236,7 @@ public class LevelManager
         }
 
         var packages = await CopyBuiltInLevelsToDownloads(new List<string> {id});
-        await InstallBuiltInLevels(packages, loadType);
+        await InstallBuiltInLevels(packages, loadType, id);
         return await LoadInstalled(forceReload: true);
     }
 

@@ -120,6 +120,11 @@ public sealed class ExternalGameContentProvider : IGameContentProvider
         if (settings == null || Context.Player.Settings == null) return;
 
         var target = Context.Player.Settings;
+        if (settings.musicVolume.HasValue) target.MusicVolume = settings.musicVolume.Value;
+        if (settings.soundEffectsVolume.HasValue) target.SoundEffectsVolume = settings.soundEffectsVolume.Value;
+        Context.AudioManager?.UpdateVolumes();
+        if (realtimeVolumeOnly) return;
+
         if (!string.IsNullOrEmpty(settings.language))
         {
             if (!settings.language.TryParseLanguageCode(out var language))
@@ -131,11 +136,6 @@ public sealed class ExternalGameContentProvider : IGameContentProvider
             Localization.Instance.SelectLanguage(language);
             Context.OnLanguageChanged.Invoke();
         }
-        if (settings.musicVolume.HasValue) target.MusicVolume = settings.musicVolume.Value;
-        if (settings.soundEffectsVolume.HasValue) target.SoundEffectsVolume = settings.soundEffectsVolume.Value;
-        Context.AudioManager?.UpdateVolumes();
-        if (realtimeVolumeOnly) return;
-
         if (settings.baseNoteOffset.HasValue) target.BaseNoteOffset = settings.baseNoteOffset.Value;
         if (settings.levelNoteOffset.HasValue && Context.SelectedLevel?.Record != null)
         {

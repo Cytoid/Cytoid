@@ -55,8 +55,8 @@ Cytoid/
 Dart models in `engines/unity/flutter_plugin/lib/src/models/` mirror C#:
 
 - `engines/unity/Assets/Scripts/Game/GameLaunchPayload.cs`
-- `engines/unity/Assets/Scripts/Game/GameResultPayload.cs`
-- `engines/unity/Assets/Scripts/Game/GameLaunchBridge.cs` / `GameResultBridge.cs`
+- `engines/unity/Assets/Scripts/Game/GameLaunchBridge.cs`
+- `engines/unity/Assets/Scripts/Game/GameResultBridge.cs` and its v2 wire payloads
 
 Protocol spec: `docs/host-protocol-v2.md` (v1 doc at `engines/unity/flutter_plugin/example/docs/host-protocol.md` is DEPRECATED; keep `cytoid_flutter/docs/host-protocol.md` in sync).
 
@@ -231,6 +231,7 @@ If you change envelope types or payloads:
 | 2026-06 | Host-side `health.check` watchdog in `PlaySession` | Detects Unity main-loop freeze with process alive — the gap the native bridge synthesis paths don't cover. Reuses `runtime_unreachable`; provenance in `message`. C# handler: `GameBridgeRouter.HandleHealthCheck` |
 | 2026-07 | `CytoidCoreBuild` uses `EditorApplication.update` + explicit `EditorApplication.Exit(0)`; invocation MUST NOT pass `-quit` | Unity 6 batchmode + `-quit` exits the instant executeMethod returns, so `update` callbacks never fire and any async work is silently dropped. Empirically verified: `Thread.Sleep` deadlocks (compiler shares the main thread); `EditorApplication.Step()` is a no-op inside executeMethod (doesn't pump compilation, doesn't advance wall clock); `wantsToQuit` vetoes are ignored under `-quit`. CI uses game-ci/unity-builder `manualExit: true` (added in PR game-ci/unity-builder#574 specifically for this pattern). |
 | 2026-07 | Swift test suite runs in `tool/run_swift_tests_sandboxed.sh` (isolated SwiftPM sandbox with stub `Flutter` module) | The iOS plugin's pure-logic tests must run without the `FlutterFramework` SPM package or `UnityFramework` binary target — neither is available locally. Harness realizes the "isolated SwiftPM sandbox" convention already documented in 5 source files. Excludes `ShowGameSurfaceAtomicityTests` (asserts on real Flutter semantics) and `CytoidGameCorePlugin.swift` (UIKit + Flutter entry point). |
+| 2026-07 | Unity no longer owns community-level installation, profile persistence, first-launch state, or remote asset caching | Flutter supplies a complete settings snapshot plus a local VFS root for every bridge session. Unity retains only session runtime state and a minimal built-in/local loader for standalone Editor debugging. |
 
 Append new rows when architecture or default paths change.
 

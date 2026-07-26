@@ -3,751 +3,306 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Unity.SharpZipLib.Zip;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.RegularExpressions;
 using Cysharp.Threading.Tasks;
+using Newtonsoft.Json;
+using Unity.SharpZipLib.Zip;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.Networking;
-using Object = UnityEngine.Object;
 
+/// <summary>
+/// Minimal local level loader for standalone/editor debugging.
+/// Bridge-embedded sessions receive validated metadata and a local VFS root from Flutter.
+/// </summary>
 public class LevelManager
 {
-    public const string CoverThumbnailFilename = ".cover";
-
-    public readonly LevelInstallProgressEvent OnLevelInstallProgress = new LevelInstallProgressEvent();
-    public readonly LevelLoadProgressEvent OnLevelLoadProgress = new LevelLoadProgressEvent();
-
     public readonly Dictionary<string, Level> LoadedLocalLevels = new Dictionary<string, Level>();
     private readonly HashSet<string> loadedPaths = new HashSet<string>();
 
     public async UniTask<List<string>> CopyBuiltInLevelsToDownloads(List<string> levelIds)
     {
         var packagePaths = new List<string>();
-
-        // Install all missing training levels that are built in
-        foreach (var uid in levelIds)
+        foreach (var id in levelIds)
         {
-            var packagePath = Application.streamingAssetsPath + "/Levels/" + uid + ".cytoidlevel";
+            var packagePath = Application.streamingAssetsPath + "/Levels/" + id + ".cytoidlevel";
             byte[] bytes;
 #if UNITY_EDITOR
-            // Check if we're in editor - use File.ReadAllBytes directly
             if (!File.Exists(packagePath))
             {
-                Debug.LogError($"Failed to copy level {uid} from StreamingAssets");
+                Debug.LogError($"Failed to find built-in debug level {id}");
                 continue;
             }
 
-            try
-            {
-                bytes = File.ReadAllBytes(packagePath);
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"Failed to copy level {uid} from {packagePath}: {e.Message}");
-                continue;
-            }
+            bytes = File.ReadAllBytes(packagePath);
 #else
-            // For runtime builds (especially mobile), use UnityWebRequest
-            if (Application.platform == RuntimePlatform.IPhonePlayer) packagePath = "file://" + packagePath;
+            if (Application.platform == RuntimePlatform.IPhonePlayer)
+            {
+                packagePath = "file://" + packagePath;
+            }
 
             using (var request = UnityWebRequest.Get(packagePath))
             {
-                request.SetRequestHeader("User-Agent", $"CytoidClient/{Context.VersionIdentifier}");
                 await request.SendWebRequest();
-
-                if (request.isNetworkError || request.isHttpError)
+                if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogError($"Failed to copy level {uid} from StreamingAssets");
+                    Debug.LogError($"Failed to read built-in debug level {id}: {request.error}");
                     continue;
                 }
 
                 bytes = request.downloadHandler.data;
             }
 #endif
-            var targetDirectory = $"{Application.temporaryCachePath}/Downloads";
-            var targetFile = $"{targetDirectory}/{uid}.cytoidlevel";
 
-            try
-            {
-                Directory.CreateDirectory(targetDirectory);
-                File.WriteAllBytes(targetFile, bytes);
-            }
-            catch (Exception e)
-            {
-                Debug.LogError(e);
-                Debug.LogError($"Failed to copy level {uid} from StreamingAssets to {targetFile}");
-                continue;
-            }
-
+            var targetDirectory = Path.Combine(Application.temporaryCachePath, "BuiltInLevelPackages");
+            Directory.CreateDirectory(targetDirectory);
+            var targetFile = Path.Combine(targetDirectory, id + ".cytoidlevel");
+            File.WriteAllBytes(targetFile, bytes);
             packagePaths.Add(targetFile);
         }
 
         return packagePaths;
     }
 
-    public async UniTask<List<Level>> LoadOrInstallBuiltInLevels()
+    private async UniTask<List<string>> InstallBuiltInLevels(
+        List<string> packagePaths,
+        LevelType type,
+        string expectedId)
     {
-        var levels = new List<Level>();
-        foreach (var levelId in BuiltInData.BuiltInLevelIds)
+        var metadataPaths = new List<string>();
+        foreach (var packagePath in packagePaths)
         {
-            levels.Add(await LoadOrInstallBuiltInLevel(levelId, LevelType.BuiltIn));
-        }
-        return levels;
-    }
-
-    public async UniTask<List<string>> InstallUserCommunityLevels()
-    {
-        if (Application.platform == RuntimePlatform.IPhonePlayer)
-        {
-            var files = new List<string>();
-            var inboxPath = Context.UserDataPath + "/Inbox/";
-            if (Directory.Exists(inboxPath))
-            {
-                files.AddRange(Directory.GetFiles(inboxPath, "*.cytoidlevel"));
-                files.AddRange(Directory.GetFiles(inboxPath, "*.cytoidlevel.zip"));
-            }
-            if (Directory.Exists(Context.iOSTemporaryInboxPath))
-            {
-                files.AddRange(Directory.GetFiles(Context.iOSTemporaryInboxPath, "*.cytoidlevel"));
-                files.AddRange(Directory.GetFiles(Context.iOSTemporaryInboxPath, "*.cytoidlevel.zip"));
-            }
-
-            foreach (var file in files)
-            {
-                if (file == null) continue;
-
-                var toPath = Context.UserDataPath + "/" + Path.GetFileName(file);
-                try
-                {
-                    if (File.Exists(toPath))
-                    {
-                        File.Delete(toPath);
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError(e);
-                    Debug.LogError($"Failed to delete .cytoidlevel file at {toPath}");
-                    continue;
-                }
-
-                try
-                {
-                    File.Move(file, toPath);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError(e);
-                    Debug.LogError($"Failed to move .cytoidlevel file from {file} to {toPath}");
-                }
-            }
-        }
-
-        var levelFiles = new List<string>();
-        try
-        {
-            levelFiles.AddRange(Directory.GetFiles(Context.UserDataPath, "*.cytoidlevel"));
-            levelFiles.AddRange(Directory.GetFiles(Context.UserDataPath, "*.cytoidlevel.zip"));
-        }
-        catch (Exception e)
-        {
-            Debug.LogError(e);
-            Debug.LogError("Cannot read from data path");
-            return new List<string>();
-        }
-
-        return await InstallLevels(levelFiles, LevelType.User);
-    }
-
-    public async UniTask<List<string>> InstallLevels(List<string> packagePaths, LevelType type)
-    {
-        var loadedLevelJsonFiles = new List<string>();
-        var index = 1;
-        foreach (var levelFile in packagePaths)
-        {
-            var fileName = Path.GetFileNameWithoutExtension(levelFile);
-            OnLevelInstallProgress.Invoke(fileName, index, packagePaths.Count);
-
-            // Create a temporary folder with UUID
-            var tempFolder = $"{type.GetDataPath()}/{Guid.NewGuid()}";
-            if (await UnpackLevelPackage(levelFile, tempFolder))
-            {
-                // Read level.json to get the id
-                var levelJsonPath = tempFolder + "/level.json";
-
-                if (!File.Exists(levelJsonPath))
-                {
-                    Debug.LogError($"level.json not found in {levelFile}");
-                    Directory.Delete(tempFolder, true);
-                    continue;
-                }
-
-                var meta = JsonConvert.DeserializeObject<LevelMeta>(File.ReadAllText(levelJsonPath));
-                if (meta == null || string.IsNullOrEmpty(meta.id))
-                {
-                    Debug.LogError($"Invalid level.json in {levelFile}");
-                    Directory.Delete(tempFolder, true);
-                    continue;
-                }
-
-                // Validate id format
-                var idRegex = new System.Text.RegularExpressions.Regex(@"^[a-z0-9_]+([-_.][a-z0-9_]+)+$");
-                if (!idRegex.IsMatch(meta.id))
-                {
-                    Debug.LogError($"Invalid level id format in {levelFile}: {meta.id}");
-                    Directory.Delete(tempFolder, true);
-                    continue;
-                }
-
-                var destFolder = $"{type.GetDataPath()}/{meta.id}";
-
-                // Copy all files from temp folder to destination folder
-                foreach (var file in Directory.GetFiles(tempFolder, "*.*", SearchOption.AllDirectories))
-                {
-                    var relativePath = file.Substring(tempFolder.Length + 1);
-                    var destFile = Path.Combine(destFolder, relativePath);
-                    Directory.CreateDirectory(Path.GetDirectoryName(destFile));
-                    File.Copy(file, destFile, true);
-                }
-
-                // Delete the temp folder
-                Directory.Delete(tempFolder, true);
-
-                loadedLevelJsonFiles.Add(destFolder + "/level.json");
-                Debug.Log($"Installed {index}/{packagePaths.Count}: {levelFile} to {destFolder}");
-            }
-            else
-            {
-                Debug.LogWarning($"Could not install {index}/{packagePaths.Count}: {levelFile}");
-            }
-
+            var tempFolder = Path.Combine(type.GetDataPath(), Guid.NewGuid().ToString());
             try
             {
-                File.Delete(levelFile);
+                if (!await UnpackLevelPackage(packagePath, tempFolder))
+                {
+                    continue;
+                }
+
+                var metadataPath = Path.Combine(tempFolder, "level.json");
+                if (!File.Exists(metadataPath))
+                {
+                    Debug.LogError($"level.json not found in {packagePath}");
+                    continue;
+                }
+
+                var meta = JsonConvert.DeserializeObject<LevelMeta>(File.ReadAllText(metadataPath));
+                if (meta == null || string.IsNullOrEmpty(meta.id) ||
+                    !string.Equals(meta.id, expectedId, StringComparison.Ordinal))
+                {
+                    Debug.LogError(
+                        $"Invalid level.json in {packagePath}: expected id {expectedId}, got {meta?.id ?? "<missing>"}");
+                    continue;
+                }
+                if (!Regex.IsMatch(meta.id, @"^[a-z0-9_]+([-_.][a-z0-9_]+)*$"))
+                {
+                    Debug.LogError($"Invalid built-in level id: {meta.id}");
+                    continue;
+                }
+
+                var destination = Path.Combine(type.GetDataPath(), expectedId);
+                string backup = null;
+                if (Directory.Exists(destination))
+                {
+                    backup = destination + ".backup-" + Guid.NewGuid().ToString("N");
+                    Directory.Move(destination, backup);
+                }
+
+                try
+                {
+                    Directory.Move(tempFolder, destination);
+                }
+                catch
+                {
+                    if (backup != null && Directory.Exists(backup))
+                    {
+                        if (Directory.Exists(destination))
+                        {
+                            Directory.Delete(destination, true);
+                        }
+                        Directory.Move(backup, destination);
+                    }
+                    throw;
+                }
+
+                if (backup != null && Directory.Exists(backup))
+                {
+                    try
+                    {
+                        Directory.Delete(backup, true);
+                    }
+                    catch (Exception exception)
+                    {
+                        Debug.LogWarning($"Failed to remove built-in level backup {backup}: {exception.Message}");
+                    }
+                }
+                metadataPaths.Add(Path.Combine(destination, "level.json"));
             }
-            catch (Exception e)
+            finally
             {
-                Debug.LogError(e);
-                Debug.LogError($"Could not delete level file at {levelFile}");
+                if (Directory.Exists(tempFolder))
+                {
+                    Directory.Delete(tempFolder, true);
+                }
+
+                if (File.Exists(packagePath))
+                {
+                    File.Delete(packagePath);
+                }
             }
-
-            index++;
         }
 
-        return loadedLevelJsonFiles;
+        return metadataPaths;
     }
 
-    public void DeleteLocalLevel(string id)
-    {
-        if (!LoadedLocalLevels.ContainsKey(id))
-        {
-            Debug.LogWarning($"Warning: Could not find level {id}");
-            return;
-        }
-
-        var level = LoadedLocalLevels[id];
-
-        Directory.Delete(Path.GetDirectoryName(level.Path) ?? throw new InvalidOperationException(), true);
-        LoadedLocalLevels.Remove(level.Id);
-        loadedPaths.Remove(level.Path);
-    }
-
-    public async UniTask<bool> UnpackLevelPackage(string packagePath, string destFolder)
+    private async UniTask<bool> UnpackLevelPackage(string packagePath, string destination)
     {
         const int bufferSize = 256 * 1024;
         ZipStrings.CodePage = Encoding.UTF8.CodePage;
+        Directory.CreateDirectory(destination);
+        var destinationRoot = Path.GetFullPath(destination) + Path.DirectorySeparatorChar;
+
         try
         {
-            Directory.CreateDirectory(destFolder);
-        }
-        catch (Exception error)
-        {
-            Debug.LogError("Failed to create level folder.");
-            Debug.LogError(error);
-            return false;
-        }
-
-        string fileName;
-        try
-        {
-            fileName = Path.GetFileName(packagePath);
-        }
-        catch (Exception error)
-        {
-            Debug.LogError($"Failed to get filename for path {packagePath}.");
-            Debug.LogError(error);
-            return false;
-        }
-        byte[] zipFileData;
-        try
-        {
-            zipFileData = File.ReadAllBytes(packagePath);
-        }
-        catch (Exception error)
-        {
-            Debug.LogError($"Failed to read bytes from {packagePath}.");
-            Debug.LogError(error);
-            return false;
-        }
-
-        using (var fileStream = new MemoryStream())
-        {
-            ZipFile zipFile;
-
-            try
+            using (var fileStream = File.OpenRead(packagePath))
+            using (var zipFile = new ZipFile(fileStream))
             {
-                fileStream.Write(zipFileData, 0, zipFileData.Length);
-                fileStream.Flush();
-                fileStream.Seek(0, SeekOrigin.Begin);
-
-                zipFile = new ZipFile(fileStream);
-
                 foreach (ZipEntry entry in zipFile)
                 {
-                    // Loop through all files to ensure the zip is valid
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"Cannot read {fileName}. Is it a valid .zip archive file?");
-                Debug.LogError(e.Message);
-                return false;
-            }
-
-            foreach (ZipEntry entry in zipFile)
-            {
-                var targetFile = Path.Combine(destFolder, entry.Name);
-                if (entry.Name.Contains("__MACOSX")) continue; // Fucking macOS...
-                Debug.Log("Extracting " + entry.Name + "...");
-
-                try
-                {
-                    var outputFile = File.Create(targetFile);
-                    using (outputFile)
+                    if (!entry.IsFile || entry.Name.Contains("__MACOSX"))
                     {
-                        if (entry.Size <= 0) continue;
-                        var zippedStream = zipFile.GetInputStream(entry);
-                        var dataBuffer = new byte[bufferSize];
+                        continue;
+                    }
 
-                        int readBytes;
-                        while ((readBytes = await zippedStream.ReadAsync(dataBuffer, 0, bufferSize)) > 0)
+                    var targetPath = Path.GetFullPath(Path.Combine(destination, entry.Name));
+                    if (!targetPath.StartsWith(destinationRoot, StringComparison.Ordinal))
+                    {
+                        throw new InvalidDataException($"Archive entry escapes destination: {entry.Name}");
+                    }
+
+                    Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
+                    using (var input = zipFile.GetInputStream(entry))
+                    using (var output = File.Create(targetPath))
+                    {
+                        var buffer = new byte[bufferSize];
+                        int read;
+                        while ((read = await input.ReadAsync(buffer, 0, buffer.Length)) > 0)
                         {
-                            outputFile.Write(dataBuffer, 0, readBytes);
-                            outputFile.Flush();
+                            await output.WriteAsync(buffer, 0, read);
                         }
                     }
                 }
-                catch (Exception e)
-                {
-                    Debug.LogError($"Cannot extract {entry.Name} from {fileName}. Is it a valid .zip archive file?");
-                    Debug.LogError(e.Message);
-                    return false;
-                }
             }
 
-            var info = new FileInfo(destFolder);
-            var path = info.FullName + Path.DirectorySeparatorChar;
-            Debug.Log($"Removing {path}");
-            loadedPaths.Remove(path);
-
-            var coverPath = path + CoverThumbnailFilename;
-            Debug.Log($"Search {coverPath}");
-            if (File.Exists(coverPath))
-            {
-                try
-                {
-                    File.Delete(coverPath);
-                    File.Delete(coverPath + ".288.180");
-                    File.Delete(coverPath + ".432.270");
-                    File.Delete(coverPath + ".576.360"); // TODO: Unhardcode this (how?)
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"Failed to delete cover thumbnail: {coverPath}");
-                    Debug.LogError(e);
-                }
-            }
+            return true;
         }
-
-        return true;
-    }
-
-    public async UniTask<List<Level>> LoadLevelsOfType(LevelType type)
-    {
-        try
+        catch (Exception exception)
         {
-            Directory.CreateDirectory(type.GetDataPath());
+            Debug.LogError($"Failed to unpack built-in debug level {packagePath}: {exception.Message}");
+            return false;
         }
-        catch (Exception error)
-        {
-            Debug.LogError("Failed to create data folder.");
-            Debug.LogError(error);
-            return new List<Level>();
-        }
-
-        var jsonPaths = Directory.EnumerateDirectories(type.GetDataPath())
-            .SelectMany(it => Directory.EnumerateFiles(it, "level.json"))
-            .ToList();
-        Debug.Log($"Found {jsonPaths.Count} levels with type {type}");
-
-        return await LoadFromMetadataFiles(type, jsonPaths);
     }
 
     public void UnloadLevelsOfType(LevelType type)
     {
         var removals = LoadedLocalLevels.RemoveAll(level => level.Type == type);
-        var removedPaths = removals.Select(it => it.Item2.Path).ToHashSet();
-        loadedPaths.RemoveWhere(it => removedPaths.Contains(it));
+        var removedPaths = removals.Select(item => item.Item2.Path).ToHashSet();
+        loadedPaths.RemoveWhere(removedPaths.Contains);
     }
 
-    public void UnloadAllLevels()
+    public async UniTask<Level> LoadOrInstallBuiltInLevel(
+        string id,
+        LevelType loadType,
+        bool forceInstall = false)
     {
-        LoadedLocalLevels.Clear();
-        loadedPaths.Clear();
-        Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.LocalLevelCoverThumbnail);
-    }
-
-    public async UniTask<Level> LoadOrInstallBuiltInLevel(string id, LevelType loadType, bool forceInstall = false)
-    {
-        async UniTask<Level> GetLevel()
+        async UniTask<Level> LoadInstalled(bool forceReload = false)
         {
             var levels = await LoadFromMetadataFiles(loadType, new List<string>
             {
-                $"{loadType.GetDataPath()}/{id}/level.json"
-            });
-            if (levels.Count > 0) return levels.First();
-            return LoadedLocalLevels.ContainsKey(id) ? LoadedLocalLevels[id] : null;
+                Path.Combine(loadType.GetDataPath(), id, "level.json")
+            }, forceReload);
+            if (levels.Count > 0)
+            {
+                return levels[0];
+            }
+
+            return !forceReload && LoadedLocalLevels.TryGetValue(id, out var loaded) ? loaded : null;
         }
 
-        var level = forceInstall ? null : await GetLevel();
-
-        if (level == null)
+        var level = forceInstall ? null : await LoadInstalled();
+        if (level != null)
         {
-            var paths = await Context.LevelManager.CopyBuiltInLevelsToDownloads(new List<string> { id });
-            await Context.LevelManager.InstallLevels(paths, loadType);
-            level = await GetLevel();
+            return level;
         }
 
-        return level;
+        var packages = await CopyBuiltInLevelsToDownloads(new List<string> {id});
+        await InstallBuiltInLevels(packages, loadType, id);
+        return await LoadInstalled(forceReload: true);
     }
 
-    public async UniTask<List<Level>> LoadFromMetadataFiles(LevelType type, List<string> jsonPaths, bool forceReload = false)
+    public async UniTask<List<Level>> LoadFromMetadataFiles(
+        LevelType type,
+        List<string> jsonPaths,
+        bool forceReload = false)
     {
-        var lowMemory = false;
-        Application.lowMemory += OnLowMemory;
-        void OnLowMemory()
-        {
-            lowMemory = true;
-        }
-        var loadedCount = 0;
-        var tasks = new List<UniTask>();
         var results = new List<Level>();
-        int index;
-        for (index = 0; index < jsonPaths.Count; index++)
+        foreach (var jsonPath in jsonPaths)
         {
-            var loadIndex = index;
-            async UniTask LoadLevel()
+            try
             {
-                var timer = new BenchmarkTimer($"Level loader ({loadIndex + 1} / {jsonPaths.Count})") { Enabled = false };
-                var jsonPath = jsonPaths[loadIndex];
+                var info = new FileInfo(jsonPath);
+                if (!info.Exists || info.Directory == null)
+                {
+                    Debug.LogWarning($"Level metadata not found: {jsonPath}");
+                    continue;
+                }
+
+                var path = info.Directory.FullName + Path.DirectorySeparatorChar;
+                if (!forceReload && loadedPaths.Contains(path))
+                {
+                    var existing = LoadedLocalLevels.Values.FirstOrDefault(level => level.Path == path);
+                    if (existing != null)
+                    {
+                        results.Add(existing);
+                    }
+                    continue;
+                }
+
+                LevelMeta meta;
+                await UniTask.SwitchToThreadPool();
                 try
                 {
-                    FileInfo info;
-                    try
-                    {
-                        info = new FileInfo(jsonPath);
-                        if (info.Directory == null)
-                        {
-                            throw new FileNotFoundException(info.ToString());
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogWarning(e);
-                        Debug.LogWarning($"{jsonPath} could not be read");
-                        Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {jsonPath}");
-                        return;
-                    }
-
-                    var path = info.Directory.FullName + Path.DirectorySeparatorChar;
-
-                    if (!forceReload && loadedPaths.Contains(path))
-                    {
-                        Debug.LogWarning($"Level from {path} is already loaded");
-                        Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {path}");
-                        return;
-                    }
-
-                    Debug.Log($"Loading {loadIndex + 1}/{jsonPaths.Count} from {path}");
-
-                    if (!File.Exists(jsonPath))
-                    {
-                        Debug.LogWarning($"level.json not found at {jsonPath}");
-                        Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {path}");
-                        return;
-                    }
-
-                    await UniTask.SwitchToThreadPool();
-                    var meta = JsonConvert.DeserializeObject<LevelMeta>(File.ReadAllText(jsonPath));
-                    await UniTask.SwitchToMainThread();
-
-                    timer.Time("Deserialization");
-
-                    if (meta == null)
-                    {
-                        Debug.LogWarning($"Invalid level.json at {jsonPath}");
-                        Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {path}");
-                        return;
-                    }
-
-                    if (type != LevelType.Temp && LoadedLocalLevels.ContainsKey(meta.id))
-                    {
-                        if (LoadedLocalLevels[meta.id].Type == LevelType.Tier && type == LevelType.User)
-                        {
-                            Debug.LogWarning($"Community level cannot override tier level");
-                            Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {path}");
-                            return;
-                        }
-                        if (LoadedLocalLevels[meta.id].Meta.version > meta.version)
-                        {
-                            Debug.LogWarning($"Level to load has smaller version than loaded level");
-                            Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {path}");
-                            return;
-                        }
-                        loadedPaths.Remove(LoadedLocalLevels[meta.id].Path);
-                    }
-
-                    // Sort charts
-                    meta.SortCharts();
-
-                    // Reject invalid level meta
-                    if (!meta.Validate())
-                    {
-                        Debug.LogWarning($"Invalid metadata in level.json at {jsonPath}");
-                        Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {path}");
-                        return;
-                    }
-
-                    timer.Time("Validate");
-
-                    await UniTask.SwitchToThreadPool();
-                    var level = Level.FromLocal(path, type, meta);
-                    if (level.Record.AddedDate == DateTimeOffset.MinValue)
-                    {
-                        level.Record.AddedDate = info.LastWriteTimeUtc;
-                    }
-                    await UniTask.SwitchToMainThread();
-                    timer.Time("LevelRecord");
-
-                    if (type != LevelType.Temp)
-                    {
-                        LoadedLocalLevels[meta.id] = level;
-                        loadedPaths.Add(path);
-
-                        // Generate thumbnail
-                        if (!File.Exists(level.Path + CoverThumbnailFilename))
-                        {
-                            var thumbnailPath = "file://" + level.Path + level.Meta.background.path;
-
-                            if (lowMemory)
-                            {
-                                // Give up
-                                Debug.LogWarning($"Low memory!");
-                                Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {jsonPath}");
-                                return;
-                            }
-
-                            using (var request = UnityWebRequest.Get(thumbnailPath))
-                            {
-                                request.SetRequestHeader("User-Agent", $"CytoidClient/{Context.VersionIdentifier}");
-                                await request.SendWebRequest();
-                                if (request.isNetworkError || request.isHttpError)
-                                {
-                                    Debug.LogWarning(request.error);
-                                    Debug.LogWarning($"Cannot get background texture from {thumbnailPath}");
-                                    Debug.LogWarning(
-                                        $"Skipped generating thumbnail for {loadIndex + 1}/{jsonPaths.Count}: {meta.id} ({path})");
-                                    return;
-                                }
-
-                                var coverTexture = request.downloadHandler.data.ToTexture2D();
-                                if (coverTexture == null)
-                                {
-                                    Debug.LogWarning(request.error);
-                                    Debug.LogWarning($"Cannot get background texture from {thumbnailPath}");
-                                    Debug.LogWarning(
-                                        $"Skipped generating thumbnail for {loadIndex + 1}/{jsonPaths.Count}: {meta.id} ({path})");
-                                    return;
-                                }
-
-                                if (lowMemory)
-                                {
-                                    // Give up
-                                    Object.Destroy(coverTexture);
-                                    Debug.LogWarning($"Low memory!");
-                                    Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {jsonPath}");
-                                    return;
-                                }
-
-                                var croppedTexture = TextureScaler.FitCrop(coverTexture, Context.LevelThumbnailWidth,
-                                    Context.LevelThumbnailHeight);
-
-                                if (lowMemory)
-                                {
-                                    // Give up
-                                    Object.Destroy(coverTexture);
-                                    Object.Destroy(croppedTexture);
-                                    Debug.LogWarning($"Low memory!");
-                                    Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {jsonPath}");
-                                    return;
-                                }
-
-                                var bytes = croppedTexture.EncodeToJPG();
-                                Object.Destroy(coverTexture);
-                                Object.Destroy(croppedTexture);
-
-                                await UniTask.DelayFrame(0); // Reduce load to prevent crash
-
-                                try
-                                {
-                                    File.WriteAllBytes(level.Path + CoverThumbnailFilename, bytes);
-                                    Debug.Log(
-                                        $"Thumbnail generated {loadIndex + 1}/{jsonPaths.Count}: {level.Id} ({thumbnailPath})");
-
-                                    await UniTask.DelayFrame(0); // Reduce load to prevent crash
-                                }
-                                catch (Exception e)
-                                {
-                                    Debug.LogWarning(e);
-                                    Debug.LogWarning($"Could not write to {level.Path + CoverThumbnailFilename}");
-                                    Debug.LogWarning(
-                                        $"Skipped generating thumbnail for {loadIndex + 1}/{jsonPaths.Count} from {jsonPath}");
-                                }
-                            }
-
-                            timer.Time("Generate thumbnail");
-                        }
-                    }
-
-                    results.Add(level);
-                    OnLevelLoadProgress.Invoke(meta.id, ++loadedCount, jsonPaths.Count);
-                    Debug.Log($"Loaded {loadIndex + 1}/{jsonPaths.Count}: {meta.id} ");
-                    timer.Time("OnLevelLoadProgressEvent");
+                    meta = JsonConvert.DeserializeObject<LevelMeta>(File.ReadAllText(jsonPath));
                 }
-                catch (Exception e)
+                finally
                 {
-                    Debug.LogError(e);
-                    Debug.LogError($"Unexpected error while loading from {jsonPath}");
-                    Debug.LogWarning($"Skipped {loadIndex + 1}/{jsonPaths.Count} from {jsonPath}");
+                    await UniTask.SwitchToMainThread();
+                }
+                if (meta == null || !meta.Validate())
+                {
+                    Debug.LogWarning($"Invalid level metadata: {jsonPath}");
+                    continue;
                 }
 
-                timer.Time();
+                meta.SortCharts();
+                var level = Level.FromLocal(path, type, meta);
+                if (type != LevelType.Temp)
+                {
+                    if (LoadedLocalLevels.TryGetValue(meta.id, out var previous))
+                    {
+                        loadedPaths.Remove(previous.Path);
+                    }
+                    LoadedLocalLevels[meta.id] = level;
+                    loadedPaths.Add(path);
+                }
+                results.Add(level);
             }
-
-            tasks.Add(LoadLevel());
+            catch (Exception exception)
+            {
+                Debug.LogError($"Failed to load level metadata {jsonPath}: {exception}");
+            }
         }
 
-        await UniTask.WhenAll(tasks);
-        Application.lowMemory -= OnLowMemory;
         return results;
     }
-
-    private bool UpdateLevelMeta(Level level, LevelMeta meta)
-    {
-        var local = level.Meta;
-        var remote = meta;
-
-        var updated = false;
-        if (local.version > remote.version)
-        {
-            Debug.Log($"Local version {local.version} > {remote.version}");
-            return false;
-        }
-
-        if (local.schema_version != remote.schema_version)
-        {
-            local.schema_version = remote.schema_version;
-            updated = true;
-        }
-
-        if (remote.title != null && local.title != remote.title)
-        {
-            local.title = remote.title;
-            updated = true;
-        }
-
-        if (remote.title_localized != null && local.title_localized != remote.title_localized)
-        {
-            local.title_localized = remote.title_localized;
-            updated = true;
-        }
-
-        if (remote.artist != null && local.artist != remote.artist)
-        {
-            local.artist = remote.artist;
-            updated = true;
-        }
-
-        if (remote.artist_localized != null && local.artist_localized != remote.artist_localized)
-        {
-            local.artist_localized = remote.artist_localized;
-            updated = true;
-        }
-
-        if (remote.artist_source != null && local.artist_source != remote.artist_source)
-        {
-            local.artist_source = remote.artist_source;
-            updated = true;
-        }
-
-        if (remote.illustrator != null && local.illustrator != remote.illustrator)
-        {
-            local.illustrator = remote.illustrator;
-            updated = true;
-        }
-
-        if (remote.illustrator_source != null && local.illustrator_source != remote.illustrator_source)
-        {
-            local.illustrator_source = remote.illustrator_source;
-            updated = true;
-        }
-
-        if (remote.charter != null && local.charter != remote.charter)
-        {
-            local.charter = remote.charter;
-            updated = true;
-        }
-
-        foreach (var type in new List<string> { LevelMeta.Easy, LevelMeta.Hard, LevelMeta.Extreme })
-        {
-            if (remote.GetChartSection(type) != null && local.GetChartSection(type) != null &&
-                local.GetChartSection(type).difficulty != remote.GetChartSection(type).difficulty)
-            {
-                local.GetChartSection(type).difficulty = remote.GetChartSection(type).difficulty;
-                updated = true;
-            }
-        }
-
-        if (updated)
-        {
-            File.WriteAllText($"{level.Path.Replace("file://", "")}/level.json", JsonConvert.SerializeObject(local));
-        }
-
-        return updated;
-    }
-
-}
-
-public class LevelEvent : UnityEvent<Level>
-{
-}
-
-public class LevelInstallProgressEvent : UnityEvent<string, int, int> // Filename, current, total
-{
-}
-
-public class LevelLoadProgressEvent : UnityEvent<string, int, int> // Level ID, current, total. Note: may NOT be continuous!
-{
 }

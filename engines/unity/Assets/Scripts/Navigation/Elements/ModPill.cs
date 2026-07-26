@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -58,6 +57,5 @@ public class ModPill : InteractableMonoBehavior
 
         if (pulse) pulseElement.Pulse();
 
-        Context.Player.Settings.EnabledMods = Context.SelectedMods.ToList();
     }
 }

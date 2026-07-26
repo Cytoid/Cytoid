@@ -43,7 +43,7 @@ public class LevelManager
             using (var request = UnityWebRequest.Get(packagePath))
             {
                 await request.SendWebRequest();
-                if (request.isNetworkError || request.isHttpError)
+                if (request.result != UnityWebRequest.Result.Success)
                 {
                     Debug.LogError($"Failed to read built-in debug level {id}: {request.error}");
                     continue;
@@ -89,7 +89,7 @@ public class LevelManager
                     Debug.LogError($"Invalid level.json in {packagePath}");
                     continue;
                 }
-                if (!Regex.IsMatch(meta.id, @"^[a-z0-9_]+([-_.][a-z0-9_]+)+$"))
+                if (!Regex.IsMatch(meta.id, @"^[a-z0-9_]+([-_.][a-z0-9_]+)*$"))
                 {
                     Debug.LogError($"Invalid built-in level id: {meta.id}");
                     continue;
@@ -181,12 +181,12 @@ public class LevelManager
         LevelType loadType,
         bool forceInstall = false)
     {
-        async UniTask<Level> LoadInstalled()
+        async UniTask<Level> LoadInstalled(bool forceReload = false)
         {
             var levels = await LoadFromMetadataFiles(loadType, new List<string>
             {
                 Path.Combine(loadType.GetDataPath(), id, "level.json")
-            });
+            }, forceReload);
             if (levels.Count > 0)
             {
                 return levels[0];
@@ -203,7 +203,7 @@ public class LevelManager
 
         var packages = await CopyBuiltInLevelsToDownloads(new List<string> {id});
         await InstallBuiltInLevels(packages, loadType);
-        return await LoadInstalled();
+        return await LoadInstalled(forceReload: true);
     }
 
     public async UniTask<List<Level>> LoadFromMetadataFiles(
@@ -234,9 +234,16 @@ public class LevelManager
                     continue;
                 }
 
+                LevelMeta meta;
                 await UniTask.SwitchToThreadPool();
-                var meta = JsonConvert.DeserializeObject<LevelMeta>(File.ReadAllText(jsonPath));
-                await UniTask.SwitchToMainThread();
+                try
+                {
+                    meta = JsonConvert.DeserializeObject<LevelMeta>(File.ReadAllText(jsonPath));
+                }
+                finally
+                {
+                    await UniTask.SwitchToMainThread();
+                }
                 if (meta == null || !meta.Validate())
                 {
                     Debug.LogWarning($"Invalid level metadata: {jsonPath}");

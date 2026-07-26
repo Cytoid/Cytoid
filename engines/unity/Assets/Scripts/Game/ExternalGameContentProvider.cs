@@ -599,11 +599,13 @@ public sealed class ExternalGameContentProvider : IGameContentProvider
     private static readonly HashSet<string> KnownAppliedFields = new HashSet<string>
     {
         // profile
+        "profile.language",
         "profile.baseNoteOffset",
         "profile.levelNoteOffset",
         "profile.headsetNoteOffset",
         "profile.judgmentOffset",
         "profile.hitTapticFeedback",
+        "profile.menuTapticFeedback",
         // runtime
         "runtime.musicVolume",
         "runtime.soundEffectsVolume",

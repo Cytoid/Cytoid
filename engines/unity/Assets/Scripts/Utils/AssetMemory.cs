@@ -56,16 +56,30 @@ public class AssetMemory
         if (loadingPaths.Contains(path))
         {
             await UniTask.WaitUntil(() => !loadingPaths.Contains(path), cancellationToken: cancellationToken);
-            return GetCachedAssetEntry<T>(path)?.Asset;
+            var loaded = GetCachedAssetEntry<T>(path);
+            if (loaded == null)
+            {
+                throw new InvalidOperationException($"Concurrent asset load failed: {path}");
+            }
+
+            loaded.Tags.Add(tag);
+            return loaded.Asset;
         }
 
         EnforceTagLimit(tag);
         loadingPaths.Add(path);
         try
         {
+            byte[] bytes;
             await UniTask.SwitchToThreadPool();
-            var bytes = File.ReadAllBytes(localPath);
-            await UniTask.SwitchToMainThread();
+            try
+            {
+                bytes = File.ReadAllBytes(localPath);
+            }
+            finally
+            {
+                await UniTask.SwitchToMainThread();
+            }
             cancellationToken.ThrowIfCancellationRequested();
 
             var texture = bytes.ToTexture2D();

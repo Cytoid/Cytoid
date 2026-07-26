@@ -215,18 +215,21 @@ public abstract class Note : MonoBehaviour
         Renderer?.Dispose();
     }
 
-    public virtual void OnTouch(Vector2 screenPos)
+    /// <returns>True if this note took the touch (cleared or otherwise handled).</returns>
+    public virtual bool OnTouch(Vector2 screenPos)
     {
-        if (!Game.IsLoaded || !Game.State.IsPlaying) return;
-        TryClear();
+        if (!Game.IsLoaded || !Game.State.IsPlaying) return false;
+        return TryClear();
     }
 
-    public virtual void TryClear()
+    /// <returns>True if a grade was applied and the note was cleared.</returns>
+    public virtual bool TryClear()
     {
         if (IsAutoEnabled()) Clear(NoteGrade.Perfect);
         if (ShouldMiss()) Clear(NoteGrade.Miss);
         var grade = CalculateGrade();
         if (grade != NoteGrade.None) Clear(grade);
+        return IsCleared;
     }
 
     public virtual NoteGrade CalculateGrade()

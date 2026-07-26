@@ -162,17 +162,17 @@ public class DragHeadNote : Note
         }
     }
 
-    public override void OnTouch(Vector2 screenPos)
+    public override bool OnTouch(Vector2 screenPos)
     {
         if (!IsCDrag)
         {
             // Do not handle touch event if touched too ahead of scanner
-            if (Model.start_time - Game.Time > 0.31f) return;
+            if (Model.start_time - Game.Time > 0.31f) return false;
             // Do not handle touch event if in a later page, unless the timing is close (half a screen) TODO: Fix inaccurate algorithm
             if (Model.page_index > Game.Chart.CurrentPageId &&
-                Model.start_time - Game.Time > Page.Duration / 2f) return;
+                Model.start_time - Game.Time > Page.Duration / 2f) return false;
         }
-        base.OnTouch(screenPos);
+        return base.OnTouch(screenPos);
     }
 
     public override async void Collect()

@@ -15,6 +15,15 @@ public class InputController : MonoBehaviour
     /// </summary>
     public const float NoteClusterGapSeconds = 0.015f;
 
+    /// <summary>
+    /// After a non-Miss Drag clears on FingerDown, select notes (Click / CDrag head / Hold / Flick)
+    /// whose effectiveNoteTime is more than this many seconds later than the accepted Drag
+    /// are blocked. Selects within the window (or earlier than the Drag) still proceed.
+    /// Independent of <see cref="NoteClusterGapSeconds"/> but same 15ms default.
+    /// Replaces the legacy collidedDrag + Page.Duration/8 far-note heuristic.
+    /// </summary>
+    public const float DragCoHitWindowSeconds = 0.015f;
+
     public Game game;
 
     public readonly Dictionary<int, FlickNote> FlickingNotes = new Dictionary<int, FlickNote>(); // Finger index to note
@@ -109,20 +118,32 @@ public class InputController : MonoBehaviour
             ? game.camera.ScreenToWorldPoint(finger.ScreenPosition)
             : game.camera.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
 
-        var collidedDrag = false;
-        // Drag does not consume a discrete click — keep list-order scan (before select notes).
+        // Drag clears first (settlement order) but does not consume the Down for select.
+        // Record acceptedDrag only for a real hit grade — TryClear also returns true on Miss.
+        Note acceptedDrag = null;
         foreach (var note in TouchableDragNotes)
         {
             if (!IsTouchableNote(note)) continue;
             if (!note.DoesCollide(pressedPosition)) continue;
+
+            // Snapshot before OnTouch: ShouldMiss/CalculateGrade Miss both Clear(Miss) via TryClear.
+            var preTouchGrade = note.ShouldMiss() ? NoteGrade.Miss : note.CalculateGrade();
             if (!note.OnTouch(finger.ScreenPosition)) continue;
-            collidedDrag = true;
+            if (preTouchGrade == NoteGrade.Miss)
+            {
+                // Miss-settled on this Down must not arm DragCoHit (would block later select).
+                continue;
+            }
+
+            acceptedDrag = note;
             break;
         }
 
         // Select notes: pre-merged SpawnedNotes id order (TouchableSelectNotes).
         // Flick keeps list-order bind (#187): only earlier candidates are flushed before
         // a Flick bind. Click/CDrag head + unheld Hold share note-time clusters.
+        // Click / CDrag head / Hold / Flick all pass IsEligibleSelectAfterDrag
+        // (DragCoHit window + cross-page). Blocked Flick still flushes earlier candidates.
         hitCandidates.Clear();
         foreach (var note in TouchableSelectNotes)
         {
@@ -131,10 +152,12 @@ public class InputController : MonoBehaviour
 
             if (note is FlickNote flickNote)
             {
+                // Flush earlier Click/Hold even when this Flick is later blocked by DragCoHit.
                 if (TryAcceptSelectClickCluster(finger, pressedPosition.x)) return;
 
                 if (FlickingNotes.ContainsKey(finger.Index) || FlickingNotes.ContainsValue(flickNote))
                     continue;
+                if (!IsEligibleSelectAfterDrag(flickNote, acceptedDrag)) continue;
                 FlickingNotes.Add(finger.Index, flickNote);
                 flickNote.StartFlicking(pressedPosition);
                 return;
@@ -145,12 +168,12 @@ public class InputController : MonoBehaviour
                 // Live check: lists are per-frame snapshots; same-frame multi-finger
                 // rebind stays on FingerUpdate.
                 if (holdNote.IsHolding || HoldingNotes.ContainsKey(finger.Index)) continue;
-                if (!IsEligibleFingerDownTapTarget(holdNote, finger, collidedDrag)) continue;
+                if (!IsEligibleSelectAfterDrag(holdNote, acceptedDrag)) continue;
                 hitCandidates.Add(holdNote);
                 continue;
             }
 
-            if (!IsEligibleFingerDownTapTarget(note, finger, collidedDrag)) continue;
+            if (!IsEligibleSelectAfterDrag(note, acceptedDrag)) continue;
             hitCandidates.Add(note);
         }
 
@@ -164,9 +187,20 @@ public class InputController : MonoBehaviour
     private static bool IsTouchableNote(Note note) =>
         note != null && !note.IsCollected && !note.IsCleared;
 
-    private bool IsEligibleFingerDownTapTarget(Note note, GameFinger finger, bool collidedDrag)
+    /// <summary>
+    /// Select gate after an optional accepted Drag on the same FingerDown.
+    /// Blocks only when select is more than <see cref="DragCoHitWindowSeconds"/> later
+    /// than the Drag (effectiveNoteTime). Earlier / within-window selects remain eligible.
+    /// Also keeps the historical cross-page early suppress.
+    /// </summary>
+    private bool IsEligibleSelectAfterDrag(Note note, Note acceptedDrag)
     {
-        if (collidedDrag && Math.Abs(note.TimeUntilStart) > note.Page.Duration / 8f) return false;
+        if (acceptedDrag != null)
+        {
+            var delta = EffectiveNoteTime(note) - EffectiveNoteTime(acceptedDrag);
+            if (delta > DragCoHitWindowSeconds) return false;
+        }
+
         if (note.Model.page_index > game.Chart.CurrentPageId &&
             note.Model.start_time - game.Time >
             game.Chart.Model.page_list[game.Chart.CurrentPageId].Duration * 0.5f)

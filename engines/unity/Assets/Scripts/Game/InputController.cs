@@ -7,7 +7,7 @@ public class InputController : MonoBehaviour
     /// <summary>
     /// Max note-to-note span (seconds) for a same-beat hit cluster (真双押 / 伪双).
     /// Used for Click / CDrag head / unheld Hold on FingerDown (discrete click consume).
-    /// Within a cluster Hold loses to Click/CDrag head; across clusters note-time order wins.
+    /// Within a cluster Click/CDrag head/Hold share |Δx| priority; across clusters note-time order wins.
     /// Flick keeps original list-order bind; Drag stays on list-order scan.
     /// Each FingerDown re-clusters the remaining collided candidates by effectiveNoteTime
     /// span ≤ this gap (no adjacent-gap chain expansion within that candidate set).
@@ -212,7 +212,7 @@ public class InputController : MonoBehaviour
     }
 
     /// <summary>
-    /// Accept a pending Click/CDrag-head/Hold cluster (note-time + type + x).
+    /// Accept a pending Click/CDrag-head/Hold cluster (note-time + |Δx|).
     /// Clears <see cref="hitCandidates"/>. Hold binds and consumes the Down event.
     /// </summary>
     private bool TryAcceptSelectClickCluster(GameFinger finger, float touchWorldX)
@@ -341,17 +341,13 @@ public class InputController : MonoBehaviour
         return note.transform.position.x;
     }
 
-    private static int SelectTypePriority(Note note) =>
-        // Within a same-beat cluster: Click/CDrag head before Hold (Hold must not steal the tap).
-        note is HoldNote ? 1 : 0;
-
     /// <summary>
     /// Yield Click/CDrag-head/Hold candidates in beat order: each FingerDown re-clusters
     /// the current remaining candidates by effectiveNoteTime span ≤
     /// <see cref="NoteClusterGapSeconds"/> (no chain expansion within that set), then
-    /// processes earlier clusters first; within a cluster prefer non-Hold, then closer
-    /// rendered center X, then time, then id. Soft fallthrough: caller continues when
-    /// Accept fails. Flick is never passed here — it stays on list-order bind.
+    /// processes earlier clusters first; within a cluster prefer closer rendered center X,
+    /// then time, then id (Hold competes with Click/CDrag head on |Δx|). Soft fallthrough:
+    /// caller continues when Accept fails. Flick is never passed here — list-order bind.
     /// </summary>
     private IEnumerable<Note> OrderHitCandidatesByNoteTimeClusters(float touchWorldX)
     {
@@ -381,11 +377,9 @@ public class InputController : MonoBehaviour
 
             clusterScratch.Sort((a, b) =>
             {
-                var cmp = SelectTypePriority(a).CompareTo(SelectTypePriority(b));
-                if (cmp != 0) return cmp;
                 var dxA = Math.Abs(touchWorldX - RenderedCenterX(a));
                 var dxB = Math.Abs(touchWorldX - RenderedCenterX(b));
-                cmp = dxA.CompareTo(dxB);
+                var cmp = dxA.CompareTo(dxB);
                 if (cmp != 0) return cmp;
                 cmp = EffectiveNoteTime(a).CompareTo(EffectiveNoteTime(b));
                 if (cmp != 0) return cmp;

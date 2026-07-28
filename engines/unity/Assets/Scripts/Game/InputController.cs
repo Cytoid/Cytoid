@@ -6,10 +6,12 @@ public class InputController : MonoBehaviour
 {
     /// <summary>
     /// Max note-to-note span (seconds) for a same-beat hit cluster (真双押 / 伪双).
-    /// Used only for Click / CDrag head (discrete clear on FingerDown).
-    /// Flick keeps original list-order bind; Drag and Hold stay on list-order scan.
-    /// Span is measured against the earliest effectiveNoteTime in the cluster
-    /// (no adjacent-gap chain expansion). Soft fallthrough to later clusters remains.
+    /// Used for Click / CDrag head / unheld Hold on FingerDown (discrete click consume).
+    /// Within a cluster Hold loses to Click/CDrag head; across clusters note-time order wins.
+    /// Flick keeps original list-order bind; Drag stays on list-order scan.
+    /// Each FingerDown re-clusters the remaining collided candidates by effectiveNoteTime
+    /// span ≤ this gap (no adjacent-gap chain expansion within that candidate set).
+    /// Soft fallthrough to later clusters remains.
     /// </summary>
     public const float NoteClusterGapSeconds = 0.015f;
 
@@ -18,8 +20,13 @@ public class InputController : MonoBehaviour
     public readonly Dictionary<int, FlickNote> FlickingNotes = new Dictionary<int, FlickNote>(); // Finger index to note
     public readonly Dictionary<int, HoldNote> HoldingNotes = new Dictionary<int, HoldNote>(); // Finger index to note
     public readonly List<Note> TouchableDragNotes = new List<Note>(); // Drag head, Drag child, CDrag child
-    public readonly List<HoldNote> TouchableHoldNotes = new List<HoldNote>(); // Hold, Long hold
-    public readonly List<Note> TouchableNormalNotes = new List<Note>(); // Click, CDrag head, Flick (Hold/LongHold: FingerUpdate only)
+    public readonly List<HoldNote> TouchableHoldNotes = new List<HoldNote>(); // Hold, Long hold (FingerUpdate)
+    /// <summary>
+    /// Click / CDrag head / Flick / unheld Hold in SpawnedNotes id order.
+    /// Built in <see cref="OnGameUpdate"/> so FingerDown never merge-compares Model.id
+    /// on a possibly pooled snapshot entry.
+    /// </summary>
+    public readonly List<Note> TouchableSelectNotes = new List<Note>();
 
     private readonly List<Note> hitCandidates = new List<Note>();
     private readonly List<Note> clusterScratch = new List<Note>();
@@ -69,28 +76,30 @@ public class InputController : MonoBehaviour
 
     public void OnGameUpdate(Game game)
     {
-        TouchableNormalNotes.Clear();
         TouchableDragNotes.Clear();
         TouchableHoldNotes.Clear();
+        TouchableSelectNotes.Clear();
         foreach (var id in game.SpawnedNotes.Keys)
         {
             var note = game.SpawnedNotes[id];
-            if (!note.HasEmerged || note.IsCleared) continue;
+            if (!note.HasEmerged || note.IsCleared || note.IsCollected) continue;
 
             if (note.Type == NoteType.DragHead || note.Type == NoteType.DragChild || note.Type == NoteType.CDragChild)
             {
                 TouchableDragNotes.Add(note);
-            }
-            else if (note.Type != NoteType.Hold && note.Type != NoteType.LongHold)
-            {
-                TouchableNormalNotes.Add(note);
+                continue;
             }
 
-            if ((note.Type == NoteType.Hold || note.Type == NoteType.LongHold) &&
-                !((HoldNote) note).IsHolding)
+            if (note.Type == NoteType.Hold || note.Type == NoteType.LongHold)
             {
-                TouchableHoldNotes.Add((HoldNote) note);
+                var holdNote = (HoldNote) note;
+                if (holdNote.IsHolding) continue;
+                TouchableHoldNotes.Add(holdNote);
+                TouchableSelectNotes.Add(holdNote);
+                continue;
             }
+
+            TouchableSelectNotes.Add(note);
         }
     }
 
@@ -104,21 +113,20 @@ public class InputController : MonoBehaviour
         // Drag does not consume a discrete click — keep list-order scan (before select notes).
         foreach (var note in TouchableDragNotes)
         {
-            if (note == null || note.IsCleared) continue;
+            if (!IsTouchableNote(note)) continue;
             if (!note.DoesCollide(pressedPosition)) continue;
             if (!note.OnTouch(finger.ScreenPosition)) continue;
             collidedDrag = true;
             break;
         }
 
-        // Select notes: Flick keeps original list-order bind; Click/CDrag head use
-        // note-time clusters only within list segments that appear before the next Flick.
-        // Walking TouchableNormalNotes in list order preserves Click-vs-Flick priority
-        // from #187 (earlier list entry wins after soft fallthrough).
+        // Select notes: pre-merged SpawnedNotes id order (TouchableSelectNotes).
+        // Flick keeps list-order bind (#187): only earlier candidates are flushed before
+        // a Flick bind. Click/CDrag head + unheld Hold share note-time clusters.
         hitCandidates.Clear();
-        foreach (var note in TouchableNormalNotes)
+        foreach (var note in TouchableSelectNotes)
         {
-            if (note == null || note.IsCleared) continue;
+            if (!IsTouchableNote(note)) continue;
             if (!note.DoesCollide(pressedPosition)) continue;
 
             if (note is FlickNote flickNote)
@@ -132,14 +140,17 @@ public class InputController : MonoBehaviour
                 return;
             }
 
-            if (collidedDrag && Math.Abs(note.TimeUntilStart) > note.Page.Duration / 8f) continue;
-            if (note.Model.page_index > game.Chart.CurrentPageId &&
-                note.Model.start_time - game.Time >
-                game.Chart.Model.page_list[game.Chart.CurrentPageId].Duration * 0.5f)
+            if (note is HoldNote holdNote)
             {
+                // Live check: lists are per-frame snapshots; same-frame multi-finger
+                // rebind stays on FingerUpdate.
+                if (holdNote.IsHolding || HoldingNotes.ContainsKey(finger.Index)) continue;
+                if (!IsEligibleFingerDownTapTarget(holdNote, finger, collidedDrag)) continue;
+                hitCandidates.Add(holdNote);
                 continue;
             }
 
+            if (!IsEligibleFingerDownTapTarget(note, finger, collidedDrag)) continue;
             hitCandidates.Add(note);
         }
 
@@ -147,7 +158,28 @@ public class InputController : MonoBehaviour
     }
 
     /// <summary>
-    /// Accept a pending Click/CDrag-head cluster (note-time + x). Clears <see cref="hitCandidates"/>.
+    /// Snapshot entries may outlive the note: Collect clears Model and resets IsCleared.
+    /// Always gate on IsCollected before touching Model / colliders.
+    /// </summary>
+    private static bool IsTouchableNote(Note note) =>
+        note != null && !note.IsCollected && !note.IsCleared;
+
+    private bool IsEligibleFingerDownTapTarget(Note note, GameFinger finger, bool collidedDrag)
+    {
+        if (collidedDrag && Math.Abs(note.TimeUntilStart) > note.Page.Duration / 8f) return false;
+        if (note.Model.page_index > game.Chart.CurrentPageId &&
+            note.Model.start_time - game.Time >
+            game.Chart.Model.page_list[game.Chart.CurrentPageId].Duration * 0.5f)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Accept a pending Click/CDrag-head/Hold cluster (note-time + type + x).
+    /// Clears <see cref="hitCandidates"/>. Hold binds and consumes the Down event.
     /// </summary>
     private bool TryAcceptSelectClickCluster(GameFinger finger, float touchWorldX)
     {
@@ -155,6 +187,19 @@ public class InputController : MonoBehaviour
 
         foreach (var note in OrderHitCandidatesByNoteTimeClusters(touchWorldX))
         {
+            if (!IsTouchableNote(note)) continue;
+
+            if (note is HoldNote holdNote)
+            {
+                // Reject holds already bound this frame (stale snapshot).
+                if (holdNote.IsHolding || HoldingNotes.ContainsKey(finger.Index)) continue;
+                if (!game.IsLoaded || !game.State.IsPlaying) continue;
+                HoldingNotes.Add(finger.Index, holdNote);
+                holdNote.UpdateFinger(finger.Index, true);
+                hitCandidates.Clear();
+                return true;
+            }
+
             if (!note.OnTouch(finger.ScreenPosition)) continue;
             hitCandidates.Clear();
             return true;
@@ -178,23 +223,24 @@ public class InputController : MonoBehaviour
             if (cleared) FlickingNotes.Remove(finger.Index);
         }
 
-        // Drag / Hold: continuous contact, not click-consume — list-order scan only
+        // Drag: continuous contact — list-order scan
         foreach (var note in TouchableDragNotes)
         {
-            if (note == null || note.IsCleared) continue;
+            if (!IsTouchableNote(note)) continue;
             if (!note.DoesCollide(pos)) continue;
             if (!note.OnTouch(finger.ScreenPosition)) continue;
             break;
         }
 
-        // If this is a new finger
+        // If this is a new finger (Down did not already bind a Hold)
         if (!HoldingNotes.ContainsKey(finger.Index))
         {
             var switchedToNewNote = false; // If the finger holds a new note
 
             foreach (var note in TouchableHoldNotes)
             {
-                if (note == null || note.IsCleared) continue;
+                if (!IsTouchableNote(note)) continue;
+                if (!game.IsLoaded || !game.State.IsPlaying) break;
                 if (!note.DoesCollide(pos)) continue;
                 HoldingNotes.Add(finger.Index, note);
                 note.UpdateFinger(finger.Index, true);
@@ -203,11 +249,11 @@ public class InputController : MonoBehaviour
             }
 
             // Query held hold notes (i.e. multiple fingers on the same hold note)
-            if (!switchedToNewNote)
+            if (!switchedToNewNote && game.IsLoaded && game.State.IsPlaying)
             {
                 foreach (var holdNote in HoldingNotes.Values)
                 {
-                    if (holdNote == null || holdNote.IsCleared) continue;
+                    if (!IsTouchableNote(holdNote)) continue;
                     if (!holdNote.DoesCollide(pos)) continue;
                     HoldingNotes.Add(finger.Index, holdNote);
                     holdNote.UpdateFinger(finger.Index, true);
@@ -219,10 +265,9 @@ public class InputController : MonoBehaviour
         {
             var holdNote = HoldingNotes[finger.Index];
 
-            if (holdNote.IsCleared) // If cleared <-- This should be impossible since the note should have called OnNoteCollected
+            if (!IsTouchableNote(holdNote))
             {
-                throw new InvalidOperationException();
-                // HoldingNotes.Remove(finger.Index);
+                HoldingNotes.Remove(finger.Index);
             }
             else if (!holdNote.DoesCollide(pos)) // If holding elsewhere
             {
@@ -262,12 +307,17 @@ public class InputController : MonoBehaviour
         return note.transform.position.x;
     }
 
+    private static int SelectTypePriority(Note note) =>
+        // Within a same-beat cluster: Click/CDrag head before Hold (Hold must not steal the tap).
+        note is HoldNote ? 1 : 0;
+
     /// <summary>
-    /// Yield Click/CDrag-head candidates in beat order: cluster by effectiveNoteTime span ≤
-    /// <see cref="NoteClusterGapSeconds"/> (no chain expansion), process earlier
-    /// clusters first; within a cluster prefer closer rendered center X, then time, then id.
-    /// Soft fallthrough: caller continues when Accept fails.
-    /// Flick is never passed here — it stays on list-order bind.
+    /// Yield Click/CDrag-head/Hold candidates in beat order: each FingerDown re-clusters
+    /// the current remaining candidates by effectiveNoteTime span ≤
+    /// <see cref="NoteClusterGapSeconds"/> (no chain expansion within that set), then
+    /// processes earlier clusters first; within a cluster prefer non-Hold, then closer
+    /// rendered center X, then time, then id. Soft fallthrough: caller continues when
+    /// Accept fails. Flick is never passed here — it stays on list-order bind.
     /// </summary>
     private IEnumerable<Note> OrderHitCandidatesByNoteTimeClusters(float touchWorldX)
     {
@@ -297,9 +347,11 @@ public class InputController : MonoBehaviour
 
             clusterScratch.Sort((a, b) =>
             {
+                var cmp = SelectTypePriority(a).CompareTo(SelectTypePriority(b));
+                if (cmp != 0) return cmp;
                 var dxA = Math.Abs(touchWorldX - RenderedCenterX(a));
                 var dxB = Math.Abs(touchWorldX - RenderedCenterX(b));
-                var cmp = dxA.CompareTo(dxB);
+                cmp = dxA.CompareTo(dxB);
                 if (cmp != 0) return cmp;
                 cmp = EffectiveNoteTime(a).CompareTo(EffectiveNoteTime(b));
                 if (cmp != 0) return cmp;

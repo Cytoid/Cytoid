@@ -5,7 +5,7 @@ using UnityEngine;
 public class InputController : MonoBehaviour
 {
     /// <summary>
-    /// Max note-to-note span (seconds) for a same-beat hit cluster (真双押 / 伪双).
+    /// Max note-to-note span (seconds) for a same-beat hit cluster (true or pseudo simultaneous press).
     /// Used for Click / CDrag head / unheld Hold on FingerDown (discrete click consume).
     /// Within a cluster Click/CDrag head/Hold share |Δx| priority; across clusters note-time order wins.
     /// Flick keeps original list-order bind; Drag stays on list-order scan.

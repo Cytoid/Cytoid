@@ -218,6 +218,11 @@ public class InputController : MonoBehaviour
     private bool TryAcceptSelectClickCluster(GameFinger finger, float touchWorldX)
     {
         if (hitCandidates.Count == 0) return false;
+        if (!game.IsLoaded || !game.State.IsPlaying)
+        {
+            hitCandidates.Clear();
+            return false;
+        }
 
         foreach (var note in OrderHitCandidatesByNoteTimeClusters(touchWorldX))
         {
@@ -227,7 +232,6 @@ public class InputController : MonoBehaviour
             {
                 // Reject holds already bound this frame (stale snapshot).
                 if (holdNote.IsHolding || HoldingNotes.ContainsKey(finger.Index)) continue;
-                if (!game.IsLoaded || !game.State.IsPlaying) continue;
                 HoldingNotes.Add(finger.Index, holdNote);
                 holdNote.UpdateFinger(finger.Index, true);
                 hitCandidates.Clear();

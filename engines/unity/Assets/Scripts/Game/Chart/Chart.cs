@@ -322,7 +322,7 @@ public class Chart
                + verticalOffset;
     }
 
-    float PageDisplayYToScreenY(ChartModel.Page page, float yDisplay)
+    float PageDisplayYToScreenY(float yDisplay)
     {
         return verticalRatio * (yDisplay * baseSize) + verticalOffset;
     }
@@ -364,7 +364,17 @@ public class Chart
     float GetNoteScreenYAtTick(ChartModel.Page page, float tick)
     {
         var t = GetPageProgressByTick(page, tick);
-        return PageDisplayYToScreenY(page, PositionFunction.EvaluateDisplayY(page, t));
+        return PageDisplayYToScreenY(PositionFunction.EvaluateDisplayY(page, t));
+    }
+
+    /// <summary>
+    /// Legacy past-last-page extrapolation: continue from the end edge with flipped scan direction.
+    /// </summary>
+    float GetScreenYPastPageEnd(ChartModel.Page page, float chronologicalProgressPastStart)
+    {
+        var past = chronologicalProgressPastStart - 1f;
+        return PageDisplayYToScreenY(
+            PositionFunction.EvaluateDisplayY(page, past, -page.scan_line_direction));
     }
 
     float GetHoldScreenLength(ChartModel.Page page, float startTick, float endTick)
@@ -395,18 +405,29 @@ public class Chart
     public float ConvertChartTickToScreenY(float tick)
     {
         var pageId = FindPageIndexByTick(tick);
-        var page = Model.page_list[pageId == Model.page_list.Count ? pageId - 1 : pageId];
-        return GetNoteScreenYAtTick(page, tick);
+        if (pageId == Model.page_list.Count)
+            return GetScreenYPastPageEnd(Model.page_list[pageId - 1], GetPageProgressByTick(Model.page_list[pageId - 1], tick));
+
+        return GetNoteScreenYAtTick(Model.page_list[pageId], tick);
     }
 
     public float GetScannerPositionY(float time, bool useScannerSmoothing)
     {
         var pageId = FindPageIndexByTime(time);
-        var page = Model.page_list[pageId == Model.page_list.Count ? pageId - 1 : pageId];
-        var progress = useScannerSmoothing
-            ? GetPageProgressByTick(page, ConvertToTick(time))
-            : GetPageProgressByTime(page, time);
-        return PageDisplayYToScreenY(page, PositionFunction.EvaluateDisplayY(page, progress));
+        if (pageId == Model.page_list.Count)
+        {
+            var page = Model.page_list[pageId - 1];
+            var progress = useScannerSmoothing
+                ? GetPageProgressByTick(page, ConvertToTick(time))
+                : GetPageProgressByTime(page, time);
+            return GetScreenYPastPageEnd(page, progress);
+        }
+
+        var current = Model.page_list[pageId];
+        var pageProgress = useScannerSmoothing
+            ? GetPageProgressByTick(current, ConvertToTick(time))
+            : GetPageProgressByTime(current, time);
+        return PageDisplayYToScreenY(PositionFunction.EvaluateDisplayY(current, pageProgress));
     }
 
     public float GetScanlinePosition01(float percentage)
@@ -419,9 +440,13 @@ public class Chart
         pageId = Mathf.Clamp(pageId, 0, Model.page_list.Count - 1);
         var page = Model.page_list[pageId];
         PositionFunction.GetVisibleBand(page, out var low, out var high);
-        return PageDisplayYToScreenY(page, bottom ? low : high);
+        return PageDisplayYToScreenY(bottom ? low : high);
     }
 
+    /// <summary>
+    /// Full play-area top/bottom (always ±baseSize). Page-aware bands use
+    /// <see cref="GetPageBoundaryScreenY"/> instead.
+    /// </summary>
     public float GetBoundaryPosition(bool bottom)
     {
         return verticalRatio * (bottom ? 1 : -1) *

@@ -222,7 +222,10 @@ public abstract class Note : MonoBehaviour
         return TryClear();
     }
 
-    /// <returns>True if this call newly cleared the note. Already-cleared notes return false so a later finger is not consumed.</returns>
+    /// <returns>
+    /// True if this call newly cleared the note. Already-cleared notes return false
+    /// so a later finger on the same Down is not consumed.
+    /// </returns>
     public virtual bool TryClear()
     {
         if (IsCleared) return false;

@@ -5,24 +5,24 @@ using UnityEngine;
 public class InputController : MonoBehaviour
 {
     /// <summary>
-    /// Max note-to-note span (seconds) for a same-beat hit cluster (true or pseudo simultaneous press).
-    /// Used for Click / CDrag head / unheld Hold on FingerDown (discrete click consume).
-    /// Within a cluster Click/CDrag head/Hold share |Δx| priority; across clusters note-time order wins.
-    /// Flick keeps original list-order bind; Drag stays on list-order scan.
-    /// Each FingerDown re-clusters the remaining collided candidates by effectiveNoteTime
-    /// span ≤ this gap (no adjacent-gap chain expansion within that candidate set).
-    /// Soft fallthrough to later clusters remains.
+    /// Max note-to-note span (seconds) for one FingerDown hit cluster
+    /// (true or pseudo simultaneous press). Applies to Click / CDrag head / unheld Hold.
+    /// Candidates are re-clustered each Down by <c>effectiveNoteTime</c> span ≤ this gap
+    /// (no adjacent-gap chain expansion). Soft fallthrough across clusters remains.
+    /// In-cluster rank: see <see cref="OrderHitCandidatesByNoteTimeClusters"/>.
+    /// Flick stays list-order bind; Drag stays list-order scan.
     /// </summary>
     public const float NoteClusterGapSeconds = 0.015f;
 
     /// <summary>
-    /// After a non-Miss Drag clears on FingerDown, select notes (Click / CDrag head / Hold / Flick)
-    /// whose effectiveNoteTime is more than this many seconds later than the accepted Drag
-    /// are blocked. Selects within the window (or earlier than the Drag) still proceed.
-    /// Independent of <see cref="NoteClusterGapSeconds"/> but same 15ms default.
-    /// Replaces the legacy collidedDrag + Page.Duration/8 far-note heuristic.
+    /// After a non-Miss Drag clears on the same FingerDown, block Click / CDrag head /
+    /// Hold / Flick whose <c>effectiveNoteTime</c> is more than this many seconds later.
+    /// Earlier or within-window selects stay eligible.
+    /// Wider than <see cref="NoteClusterGapSeconds"/> (30ms vs 15ms) so short Drag+tap
+    /// stacks co-clear on one Down without widening note-time clusters.
+    /// Replaces legacy collidedDrag + Page.Duration/8.
     /// </summary>
-    public const float DragCoHitWindowSeconds = 0.015f;
+    public const float DragCoHitWindowSeconds = 0.030f;
 
     public Game game;
 
@@ -32,8 +32,8 @@ public class InputController : MonoBehaviour
     public readonly List<HoldNote> TouchableHoldNotes = new List<HoldNote>(); // Hold, Long hold (FingerUpdate)
     /// <summary>
     /// Click / CDrag head / Flick / unheld Hold in SpawnedNotes id order.
-    /// Built in <see cref="OnGameUpdate"/> so FingerDown never merge-compares Model.id
-    /// on a possibly pooled snapshot entry.
+    /// Rebuilt each frame in <see cref="OnGameUpdate"/> so FingerDown never compares
+    /// <c>Model.id</c> on a pooled snapshot entry.
     /// </summary>
     public readonly List<Note> TouchableSelectNotes = new List<Note>();
 
@@ -119,7 +119,7 @@ public class InputController : MonoBehaviour
             : game.camera.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
 
         // Drag clears first (settlement order) but does not consume the Down for select.
-        // Record acceptedDrag only for a real hit grade — TryClear also returns true on Miss.
+        // Arm DragCoHit only on a real hit grade — TryClear also returns true on Miss.
         Note acceptedDrag = null;
         foreach (var note in TouchableDragNotes)
         {
@@ -131,7 +131,7 @@ public class InputController : MonoBehaviour
             if (!note.OnTouch(finger.ScreenPosition)) continue;
             if (preTouchGrade == NoteGrade.Miss)
             {
-                // Miss-settled on this Down must not arm DragCoHit (would block later select).
+                // Miss on this Down must not arm DragCoHit (would block later select).
                 continue;
             }
 
@@ -139,11 +139,10 @@ public class InputController : MonoBehaviour
             break;
         }
 
-        // Select notes: pre-merged SpawnedNotes id order (TouchableSelectNotes).
-        // Flick keeps list-order bind (#187): only earlier candidates are flushed before
-        // a Flick bind. Click/CDrag head + unheld Hold share note-time clusters.
-        // Click / CDrag head / Hold / Flick all pass IsEligibleSelectAfterDrag
-        // (DragCoHit window + cross-page). Blocked Flick still flushes earlier candidates.
+        // Select in SpawnedNotes id order (TouchableSelectNotes).
+        // Flick: list-order bind; flush earlier Click/Hold cluster first (even if Flick is
+        // later blocked by DragCoHit). Click / CDrag head / unheld Hold: note-time clusters.
+        // All four types pass IsEligibleSelectAfterDrag (DragCoHit + cross-page).
         hitCandidates.Clear();
         foreach (var note in TouchableSelectNotes)
         {
@@ -152,7 +151,6 @@ public class InputController : MonoBehaviour
 
             if (note is FlickNote flickNote)
             {
-                // Flush earlier Click/Hold even when this Flick is later blocked by DragCoHit.
                 if (TryAcceptSelectClickCluster(finger, pressedPosition.x)) return;
 
                 if (FlickingNotes.ContainsKey(finger.Index) || FlickingNotes.ContainsValue(flickNote))
@@ -165,8 +163,7 @@ public class InputController : MonoBehaviour
 
             if (note is HoldNote holdNote)
             {
-                // Live check: lists are per-frame snapshots; same-frame multi-finger
-                // rebind stays on FingerUpdate.
+                // Lists are per-frame snapshots; same-frame multi-finger rebind uses Update.
                 if (holdNote.IsHolding || HoldingNotes.ContainsKey(finger.Index)) continue;
                 if (!IsEligibleSelectAfterDrag(holdNote, acceptedDrag)) continue;
                 hitCandidates.Add(holdNote);
@@ -181,17 +178,16 @@ public class InputController : MonoBehaviour
     }
 
     /// <summary>
-    /// Snapshot entries may outlive the note: Collect clears Model and resets IsCleared.
-    /// Always gate on IsCollected before touching Model / colliders.
+    /// Snapshot entries may outlive the note (Collect clears Model / resets IsCleared).
+    /// Gate before touching Model or colliders.
     /// </summary>
     private static bool IsTouchableNote(Note note) =>
         note != null && !note.IsCollected && !note.IsCleared;
 
     /// <summary>
-    /// Select gate after an optional accepted Drag on the same FingerDown.
+    /// Same-Down select gate after an optional accepted Drag.
     /// Blocks only when select is more than <see cref="DragCoHitWindowSeconds"/> later
-    /// than the Drag (effectiveNoteTime). Earlier / within-window selects remain eligible.
-    /// Also keeps the historical cross-page early suppress.
+    /// than the Drag (<c>effectiveNoteTime</c>). Also keeps cross-page early suppress.
     /// </summary>
     private bool IsEligibleSelectAfterDrag(Note note, Note acceptedDrag)
     {
@@ -212,8 +208,8 @@ public class InputController : MonoBehaviour
     }
 
     /// <summary>
-    /// Accept a pending Click/CDrag-head/Hold cluster (note-time + |Δx|).
-    /// Clears <see cref="hitCandidates"/>. Hold binds and consumes the Down event.
+    /// Accept one Click / CDrag-head / Hold from <see cref="hitCandidates"/> using
+    /// <see cref="OrderHitCandidatesByNoteTimeClusters"/>. Hold binds and consumes Down.
     /// </summary>
     private bool TryAcceptSelectClickCluster(GameFinger finger, float touchWorldX)
     {
@@ -346,12 +342,12 @@ public class InputController : MonoBehaviour
     }
 
     /// <summary>
-    /// Yield Click/CDrag-head/Hold candidates in beat order: each FingerDown re-clusters
-    /// the current remaining candidates by effectiveNoteTime span ≤
-    /// <see cref="NoteClusterGapSeconds"/> (no chain expansion within that set), then
-    /// processes earlier clusters first; within a cluster prefer closer rendered center X,
-    /// then time, then id (Hold competes with Click/CDrag head on |Δx|). Soft fallthrough:
-    /// caller continues when Accept fails. Flick is never passed here — list-order bind.
+    /// Order Click / CDrag-head / Hold candidates for one FingerDown.
+    /// Sort by <c>effectiveNoteTime</c>, then split into clusters with span ≤
+    /// <see cref="NoteClusterGapSeconds"/> (earlier clusters first; soft fallthrough).
+    /// Within a cluster: |Δx| → note time → type (Click/CDrag head before Hold) → id.
+    /// Flick is never passed here (list-order bind on the scan path).
+    /// Not re-entrant: mutates <see cref="hitCandidates"/> / <c>clusterScratch</c> while yielding.
     /// </summary>
     private IEnumerable<Note> OrderHitCandidatesByNoteTimeClusters(float touchWorldX)
     {
@@ -387,6 +383,8 @@ public class InputController : MonoBehaviour
                 if (cmp != 0) return cmp;
                 cmp = EffectiveNoteTime(a).CompareTo(EffectiveNoteTime(b));
                 if (cmp != 0) return cmp;
+                cmp = SelectTypePriority(a).CompareTo(SelectTypePriority(b));
+                if (cmp != 0) return cmp;
                 return a.Model.id.CompareTo(b.Model.id);
             });
 
@@ -396,5 +394,13 @@ public class InputController : MonoBehaviour
             }
         }
     }
+
+    /// <summary>
+    /// In-cluster type rank after |Δx| and note time. Lower = preferred.
+    /// Click / CDrag head beat Hold on same-time / same-position ties so chart id
+    /// alone does not decide who consumes FingerDown.
+    /// </summary>
+    private static int SelectTypePriority(Note note) =>
+        note is HoldNote ? 1 : 0;
 
 }

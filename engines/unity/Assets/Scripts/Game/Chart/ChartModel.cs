@@ -45,8 +45,8 @@ public class ChartModel
         public PagePositionFunction position_function;
 
         // Resolved at chart load; not part of c2 JSON.
-        public float position_arg_a = 1f;
-        public float position_arg_b;
+        [JsonIgnore] public float position_arg_a = 1f;
+        [JsonIgnore] public float position_arg_b;
 
         public float start_time;
         public float end_time;

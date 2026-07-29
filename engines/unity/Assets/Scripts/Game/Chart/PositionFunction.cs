@@ -83,18 +83,15 @@ public static class PositionFunction
             return Mathf.Clamp(b, -1f, 1f);
 
         var t = GetScanProgress(scanLineDirection, chronologicalT);
-        var yRaw = b + a * (2f * t - 1f);
 
-        // Outside the page chronologically (or the mirrored past-end segment): raw linear.
-        if (t < 0f || t > 1f)
-            return yRaw;
-
-        // Remap the raw segment [b-a, b+a] onto its intersection with [-1, 1],
-        // preserving direction so negative a still reverses the page.
+        // Affine map of scan progress onto the visible band [d0, d1] for all t
+        // (including past-end / pre-page). Equivalent to remapping yRaw∈[b-a, b+a]
+        // onto Clamp endpoints; for unclipped a=1,b=0 this is identical to yRaw.
+        // Preserves direction so negative a still reverses the page.
         var y0 = b - a;
         var y1 = b + a;
         var d0 = Mathf.Clamp(y0, -1f, 1f);
         var d1 = Mathf.Clamp(y1, -1f, 1f);
-        return d0 + (d1 - d0) * (yRaw - y0) / (y1 - y0);
+        return d0 + (d1 - d0) * t;
     }
 }

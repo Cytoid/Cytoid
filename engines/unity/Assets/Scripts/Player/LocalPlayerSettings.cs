@@ -42,6 +42,8 @@ public class LocalPlayerSettings
         {NoteType.Flick, "#FFFFFF".ToColor()},
         {NoteType.CDragChild, "#FFFFFF".ToColor()},
         {NoteType.CDragHead, "#FFFFFF".ToColor()},
+        {NoteType.DropClick, "#FFFFFF".ToColor()},
+        {NoteType.DropDrag, "#FFFFFF".ToColor()},
     };
 
     [JsonProperty("note_fill_colors")]
@@ -56,6 +58,8 @@ public class LocalPlayerSettings
         {NoteType.Flick, "#35A7FF".ToColor()},
         {NoteType.CDragChild, "#39E59E".ToColor()},
         {NoteType.CDragHead, "#39E59E".ToColor()},
+        {NoteType.DropClick, "#FF5964".ToColor()},
+        {NoteType.DropDrag, "#39E59E".ToColor()},
     };
 
     [JsonProperty("note_fill_colors_alt")]
@@ -70,6 +74,8 @@ public class LocalPlayerSettings
         {NoteType.Flick, "#FF5964".ToColor()},
         {NoteType.CDragChild, "#39E59E".ToColor()},
         {NoteType.CDragHead, "#39E59E".ToColor()},
+        {NoteType.DropClick, "#35A7FF".ToColor()},
+        {NoteType.DropDrag, "#39E59E".ToColor()},
     };
 
     [JsonProperty("use_fill_color_for_drag_child_nodes")]

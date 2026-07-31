@@ -2533,6 +2533,10 @@ MonoBehaviour:
     type: 3}
   dragHeadNotePrefab: {fileID: 1539269434326196, guid: c46f87c0607ca4af2ab5929f08dd28fc,
     type: 3}
+  dropClickNotePrefab: {fileID: 1080796316723544, guid: 445db35b6ab514c9f8cf5a96194114cc,
+    type: 3}
+  dropDragNotePrefab: {fileID: 1080796316723544, guid: 943582fed27d843c18e14587e4f4b365,
+    type: 3}
   dragLinePrefab: {fileID: 1150254488694836, guid: f0484ebe0f15c4e69b21c16f8dd2fde5,
     type: 3}
   flickNotePrefab: {fileID: 1676948444546874, guid: 09de2592a0c6d4ec2b03b3eda4fbfd91,

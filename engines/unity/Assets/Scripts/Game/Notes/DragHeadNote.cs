@@ -162,6 +162,13 @@ public class DragHeadNote : Note
         }
     }
 
+    // SYNC-WARNING: DropDrag judgment is a verbatim copy of DragHeadNote's OnTouch, CalculateGrade,
+    // IsAutoEnabled, and PlayHitSound (DragHeadNote.cs:165-252). If you change judgment in either
+    // file, update the other. DragHead chain logic (OnGameLateUpdate, Collect, FromNoteModel/ToNoteModel)
+    // is INTENTIONALLY NOT inherited — DropDrag is standalone per design decision.
+    // NOTE: DragHead's cross-page check is redundant for drop notes (5×pageDuration >> Page.Duration/2
+    // always, so the 0.31s check dominates) — safe to copy verbatim, do not remove.
+    // Mirror: Assets/Scripts/Game/Notes/Drop/DropDragNote.cs
     public override bool OnTouch(Vector2 screenPos)
     {
         if (!IsCDrag)

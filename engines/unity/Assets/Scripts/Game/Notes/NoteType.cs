@@ -8,6 +8,8 @@
     Flick = 5,
     CDragHead = 6,
     CDragChild = 7,
+    DropClick = 8,
+    DropDrag = 9,
 }
 
 public static class NoteTypeExtensions

@@ -76,7 +76,8 @@ public class HoldNote : Note
     
     public override bool OnTouch(Vector2 screenPos)
     {
-        // Hold binds via InputController.UpdateFinger, not OnTouch.
+        // Hold start is owned by InputController (FingerDown / Update → UpdateFinger).
+        // false keeps TryClear off the Down path; binding consumes the event there.
         return false;
     }
 

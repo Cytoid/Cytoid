@@ -35,7 +35,9 @@ public class GameConfig
         {NoteType.LongHold, new[] {6, 7}},
         {NoteType.Flick, new[] {8, 9}},
         {NoteType.CDragHead, new[] {10, 11}},
-        {NoteType.CDragChild, new[] {10, 11}}
+        {NoteType.CDragChild, new[] {10, 11}},
+        {NoteType.DropClick, new[] {0, 1}},
+        {NoteType.DropDrag, new[] {2, 3}}
     };
 
     public void OnGameLoaded(Game game)
@@ -67,6 +69,8 @@ public class GameConfig
         NoteTransformSizes[NoteType.Hold] = NoteTransformSizes[NoteType.Click];
         NoteTransformSizes[NoteType.LongHold] = NoteTransformSizes[NoteType.Click];
         NoteTransformSizes[NoteType.Flick] = NoteTransformSizes[NoteType.Click] * 1.125f;
+        NoteTransformSizes[NoteType.DropClick] = NoteTransformSizes[NoteType.Click];
+        NoteTransformSizes[NoteType.DropDrag] = NoteTransformSizes[NoteType.DragHead];
 
         NoteHitboxSizes[NoteType.Click] = NoteHitboxSizes[NoteType.CDragHead] =
             new[] {0.666666f * 1.111111f, 0.666666f * 1.333333f, 0.666666f * 1.555555f}[lp.Settings.HitboxSizes[NoteType.Click]];
@@ -78,6 +82,10 @@ public class GameConfig
             new[] {0.888888f * 1.111111f, 0.888888f * 1.333333f, 0.888888f * 1.555555f}[lp.Settings.HitboxSizes[NoteType.Hold]];
         NoteHitboxSizes[NoteType.Flick] =
             new[] {0.888888f * 1.111111f, 0.888888f * 1.333333f, 0.888888f * 1.555555f}[lp.Settings.HitboxSizes[NoteType.Flick]];
+        NoteHitboxSizes[NoteType.DropClick] =
+            new[] {0.666666f * 1.111111f, 0.666666f * 1.333333f, 0.666666f * 1.555555f}[lp.Settings.HitboxSizes[NoteType.Click]];
+        NoteHitboxSizes[NoteType.DropDrag] =
+            new[] {0.666666f * 1.111111f, 0.666666f * 1.333333f, 0.666666f * 1.555555f}[lp.Settings.HitboxSizes[NoteType.DragChild]];
 
         foreach (NoteType type in Enum.GetValues(typeof(NoteType)))
         {

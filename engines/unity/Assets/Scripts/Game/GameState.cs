@@ -467,6 +467,28 @@ public sealed class GameState
                 new HpMod(-4, HpModType.Percentage),
                 new HpMod(-6, HpModType.Percentage)
             })
+        },
+        {
+            NoteType.DropClick, new NoteHpMod(new List<HpMod>
+            {
+                new HpMod(1, HpModType.Absolute),
+                new HpMod(0.5, HpModType.Absolute),
+                new HpMod(-1, HpModType.Percentage),
+                new HpMod(-3, HpModType.Percentage),
+                new HpMod(-6, HpModType.Percentage),
+                new HpMod(-8, HpModType.Percentage)
+            })
+        },
+        {
+            NoteType.DropDrag, new NoteHpMod(new List<HpMod>
+            {
+                new HpMod(0.2, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(-8, HpModType.Percentage)
+            })
         }
     });
 
@@ -559,6 +581,28 @@ public sealed class GameState
                 new HpMod(-12, HpModType.Percentage),
                 new HpMod(-15, HpModType.Percentage)
             })
+        },
+        {
+            NoteType.DropClick, new NoteHpMod(new List<HpMod>
+            {
+                new HpMod(1, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(-4, HpModType.Percentage),
+                new HpMod(-8, HpModType.Percentage),
+                new HpMod(-15, HpModType.Percentage),
+                new HpMod(-20, HpModType.Percentage)
+            })
+        },
+        {
+            NoteType.DropDrag, new NoteHpMod(new List<HpMod>
+            {
+                new HpMod(0.2, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(-20, HpModType.Percentage)
+            })
         }
     });
 
@@ -650,6 +694,28 @@ public sealed class GameState
                 new HpMod(-6, HpModType.Percentage),
                 new HpMod(-12, HpModType.Percentage),
                 new HpMod(-15, HpModType.Percentage)
+            })
+        },
+        {
+            NoteType.DropClick, new NoteHpMod(new List<HpMod>
+            {
+                new HpMod(1, HpModType.Absolute),
+                new HpMod(0.25, HpModType.Absolute),
+                new HpMod(-2, HpModType.Percentage, true),
+                new HpMod(-4, HpModType.Percentage, true),
+                new HpMod(-7, HpModType.Percentage, true),
+                new HpMod(-10, HpModType.Percentage, true)
+            })
+        },
+        {
+            NoteType.DropDrag, new NoteHpMod(new List<HpMod>
+            {
+                new HpMod(0.2, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(0, HpModType.Absolute),
+                new HpMod(-20, HpModType.Percentage)
             })
         }
     });

@@ -28,11 +28,25 @@ public class ChartModel
     public bool? skip_music_on_completion;
     
     [Serializable]
+    public class PagePositionFunction
+    {
+        public int Type;
+        public double[] Arguments;
+    }
+
+    [Serializable]
     public class Page
     {
         public double start_tick;
         public double end_tick;
         public int scan_line_direction;
+
+        [JsonProperty("PositionFunction")]
+        public PagePositionFunction position_function;
+
+        // Resolved at chart load; not part of c2 JSON.
+        [JsonIgnore] public float position_arg_a = 1f;
+        [JsonIgnore] public float position_arg_b;
 
         public float start_time;
         public float end_time;
@@ -106,6 +120,7 @@ public class ChartModel
         public float initial_scale = 0.4f;
         public float intro_time;
         public int direction;
+        public int NoteDirection; // DropNote drop direction (0=Down, 1=Up). Distinct from `direction` (HoldNote alt-color, overwritten at runtime).
         public float tint;
         public float nextdraglinestarttime;
         public float nextdraglinestoptime;
@@ -156,6 +171,10 @@ public class ChartModel
 
         public bool UseAlternativeColor()
         {
+            if (type == (int) NoteType.DropClick || type == (int) NoteType.DropDrag)
+            {
+                return NoteDirection == 1;
+            }
             var alt = direction > 0;
             if (is_forward) alt = !alt;
             return alt;
@@ -184,6 +203,7 @@ public class ChartModel
             holdlength = note.holdlength;
             intro_time = note.intro_time;
             direction = note.direction;
+            NoteDirection = note.NoteDirection;
             rotation = note.rotation;
             tint = note.tint;
             nextdraglinestarttime = note.nextdraglinestarttime;

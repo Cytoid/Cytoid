@@ -38,15 +38,29 @@ public class ChartEventPresentationTimelineTests
     }
 
     [Test]
-    public void InvalidColorWarnsAndFallsBackToWhite()
+    public void InvalidColorSuffixUsesTheFirstUnescapedCommaAndWarns()
     {
         var warnings = new List<string>();
         var timeline = new ChartEventPresentationTimeline(
             Model(Order(0, Event(ChartEventType.Message, "Hello,not-a-color"))),
             warnings.Add);
 
+        var state = timeline.Evaluate(1);
         Assert.That(warnings, Has.Count.EqualTo(1));
-        AssertColor(timeline.Evaluate(1).ScanlineColor, Color.white);
+        Assert.That(state.Content, Is.EqualTo("Hello"));
+        AssertColor(state.ScanlineColor, Color.white);
+    }
+
+    [Test]
+    public void MessageSupportsEscapedCommasBackslashesAndRgbaColor()
+    {
+        var state = Timeline(Order(
+            0,
+            Event(ChartEventType.Message, "Hello\\, world\\\\path,#0A141E80"))).Evaluate(1);
+
+        Assert.That(state.Content, Is.EqualTo("Hello, world\\path"));
+        AssertColor(state.TextColor, new Color32(10, 20, 30, 128));
+        AssertColor(state.ScanlineColor, new Color32(10, 20, 30, 128));
     }
 
     [Test]

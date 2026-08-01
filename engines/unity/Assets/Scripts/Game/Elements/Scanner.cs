@@ -202,11 +202,12 @@ public class Scanner : SingletonMonoBehavior<Scanner>
     private void ApplyVisualState()
     {
         var color = colorOverride == Color.clear ? currentColor : colorOverride;
-        color = color.WithAlpha(EffectiveOpacity);
+        var composedOpacity = color.a * EffectiveOpacity;
+        color = color.WithAlpha(composedOpacity);
         lineRenderer.startColor = color;
         lineRenderer.endColor = color;
         foreach (var triangle in triangles)
-            if (triangle != null) triangle.ApplyOpacity(EffectiveOpacity);
+            if (triangle != null) triangle.ApplyOpacity(composedOpacity);
     }
 
     public void RegisterTriangle(MeshTriangle triangle) => triangles.Add(triangle);

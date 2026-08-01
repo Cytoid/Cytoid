@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
 public enum ChartEventPresentationKind
@@ -284,22 +285,55 @@ public sealed class ChartEventPresentationTimeline
         out Color color)
     {
         args = args ?? string.Empty;
-        var separator = args.IndexOf(',');
-        content = TmpRichTextSanitizer.Sanitize(
-            separator < 0 ? args : args.Substring(0, separator));
+        var separator = FindMessageSeparator(args);
+        var contentText = separator < 0 ? args : args.Substring(0, separator);
         var colorText = separator < 0 ? string.Empty : args.Substring(separator + 1).Trim();
+        content = TmpRichTextSanitizer.Sanitize(UnescapeMessageContent(contentText));
 
-        if (IsRgbHexColor(colorText) && ColorUtility.TryParseHtmlString(colorText, out color)) return;
+        if (IsRgbHexColor(colorText) &&
+            ColorUtility.TryParseHtmlString(colorText, out color))
+            return;
 
         color = Color.white;
         if (colorText.Length == 0) return;
         warningLogger?.Invoke(
-            $"Invalid C2 message color '{colorText}'. Expected #RRGGBB; using white.");
+            $"Invalid C2 message color '{colorText}'. Expected #RRGGBB or #RRGGBBAA; using white.");
+    }
+
+    private static int FindMessageSeparator(string value)
+    {
+        for (var i = 0; i < value.Length; i++)
+        {
+            if (value[i] == '\\' && i + 1 < value.Length &&
+                (value[i + 1] == ',' || value[i + 1] == '\\'))
+            {
+                i++;
+                continue;
+            }
+            if (value[i] == ',') return i;
+        }
+        return -1;
+    }
+
+    private static string UnescapeMessageContent(string value)
+    {
+        var result = new StringBuilder(value.Length);
+        for (var i = 0; i < value.Length; i++)
+        {
+            if (value[i] == '\\' && i + 1 < value.Length &&
+                (value[i + 1] == ',' || value[i + 1] == '\\'))
+                result.Append(value[++i]);
+            else
+                result.Append(value[i]);
+        }
+        return result.ToString();
     }
 
     private static bool IsRgbHexColor(string value)
     {
-        if (value == null || value.Length != 7 || value[0] != '#') return false;
+        if (value == null ||
+            (value.Length != 7 && value.Length != 9) ||
+            value[0] != '#') return false;
         for (var i = 1; i < value.Length; i++)
         {
             var c = value[i];

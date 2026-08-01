@@ -119,7 +119,8 @@ public class GameTooltipText : MonoBehaviour
                 break;
         }
 
-        tmp.color = chartEventState.TextColor.WithAlpha(chartEventState.TextAlpha);
+        tmp.color = chartEventState.TextColor.WithAlpha(
+            chartEventState.TextColor.a * chartEventState.TextAlpha);
         tmp.characterSpacing = chartEventState.LetterSpacing;
     }
 

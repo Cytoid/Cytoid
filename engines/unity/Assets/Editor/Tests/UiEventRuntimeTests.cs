@@ -70,6 +70,25 @@ public class UiEventRuntimeTests
     }
 
     [Test]
+    public void ChartEventColorAlphaComposesWithScannerOpacity()
+    {
+        var scene = EditorSceneManager.OpenScene(GameScenePath, OpenSceneMode.Additive);
+        try
+        {
+            var scanner = FindScanner(scene);
+            scanner.opacity = 0.5f;
+            scanner.SetUiEventState(1, 1, ChartUiAnimationKind.None, 1, false);
+            scanner.SetChartEventColor(new Color(1, 0, 0, 0.4f));
+
+            Assert.That(scanner.lineRenderer.startColor.a, Is.EqualTo(0.2f).Within(0.0001f));
+        }
+        finally
+        {
+            EditorSceneManager.CloseScene(scene, true);
+        }
+    }
+
+    [Test]
     public void BoundaryOpacityMultipliesStoryboardAndBothUiEventLayers()
     {
         Assert.That(GameRenderer.ComposeBoundaryOpacity(0.5f, 0.4f, 0.25f),
@@ -89,8 +108,9 @@ public class UiEventRuntimeTests
             var method = typeof(GameUiEventController).GetMethod(
                 "FindPerformanceTarget",
                 BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null);
 
-            var target = (Transform) method?.Invoke(null, new object[] {overlay});
+            var target = (Transform) method.Invoke(null, new object[] {overlay});
 
             Assert.That(target, Is.Not.Null);
             Assert.That(target.name, Is.EqualTo("Performance"));
@@ -144,7 +164,7 @@ public class UiEventRuntimeTests
                 true,
                 ChartEventPresentationKind.Message,
                 "<b>Hello</b>",
-                new Color(0.25f, 0.5f, 0.75f),
+                new Color(0.25f, 0.5f, 0.75f, 0.5f),
                 Color.white,
                 0.75f,
                 21));
@@ -153,7 +173,7 @@ public class UiEventRuntimeTests
             Assert.That(tooltip.tmp.color.r, Is.EqualTo(0.25f).Within(0.0001f));
             Assert.That(tooltip.tmp.color.g, Is.EqualTo(0.5f).Within(0.0001f));
             Assert.That(tooltip.tmp.color.b, Is.EqualTo(0.75f).Within(0.0001f));
-            Assert.That(tooltip.tmp.color.a, Is.EqualTo(0.75f).Within(0.0001f));
+            Assert.That(tooltip.tmp.color.a, Is.EqualTo(0.375f).Within(0.0001f));
             Assert.That(tooltip.tmp.characterSpacing, Is.EqualTo(21).Within(0.0001f));
             Assert.That(tooltip.tmp.textWrappingMode,
                 Is.EqualTo(TextWrappingModes.PreserveWhitespaceNoWrap));

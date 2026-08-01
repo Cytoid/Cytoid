@@ -17,21 +17,12 @@ public class GameTooltipText : MonoBehaviour
     public GameMessage CurrentMessage { get; protected set; }
 
     private readonly List<Sequence> sequences = new List<Sequence>();
+    private ChartEventPresentationState chartEventState = ChartEventPresentationState.Empty;
+    private int messageVersion;
 
     protected void Awake()
     {
-        game.onGameSpeedUp.AddListener(_ => Animate(new GameMessage
-        {
-            Type = GameMessage.AnimationType.Expand,
-            Color = Scanner.SpeedUpColor,
-            TextFunction = () => "GAME_SPEED_UP".Get()
-        }));
-        game.onGameSpeedDown.AddListener(_ => Animate(new GameMessage
-        {
-            Type = GameMessage.AnimationType.Shrink,
-            Color = Scanner.SpeedDownColor,
-            TextFunction = () => "GAME_SLOW_DOWN".Get()
-        }));
+        tmp.textWrappingMode = TextWrappingModes.PreserveWhitespaceNoWrap;
         game.onGameWillUnpause.AddListener(async _ =>
         {
             await UniTask.Delay(TimeSpan.FromSeconds(1.4f));
@@ -49,6 +40,7 @@ public class GameTooltipText : MonoBehaviour
 
     public async void Animate(GameMessage message, float duration = 1.5f)
     {
+        var version = ++messageVersion;
         CurrentMessage = message;
         tmp.color = message.Color.WithAlpha(0);
         tmp.text = message.TextFunction();
@@ -90,7 +82,56 @@ public class GameTooltipText : MonoBehaviour
             .Also(it => sequences.Add(it));
 
         await UniTask.Delay(TimeSpan.FromSeconds(duration));
+        if (version != messageVersion) return;
         CurrentMessage = null;
+        RenderChartEventState();
+    }
+
+    public void ApplyChartEventState(ChartEventPresentationState state)
+    {
+        chartEventState = state;
+        if (CurrentMessage == null) RenderChartEventState();
+    }
+
+    public void ClearChartEventState()
+    {
+        messageVersion++;
+        sequences.ForEach(it => it.Kill());
+        sequences.Clear();
+        CurrentMessage = null;
+        chartEventState = ChartEventPresentationState.Empty;
+        RenderChartEventState();
+    }
+
+    private void RenderChartEventState()
+    {
+        if (!chartEventState.IsActive)
+        {
+            tmp.text = string.Empty;
+            tmp.color = Color.clear;
+            tmp.characterSpacing = 0;
+            return;
+        }
+
+        switch (chartEventState.Kind)
+        {
+            case ChartEventPresentationKind.SpeedUp:
+                tmp.text = "GAME_SPEED_UP".Get();
+                break;
+            case ChartEventPresentationKind.SpeedDown:
+                tmp.text = "GAME_SLOW_DOWN".Get();
+                break;
+            case ChartEventPresentationKind.Message:
+                tmp.text = chartEventState.Content;
+                break;
+            default:
+                tmp.text = string.Empty;
+                break;
+        }
+
+        tmp.color = chartEventState.TextColor.WithAlpha(
+            chartEventState.TextColor.a * chartEventState.TextAlpha);
+        tmp.characterSpacing = chartEventState.LetterSpacing;
     }
 
     public void Update()

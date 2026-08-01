@@ -9,6 +9,9 @@ public class GameRenderer
 
     public float OpacityMultiplier { get; set; } = 1f;
 
+    private float uiEventOpacity = 1f;
+    private float uiEventAnimationOpacity = 1f;
+
     private Image cover;
     private GameObject boundaryTop;
     private GameObject boundaryBottom;
@@ -43,7 +46,7 @@ public class GameRenderer
                 .ForEach(it =>
                 {
                     it.color = it.color.WithAlpha(0);
-                    it.DOFade(BoundaryOpacity, 0.4f);
+                    it.DOFade(BoundaryOpacity * uiEventOpacity * uiEventAnimationOpacity, 0.4f);
                 });
             Game.onTopBoundaryBounded.AddListener(_ => boundaryTopAnimator.Play("BoundaryBound"));
             Game.onBottomBoundaryBounded.AddListener(_ => boundaryBottomAnimator.Play("BoundaryBound"));
@@ -91,6 +94,28 @@ public class GameRenderer
         cover.DOFade(0, 0.8f);
     }
 
+    public void SetUiEventOpacity(float opacity, float animationOpacity)
+    {
+        uiEventOpacity = Mathf.Clamp01(opacity);
+        uiEventAnimationOpacity = Mathf.Clamp01(animationOpacity);
+        ApplyBoundaryOpacity();
+    }
+
+    public void ApplyBoundaryOpacity()
+    {
+        if (boundaryTopSpriteRenderer == null || boundaryBottomSpriteRenderer == null) return;
+        if (!Game.State.IsStarted || Game.State.IsCompleted || Game.State.IsFailed) return;
+        var alpha = ComposeBoundaryOpacity(OpacityMultiplier, uiEventOpacity, uiEventAnimationOpacity);
+        boundaryTopSpriteRenderer.color = boundaryTopSpriteRenderer.color.WithAlpha(alpha);
+        boundaryBottomSpriteRenderer.color = boundaryBottomSpriteRenderer.color.WithAlpha(alpha);
+    }
+
+    public static float ComposeBoundaryOpacity(
+        float storyboardOpacity,
+        float eventOpacity,
+        float animationOpacity) =>
+        BoundaryOpacity * storyboardOpacity * eventOpacity * animationOpacity;
+
     public void OnUpdate()
     {
         if (!Game.IsLoaded) return;
@@ -118,11 +143,7 @@ public class GameRenderer
         }
         if (Game.State.IsStarted && Game.State.IsPlaying && !Game.State.IsCompleted)
         {
-            // Update opacity
-            boundaryTopSpriteRenderer.color =
-                boundaryTopSpriteRenderer.color.WithAlpha(BoundaryOpacity * OpacityMultiplier);
-            boundaryBottomSpriteRenderer.color =
-                boundaryBottomSpriteRenderer.color.WithAlpha(BoundaryOpacity * OpacityMultiplier);
+            ApplyBoundaryOpacity();
         }
     }
     

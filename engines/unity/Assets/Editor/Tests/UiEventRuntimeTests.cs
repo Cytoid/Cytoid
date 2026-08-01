@@ -1,0 +1,312 @@
+using System.Linq;
+using System.Reflection;
+using System.Runtime.Serialization;
+using NUnit.Framework;
+using TMPro;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class UiEventRuntimeTests
+{
+    private const string GameScenePath = "Assets/Scenes/Game.unity";
+
+    public enum PresentationReleaseTrigger
+    {
+        Completion,
+        Failure,
+        Exit,
+        Disposal
+    }
+
+    [Test]
+    public void ScanlineRestoresGeometryAfterSeekingBeforeAnAnimation()
+    {
+        var scene = EditorSceneManager.OpenScene(GameScenePath, OpenSceneMode.Additive);
+        try
+        {
+            var scanner = FindScanner(scene);
+            scanner.SetUiEventState(1, 1, ChartUiAnimationKind.Out, 1, false);
+            Assert.That(scanner.lineRenderer.positionCount, Is.EqualTo(100));
+            Assert.That(scanner.lineRenderer.GetPosition(0), Is.EqualTo(scanner.lineRenderer.GetPosition(99)));
+
+            scanner.SetUiEventState(1, 1, ChartUiAnimationKind.None, 1, false);
+            Assert.That(scanner.lineRenderer.positionCount, Is.EqualTo(2));
+            Assert.That(scanner.lineRenderer.GetPosition(0).x,
+                Is.LessThan(scanner.lineRenderer.GetPosition(1).x));
+        }
+        finally
+        {
+            EditorSceneManager.CloseScene(scene, true);
+        }
+    }
+
+    [Test]
+    public void ScannerAndTriangleReceiveTheSameComposedOpacity()
+    {
+        var scene = EditorSceneManager.OpenScene(GameScenePath, OpenSceneMode.Additive);
+        GameObject triangleObject = null;
+        Material material = null;
+        try
+        {
+            var scanner = FindScanner(scene);
+            scanner.opacity = 0.4f;
+
+            triangleObject = new GameObject("UiEventRuntimeTriangle");
+            triangleObject.SetActive(false);
+            triangleObject.AddComponent<MeshFilter>();
+            var meshRenderer = triangleObject.AddComponent<MeshRenderer>();
+            material = new Material(Shader.Find("Sprites/Default"));
+            meshRenderer.sharedMaterial = material;
+            var triangle = triangleObject.AddComponent<MeshTriangle>();
+            triangleObject.SetActive(true);
+            SetPrivateField(triangle, "meshRenderer", meshRenderer);
+            SetPrivateField(triangle, "material", material);
+            SetPrivateField(triangle, "scanner", scanner);
+            scanner.RegisterTriangle(triangle);
+
+            scanner.SetUiEventState(0.5f, 0.25f, ChartUiAnimationKind.None, 1, false);
+
+            Assert.That(scanner.EffectiveOpacity, Is.EqualTo(0.05f).Within(0.0001f));
+            Assert.That(meshRenderer.sharedMaterial.color.a, Is.EqualTo(0.005f).Within(0.0001f));
+        }
+        finally
+        {
+            if (triangleObject != null) Object.DestroyImmediate(triangleObject);
+            if (material != null) Object.DestroyImmediate(material);
+            EditorSceneManager.CloseScene(scene, true);
+        }
+    }
+
+    [Test]
+    public void ChartEventColorAlphaComposesWithScannerOpacity()
+    {
+        var scene = EditorSceneManager.OpenScene(GameScenePath, OpenSceneMode.Additive);
+        try
+        {
+            var scanner = FindScanner(scene);
+            scanner.opacity = 0.5f;
+            scanner.SetUiEventState(1, 1, ChartUiAnimationKind.None, 1, false);
+            scanner.SetChartEventColor(new Color(1, 0, 0, 0.4f));
+
+            Assert.That(scanner.lineRenderer.startColor.a, Is.EqualTo(0.2f).Within(0.0001f));
+        }
+        finally
+        {
+            EditorSceneManager.CloseScene(scene, true);
+        }
+    }
+
+    [Test]
+    public void BoundaryOpacityMultipliesStoryboardAndBothUiEventLayers()
+    {
+        Assert.That(GameRenderer.ComposeBoundaryOpacity(0.5f, 0.4f, 0.25f),
+            Is.EqualTo(0.01f).Within(0.0001f));
+    }
+
+    [Test]
+    public void ScoreUiTargetIncludesAccuracyThroughTheirSharedPerformanceContainer()
+    {
+        var scene = EditorSceneManager.OpenScene(GameScenePath, OpenSceneMode.Additive);
+        try
+        {
+            var game = scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<Game>(true))
+                .Single();
+            var overlay = game.levelInfoParent.transform.parent;
+            var method = typeof(GameUiEventController).GetMethod(
+                "FindPerformanceTarget",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null);
+
+            var target = (Transform) method.Invoke(null, new object[] {overlay});
+
+            Assert.That(target, Is.Not.Null);
+            Assert.That(target.name, Is.EqualTo("Performance"));
+            Assert.That(target.Find("Score"), Is.Not.Null);
+            Assert.That(target.Find("Accuracy"), Is.Not.Null);
+            Assert.That(target.GetComponent<CanvasGroup>(), Is.Not.Null);
+        }
+        finally
+        {
+            EditorSceneManager.CloseScene(scene, true);
+        }
+    }
+
+    [Test]
+    public void StoryboardColorOverrideWinsOverChartEventColor()
+    {
+        var scene = EditorSceneManager.OpenScene(GameScenePath, OpenSceneMode.Additive);
+        try
+        {
+            var scanner = FindScanner(scene);
+            scanner.opacity = 0.5f;
+            scanner.colorOverride = Color.green;
+            scanner.SetChartEventColor(Color.red);
+
+            Assert.That(scanner.lineRenderer.startColor.r, Is.EqualTo(0).Within(0.0001f));
+            Assert.That(scanner.lineRenderer.startColor.g, Is.EqualTo(1).Within(0.0001f));
+            Assert.That(scanner.lineRenderer.startColor.a, Is.EqualTo(0.5f).Within(0.002f));
+
+            scanner.colorOverride = Color.clear;
+            scanner.SetChartEventColor(Color.red);
+            Assert.That(scanner.lineRenderer.startColor.r, Is.EqualTo(1).Within(0.0001f));
+            Assert.That(scanner.lineRenderer.startColor.g, Is.EqualTo(0).Within(0.0001f));
+            Assert.That(scanner.lineRenderer.startColor.a, Is.EqualTo(0.5f).Within(0.002f));
+        }
+        finally
+        {
+            EditorSceneManager.CloseScene(scene, true);
+        }
+    }
+
+    [Test]
+    public void TooltipAppliesSeekSampledMessageRichTextAndSpacing()
+    {
+        var scene = EditorSceneManager.OpenScene(GameScenePath, OpenSceneMode.Additive);
+        try
+        {
+            var tooltip = scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<GameTooltipText>(true))
+                .Single();
+            tooltip.ApplyChartEventState(new ChartEventPresentationState(
+                true,
+                ChartEventPresentationKind.Message,
+                "<b>Hello</b>",
+                new Color(0.25f, 0.5f, 0.75f, 0.5f),
+                Color.white,
+                0.75f,
+                21));
+
+            Assert.That(tooltip.tmp.text, Is.EqualTo("<b>Hello</b>"));
+            Assert.That(tooltip.tmp.color.r, Is.EqualTo(0.25f).Within(0.0001f));
+            Assert.That(tooltip.tmp.color.g, Is.EqualTo(0.5f).Within(0.0001f));
+            Assert.That(tooltip.tmp.color.b, Is.EqualTo(0.75f).Within(0.0001f));
+            Assert.That(tooltip.tmp.color.a, Is.EqualTo(0.375f).Within(0.0001f));
+            Assert.That(tooltip.tmp.characterSpacing, Is.EqualTo(21).Within(0.0001f));
+            Assert.That(tooltip.tmp.textWrappingMode,
+                Is.EqualTo(TextWrappingModes.PreserveWhitespaceNoWrap));
+
+            tooltip.ApplyChartEventState(new ChartEventPresentationState(
+                true,
+                ChartEventPresentationKind.SpeedUp,
+                string.Empty,
+                Color.white,
+                Color.white,
+                1,
+                0));
+            Assert.That(tooltip.tmp.textWrappingMode,
+                Is.EqualTo(TextWrappingModes.PreserveWhitespaceNoWrap));
+        }
+        finally
+        {
+            EditorSceneManager.CloseScene(scene, true);
+        }
+    }
+
+    [Test]
+    public void TooltipDoesNotExecuteUnsupportedTags()
+    {
+        var scene = EditorSceneManager.OpenScene(GameScenePath, OpenSceneMode.Additive);
+        try
+        {
+            var tooltip = scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<GameTooltipText>(true))
+                .Single();
+            var sanitized = TmpRichTextSanitizer.Sanitize(
+                "<mark=#FFFFFF80>Visible</mark>");
+            tooltip.tmp.text = sanitized;
+            tooltip.tmp.ForceMeshUpdate();
+
+            Assert.That(sanitized, Is.EqualTo("Visible"));
+            Assert.That(tooltip.tmp.GetParsedText(), Is.EqualTo("Visible"));
+        }
+        finally
+        {
+            EditorSceneManager.CloseScene(scene, true);
+        }
+    }
+
+    [TestCase(PresentationReleaseTrigger.Completion)]
+    [TestCase(PresentationReleaseTrigger.Failure)]
+    [TestCase(PresentationReleaseTrigger.Exit)]
+    [TestCase(PresentationReleaseTrigger.Disposal)]
+    public void ControllerReleaseEventsForceClearAnActiveSystemMessage(
+        PresentationReleaseTrigger trigger)
+    {
+        var scene = EditorSceneManager.OpenScene(GameScenePath, OpenSceneMode.Additive);
+        try
+        {
+            var game = scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<Game>(true))
+                .Single();
+            var tooltip = scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<GameTooltipText>(true))
+                .Single();
+            var chart = (Chart) FormatterServices.GetUninitializedObject(typeof(Chart));
+            chart.Model = new ChartModel();
+            SetPrivateField(game, "<Chart>k__BackingField", chart);
+            _ = new GameEventPresentationController(game);
+
+            var message = new GameMessage
+            {
+                Type = GameMessage.AnimationType.Expand,
+                Color = Color.white,
+                TextFunction = () => "System message"
+            };
+            tooltip.Animate(message, 10);
+
+            tooltip.ApplyChartEventState(ChartEventPresentationState.Empty);
+            Assert.That(tooltip.CurrentMessage, Is.SameAs(message));
+            Assert.That(tooltip.tmp.text, Is.EqualTo("System message"));
+
+            InvokeReleaseEvent(game, trigger);
+            Assert.That(tooltip.CurrentMessage, Is.Null);
+            Assert.That(tooltip.tmp.text, Is.Empty);
+            Assert.That(tooltip.tmp.color, Is.EqualTo(Color.clear));
+            Assert.That(tooltip.tmp.characterSpacing, Is.EqualTo(0));
+        }
+        finally
+        {
+            EditorSceneManager.CloseScene(scene, true);
+        }
+    }
+
+    private static void InvokeReleaseEvent(Game game, PresentationReleaseTrigger trigger)
+    {
+        switch (trigger)
+        {
+            case PresentationReleaseTrigger.Completion:
+                game.onGameCompleted.Invoke(game);
+                break;
+            case PresentationReleaseTrigger.Failure:
+                game.onGameFailed.Invoke(game);
+                break;
+            case PresentationReleaseTrigger.Exit:
+                game.onGameBeforeExit.Invoke(game);
+                break;
+            case PresentationReleaseTrigger.Disposal:
+                game.onGameDisposed.Invoke(game);
+                break;
+        }
+    }
+
+    private static Scanner FindScanner(Scene scene)
+    {
+        var scanner = scene.GetRootGameObjects()
+            .SelectMany(root => root.GetComponentsInChildren<Scanner>(true))
+            .Single();
+        Assert.That(scanner.game, Is.Not.Null);
+        Assert.That(scanner.game.camera, Is.Not.Null);
+        Assert.That(scanner.lineRenderer, Is.Not.Null);
+        return scanner;
+    }
+
+    private static void SetPrivateField<TOwner, TValue>(TOwner owner, string name, TValue value)
+    {
+        var field = typeof(TOwner).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(field, Is.Not.Null, $"{typeof(TOwner).Name} has no private field '{name}'.");
+        field.SetValue(owner, value);
+    }
+
+}

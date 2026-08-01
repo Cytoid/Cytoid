@@ -9,6 +9,7 @@ public class MeshTriangle : MonoBehaviour
 
     private Mesh mesh;
     private MeshRenderer meshRenderer;
+    private Material material;
     private Scanner scanner;
     private Camera mainCamera;
 
@@ -29,12 +30,20 @@ public class MeshTriangle : MonoBehaviour
         };
         mesh.triangles = new[] {0, 1, 2};
         meshRenderer = gameObject.GetComponent<MeshRenderer>();
+        material = meshRenderer.material;
         scanner = Scanner.Instance;
         mainCamera = Camera.main;
+        if (scanner != null) scanner.RegisterTriangle(this);
+    }
+
+    private void OnDisable()
+    {
+        if (scanner != null) scanner.UnregisterTriangle(this);
     }
 
     public void Reset()
     {
+        if (mesh == null) return;
         mesh.vertices = new[]
         {
             new Vector3(),
@@ -74,6 +83,11 @@ public class MeshTriangle : MonoBehaviour
         };
         mesh.triangles = new[] {0, 1, 2};
         
-        meshRenderer.material.color = Color.white.WithAlpha(0.1f * Mathf.Min(1f, scanner.opacity));
+        ApplyOpacity(scanner.EffectiveOpacity);
+    }
+
+    public void ApplyOpacity(float scannerOpacity)
+    {
+        if (material != null) material.color = Color.white.WithAlpha(0.1f * scannerOpacity);
     }
 }

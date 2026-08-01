@@ -15,7 +15,8 @@ public class UiEventRuntimeTests
     {
         Completion,
         Failure,
-        Exit
+        Exit,
+        Disposal
     }
 
     [Test]
@@ -229,6 +230,7 @@ public class UiEventRuntimeTests
     [TestCase(PresentationReleaseTrigger.Completion)]
     [TestCase(PresentationReleaseTrigger.Failure)]
     [TestCase(PresentationReleaseTrigger.Exit)]
+    [TestCase(PresentationReleaseTrigger.Disposal)]
     public void ControllerReleaseEventsForceClearAnActiveSystemMessage(
         PresentationReleaseTrigger trigger)
     {
@@ -282,6 +284,9 @@ public class UiEventRuntimeTests
                 break;
             case PresentationReleaseTrigger.Exit:
                 game.onGameBeforeExit.Invoke(game);
+                break;
+            case PresentationReleaseTrigger.Disposal:
+                game.onGameDisposed.Invoke(game);
                 break;
         }
     }

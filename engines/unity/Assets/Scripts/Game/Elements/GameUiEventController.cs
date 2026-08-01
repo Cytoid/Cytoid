@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,15 +10,17 @@ public sealed class GameUiEventController
 {
     private readonly Game game;
     private readonly ChartUiEventTimeline timeline;
+    private readonly Action<string> warningLogger;
     private readonly Dictionary<ChartUiTarget, CanvasTarget> canvasTargets =
         new Dictionary<ChartUiTarget, CanvasTarget>();
 
     private bool active = true;
 
-    public GameUiEventController(Game game)
+    public GameUiEventController(Game game, Action<string> warningLogger = null)
     {
         this.game = game;
-        timeline = new ChartUiEventTimeline(game.Chart.Model, Debug.LogWarning);
+        this.warningLogger = warningLogger ?? Debug.LogWarning;
+        timeline = new ChartUiEventTimeline(game.Chart.Model, this.warningLogger);
         ResolveTargets();
 
         // Establish only the initial state before the overlay enters. Events authored at tick zero
@@ -84,10 +87,9 @@ public sealed class GameUiEventController
     private void ResolveTargets()
     {
         var overlay = game.levelInfoParent != null ? game.levelInfoParent.transform.parent : null;
-        if (overlay == null) return;
 
         AddCanvasTarget(ChartUiTarget.Combo, FindDescendant(overlay, "Combo"), Vector2.zero);
-        AddCanvasTarget(ChartUiTarget.Score, FindDescendant(overlay, "Score"), Vector2.zero);
+        AddCanvasTarget(ChartUiTarget.Score, FindPerformanceTarget(overlay), Vector2.zero);
 
         var left = game.levelInfoParent != null
             ? FindDescendant(game.levelInfoParent.transform, "LevelInfo") ?? game.levelInfoParent.transform
@@ -102,9 +104,21 @@ public sealed class GameUiEventController
         AddCanvasTarget(ChartUiTarget.ProgressBar, FindDescendant(overlay, "ProgressIndicator"), Vector2.zero);
     }
 
+    private static Transform FindPerformanceTarget(Transform overlay)
+    {
+        var score = FindDescendant(overlay, "Score");
+        if (score?.parent != null && FindDescendant(score.parent, "Accuracy") != null)
+            return score.parent;
+        return score;
+    }
+
     private void AddCanvasTarget(ChartUiTarget target, Transform transform, Vector2 animationDirection)
     {
-        if (!(transform is RectTransform rectTransform)) return;
+        if (!(transform is RectTransform rectTransform))
+        {
+            warningLogger?.Invoke($"Could not resolve C2 UI canvas target '{target}'.");
+            return;
+        }
         var canvasGroup = transform.GetComponent<CanvasGroup>();
         if (canvasGroup == null) canvasGroup = transform.gameObject.AddComponent<CanvasGroup>();
         canvasTargets[target] = new CanvasTarget(canvasGroup, rectTransform, animationDirection);

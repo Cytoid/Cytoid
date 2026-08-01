@@ -4,6 +4,20 @@ using NUnit.Framework;
 public class ChartUiEventTimelineTests
 {
     [Test]
+    public void MissingModelOrEventListPreservesInitializedTargetAlpha()
+    {
+        var missingModel = new ChartUiEventTimeline(null);
+        var missingEvents = new ChartUiEventTimeline(new ChartModel
+        {
+            is_start_without_ui = true,
+            event_order_list = null
+        });
+
+        Assert.That(missingModel.Evaluate(ChartUiTarget.Combo, 0).Alpha, Is.EqualTo(1));
+        Assert.That(missingEvents.Evaluate(ChartUiTarget.Combo, 0).Alpha, Is.EqualTo(0));
+    }
+
+    [Test]
     public void InitialVisibilityAndCytoidSideTargetsAreResolvedIndependently()
     {
         var model = Model(true,

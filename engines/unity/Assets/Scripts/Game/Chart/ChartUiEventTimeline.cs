@@ -98,7 +98,7 @@ public sealed class ChartUiEventTimeline
 
     public ChartUiEventTimeline(ChartModel model, Action<string> warningLogger = null)
     {
-        var initial = model.is_start_without_ui ? 0f : 1f;
+        var initial = model != null && model.is_start_without_ui ? 0f : 1f;
         var alphaDrafts = new Dictionary<ChartUiTarget, List<AlphaDraft>>();
         var animationDrafts = new Dictionary<ChartUiTarget, List<AnimationSnapshot>>();
         foreach (var target in SupportedTargets)
@@ -106,7 +106,11 @@ public sealed class ChartUiEventTimeline
             initialAlpha[target] = initial;
             alphaDrafts[target] = new List<AlphaDraft>();
             animationDrafts[target] = new List<AnimationSnapshot>();
+            alphaSnapshots[target] = new List<AlphaSnapshot>();
+            animationSnapshots[target] = new List<AnimationSnapshot>();
         }
+
+        if (model?.event_order_list == null) return;
 
         var sequence = 0;
         foreach (var order in model.event_order_list)
@@ -190,19 +194,21 @@ public sealed class ChartUiEventTimeline
 
     public ChartUiTargetState Evaluate(ChartUiTarget target, float time)
     {
-        if (!initialAlpha.ContainsKey(target)) return new ChartUiTargetState(1, 1, 1, ChartUiAnimationKind.None);
+        if (!initialAlpha.TryGetValue(target, out var alpha) ||
+            !alphaSnapshots.TryGetValue(target, out var targetAlphaSnapshots) ||
+            !animationSnapshots.TryGetValue(target, out var targetAnimationSnapshots))
+            return new ChartUiTargetState(1, 1, 1, ChartUiAnimationKind.None);
 
-        var alpha = initialAlpha[target];
-        var alphaIndex = FindLastAtOrBefore(alphaSnapshots[target], time, snapshot => snapshot.Time);
-        if (alphaIndex >= 0) alpha = ResolveAlpha(alphaSnapshots[target][alphaIndex], time);
+        var alphaIndex = FindLastAtOrBefore(targetAlphaSnapshots, time, snapshot => snapshot.Time);
+        if (alphaIndex >= 0) alpha = ResolveAlpha(targetAlphaSnapshots[alphaIndex], time);
 
         var animationAlpha = 1f;
         var animationProgress = 1f;
         var animationKind = ChartUiAnimationKind.None;
-        var animationIndex = FindLastAtOrBefore(animationSnapshots[target], time, snapshot => snapshot.Time);
+        var animationIndex = FindLastAtOrBefore(targetAnimationSnapshots, time, snapshot => snapshot.Time);
         if (animationIndex >= 0)
         {
-            var snapshot = animationSnapshots[target][animationIndex];
+            var snapshot = targetAnimationSnapshots[animationIndex];
             animationKind = snapshot.Kind;
             animationProgress = snapshot.Duration <= 0
                 ? 1

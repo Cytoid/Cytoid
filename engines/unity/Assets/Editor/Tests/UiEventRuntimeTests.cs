@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
+using TMPro;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -76,6 +77,34 @@ public class UiEventRuntimeTests
     }
 
     [Test]
+    public void ScoreUiTargetIncludesAccuracyThroughTheirSharedPerformanceContainer()
+    {
+        var scene = EditorSceneManager.OpenScene(GameScenePath, OpenSceneMode.Additive);
+        try
+        {
+            var game = scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<Game>(true))
+                .Single();
+            var overlay = game.levelInfoParent.transform.parent;
+            var method = typeof(GameUiEventController).GetMethod(
+                "FindPerformanceTarget",
+                BindingFlags.Static | BindingFlags.NonPublic);
+
+            var target = (Transform) method?.Invoke(null, new object[] {overlay});
+
+            Assert.That(target, Is.Not.Null);
+            Assert.That(target.name, Is.EqualTo("Performance"));
+            Assert.That(target.Find("Score"), Is.Not.Null);
+            Assert.That(target.Find("Accuracy"), Is.Not.Null);
+            Assert.That(target.GetComponent<CanvasGroup>(), Is.Not.Null);
+        }
+        finally
+        {
+            EditorSceneManager.CloseScene(scene, true);
+        }
+    }
+
+    [Test]
     public void StoryboardColorOverrideWinsOverChartEventColor()
     {
         var scene = EditorSceneManager.OpenScene(GameScenePath, OpenSceneMode.Additive);
@@ -126,6 +155,42 @@ public class UiEventRuntimeTests
             Assert.That(tooltip.tmp.color.b, Is.EqualTo(0.75f).Within(0.0001f));
             Assert.That(tooltip.tmp.color.a, Is.EqualTo(0.75f).Within(0.0001f));
             Assert.That(tooltip.tmp.characterSpacing, Is.EqualTo(21).Within(0.0001f));
+            Assert.That(tooltip.tmp.textWrappingMode,
+                Is.EqualTo(TextWrappingModes.PreserveWhitespaceNoWrap));
+
+            tooltip.ApplyChartEventState(new ChartEventPresentationState(
+                true,
+                ChartEventPresentationKind.SpeedUp,
+                string.Empty,
+                Color.white,
+                Color.white,
+                1,
+                0));
+            Assert.That(tooltip.tmp.textWrappingMode,
+                Is.EqualTo(TextWrappingModes.PreserveWhitespaceNoWrap));
+        }
+        finally
+        {
+            EditorSceneManager.CloseScene(scene, true);
+        }
+    }
+
+    [Test]
+    public void TooltipDoesNotExecuteUnsupportedTags()
+    {
+        var scene = EditorSceneManager.OpenScene(GameScenePath, OpenSceneMode.Additive);
+        try
+        {
+            var tooltip = scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<GameTooltipText>(true))
+                .Single();
+            var sanitized = TmpRichTextSanitizer.Sanitize(
+                "<mark=#FFFFFF80>Visible</mark>");
+            tooltip.tmp.text = sanitized;
+            tooltip.tmp.ForceMeshUpdate();
+
+            Assert.That(sanitized, Is.EqualTo("Visible"));
+            Assert.That(tooltip.tmp.GetParsedText(), Is.EqualTo("Visible"));
         }
         finally
         {
@@ -144,12 +209,11 @@ public class UiEventRuntimeTests
         return scanner;
     }
 
-    private static void SetPrivateField<T>(MeshTriangle triangle, string name, T value) =>
-        typeof(MeshTriangle).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)
-            ?.SetValue(triangle, value);
-
-    private static void SetPrivateField<T>(Scanner scanner, string name, T value) =>
-        typeof(Scanner).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)
-            ?.SetValue(scanner, value);
+    private static void SetPrivateField<TOwner, TValue>(TOwner owner, string name, TValue value)
+    {
+        var field = typeof(TOwner).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(field, Is.Not.Null, $"{typeof(TOwner).Name} has no private field '{name}'.");
+        field.SetValue(owner, value);
+    }
 
 }

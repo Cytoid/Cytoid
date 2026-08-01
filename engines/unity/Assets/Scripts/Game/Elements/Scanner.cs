@@ -134,17 +134,20 @@ public class Scanner : SingletonMonoBehavior<Scanner>
 
         if (uiEventAnimationKind == ChartUiAnimationKind.In)
         {
+            StopGeometryAnimation();
             hasAppliedUiEventAnimation = true;
             if (uiEventAnimationProgress >= 1) ApplyNormalLineGeometry();
             else ApplyLineGeometry(uiEventAnimationProgress);
         }
         else if (uiEventAnimationKind == ChartUiAnimationKind.Out)
         {
+            StopGeometryAnimation();
             hasAppliedUiEventAnimation = true;
             ApplyLineGeometry(1 - uiEventAnimationProgress);
         }
         else if (hasAppliedUiEventAnimation)
         {
+            StopGeometryAnimation();
             // A backward seek can move before the latest animation snapshot. Restore the stable
             // geometry once, without overriding the normal system enter animation every frame.
             ApplyNormalLineGeometry();

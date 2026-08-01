@@ -16,7 +16,9 @@ public sealed class GameEventPresentationController
         this.game = game;
         timeline = new ChartEventPresentationTimeline(game.Chart.Model, Debug.LogWarning);
 
-        foreach (var candidate in Object.FindObjectsOfType<GameTooltipText>(true))
+        foreach (var candidate in Object.FindObjectsByType<GameTooltipText>(
+                     FindObjectsInactive.Include,
+                     FindObjectsSortMode.None))
         {
             if (candidate.game != game) continue;
             tooltip = candidate;

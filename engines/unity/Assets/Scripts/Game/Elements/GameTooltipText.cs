@@ -22,6 +22,7 @@ public class GameTooltipText : MonoBehaviour
 
     protected void Awake()
     {
+        tmp.textWrappingMode = TextWrappingModes.PreserveWhitespaceNoWrap;
         game.onGameWillUnpause.AddListener(async _ =>
         {
             await UniTask.Delay(TimeSpan.FromSeconds(1.4f));

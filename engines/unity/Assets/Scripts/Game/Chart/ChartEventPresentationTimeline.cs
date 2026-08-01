@@ -52,7 +52,9 @@ public readonly struct ChartEventPresentationState
 /// <summary>
 /// Seek-safe presentation track shared by C2 speed-change and custom-message events.
 /// Later events interrupt the previous text and continue the scanline transition from the
-/// previously sampled color. Events at the same time use their authored source order.
+/// previously sampled color. Overlapping non-empty message lifetimes share one opacity run,
+/// while their content, color, and letter-spacing animations remain event-local. Events at
+/// the same time use their authored source order.
 /// </summary>
 public sealed class ChartEventPresentationTimeline
 {
@@ -62,6 +64,7 @@ public sealed class ChartEventPresentationTimeline
     public const float TotalDuration = FadeInDuration + HoldDuration + FadeOutDuration;
     public const float TextDuration = 1.5f;
     public const float TextFadeDuration = 0.4f;
+    public const float TextHoldDuration = TextDuration - TextFadeDuration * 2;
     public const float MaxLetterSpacing = 192f;
 
     private readonly List<Snapshot> snapshots = new List<Snapshot>();
@@ -145,6 +148,8 @@ public sealed class ChartEventPresentationTimeline
                 startColor,
                 draft.TargetColor));
         }
+
+        BuildMessageOpacityRuns();
     }
 
     public ChartEventPresentationState Evaluate(float time)
@@ -164,9 +169,39 @@ public sealed class ChartEventPresentationTimeline
             snapshot.Content,
             snapshot.TargetColor,
             ResolveScanlineColor(snapshot, time),
-            hasText ? ResolveTextAlpha(elapsed) : 0,
+            hasText ? ResolveTextAlpha(snapshot, time) : 0,
             ResolveLetterSpacing(snapshot.Kind, elapsed));
     }
+
+    private void BuildMessageOpacityRuns()
+    {
+        for (var startIndex = 0; startIndex < snapshots.Count;)
+        {
+            if (!HasMessageText(snapshots[startIndex]))
+            {
+                startIndex++;
+                continue;
+            }
+
+            var endIndex = startIndex;
+            while (endIndex + 1 < snapshots.Count &&
+                   HasMessageText(snapshots[endIndex + 1]) &&
+                   snapshots[endIndex + 1].Time < snapshots[endIndex].Time + TextDuration)
+                endIndex++;
+
+            var runStart = snapshots[startIndex].Time;
+            var holdStart = Mathf.Max(runStart + TextFadeDuration, snapshots[endIndex].Time);
+            var runEnd = holdStart + TextHoldDuration + TextFadeDuration;
+            for (var index = startIndex; index <= endIndex; index++)
+                snapshots[index] = snapshots[index].WithTextOpacityRun(runStart, runEnd);
+
+            startIndex = endIndex + 1;
+        }
+    }
+
+    private static bool HasMessageText(Snapshot snapshot) =>
+        snapshot.Kind == ChartEventPresentationKind.Message &&
+        !string.IsNullOrEmpty(snapshot.Content);
 
     private int FindLastAtOrBefore(float time)
     {
@@ -202,13 +237,23 @@ public sealed class ChartEventPresentationTimeline
             (elapsed - FadeInDuration - HoldDuration) / FadeOutDuration);
     }
 
-    private static float ResolveTextAlpha(float elapsed)
+    private static float ResolveTextAlpha(Snapshot snapshot, float time)
     {
-        if (elapsed <= 0 || elapsed >= TextDuration) return 0;
+        if (snapshot.Kind != ChartEventPresentationKind.Message)
+            return ResolveEventTextAlpha(time - snapshot.Time);
+
+        var elapsed = time - snapshot.TextOpacityRunStart;
+        var duration = snapshot.TextOpacityRunEnd - snapshot.TextOpacityRunStart;
+        return ResolveEventTextAlpha(elapsed, duration);
+    }
+
+    private static float ResolveEventTextAlpha(float elapsed, float duration = TextDuration)
+    {
+        if (elapsed <= 0 || elapsed >= duration) return 0;
         if (elapsed < TextFadeDuration)
             return EaseOutCubic(elapsed / TextFadeDuration);
 
-        var fadeOutStart = TextDuration - TextFadeDuration;
+        var fadeOutStart = duration - TextFadeDuration;
         if (elapsed < fadeOutStart) return 1;
         return 1 - EaseOutCubic((elapsed - fadeOutStart) / TextFadeDuration);
     }
@@ -240,12 +285,14 @@ public sealed class ChartEventPresentationTimeline
     {
         args = args ?? string.Empty;
         var separator = args.IndexOf(',');
-        content = separator < 0 ? args : args.Substring(0, separator);
+        content = TmpRichTextSanitizer.Sanitize(
+            separator < 0 ? args : args.Substring(0, separator));
         var colorText = separator < 0 ? string.Empty : args.Substring(separator + 1).Trim();
 
         if (IsRgbHexColor(colorText) && ColorUtility.TryParseHtmlString(colorText, out color)) return;
 
         color = Color.white;
+        if (colorText.Length == 0) return;
         warningLogger?.Invoke(
             $"Invalid C2 message color '{colorText}'. Expected #RRGGBB; using white.");
     }
@@ -293,6 +340,8 @@ public sealed class ChartEventPresentationTimeline
         public string Content { get; }
         public Color StartColor { get; }
         public Color TargetColor { get; }
+        public float TextOpacityRunStart { get; }
+        public float TextOpacityRunEnd { get; }
 
         public Snapshot(
             float time,
@@ -306,6 +355,35 @@ public sealed class ChartEventPresentationTimeline
             Content = content;
             StartColor = startColor;
             TargetColor = targetColor;
+            TextOpacityRunStart = time;
+            TextOpacityRunEnd = time + TextDuration;
         }
+
+        private Snapshot(
+            float time,
+            ChartEventPresentationKind kind,
+            string content,
+            Color startColor,
+            Color targetColor,
+            float textOpacityRunStart,
+            float textOpacityRunEnd)
+        {
+            Time = time;
+            Kind = kind;
+            Content = content;
+            StartColor = startColor;
+            TargetColor = targetColor;
+            TextOpacityRunStart = textOpacityRunStart;
+            TextOpacityRunEnd = textOpacityRunEnd;
+        }
+
+        public Snapshot WithTextOpacityRun(float start, float end) => new Snapshot(
+            Time,
+            Kind,
+            Content,
+            StartColor,
+            TargetColor,
+            start,
+            end);
     }
 }

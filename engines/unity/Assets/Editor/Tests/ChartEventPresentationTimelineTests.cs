@@ -18,7 +18,27 @@ public class ChartEventPresentationTimelineTests
     }
 
     [Test]
-    public void InvalidOrMissingColorWarnsAndFallsBackToWhite()
+    public void MessageNormalizesQuotedUnityColorTagsForTmp()
+    {
+        var timeline = Timeline(Order(
+            0,
+            Event(
+                ChartEventType.Message,
+                "Status: <color=\"#12AB34\">ready</color> " +
+                "<COLOR='#A1B2C3'>now</COLOR>,#FFFFFF")));
+
+        var state = timeline.Evaluate(1);
+
+        Assert.That(
+            state.Content,
+            Is.EqualTo(
+                    "Status: <color=#12AB34>ready</color> <color=#A1B2C3>now</color>")
+                .IgnoreCase);
+        AssertColor(state.TextColor, Color.white);
+    }
+
+    [Test]
+    public void InvalidColorWarnsAndFallsBackToWhite()
     {
         var warnings = new List<string>();
         var timeline = new ChartEventPresentationTimeline(
@@ -26,6 +46,18 @@ public class ChartEventPresentationTimelineTests
             warnings.Add);
 
         Assert.That(warnings, Has.Count.EqualTo(1));
+        AssertColor(timeline.Evaluate(1).ScanlineColor, Color.white);
+    }
+
+    [Test]
+    public void MissingColorSilentlyFallsBackToWhite()
+    {
+        var warnings = new List<string>();
+        var timeline = new ChartEventPresentationTimeline(
+            Model(Order(0, Event(ChartEventType.Message, "Hello"))),
+            warnings.Add);
+
+        Assert.That(warnings, Is.Empty);
         AssertColor(timeline.Evaluate(1).ScanlineColor, Color.white);
     }
 
@@ -80,6 +112,70 @@ public class ChartEventPresentationTimelineTests
         Assert.That(speedDown.Evaluate(0.75f).LetterSpacing,
             Is.EqualTo(ChartEventPresentationTimeline.MaxLetterSpacing -
                        speedUp.Evaluate(0.75f).LetterSpacing).Within(0.0001f));
+    }
+
+    [Test]
+    public void OverlappingMessagesShareOpacityButKeepSpacingEventLocal()
+    {
+        var timeline = Timeline(
+            Order(0, Event(ChartEventType.Message, "Frame A,#FFFFFF")),
+            Order(0.3f, Event(ChartEventType.Message, "Frame B,#FFFFFF")));
+
+        var state = timeline.Evaluate(0.3f);
+
+        Assert.That(state.Content, Is.EqualTo("Frame B"));
+        Assert.That(state.TextAlpha, Is.EqualTo(0.984375f).Within(0.0001f));
+        Assert.That(state.LetterSpacing, Is.EqualTo(0).Within(0.0001f));
+
+        state = timeline.Evaluate(0.45f);
+        Assert.That(state.TextAlpha, Is.EqualTo(1).Within(0.0001f));
+        Assert.That(state.LetterSpacing, Is.EqualTo(
+            ChartEventPresentationTimeline.MaxLetterSpacing * 0.00001f).Within(0.0001f));
+    }
+
+    [Test]
+    public void MergedOpacityRunDoesNotDipInTheFormerFadeOverlapWindow()
+    {
+        var timeline = Timeline(
+            Order(0, Event(ChartEventType.Message, "First,#FFFFFF")),
+            Order(1.1f, Event(ChartEventType.Message, "Second,#FFFFFF")));
+
+        Assert.That(timeline.Evaluate(1.1f).TextAlpha, Is.EqualTo(1).Within(0.0001f));
+        Assert.That(timeline.Evaluate(1.3f).TextAlpha, Is.EqualTo(1).Within(0.0001f));
+        Assert.That(timeline.Evaluate(1.8f).TextAlpha, Is.EqualTo(1).Within(0.0001f));
+        Assert.That(timeline.Evaluate(2).TextAlpha, Is.EqualTo(0.125f).Within(0.001f));
+        Assert.That(timeline.Evaluate(2.2f).TextAlpha, Is.EqualTo(0).Within(0.0001f));
+    }
+
+    [Test]
+    public void NonOverlappingMessageStartsANewOpacityRun()
+    {
+        var timeline = Timeline(
+            Order(0, Event(ChartEventType.Message, "First,#FFFFFF")),
+            Order(1.5f, Event(ChartEventType.Message, "Second,#FFFFFF")));
+
+        Assert.That(timeline.Evaluate(1.5f).Content, Is.EqualTo("Second"));
+        Assert.That(timeline.Evaluate(1.5f).TextAlpha, Is.EqualTo(0).Within(0.0001f));
+        Assert.That(timeline.Evaluate(1.7f).TextAlpha, Is.EqualTo(0.875f).Within(0.001f));
+    }
+
+    [Test]
+    public void SpeedAndEmptyMessageEventsBreakMessageOpacityRuns()
+    {
+        var interruptedBySpeed = Timeline(
+            Order(0, Event(ChartEventType.Message, "First,#FFFFFF")),
+            Order(0.5f, Event(ChartEventType.SpeedUp, "R")),
+            Order(0.6f, Event(ChartEventType.Message, "Second,#FFFFFF")));
+        var interruptedByEmptyMessage = Timeline(
+            Order(0, Event(ChartEventType.Message, "First,#FFFFFF")),
+            Order(0.5f, Event(ChartEventType.Message, ",#FFFFFF")),
+            Order(0.6f, Event(ChartEventType.Message, "Second,#FFFFFF")));
+
+        Assert.That(interruptedBySpeed.Evaluate(0.6f).TextAlpha,
+            Is.EqualTo(0).Within(0.0001f));
+        Assert.That(interruptedByEmptyMessage.Evaluate(0.5f).IsTextVisible, Is.False);
+        Assert.That(interruptedByEmptyMessage.Evaluate(0.6f).TextAlpha,
+            Is.EqualTo(0).Within(0.0001f));
     }
 
     [Test]

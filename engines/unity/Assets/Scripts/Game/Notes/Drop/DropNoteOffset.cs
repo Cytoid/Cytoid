@@ -12,7 +12,8 @@ internal static class DropNoteOffset
     // itself is left untouched so the CircleCollider2D stays anchored at the landing point.
     //
     // Returns Vector3.zero when the offset should be skipped: malformed chart (durationTick<=0),
-    // already landed (timeDiff<=0), or singular/non-finite local scale (note is invisible anyway).
+    // already landed (timeDiff<=0), non-finite inputs (NaN/Infinity in timeDiff or scale), or
+    // singular local scale (note is invisible anyway).
     public static Vector3 ComputeLocalOffset(Note note)
     {
         var page = note.Page;
@@ -24,7 +25,7 @@ internal static class DropNoteOffset
         // Up rises from below (-Y).
         float dirSign = note.Model.NoteDirection == 1 ? -1f : 1f; // Up -> -1, Down -> +1
         float timeDiffSeconds = (float) (note.Model.start_time - note.Game.Time);
-        if (timeDiffSeconds <= 0f) return Vector3.zero;
+        if (timeDiffSeconds <= 0f || !float.IsFinite(timeDiffSeconds)) return Vector3.zero;
 
         // Cylheim formula in screen-heights (resolution-independent):
         //   offsetY_screen_heights = dir * (8_000_000 / durationTick) * timeDiff / 1080

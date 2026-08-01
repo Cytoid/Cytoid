@@ -72,57 +72,15 @@ public class DropClickNoteRenderer : ClassicClickNoteRenderer
         ApplyDropOffset();
     }
 
-    // Faithful port of Cylheim pixi-playback-note-layer.ts:524-540 getPlaybackDropSpriteOffsetY,
-    // then applied only to visual children so the collider stays at the landing scanline point.
-    // Verified: durationTick=500, timeDiff=0.1s, height=540 -> 800px; height=1080 -> 1600px.
+    // Drives the falling animation by offsetting only the visual children — see
+    // DropNoteOffset.ComputeLocalOffset for the math and rationale.
     private void ApplyDropOffset()
     {
-        var page = Note.Page;
-        double durationTick = (page.end_tick - page.start_tick) * 5.0;
-
-        Vector3 localOffset = Vector3.zero;
-        // Cylheim guard: skip when chart is malformed. timeDiff<=0 means "at or past landing";
-        // localOffset stays zero and children snap back to base localPosition.
-        if (durationTick > 0 && double.IsFinite(durationTick))
-        {
-            // Cylheim uses screen coords (Y down): Up=+1, Down=-1.
-            // Unity uses world coords (Y up): flip the sign so Down falls from above (+Y),
-            // Up rises from below (-Y).
-            float dirSign = Note.Model.NoteDirection == 1 ? -1f : 1f; // Up -> -1, Down -> +1
-            float timeDiffSeconds = (float) (Note.Model.start_time - Note.Game.Time);
-
-            if (timeDiffSeconds > 0f)
-            {
-                // Cylheim formula in screen-heights (resolution-independent):
-                //   offsetY_screen_heights = dir * (8_000_000 / durationTick) * timeDiff / 1080
-                // Translate to Unity world units via visible camera height (2 * orthographicSize):
-                float screenHeightWorld = 2f * Note.Game.camera.orthographicSize;
-                float offsetYWorld = dirSign * (8_000_000f / (float) durationTick) * timeDiffSeconds
-                                     / 1080f * screenHeightWorld;
-                // Translate the world-space vertical offset into Note's local space so the
-                // visual amplitude is correct under any combination of rotation AND scale.
-                // InverseTransformVector accounts for both. Guard against singular (zero) or
-                // non-finite scale to avoid NaN from the matrix inversion — a zero-scale note
-                // is invisible anyway, so the offset is irrelevant.
-                Vector3 s = Note.transform.localScale;
-                if (s.x != 0f && s.y != 0f && s.z != 0f
-                    && float.IsFinite(s.x) && float.IsFinite(s.y) && float.IsFinite(s.z))
-                {
-                    localOffset = Note.transform.InverseTransformVector(
-                        new Vector3(0f, offsetYWorld, 0f));
-                }
-            }
-        }
-
-        ApplyChildOffset(Ring.transform, ringBaseLocal, localOffset);
-        ApplyChildOffset(Fill.transform, fillBaseLocal, localOffset);
-        if (hasCore) ApplyChildOffset(Core.transform, coreBaseLocal, localOffset);
-        if (hasNoteId) ApplyChildOffset(NoteId.transform, noteIdBaseLocal, localOffset);
-    }
-
-    private static void ApplyChildOffset(Transform t, Vector3 baseLocal, Vector3 offset)
-    {
-        t.localPosition = baseLocal + offset;
+        Vector3 localOffset = DropNoteOffset.ComputeLocalOffset(Note);
+        DropNoteOffset.ApplyToChild(Ring.transform, ringBaseLocal, localOffset);
+        DropNoteOffset.ApplyToChild(Fill.transform, fillBaseLocal, localOffset);
+        if (hasCore) DropNoteOffset.ApplyToChild(Core.transform, coreBaseLocal, localOffset);
+        if (hasNoteId) DropNoteOffset.ApplyToChild(NoteId.transform, noteIdBaseLocal, localOffset);
     }
 
     // Drop notes ignore the approach-scale animation: always full BaseTransformSize.

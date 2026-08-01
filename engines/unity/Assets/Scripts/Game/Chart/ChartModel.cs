@@ -15,6 +15,8 @@ public class ChartModel
     public Dictionary<int, Note> note_map = new Dictionary<int, Note>();
     public List<EventOrder> event_order_list = new List<EventOrder>();
 
+    public bool is_start_without_ui;
+
     public double music_offset;
     public double size = 1.0;
     public double opacity = 1.0;

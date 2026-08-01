@@ -1,7 +1,6 @@
 ﻿using System.Collections;
-using DG.Tweening;
+using System.Collections.Generic;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 public class Scanner : SingletonMonoBehavior<Scanner>
 {
@@ -17,9 +16,15 @@ public class Scanner : SingletonMonoBehavior<Scanner>
     public LineRenderer lineRenderer;
     public float animationDuration;
 
-    private Color colorNext = new Color(1, 1, 1);
-    private float colorNextSpeed;
-    private Coroutine animationCoroutine;
+    private Color currentColor = Color.white;
+    private Coroutine geometryAnimationCoroutine;
+
+    private float uiEventOpacity = 1f;
+    private float uiEventAnimationOpacity = 1f;
+    private ChartUiAnimationKind uiEventAnimationKind = ChartUiAnimationKind.None;
+    private float uiEventAnimationProgress = 1f;
+    private bool hasAppliedUiEventAnimation;
+    private readonly HashSet<MeshTriangle> triangles = new HashSet<MeshTriangle>();
 
     private bool exited;
 
@@ -34,8 +39,6 @@ public class Scanner : SingletonMonoBehavior<Scanner>
         game.onGameStarted.AddListener(_ => PlayEnter());
         game.onGameCompleted.AddListener(_ => PlayExit());
         game.onGameUpdate.AddListener(OnGameUpdate);
-        game.onGameSpeedUp.AddListener(_ => PlaySpeedUp());
-        game.onGameSpeedDown.AddListener(_ => PlaySpeedDown());
     }
 
     private void OnEnable()
@@ -45,74 +48,34 @@ public class Scanner : SingletonMonoBehavior<Scanner>
         lineRenderer.SetPosition(1, new Vector3(0, 0, 0));
         gameObject.GetComponent<LineRenderer>().startColor = new Color(1f, 1f, 1f);
         gameObject.GetComponent<LineRenderer>().startColor = new Color(1f, 1f, 1f);
-        colorNext = new Color(1f, 1f, 1f, opacity);
-        colorNextSpeed = 9.0f;
+        currentColor = Color.white;
     }
 
     private IEnumerator ResetLine()
     {
         yield return null;
-        lineRenderer.positionCount = 2;
-        lineRenderer.SetPosition(0,
-            new Vector3(-game.camera.orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height * 1000f, 0,
-                0));
-        lineRenderer.SetPosition(1,
-            new Vector3(game.camera.orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height * 1000f, 0,
-                0));
-        lineRenderer.useWorldSpace = false;
-        lineRenderer.endWidth = 0.05f;
-        lineRenderer.startWidth = 0.05f;
+        ApplyNormalLineGeometry();
     }
 
-    public void EnsureSingleAnimation()
+    private void StopGeometryAnimation()
     {
-        if (animationCoroutine != null)
+        if (geometryAnimationCoroutine != null)
         {
-            StopCoroutine(animationCoroutine);
-            StartCoroutine(ResetLine());
+            StopCoroutine(geometryAnimationCoroutine);
+            geometryAnimationCoroutine = null;
         }
     }
 
     public void PlayEnter()
     {
-        EnsureSingleAnimation();
-        animationCoroutine = StartCoroutine(PlayEnterAnimation());
+        StopGeometryAnimation();
+        geometryAnimationCoroutine = StartCoroutine(PlayEnterAnimation());
     }
 
     public void PlayExit()
     {
-        EnsureSingleAnimation();
-        animationCoroutine = StartCoroutine(PlayExitAnimation());
-    }
-
-    public void PlaySpeedUp()
-    {
-        EnsureSingleAnimation();
-        animationCoroutine = StartCoroutine(PlaySpeedUpAnimation());
-    }
-
-    public void PlaySpeedDown()
-    {
-        EnsureSingleAnimation();
-        animationCoroutine = StartCoroutine(PlaySpeedDownAnimation());
-    }
-
-    IEnumerator PlaySpeedUpAnimation()
-    {
-        colorNext = SpeedUpColor;
-        colorNextSpeed = 6.0f;
-        yield return new WaitForSeconds(3.5f);
-        colorNext = new Color(1f, 1f, 1f);
-        colorNextSpeed = 24.0f;
-    }
-
-    IEnumerator PlaySpeedDownAnimation()
-    {
-        colorNext = SpeedDownColor;
-        colorNextSpeed = 6.0f;
-        yield return new WaitForSeconds(3.5f);
-        colorNext = new Color(1f, 1f, 1f);
-        colorNextSpeed = 24.0f;
+        StopGeometryAnimation();
+        geometryAnimationCoroutine = StartCoroutine(PlayExitAnimation());
     }
 
     IEnumerator PlayExitAnimation()
@@ -122,18 +85,7 @@ public class Scanner : SingletonMonoBehavior<Scanner>
         lineRenderer.positionCount = 100;
         while (timing < animationDuration)
         {
-            var progress = timing / animationDuration;
-            var randomRange = 0; // progress / 10;
-            for (var i = 0; i < 100; i++)
-            {
-                var orthographicSize = game.camera.orthographicSize;
-                lineRenderer.SetPosition(i,
-                    new Vector3(
-                        (-orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height + 2f *
-                         orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height * (i / 100f)) *
-                        (1 - progress),
-                        Random.Range(-randomRange, randomRange)));
-            }
+            ApplyLineGeometry(1 - timing / animationDuration);
 
             yield return null;
             // Continue here next frame
@@ -142,6 +94,7 @@ public class Scanner : SingletonMonoBehavior<Scanner>
 
         lineRenderer.positionCount = 0;
         exited = true;
+        geometryAnimationCoroutine = null;
     }
 
     IEnumerator PlayEnterAnimation()
@@ -151,18 +104,7 @@ public class Scanner : SingletonMonoBehavior<Scanner>
         lineRenderer.positionCount = 100;
         while (timing < animationDuration)
         {
-            var progress = timing / animationDuration;
-            var randomRange = 0; // (1 - progress) / 10;
-            for (var i = 0; i < 100; i++)
-            {
-                var orthographicSize = game.camera.orthographicSize;
-                lineRenderer.SetPosition(i,
-                    new Vector3(
-                        (-orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height + 2f *
-                         orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height * (i / 100f)) *
-                        progress,
-                        Random.Range(-randomRange, randomRange)));
-            }
+            ApplyLineGeometry(timing / animationDuration);
 
             yield return null;
             //Continue here next frame
@@ -170,40 +112,120 @@ public class Scanner : SingletonMonoBehavior<Scanner>
         }
 
         StartCoroutine(ResetLine());
+        exited = false;
+        geometryAnimationCoroutine = null;
     }
+
+    public float EffectiveOpacity => exited
+        ? 0
+        : Mathf.Clamp01(opacity * uiEventOpacity * uiEventAnimationOpacity);
+
+    public void SetUiEventState(
+        float targetOpacity,
+        float animationOpacity,
+        ChartUiAnimationKind animationKind,
+        float animationProgress,
+        bool applyPosition = true)
+    {
+        uiEventOpacity = Mathf.Clamp01(targetOpacity);
+        uiEventAnimationOpacity = Mathf.Clamp01(animationOpacity);
+        uiEventAnimationKind = animationKind;
+        uiEventAnimationProgress = Mathf.Clamp01(animationProgress);
+
+        if (uiEventAnimationKind == ChartUiAnimationKind.In)
+        {
+            hasAppliedUiEventAnimation = true;
+            if (uiEventAnimationProgress >= 1) ApplyNormalLineGeometry();
+            else ApplyLineGeometry(uiEventAnimationProgress);
+        }
+        else if (uiEventAnimationKind == ChartUiAnimationKind.Out)
+        {
+            hasAppliedUiEventAnimation = true;
+            ApplyLineGeometry(1 - uiEventAnimationProgress);
+        }
+        else if (hasAppliedUiEventAnimation)
+        {
+            // A backward seek can move before the latest animation snapshot. Restore the stable
+            // geometry once, without overriding the normal system enter animation every frame.
+            ApplyNormalLineGeometry();
+            hasAppliedUiEventAnimation = false;
+        }
+
+        // Storyboard position is updated during onGameLateUpdate. Reapply it here so position,
+        // color and opacity all compose in the same rendered frame.
+        if (applyPosition) ApplyPosition();
+        ApplyVisualState();
+    }
+
+    public void SetUiEventOpacity(float targetOpacity, float animationOpacity)
+    {
+        uiEventOpacity = Mathf.Clamp01(targetOpacity);
+        uiEventAnimationOpacity = Mathf.Clamp01(animationOpacity);
+    }
+
+    public void SetChartEventColor(Color color)
+    {
+        currentColor = color;
+        ApplyVisualState();
+    }
+
+    private void ApplyLineGeometry(float visibleWidth)
+    {
+        visibleWidth = Mathf.Clamp01(visibleWidth);
+        lineRenderer.positionCount = 100;
+        var orthographicSize = game.camera.orthographicSize;
+        var halfWidth = orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height;
+        for (var i = 0; i < 100; i++)
+        {
+            var x = (-halfWidth + 2f * halfWidth * (i / 100f)) * visibleWidth;
+            lineRenderer.SetPosition(i, new Vector3(x, 0));
+        }
+        lineRenderer.useWorldSpace = false;
+        lineRenderer.endWidth = 0.05f;
+        lineRenderer.startWidth = 0.05f;
+    }
+
+    private void ApplyNormalLineGeometry()
+    {
+        var halfWidth = game.camera.orthographicSize * UnityEngine.Screen.width / UnityEngine.Screen.height;
+        lineRenderer.positionCount = 2;
+        lineRenderer.SetPosition(0, new Vector3(-halfWidth * 1000f, 0, 0));
+        lineRenderer.SetPosition(1, new Vector3(halfWidth * 1000f, 0, 0));
+        lineRenderer.useWorldSpace = false;
+        lineRenderer.endWidth = 0.05f;
+        lineRenderer.startWidth = 0.05f;
+    }
+
+    private void ApplyVisualState()
+    {
+        var color = colorOverride == Color.clear ? currentColor : colorOverride;
+        color = color.WithAlpha(EffectiveOpacity);
+        lineRenderer.startColor = color;
+        lineRenderer.endColor = color;
+        foreach (var triangle in triangles)
+            if (triangle != null) triangle.ApplyOpacity(EffectiveOpacity);
+    }
+
+    public void RegisterTriangle(MeshTriangle triangle) => triangles.Add(triangle);
+
+    public void UnregisterTriangle(MeshTriangle triangle) => triangles.Remove(triangle);
 
     public void OnGameUpdate(Game game)
     {
-        var chart = game.Chart;
-        
-        // Color
-        Color color;
-        if (colorOverride == Color.clear)
-        {
-            color = gameObject.GetComponent<LineRenderer>().startColor;
-            color = new Color((color.r * colorNextSpeed + colorNext.r) / (1 + colorNextSpeed),
-                (color.g * colorNextSpeed + colorNext.g) / (1 + colorNextSpeed),
-                (color.b * colorNextSpeed + colorNext.b) / (1 + colorNextSpeed));
-        }
-        else
-        {
-            color = colorOverride;
-        }
+        ApplyPosition();
 
-        color = color.WithAlpha(exited ? 0 : opacity);
-        gameObject.GetComponent<LineRenderer>().startColor = color;
-        gameObject.GetComponent<LineRenderer>().endColor = color;
+        // Direction
+    }
 
-        // Position
+    private void ApplyPosition()
+    {
         if (positionOverride != float.MinValue)
         {
             transform.SetY(positionOverride);
         }
         else
         {
-            transform.SetY(chart.GetScannerPositionY(game.Time, game.Config.UseScannerSmoothing));
+            transform.SetY(game.Chart.GetScannerPositionY(game.Time, game.Config.UseScannerSmoothing));
         }
-        
-        // Direction
     }
 }

@@ -43,7 +43,7 @@ public sealed class GameEventPresentationController
     {
         if (!active) return;
         active = false;
-        tooltip?.ApplyChartEventState(ChartEventPresentationState.Empty);
+        tooltip?.ClearChartEventState();
         if (Scanner.Instance != null) Scanner.Instance.SetChartEventColor(Color.white);
     }
 }

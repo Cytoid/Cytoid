@@ -218,6 +218,39 @@ public class UiEventRuntimeTests
         }
     }
 
+    [Test]
+    public void TooltipReleaseForceClearsAnActiveSystemMessage()
+    {
+        var scene = EditorSceneManager.OpenScene(GameScenePath, OpenSceneMode.Additive);
+        try
+        {
+            var tooltip = scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<GameTooltipText>(true))
+                .Single();
+            var message = new GameMessage
+            {
+                Type = GameMessage.AnimationType.Expand,
+                Color = Color.white,
+                TextFunction = () => "System message"
+            };
+            tooltip.Animate(message, 10);
+
+            tooltip.ApplyChartEventState(ChartEventPresentationState.Empty);
+            Assert.That(tooltip.CurrentMessage, Is.SameAs(message));
+            Assert.That(tooltip.tmp.text, Is.EqualTo("System message"));
+
+            tooltip.ClearChartEventState();
+            Assert.That(tooltip.CurrentMessage, Is.Null);
+            Assert.That(tooltip.tmp.text, Is.Empty);
+            Assert.That(tooltip.tmp.color, Is.EqualTo(Color.clear));
+            Assert.That(tooltip.tmp.characterSpacing, Is.EqualTo(0));
+        }
+        finally
+        {
+            EditorSceneManager.CloseScene(scene, true);
+        }
+    }
+
     private static Scanner FindScanner(Scene scene)
     {
         var scanner = scene.GetRootGameObjects()

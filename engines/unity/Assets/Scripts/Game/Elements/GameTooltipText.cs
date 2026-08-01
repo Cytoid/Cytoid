@@ -93,6 +93,16 @@ public class GameTooltipText : MonoBehaviour
         if (CurrentMessage == null) RenderChartEventState();
     }
 
+    public void ClearChartEventState()
+    {
+        messageVersion++;
+        sequences.ForEach(it => it.Kill());
+        sequences.Clear();
+        CurrentMessage = null;
+        chartEventState = ChartEventPresentationState.Empty;
+        RenderChartEventState();
+    }
+
     private void RenderChartEventState()
     {
         if (!chartEventState.IsActive)

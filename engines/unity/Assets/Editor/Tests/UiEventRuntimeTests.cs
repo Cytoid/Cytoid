@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 using NUnit.Framework;
 using TMPro;
 using UnityEditor.SceneManagement;
@@ -9,6 +10,13 @@ using UnityEngine.SceneManagement;
 public class UiEventRuntimeTests
 {
     private const string GameScenePath = "Assets/Scenes/Game.unity";
+
+    public enum PresentationReleaseTrigger
+    {
+        Completion,
+        Failure,
+        Exit
+    }
 
     [Test]
     public void ScanlineRestoresGeometryAfterSeekingBeforeAnAnimation()
@@ -218,15 +226,26 @@ public class UiEventRuntimeTests
         }
     }
 
-    [Test]
-    public void TooltipReleaseForceClearsAnActiveSystemMessage()
+    [TestCase(PresentationReleaseTrigger.Completion)]
+    [TestCase(PresentationReleaseTrigger.Failure)]
+    [TestCase(PresentationReleaseTrigger.Exit)]
+    public void ControllerReleaseEventsForceClearAnActiveSystemMessage(
+        PresentationReleaseTrigger trigger)
     {
         var scene = EditorSceneManager.OpenScene(GameScenePath, OpenSceneMode.Additive);
         try
         {
+            var game = scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<Game>(true))
+                .Single();
             var tooltip = scene.GetRootGameObjects()
                 .SelectMany(root => root.GetComponentsInChildren<GameTooltipText>(true))
                 .Single();
+            var chart = (Chart) FormatterServices.GetUninitializedObject(typeof(Chart));
+            chart.Model = new ChartModel();
+            SetPrivateField(game, "<Chart>k__BackingField", chart);
+            _ = new GameEventPresentationController(game);
+
             var message = new GameMessage
             {
                 Type = GameMessage.AnimationType.Expand,
@@ -239,7 +258,7 @@ public class UiEventRuntimeTests
             Assert.That(tooltip.CurrentMessage, Is.SameAs(message));
             Assert.That(tooltip.tmp.text, Is.EqualTo("System message"));
 
-            tooltip.ClearChartEventState();
+            InvokeReleaseEvent(game, trigger);
             Assert.That(tooltip.CurrentMessage, Is.Null);
             Assert.That(tooltip.tmp.text, Is.Empty);
             Assert.That(tooltip.tmp.color, Is.EqualTo(Color.clear));
@@ -248,6 +267,22 @@ public class UiEventRuntimeTests
         finally
         {
             EditorSceneManager.CloseScene(scene, true);
+        }
+    }
+
+    private static void InvokeReleaseEvent(Game game, PresentationReleaseTrigger trigger)
+    {
+        switch (trigger)
+        {
+            case PresentationReleaseTrigger.Completion:
+                game.onGameCompleted.Invoke(game);
+                break;
+            case PresentationReleaseTrigger.Failure:
+                game.onGameFailed.Invoke(game);
+                break;
+            case PresentationReleaseTrigger.Exit:
+                game.onGameBeforeExit.Invoke(game);
+                break;
         }
     }
 

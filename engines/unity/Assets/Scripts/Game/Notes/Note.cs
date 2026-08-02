@@ -25,6 +25,8 @@ public abstract class Note : MonoBehaviour
     public float MissThreshold { get; set; }
 
     public bool IsCleared { get; private set; }
+    public bool IsArmed { get; private set; }
+    private NoteGrade armedGrade = NoteGrade.None;
 
     // For ranked mode: weighted difference between the current timing and the perfect timing
     public float GreatGradeWeight { get; protected set; }
@@ -47,7 +49,9 @@ public abstract class Note : MonoBehaviour
     public virtual void SetData(int noteId)
     {
         IsCollected = false;
-
+        IsArmed = false;
+        armedGrade = NoteGrade.None;
+    
         Chart = Game.Chart.Model;
         Model = Game.Chart.Model.note_map[noteId];
         if (Model.next_id > 0 && Chart.note_map.ContainsKey(Model.next_id))
@@ -89,6 +93,8 @@ public abstract class Note : MonoBehaviour
         Page = default;
         MissThreshold = default;
         IsCleared = default;
+        IsArmed = default;
+        armedGrade = NoteGrade.None;
         GreatGradeWeight = default;
         JudgmentOffset = default;
     }
@@ -97,6 +103,8 @@ public abstract class Note : MonoBehaviour
     {
         if (IsCleared) return;
 
+        IsArmed = false;
+        armedGrade = NoteGrade.None;
         IsCleared = true;
         Renderer.OnClear(grade);
         Game.State.Judge(this, grade, -TimeUntilEnd, GreatGradeWeight);
@@ -128,26 +136,36 @@ public abstract class Note : MonoBehaviour
             // Update position
             gameObject.transform.localPosition = Model.CalculatePosition(Game.Chart);
 
-            // Autoplay
-            if (IsAutoEnabled())
+            if (IsArmed)
             {
-                if (TimeUntilStart < 0)
+                if (Game.Time >= Model.start_time + JudgmentOffset)
                 {
-                    if (this is HoldNote)
-                    {
-                        ((HoldNote) this).UpdateFinger(0, true);
-                    }
-                    else
-                    {
-                        Clear(NoteGrade.Perfect);
-                    }
+                    Clear(armedGrade);
                 }
             }
-
-            // Check removable
-            if (ShouldMiss())
+            else
             {
-                Clear(NoteGrade.Miss);
+                // Autoplay
+                if (IsAutoEnabled())
+                {
+                    if (TimeUntilStart < 0)
+                    {
+                        if (this is HoldNote)
+                        {
+                            ((HoldNote) this).UpdateFinger(0, true);
+                        }
+                        else
+                        {
+                            Clear(NoteGrade.Perfect);
+                        }
+                    }
+                }
+
+                // Check removable
+                if (ShouldMiss())
+                {
+                    Clear(NoteGrade.Miss);
+                }
             }
         }
 
@@ -218,8 +236,51 @@ public abstract class Note : MonoBehaviour
     /// <returns>True if this note took the touch (cleared or otherwise handled).</returns>
     public virtual bool OnTouch(Vector2 screenPos)
     {
-        if (!Game.IsLoaded || !Game.State.IsPlaying) return false;
+        if (!CanHandleTouch()) return false;
         return TryClear();
+    }
+
+    /// <summary>
+    /// Handles passive contact from an already-down finger. A valid early hit is armed
+    /// and resolves at the effective perfect time; a hit at or after that time resolves
+    /// immediately. Misses retain the existing immediate settlement behavior.
+    /// </summary>
+    public virtual bool OnTouchDeferred(Vector2 screenPos)
+    {
+        if (!CanHandleTouch() || IsArmed) return false;
+
+        var grade = GetTouchGrade();
+        if (grade == NoteGrade.None) return false;
+        if (grade == NoteGrade.Miss || Game.Time >= Model.start_time + JudgmentOffset)
+        {
+            Clear(grade);
+        }
+        else
+        {
+            IsArmed = true;
+            armedGrade = grade;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Returns whether this note may consider a touch at the current chart time.
+    /// Drag variants extend this with their early and cross-page admission gates.
+    /// </summary>
+    public virtual bool CanHandleTouch()
+    {
+        return Game.IsLoaded && Game.State.IsPlaying && !IsCollected && !IsCleared && !IsArmed;
+    }
+
+    /// <summary>
+    /// Side-effect-free preview of the grade that an immediate touch would settle with,
+    /// apart from CalculateGrade's existing GreatGradeWeight calculation.
+    /// </summary>
+    public NoteGrade GetTouchGrade()
+    {
+        if (IsAutoEnabled()) return NoteGrade.Perfect;
+        if (ShouldMiss()) return NoteGrade.Miss;
+        return CalculateGrade();
     }
 
     /// <returns>
@@ -228,10 +289,8 @@ public abstract class Note : MonoBehaviour
     /// </returns>
     public virtual bool TryClear()
     {
-        if (IsCleared) return false;
-        if (IsAutoEnabled()) Clear(NoteGrade.Perfect);
-        if (ShouldMiss()) Clear(NoteGrade.Miss);
-        var grade = CalculateGrade();
+        if (IsCleared || IsArmed) return false;
+        var grade = GetTouchGrade();
         if (grade != NoteGrade.None) Clear(grade);
         return IsCleared;
     }

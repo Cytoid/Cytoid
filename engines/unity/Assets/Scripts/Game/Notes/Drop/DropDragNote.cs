@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// SYNC-WARNING: DropDrag judgment is a verbatim copy of DragHeadNote's OnTouch, CalculateGrade,
+// SYNC-WARNING: DropDrag judgment is a verbatim copy of DragHeadNote's CanHandleTouch, CalculateGrade,
 // IsAutoEnabled, and PlayHitSound (DragHeadNote.cs:165-252). If you change judgment in either
 // file, update the other. DragHead chain logic (OnGameLateUpdate, Collect, FromNoteModel/ToNoteModel)
 // is INTENTIONALLY NOT inherited — DropDrag is standalone per design decision.
@@ -13,14 +13,15 @@ public class DropDragNote : Note
         return new DropDragNoteRenderer(this);
     }
 
-    public override bool OnTouch(Vector2 screenPos)
+    public override bool CanHandleTouch(Vector2 screenPos)
     {
+        if (!base.CanHandleTouch(screenPos)) return false;
         // Do not handle touch event if touched too ahead of scanner
         if (Model.start_time - Game.Time > 0.31f) return false;
         // Do not handle touch event if in a later page, unless the timing is close (half a screen) TODO: Fix inaccurate algorithm
         if (Model.page_index > Game.Chart.CurrentPageId &&
             Model.start_time - Game.Time > Page.Duration / 2f) return false;
-        return base.OnTouch(screenPos);
+        return true;
     }
 
     public override NoteGrade CalculateGrade()

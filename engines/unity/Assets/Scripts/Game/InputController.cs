@@ -15,7 +15,7 @@ public class InputController : MonoBehaviour
     public const float NoteClusterGapSeconds = 0.015f;
 
     /// <summary>
-    /// After a non-Miss Drag clears on the same FingerDown, block Click / CDrag head /
+    /// After a non-Miss Drag is accepted on the same FingerDown, block Click / CDrag head /
     /// Hold / Flick whose <c>effectiveNoteTime</c> is more than this many seconds later.
     /// Earlier or within-window selects stay eligible.
     /// Wider than <see cref="NoteClusterGapSeconds"/> (30ms vs 15ms) so short Drag+tap
@@ -91,7 +91,7 @@ public class InputController : MonoBehaviour
         foreach (var id in game.SpawnedNotes.Keys)
         {
             var note = game.SpawnedNotes[id];
-            if (!note.HasEmerged || note.IsCleared || note.IsCollected) continue;
+            if (!note.HasEmerged || note.IsCleared || note.IsArmed || note.IsCollected) continue;
 
             if (note.Type == NoteType.DragHead || note.Type == NoteType.DragChild || note.Type == NoteType.CDragChild || note.Type == NoteType.DropDrag)
             {
@@ -118,26 +118,61 @@ public class InputController : MonoBehaviour
             ? game.camera.ScreenToWorldPoint(finger.ScreenPosition)
             : game.camera.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
 
-        // Drag clears first (settlement order) but does not consume the Down for select.
-        // Arm DragCoHit only on a real hit grade — TryClear also returns true on Miss.
-        Note acceptedDrag = null;
+        // Pick a Drag without settling it yet: whether it clears immediately or arms
+        // depends on whether a higher-priority Select candidate claims this fresh Down.
+        var acceptedDrag = FindAcceptedDrag(pressedPosition);
+
+        // Select is still gated by the accepted Drag before either candidate settles,
+        // preserving DragCoHit and cross-page suppression without changing event order.
+        var acceptedSelect = FindAcceptedSelect(finger, pressedPosition, acceptedDrag);
+
+        if (acceptedDrag != null)
+        {
+            if (acceptedSelect != null)
+            {
+                acceptedDrag.OnTouchDeferred(finger.ScreenPosition);
+            }
+            else
+            {
+                acceptedDrag.OnTouch(finger.ScreenPosition);
+            }
+        }
+
+        AcceptSelect(acceptedSelect, finger, pressedPosition);
+    }
+
+    /// <summary>
+    /// Returns the first valid non-Miss Drag in list order. Expired Drag notes retain
+    /// their legacy immediate Miss settlement and do not arm DragCoHit.
+    /// </summary>
+    private Note FindAcceptedDrag(Vector2 pressedPosition)
+    {
         foreach (var note in TouchableDragNotes)
         {
             if (!IsTouchableNote(note)) continue;
             if (!note.DoesCollide(pressedPosition)) continue;
+            if (!note.CanHandleTouch(pressedPosition)) continue;
 
-            // Snapshot before OnTouch: ShouldMiss/CalculateGrade Miss both Clear(Miss) via TryClear.
-            var preTouchGrade = note.ShouldMiss() ? NoteGrade.Miss : note.CalculateGrade();
-            if (!note.OnTouch(finger.ScreenPosition)) continue;
-            if (preTouchGrade == NoteGrade.Miss)
+            var grade = note.GetTouchGrade();
+            if (grade == NoteGrade.None) continue;
+            if (grade == NoteGrade.Miss)
             {
-                // Miss on this Down must not arm DragCoHit (would block later select).
+                note.Clear(NoteGrade.Miss);
                 continue;
             }
 
-            acceptedDrag = note;
-            break;
+            return note;
         }
+        return null;
+    }
+
+    /// <summary>
+    /// Chooses, but does not settle, the Select note that would consume this Down.
+    /// This lets Drag decide Immediate versus Armed while keeping Drag settlement first.
+    /// </summary>
+    private Note FindAcceptedSelect(GameFinger finger, Vector2 pressedPosition, Note acceptedDrag)
+    {
+        if (!game.IsLoaded || !game.State.IsPlaying) return null;
 
         // Select in SpawnedNotes id order (TouchableSelectNotes).
         // Flick: list-order bind; flush earlier Click/Hold cluster first (even if Flick is
@@ -151,14 +186,13 @@ public class InputController : MonoBehaviour
 
             if (note is FlickNote flickNote)
             {
-                if (TryAcceptSelectClickCluster(finger, pressedPosition.x)) return;
+                var clusterCandidate = FindSelectClickCluster(pressedPosition.x, pressedPosition);
+                if (clusterCandidate != null) return clusterCandidate;
 
                 if (FlickingNotes.ContainsKey(finger.Index) || FlickingNotes.ContainsValue(flickNote))
                     continue;
                 if (!IsEligibleSelectAfterDrag(flickNote, acceptedDrag)) continue;
-                FlickingNotes.Add(finger.Index, flickNote);
-                flickNote.StartFlicking(pressedPosition);
-                return;
+                return flickNote;
             }
 
             if (note is HoldNote holdNote)
@@ -174,7 +208,7 @@ public class InputController : MonoBehaviour
             hitCandidates.Add(note);
         }
 
-        TryAcceptSelectClickCluster(finger, pressedPosition.x);
+        return FindSelectClickCluster(pressedPosition.x, pressedPosition);
     }
 
     /// <summary>
@@ -182,7 +216,7 @@ public class InputController : MonoBehaviour
     /// Gate before touching Model or colliders.
     /// </summary>
     private static bool IsTouchableNote(Note note) =>
-        note != null && !note.IsCollected && !note.IsCleared;
+        note != null && !note.IsCollected && !note.IsCleared && !note.IsArmed;
 
     /// <summary>
     /// Same-Down select gate after an optional accepted Drag.
@@ -208,39 +242,62 @@ public class InputController : MonoBehaviour
     }
 
     /// <summary>
-    /// Accept one Click / CDrag-head / Hold from <see cref="hitCandidates"/> using
-    /// <see cref="OrderHitCandidatesByNoteTimeClusters"/>. Hold binds and consumes Down.
+    /// Finds one Click / CDrag-head / Hold from <see cref="hitCandidates"/> using
+    /// <see cref="OrderHitCandidatesByNoteTimeClusters"/> without settling it.
     /// </summary>
-    private bool TryAcceptSelectClickCluster(GameFinger finger, float touchWorldX)
+    private Note FindSelectClickCluster(float touchWorldX, Vector2 pressedPosition)
     {
-        if (hitCandidates.Count == 0) return false;
+        if (hitCandidates.Count == 0) return null;
         if (!game.IsLoaded || !game.State.IsPlaying)
         {
             hitCandidates.Clear();
-            return false;
+            return null;
         }
 
+        Note accepted = null;
         foreach (var note in OrderHitCandidatesByNoteTimeClusters(touchWorldX))
         {
             if (!IsTouchableNote(note)) continue;
 
             if (note is HoldNote holdNote)
             {
-                // Reject holds already bound this frame (stale snapshot).
-                if (holdNote.IsHolding || HoldingNotes.ContainsKey(finger.Index)) continue;
-                HoldingNotes.Add(finger.Index, holdNote);
-                holdNote.UpdateFinger(finger.Index, true);
-                hitCandidates.Clear();
-                return true;
+                if (holdNote.IsHolding) continue;
+                accepted = holdNote;
+                break;
             }
 
-            if (!note.OnTouch(finger.ScreenPosition)) continue;
-            hitCandidates.Clear();
-            return true;
+            if (!note.CanHandleTouch(pressedPosition)) continue;
+            if (note.GetTouchGrade() == NoteGrade.None) continue;
+            accepted = note;
+            break;
         }
 
         hitCandidates.Clear();
-        return false;
+        return accepted;
+    }
+
+    /// <summary>Settles the previously selected candidate.</summary>
+    private bool AcceptSelect(Note note, GameFinger finger, Vector2 pressedPosition)
+    {
+        if (!IsTouchableNote(note) || !game.IsLoaded || !game.State.IsPlaying) return false;
+
+        if (note is FlickNote flickNote)
+        {
+            if (FlickingNotes.ContainsKey(finger.Index) || FlickingNotes.ContainsValue(flickNote)) return false;
+            FlickingNotes.Add(finger.Index, flickNote);
+            flickNote.StartFlicking(pressedPosition);
+            return true;
+        }
+
+        if (note is HoldNote holdNote)
+        {
+            if (holdNote.IsHolding || HoldingNotes.ContainsKey(finger.Index)) return false;
+            HoldingNotes.Add(finger.Index, holdNote);
+            holdNote.UpdateFinger(finger.Index, true);
+            return true;
+        }
+
+        return note.OnTouch(finger.ScreenPosition);
     }
 
     protected virtual void OnFingerUpdate(GameFinger finger)
@@ -262,7 +319,7 @@ public class InputController : MonoBehaviour
         {
             if (!IsTouchableNote(note)) continue;
             if (!note.DoesCollide(pos)) continue;
-            if (!note.OnTouch(finger.ScreenPosition)) continue;
+            if (!note.OnTouchDeferred(finger.ScreenPosition)) continue;
             break;
         }
 

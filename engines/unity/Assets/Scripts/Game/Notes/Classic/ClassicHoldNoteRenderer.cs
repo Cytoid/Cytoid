@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class ClassicHoldNoteRenderer : ClassicNoteRenderer
 {
+    private const float ExperimentalHoldingScale = 0.85f;
+
     public HoldNote HoldNote => (HoldNote) Note; 
 
     public SpriteRenderer Line;
@@ -12,6 +14,8 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
     public ParticleSystem HoldFx;
     protected SpriteMask SpriteMask;
     protected Vector3 InitialProgressRingScale;
+    private bool hasAppliedTransformScale;
+    private bool hasReachedFullScale;
 
     public ClassicHoldNoteRenderer(HoldNote holdNote) : base(holdNote)
     {
@@ -48,6 +52,8 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
     public override void OnNoteLoaded()
     {
         base.OnNoteLoaded();
+        hasAppliedTransformScale = false;
+        hasReachedFullScale = false;
         Triangle.gameObject.SetActive(true);
         Triangle.Note = Note;
         ProgressRing.spriteRenderer.enabled = true;
@@ -62,6 +68,8 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
     public override void OnCollect()
     {
         base.OnCollect();
+        hasAppliedTransformScale = false;
+        hasReachedFullScale = false;
         ProgressRing.Reset();
         Triangle.Reset();
         Triangle.gameObject.SetActive(false);
@@ -70,6 +78,14 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
 
     protected override void UpdateComponentStates()
     {
+        if (!hasAppliedTransformScale && UseExperimentalAnimations && HoldNote.IsHolding &&
+            Note.Game.Time >= Note.Model.start_time &&
+            Note.Game.Time > Note.Model.start_time + Note.JudgmentOffset)
+        {
+            ApplyTransformScale(1f, ExperimentalHoldingScale);
+            hasReachedFullScale = true;
+        }
+
         base.UpdateComponentStates();
         if (!Note.IsCleared && Game.Time >= Note.Model.intro_time + Note.JudgmentOffset && Game.Time <= Note.Model.end_time + Note.MissThreshold + Note.JudgmentOffset)
         {
@@ -121,9 +137,9 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
                         if (UseExperimentalAnimations)
                         {
                             var size = BaseTransformSize * Note.Model.Override.SizeMultiplier;
-                            Ring.transform.DOScale(size * 0.85f, 0.2f);
-                            Fill.transform.DOScale(size * 0.85f, 0.2f);
-                            SpriteMask.transform.DOScale(size * 0.85f, 0.2f);
+                            Ring.transform.DOScale(size * ExperimentalHoldingScale, 0.2f);
+                            Fill.transform.DOScale(size * ExperimentalHoldingScale, 0.2f);
+                            SpriteMask.transform.DOScale(size * ExperimentalHoldingScale, 0.2f);
                         }
                         
                         if (Game.State.IsPlaying && !HoldFx.isPlaying)
@@ -201,18 +217,25 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
 
     protected override void UpdateTransformScale()
     {
-        if (Game.Time > Note.Model.start_time) return; // Already scaled to maximum TODO: size_multiplier no longer works?
+        // A note can be spawned and held after its start time in the same frame. In
+        // that case it has never passed through the intro animation, so apply the
+        // final scale once before leaving the transform to the holding animation.
+        if (hasReachedFullScale) return;
 
+        var timeScale = Mathf.Clamp((Game.Time - Note.Model.intro_time) / (Note.Model.start_time - Note.Model.intro_time), 0f, 1f);
+        ApplyTransformScale(timeScale);
+        hasReachedFullScale = timeScale >= 1f;
+    }
+
+    private void ApplyTransformScale(float timeScale, float holdingScale = 1f)
+    {
         var scale = BaseTransformScale * Note.Model.Override.SizeMultiplier;
         var newProgressRingScale = InitialProgressRingScale * scale;
         ProgressRing.transform.SetLocalScaleXY(newProgressRingScale.x, newProgressRingScale.y);
-        
-        // Scale the entire transform
-        var timeScale = Mathf.Clamp((Game.Time - Note.Model.intro_time) / (Note.Model.start_time - Note.Model.intro_time), 0f, 1f);
 
         var size = BaseTransformSize * Note.Model.Override.SizeMultiplier;
         var minPercentageSize = Note.Model.initial_scale;
-        var timeScaledSize = size * minPercentageSize + size * (1 - minPercentageSize) * timeScale;
+        var timeScaledSize = (size * minPercentageSize + size * (1 - minPercentageSize) * timeScale) * holdingScale;
         const float minPercentageLineSize = 0.0f;
         
         Ring.transform.SetLocalScaleXY(timeScaledSize, timeScaledSize);
@@ -229,6 +252,7 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
             fxScale *= (float) Note.Model.size;
         }
         HoldFx.transform.SetLocalScale(5 * (1 + Context.Player.Settings.ClearEffectsSize) * fxScale);
+        hasAppliedTransformScale = true;
     }
 
     protected override void UpdateFillScale()

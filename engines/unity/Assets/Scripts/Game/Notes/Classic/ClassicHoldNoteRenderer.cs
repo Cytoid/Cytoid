@@ -12,6 +12,7 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
     public ParticleSystem HoldFx;
     protected SpriteMask SpriteMask;
     protected Vector3 InitialProgressRingScale;
+    private bool hasReachedFullScale;
 
     public ClassicHoldNoteRenderer(HoldNote holdNote) : base(holdNote)
     {
@@ -48,6 +49,7 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
     public override void OnNoteLoaded()
     {
         base.OnNoteLoaded();
+        hasReachedFullScale = false;
         Triangle.gameObject.SetActive(true);
         Triangle.Note = Note;
         ProgressRing.spriteRenderer.enabled = true;
@@ -62,6 +64,7 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
     public override void OnCollect()
     {
         base.OnCollect();
+        hasReachedFullScale = false;
         ProgressRing.Reset();
         Triangle.Reset();
         Triangle.gameObject.SetActive(false);
@@ -201,7 +204,10 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
 
     protected override void UpdateTransformScale()
     {
-        if (Game.Time > Note.Model.start_time) return; // Already scaled to maximum TODO: size_multiplier no longer works?
+        // A note can be spawned and held after its start time in the same frame. In
+        // that case it has never passed through the intro animation, so apply the
+        // final scale once before leaving the transform to the holding animation.
+        if (hasReachedFullScale) return;
 
         var scale = BaseTransformScale * Note.Model.Override.SizeMultiplier;
         var newProgressRingScale = InitialProgressRingScale * scale;
@@ -209,6 +215,7 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
         
         // Scale the entire transform
         var timeScale = Mathf.Clamp((Game.Time - Note.Model.intro_time) / (Note.Model.start_time - Note.Model.intro_time), 0f, 1f);
+        hasReachedFullScale = timeScale >= 1f;
 
         var size = BaseTransformSize * Note.Model.Override.SizeMultiplier;
         var minPercentageSize = Note.Model.initial_scale;

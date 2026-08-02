@@ -21,6 +21,15 @@ public class EffectController : MonoBehaviour
     /// <summary>Outer diameter at ring spawn; matches legacy FlatFX ripple preset.</summary>
     const float ClearRingStartDiameter = 1f;
 
+    /// <summary>
+    /// Active only between <see cref="BeginClearBatch"/> and <see cref="EndClearBatch"/>
+    /// (stacked drag settle). Outside a batch, FX / hit sounds are uncapped.
+    /// </summary>
+    private int batchFxCap = -1;
+    private int batchFxUsed;
+    private int batchSoundCap = -1;
+    private int batchSoundUsed;
+
     private void Awake()
     {
         EffectParentTransform = effectParent.transform;
@@ -30,6 +39,48 @@ public class EffectController : MonoBehaviour
     public void OnGameLoaded()
     {
         clearEffectSizeMultiplier = Context.Player.Settings.ClearEffectsSize;
+    }
+
+    /// <summary>
+    /// Caps clear FX / hit sounds for one stacked-drag settle batch only.
+    /// Nested calls are not supported; always pair with <see cref="EndClearBatch"/>.
+    /// </summary>
+    public void BeginClearBatch(int maxFx, int maxSounds)
+    {
+        batchFxCap = maxFx;
+        batchFxUsed = 0;
+        batchSoundCap = maxSounds;
+        batchSoundUsed = 0;
+    }
+
+    public void EndClearBatch()
+    {
+        batchFxCap = -1;
+        batchSoundCap = -1;
+    }
+
+    /// <returns>
+    /// False only when inside a clear batch that has already used its FX budget.
+    /// Outside a batch, always true.
+    /// </returns>
+    public bool TryConsumeClearFx()
+    {
+        if (batchFxCap < 0) return true;
+        if (batchFxUsed >= batchFxCap) return false;
+        batchFxUsed++;
+        return true;
+    }
+
+    /// <returns>
+    /// False only when inside a clear batch that has already used its hit-sound budget.
+    /// Outside a batch, always true.
+    /// </returns>
+    public bool TryConsumeHitSound()
+    {
+        if (batchSoundCap < 0) return true;
+        if (batchSoundUsed >= batchSoundCap) return false;
+        batchSoundUsed++;
+        return true;
     }
 
     public void PlayRippleEffect(Vector3 position)
@@ -57,6 +108,8 @@ public class EffectController : MonoBehaviour
         {
             return;
         }
+
+        if (!TryConsumeClearFx()) return;
         
         var color = game.Config.NoteGradeEffectColors[grade];
         var at = noteRenderer.Note.transform.position;

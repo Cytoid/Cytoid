@@ -10,7 +10,7 @@ public class InputController : MonoBehaviour
     /// Candidates are re-clustered each Down by <c>effectiveNoteTime</c> span ≤ this gap
     /// (no adjacent-gap chain expansion). Soft fallthrough across clusters remains.
     /// In-cluster rank: see <see cref="OrderHitCandidatesByNoteTimeClusters"/>.
-    /// Flick stays list-order bind; Drag stays list-order scan.
+    /// Flick stays list-order bind; Drag settles all colliding eligible notes per input.
     /// </summary>
     public const float NoteClusterGapSeconds = 0.015f;
 
@@ -23,6 +23,24 @@ public class InputController : MonoBehaviour
     /// Replaces legacy collidedDrag + Page.Duration/8.
     /// </summary>
     public const float DragCoHitWindowSeconds = 0.030f;
+
+    /// <summary>
+    /// Max clear FX (ripple + particles) spawned from one drag input batch
+    /// (FingerDown settle or FingerUpdate multi-clear).
+    /// </summary>
+    public const int DragBatchMaxClearFx = 3;
+
+    /// <summary>
+    /// Max hit sounds (and gated haptics) from one drag input batch.
+    /// </summary>
+    public const int DragBatchMaxHitSounds = 1;
+
+    /// <summary>
+    /// Max |ΔeffectiveNoteTime| from the DragCoHit representative (first colliding
+    /// non-Miss in list order) for other colliding Drags settled in the same batch.
+    /// Keeps same-tick stacks co-clearing without changing which Drag gates Select.
+    /// </summary>
+    public const float DragStackBatchGapSeconds = 0.015f;
 
     public Game game;
 
@@ -39,6 +57,7 @@ public class InputController : MonoBehaviour
 
     private readonly List<Note> hitCandidates = new List<Note>();
     private readonly List<Note> clusterScratch = new List<Note>();
+    private readonly List<Note> dragBatchScratch = new List<Note>();
 
     private void Awake()
     {
@@ -118,52 +137,97 @@ public class InputController : MonoBehaviour
             ? game.camera.ScreenToWorldPoint(finger.ScreenPosition)
             : game.camera.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
 
-        // Pick a Drag without settling it yet: whether it clears immediately or arms
+        // Collect all colliding eligible Drags without settling yet: Immediate vs Armed
         // depends on whether a higher-priority Select candidate claims this fresh Down.
-        var acceptedDrag = FindAcceptedDrag(pressedPosition);
+        // Misses still settle immediately and do not arm DragCoHit.
+        var acceptedDrag = CollectCollidingDragBatch(pressedPosition);
 
         // Select is still gated by the accepted Drag before either candidate settles,
         // preserving DragCoHit and cross-page suppression without changing event order.
         var acceptedSelect = FindAcceptedSelect(finger, pressedPosition, acceptedDrag);
 
-        if (acceptedDrag != null)
-        {
-            if (acceptedSelect != null)
-            {
-                acceptedDrag.OnTouchDeferred(finger.ScreenPosition);
-            }
-            else
-            {
-                acceptedDrag.OnTouch(finger.ScreenPosition);
-            }
-        }
+        SettleDragBatch(finger.ScreenPosition, deferred: acceptedSelect != null);
 
         AcceptSelect(acceptedSelect, finger, pressedPosition);
     }
 
     /// <summary>
-    /// Returns the first valid non-Miss Drag in list order. Expired Drag notes retain
-    /// their legacy immediate Miss settlement and do not arm DragCoHit.
+    /// Collects a Drag settle batch and returns the DragCoHit representative.
+    /// Representative is the first colliding non-Miss in <see cref="TouchableDragNotes"/>
+    /// list order — same as legacy <c>FindAcceptedDrag</c>, so Select gating is unchanged.
+    /// Additional colliding non-Miss notes within
+    /// <see cref="DragStackBatchGapSeconds"/> of that note are added to
+    /// <see cref="dragBatchScratch"/> for co-clear. Misses before the representative
+    /// still clear immediately; scanning after the representative does not Miss-clear
+    /// (legacy returned on first hit).
     /// </summary>
-    private Note FindAcceptedDrag(Vector2 pressedPosition)
+    private Note CollectCollidingDragBatch(Vector2 worldPos)
     {
+        dragBatchScratch.Clear();
+        Note accepted = null;
+        var acceptedTime = 0f;
         foreach (var note in TouchableDragNotes)
         {
             if (!IsTouchableNote(note)) continue;
-            if (!note.DoesCollide(pressedPosition)) continue;
+            if (!note.DoesCollide(worldPos)) continue;
             if (!note.CanHandleTouch()) continue;
 
             var grade = note.GetTouchGrade();
             if (grade == NoteGrade.None) continue;
             if (grade == NoteGrade.Miss)
             {
-                note.Clear(NoteGrade.Miss);
+                // Legacy FindAcceptedDrag cleared Misses only until the first valid hit.
+                if (accepted == null) note.Clear(NoteGrade.Miss);
                 continue;
             }
 
-            return note;
+            if (accepted == null)
+            {
+                accepted = note;
+                acceptedTime = EffectiveNoteTime(note);
+                dragBatchScratch.Add(note);
+                continue;
+            }
+
+            if (Math.Abs(EffectiveNoteTime(note) - acceptedTime) > DragStackBatchGapSeconds)
+                continue;
+
+            dragBatchScratch.Add(note);
         }
-        return null;
+
+        return accepted;
+    }
+
+    /// <summary>
+    /// Settles <see cref="dragBatchScratch"/> under a shared clear-FX / hit-sound budget.
+    /// When <paramref name="deferred"/> is false, only the DragCoHit representative
+    /// (index 0) uses immediate <see cref="Note.OnTouch"/> — same as legacy Down.
+    /// The rest of the stack uses <see cref="Note.OnTouchDeferred"/>, matching the
+    /// legacy FingerUpdate path so early contacts still arm to perfect time.
+    /// When <paramref name="deferred"/> is true (Select claimed the Down), every
+    /// note in the batch is deferred.
+    /// </summary>
+    private void SettleDragBatch(Vector2 screenPos, bool deferred)
+    {
+        if (dragBatchScratch.Count == 0) return;
+
+        var effects = game.effectController;
+        effects.BeginClearBatch(DragBatchMaxClearFx, DragBatchMaxHitSounds);
+        try
+        {
+            for (var i = 0; i < dragBatchScratch.Count; i++)
+            {
+                var note = dragBatchScratch[i];
+                if (!IsTouchableNote(note)) continue;
+                if (deferred || i > 0) note.OnTouchDeferred(screenPos);
+                else note.OnTouch(screenPos);
+            }
+        }
+        finally
+        {
+            effects.EndClearBatch();
+            dragBatchScratch.Clear();
+        }
     }
 
     /// <summary>
@@ -314,14 +378,9 @@ public class InputController : MonoBehaviour
             if (cleared) FlickingNotes.Remove(finger.Index);
         }
 
-        // Drag: continuous contact — list-order scan
-        foreach (var note in TouchableDragNotes)
-        {
-            if (!IsTouchableNote(note)) continue;
-            if (!note.DoesCollide(pos)) continue;
-            if (!note.OnTouchDeferred(finger.ScreenPosition)) continue;
-            break;
-        }
+        // Drag: continuous contact — clear/arm colliding stack batch in one pass
+        CollectCollidingDragBatch(pos);
+        SettleDragBatch(finger.ScreenPosition, deferred: true);
 
         // If this is a new finger (Down did not already bind a Hold)
         if (!HoldingNotes.ContainsKey(finger.Index))

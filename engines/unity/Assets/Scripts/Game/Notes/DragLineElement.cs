@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class DragLineElement : MonoBehaviour
@@ -13,6 +14,11 @@ public class DragLineElement : MonoBehaviour
     public bool IsCollected { get; private set; }
     public ChartModel.Note FromNoteModel { get; private set; }
     public ChartModel.Note ToNoteModel { get; private set; }
+
+    /// <summary>Shared-geometry key assigned by <see cref="ObjectPool"/>; 0 when unset.</summary>
+    public long GeometryKey { get; set; }
+
+    private readonly HashSet<int> geometryFromIds = new HashSet<int>();
 
     private bool hasFromNote;
     private Note fromNote;
@@ -34,6 +40,18 @@ public class DragLineElement : MonoBehaviour
         Game = game;
     }
 
+    public void AddGeometryRef(int fromNoteId)
+    {
+        geometryFromIds.Add(fromNoteId);
+    }
+
+    public List<int> DrainGeometryRefs()
+    {
+        var ids = new List<int>(geometryFromIds);
+        geometryFromIds.Clear();
+        return ids;
+    }
+
     public void Dispose()
     {
         Destroy(gameObject);
@@ -49,6 +67,7 @@ public class DragLineElement : MonoBehaviour
         spriteRenderer.material.SetFloat(MaterialStart, 0.0f);
         UpdateTransform();
         spriteRenderer.sortingOrder = fromNoteModel.id;
+        Game.onGameUpdate.RemoveListener(OnGameUpdate);
         Game.onGameUpdate.AddListener(OnGameUpdate);
     }
 
@@ -118,15 +137,29 @@ public class DragLineElement : MonoBehaviour
             var note = Game.SpawnedNotes[FromNoteModel.id];
             if (!note.IsCleared)
             {
-                if (note.Renderer is ClassicNoteRenderer classicNoteRenderer)
+                // Followers disable Fill; resolve opacity from the stack primary when present.
+                var visual = note;
+                if (note.IsDragStackFollower && note.DragStack?.Primary != null)
+                    visual = note.DragStack.Primary;
+
+                if (visual.Renderer is ClassicNoteRenderer classicNoteRenderer)
                 {
                     var fill = classicNoteRenderer.Fill;
-                    spriteRenderer.color = spriteRenderer.color.WithAlpha(fill.enabled ? fill.color.a : 0);
+                    if (fill != null && fill.enabled)
+                    {
+                        spriteRenderer.color = spriteRenderer.color.WithAlpha(fill.color.a);
+                    }
+                    else
+                    {
+                        var denom = note.Model.start_time - note.Model.intro_time;
+                        var f = denom > 0f ? Mathf.Clamp01(1f - note.TimeUntilStart / denom) : 1f;
+                        spriteRenderer.color = Color.white.WithAlpha(f);
+                    }
                 }
                 else
                 {
-                    var f = 1 - note.TimeUntilStart / (note.Model.start_time - note.Model.intro_time);
-                    f = Mathf.Clamp01(f);
+                    var denom = note.Model.start_time - note.Model.intro_time;
+                    var f = denom > 0f ? Mathf.Clamp01(1f - note.TimeUntilStart / denom) : 1f;
                     spriteRenderer.color = Color.white.WithAlpha(f);
                 }
             }
@@ -184,5 +217,7 @@ public class DragLineElement : MonoBehaviour
         introRatio = default;
         outroRatio = default;
         length = default;
+        GeometryKey = default;
+        geometryFromIds.Clear();
     }
 }

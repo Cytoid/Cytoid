@@ -143,6 +143,7 @@ public class DragHeadNote : Note
                     {
                         Clear(NoteGrade.Miss);
                     }
+                    SyncDragStackFollowersIfPrimary();
                     return;
                 }
 
@@ -167,6 +168,8 @@ public class DragHeadNote : Note
             FromNoteModel = Model;
             ToNoteModel = StartToNoteModel;
         }
+
+        SyncDragStackFollowersIfPrimary();
     }
 
     // SYNC-WARNING: DropDrag judgment is a verbatim copy of DragHeadNote's CanHandleTouch, CalculateGrade,

@@ -131,6 +131,8 @@ public class InputController : MonoBehaviour
 
             if (note.Type == NoteType.DragHead || note.Type == NoteType.DragChild || note.Type == NoteType.CDragChild || note.Type == NoteType.DropDrag)
             {
+                // Stack followers share the primary collider ? only scan primaries here.
+                if (note.IsDragStackFollower) continue;
                 TouchableDragNotes.Add(note);
                 continue;
             }
@@ -144,6 +146,7 @@ public class InputController : MonoBehaviour
                 continue;
             }
 
+            // CDragHead stays on the normal Select path (not stack-collapsed).
             TouchableSelectNotes.Add(note);
         }
     }
@@ -201,6 +204,13 @@ public class InputController : MonoBehaviour
             if (!note.DoesCollide(worldPos)) continue;
             if (!note.CanHandleTouch()) continue;
 
+            // Expand co-located stack members that share this host's collider.
+            if (note.DragStack != null && note.DragStack.IsPrimary(note))
+            {
+                ExpandDragStackIntoBatch(note.DragStack, ref accepted, ref acceptedTime);
+                continue;
+            }
+
             var grade = note.GetTouchGrade();
             if (grade == NoteGrade.None) continue;
             if (grade == NoteGrade.Miss)
@@ -225,6 +235,38 @@ public class InputController : MonoBehaviour
         }
 
         return accepted;
+    }
+
+    private void ExpandDragStackIntoBatch(DragStackHost host, ref Note accepted, ref float acceptedTime)
+    {
+        for (var i = 0; i < host.Members.Count; i++)
+        {
+            var note = host.Members[i];
+            if (!IsTouchableNote(note)) continue;
+            if (!note.CanHandleTouch()) continue;
+
+            var grade = note.GetTouchGrade();
+            if (grade == NoteGrade.None) continue;
+            if (grade == NoteGrade.Miss)
+            {
+                if (accepted == null) note.Clear(NoteGrade.Miss);
+                continue;
+            }
+
+            if (accepted == null)
+            {
+                accepted = note;
+                acceptedTime = EffectiveNoteTime(note);
+                dragBatchScratch.Add(note);
+                continue;
+            }
+
+            if (Math.Abs(EffectiveNoteTime(note) - acceptedTime) > DragStackBatchGapSeconds)
+                continue;
+
+            if (!dragBatchScratch.Contains(note))
+                dragBatchScratch.Add(note);
+        }
     }
 
     /// <summary>

@@ -12,9 +12,9 @@ public class DragChildNote : Note
             : throw new NotSupportedException();
     }
 
-    public override bool CanHandleTouch(Vector2 screenPos)
+    public override bool CanHandleTouch()
     {
-        if (!base.CanHandleTouch(screenPos)) return false;
+        if (!base.CanHandleTouch()) return false;
         // Do not handle touch event if touched too ahead of scanner
         if (Model.start_time - Game.Time > 0.31f) return false;
         // Do not handle touch event if in a later page, unless the timing is close (half a screen)

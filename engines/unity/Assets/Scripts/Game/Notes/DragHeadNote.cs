@@ -169,9 +169,9 @@ public class DragHeadNote : Note
     // NOTE: DragHead's cross-page check is redundant for drop notes (5×pageDuration >> Page.Duration/2
     // always, so the 0.31s check dominates) — safe to copy verbatim, do not remove.
     // Mirror: Assets/Scripts/Game/Notes/Drop/DropDragNote.cs
-    public override bool CanHandleTouch(Vector2 screenPos)
+    public override bool CanHandleTouch()
     {
-        if (!base.CanHandleTouch(screenPos)) return false;
+        if (!base.CanHandleTouch()) return false;
         if (!IsCDrag)
         {
             // Do not handle touch event if touched too ahead of scanner

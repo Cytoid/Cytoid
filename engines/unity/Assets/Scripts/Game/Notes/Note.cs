@@ -26,6 +26,7 @@ public abstract class Note : MonoBehaviour
 
     public bool IsCleared { get; private set; }
     public bool IsArmed { get; private set; }
+    private NoteGrade armedGrade = NoteGrade.None;
 
     // For ranked mode: weighted difference between the current timing and the perfect timing
     public float GreatGradeWeight { get; protected set; }
@@ -49,6 +50,7 @@ public abstract class Note : MonoBehaviour
     {
         IsCollected = false;
         IsArmed = false;
+        armedGrade = NoteGrade.None;
     
         Chart = Game.Chart.Model;
         Model = Game.Chart.Model.note_map[noteId];
@@ -92,6 +94,7 @@ public abstract class Note : MonoBehaviour
         MissThreshold = default;
         IsCleared = default;
         IsArmed = default;
+        armedGrade = NoteGrade.None;
         GreatGradeWeight = default;
         JudgmentOffset = default;
     }
@@ -101,6 +104,7 @@ public abstract class Note : MonoBehaviour
         if (IsCleared) return;
 
         IsArmed = false;
+        armedGrade = NoteGrade.None;
         IsCleared = true;
         Renderer.OnClear(grade);
         Game.State.Judge(this, grade, -TimeUntilEnd, GreatGradeWeight);
@@ -136,7 +140,7 @@ public abstract class Note : MonoBehaviour
             {
                 if (Game.Time >= Model.start_time + JudgmentOffset)
                 {
-                    Clear(NoteGrade.Perfect);
+                    Clear(armedGrade);
                 }
             }
             else
@@ -232,7 +236,7 @@ public abstract class Note : MonoBehaviour
     /// <returns>True if this note took the touch (cleared or otherwise handled).</returns>
     public virtual bool OnTouch(Vector2 screenPos)
     {
-        if (!CanHandleTouch(screenPos)) return false;
+        if (!CanHandleTouch()) return false;
         return TryClear();
     }
 
@@ -243,7 +247,7 @@ public abstract class Note : MonoBehaviour
     /// </summary>
     public virtual bool OnTouchDeferred(Vector2 screenPos)
     {
-        if (!CanHandleTouch(screenPos) || IsArmed) return false;
+        if (!CanHandleTouch() || IsArmed) return false;
 
         var grade = GetTouchGrade();
         if (grade == NoteGrade.None) return false;
@@ -254,6 +258,7 @@ public abstract class Note : MonoBehaviour
         else
         {
             IsArmed = true;
+            armedGrade = grade;
         }
         return true;
     }
@@ -262,7 +267,7 @@ public abstract class Note : MonoBehaviour
     /// Returns whether this note may consider a touch at the current chart time.
     /// Drag variants extend this with their early and cross-page admission gates.
     /// </summary>
-    public virtual bool CanHandleTouch(Vector2 screenPos)
+    public virtual bool CanHandleTouch()
     {
         return Game.IsLoaded && Game.State.IsPlaying && !IsCollected && !IsCleared && !IsArmed;
     }

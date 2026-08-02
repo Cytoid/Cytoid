@@ -151,7 +151,7 @@ public class InputController : MonoBehaviour
         {
             if (!IsTouchableNote(note)) continue;
             if (!note.DoesCollide(pressedPosition)) continue;
-            if (!note.CanHandleTouch(pressedPosition)) continue;
+            if (!note.CanHandleTouch()) continue;
 
             var grade = note.GetTouchGrade();
             if (grade == NoteGrade.None) continue;
@@ -266,7 +266,7 @@ public class InputController : MonoBehaviour
                 break;
             }
 
-            if (!note.CanHandleTouch(pressedPosition)) continue;
+            if (!note.CanHandleTouch()) continue;
             if (note.GetTouchGrade() == NoteGrade.None) continue;
             accepted = note;
             break;

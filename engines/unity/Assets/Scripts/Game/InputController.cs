@@ -10,7 +10,7 @@ public class InputController : MonoBehaviour
     /// Candidates are re-clustered each Down by <c>effectiveNoteTime</c> span <= this gap
     /// (no adjacent-gap chain expansion). Soft fallthrough across clusters remains.
     /// In-cluster rank: see <see cref="OrderHitCandidatesByNoteTimeClusters"/>.
-    /// Flick stays list-order bind; Drag settles all colliding eligible notes per input.
+    /// Flick joins Click/Hold note-time clusters; Drag settles all colliding eligible notes per input.
     /// </summary>
     public const float NoteClusterGapSeconds = 0.015f;
 
@@ -101,6 +101,12 @@ public class InputController : MonoBehaviour
             note.HoldingFingers.Clear();
         });
         HoldingNotes.Clear();
+
+        FlickingNotes.Values.ForEach(note =>
+        {
+            if (!note.IsCleared) note.StopFlicking();
+        });
+        FlickingNotes.Clear();
     }
 
     public void OnGameUpdate(Game game)
@@ -250,16 +256,13 @@ public class InputController : MonoBehaviour
 
     /// <summary>
     /// Chooses, but does not settle, the Select note that would consume this Down.
+    /// Click / Flick / Hold share note-time clusters and rendered-X order.
     /// This lets Drag decide Immediate versus Armed while keeping Drag settlement first.
     /// </summary>
     private Note FindAcceptedSelect(GameFinger finger, Vector2 pressedPosition, Note acceptedDrag)
     {
         if (!game.IsLoaded || !game.State.IsPlaying) return null;
 
-        // Select in SpawnedNotes id order (TouchableSelectNotes).
-        // Flick: list-order bind; flush earlier Click/Hold cluster first (even if Flick is
-        // later blocked by DragCoHit). Click / CDrag head / unheld Hold: note-time clusters.
-        // All four types pass IsEligibleSelectAfterDrag (DragCoHit + cross-page).
         hitCandidates.Clear();
         foreach (var note in TouchableSelectNotes)
         {
@@ -268,13 +271,12 @@ public class InputController : MonoBehaviour
 
             if (note is FlickNote flickNote)
             {
-                var clusterCandidate = FindSelectClickCluster(pressedPosition.x, pressedPosition);
-                if (clusterCandidate != null) return clusterCandidate;
-
                 if (FlickingNotes.ContainsKey(finger.Index) || FlickingNotes.ContainsValue(flickNote))
                     continue;
+                if (flickNote.IsFlicking) continue;
                 if (!IsEligibleSelectAfterDrag(flickNote, acceptedDrag)) continue;
-                return flickNote;
+                hitCandidates.Add(flickNote);
+                continue;
             }
 
             if (note is HoldNote holdNote)
@@ -290,7 +292,7 @@ public class InputController : MonoBehaviour
             hitCandidates.Add(note);
         }
 
-        return FindSelectClickCluster(pressedPosition.x, pressedPosition);
+        return FindSelectCluster(finger, pressedPosition.x);
     }
 
     /// <summary>
@@ -324,10 +326,11 @@ public class InputController : MonoBehaviour
     }
 
     /// <summary>
-    /// Finds one Click / CDrag-head / Hold from <see cref="hitCandidates"/> using
+    /// Finds one Click / CDrag-head / Flick / Hold from <see cref="hitCandidates"/> using
     /// <see cref="OrderHitCandidatesByNoteTimeClusters"/> without settling it.
+    /// Revalidates cleared / reserved / holding state for same-frame multi-finger Downs.
     /// </summary>
-    private Note FindSelectClickCluster(float touchWorldX, Vector2 pressedPosition)
+    private Note FindSelectCluster(GameFinger finger, float touchWorldX)
     {
         if (hitCandidates.Count == 0) return null;
         if (!game.IsLoaded || !game.State.IsPlaying)
@@ -341,9 +344,18 @@ public class InputController : MonoBehaviour
         {
             if (!IsTouchableNote(note)) continue;
 
+            if (note is FlickNote flickNote)
+            {
+                if (FlickingNotes.ContainsKey(finger.Index) || FlickingNotes.ContainsValue(flickNote))
+                    continue;
+                if (flickNote.IsFlicking) continue;
+                accepted = flickNote;
+                break;
+            }
+
             if (note is HoldNote holdNote)
             {
-                if (holdNote.IsHolding) continue;
+                if (holdNote.IsHolding || HoldingNotes.ContainsKey(finger.Index)) continue;
                 accepted = holdNote;
                 break;
             }
@@ -366,6 +378,7 @@ public class InputController : MonoBehaviour
         if (note is FlickNote flickNote)
         {
             if (FlickingNotes.ContainsKey(finger.Index) || FlickingNotes.ContainsValue(flickNote)) return false;
+            if (flickNote.IsFlicking) return false;
             FlickingNotes.Add(finger.Index, flickNote);
             flickNote.StartFlicking(pressedPosition);
             return true;
@@ -388,12 +401,20 @@ public class InputController : MonoBehaviour
             ? game.camera.ScreenToWorldPoint(finger.ScreenPosition)
             : game.camera.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
 
-        // Query flick note
         if (FlickingNotes.ContainsKey(finger.Index))
         {
             var flickingNote = FlickingNotes[finger.Index];
-            var cleared = flickingNote.UpdateFingerPosition(pos);
-            if (cleared) FlickingNotes.Remove(finger.Index);
+            if (!IsTouchableNote(flickingNote))
+            {
+                flickingNote.StopFlicking();
+                FlickingNotes.Remove(finger.Index);
+            }
+            else
+            {
+                var result = flickingNote.UpdateFingerPosition(pos);
+                if (result == FlickFingerResult.Cleared)
+                    FlickingNotes.Remove(finger.Index);
+            }
         }
 
         // Drag: continuous contact -- clear/arm colliding stack batch in one pass
@@ -469,7 +490,7 @@ public class InputController : MonoBehaviour
                 : game.camera.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
 
             var flickingNote = FlickingNotes[finger.Index];
-            flickingNote.UpdateFingerPosition(pos);
+            flickingNote.ReleaseFinger(pos);
             FlickingNotes.Remove(finger.Index);
         }
     }
@@ -485,11 +506,10 @@ public class InputController : MonoBehaviour
     }
 
     /// <summary>
-    /// Order Click / CDrag-head / Hold candidates for one FingerDown.
+    /// Order Click / CDrag-head / Flick / Hold candidates for one FingerDown.
     /// Sort by <c>effectiveNoteTime</c>, then split into clusters with span &lt;=
     /// <see cref="NoteClusterGapSeconds"/> (earlier clusters first; soft fallthrough).
-    /// Within a cluster: |dx| -&gt; note time -&gt; type (Click/CDrag head before Hold) -&gt; id.
-    /// Flick is never passed here (list-order bind on the scan path).
+    /// Within a cluster: |dx| -&gt; note time -&gt; kind (Click, Flick, Hold) -&gt; id.
     /// Not re-entrant: mutates <see cref="hitCandidates"/> / <c>clusterScratch</c> while yielding.
     /// </summary>
     private IEnumerable<Note> OrderHitCandidatesByNoteTimeClusters(float touchWorldX)
@@ -540,10 +560,13 @@ public class InputController : MonoBehaviour
 
     /// <summary>
     /// In-cluster type rank after |dx| and note time. Lower = preferred.
-    /// Click / CDrag head beat Hold on same-time / same-position ties so chart id
-    /// alone does not decide who consumes FingerDown.
+    /// Click-like = 0, Flick = 1, Hold = 2.
     /// </summary>
-    private static int SelectTypePriority(Note note) =>
-        note is HoldNote ? 1 : 0;
+    private static int SelectTypePriority(Note note)
+    {
+        if (note is HoldNote) return 2;
+        if (note is FlickNote) return 1;
+        return 0;
+    }
 
 }

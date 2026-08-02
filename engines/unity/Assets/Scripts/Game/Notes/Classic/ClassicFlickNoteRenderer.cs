@@ -53,17 +53,23 @@ public class ClassicFlickNoteRenderer : ClassicNoteRenderer
 
     protected virtual void UpdateArrows()
     {
+        // Prefer closing 0.25s before hit time, but never let the animation window
+        // become non-positive under very fast AR (approachDuration <= 0.25).
+        var approachDuration = Note.Model.start_time - Note.Model.intro_time;
+        var animDuration = approachDuration > 0.25f ? approachDuration - 0.25f : approachDuration;
+        var progress = animDuration > 0f
+            ? Mathf.Clamp01((Game.Time - Note.Model.intro_time) / animDuration)
+            : 1f;
+
         leftArrow.transform.localPosition = Vector3.Lerp(
             new Vector3(-maxArrowOffset, 0, 0),
             new Vector3(0, 0, 0),
-            Mathf.Clamp((Game.Time - Note.Model.intro_time) / (Note.Model.start_time - Note.Model.intro_time - 0.25f),
-                0, 1)
+            progress
         );
         rightArrow.transform.localPosition = Vector3.Lerp(
             new Vector3(maxArrowOffset, 0, 0),
             new Vector3(0, 0, 0),
-            Mathf.Clamp((Game.Time - Note.Model.intro_time) / (Note.Model.start_time - Note.Model.intro_time - 0.25f),
-                0, 1)
+            progress
         );
     }
 }

@@ -62,7 +62,7 @@ public class FlickNote : Note
 
         var swipeVector = screenPos - FlickingStartPosition;
         // TODO: Consider rotation
-        if (Math.Abs(swipeVector.x) <= Game.camera.orthographicSize * 0.01f)
+        if (Math.Abs(swipeVector.x) < Game.camera.orthographicSize * 0.01f)
             return FlickFingerResult.Pending;
 
         if (TryClear())
@@ -75,12 +75,18 @@ public class FlickNote : Note
     }
 
     /// <summary>
-    /// FingerUp / cancel: one final <see cref="Note.TryClear"/> then always release ownership.
+    /// FingerUp / cancel: attempt clear only if release displacement meets the Flick
+    /// threshold, then always release ownership (no stationary Up clear).
     /// </summary>
     public FlickFingerResult ReleaseFinger(Vector2 screenPos)
     {
         if (!IsCleared && Game.State.IsPlaying)
-            TryClear();
+        {
+            var swipeVector = screenPos - FlickingStartPosition;
+            // TODO: Consider rotation
+            if (Math.Abs(swipeVector.x) >= Game.camera.orthographicSize * 0.01f)
+                TryClear();
+        }
 
         if (!IsCleared)
             StopFlicking();

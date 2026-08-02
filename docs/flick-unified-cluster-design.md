@@ -92,7 +92,7 @@ Never enter the unified Select cluster:
 
 - Drag head, Drag child, CDrag child, DropDrag.
 
-Those remain in `TouchableDragNotes` with list-order scan and DragCoHit gating of
+Those remain in `TouchableDragNotes` with colliding-stack batch settle and DragCoHit gating of
 Select.
 
 ## 7. Candidate collection
@@ -171,7 +171,7 @@ Notes:
 ## 11. FingerDown arbitration
 
 ```text
-acceptedDrag = FindAcceptedDrag(pressedPosition)          // unchanged
+acceptedDrag = CollectCollidingDragBatch(pressedPosition) // DragCoHit representative
 candidates   = collectUnifiedSelectCandidates(...)        // includes Flick
 
 for cluster in clustersByEffectiveNoteTime(candidates):
@@ -185,12 +185,13 @@ for cluster in clustersByEffectiveNoteTime(candidates):
 return NotConsumed
 ```
 
-Settlement interaction with Drag (unchanged):
+Settlement interaction with Drag (unchanged event order; batch settle from stacked-drag path):
 
 ```text
 if acceptedDrag != null:
-    if acceptedSelect != null: acceptedDrag.OnTouchDeferred(...)
-    else:                      acceptedDrag.OnTouch(...)
+    // SettleDragBatch: deferred when acceptedSelect != null
+    if acceptedSelect != null: acceptedDrag stack OnTouchDeferred(...)
+    else:                      representative OnTouch(...); rest deferred
 AcceptSelect(acceptedSelect, ...)
 ```
 
@@ -255,7 +256,7 @@ Replace boolean “handled” with:
 ```text
 Pending   — keep binding
 Cleared   — remove binding after successful clear
-Released  — remove binding after FingerUp / Cancel (after one final TryClear)
+Released  — remove binding after FingerUp / Cancel (after optional thresholded TryClear)
 ```
 
 Movement (always against the **single** reserved note from Down):
@@ -271,11 +272,13 @@ Movement (always against the **single** reserved note from Down):
 FingerUp / Cancel:
 
 ```text
-final TryClear at release position on the reserved note only
+if |releasePos - startPos| ≥ threshold: one TryClear attempt
 unbind regardless of result
 ```
 
-Threshold value unchanged: `orthographicSize * 0.01`.
+A stationary FingerUp must **not** clear the Flick. The displacement gate matches the
+previous Up path (`UpdateFingerPosition`) so reserve-then-lift without a swipe cannot
+settle the note.
 
 Collect / pause must still drop `FlickingNotes` entries for the note / all
 fingers as today.
@@ -308,7 +311,7 @@ Joining the cluster must not change Drag-first settlement order.
 Unchanged:
 
 - grade windows, Early/Late, score;
-- Drag list-order + DragCoHit 30ms;
+- Drag colliding-stack batch settle + DragCoHit 30ms;
 - one Down → one Select;
 - Auto / AutoFlick / AutoHold / practice rules;
 - 15ms cluster span;
@@ -376,7 +379,7 @@ Update play-event fixtures accordingly.
 |------|----------------|
 | Select Down | `InputController.FindAcceptedSelect`, `OrderHitCandidatesByNoteTimeClusters`, `SelectTypePriority`, `AcceptSelect` |
 | Lifecycle | `FlickNote.UpdateFingerPosition` (+ result enum or equivalent); `OnFingerUpdate` must honor Pending |
-| Drag | `FindAcceptedDrag`, `IsEligibleSelectAfterDrag` — logic preserved |
+| Drag | `CollectCollidingDragBatch` / `SettleDragBatch`, `IsEligibleSelectAfterDrag` — DragCoHit preserved |
 
 ```text
 OrderCluster(touchWorldX, candidates):

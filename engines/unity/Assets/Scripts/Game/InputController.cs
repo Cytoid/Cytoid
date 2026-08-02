@@ -7,7 +7,7 @@ public class InputController : MonoBehaviour
     /// <summary>
     /// Max note-to-note span (seconds) for one FingerDown hit cluster
     /// (true or pseudo simultaneous press). Applies to Click / CDrag head / unheld Hold.
-    /// Candidates are re-clustered each Down by <c>effectiveNoteTime</c> span â‰¤ this gap
+    /// Candidates are re-clustered each Down by <c>effectiveNoteTime</c> span â‰?this gap
     /// (no adjacent-gap chain expansion). Soft fallthrough across clusters remains.
     /// In-cluster rank: see <see cref="OrderHitCandidatesByNoteTimeClusters"/>.
     /// Flick stays list-order bind; Drag settles all colliding eligible notes per input.
@@ -25,15 +25,16 @@ public class InputController : MonoBehaviour
     public const float DragCoHitWindowSeconds = 0.030f;
 
     /// <summary>
-    /// Max clear FX (ripple + particles) spawned from one drag input batch
-    /// (FingerDown settle or FingerUpdate multi-clear).
+    /// Clear FX budget for stacked-drag settle; aliases
+    /// <see cref="EffectController.MaxClearFxPerFrame"/> (also covers armed/Auto Clear).
     /// </summary>
-    public const int DragBatchMaxClearFx = 3;
+    public const int DragBatchMaxClearFx = EffectController.MaxClearFxPerFrame;
 
     /// <summary>
-    /// Max hit sounds (and gated haptics) from one drag input batch.
+    /// Hit-sound budget for stacked-drag settle; aliases
+    /// <see cref="EffectController.MaxHitSoundsPerFrame"/>.
     /// </summary>
-    public const int DragBatchMaxHitSounds = 1;
+    public const int DragBatchMaxHitSounds = EffectController.MaxHitSoundsPerFrame;
 
     /// <summary>
     /// Max |Î”effectiveNoteTime| from the DragCoHit representative (first colliding
@@ -154,7 +155,7 @@ public class InputController : MonoBehaviour
     /// <summary>
     /// Collects a Drag settle batch and returns the DragCoHit representative.
     /// Representative is the first colliding non-Miss in <see cref="TouchableDragNotes"/>
-    /// list order â€” same as legacy <c>FindAcceptedDrag</c>, so Select gating is unchanged.
+    /// list order â€?same as legacy <c>FindAcceptedDrag</c>, so Select gating is unchanged.
     /// Additional colliding non-Miss notes within
     /// <see cref="DragStackBatchGapSeconds"/> of that note are added to
     /// <see cref="dragBatchScratch"/> for co-clear. Misses before the representative
@@ -199,13 +200,15 @@ public class InputController : MonoBehaviour
     }
 
     /// <summary>
-    /// Settles <see cref="dragBatchScratch"/> under a shared clear-FX / hit-sound budget.
+    /// Settles <see cref="dragBatchScratch"/> under the shared per-frame clear-FX /
+    /// hit-sound budget (<see cref="EffectController.MaxClearFxPerFrame"/>).
     /// When <paramref name="deferred"/> is false, only the DragCoHit representative
-    /// (index 0) uses immediate <see cref="Note.OnTouch"/> â€” same as legacy Down.
+    /// (index 0) uses immediate <see cref="Note.OnTouch"/> -- same as legacy Down.
     /// The rest of the stack uses <see cref="Note.OnTouchDeferred"/>, matching the
     /// legacy FingerUpdate path so early contacts still arm to perfect time.
     /// When <paramref name="deferred"/> is true (Select claimed the Down), every
-    /// note in the batch is deferred.
+    /// note in the batch is deferred. Armed notes that later Clear in
+    /// <see cref="Note"/> still share the same per-frame FX/SFX budget.
     /// </summary>
     private void SettleDragBatch(Vector2 screenPos, bool deferred)
     {
@@ -378,7 +381,7 @@ public class InputController : MonoBehaviour
             if (cleared) FlickingNotes.Remove(finger.Index);
         }
 
-        // Drag: continuous contact â€” clear/arm colliding stack batch in one pass
+        // Drag: continuous contact â€?clear/arm colliding stack batch in one pass
         CollectCollidingDragBatch(pos);
         SettleDragBatch(finger.ScreenPosition, deferred: true);
 
@@ -459,9 +462,8 @@ public class InputController : MonoBehaviour
 
     /// <summary>
     /// Order Click / CDrag-head / Hold candidates for one FingerDown.
-    /// Sort by <c>effectiveNoteTime</c>, then split into clusters with span â‰¤
-    /// <see cref="NoteClusterGapSeconds"/> (earlier clusters first; soft fallthrough).
-    /// Within a cluster: |Î”x| â†’ note time â†’ type (Click/CDrag head before Hold) â†’ id.
+    /// Sort by <c>effectiveNoteTime</c>, then split into clusters with span â‰?    /// <see cref="NoteClusterGapSeconds"/> (earlier clusters first; soft fallthrough).
+    /// Within a cluster: |Î”x| â†?note time â†?type (Click/CDrag head before Hold) â†?id.
     /// Flick is never passed here (list-order bind on the scan path).
     /// Not re-entrant: mutates <see cref="hitCandidates"/> / <c>clusterScratch</c> while yielding.
     /// </summary>

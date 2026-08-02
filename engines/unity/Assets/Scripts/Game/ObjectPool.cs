@@ -235,10 +235,12 @@ public class ObjectPool
 
     private static long MakeDragLineGeometryKey(ChartModel.Note from, ChartModel.Note to)
     {
-        // Full quantized coords — do not fold x into 10 bits (that collided unrelated edges).
+        // Include note type so Drag vs CDrag edges with matching quantized (t,x) do not share.
         unchecked
         {
             long hash = 17;
+            hash = hash * 31 + from.type;
+            hash = hash * 31 + to.type;
             hash = hash * 31 + (long) Mathf.Round(from.start_time * 1000f);
             hash = hash * 31 + (long) Mathf.Round(to.start_time * 1000f);
             hash = hash * 31 + (long) Mathf.Round((float) from.x * 10000f);

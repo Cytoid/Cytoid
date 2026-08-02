@@ -106,7 +106,24 @@ public class DragLineElement : MonoBehaviour
             }
         }
 
-        var fromNotePosition = hasFromNote ? (fromNote is DragHeadNote dragHeadNote ? dragHeadNote.OriginalPosition : fromNote.transform.localPosition) : FromNoteModel.CalculatePosition(Game.Chart);
+        Vector3 fromNotePosition;
+        if (!hasFromNote)
+        {
+            fromNotePosition = FromNoteModel.CalculatePosition(Game.Chart);
+        }
+        else if (fromNote is DragHeadNote dragHeadNote)
+        {
+            // OriginalPosition is only written while Time < start_time; unset (default)
+            // would anchor the line at the world origin and leave a visible stub.
+            fromNotePosition = dragHeadNote.OriginalPosition != default
+                ? dragHeadNote.OriginalPosition
+                : dragHeadNote.transform.localPosition;
+        }
+        else
+        {
+            fromNotePosition = fromNote.transform.localPosition;
+        }
+
         var toNotePosition = hasToNote ? toNote.transform.localPosition : ToNoteModel.CalculatePosition(Game.Chart);
         
         var transform = this.transform;
@@ -125,12 +142,6 @@ public class DragLineElement : MonoBehaviour
         UpdateTransform();
         
         spriteRenderer.enabled = !Game.State.Mods.Contains(Mod.HideNotes);
-
-        if (outroRatio >= 1)
-        {
-            Collect();
-            return;
-        }
 
         if (Game.SpawnedNotes.ContainsKey(FromNoteModel.id))
         {
@@ -176,11 +187,18 @@ public class DragLineElement : MonoBehaviour
             introRatio = time < FromNoteModel.nextdraglinestarttime ? 1.0f : 0.0f;
         }
 
-        var outroSpan = ToNoteModel.start_time - FromNoteModel.start_time;
-        if (outroSpan > 0f)
-            outroRatio = (time - FromNoteModel.start_time) / outroSpan;
+        // Compute outro before Collect so completion happens on the same frame
+        // (avoids a one-frame remnant when _Start is never pulled to 1).
+        var outroDuration = ToNoteModel.start_time - FromNoteModel.start_time;
+        if (outroDuration > 0f)
+        {
+            outroRatio = (time - FromNoteModel.start_time) / outroDuration;
+        }
         else
+        {
+            // Simultaneous or reverse edge: finish once at/after from start (no NaN).
             outroRatio = time < FromNoteModel.start_time ? 0f : 1f;
+        }
 
         if (introRatio > 0 && introRatio < 1)
         {
@@ -195,7 +213,14 @@ public class DragLineElement : MonoBehaviour
             spriteRenderer.material.SetFloat(MaterialEnd, 0.0f);
         }
 
-        if (outroRatio > 0 && outroRatio < 1)
+        if (outroRatio >= 1f)
+        {
+            spriteRenderer.material.SetFloat(MaterialStart, 1f);
+            Collect();
+            return;
+        }
+
+        if (outroRatio > 0f)
         {
             spriteRenderer.material.SetFloat(MaterialStart, outroRatio);
         }

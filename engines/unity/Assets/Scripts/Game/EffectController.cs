@@ -77,7 +77,8 @@ public class EffectController : MonoBehaviour
 
     /// <summary>
     /// Caps clear FX / hit sounds for one stacked-drag settle batch only.
-    /// Nested calls are not supported; always pair with <see cref="EndClearBatch"/>.
+    /// Nesting is depth-counted: inner <see cref="BeginClearBatch"/> calls share the
+    /// outermost caps; pair each begin with <see cref="EndClearBatch"/>.
     /// </summary>
     public void BeginClearBatch(int maxFx, int maxSounds)
     {

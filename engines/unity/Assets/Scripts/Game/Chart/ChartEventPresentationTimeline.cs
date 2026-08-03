@@ -302,6 +302,16 @@ public sealed class ChartEventPresentationTimeline
 
     private static int FindMessageSeparator(string value)
     {
+        // Classic C2 is "content,#RRGGBB". Community charts write spinner frames like
+        // "\,#FFFFFF" meaning content "\" + white. Prefer a comma whose suffix is a valid
+        // color so "\," is not treated as an escaped comma that swallows the color.
+        for (var i = value.Length - 1; i >= 0; i--)
+        {
+            if (value[i] != ',') continue;
+            if (IsRgbHexColor(value.Substring(i + 1).Trim())) return i;
+        }
+
+        // Fallback for invalid color suffixes / mid-text commas: first unescaped comma.
         for (var i = 0; i < value.Length; i++)
         {
             if (value[i] == '\\' && i + 1 < value.Length &&

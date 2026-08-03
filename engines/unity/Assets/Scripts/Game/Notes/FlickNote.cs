@@ -1,6 +1,16 @@
 ﻿using System;
 using UnityEngine;
 
+public enum FlickFingerResult
+{
+    /// <summary>Keep the finger→Flick binding.</summary>
+    Pending,
+    /// <summary>Note cleared; caller must unbind.</summary>
+    Cleared,
+    /// <summary>Finger released/canceled; caller must unbind regardless of clear.</summary>
+    Released,
+}
+
 public class FlickNote : Note
 {
     public bool IsFlicking { get; set; }
@@ -30,27 +40,65 @@ public class FlickNote : Note
         FlickingStartPosition = screenPos;
     }
 
-    public bool UpdateFingerPosition(Vector2 screenPos)
+    /// <summary>
+    /// Clears flicking session state so another FingerDown can reserve this note.
+    /// Does not clear the note judgment.
+    /// </summary>
+    public void StopFlicking()
     {
-        if (!Game.State.IsPlaying) return false;
-        if (IsCleared) return true;
+        IsFlicking = default;
+        FlickingStartTime = default;
+        FlickingStartPosition = default;
+    }
+
+    /// <summary>
+    /// Movement while reserved. Threshold crossed + failed <see cref="Note.TryClear"/> stays
+    /// <see cref="FlickFingerResult.Pending"/> and resets the swipe origin.
+    /// </summary>
+    public FlickFingerResult UpdateFingerPosition(Vector2 screenPos)
+    {
+        if (!Game.State.IsPlaying) return FlickFingerResult.Pending;
+        if (IsCleared) return FlickFingerResult.Cleared;
+
         var swipeVector = screenPos - FlickingStartPosition;
         // TODO: Consider rotation
-        if (Math.Abs(swipeVector.x) > Game.camera.orthographicSize * 0.01f)
+        if (Math.Abs(swipeVector.x) < Game.camera.orthographicSize * 0.01f)
+            return FlickFingerResult.Pending;
+
+        if (TryClear())
+            return FlickFingerResult.Cleared;
+
+        // Failed early/out-of-window attempt: keep binding; require a new threshold cross.
+        FlickingStartPosition = screenPos;
+        FlickingStartTime = Game.Time;
+        return FlickFingerResult.Pending;
+    }
+
+    /// <summary>
+    /// FingerUp / cancel: attempt clear only if release displacement meets the Flick
+    /// threshold, then always release ownership (no stationary Up clear).
+    /// </summary>
+    public FlickFingerResult ReleaseFinger(Vector2 screenPos)
+    {
+        if (!IsCleared && Game.State.IsPlaying)
         {
-            TryClear();
-            return true;
+            var swipeVector = screenPos - FlickingStartPosition;
+            // TODO: Consider rotation
+            if (Math.Abs(swipeVector.x) >= Game.camera.orthographicSize * 0.01f)
+                TryClear();
         }
-        return false;
+
+        if (!IsCleared)
+            StopFlicking();
+
+        return FlickFingerResult.Released;
     }
 
     public override void Collect()
     {
         if (IsCollected) return;
-    
-        IsFlicking = default;
-        FlickingStartTime = default;
-        FlickingStartPosition = default;
+
+        StopFlicking();
         age = default;
         base.Collect();
     }
@@ -97,5 +145,5 @@ public class FlickNote : Note
     {
         return base.IsAutoEnabled() || Game.State.Mods.Contains(Mod.AutoFlick);
     }
-    
+
 }

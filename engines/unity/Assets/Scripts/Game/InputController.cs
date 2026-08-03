@@ -7,7 +7,7 @@ public class InputController : MonoBehaviour
     /// <summary>
     /// Max note-to-note span (seconds) for one FingerDown hit cluster
     /// (true or pseudo simultaneous press). Applies to Click / CDrag head / unheld Hold.
-    /// Candidates are re-clustered each Down by <c>effectiveNoteTime</c> span â‰?this gap
+    /// Candidates are re-clustered each Down by <c>effectiveNoteTime</c> span â‰¤ this gap
     /// (no adjacent-gap chain expansion). Soft fallthrough across clusters remains.
     /// In-cluster rank: see <see cref="OrderHitCandidatesByNoteTimeClusters"/>.
     /// Flick stays list-order bind; Drag settles all colliding eligible notes per input.
@@ -155,7 +155,7 @@ public class InputController : MonoBehaviour
     /// <summary>
     /// Collects a Drag settle batch and returns the DragCoHit representative.
     /// Representative is the first colliding non-Miss in <see cref="TouchableDragNotes"/>
-    /// list order â€?same as legacy <c>FindAcceptedDrag</c>, so Select gating is unchanged.
+    /// list order â€” same as legacy <c>FindAcceptedDrag</c>, so Select gating is unchanged.
     /// Additional colliding non-Miss notes within
     /// <see cref="DragStackBatchGapSeconds"/> of that note are added to
     /// <see cref="dragBatchScratch"/> for co-clear. Misses before the representative
@@ -381,7 +381,7 @@ public class InputController : MonoBehaviour
             if (cleared) FlickingNotes.Remove(finger.Index);
         }
 
-        // Drag: continuous contact â€?clear/arm colliding stack batch in one pass
+        // Drag: continuous contact â€” clear/arm colliding stack batch in one pass
         CollectCollidingDragBatch(pos);
         SettleDragBatch(finger.ScreenPosition, deferred: true);
 
@@ -462,8 +462,9 @@ public class InputController : MonoBehaviour
 
     /// <summary>
     /// Order Click / CDrag-head / Hold candidates for one FingerDown.
-    /// Sort by <c>effectiveNoteTime</c>, then split into clusters with span â‰?    /// <see cref="NoteClusterGapSeconds"/> (earlier clusters first; soft fallthrough).
-    /// Within a cluster: |Î”x| â†?note time â†?type (Click/CDrag head before Hold) â†?id.
+    /// Sort by <c>effectiveNoteTime</c>, then split into clusters with span â‰¤
+    /// <see cref="NoteClusterGapSeconds"/> (earlier clusters first; soft fallthrough).
+    /// Within a cluster: |Î”x| â†’ note time â†’ type (Click/CDrag head before Hold) â†’ id.
     /// Flick is never passed here (list-order bind on the scan path).
     /// Not re-entrant: mutates <see cref="hitCandidates"/> / <c>clusterScratch</c> while yielding.
     /// </summary>

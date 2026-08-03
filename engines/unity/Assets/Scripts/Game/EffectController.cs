@@ -22,19 +22,26 @@ public class EffectController : MonoBehaviour
     const float ClearRingStartDiameter = 1f;
 
     /// <summary>
-    /// Max clear FX (ripple + particles) spawned in one frame from any settle path:
-    /// stacked-drag input batch, deferred armed Clear, Auto, or mass Miss.
+    /// Max clear FX (ripple + particles) for one co-located drag-stack settle
+    /// (input batch or deferred armed co-clear). Does not cap Click/Flick/Hold/Auto.
     /// </summary>
-    public const int MaxClearFxPerFrame = 3;
+    public const int MaxClearFxPerDragBatch = 3;
 
     /// <summary>
-    /// Max hit sounds (and gated haptics) spawned in one frame from any settle path.
+    /// Max hit sounds (and gated haptics) for one co-located drag-stack settle.
     /// </summary>
-    public const int MaxHitSoundsPerFrame = 1;
+    public const int MaxHitSoundsPerDragBatch = 1;
 
-    private int budgetFrame = -1;
-    private int frameFxUsed;
-    private int frameSoundUsed;
+    /// <summary>
+    /// Active only while a drag-stack budget is open (<see cref="BeginClearBatch"/> or
+    /// <see cref="EnsureDragStackBudget"/>). Cap &lt; 0 means uncapped.
+    /// </summary>
+    private int batchDepth;
+    private int softBudgetFrame = -1;
+    private int batchFxCap = -1;
+    private int batchFxUsed;
+    private int batchSoundCap = -1;
+    private int batchSoundUsed;
 
     private void Awake()
     {
@@ -47,51 +54,79 @@ public class EffectController : MonoBehaviour
         clearEffectSizeMultiplier = Context.Player.Settings.ClearEffectsSize;
     }
 
-    private void ResetBudgetIfNewFrame()
+    private void ExpireSoftBudgetIfStale()
     {
-        var frame = Time.frameCount;
-        if (budgetFrame == frame) return;
-        budgetFrame = frame;
-        frameFxUsed = 0;
-        frameSoundUsed = 0;
+        if (softBudgetFrame < 0 || batchDepth > 0) return;
+        if (softBudgetFrame == Time.frameCount) return;
+        softBudgetFrame = -1;
+        batchFxCap = -1;
+        batchSoundCap = -1;
     }
 
     /// <summary>
-    /// Marks a multi-clear settle group. Budget is always per-frame
-    /// (<see cref="MaxClearFxPerFrame"/> / <see cref="MaxHitSoundsPerFrame"/>);
-    /// this exists so stacked-drag input can share the same counters without resetting them.
+    /// Caps clear FX / hit sounds for one stacked-drag settle batch only.
     /// Nested calls are not supported; always pair with <see cref="EndClearBatch"/>.
     /// </summary>
     public void BeginClearBatch(int maxFx, int maxSounds)
     {
-        // maxFx / maxSounds kept for call-site clarity; frame caps are the source of truth.
-        ResetBudgetIfNewFrame();
+        batchDepth++;
+        if (batchDepth > 1) return;
+        softBudgetFrame = -1;
+        batchFxCap = maxFx;
+        batchFxUsed = 0;
+        batchSoundCap = maxSounds;
+        batchSoundUsed = 0;
     }
 
     public void EndClearBatch()
     {
-        // Per-frame budget persists until the next frame; nothing to clear.
+        if (batchDepth <= 0) return;
+        batchDepth--;
+        if (batchDepth > 0) return;
+        batchFxCap = -1;
+        batchSoundCap = -1;
+    }
+
+    /// <summary>
+    /// Opens the same drag-stack caps for the rest of this frame when deferred armed
+    /// stack notes co-clear outside <see cref="BeginClearBatch"/>. No-op if a hard
+    /// batch is already active or the soft budget was already opened this frame.
+    /// </summary>
+    public void EnsureDragStackBudget(int maxFx, int maxSounds)
+    {
+        ExpireSoftBudgetIfStale();
+        if (batchDepth > 0) return;
+        if (softBudgetFrame == Time.frameCount) return;
+        softBudgetFrame = Time.frameCount;
+        batchFxCap = maxFx;
+        batchFxUsed = 0;
+        batchSoundCap = maxSounds;
+        batchSoundUsed = 0;
     }
 
     /// <returns>
-    /// False when this frame has already used its clear-FX budget.
+    /// False only when a drag-stack budget is active and its FX quota is exhausted.
+    /// Outside a drag-stack budget, always true.
     /// </returns>
     public bool TryConsumeClearFx()
     {
-        ResetBudgetIfNewFrame();
-        if (frameFxUsed >= MaxClearFxPerFrame) return false;
-        frameFxUsed++;
+        ExpireSoftBudgetIfStale();
+        if (batchFxCap < 0) return true;
+        if (batchFxUsed >= batchFxCap) return false;
+        batchFxUsed++;
         return true;
     }
 
     /// <returns>
-    /// False when this frame has already used its hit-sound budget.
+    /// False only when a drag-stack budget is active and its hit-sound quota is exhausted.
+    /// Outside a drag-stack budget, always true.
     /// </returns>
     public bool TryConsumeHitSound()
     {
-        ResetBudgetIfNewFrame();
-        if (frameSoundUsed >= MaxHitSoundsPerFrame) return false;
-        frameSoundUsed++;
+        ExpireSoftBudgetIfStale();
+        if (batchSoundCap < 0) return true;
+        if (batchSoundUsed >= batchSoundCap) return false;
+        batchSoundUsed++;
         return true;
     }
 

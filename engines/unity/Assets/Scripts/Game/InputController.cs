@@ -7,7 +7,7 @@ public class InputController : MonoBehaviour
     /// <summary>
     /// Max note-to-note span (seconds) for one FingerDown hit cluster
     /// (true or pseudo simultaneous press). Applies to Click / CDrag head / unheld Hold.
-    /// Candidates are re-clustered each Down by <c>effectiveNoteTime</c> span ≤ this gap
+    /// Candidates are re-clustered each Down by <c>effectiveNoteTime</c> span <= this gap
     /// (no adjacent-gap chain expansion). Soft fallthrough across clusters remains.
     /// In-cluster rank: see <see cref="OrderHitCandidatesByNoteTimeClusters"/>.
     /// Flick stays list-order bind; Drag settles all colliding eligible notes per input.
@@ -25,19 +25,19 @@ public class InputController : MonoBehaviour
     public const float DragCoHitWindowSeconds = 0.030f;
 
     /// <summary>
-    /// Clear FX budget for stacked-drag settle; aliases
-    /// <see cref="EffectController.MaxClearFxPerFrame"/> (also covers armed/Auto Clear).
+    /// Clear FX budget for one co-located drag-stack settle; aliases
+    /// <see cref="EffectController.MaxClearFxPerDragBatch"/>.
     /// </summary>
-    public const int DragBatchMaxClearFx = EffectController.MaxClearFxPerFrame;
+    public const int DragBatchMaxClearFx = EffectController.MaxClearFxPerDragBatch;
 
     /// <summary>
-    /// Hit-sound budget for stacked-drag settle; aliases
-    /// <see cref="EffectController.MaxHitSoundsPerFrame"/>.
+    /// Hit-sound budget for one co-located drag-stack settle; aliases
+    /// <see cref="EffectController.MaxHitSoundsPerDragBatch"/>.
     /// </summary>
-    public const int DragBatchMaxHitSounds = EffectController.MaxHitSoundsPerFrame;
+    public const int DragBatchMaxHitSounds = EffectController.MaxHitSoundsPerDragBatch;
 
     /// <summary>
-    /// Max |ΔeffectiveNoteTime| from the DragCoHit representative (first colliding
+    /// Max |delta effectiveNoteTime| from the DragCoHit representative (first colliding
     /// non-Miss in list order) for other colliding Drags settled in the same batch.
     /// Keeps same-tick stacks co-clearing without changing which Drag gates Select.
     /// </summary>
@@ -138,16 +138,28 @@ public class InputController : MonoBehaviour
             ? game.camera.ScreenToWorldPoint(finger.ScreenPosition)
             : game.camera.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
 
-        // Collect all colliding eligible Drags without settling yet: Immediate vs Armed
-        // depends on whether a higher-priority Select candidate claims this fresh Down.
-        // Misses still settle immediately and do not arm DragCoHit.
-        var acceptedDrag = CollectCollidingDragBatch(pressedPosition);
+        // Collect + settle under one drag-stack FX/SFX budget so Miss clears during
+        // collection share the same caps as the co-located non-Miss batch.
+        var effects = game.effectController;
+        effects.BeginClearBatch(DragBatchMaxClearFx, DragBatchMaxHitSounds);
+        Note acceptedSelect;
+        try
+        {
+            // Collect all colliding eligible Drags without settling yet: Immediate vs Armed
+            // depends on whether a higher-priority Select candidate claims this fresh Down.
+            // Misses still settle immediately and do not arm DragCoHit.
+            var acceptedDrag = CollectCollidingDragBatch(pressedPosition);
 
-        // Select is still gated by the accepted Drag before either candidate settles,
-        // preserving DragCoHit and cross-page suppression without changing event order.
-        var acceptedSelect = FindAcceptedSelect(finger, pressedPosition, acceptedDrag);
+            // Select is still gated by the accepted Drag before either candidate settles,
+            // preserving DragCoHit and cross-page suppression without changing event order.
+            acceptedSelect = FindAcceptedSelect(finger, pressedPosition, acceptedDrag);
 
-        SettleDragBatch(finger.ScreenPosition, deferred: acceptedSelect != null);
+            SettleDragBatch(finger.ScreenPosition, deferred: acceptedSelect != null);
+        }
+        finally
+        {
+            effects.EndClearBatch();
+        }
 
         AcceptSelect(acceptedSelect, finger, pressedPosition);
     }
@@ -155,7 +167,7 @@ public class InputController : MonoBehaviour
     /// <summary>
     /// Collects a Drag settle batch and returns the DragCoHit representative.
     /// Representative is the first colliding non-Miss in <see cref="TouchableDragNotes"/>
-    /// list order — same as legacy <c>FindAcceptedDrag</c>, so Select gating is unchanged.
+    /// list order -- same as legacy <c>FindAcceptedDrag</c>, so Select gating is unchanged.
     /// Additional colliding non-Miss notes within
     /// <see cref="DragStackBatchGapSeconds"/> of that note are added to
     /// <see cref="dragBatchScratch"/> for co-clear. Misses before the representative
@@ -200,37 +212,37 @@ public class InputController : MonoBehaviour
     }
 
     /// <summary>
-    /// Settles <see cref="dragBatchScratch"/> under the shared per-frame clear-FX /
-    /// hit-sound budget (<see cref="EffectController.MaxClearFxPerFrame"/>).
+    /// Settles <see cref="dragBatchScratch"/>. Caller must hold
+    /// <see cref="EffectController.BeginClearBatch"/> so immediate Clears (including
+    /// Misses collected earlier) share one co-located drag-stack FX/SFX budget.
     /// When <paramref name="deferred"/> is false, only the DragCoHit representative
     /// (index 0) uses immediate <see cref="Note.OnTouch"/> -- same as legacy Down.
     /// The rest of the stack uses <see cref="Note.OnTouchDeferred"/>, matching the
     /// legacy FingerUpdate path so early contacts still arm to perfect time.
     /// When <paramref name="deferred"/> is true (Select claimed the Down), every
-    /// note in the batch is deferred. Armed notes that later Clear in
-    /// <see cref="Note"/> still share the same per-frame FX/SFX budget.
+    /// note in the batch is deferred. Multi-note stacks that arm mark
+    /// <see cref="Note.MarkDragStackBudget"/> so later co-clears share the same caps
+    /// via <see cref="EffectController.EnsureDragStackBudget"/> without affecting
+    /// Click/Flick/Hold/Auto feedback.
     /// </summary>
     private void SettleDragBatch(Vector2 screenPos, bool deferred)
     {
         if (dragBatchScratch.Count == 0) return;
 
-        var effects = game.effectController;
-        effects.BeginClearBatch(DragBatchMaxClearFx, DragBatchMaxHitSounds);
-        try
+        var budgetStack = dragBatchScratch.Count > 1;
+        for (var i = 0; i < dragBatchScratch.Count; i++)
         {
-            for (var i = 0; i < dragBatchScratch.Count; i++)
+            var note = dragBatchScratch[i];
+            if (!IsTouchableNote(note)) continue;
+            if (deferred || i > 0)
             {
-                var note = dragBatchScratch[i];
-                if (!IsTouchableNote(note)) continue;
-                if (deferred || i > 0) note.OnTouchDeferred(screenPos);
-                else note.OnTouch(screenPos);
+                note.OnTouchDeferred(screenPos);
+                if (budgetStack && note.IsArmed) note.MarkDragStackBudget();
             }
+            else note.OnTouch(screenPos);
         }
-        finally
-        {
-            effects.EndClearBatch();
-            dragBatchScratch.Clear();
-        }
+
+        dragBatchScratch.Clear();
     }
 
     /// <summary>
@@ -381,9 +393,18 @@ public class InputController : MonoBehaviour
             if (cleared) FlickingNotes.Remove(finger.Index);
         }
 
-        // Drag: continuous contact — clear/arm colliding stack batch in one pass
-        CollectCollidingDragBatch(pos);
-        SettleDragBatch(finger.ScreenPosition, deferred: true);
+        // Drag: continuous contact -- clear/arm colliding stack batch in one pass
+        var effects = game.effectController;
+        effects.BeginClearBatch(DragBatchMaxClearFx, DragBatchMaxHitSounds);
+        try
+        {
+            CollectCollidingDragBatch(pos);
+            SettleDragBatch(finger.ScreenPosition, deferred: true);
+        }
+        finally
+        {
+            effects.EndClearBatch();
+        }
 
         // If this is a new finger (Down did not already bind a Hold)
         if (!HoldingNotes.ContainsKey(finger.Index))
@@ -462,9 +483,9 @@ public class InputController : MonoBehaviour
 
     /// <summary>
     /// Order Click / CDrag-head / Hold candidates for one FingerDown.
-    /// Sort by <c>effectiveNoteTime</c>, then split into clusters with span ≤
+    /// Sort by <c>effectiveNoteTime</c>, then split into clusters with span ?
     /// <see cref="NoteClusterGapSeconds"/> (earlier clusters first; soft fallthrough).
-    /// Within a cluster: |Δx| → note time → type (Click/CDrag head before Hold) → id.
+    /// Within a cluster: |?x| ? note time ? type (Click/CDrag head before Hold) ? id.
     /// Flick is never passed here (list-order bind on the scan path).
     /// Not re-entrant: mutates <see cref="hitCandidates"/> / <c>clusterScratch</c> while yielding.
     /// </summary>
@@ -515,7 +536,7 @@ public class InputController : MonoBehaviour
     }
 
     /// <summary>
-    /// In-cluster type rank after |Δx| and note time. Lower = preferred.
+    /// In-cluster type rank after |?x| and note time. Lower = preferred.
     /// Click / CDrag head beat Hold on same-time / same-position ties so chart id
     /// alone does not decide who consumes FingerDown.
     /// </summary>

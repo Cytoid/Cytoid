@@ -34,10 +34,15 @@ public class EffectController : MonoBehaviour
 
     /// <summary>
     /// Active only while a drag-stack budget is open (<see cref="BeginClearBatch"/> or
-    /// <see cref="EnsureDragStackBudget"/>). Cap &lt; 0 means uncapped.
+    /// <see cref="EnterDragStackClear"/>). Cap &lt; 0 means uncapped.
+    /// Soft budgets apply only to clears inside <see cref="EnterDragStackClear"/>;
+    /// hard batches apply to every clear under <see cref="BeginClearBatch"/>.
     /// </summary>
     private int batchDepth;
     private int softBudgetFrame = -1;
+    private int softBudgetStackId = -1;
+    private int nextDragStackBudgetId;
+    private bool stackBudgetParticipant;
     private int batchFxCap = -1;
     private int batchFxUsed;
     private int batchSoundCap = -1;
@@ -59,9 +64,16 @@ public class EffectController : MonoBehaviour
         if (softBudgetFrame < 0 || batchDepth > 0) return;
         if (softBudgetFrame == Time.frameCount) return;
         softBudgetFrame = -1;
+        softBudgetStackId = -1;
         batchFxCap = -1;
         batchSoundCap = -1;
     }
+
+    /// <summary>
+    /// Allocates an id shared by one co-located deferred drag-stack settle so sibling
+    /// armed notes reuse one soft FX/SFX quota while a different stack gets a fresh one.
+    /// </summary>
+    public int AllocateDragStackBudgetId() => ++nextDragStackBudgetId;
 
     /// <summary>
     /// Caps clear FX / hit sounds for one stacked-drag settle batch only.
@@ -72,6 +84,7 @@ public class EffectController : MonoBehaviour
         batchDepth++;
         if (batchDepth > 1) return;
         softBudgetFrame = -1;
+        softBudgetStackId = -1;
         batchFxCap = maxFx;
         batchFxUsed = 0;
         batchSoundCap = maxSounds;
@@ -88,29 +101,55 @@ public class EffectController : MonoBehaviour
     }
 
     /// <summary>
-    /// Opens the same drag-stack caps for the rest of this frame when deferred armed
-    /// stack notes co-clear outside <see cref="BeginClearBatch"/>. No-op if a hard
-    /// batch is already active or the soft budget was already opened this frame.
+    /// Opens (or shares) soft drag-stack caps for deferred armed co-clears outside
+    /// <see cref="BeginClearBatch"/>. Same <paramref name="stackId"/> reuses the quota;
+    /// a different id resets it. No-op while a hard batch is active.
     /// </summary>
-    public void EnsureDragStackBudget(int maxFx, int maxSounds)
+    public void EnsureDragStackBudget(int maxFx, int maxSounds, int stackId)
     {
         ExpireSoftBudgetIfStale();
         if (batchDepth > 0) return;
-        if (softBudgetFrame == Time.frameCount) return;
+        if (softBudgetFrame == Time.frameCount && softBudgetStackId == stackId) return;
         softBudgetFrame = Time.frameCount;
+        softBudgetStackId = stackId;
         batchFxCap = maxFx;
         batchFxUsed = 0;
         batchSoundCap = maxSounds;
         batchSoundUsed = 0;
     }
 
+    /// <summary>
+    /// Marks the current <see cref="Note.Clear"/> as a soft-budget participant and opens
+    /// or shares that stack's caps. Pair with <see cref="ExitDragStackClear"/>.
+    /// </summary>
+    public void EnterDragStackClear(int maxFx, int maxSounds, int stackId)
+    {
+        EnsureDragStackBudget(maxFx, maxSounds, stackId);
+        stackBudgetParticipant = true;
+    }
+
+    public void ExitDragStackClear()
+    {
+        stackBudgetParticipant = false;
+    }
+
+    private bool ShouldApplyClearBudget()
+    {
+        if (batchFxCap < 0 && batchSoundCap < 0) return false;
+        // Hard batch: every clear in the settle pass shares the caps.
+        if (batchDepth > 0) return true;
+        // Soft budget: only the marked stack clear currently inside Enter/Exit.
+        return stackBudgetParticipant;
+    }
+
     /// <returns>
-    /// False only when a drag-stack budget is active and its FX quota is exhausted.
-    /// Outside a drag-stack budget, always true.
+    /// False only when a drag-stack budget applies to this clear and its FX quota is exhausted.
+    /// Uncapped clears (including non-stack clears while a soft budget is open) return true.
     /// </returns>
     public bool TryConsumeClearFx()
     {
         ExpireSoftBudgetIfStale();
+        if (!ShouldApplyClearBudget()) return true;
         if (batchFxCap < 0) return true;
         if (batchFxUsed >= batchFxCap) return false;
         batchFxUsed++;
@@ -118,12 +157,13 @@ public class EffectController : MonoBehaviour
     }
 
     /// <returns>
-    /// False only when a drag-stack budget is active and its hit-sound quota is exhausted.
-    /// Outside a drag-stack budget, always true.
+    /// False only when a drag-stack budget applies to this clear and its hit-sound quota
+    /// is exhausted. Uncapped clears return true.
     /// </returns>
     public bool TryConsumeHitSound()
     {
         ExpireSoftBudgetIfStale();
+        if (!ShouldApplyClearBudget()) return true;
         if (batchSoundCap < 0) return true;
         if (batchSoundUsed >= batchSoundCap) return false;
         batchSoundUsed++;

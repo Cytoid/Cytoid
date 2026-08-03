@@ -27,6 +27,12 @@ public abstract class Note : MonoBehaviour
     public bool IsCleared { get; private set; }
     public bool IsArmed { get; private set; }
     private NoteGrade armedGrade = NoteGrade.None;
+    /// <summary>
+    /// When set, the next <see cref="Clear"/> joins a deferred drag-stack soft budget
+    /// (see <see cref="MarkDragStackBudget"/>).
+    /// </summary>
+    private bool dragStackBudgetPending;
+    private int dragStackBudgetId;
 
     // For ranked mode: weighted difference between the current timing and the perfect timing
     public float GreatGradeWeight { get; protected set; }
@@ -51,6 +57,8 @@ public abstract class Note : MonoBehaviour
         IsCollected = false;
         IsArmed = false;
         armedGrade = NoteGrade.None;
+        dragStackBudgetPending = false;
+        dragStackBudgetId = 0;
     
         Chart = Game.Chart.Model;
         Model = Game.Chart.Model.note_map[noteId];
@@ -95,6 +103,8 @@ public abstract class Note : MonoBehaviour
         IsCleared = default;
         IsArmed = default;
         armedGrade = NoteGrade.None;
+        dragStackBudgetPending = false;
+        dragStackBudgetId = 0;
         GreatGradeWeight = default;
         JudgmentOffset = default;
     }
@@ -106,20 +116,55 @@ public abstract class Note : MonoBehaviour
         IsArmed = false;
         armedGrade = NoteGrade.None;
         IsCleared = true;
-        Renderer.OnClear(grade);
-        Game.State.Judge(this, grade, -TimeUntilEnd, GreatGradeWeight);
-        Game.onNoteJudged.Invoke(Game, this, new JudgeData(grade, -TimeUntilEnd, GreatGradeWeight));
 
-        // Hit sound (frame / batch budget via EffectController)
-        if (grade != NoteGrade.Miss &&
-            (!(this is HoldNote) || Context.Player.Settings.HoldHitSoundTiming.Let(it => it == HoldHitSoundTiming.End || it == HoldHitSoundTiming.Both)) &&
-            Game.effectController.TryConsumeHitSound())
+        // Deferred multi-note drag stacks join a per-stack soft budget for this Clear only.
+        // Ordinary Click/Flick/Hold/Auto clears remain uncapped even in the same frame.
+        var effects = Game.effectController;
+        var joinedDragStackBudget = false;
+        if (dragStackBudgetPending)
         {
-            PlayHitSound();
+            dragStackBudgetPending = false;
+            var stackId = dragStackBudgetId;
+            dragStackBudgetId = 0;
+            effects.EnterDragStackClear(
+                EffectController.MaxClearFxPerDragBatch,
+                EffectController.MaxHitSoundsPerDragBatch,
+                stackId);
+            joinedDragStackBudget = true;
+        }
+
+        try
+        {
+            Renderer.OnClear(grade);
+            Game.State.Judge(this, grade, -TimeUntilEnd, GreatGradeWeight);
+            Game.onNoteJudged.Invoke(Game, this, new JudgeData(grade, -TimeUntilEnd, GreatGradeWeight));
+
+            // Hit sound (drag-stack budget via EffectController when this clear participates)
+            if (grade != NoteGrade.Miss &&
+                (!(this is HoldNote) || Context.Player.Settings.HoldHitSoundTiming.Let(it => it == HoldHitSoundTiming.End || it == HoldHitSoundTiming.Both)) &&
+                effects.TryConsumeHitSound())
+            {
+                PlayHitSound();
+            }
+        }
+        finally
+        {
+            if (joinedDragStackBudget) effects.ExitDragStackClear();
         }
 
         Game.onNoteClear.Invoke(Game, this);
         AwaitAndCollect();
+    }
+
+    /// <summary>
+    /// Marks this note so its later armed <see cref="Clear"/> shares the co-located
+    /// drag-stack FX/SFX budget with siblings that received the same
+    /// <paramref name="stackId"/>.
+    /// </summary>
+    public void MarkDragStackBudget(int stackId)
+    {
+        dragStackBudgetPending = true;
+        dragStackBudgetId = stackId;
     }
 
     public virtual void PlayHitSound()

@@ -64,6 +64,32 @@ public class ChartEventPresentationTimelineTests
     }
 
     [Test]
+    public void BackslashOnlyMessageKeepsClassicC2ColorSuffix()
+    {
+        // Community charts encode spinner "\" as "\,#FFFFFF" (JSON "\\,#FFFFFF").
+        // That must remain content "\" + white, not leaked text ",#FFFFFF".
+        var state = Timeline(Order(
+            0,
+            Event(ChartEventType.Message, "\\,#FFFFFF"))).Evaluate(1);
+
+        Assert.That(state.Content, Is.EqualTo("\\"));
+        Assert.That(state.IsTextVisible, Is.True);
+        AssertColor(state.TextColor, Color.white);
+        AssertColor(state.ScanlineColor, Color.white);
+    }
+
+    [Test]
+    public void EscapedCommaBeforeColorStillAllowsLiteralCommaContent()
+    {
+        var state = Timeline(Order(
+            0,
+            Event(ChartEventType.Message, "Hello\\,,#00FF00"))).Evaluate(1);
+
+        Assert.That(state.Content, Is.EqualTo("Hello,"));
+        AssertColor(state.TextColor, Color.green);
+    }
+
+    [Test]
     public void MissingColorSilentlyFallsBackToWhite()
     {
         var warnings = new List<string>();

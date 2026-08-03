@@ -53,10 +53,13 @@ public class ClassicFlickNoteRenderer : ClassicNoteRenderer
 
     protected virtual void UpdateArrows()
     {
-        // Prefer closing 0.25s before hit time, but never let the animation window
-        // become non-positive under very fast AR (approachDuration <= 0.25).
+        // Prefer closing 0.25s before hit when approach is long enough. Cap early-close
+        // at half the approach so animDuration stays continuous near the 0.25 boundary
+        // (avoids the cliff: approach 0.25 → full window, 0.2501 → near-zero window).
+        const float PreferredEarlyClose = 0.25f;
         var approachDuration = Note.Model.start_time - Note.Model.intro_time;
-        var animDuration = approachDuration > 0.25f ? approachDuration - 0.25f : approachDuration;
+        var earlyClose = Mathf.Min(PreferredEarlyClose, Mathf.Max(0f, approachDuration) * 0.5f);
+        var animDuration = Mathf.Max(0f, approachDuration - earlyClose);
         var progress = animDuration > 0f
             ? Mathf.Clamp01((Game.Time - Note.Model.intro_time) / animDuration)
             : 1f;

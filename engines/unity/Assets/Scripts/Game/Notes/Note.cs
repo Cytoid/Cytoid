@@ -110,8 +110,10 @@ public abstract class Note : MonoBehaviour
         Game.State.Judge(this, grade, -TimeUntilEnd, GreatGradeWeight);
         Game.onNoteJudged.Invoke(Game, this, new JudgeData(grade, -TimeUntilEnd, GreatGradeWeight));
 
-        // Hit sound
-        if (grade != NoteGrade.Miss && (!(this is HoldNote) || Context.Player.Settings.HoldHitSoundTiming.Let(it => it == HoldHitSoundTiming.End || it == HoldHitSoundTiming.Both)))
+        // Hit sound (frame / batch budget via EffectController)
+        if (grade != NoteGrade.Miss &&
+            (!(this is HoldNote) || Context.Player.Settings.HoldHitSoundTiming.Let(it => it == HoldHitSoundTiming.End || it == HoldHitSoundTiming.Both)) &&
+            Game.effectController.TryConsumeHitSound())
         {
             PlayHitSound();
         }

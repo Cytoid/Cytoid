@@ -21,6 +21,21 @@ public class EffectController : MonoBehaviour
     /// <summary>Outer diameter at ring spawn; matches legacy FlatFX ripple preset.</summary>
     const float ClearRingStartDiameter = 1f;
 
+    /// <summary>
+    /// Max clear FX (ripple + particles) spawned in one frame from any settle path:
+    /// stacked-drag input batch, deferred armed Clear, Auto, or mass Miss.
+    /// </summary>
+    public const int MaxClearFxPerFrame = 3;
+
+    /// <summary>
+    /// Max hit sounds (and gated haptics) spawned in one frame from any settle path.
+    /// </summary>
+    public const int MaxHitSoundsPerFrame = 1;
+
+    private int budgetFrame = -1;
+    private int frameFxUsed;
+    private int frameSoundUsed;
+
     private void Awake()
     {
         EffectParentTransform = effectParent.transform;
@@ -30,6 +45,54 @@ public class EffectController : MonoBehaviour
     public void OnGameLoaded()
     {
         clearEffectSizeMultiplier = Context.Player.Settings.ClearEffectsSize;
+    }
+
+    private void ResetBudgetIfNewFrame()
+    {
+        var frame = Time.frameCount;
+        if (budgetFrame == frame) return;
+        budgetFrame = frame;
+        frameFxUsed = 0;
+        frameSoundUsed = 0;
+    }
+
+    /// <summary>
+    /// Marks a multi-clear settle group. Budget is always per-frame
+    /// (<see cref="MaxClearFxPerFrame"/> / <see cref="MaxHitSoundsPerFrame"/>);
+    /// this exists so stacked-drag input can share the same counters without resetting them.
+    /// Nested calls are not supported; always pair with <see cref="EndClearBatch"/>.
+    /// </summary>
+    public void BeginClearBatch(int maxFx, int maxSounds)
+    {
+        // maxFx / maxSounds kept for call-site clarity; frame caps are the source of truth.
+        ResetBudgetIfNewFrame();
+    }
+
+    public void EndClearBatch()
+    {
+        // Per-frame budget persists until the next frame; nothing to clear.
+    }
+
+    /// <returns>
+    /// False when this frame has already used its clear-FX budget.
+    /// </returns>
+    public bool TryConsumeClearFx()
+    {
+        ResetBudgetIfNewFrame();
+        if (frameFxUsed >= MaxClearFxPerFrame) return false;
+        frameFxUsed++;
+        return true;
+    }
+
+    /// <returns>
+    /// False when this frame has already used its hit-sound budget.
+    /// </returns>
+    public bool TryConsumeHitSound()
+    {
+        ResetBudgetIfNewFrame();
+        if (frameSoundUsed >= MaxHitSoundsPerFrame) return false;
+        frameSoundUsed++;
+        return true;
     }
 
     public void PlayRippleEffect(Vector3 position)
@@ -57,6 +120,8 @@ public class EffectController : MonoBehaviour
         {
             return;
         }
+
+        if (!TryConsumeClearFx()) return;
         
         var color = game.Config.NoteGradeEffectColors[grade];
         var at = noteRenderer.Note.transform.position;

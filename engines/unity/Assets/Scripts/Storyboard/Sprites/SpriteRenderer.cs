@@ -63,25 +63,28 @@ namespace Cytoid.Storyboard.Sprites
                 }
                 Image.gameObject.name = $"Sprite[{spritePath}]";
 
-                LoadPath = MainRenderer.Game.UsesExternalContent
+                var loadPath = MainRenderer.Game.UsesExternalContent
                     ? GameLaunchVfs.ResolveRequiredFileUri(
                         MainRenderer.Game.Level.Path,
                         spritePath,
                         "storyboard.sprite.path")
                     : "file://" + MainRenderer.Game.Level.Path + spritePath;
-                var sprite = await Context.AssetMemory.LoadAsset<UnityEngine.Sprite>(LoadPath, AssetTag.Storyboard);
+                LoadPath = loadPath;
+                // Capture before await: Dispose may null MainRenderer / clear fields mid-load.
+                var mainRenderer = MainRenderer;
+                var sprite = await Context.AssetMemory.LoadAsset<UnityEngine.Sprite>(loadPath, AssetTag.Storyboard);
 
                 if (IsInitializeStale(version) || Image == null)
                 {
-                    ReleaseUnusedLoadedAsset();
+                    ReleaseUnusedLoadedAsset(loadPath, mainRenderer);
                     return;
                 }
 
                 Image.sprite = sprite;
 
-                if (!MainRenderer.SpritePathRefCount.ContainsKey(LoadPath))
-                    MainRenderer.SpritePathRefCount[LoadPath] = 0;
-                MainRenderer.SpritePathRefCount[LoadPath]++;
+                if (!mainRenderer.SpritePathRefCount.ContainsKey(loadPath))
+                    mainRenderer.SpritePathRefCount[loadPath] = 0;
+                mainRenderer.SpritePathRefCount[loadPath]++;
                 holdsAssetRef = true;
             }
         }
@@ -127,13 +130,18 @@ namespace Cytoid.Storyboard.Sprites
             holdsAssetRef = false;
         }
 
-        private void ReleaseUnusedLoadedAsset()
+        private static void ReleaseUnusedLoadedAsset(string loadPath, StoryboardRenderer mainRenderer)
         {
             // Stale completion: LoadAsset already pinned the cache entry, but no business ref was taken.
-            if (LoadPath == null || MainRenderer == null) return;
-            if (MainRenderer.SpritePathRefCount.TryGetValue(LoadPath, out var count) && count > 0)
+            if (string.IsNullOrEmpty(loadPath)) return;
+            if (mainRenderer != null &&
+                mainRenderer.SpritePathRefCount.TryGetValue(loadPath, out var count) &&
+                count > 0)
+            {
                 return;
-            Context.AssetMemory.DisposeAsset(LoadPath, AssetTag.Storyboard);
+            }
+
+            Context.AssetMemory.DisposeAsset(loadPath, AssetTag.Storyboard);
         }
 
     }

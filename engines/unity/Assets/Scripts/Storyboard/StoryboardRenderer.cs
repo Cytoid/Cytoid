@@ -255,7 +255,7 @@ namespace Cytoid.Storyboard
             {
                 foreach (var id in trigger.Spawn)
                 {
-                    SpawnObjectById(id).Forget();
+                    SpawnObjectByIdLogged(id).Forget();
                 }
             }
 
@@ -269,8 +269,22 @@ namespace Cytoid.Storyboard
             }
         }
 
+        async UniTaskVoid SpawnObjectByIdLogged(string id)
+        {
+            try
+            {
+                await SpawnObjectById(id);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+            }
+        }
+
         public async UniTask SpawnObjectById(string id)
         {
+            // Storyboard object ids are unique across component kinds; else-if matches that contract
+            // (legacy multi-if could spawn the same id from multiple dictionaries).
             bool Predicate<TO>(TO obj) where TO : Object => obj.Id == id;
             TO Transformer<TO, TS>(TO obj) where TO : Object<TS> where TS : ObjectState
             {

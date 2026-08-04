@@ -57,13 +57,14 @@ public class AssetMemory
         {
             await UniTask.WaitUntil(() => !loadingPaths.Contains(path), cancellationToken: cancellationToken);
             var loaded = GetCachedAssetEntry<T>(path);
-            if (loaded == null)
+            if (loaded != null)
             {
-                throw new InvalidOperationException($"Concurrent asset load failed: {path}");
+                loaded.Tags.Add(tag);
+                return loaded.Asset;
             }
 
-            loaded.Tags.Add(tag);
-            return loaded.Asset;
+            // Leader failed or disposed the entry before waiters woke; retry as a fresh load.
+            return await LoadAsset<T>(path, tag, cancellationToken);
         }
 
         EnforceTagLimit(tag);

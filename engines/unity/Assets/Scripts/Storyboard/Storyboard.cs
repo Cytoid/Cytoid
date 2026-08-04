@@ -149,8 +149,10 @@ namespace Cytoid.Storyboard
 
         public void OnNoteClear(Game game, Note note)
         {
-            // Reverse walk so Uses-exhausted / Score one-shot removals never mutate during foreach.
-            for (var i = Triggers.Count - 1; i >= 0; i--)
+            // Fire in registration order, then remove by descending index so list mutation is safe
+            // and same-frame multi-trigger side effects keep legacy spawn/update ordering.
+            var removals = new HashSet<Trigger>();
+            for (var i = 0; i < Triggers.Count; i++)
             {
                 var trigger = Triggers[i];
                 var hit = false;
@@ -175,6 +177,12 @@ namespace Cytoid.Storyboard
                 var shouldRemove = OnTrigger(trigger);
                 // Score triggers remain one-shot after fire (legacy behavior).
                 if (shouldRemove || trigger.Type == TriggerType.Score)
+                    removals.Add(trigger);
+            }
+
+            for (var i = Triggers.Count - 1; i >= 0; i--)
+            {
+                if (removals.Contains(Triggers[i]))
                     Triggers.RemoveAt(i);
             }
         }

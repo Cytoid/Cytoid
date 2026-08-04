@@ -27,6 +27,8 @@ namespace Cytoid.Storyboard.Videos
         private bool ownsResources;
         private bool prepareCompleted;
         private bool hasEnded;
+        /// <summary>Owner of the shared VideoPlayer; borrowers read ended state from here.</summary>
+        private VideoRenderer sharedPlaybackOwner;
         private VideoPlayer.EventHandler prepareCompletedHandler;
         private VideoPlayer.EventHandler loopPointReachedHandler;
 
@@ -45,6 +47,7 @@ namespace Cytoid.Storyboard.Videos
             if (targetRenderer != null)
             {
                 ownsResources = false;
+                sharedPlaybackOwner = targetRenderer;
                 VideoPlayer = targetRenderer.VideoPlayer;
                 RawImage = targetRenderer.RawImage;
                 RenderTexture = targetRenderer.RenderTexture;
@@ -54,6 +57,7 @@ namespace Cytoid.Storyboard.Videos
             else
             {
                 ownsResources = true;
+                sharedPlaybackOwner = this;
                 VideoPlayer = Instantiate(Provider.VideoVideoPlayerPrefab);
                 RawImage = Instantiate(Provider.VideoRawImagePrefab, Provider.Canvas.transform);
                 RenderTexture = new RenderTexture(UnityEngine.Screen.width / 2, UnityEngine.Screen.height / 2, 0, RenderTextureFormat.ARGB32);
@@ -125,9 +129,18 @@ namespace Cytoid.Storyboard.Videos
                 hasEnded = true;
         }
 
+        /// <summary>
+        /// Ended is owned by the resource owner so target_id borrowers honor the same gate.
+        /// </summary>
+        private bool HasSharedPlaybackEnded =>
+            sharedPlaybackOwner != null &&
+            !sharedPlaybackOwner.IsDisposed &&
+            sharedPlaybackOwner.hasEnded;
+
         public override void Clear()
         {
-            hasEnded = false;
+            if (ownsResources)
+                hasEnded = false;
             if (ownsResources && VideoPlayer != null)
                 VideoPlayer.Stop();
             if (RawImage != null)
@@ -157,6 +170,7 @@ namespace Cytoid.Storyboard.Videos
             Canvas = null;
             ownsResources = false;
             hasEnded = false;
+            sharedPlaybackOwner = null;
             base.Dispose();
         }
 
@@ -191,8 +205,9 @@ namespace Cytoid.Storyboard.Videos
             }
             else if (!VideoPlayer.isPlaying)
             {
-                // Non-loop clips must not restart every frame after natural end.
-                if (hasEnded && !VideoPlayer.isLooping) return;
+                // Non-loop clips must not restart every frame after natural end
+                // (owner and target_id borrowers share this gate).
+                if (HasSharedPlaybackEnded && !VideoPlayer.isLooping) return;
                 VideoPlayer.Play();
             }
         }

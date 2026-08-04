@@ -203,7 +203,15 @@ namespace Cytoid.Storyboard
             var updateOrder = new[]
                 {typeof(NoteController), typeof(Text), typeof(Sprite), typeof(Line), typeof(Video), typeof(Controller)};
 
-            var renderersToDestroy = new HashSet<string>();
+            // Insertion order is parent/self then descendants; destroy in reverse so
+            // children run first (same invariant as DestroyObjectsById).
+            var renderersToDestroy = new List<string>();
+            var renderersToDestroySet = new HashSet<string>();
+            void EnqueueDestroy(string id)
+            {
+                if (renderersToDestroySet.Add(id))
+                    renderersToDestroy.Add(id);
+            }
 
             foreach (var type in updateOrder)
             {
@@ -220,10 +228,10 @@ namespace Cytoid.Storyboard
                         // Destroy the target as well
                         if (renderer.Parent != null && renderer.Component.TargetId != null)
                         {
-                            renderersToDestroy.Add(renderer.Parent.Component.Id);
+                            EnqueueDestroy(renderer.Parent.Component.Id);
                             this.ListOf(renderer.Parent).Flatten(it => it.Children).ForEach(it =>
                             {
-                                renderersToDestroy.Add(it.Component.Id);
+                                EnqueueDestroy(it.Component.Id);
                             });
                         }
                         else
@@ -231,7 +239,7 @@ namespace Cytoid.Storyboard
                             renderer.Parent?.Children.Remove(renderer);
                             this.ListOf(renderer).Flatten(it => it.Children).ForEach(it =>
                             {
-                                renderersToDestroy.Add(it.Component.Id);
+                                EnqueueDestroy(it.Component.Id);
                             });
                         }
                         continue;
@@ -241,8 +249,9 @@ namespace Cytoid.Storyboard
                 }
             }
 
-            foreach (var id in renderersToDestroy)
+            for (var i = renderersToDestroy.Count - 1; i >= 0; i--)
             {
+                var id = renderersToDestroy[i];
                 if (!ComponentRenderers.TryGetValue(id, out var renderer)) continue;
                 DestroyObject(id, renderer);
             }

@@ -89,7 +89,10 @@ public class DragHeadNote : Note
         if (Game.Time >= Model.start_time)
         {
             // Consume zero-span edges in the same frame so same-tick chains do not linger on NaN/u=Inf.
-            while (true)
+            // Cap iterations against malformed charts with cyclic next_id and non-increasing start_time.
+            var maxEdgeSteps = Chart.note_map.Count + 1;
+            var edgeSteps = 0;
+            while (edgeSteps++ < maxEdgeSteps)
             {
                 var fromPos = (hasFromNote && fromNote != this)
                     ? fromNote.transform.localPosition

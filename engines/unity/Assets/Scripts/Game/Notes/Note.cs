@@ -241,7 +241,11 @@ public abstract class Note : MonoBehaviour
             }
 
             var position = transform.localPosition;
-            var nextPosition = hasNextNote ? nextNote.transform.localPosition : NextNoteModel.position;
+            // Unspawned next notes must use CalculatePosition so Storyboard Override applies
+            // (baked .position would aim drag lines/heads at the pre-override chart coord).
+            var nextPosition = hasNextNote
+                ? nextNote.transform.localPosition
+                : NextNoteModel.CalculatePosition(Game.Chart);
 
             if (position == nextPosition)
                 Model.rotation = Vector3.zero;

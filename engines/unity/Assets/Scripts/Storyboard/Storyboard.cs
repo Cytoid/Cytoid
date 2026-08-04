@@ -149,39 +149,43 @@ namespace Cytoid.Storyboard
 
         public void OnNoteClear(Game game, Note note)
         {
-            foreach (var trigger in Triggers)
+            // Reverse walk so Uses-exhausted / Score one-shot removals never mutate during foreach.
+            for (var i = Triggers.Count - 1; i >= 0; i--)
             {
+                var trigger = Triggers[i];
+                var hit = false;
                 if (trigger.Type == TriggerType.NoteClear && trigger.Notes.Contains(note.Model.id))
                 {
                     trigger.Triggerer = note;
-                    OnTrigger(trigger);
+                    hit = true;
                 }
-
-                if (trigger.Type == TriggerType.Combo && Game.State.Combo == trigger.Combo)
+                else if (trigger.Type == TriggerType.Combo && Game.State.Combo == trigger.Combo)
                 {
                     trigger.Triggerer = note;
-                    OnTrigger(trigger);
+                    hit = true;
                 }
-
-                if (trigger.Type == TriggerType.Score && Game.State.Score >= trigger.Score)
+                else if (trigger.Type == TriggerType.Score && Game.State.Score >= trigger.Score)
                 {
                     trigger.Triggerer = note;
-                    OnTrigger(trigger);
-                    Triggers.Remove(trigger);
+                    hit = true;
                 }
+
+                if (!hit) continue;
+
+                var shouldRemove = OnTrigger(trigger);
+                // Score triggers remain one-shot after fire (legacy behavior).
+                if (shouldRemove || trigger.Type == TriggerType.Score)
+                    Triggers.RemoveAt(i);
             }
         }
 
-        public void OnTrigger(Trigger trigger)
+        /// <returns>True when the trigger should be removed from <see cref="Triggers"/>.</returns>
+        public bool OnTrigger(Trigger trigger)
         {
             Renderer.OnTrigger(trigger);
-            
-            // Destroy trigger if needed
+
             trigger.CurrentUses++;
-            if (trigger.CurrentUses == trigger.Uses)
-            {
-                Triggers.Remove(trigger);
-            }
+            return trigger.CurrentUses == trigger.Uses;
         }
 
         public JObject Compile()

@@ -24,17 +24,24 @@ namespace Cytoid.Storyboard.Videos
 
         public override bool IsOnCanvas => true;
 
+        private bool ownsResources;
+        private bool prepareCompleted;
+        private VideoPlayer.EventHandler prepareCompletedHandler;
+
         public VideoRenderer(StoryboardRenderer mainRenderer, Video component) : base(mainRenderer, component)
         {
+            prepareCompletedHandler = OnPrepareCompleted;
         }
 
         public override StoryboardRendererEaser<VideoState> CreateEaser() => new VideoEaser(this);
 
         public override async UniTask Initialize()
         {
+            var version = BeginInitialize();
             var targetRenderer = GetTargetRenderer<VideoRenderer>();
             if (targetRenderer != null)
             {
+                ownsResources = false;
                 VideoPlayer = targetRenderer.VideoPlayer;
                 RawImage = targetRenderer.RawImage;
                 RenderTexture = targetRenderer.RenderTexture;
@@ -43,6 +50,7 @@ namespace Cytoid.Storyboard.Videos
             }
             else
             {
+                ownsResources = true;
                 VideoPlayer = Instantiate(Provider.VideoVideoPlayerPrefab);
                 RawImage = Instantiate(Provider.VideoRawImagePrefab, Provider.Canvas.transform);
                 RenderTexture = new RenderTexture(UnityEngine.Screen.width / 2, UnityEngine.Screen.height / 2, 0, RenderTextureFormat.ARGB32);
@@ -81,32 +89,68 @@ namespace Cytoid.Storyboard.Videos
                 VideoPlayer.targetTexture = RenderTexture;
                 RawImage.texture = RenderTexture;
 
-                var prepareCompleted = false;
-                VideoPlayer.prepareCompleted += _ => prepareCompleted = true;
-                VideoPlayer.Prepare();
-                var startTime = DateTimeOffset.UtcNow;
-                await UniTask.WaitUntil(() => prepareCompleted || DateTimeOffset.UtcNow - startTime > TimeSpan.FromSeconds(5));
-                if (!prepareCompleted)
+                prepareCompleted = false;
+                VideoPlayer.prepareCompleted += prepareCompletedHandler;
+                try
                 {
-                    Debug.Log($"Android version code: {Context.AndroidVersionCode}");
-                    Debug.Log($"Video path: {path}");
-                    Debug.LogError("Could not load video. Are you using Android Q or above?");
+                    VideoPlayer.Prepare();
+                    var startTime = DateTimeOffset.UtcNow;
+                    await UniTask.WaitUntil(() =>
+                        prepareCompleted || IsInitializeStale(version) ||
+                        DateTimeOffset.UtcNow - startTime > TimeSpan.FromSeconds(5));
+                    if (IsInitializeStale(version)) return;
+                    if (!prepareCompleted)
+                    {
+                        Debug.Log($"Android version code: {Context.AndroidVersionCode}");
+                        Debug.Log($"Video path: {path}");
+                        Debug.LogError("Could not load video. Are you using Android Q or above?");
+                    }
+                }
+                finally
+                {
+                    UnsubscribePrepareCompleted();
                 }
             }
         }
 
+        private void OnPrepareCompleted(VideoPlayer _) => prepareCompleted = true;
+
         public override void Clear()
         {
-            VideoPlayer.Stop();
-            RawImage.color = UnityEngine.Color.white.WithAlpha(0);
+            if (ownsResources && VideoPlayer != null)
+                VideoPlayer.Stop();
+            if (RawImage != null)
+                RawImage.color = UnityEngine.Color.white.WithAlpha(0);
             IsTransformActive = false;
         }
 
         public override void Dispose()
         {
-            Destroy(VideoPlayer.gameObject);
-            Destroy(RawImage.gameObject);
-            Destroy(RenderTexture);
+            if (IsDisposed) return;
+            UnsubscribePrepareCompleted();
+            if (ownsResources)
+            {
+                if (VideoPlayer != null) Destroy(VideoPlayer.gameObject);
+                if (RawImage != null) Destroy(RawImage.gameObject);
+                if (RenderTexture != null)
+                {
+                    RenderTexture.Release();
+                    Destroy(RenderTexture);
+                }
+            }
+            VideoPlayer = null;
+            RawImage = null;
+            RenderTexture = null;
+            RectTransform = null;
+            Canvas = null;
+            ownsResources = false;
+            base.Dispose();
+        }
+
+        private void UnsubscribePrepareCompleted()
+        {
+            if (VideoPlayer != null && prepareCompletedHandler != null)
+                VideoPlayer.prepareCompleted -= prepareCompletedHandler;
         }
 
         public override void Update(VideoState fromState, VideoState toState)
@@ -117,7 +161,7 @@ namespace Cytoid.Storyboard.Videos
 
         public void SyncPlaybackWithGameState()
         {
-            if (VideoPlayer == null || MainRenderer == null) return;
+            if (VideoPlayer == null || MainRenderer == null || IsDisposed) return;
 
             if (!MainRenderer.Game.State.IsPlaying)
             {

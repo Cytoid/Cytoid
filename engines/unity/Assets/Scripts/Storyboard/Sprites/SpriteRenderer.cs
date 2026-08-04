@@ -18,6 +18,9 @@ namespace Cytoid.Storyboard.Sprites
 
         public string LoadPath { get; private set; }
 
+        private bool ownsResources;
+        private bool holdsAssetRef;
+
         public SpriteRenderer(StoryboardRenderer mainRenderer, Sprite component) : base(mainRenderer, component)
         {
         }
@@ -30,9 +33,11 @@ namespace Cytoid.Storyboard.Sprites
 
         public override async UniTask Initialize()
         {
+            var version = BeginInitialize();
             var targetRenderer = GetTargetRenderer<SpriteRenderer>();
             if (targetRenderer != null)
             {
+                ownsResources = false;
                 Image = targetRenderer.Image;
                 RectTransform = targetRenderer.RectTransform;
                 Canvas = targetRenderer.Canvas;
@@ -40,6 +45,7 @@ namespace Cytoid.Storyboard.Sprites
             }
             else
             {
+                ownsResources = true;
                 Image = Instantiate(Provider.SpritePrefab, GetParentTransform());
                 RectTransform = Image.rectTransform;
                 Canvas = Image.GetComponent<Canvas>();
@@ -63,34 +69,71 @@ namespace Cytoid.Storyboard.Sprites
                         spritePath,
                         "storyboard.sprite.path")
                     : "file://" + MainRenderer.Game.Level.Path + spritePath;
-                Image.sprite = await Context.AssetMemory.LoadAsset<UnityEngine.Sprite>(LoadPath, AssetTag.Storyboard);
+                var sprite = await Context.AssetMemory.LoadAsset<UnityEngine.Sprite>(LoadPath, AssetTag.Storyboard);
+
+                if (IsInitializeStale(version) || Image == null)
+                {
+                    ReleaseUnusedLoadedAsset();
+                    return;
+                }
+
+                Image.sprite = sprite;
 
                 if (!MainRenderer.SpritePathRefCount.ContainsKey(LoadPath))
                     MainRenderer.SpritePathRefCount[LoadPath] = 0;
                 MainRenderer.SpritePathRefCount[LoadPath]++;
+                holdsAssetRef = true;
             }
         }
 
         public override void Clear()
         {
-            Image.color = UnityEngine.Color.white;
-            Image.preserveAspect = true;
-            CanvasGroup.alpha = 0;
+            if (Image != null)
+            {
+                Image.color = UnityEngine.Color.white;
+                Image.preserveAspect = true;
+            }
+            if (CanvasGroup != null)
+                CanvasGroup.alpha = 0;
             IsTransformActive = false;
         }
 
         public override void Dispose()
         {
-            if (LoadPath != null && MainRenderer.SpritePathRefCount.ContainsKey(LoadPath))
+            if (IsDisposed) return;
+            ReleaseAssetRef();
+            if (ownsResources && Image != null)
+                Destroy(Image.gameObject);
+            Image = null;
+            RectTransform = null;
+            Canvas = null;
+            CanvasGroup = null;
+            ownsResources = false;
+            base.Dispose();
+        }
+
+        private void ReleaseAssetRef()
+        {
+            if (!holdsAssetRef || LoadPath == null || MainRenderer == null) return;
+            if (MainRenderer.SpritePathRefCount.ContainsKey(LoadPath))
             {
                 MainRenderer.SpritePathRefCount[LoadPath]--;
-                if (MainRenderer.SpritePathRefCount[LoadPath] == 0)
+                if (MainRenderer.SpritePathRefCount[LoadPath] <= 0)
                 {
+                    MainRenderer.SpritePathRefCount.Remove(LoadPath);
                     Context.AssetMemory.DisposeAsset(LoadPath, AssetTag.Storyboard);
                 }
             }
-            Destroy(Image.gameObject);
-            Image = null;
+            holdsAssetRef = false;
+        }
+
+        private void ReleaseUnusedLoadedAsset()
+        {
+            // Stale completion: LoadAsset already pinned the cache entry, but no business ref was taken.
+            if (LoadPath == null || MainRenderer == null) return;
+            if (MainRenderer.SpritePathRefCount.TryGetValue(LoadPath, out var count) && count > 0)
+                return;
+            Context.AssetMemory.DisposeAsset(LoadPath, AssetTag.Storyboard);
         }
 
     }

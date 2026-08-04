@@ -203,7 +203,7 @@ namespace Cytoid.Storyboard
             var updateOrder = new[]
                 {typeof(NoteController), typeof(Text), typeof(Sprite), typeof(Line), typeof(Video), typeof(Controller)};
 
-            var renderersToDestroy = new Dictionary<string, Type>();
+            var renderersToDestroy = new HashSet<string>();
 
             foreach (var type in updateOrder)
             {
@@ -220,10 +220,10 @@ namespace Cytoid.Storyboard
                         // Destroy the target as well
                         if (renderer.Parent != null && renderer.Component.TargetId != null)
                         {
-                            renderersToDestroy[renderer.Parent.Component.Id] = type;
+                            renderersToDestroy.Add(renderer.Parent.Component.Id);
                             this.ListOf(renderer.Parent).Flatten(it => it.Children).ForEach(it =>
                             {
-                                renderersToDestroy[it.Component.Id] = type;
+                                renderersToDestroy.Add(it.Component.Id);
                             });
                         }
                         else
@@ -231,7 +231,7 @@ namespace Cytoid.Storyboard
                             renderer.Parent?.Children.Remove(renderer);
                             this.ListOf(renderer).Flatten(it => it.Children).ForEach(it =>
                             {
-                                renderersToDestroy[it.Component.Id] = type;
+                                renderersToDestroy.Add(it.Component.Id);
                             });
                         }
                         continue;
@@ -241,16 +241,11 @@ namespace Cytoid.Storyboard
                 }
             }
 
-            renderersToDestroy.ForEach(it =>
+            foreach (var id in renderersToDestroy)
             {
-                var id = it.Key;
-                var type = it.Value;
-                var renderer = ComponentRenderers[id];
-                
-                renderer.Dispose();
-                ComponentRenderers.Remove(id);
-                TypedComponentRenderers[type].Remove(renderer);
-            });
+                if (!ComponentRenderers.TryGetValue(id, out var renderer)) continue;
+                DestroyObject(id, renderer);
+            }
         }
 
         public void OnTrigger(Trigger trigger)
@@ -260,7 +255,7 @@ namespace Cytoid.Storyboard
             {
                 foreach (var id in trigger.Spawn)
                 {
-                    SpawnObjectById(id);
+                    SpawnObjectById(id).Forget();
                 }
             }
 
@@ -274,7 +269,7 @@ namespace Cytoid.Storyboard
             }
         }
 
-        public async void SpawnObjectById(string id)
+        public async UniTask SpawnObjectById(string id)
         {
             bool Predicate<TO>(TO obj) where TO : Object => obj.Id == id;
             TO Transformer<TO, TS>(TO obj) where TO : Object<TS> where TS : ObjectState
@@ -284,22 +279,46 @@ namespace Cytoid.Storyboard
                 return res;
             }
             if (Storyboard.Texts.ContainsKey(id)) await SpawnObjects<Text, TextState, TextRenderer>(new List<Text> {Storyboard.Texts[id]}, text => new TextRenderer(this, text), Predicate, Transformer<Text, TextState>);
-            if (Storyboard.Sprites.ContainsKey(id)) await SpawnObjects<Sprite, SpriteState, SpriteRenderer>(new List<Sprite> {Storyboard.Sprites[id]}, sprite => new SpriteRenderer(this, sprite), Predicate, Transformer<Sprite, SpriteState>);
-            if (Storyboard.Lines.ContainsKey(id)) await SpawnObjects<Line, LineState, LineRenderer>(new List<Line> {Storyboard.Lines[id]}, line => new LineRenderer(this, line), Predicate, Transformer<Line, LineState>);
-            if (Storyboard.Videos.ContainsKey(id)) await SpawnObjects<Video, VideoState, VideoRenderer>(new List<Video> {Storyboard.Videos[id]}, line => new VideoRenderer(this, line), Predicate, Transformer<Video, VideoState>);
-            if (Storyboard.Controllers.ContainsKey(id)) await SpawnObjects<Controller, ControllerState, ControllerRenderer>(new List<Controller> {Storyboard.Controllers[id]}, controller => new ControllerRenderer(this, controller), Predicate, Transformer<Controller, ControllerState>);
-            if (Storyboard.NoteControllers.ContainsKey(id)) await SpawnObjects<NoteController, NoteControllerState, NoteControllerRenderer>(new List<NoteController> {Storyboard.NoteControllers[id]}, noteController => new NoteControllerRenderer(this, noteController), Predicate, Transformer<NoteController, NoteControllerState>);
+            else if (Storyboard.Sprites.ContainsKey(id)) await SpawnObjects<Sprite, SpriteState, SpriteRenderer>(new List<Sprite> {Storyboard.Sprites[id]}, sprite => new SpriteRenderer(this, sprite), Predicate, Transformer<Sprite, SpriteState>);
+            else if (Storyboard.Lines.ContainsKey(id)) await SpawnObjects<Line, LineState, LineRenderer>(new List<Line> {Storyboard.Lines[id]}, line => new LineRenderer(this, line), Predicate, Transformer<Line, LineState>);
+            else if (Storyboard.Videos.ContainsKey(id)) await SpawnObjects<Video, VideoState, VideoRenderer>(new List<Video> {Storyboard.Videos[id]}, line => new VideoRenderer(this, line), Predicate, Transformer<Video, VideoState>);
+            else if (Storyboard.Controllers.ContainsKey(id)) await SpawnObjects<Controller, ControllerState, ControllerRenderer>(new List<Controller> {Storyboard.Controllers[id]}, controller => new ControllerRenderer(this, controller), Predicate, Transformer<Controller, ControllerState>);
+            else if (Storyboard.NoteControllers.ContainsKey(id)) await SpawnObjects<NoteController, NoteControllerState, NoteControllerRenderer>(new List<NoteController> {Storyboard.NoteControllers[id]}, noteController => new NoteControllerRenderer(this, noteController), Predicate, Transformer<NoteController, NoteControllerState>);
         }
 
         public void DestroyObjectsById(string id)
         {
-            if (!ComponentRenderers.ContainsKey(id)) return;
-            ComponentRenderers[id].Let(it =>
+            if (!ComponentRenderers.TryGetValue(id, out var renderer)) return;
+
+            // Cascade children/borrowers first so owner teardown cannot leave dangling shared refs.
+            var children = renderer.Children.ToList();
+            foreach (var child in children)
             {
-                it.Dispose();
-                TypedComponentRenderers[it.GetType()].Remove(it);
-            });
+                if (child?.Component?.Id != null)
+                    DestroyObjectsById(child.Component.Id);
+            }
+
+            if (!ComponentRenderers.TryGetValue(id, out renderer)) return;
+            DestroyObject(id, renderer);
+        }
+
+        public void DestroyObject(string id, StoryboardComponentRenderer renderer)
+        {
+            if (renderer == null) return;
+
+            DetachFromParent(renderer);
+            renderer.Dispose();
+
+            if (TypedComponentRenderers.TryGetValue(renderer.ObjectType, out var list))
+                list.Remove(renderer);
             ComponentRenderers.Remove(id);
+        }
+
+        private static void DetachFromParent(StoryboardComponentRenderer renderer)
+        {
+            if (renderer.Parent == null) return;
+            renderer.Parent.Children.Remove(renderer);
+            renderer.Parent = null;
         }
 
         public void RecalculateTime<TO, TS>(TO obj) where TO : Object<TS> where TS : ObjectState

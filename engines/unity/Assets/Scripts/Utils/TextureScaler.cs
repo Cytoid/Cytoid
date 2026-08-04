@@ -22,13 +22,22 @@ public class TextureScaler
     public static Texture2D Scaled(Texture2D src, int width, int height, FilterMode mode = FilterMode.Trilinear)
     {
         Rect texR = new Rect(0, 0, width, height);
-        _gpu_scale(src, width, height, mode);
+        var previous = RenderTexture.active;
+        RenderTexture rtt = null;
+        try
+        {
+            rtt = _gpu_scale(src, width, height, mode);
 
-        //Get rendered data back to a new texture
-        Texture2D result = new Texture2D(width, height, TextureFormat.ARGB32, true);
-        result.Reinitialize(width, height);
-        result.ReadPixels(texR, 0, 0, true);
-        return result;
+            //Get rendered data back to a new texture
+            Texture2D result = new Texture2D(width, height, TextureFormat.ARGB32, true);
+            result.Reinitialize(width, height);
+            result.ReadPixels(texR, 0, 0, true);
+            return result;
+        }
+        finally
+        {
+            ReleaseTemporary(rtt, previous);
+        }
     }
 
     /// <summary>
@@ -41,12 +50,21 @@ public class TextureScaler
     public static void Scale(Texture2D tex, int width, int height, FilterMode mode = FilterMode.Trilinear)
     {
         Rect texR = new Rect(0, 0, width, height);
-        _gpu_scale(tex, width, height, mode);
+        var previous = RenderTexture.active;
+        RenderTexture rtt = null;
+        try
+        {
+            rtt = _gpu_scale(tex, width, height, mode);
 
-        // Update new texture
-        tex.Reinitialize(width, height);
-        tex.ReadPixels(texR, 0, 0, true);
-        tex.Apply(true); //Remove this if you hate us applying textures for you :)
+            // Update new texture
+            tex.Reinitialize(width, height);
+            tex.ReadPixels(texR, 0, 0, true);
+            tex.Apply(true); //Remove this if you hate us applying textures for you :)
+        }
+        finally
+        {
+            ReleaseTemporary(rtt, previous);
+        }
     }
     
     public static Texture2D FitCrop(Texture2D tex, int width, int height, FilterMode mode = FilterMode.Trilinear)
@@ -57,29 +75,38 @@ public class TextureScaler
         var ratio = tex.width * 1.0f / tex.height;
         // Debug.Log($"Width: {width}, Height: {height}, Texture width: {tex.width}, Texture height: {tex.height}, Target ratio: {targetRatio}, Texture ratio: {ratio}");
         Rect texR;
-        if (targetRatio < ratio)
+        var previous = RenderTexture.active;
+        RenderTexture rtt = null;
+        try
         {
-            var toWidth = tex.width * height * 1.0f / tex.height;
-            texR = new Rect((int) ((toWidth - width) / 2), 0, width, height);
-            _gpu_scale(tex, (int) toWidth, height, mode);
-            // Debug.Log($"To width: {toWidth}, Rect: {texR}");
-            result.ReadPixels(texR, 0, 0, true);
+            if (targetRatio < ratio)
+            {
+                var toWidth = tex.width * height * 1.0f / tex.height;
+                texR = new Rect((int) ((toWidth - width) / 2), 0, width, height);
+                rtt = _gpu_scale(tex, (int) toWidth, height, mode);
+                // Debug.Log($"To width: {toWidth}, Rect: {texR}");
+                result.ReadPixels(texR, 0, 0, true);
+            }
+            else
+            {
+                var toHeight = tex.height * width * 1.0f / tex.width;
+                texR = new Rect(0, (int) ((toHeight - height) / 2), width, height);
+                rtt = _gpu_scale(tex, width, (int) toHeight, mode);
+                // Debug.Log($"To height: {toHeight}, Rect: {texR}");
+                result.ReadPixels(texR, 0, 0, true);
+            }
+            result.Apply();
+            return result;
         }
-        else
+        finally
         {
-            var toHeight = tex.height * width * 1.0f / tex.width;
-            texR = new Rect(0, (int) ((toHeight - height) / 2), width, height);
-            _gpu_scale(tex, width, (int) toHeight, mode);
-            // Debug.Log($"To height: {toHeight}, Rect: {texR}");
-            result.ReadPixels(texR, 0, 0, true);
+            ReleaseTemporary(rtt, previous);
         }
-        result.Apply();
-
-        return result;
     }
 
     // Internal unility that renders the source texture into the RTT - the scaling method itself.
-    static void _gpu_scale(Texture2D src, int width, int height, FilterMode fmode)
+    // Caller must release the returned RenderTexture and restore the previous active RT.
+    static RenderTexture _gpu_scale(Texture2D src, int width, int height, FilterMode fmode)
     {
         //We need the source texture in VRAM because we render with it
         src.filterMode = fmode;
@@ -97,5 +124,14 @@ public class TextureScaler
         //Then clear & draw the texture to fill the entire RTT.
         GL.Clear(true, true, new Color(0, 0, 0, 0));
         Graphics.DrawTexture(new Rect(0, 0, 1, 1), src);
+        return rtt;
+    }
+
+    static void ReleaseTemporary(RenderTexture temporary, RenderTexture previous)
+    {
+        RenderTexture.active = previous;
+        if (temporary == null) return;
+        temporary.Release();
+        Object.Destroy(temporary);
     }
 }

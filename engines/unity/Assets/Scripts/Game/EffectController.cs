@@ -343,10 +343,11 @@ public class EffectController : MonoBehaviour
     
     private async void AwaitAndCollect(Effect effect, ParticleSystem particle)
     {
+        var generation = game.ObjectPool.Generation;
         var main = particle.main;
         var waitSeconds = main.duration / Mathf.Max(1e-4f, main.simulationSpeed);
         await UniTask.Delay(TimeSpan.FromSeconds(waitSeconds));
-        if (this == null) return;
+        if (this == null || game.ObjectPool == null || game.ObjectPool.Generation != generation) return;
         game.ObjectPool.CollectEffect(effect, particle);
     }
 

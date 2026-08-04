@@ -26,11 +26,14 @@ namespace Cytoid.Storyboard.Videos
 
         private bool ownsResources;
         private bool prepareCompleted;
+        private bool hasEnded;
         private VideoPlayer.EventHandler prepareCompletedHandler;
+        private VideoPlayer.EventHandler loopPointReachedHandler;
 
         public VideoRenderer(StoryboardRenderer mainRenderer, Video component) : base(mainRenderer, component)
         {
             prepareCompletedHandler = OnPrepareCompleted;
+            loopPointReachedHandler = OnLoopPointReached;
         }
 
         public override StoryboardRendererEaser<VideoState> CreateEaser() => new VideoEaser(this);
@@ -88,6 +91,7 @@ namespace Cytoid.Storyboard.Videos
                 VideoPlayer.renderMode = VideoRenderMode.RenderTexture;
                 VideoPlayer.targetTexture = RenderTexture;
                 RawImage.texture = RenderTexture;
+                VideoPlayer.loopPointReached += loopPointReachedHandler;
 
                 prepareCompleted = false;
                 VideoPlayer.prepareCompleted += prepareCompletedHandler;
@@ -115,8 +119,15 @@ namespace Cytoid.Storyboard.Videos
 
         private void OnPrepareCompleted(VideoPlayer _) => prepareCompleted = true;
 
+        private void OnLoopPointReached(VideoPlayer _)
+        {
+            if (VideoPlayer != null && !VideoPlayer.isLooping)
+                hasEnded = true;
+        }
+
         public override void Clear()
         {
+            hasEnded = false;
             if (ownsResources && VideoPlayer != null)
                 VideoPlayer.Stop();
             if (RawImage != null)
@@ -128,6 +139,7 @@ namespace Cytoid.Storyboard.Videos
         {
             if (IsDisposed) return;
             UnsubscribePrepareCompleted();
+            UnsubscribeLoopPointReached();
             if (ownsResources)
             {
                 if (VideoPlayer != null) Destroy(VideoPlayer.gameObject);
@@ -144,6 +156,7 @@ namespace Cytoid.Storyboard.Videos
             RectTransform = null;
             Canvas = null;
             ownsResources = false;
+            hasEnded = false;
             base.Dispose();
         }
 
@@ -151,6 +164,12 @@ namespace Cytoid.Storyboard.Videos
         {
             if (VideoPlayer != null && prepareCompletedHandler != null)
                 VideoPlayer.prepareCompleted -= prepareCompletedHandler;
+        }
+
+        private void UnsubscribeLoopPointReached()
+        {
+            if (ownsResources && VideoPlayer != null && loopPointReachedHandler != null)
+                VideoPlayer.loopPointReached -= loopPointReachedHandler;
         }
 
         public override void Update(VideoState fromState, VideoState toState)
@@ -172,6 +191,8 @@ namespace Cytoid.Storyboard.Videos
             }
             else if (!VideoPlayer.isPlaying)
             {
+                // Non-loop clips must not restart every frame after natural end.
+                if (hasEnded && !VideoPlayer.isLooping) return;
                 VideoPlayer.Play();
             }
         }

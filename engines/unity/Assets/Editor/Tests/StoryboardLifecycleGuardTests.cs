@@ -44,14 +44,59 @@ public class StoryboardLifecycleGuardTests
     }
 
     [Test]
+    public void StoryboardRenderer_OnGameUpdate_DestroysFlattenForward()
+    {
+        // Brace-scoped to OnGameUpdate only (not the rest of the type).
+        var body = MethodBody(
+            Path.Combine(Application.dataPath, "Scripts/Storyboard/StoryboardRenderer.cs"),
+            "public void OnGameUpdate(Game _)",
+            null);
+        Assert.That(body, Does.Contain(".Flatten(it => it.Children)"));
+        Assert.That(body, Does.Contain("EnqueueDestroy(it.Component.Id)"));
+        Assert.That(body, Does.Contain("for (var i = 0; i < renderersToDestroy.Count; i++)"));
+        Assert.That(body, Does.Contain("DestroyObject(id, renderer)"));
+        Assert.That(body, Does.Not.Contain("Count - 1"));
+        Assert.That(body, Does.Not.Contain("i >= 0; i--"));
+        Assert.That(body, Does.Not.Contain("EnqueueDestroy(renderer.Parent.Component.Id)"));
+    }
+
+    [Test]
+    public void StoryboardRenderer_SpawnObjects_RollsBackOnFailure()
+    {
+        var path = Path.Combine(Application.dataPath, "Scripts/Storyboard/StoryboardRenderer.cs");
+        // Brace-scope each method so helper definitions cannot satisfy SpawnObjects assertions.
+        var spawn = MethodBody(path, "private async UniTask<List<TR>> SpawnObjects", null);
+        var init = MethodBody(path, "private async UniTask InitializeSpawnedRenderer", null);
+        var rollback = MethodBody(path, "private void RollbackSpawnedRenderer", null);
+
+        Assert.That(spawn, Does.Contain("tasks.Add(InitializeSpawnedRenderer(renderer))"));
+        Assert.That(spawn, Does.Contain("RollbackSpawnedRenderer(renderer)"));
+        Assert.That(spawn, Does.Contain("catch"));
+        Assert.That(init, Does.Contain("await renderer.Initialize()"));
+        Assert.That(init, Does.Contain("RollbackSpawnedRenderer(renderer)"));
+        Assert.That(rollback, Does.Contain("DestroyObject(id, renderer)"));
+
+        var publish = spawn.IndexOf("ComponentRenderers[transformedObj.Id] = renderer");
+        var parentCheck = spawn.IndexOf("transformedObj.ParentId != null");
+        var targetCheck = spawn.IndexOf("transformedObj.TargetId != null");
+        Assert.That(parentCheck, Is.GreaterThanOrEqualTo(0), "parent_id check missing");
+        Assert.That(targetCheck, Is.GreaterThanOrEqualTo(0), "target_id check missing");
+        Assert.That(publish, Is.GreaterThanOrEqualTo(0), "ComponentRenderers publish missing");
+        Assert.That(publish, Is.GreaterThan(parentCheck));
+        Assert.That(publish, Is.GreaterThan(targetCheck));
+    }
+
+    [Test]
     public void StoryboardRenderer_DestroyObject_UsesObjectType()
     {
         var body = MethodBody(
             Path.Combine(Application.dataPath, "Scripts/Storyboard/StoryboardRenderer.cs"),
             "public void DestroyObject(string id, StoryboardComponentRenderer renderer)",
-            "private static void DetachFromParent");
+            null);
         Assert.That(body, Does.Contain("renderer.ObjectType"));
         Assert.That(body, Does.Not.Contain("GetType()"));
+        Assert.That(body, Does.Contain("finally"));
+        Assert.That(body, Does.Contain("ReferenceEquals(current, renderer)"));
     }
 
     [Test]

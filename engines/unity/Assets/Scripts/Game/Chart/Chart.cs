@@ -179,6 +179,11 @@ public class Chart
                 speed /= 1.5f;
             }
 
+            // Final speed (mods × AR × experimental) must stay positive/finite for intro/scale.
+            const float minNoteSpeed = 1e-4f;
+            if (float.IsNaN(speed) || float.IsInfinity(speed) || speed <= minNoteSpeed)
+                speed = 1f;
+
             note.start_time = ConvertToTime((float) note.tick);
             note.end_time = ConvertToTime((float) (note.tick + note.hold_tick));
 

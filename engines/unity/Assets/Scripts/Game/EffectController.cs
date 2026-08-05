@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -17,6 +18,7 @@ public class EffectController : MonoBehaviour
     public Transform EffectParentTransform { get; private set; }
     
     private float clearEffectSizeMultiplier;
+    private readonly Dictionary<Effect, float> prefabDurations = new Dictionary<Effect, float>();
 
     /// <summary>Outer diameter at ring spawn; matches legacy FlatFX ripple preset.</summary>
     const float ClearRingStartDiameter = 1f;
@@ -57,7 +59,20 @@ public class EffectController : MonoBehaviour
     public void OnGameLoaded()
     {
         clearEffectSizeMultiplier = Context.Player.Settings.ClearEffectsSize;
+        CachePrefabDurations();
     }
+
+    private void CachePrefabDurations()
+    {
+        prefabDurations.Clear();
+        foreach (Effect effect in Enum.GetValues(typeof(Effect)))
+        {
+            prefabDurations[effect] = GetPrefab(effect).main.duration;
+        }
+    }
+
+    private float PrefabDuration(Effect effect) =>
+        prefabDurations.TryGetValue(effect, out var duration) ? duration : GetPrefab(effect).main.duration;
 
     private void ExpireSoftBudgetIfStale()
     {
@@ -254,11 +269,11 @@ public class EffectController : MonoBehaviour
             fx.Stop();
 
             var mainModule = fx.main;
+            mainModule.duration = PrefabDuration(Effect.Miss);
             mainModule.simulationSpeed = 0.3f;
-            mainModule.duration /= 0.3f;
             mainModule.startColor = game.Config.NoteGradeEffectColors[grade];
 
-            if (isDragType) fx.transform.localScale = new Vector3(2, 2, 2);
+            fx.transform.localScale = isDragType ? new Vector3(2, 2, 2) : Vector3.one;
 
             fx.Play();
             AwaitAndCollect(Effect.Miss, fx);
@@ -303,11 +318,11 @@ public class EffectController : MonoBehaviour
             }
 
             var mainModule = fx.main;
+            mainModule.duration = PrefabDuration(clearEffect);
             mainModule.simulationSpeed = speed;
-            mainModule.duration /= speed;
             mainModule.startColor = color.WithAlpha(1);
 
-            if (isDragType) fx.transform.localScale = new Vector3(3f, 3f, 3f);
+            fx.transform.localScale = isDragType ? new Vector3(3f, 3f, 3f) : Vector3.one;
 
             fx.Play();
             AwaitAndCollect(clearEffect, fx);
@@ -328,8 +343,11 @@ public class EffectController : MonoBehaviour
     
     private async void AwaitAndCollect(Effect effect, ParticleSystem particle)
     {
-        await UniTask.Delay(TimeSpan.FromSeconds(particle.main.duration));
-        if (this == null) return;
+        var generation = game.ObjectPool.Generation;
+        var main = particle.main;
+        var waitSeconds = main.duration / Mathf.Max(1e-4f, main.simulationSpeed);
+        await UniTask.Delay(TimeSpan.FromSeconds(waitSeconds));
+        if (this == null || game.ObjectPool == null || game.ObjectPool.Generation != generation) return;
         game.ObjectPool.CollectEffect(effect, particle);
     }
 

@@ -88,41 +88,48 @@ public class DragHeadNote : Note
 
         if (Game.Time >= Model.start_time)
         {
-            // Move drag head
-            if (FromNoteModel.id == 523)
+            // Consume zero-span edges in the same frame so same-tick chains do not linger on NaN/u=Inf.
+            // Cap iterations against malformed charts with cyclic next_id and non-increasing start_time.
+            var maxEdgeSteps = Chart.note_map.Count + 1;
+            var edgeSteps = 0;
+            while (edgeSteps++ < maxEdgeSteps)
             {
-                if (hasFromNote && fromNote != this)
-                {
-                    print(fromNote.transform.localPosition);
-                }
-                else
-                {
-                    print(FromNoteModel.CalculatePosition(Game.Chart));
-                }
-            }
-            
-            transform.localPosition = Vector3.Lerp(
-                (hasFromNote && fromNote != this) ? fromNote.transform.localPosition : FromNoteModel.CalculatePosition(Game.Chart), 
-                hasToNote ? toNote.transform.localPosition : ToNoteModel.CalculatePosition(Game.Chart),
-                (Game.Time - FromNoteModel.start_time) / (ToNoteModel.start_time - FromNoteModel.start_time));
+                var fromPos = (hasFromNote && fromNote != this)
+                    ? fromNote.transform.localPosition
+                    : FromNoteModel.CalculatePosition(Game.Chart);
+                var toPos = hasToNote
+                    ? toNote.transform.localPosition
+                    : ToNoteModel.CalculatePosition(Game.Chart);
 
-            // Moved to next note?
-            if (Game.Time >= ToNoteModel.start_time)
-            {
-                if (ToNoteModel == EndNoteModel) // Last note
-                {
-                    transform.localPosition = hasToNote ? toNote.transform.localPosition : ToNoteModel.CalculatePosition(Game.Chart);
-                }
+                var span = ToNoteModel.start_time - FromNoteModel.start_time;
+                float u;
+                if (span > 0f)
+                    u = Mathf.Clamp01((Game.Time - FromNoteModel.start_time) / span);
                 else
+                    u = Game.Time >= ToNoteModel.start_time ? 1f : 0f;
+
+                transform.localPosition = Vector3.Lerp(fromPos, toPos, u);
+
+                if (Game.Time < ToNoteModel.start_time)
+                    break;
+
+                if (ToNoteModel == EndNoteModel)
                 {
-                    FromNoteModel = ToNoteModel;
-                    ToNoteModel = Chart.note_map[FromNoteModel.next_id];
-                    
-                    hasFromNote = false;
-                    hasToNote = false;
-                    fromNote = null;
-                    toNote = null;
+                    transform.localPosition = toPos;
+                    break;
                 }
+
+                FromNoteModel = ToNoteModel;
+                ToNoteModel = Chart.note_map[FromNoteModel.next_id];
+                hasFromNote = false;
+                hasToNote = false;
+                fromNote = null;
+                toNote = null;
+
+                if (Game.SpawnedNotes.TryGetValue(FromNoteModel.id, out fromNote))
+                    hasFromNote = true;
+                if (Game.SpawnedNotes.TryGetValue(ToNoteModel.id, out toNote))
+                    hasToNote = true;
             }
 
             // Moving to or already at last note

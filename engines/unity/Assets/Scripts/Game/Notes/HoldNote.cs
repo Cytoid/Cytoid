@@ -45,7 +45,9 @@ public class HoldNote : Note
             {
                 HeldDuration = 0;
             }
-            HoldProgress = (Game.Time - (Model.start_time + JudgmentOffset)) / Model.Duration;
+            HoldProgress = Model.Duration > 1e-4f
+                ? (Game.Time - (Model.start_time + JudgmentOffset)) / Model.Duration
+                : (Game.Time >= Model.start_time + JudgmentOffset ? 1f : 0f);
             
             if (!playedHitSoundAtBegin && HoldProgress >= 0 && Context.Player.Settings.HoldHitSoundTiming.Let(it => it == HoldHitSoundTiming.Begin || it == HoldHitSoundTiming.Both))
             {

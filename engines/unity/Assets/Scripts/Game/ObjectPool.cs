@@ -29,6 +29,11 @@ public class ObjectPool
     private readonly DragLinePoolItem dragLinePoolItem = new DragLinePoolItem();
     private readonly Dictionary<EffectController.Effect, PrefabPoolItem> effectPoolItems = new Dictionary<EffectController.Effect, PrefabPoolItem>();
 
+    /// <summary>
+    /// Bumped on <see cref="Dispose"/> so delayed FX collect callbacks can no-op.
+    /// </summary>
+    public int Generation { get; private set; }
+
     public Game Game { get; }
 
     public ObjectPool(Game game)
@@ -110,9 +115,19 @@ public class ObjectPool
 
     public void Dispose()
     {
+        Generation++;
+
         SpawnedNotes.Values.ForEach(it => it.Dispose());
+        SpawnedNotes.Clear();
         notePoolItems.Values.ForEach(it => it.Dispose());
+
+        // Active drag lines are not in the pool queue.
+        foreach (var line in SpawnedDragLines.Values.ToList())
+            line.Dispose();
+        SpawnedDragLines.Clear();
         dragLinePoolItem.Dispose();
+
+        effectPoolItems.Values.ForEach(it => it.Dispose());
     }
 
     public Note SpawnNote(ChartModel.Note model)
@@ -333,14 +348,19 @@ public class ObjectPool
 
     public class PrefabPoolItem : PoolItem<ParticleSystem, ParticleSystemInstantiateProvider, ParticleSystemSpawnProvider>
     {
+        private readonly List<ParticleSystem> allItems = new List<ParticleSystem>();
+
         public override ParticleSystem OnInstantiate(Game game, ParticleSystemInstantiateProvider arguments)
         {
-            return Object.Instantiate(arguments.Prefab, arguments.Parent, true);
+            var particle = Object.Instantiate(arguments.Prefab, arguments.Parent, true);
+            allItems.Add(particle);
+            return particle;
         }
 
         public override void OnSpawn(Game game, ParticleSystem particle, ParticleSystemSpawnProvider arguments)
         {
             particle.gameObject.SetActive(true);
+            particle.transform.localScale = Vector3.one;
             if (arguments.Parent != default)
             {
                 var transform = particle.transform;
@@ -358,12 +378,15 @@ public class ObjectPool
         {
             if (particle == null || particle.gameObject == null) return;
             particle.Stop();
+            particle.transform.localScale = Vector3.one;
             particle.gameObject.SetActive(false);
         }
 
         public override void Dispose()
         {
-            PooledItems.ForEach(Object.Destroy);
+            allItems.ForEach(Object.Destroy);
+            allItems.Clear();
+            PooledItems.Clear();
         }
     }
 

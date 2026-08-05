@@ -143,7 +143,11 @@ public class DragLineElement : MonoBehaviour
             introRatio = time < FromNoteModel.nextdraglinestarttime ? 1.0f : 0.0f;
         }
 
-        outroRatio = (time - FromNoteModel.start_time) / (ToNoteModel.start_time - FromNoteModel.start_time);
+        var outroSpan = ToNoteModel.start_time - FromNoteModel.start_time;
+        if (outroSpan > 0f)
+            outroRatio = (time - FromNoteModel.start_time) / outroSpan;
+        else
+            outroRatio = time < FromNoteModel.start_time ? 0f : 1f;
 
         if (introRatio > 0 && introRatio < 1)
         {

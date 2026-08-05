@@ -74,7 +74,7 @@ public class StoryboardLifecycleGuardTests
         Assert.That(spawn, Does.Contain("catch"));
         Assert.That(init, Does.Contain("await renderer.Initialize()"));
         Assert.That(init, Does.Contain("RollbackSpawnedRenderer(renderer)"));
-        Assert.That(rollback, Does.Contain("DestroyObject(id, renderer)"));
+        Assert.That(rollback, Does.Contain("DestroyObjectsById(id)"));
 
         var publish = spawn.IndexOf("ComponentRenderers[transformedObj.Id] = renderer");
         var parentCheck = spawn.IndexOf("transformedObj.ParentId != null");
@@ -84,6 +84,35 @@ public class StoryboardLifecycleGuardTests
         Assert.That(publish, Is.GreaterThanOrEqualTo(0), "ComponentRenderers publish missing");
         Assert.That(publish, Is.GreaterThan(parentCheck));
         Assert.That(publish, Is.GreaterThan(targetCheck));
+    }
+
+    [Test]
+    public void StoryboardRenderer_Initialize_DisposesOnFailure()
+    {
+        var body = MethodBody(
+            Path.Combine(Application.dataPath, "Scripts/Storyboard/StoryboardRenderer.cs"),
+            "public async UniTask Initialize()",
+            null);
+        Assert.That(body, Does.Contain("catch"));
+        Assert.That(body, Does.Contain("Dispose()"));
+        Assert.That(body, Does.Contain("throw"));
+        // Listeners must register only after successful spawn batches.
+        var catchIdx = body.IndexOf("catch");
+        var disposeListenerIdx = body.IndexOf("Game.onGameDisposed.AddListener");
+        Assert.That(catchIdx, Is.GreaterThanOrEqualTo(0));
+        Assert.That(disposeListenerIdx, Is.GreaterThan(catchIdx));
+    }
+
+    [Test]
+    public void Storyboard_Initialize_DisposesOnFailure()
+    {
+        var body = MethodBody(
+            Path.Combine(Application.dataPath, "Scripts/Storyboard/Storyboard.cs"),
+            "public async UniTask Initialize()",
+            null);
+        Assert.That(body, Does.Contain("catch"));
+        Assert.That(body, Does.Contain("Dispose()"));
+        Assert.That(body, Does.Contain("throw"));
     }
 
     [Test]

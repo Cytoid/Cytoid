@@ -101,21 +101,33 @@ namespace Cytoid.Storyboard
             {
                 TypedComponentRenderers[type] = new List<StoryboardComponentRenderer>();
             }
-            
-            var timer = new BenchmarkTimer("StoryboardRenderer initialization");
-            bool Predicate<TO>(TO obj) where TO : Object => !obj.IsManuallySpawned(); await SpawnObjects<NoteController, NoteControllerState, NoteControllerRenderer>(Storyboard.NoteControllers.Values.ToList(), noteController => new NoteControllerRenderer(this, noteController), Predicate);
-            timer.Time("NoteController"); // Spawn note placeholder transforms
-            await SpawnObjects<Text, TextState, TextRenderer>(Storyboard.Texts.Values.ToList(), text => new TextRenderer(this, text), Predicate);
-            timer.Time("Text");
-            await SpawnObjects<Sprite, SpriteState, SpriteRenderer>(Storyboard.Sprites.Values.ToList(), sprite => new SpriteRenderer(this, sprite), Predicate);
-            timer.Time("Sprite");
-            await SpawnObjects<Line, LineState, LineRenderer>(Storyboard.Lines.Values.ToList(), line => new LineRenderer(this, line), Predicate);
-            timer.Time("Line");
-            await SpawnObjects<Video, VideoState, VideoRenderer>(Storyboard.Videos.Values.ToList(), line => new VideoRenderer(this, line), Predicate);
-            timer.Time("Video");
-            await SpawnObjects<Controller, ControllerState, ControllerRenderer>(Storyboard.Controllers.Values.ToList(), controller => new ControllerRenderer(this, controller), Predicate);
-            timer.Time("Controller");
-            timer.Time();
+
+            try
+            {
+                var timer = new BenchmarkTimer("StoryboardRenderer initialization");
+                bool Predicate<TO>(TO obj) where TO : Object => !obj.IsManuallySpawned();
+                await SpawnObjects<NoteController, NoteControllerState, NoteControllerRenderer>(Storyboard.NoteControllers.Values.ToList(), noteController => new NoteControllerRenderer(this, noteController), Predicate);
+                timer.Time("NoteController"); // Spawn note placeholder transforms
+                await SpawnObjects<Text, TextState, TextRenderer>(Storyboard.Texts.Values.ToList(), text => new TextRenderer(this, text), Predicate);
+                timer.Time("Text");
+                await SpawnObjects<Sprite, SpriteState, SpriteRenderer>(Storyboard.Sprites.Values.ToList(), sprite => new SpriteRenderer(this, sprite), Predicate);
+                timer.Time("Sprite");
+                await SpawnObjects<Line, LineState, LineRenderer>(Storyboard.Lines.Values.ToList(), line => new LineRenderer(this, line), Predicate);
+                timer.Time("Line");
+                await SpawnObjects<Video, VideoState, VideoRenderer>(Storyboard.Videos.Values.ToList(), line => new VideoRenderer(this, line), Predicate);
+                timer.Time("Video");
+                await SpawnObjects<Controller, ControllerState, ControllerRenderer>(Storyboard.Controllers.Values.ToList(), controller => new ControllerRenderer(this, controller), Predicate);
+                timer.Time("Controller");
+                timer.Time();
+            }
+            catch
+            {
+                // SpawnObjects only rolls back its own batch. Earlier successful type batches would
+                // otherwise remain registered, and Game catches storyboard init failures without
+                // calling Dispose (listeners below are registered only on success).
+                Dispose();
+                throw;
+            }
 
             // Clear on abort/retry/complete
             Game.onGameDisposed.AddListener(_ =>

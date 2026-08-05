@@ -140,11 +140,21 @@ namespace Cytoid.Storyboard
 
         public async UniTask Initialize()
         {
-            await Renderer.Initialize();
-            // Register note clear listener for triggers
-            Game.onNoteClear.AddListener(OnNoteClear);
-            Game.onGameDisposed.AddListener(_ => Dispose());
-            Game.onGameLateUpdate.AddListener(Renderer.OnGameUpdate);
+            try
+            {
+                await Renderer.Initialize();
+                // Register note clear listener for triggers
+                Game.onNoteClear.AddListener(OnNoteClear);
+                Game.onGameDisposed.AddListener(_ => Dispose());
+                Game.onGameLateUpdate.AddListener(Renderer.OnGameUpdate);
+            }
+            catch
+            {
+                // Game.Initialize catches and continues; dispose partial renderer graph / parsed
+                // maps here so a failed load does not leave Storyboard state for the session.
+                Dispose();
+                throw;
+            }
         }
 
         public void OnNoteClear(Game game, Note note)

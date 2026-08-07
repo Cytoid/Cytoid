@@ -101,21 +101,33 @@ namespace Cytoid.Storyboard
             {
                 TypedComponentRenderers[type] = new List<StoryboardComponentRenderer>();
             }
-            
-            var timer = new BenchmarkTimer("StoryboardRenderer initialization");
-            bool Predicate<TO>(TO obj) where TO : Object => !obj.IsManuallySpawned(); await SpawnObjects<NoteController, NoteControllerState, NoteControllerRenderer>(Storyboard.NoteControllers.Values.ToList(), noteController => new NoteControllerRenderer(this, noteController), Predicate);
-            timer.Time("NoteController"); // Spawn note placeholder transforms
-            await SpawnObjects<Text, TextState, TextRenderer>(Storyboard.Texts.Values.ToList(), text => new TextRenderer(this, text), Predicate);
-            timer.Time("Text");
-            await SpawnObjects<Sprite, SpriteState, SpriteRenderer>(Storyboard.Sprites.Values.ToList(), sprite => new SpriteRenderer(this, sprite), Predicate);
-            timer.Time("Sprite");
-            await SpawnObjects<Line, LineState, LineRenderer>(Storyboard.Lines.Values.ToList(), line => new LineRenderer(this, line), Predicate);
-            timer.Time("Line");
-            await SpawnObjects<Video, VideoState, VideoRenderer>(Storyboard.Videos.Values.ToList(), line => new VideoRenderer(this, line), Predicate);
-            timer.Time("Video");
-            await SpawnObjects<Controller, ControllerState, ControllerRenderer>(Storyboard.Controllers.Values.ToList(), controller => new ControllerRenderer(this, controller), Predicate);
-            timer.Time("Controller");
-            timer.Time();
+
+            try
+            {
+                var timer = new BenchmarkTimer("StoryboardRenderer initialization");
+                bool Predicate<TO>(TO obj) where TO : Object => !obj.IsManuallySpawned();
+                await SpawnObjects<NoteController, NoteControllerState, NoteControllerRenderer>(Storyboard.NoteControllers.Values.ToList(), noteController => new NoteControllerRenderer(this, noteController), Predicate);
+                timer.Time("NoteController"); // Spawn note placeholder transforms
+                await SpawnObjects<Text, TextState, TextRenderer>(Storyboard.Texts.Values.ToList(), text => new TextRenderer(this, text), Predicate);
+                timer.Time("Text");
+                await SpawnObjects<Sprite, SpriteState, SpriteRenderer>(Storyboard.Sprites.Values.ToList(), sprite => new SpriteRenderer(this, sprite), Predicate);
+                timer.Time("Sprite");
+                await SpawnObjects<Line, LineState, LineRenderer>(Storyboard.Lines.Values.ToList(), line => new LineRenderer(this, line), Predicate);
+                timer.Time("Line");
+                await SpawnObjects<Video, VideoState, VideoRenderer>(Storyboard.Videos.Values.ToList(), line => new VideoRenderer(this, line), Predicate);
+                timer.Time("Video");
+                await SpawnObjects<Controller, ControllerState, ControllerRenderer>(Storyboard.Controllers.Values.ToList(), controller => new ControllerRenderer(this, controller), Predicate);
+                timer.Time("Controller");
+                timer.Time();
+            }
+            catch
+            {
+                // SpawnObjects only rolls back its own batch. Earlier successful type batches would
+                // otherwise remain registered, and Game catches storyboard init failures without
+                // calling Dispose (listeners below are registered only on success).
+                Dispose();
+                throw;
+            }
 
             // Clear on abort/retry/complete
             Game.onGameDisposed.AddListener(_ =>
@@ -148,51 +160,92 @@ namespace Cytoid.Storyboard
             if (predicate == default) predicate = _ => true;
             if (transformer == default) transformer = _ => _;
             var renderers = new List<TR>();
-            var tasks = new List<UniTask>();
-            foreach (var obj in objects)
+            try
             {
-                if (!predicate(obj)) continue;
-                var transformedObj = transformer(obj);
-                
-                var renderer = rendererCreator(transformedObj);
-                if (ComponentRenderers.ContainsKey(transformedObj.Id))
+                // Phase 1: validate parent/target, then publish. Failures here never leave a
+                // half-registered id, and no Initialize is in flight yet.
+                foreach (var obj in objects)
                 {
-                    Debug.LogWarning($"Storyboard: Object {transformedObj.Id} is already spawned");
-                    continue;
-                }
-                ComponentRenderers[transformedObj.Id] = renderer;
-                TypedComponentRenderers[typeof(TO)].Add(renderer);
-                // Debug.Log($"StoryboardRenderer: Spawned {typeof(TO).Name} with ID {obj.Id}");
-                
-                // Resolve parent
-                StoryboardComponentRenderer parent = null;
-                if (transformedObj.ParentId != null)
-                {
-                    if (!ComponentRenderers.ContainsKey(transformedObj.ParentId))
-                    {
-                        throw new InvalidOperationException($"Storyboard: parent_id \"{transformedObj.ParentId}\" does not exist");
-                    }
-                    parent = ComponentRenderers[transformedObj.ParentId];
-                }
-                else if (transformedObj.TargetId != null)
-                {
-                    if (!ComponentRenderers.ContainsKey(transformedObj.TargetId))
-                    {
-                        throw new InvalidOperationException($"Storyboard: target_id \"{transformedObj.TargetId}\" does not exist");
-                    }
-                    parent = ComponentRenderers[transformedObj.TargetId] as TR ?? throw new InvalidOperationException($"Storyboard: target_id \"{transformedObj.TargetId} does not have type {typeof(TR).Name}");
-                }
-                if (parent != null)
-                {
-                    parent.Children.Add(renderer);
-                    renderer.Parent = parent;
-                }
-                
-                tasks.Add(renderer.Initialize());
-            }
+                    if (!predicate(obj)) continue;
+                    var transformedObj = transformer(obj);
 
-            await UniTask.WhenAll(tasks);
-            return renderers;
+                    if (ComponentRenderers.ContainsKey(transformedObj.Id))
+                    {
+                        Debug.LogWarning($"Storyboard: Object {transformedObj.Id} is already spawned");
+                        continue;
+                    }
+
+                    var renderer = rendererCreator(transformedObj);
+
+                    StoryboardComponentRenderer parent = null;
+                    if (transformedObj.ParentId != null)
+                    {
+                        if (!ComponentRenderers.ContainsKey(transformedObj.ParentId))
+                        {
+                            throw new InvalidOperationException($"Storyboard: parent_id \"{transformedObj.ParentId}\" does not exist");
+                        }
+                        parent = ComponentRenderers[transformedObj.ParentId];
+                    }
+                    else if (transformedObj.TargetId != null)
+                    {
+                        if (!ComponentRenderers.ContainsKey(transformedObj.TargetId))
+                        {
+                            throw new InvalidOperationException($"Storyboard: target_id \"{transformedObj.TargetId}\" does not exist");
+                        }
+                        parent = ComponentRenderers[transformedObj.TargetId] as TR ?? throw new InvalidOperationException($"Storyboard: target_id \"{transformedObj.TargetId} does not have type {typeof(TR).Name}");
+                    }
+
+                    ComponentRenderers[transformedObj.Id] = renderer;
+                    TypedComponentRenderers[typeof(TO)].Add(renderer);
+                    if (parent != null)
+                    {
+                        parent.Children.Add(renderer);
+                        renderer.Parent = parent;
+                    }
+
+                    renderers.Add(renderer);
+                }
+
+                // Phase 2: initialize; any failure rolls back every renderer published above.
+                var tasks = new List<UniTask>(renderers.Count);
+                foreach (var renderer in renderers)
+                    tasks.Add(InitializeSpawnedRenderer(renderer));
+
+                await UniTask.WhenAll(tasks);
+                return renderers;
+            }
+            catch
+            {
+                // Drop any renderers published by this call so trigger retries and bulk init
+                // cannot keep a half-initialized id after SpawnObjectByIdLogged swallows the error.
+                foreach (var renderer in renderers)
+                    RollbackSpawnedRenderer(renderer);
+                throw;
+            }
+        }
+
+        private async UniTask InitializeSpawnedRenderer(StoryboardComponentRenderer renderer)
+        {
+            try
+            {
+                await renderer.Initialize();
+            }
+            catch
+            {
+                RollbackSpawnedRenderer(renderer);
+                throw;
+            }
+        }
+
+        private void RollbackSpawnedRenderer(StoryboardComponentRenderer renderer)
+        {
+            if (renderer?.Component?.Id == null) return;
+            var id = renderer.Component.Id;
+            if (!ComponentRenderers.TryGetValue(id, out var current) || current != renderer) return;
+            // Cascade children first: DestroyObject Dispose()-clears Children without
+            // destroying them, and concurrent SpawnObjectById children are not in the
+            // failing SpawnObjects renderers list for the outer catch to roll back.
+            DestroyObjectsById(id);
         }
 
         public void OnGameUpdate(Game _)
@@ -203,7 +256,16 @@ namespace Cytoid.Storyboard
             var updateOrder = new[]
                 {typeof(NoteController), typeof(Text), typeof(Sprite), typeof(Line), typeof(Video), typeof(Controller)};
 
-            var renderersToDestroy = new Dictionary<string, Type>();
+            // Flatten is already post-order (descendants then root). Enqueue in that order and
+            // destroy forward so children/borrowers run before their owner (same invariant as
+            // DestroyObjectsById). Do not reverse Flatten output.
+            var renderersToDestroy = new List<string>();
+            var renderersToDestroySet = new HashSet<string>();
+            void EnqueueDestroy(string id)
+            {
+                if (renderersToDestroySet.Add(id))
+                    renderersToDestroy.Add(id);
+            }
 
             foreach (var type in updateOrder)
             {
@@ -220,10 +282,9 @@ namespace Cytoid.Storyboard
                         // Destroy the target as well
                         if (renderer.Parent != null && renderer.Component.TargetId != null)
                         {
-                            renderersToDestroy[renderer.Parent.Component.Id] = type;
                             this.ListOf(renderer.Parent).Flatten(it => it.Children).ForEach(it =>
                             {
-                                renderersToDestroy[it.Component.Id] = type;
+                                EnqueueDestroy(it.Component.Id);
                             });
                         }
                         else
@@ -231,7 +292,7 @@ namespace Cytoid.Storyboard
                             renderer.Parent?.Children.Remove(renderer);
                             this.ListOf(renderer).Flatten(it => it.Children).ForEach(it =>
                             {
-                                renderersToDestroy[it.Component.Id] = type;
+                                EnqueueDestroy(it.Component.Id);
                             });
                         }
                         continue;
@@ -241,16 +302,12 @@ namespace Cytoid.Storyboard
                 }
             }
 
-            renderersToDestroy.ForEach(it =>
+            for (var i = 0; i < renderersToDestroy.Count; i++)
             {
-                var id = it.Key;
-                var type = it.Value;
-                var renderer = ComponentRenderers[id];
-                
-                renderer.Dispose();
-                ComponentRenderers.Remove(id);
-                TypedComponentRenderers[type].Remove(renderer);
-            });
+                var id = renderersToDestroy[i];
+                if (!ComponentRenderers.TryGetValue(id, out var renderer)) continue;
+                DestroyObject(id, renderer);
+            }
         }
 
         public void OnTrigger(Trigger trigger)
@@ -260,7 +317,7 @@ namespace Cytoid.Storyboard
             {
                 foreach (var id in trigger.Spawn)
                 {
-                    SpawnObjectById(id);
+                    SpawnObjectByIdLogged(id).Forget();
                 }
             }
 
@@ -274,8 +331,22 @@ namespace Cytoid.Storyboard
             }
         }
 
-        public async void SpawnObjectById(string id)
+        async UniTaskVoid SpawnObjectByIdLogged(string id)
         {
+            try
+            {
+                await SpawnObjectById(id);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+            }
+        }
+
+        public async UniTask SpawnObjectById(string id)
+        {
+            // Storyboard object ids are unique across component kinds; else-if matches that contract
+            // (legacy multi-if could spawn the same id from multiple dictionaries).
             bool Predicate<TO>(TO obj) where TO : Object => obj.Id == id;
             TO Transformer<TO, TS>(TO obj) where TO : Object<TS> where TS : ObjectState
             {
@@ -284,22 +355,58 @@ namespace Cytoid.Storyboard
                 return res;
             }
             if (Storyboard.Texts.ContainsKey(id)) await SpawnObjects<Text, TextState, TextRenderer>(new List<Text> {Storyboard.Texts[id]}, text => new TextRenderer(this, text), Predicate, Transformer<Text, TextState>);
-            if (Storyboard.Sprites.ContainsKey(id)) await SpawnObjects<Sprite, SpriteState, SpriteRenderer>(new List<Sprite> {Storyboard.Sprites[id]}, sprite => new SpriteRenderer(this, sprite), Predicate, Transformer<Sprite, SpriteState>);
-            if (Storyboard.Lines.ContainsKey(id)) await SpawnObjects<Line, LineState, LineRenderer>(new List<Line> {Storyboard.Lines[id]}, line => new LineRenderer(this, line), Predicate, Transformer<Line, LineState>);
-            if (Storyboard.Videos.ContainsKey(id)) await SpawnObjects<Video, VideoState, VideoRenderer>(new List<Video> {Storyboard.Videos[id]}, line => new VideoRenderer(this, line), Predicate, Transformer<Video, VideoState>);
-            if (Storyboard.Controllers.ContainsKey(id)) await SpawnObjects<Controller, ControllerState, ControllerRenderer>(new List<Controller> {Storyboard.Controllers[id]}, controller => new ControllerRenderer(this, controller), Predicate, Transformer<Controller, ControllerState>);
-            if (Storyboard.NoteControllers.ContainsKey(id)) await SpawnObjects<NoteController, NoteControllerState, NoteControllerRenderer>(new List<NoteController> {Storyboard.NoteControllers[id]}, noteController => new NoteControllerRenderer(this, noteController), Predicate, Transformer<NoteController, NoteControllerState>);
+            else if (Storyboard.Sprites.ContainsKey(id)) await SpawnObjects<Sprite, SpriteState, SpriteRenderer>(new List<Sprite> {Storyboard.Sprites[id]}, sprite => new SpriteRenderer(this, sprite), Predicate, Transformer<Sprite, SpriteState>);
+            else if (Storyboard.Lines.ContainsKey(id)) await SpawnObjects<Line, LineState, LineRenderer>(new List<Line> {Storyboard.Lines[id]}, line => new LineRenderer(this, line), Predicate, Transformer<Line, LineState>);
+            else if (Storyboard.Videos.ContainsKey(id)) await SpawnObjects<Video, VideoState, VideoRenderer>(new List<Video> {Storyboard.Videos[id]}, line => new VideoRenderer(this, line), Predicate, Transformer<Video, VideoState>);
+            else if (Storyboard.Controllers.ContainsKey(id)) await SpawnObjects<Controller, ControllerState, ControllerRenderer>(new List<Controller> {Storyboard.Controllers[id]}, controller => new ControllerRenderer(this, controller), Predicate, Transformer<Controller, ControllerState>);
+            else if (Storyboard.NoteControllers.ContainsKey(id)) await SpawnObjects<NoteController, NoteControllerState, NoteControllerRenderer>(new List<NoteController> {Storyboard.NoteControllers[id]}, noteController => new NoteControllerRenderer(this, noteController), Predicate, Transformer<NoteController, NoteControllerState>);
         }
 
         public void DestroyObjectsById(string id)
         {
-            if (!ComponentRenderers.ContainsKey(id)) return;
-            ComponentRenderers[id].Let(it =>
+            if (!ComponentRenderers.TryGetValue(id, out var renderer)) return;
+
+            // Cascade children/borrowers first so owner teardown cannot leave dangling shared refs.
+            var children = renderer.Children.ToList();
+            foreach (var child in children)
             {
-                it.Dispose();
-                TypedComponentRenderers[it.GetType()].Remove(it);
-            });
-            ComponentRenderers.Remove(id);
+                if (child?.Component?.Id != null)
+                    DestroyObjectsById(child.Component.Id);
+            }
+
+            if (!ComponentRenderers.TryGetValue(id, out renderer)) return;
+            DestroyObject(id, renderer);
+        }
+
+        public void DestroyObject(string id, StoryboardComponentRenderer renderer)
+        {
+            if (renderer == null) return;
+
+            DetachFromParent(renderer);
+            try
+            {
+                renderer.Dispose();
+            }
+            finally
+            {
+                if (TypedComponentRenderers.TryGetValue(renderer.ObjectType, out var list))
+                    list.Remove(renderer);
+
+                // Identity guard: if Dispose re-entered spawn for the same id, do not
+                // remove the replacement instance from ComponentRenderers.
+                if (ComponentRenderers.TryGetValue(id, out var current) &&
+                    ReferenceEquals(current, renderer))
+                {
+                    ComponentRenderers.Remove(id);
+                }
+            }
+        }
+
+        private static void DetachFromParent(StoryboardComponentRenderer renderer)
+        {
+            if (renderer.Parent == null) return;
+            renderer.Parent.Children.Remove(renderer);
+            renderer.Parent = null;
         }
 
         public void RecalculateTime<TO, TS>(TO obj) where TO : Object<TS> where TS : ObjectState

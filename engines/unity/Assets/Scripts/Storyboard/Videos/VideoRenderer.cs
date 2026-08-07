@@ -24,17 +24,30 @@ namespace Cytoid.Storyboard.Videos
 
         public override bool IsOnCanvas => true;
 
+        private bool ownsResources;
+        private bool prepareCompleted;
+        private bool hasEnded;
+        /// <summary>Owner of the shared VideoPlayer; borrowers read ended state from here.</summary>
+        private VideoRenderer sharedPlaybackOwner;
+        private VideoPlayer.EventHandler prepareCompletedHandler;
+        private VideoPlayer.EventHandler loopPointReachedHandler;
+
         public VideoRenderer(StoryboardRenderer mainRenderer, Video component) : base(mainRenderer, component)
         {
+            prepareCompletedHandler = OnPrepareCompleted;
+            loopPointReachedHandler = OnLoopPointReached;
         }
 
         public override StoryboardRendererEaser<VideoState> CreateEaser() => new VideoEaser(this);
 
         public override async UniTask Initialize()
         {
+            var version = BeginInitialize();
             var targetRenderer = GetTargetRenderer<VideoRenderer>();
             if (targetRenderer != null)
             {
+                ownsResources = false;
+                sharedPlaybackOwner = targetRenderer;
                 VideoPlayer = targetRenderer.VideoPlayer;
                 RawImage = targetRenderer.RawImage;
                 RenderTexture = targetRenderer.RenderTexture;
@@ -43,6 +56,8 @@ namespace Cytoid.Storyboard.Videos
             }
             else
             {
+                ownsResources = true;
+                sharedPlaybackOwner = this;
                 VideoPlayer = Instantiate(Provider.VideoVideoPlayerPrefab);
                 RawImage = Instantiate(Provider.VideoRawImagePrefab, Provider.Canvas.transform);
                 RenderTexture = new RenderTexture(UnityEngine.Screen.width / 2, UnityEngine.Screen.height / 2, 0, RenderTextureFormat.ARGB32);
@@ -80,33 +95,95 @@ namespace Cytoid.Storyboard.Videos
                 VideoPlayer.renderMode = VideoRenderMode.RenderTexture;
                 VideoPlayer.targetTexture = RenderTexture;
                 RawImage.texture = RenderTexture;
+                VideoPlayer.loopPointReached += loopPointReachedHandler;
 
-                var prepareCompleted = false;
-                VideoPlayer.prepareCompleted += _ => prepareCompleted = true;
-                VideoPlayer.Prepare();
-                var startTime = DateTimeOffset.UtcNow;
-                await UniTask.WaitUntil(() => prepareCompleted || DateTimeOffset.UtcNow - startTime > TimeSpan.FromSeconds(5));
-                if (!prepareCompleted)
+                prepareCompleted = false;
+                VideoPlayer.prepareCompleted += prepareCompletedHandler;
+                try
                 {
-                    Debug.Log($"Android version code: {Context.AndroidVersionCode}");
-                    Debug.Log($"Video path: {path}");
-                    Debug.LogError("Could not load video. Are you using Android Q or above?");
+                    VideoPlayer.Prepare();
+                    var startTime = DateTimeOffset.UtcNow;
+                    await UniTask.WaitUntil(() =>
+                        prepareCompleted || IsInitializeStale(version) ||
+                        DateTimeOffset.UtcNow - startTime > TimeSpan.FromSeconds(5));
+                    if (IsInitializeStale(version)) return;
+                    if (!prepareCompleted)
+                    {
+                        Debug.Log($"Android version code: {Context.AndroidVersionCode}");
+                        Debug.Log($"Video path: {path}");
+                        Debug.LogError("Could not load video. Are you using Android Q or above?");
+                    }
+                }
+                finally
+                {
+                    UnsubscribePrepareCompleted();
                 }
             }
         }
 
+        private void OnPrepareCompleted(VideoPlayer _) => prepareCompleted = true;
+
+        private void OnLoopPointReached(VideoPlayer _)
+        {
+            if (VideoPlayer != null && !VideoPlayer.isLooping)
+                hasEnded = true;
+        }
+
+        /// <summary>
+        /// Ended is owned by the resource owner so target_id borrowers honor the same gate.
+        /// </summary>
+        private bool HasSharedPlaybackEnded =>
+            sharedPlaybackOwner != null &&
+            !sharedPlaybackOwner.IsDisposed &&
+            sharedPlaybackOwner.hasEnded;
+
         public override void Clear()
         {
-            VideoPlayer.Stop();
-            RawImage.color = UnityEngine.Color.white.WithAlpha(0);
+            if (ownsResources)
+                hasEnded = false;
+            if (ownsResources && VideoPlayer != null)
+                VideoPlayer.Stop();
+            if (RawImage != null)
+                RawImage.color = UnityEngine.Color.white.WithAlpha(0);
             IsTransformActive = false;
         }
 
         public override void Dispose()
         {
-            Destroy(VideoPlayer.gameObject);
-            Destroy(RawImage.gameObject);
-            Destroy(RenderTexture);
+            if (IsDisposed) return;
+            UnsubscribePrepareCompleted();
+            UnsubscribeLoopPointReached();
+            if (ownsResources)
+            {
+                if (VideoPlayer != null) Destroy(VideoPlayer.gameObject);
+                if (RawImage != null) Destroy(RawImage.gameObject);
+                if (RenderTexture != null)
+                {
+                    RenderTexture.Release();
+                    Destroy(RenderTexture);
+                }
+            }
+            VideoPlayer = null;
+            RawImage = null;
+            RenderTexture = null;
+            RectTransform = null;
+            Canvas = null;
+            ownsResources = false;
+            hasEnded = false;
+            sharedPlaybackOwner = null;
+            base.Dispose();
+        }
+
+        private void UnsubscribePrepareCompleted()
+        {
+            if (VideoPlayer != null && prepareCompletedHandler != null)
+                VideoPlayer.prepareCompleted -= prepareCompletedHandler;
+        }
+
+        private void UnsubscribeLoopPointReached()
+        {
+            if (ownsResources && VideoPlayer != null && loopPointReachedHandler != null)
+                VideoPlayer.loopPointReached -= loopPointReachedHandler;
         }
 
         public override void Update(VideoState fromState, VideoState toState)
@@ -117,7 +194,7 @@ namespace Cytoid.Storyboard.Videos
 
         public void SyncPlaybackWithGameState()
         {
-            if (VideoPlayer == null || MainRenderer == null) return;
+            if (VideoPlayer == null || MainRenderer == null || IsDisposed) return;
 
             if (!MainRenderer.Game.State.IsPlaying)
             {
@@ -128,6 +205,9 @@ namespace Cytoid.Storyboard.Videos
             }
             else if (!VideoPlayer.isPlaying)
             {
+                // Non-loop clips must not restart every frame after natural end
+                // (owner and target_id borrowers share this gate).
+                if (HasSharedPlaybackEnded && !VideoPlayer.isLooping) return;
                 VideoPlayer.Play();
             }
         }

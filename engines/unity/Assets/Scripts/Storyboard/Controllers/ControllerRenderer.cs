@@ -30,6 +30,8 @@ namespace Cytoid.Storyboard.Controllers
 
         public override void Dispose()
         {
+            if (IsDisposed) return;
+            base.Dispose();
         }
 
     }

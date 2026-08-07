@@ -140,48 +140,70 @@ namespace Cytoid.Storyboard
 
         public async UniTask Initialize()
         {
-            await Renderer.Initialize();
-            // Register note clear listener for triggers
-            Game.onNoteClear.AddListener(OnNoteClear);
-            Game.onGameDisposed.AddListener(_ => Dispose());
-            Game.onGameLateUpdate.AddListener(Renderer.OnGameUpdate);
+            try
+            {
+                await Renderer.Initialize();
+                // Register note clear listener for triggers
+                Game.onNoteClear.AddListener(OnNoteClear);
+                Game.onGameDisposed.AddListener(_ => Dispose());
+                Game.onGameLateUpdate.AddListener(Renderer.OnGameUpdate);
+            }
+            catch
+            {
+                // Game.Initialize catches and continues; dispose partial renderer graph / parsed
+                // maps here so a failed load does not leave Storyboard state for the session.
+                Dispose();
+                throw;
+            }
         }
 
         public void OnNoteClear(Game game, Note note)
         {
-            foreach (var trigger in Triggers)
+            // Fire in registration order, then remove by descending index so list mutation is safe
+            // and same-frame multi-trigger side effects keep legacy spawn/update ordering.
+            var removals = new HashSet<Trigger>();
+            for (var i = 0; i < Triggers.Count; i++)
             {
+                var trigger = Triggers[i];
+                var hit = false;
                 if (trigger.Type == TriggerType.NoteClear && trigger.Notes.Contains(note.Model.id))
                 {
                     trigger.Triggerer = note;
-                    OnTrigger(trigger);
+                    hit = true;
                 }
-
-                if (trigger.Type == TriggerType.Combo && Game.State.Combo == trigger.Combo)
+                else if (trigger.Type == TriggerType.Combo && Game.State.Combo == trigger.Combo)
                 {
                     trigger.Triggerer = note;
-                    OnTrigger(trigger);
+                    hit = true;
                 }
-
-                if (trigger.Type == TriggerType.Score && Game.State.Score >= trigger.Score)
+                else if (trigger.Type == TriggerType.Score && Game.State.Score >= trigger.Score)
                 {
                     trigger.Triggerer = note;
-                    OnTrigger(trigger);
-                    Triggers.Remove(trigger);
+                    hit = true;
                 }
+
+                if (!hit) continue;
+
+                var shouldRemove = OnTrigger(trigger);
+                // Score triggers remain one-shot after fire (legacy behavior).
+                if (shouldRemove || trigger.Type == TriggerType.Score)
+                    removals.Add(trigger);
+            }
+
+            for (var i = Triggers.Count - 1; i >= 0; i--)
+            {
+                if (removals.Contains(Triggers[i]))
+                    Triggers.RemoveAt(i);
             }
         }
 
-        public void OnTrigger(Trigger trigger)
+        /// <returns>True when the trigger should be removed from <see cref="Triggers"/>.</returns>
+        public bool OnTrigger(Trigger trigger)
         {
             Renderer.OnTrigger(trigger);
-            
-            // Destroy trigger if needed
+
             trigger.CurrentUses++;
-            if (trigger.CurrentUses == trigger.Uses)
-            {
-                Triggers.Remove(trigger);
-            }
+            return trigger.CurrentUses == trigger.Uses;
         }
 
         public JObject Compile()

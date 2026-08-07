@@ -278,6 +278,10 @@ public class Game : MonoBehaviour
             {
                 Debug.LogError($"[CYTOID-DBG] Game.Initialize: STORYBOARD LOAD FAILED: {e}");
                 Debug.LogError("Could not load storyboard.");
+                // Storyboard.Initialize disposes on failure, but clear the dangling reference so
+                // the rest of the session does not treat a failed load as an active storyboard.
+                Storyboard?.Dispose();
+                Storyboard = null;
             }
         }
         else

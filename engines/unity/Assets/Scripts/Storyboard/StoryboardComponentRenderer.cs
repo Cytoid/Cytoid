@@ -8,26 +8,44 @@ namespace Cytoid.Storyboard
     public abstract class StoryboardComponentRenderer
     {
         public Object Component { get; protected set; }
-
+        
         public List<StoryboardComponentRenderer> Children = new List<StoryboardComponentRenderer>();
 
         public StoryboardComponentRenderer Parent;
 
+        /// <summary>Storyboard object type key used in <see cref="StoryboardRenderer.TypedComponentRenderers"/>.</summary>
+        public abstract Type ObjectType { get; }
+        
         public abstract Transform Transform { get; }
-
+        
         public abstract Transform CanvasTransform { get; }
-
+        
         public abstract Transform WorldTransform { get; }
 
         public abstract bool IsOnCanvas { get; }
+
+        public bool IsDisposed { get; private set; }
+
+        protected int InitializeVersion { get; private set; }
 
         public abstract UniTask Initialize();
 
         public abstract void Clear();
 
-        public abstract void Dispose();
+        public virtual void Dispose()
+        {
+            if (IsDisposed) return;
+            IsDisposed = true;
+            InitializeVersion++;
+            Children.Clear();
+            Parent = null;
+        }
 
         public abstract void Update(ObjectState fromState, ObjectState toState);
+
+        protected int BeginInitialize() => ++InitializeVersion;
+
+        protected bool IsInitializeStale(int version) => IsDisposed || version != InitializeVersion;
 
         public bool IsTransformActive
         {
@@ -37,23 +55,26 @@ namespace Cytoid.Storyboard
                 if (isTransformActive != value)
                 {
                     isTransformActive = value;
-                    Transform.gameObject.SetActive(value);
+                    if (Transform != null)
+                        Transform.gameObject.SetActive(value);
                 }
             }
         }
 
         private bool isTransformActive;
-
+        
     }
-
+    
     public abstract class StoryboardComponentRenderer<TO, TS> : StoryboardComponentRenderer where TS : ObjectState where TO : Object<TS>
     {
 
         public StoryboardRenderer MainRenderer { get; private set; }
-
+        
         public StoryboardRendererEaser<TS> Easer { get; private set; }
 
         public new TO Component { get; private set; }
+
+        public override Type ObjectType => typeof(TO);
 
         public StoryboardRendererProvider Provider => StoryboardRendererProvider.Instance;
 
@@ -68,6 +89,7 @@ namespace Cytoid.Storyboard
 
         public override void Dispose()
         {
+            if (IsDisposed) return;
             MainRenderer = null;
             Component = null;
             if (equivalentTransform != null)
@@ -75,6 +97,7 @@ namespace Cytoid.Storyboard
                 UnityEngine.Object.Destroy(equivalentTransform);
             }
             equivalentTransform = null;
+            base.Dispose();
         }
 
         public virtual void Update(TS fromState, TS toState)
@@ -89,6 +112,7 @@ namespace Cytoid.Storyboard
 
         public override void Update(ObjectState fromState, ObjectState toState)
         {
+            if (IsDisposed || MainRenderer == null) return;
             Update((TS) fromState, (TS) toState);
             UpdateEquivalentTransform();
         }
@@ -162,7 +186,7 @@ namespace Cytoid.Storyboard
             }
             equivalentTransform.transform.localPosition = Vector3.zero;
             equivalentTransform.transform.localScale = Vector3.one;
-
+            
             UpdateEquivalentTransform();
         }
 
@@ -191,7 +215,7 @@ namespace Cytoid.Storyboard
                     // World -> Canvas
                     var pos = Transform.position;
                     var screenPos = MainRenderer.Camera.WorldToScreenPoint(pos);
-
+                    
                     rectTransform.anchoredPosition = new Vector2(
                         screenPos.x * MainRenderer.Constants.WorldToCanvasXMultiplier,
                         screenPos.y * MainRenderer.Constants.WorldToCanvasYMultiplier
@@ -199,7 +223,7 @@ namespace Cytoid.Storyboard
                 }
             }
         }
-
+        
         protected virtual Transform GetParentTransform()
         {
             if (Component.ParentId != null)
@@ -211,5 +235,5 @@ namespace Cytoid.Storyboard
         }
 
     }
-
+    
 }

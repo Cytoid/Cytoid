@@ -22,6 +22,7 @@ public class GameTooltipText : MonoBehaviour
 
     protected void Awake()
     {
+        UseFont(FontWeight.Bold);
         tmp.textWrappingMode = TextWrappingModes.PreserveWhitespaceNoWrap;
         game.onGameWillUnpause.AddListener(async _ =>
         {
@@ -42,6 +43,7 @@ public class GameTooltipText : MonoBehaviour
     {
         var version = ++messageVersion;
         CurrentMessage = message;
+        UseFont(FontWeight.Bold);
         tmp.color = message.Color.WithAlpha(0);
         tmp.text = message.TextFunction();
         tmp.characterSpacing = message.Type == GameMessage.AnimationType.Shrink ? message.MaxSpacing : message.MinSpacing;
@@ -107,6 +109,7 @@ public class GameTooltipText : MonoBehaviour
     {
         if (!chartEventState.IsActive)
         {
+            UseFont(FontWeight.Bold);
             tmp.text = string.Empty;
             tmp.color = Color.clear;
             tmp.characterSpacing = 0;
@@ -116,15 +119,19 @@ public class GameTooltipText : MonoBehaviour
         switch (chartEventState.Kind)
         {
             case ChartEventPresentationKind.SpeedUp:
+                UseFont(FontWeight.Bold);
                 tmp.text = "GAME_SPEED_UP".Get();
                 break;
             case ChartEventPresentationKind.SpeedDown:
+                UseFont(FontWeight.Bold);
                 tmp.text = "GAME_SLOW_DOWN".Get();
                 break;
             case ChartEventPresentationKind.Message:
+                UseFont(FontWeight.Regular);
                 tmp.text = chartEventState.Content;
                 break;
             default:
+                UseFont(FontWeight.Bold);
                 tmp.text = string.Empty;
                 break;
         }
@@ -132,6 +139,12 @@ public class GameTooltipText : MonoBehaviour
         tmp.color = chartEventState.TextColor.WithAlpha(
             chartEventState.TextColor.a * chartEventState.TextAlpha);
         tmp.characterSpacing = chartEventState.LetterSpacing;
+    }
+
+    private void UseFont(FontWeight weight)
+    {
+        var font = weight.GetTmpFont();
+        if (font != null && tmp.font != font) tmp.font = font;
     }
 
     public void Update()

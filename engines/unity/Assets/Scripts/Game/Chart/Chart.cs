@@ -440,17 +440,9 @@ public class Chart
         return ConvertChartYToScreenY(percentage);
     }
 
-    public float GetPageBoundaryScreenY(int pageId, bool bottom)
-    {
-        pageId = Mathf.Clamp(pageId, 0, Model.page_list.Count - 1);
-        var page = Model.page_list[pageId];
-        PositionFunction.GetVisibleBand(page, out var low, out var high);
-        return PageDisplayYToScreenY(bottom ? low : high);
-    }
-
     /// <summary>
-    /// Full play-area top/bottom (always ±baseSize). Page-aware bands use
-    /// <see cref="GetPageBoundaryScreenY"/> instead.
+    /// Full play-area top/bottom (always ±baseSize), independent of the per-page
+    /// PositionFunction band.
     /// </summary>
     public float GetBoundaryPosition(bool bottom)
     {

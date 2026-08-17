@@ -26,44 +26,6 @@ public static class PositionFunction
     }
 
     /// <summary>
-    /// Visible play-area band in display Y (always <paramref name="low"/> ≤ <paramref name="high"/>).
-    /// </summary>
-    public static void GetVisibleBand(ChartModel.Page page, out float low, out float high)
-    {
-        var a = page.position_arg_a;
-        var b = page.position_arg_b;
-        if (Mathf.Approximately(a, 0f))
-        {
-            var y = Mathf.Clamp(b, -1f, 1f);
-            low = y;
-            high = y;
-            return;
-        }
-
-        var y0 = b - a;
-        var y1 = b + a;
-        var sortedLo = Mathf.Min(y0, y1);
-        var sortedHi = Mathf.Max(y0, y1);
-
-        if (sortedHi < -1f)
-        {
-            low = -1f;
-            high = -1f;
-            return;
-        }
-
-        if (sortedLo > 1f)
-        {
-            low = 1f;
-            high = 1f;
-            return;
-        }
-
-        low = Mathf.Max(sortedLo, -1f);
-        high = Mathf.Min(sortedHi, 1f);
-    }
-
-    /// <summary>
     /// Normalized play-area Y in [-1, 1] (bottom = -1).
     /// </summary>
     public static float EvaluateDisplayY(ChartModel.Page page, float chronologicalT)

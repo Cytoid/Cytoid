@@ -135,12 +135,9 @@ public class GameRenderer
             boundaryBottomAnimator.speed = boundaryTopAnimator.speed;
         }
 
-        if (chart.Model.page_list.Count > 0)
-        {
-            var pageId = Mathf.Min(chart.CurrentPageId, chart.Model.page_list.Count - 1);
-            boundaryTop.transform.position = new Vector3(0, chart.GetPageBoundaryScreenY(pageId, false), 0);
-            boundaryBottom.transform.position = new Vector3(0, chart.GetPageBoundaryScreenY(pageId, true), 0);
-        }
+        // By design boundaries are static; they intentionally do not follow the per-page PositionFunction band.
+        boundaryTop.transform.position = new Vector3(0, chart.GetBoundaryPosition(false), 0);
+        boundaryBottom.transform.position = new Vector3(0, chart.GetBoundaryPosition(true), 0);
         if (Game.State.IsStarted && Game.State.IsPlaying && !Game.State.IsCompleted)
         {
             ApplyBoundaryOpacity();

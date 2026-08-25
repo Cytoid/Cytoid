@@ -205,6 +205,13 @@ public abstract class Note : MonoBehaviour
         }
 
         Renderer.OnLateUpdate();
+
+        // Pin followers before LateUpdate so stacked origins match the primary this frame
+        // (lines still lag one Update like unstacked notes; they must not see a pooled pose).
+        if (!(this is DragHeadNote))
+        {
+            SyncDragStackFollowersIfPrimary();
+        }
     }
 
     /// <summary>
@@ -277,9 +284,17 @@ public abstract class Note : MonoBehaviour
             var position = transform.localPosition;
             // Unspawned next notes must use CalculatePosition so Storyboard Override applies
             // (baked .position would aim drag lines/heads at the pre-override chart coord).
-            var nextPosition = hasNextNote
-                ? nextNote.transform.localPosition
-                : NextNoteModel.CalculatePosition(Game.Chart);
+            Vector3 nextPosition;
+            if (hasNextNote)
+            {
+                nextPosition = nextNote.IsDragStackFollower && nextNote.DragStack?.Primary != null
+                    ? nextNote.DragStack.Primary.transform.localPosition
+                    : nextNote.transform.localPosition;
+            }
+            else
+            {
+                nextPosition = NextNoteModel.CalculatePosition(Game.Chart);
+            }
 
             if (position == nextPosition)
                 Model.rotation = Vector3.zero;
@@ -312,7 +327,7 @@ public abstract class Note : MonoBehaviour
     {
         if (DragStack != null && DragStack.IsPrimary(this))
         {
-            DragStack.TickFollowers(Game);
+            DragStack.TickFollowers();
         }
     }
 

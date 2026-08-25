@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// One visual/collision host for co-located drag notes (size ≥ 2).
+/// One visual/collision host for co-located drag children (size ≥ 2).
 /// Primary note owns Ring/Fill/Collider and Update listeners; followers are judgment-only
 /// and sync transforms from the primary each tick.
 /// </summary>
@@ -40,11 +40,19 @@ public class DragStackHost
         if (Primary == null)
         {
             SetPrimary(note, promote: false);
+            return;
         }
-        else
+
+        // Keep the lowest id as the stable host, independent of spawn order.
+        if (note.Model.id < Primary.Model.id)
         {
-            note.BecomeDragStackFollower();
+            var previous = Primary;
+            SetPrimary(note, promote: false);
+            previous.BecomeDragStackFollower();
+            return;
         }
+
+        note.BecomeDragStackFollower();
     }
 
     public void OnMemberCollected(Note note)
@@ -71,7 +79,7 @@ public class DragStackHost
 
     public bool IsPrimary(Note note) => Primary == note;
 
-    public void TickFollowers(Game game)
+    public void TickFollowers()
     {
         if (Primary == null || members.Count == 0) return;
 

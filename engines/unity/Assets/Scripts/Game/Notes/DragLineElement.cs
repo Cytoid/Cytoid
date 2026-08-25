@@ -117,14 +117,16 @@ public class DragLineElement : MonoBehaviour
             // would anchor the line at the world origin and leave a visible stub.
             fromNotePosition = dragHeadNote.OriginalPosition != default
                 ? dragHeadNote.OriginalPosition
-                : dragHeadNote.transform.localPosition;
+                : VisualPosition(dragHeadNote);
         }
         else
         {
-            fromNotePosition = fromNote.transform.localPosition;
+            fromNotePosition = VisualPosition(fromNote);
         }
 
-        var toNotePosition = hasToNote ? toNote.transform.localPosition : ToNoteModel.CalculatePosition(Game.Chart);
+        var toNotePosition = hasToNote
+            ? VisualPosition(toNote)
+            : ToNoteModel.CalculatePosition(Game.Chart);
         
         var transform = this.transform;
         transform.localPosition = fromNotePosition;
@@ -133,8 +135,22 @@ public class DragLineElement : MonoBehaviour
             toNotePosition
         );
         spriteRenderer.material.mainTextureScale = new Vector2(1.0f, length / 0.16f);
-        transform.localEulerAngles = hasFromNote ? fromNote.transform.localEulerAngles : FromNoteModel.rotation;
+        // Compatible with Override.Rot*: aim with the from-note euler, not from→to.
+        transform.localEulerAngles = hasFromNote
+            ? fromNote.transform.localEulerAngles
+            : FromNoteModel.rotation;
         transform.localScale = new Vector3(1.0f, length / 0.16f);
+    }
+
+    static Vector3 VisualPosition(Note note)
+    {
+        if (note == null) return Vector3.zero;
+        if (note.IsDragStackFollower && note.DragStack?.Primary != null)
+        {
+            return note.DragStack.Primary.transform.localPosition;
+        }
+
+        return note.transform.localPosition;
     }
 
     private void OnGameUpdate(Game _)
@@ -162,16 +178,12 @@ public class DragLineElement : MonoBehaviour
                     }
                     else
                     {
-                        var denom = note.Model.start_time - note.Model.intro_time;
-                        var f = denom > 0f ? Mathf.Clamp01(1f - note.TimeUntilStart / denom) : 1f;
-                        spriteRenderer.color = Color.white.WithAlpha(f);
+                        spriteRenderer.color = Color.white.WithAlpha(FallbackAlpha(note));
                     }
                 }
                 else
                 {
-                    var denom = note.Model.start_time - note.Model.intro_time;
-                    var f = denom > 0f ? Mathf.Clamp01(1f - note.TimeUntilStart / denom) : 1f;
-                    spriteRenderer.color = Color.white.WithAlpha(f);
+                    spriteRenderer.color = Color.white.WithAlpha(FallbackAlpha(note));
                 }
             }
         }
@@ -224,6 +236,12 @@ public class DragLineElement : MonoBehaviour
         {
             spriteRenderer.material.SetFloat(MaterialStart, outroRatio);
         }
+    }
+
+    static float FallbackAlpha(Note note)
+    {
+        var denom = note.Model.start_time - note.Model.intro_time;
+        return denom > 0f ? Mathf.Clamp01(1f - note.TimeUntilStart / denom) : 1f;
     }
 
     public void Collect()

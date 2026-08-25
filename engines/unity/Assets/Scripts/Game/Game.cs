@@ -289,6 +289,12 @@ public class Game : MonoBehaviour
             Debug.Log("[CYTOID-DBG] Game.Initialize: storyboard text empty/null — skipping");
         }
 
+        // Drag-stack merge runs after storyboard parse so note controllers (including
+        // selector expansion and $note substitution) can refuse independently-moved chains.
+        Chart.ApplyDragStacks(Storyboard != null
+            ? DragStackPlanner.SignaturesFromNoteControllers(Storyboard.NoteControllers.Values)
+            : null);
+
         // Load hit sound
         if (Context.Player.Settings.HitSound != "none")
         {

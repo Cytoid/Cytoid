@@ -37,6 +37,12 @@ public class Chart
 
     /// <summary>Peak distinct drag-stack hosts on one page (for pool sizing).</summary>
     public int MaxSamePageDragStackHostCount { get; private set; }
+
+    /// <summary>
+    /// Peak distinct drag-line GOs on one page after stack sharing.
+    /// Counts unshared edges plus one line per unique stacked endpoint pair.
+    /// </summary>
+    public int MaxSamePageDragLineCount { get; private set; }
     
     private readonly float baseSize;
     private readonly float horizontalRatio;
@@ -261,70 +267,30 @@ public class Chart
                     note.tint = note.direction == 1 ? 1.00f : 1.30f;
                     break;
             }
-
-        BuildDragStacks();
     }
 
     /// <summary>
-    /// Groups co-located drag notes that share type, start time, and chart x into stacks.
-    /// Only multi-member groups are recorded — singles keep the legacy per-note path.
+    /// Groups co-located drag children after storyboard parse. Call once from
+    /// <see cref="Game.Initialize"/> so note-controller signatures are already resolved.
+    /// Charts without storyboard pass a null signature map (uncontrolled notes only).
     /// </summary>
-    private void BuildDragStacks()
+    public void ApplyDragStacks(IReadOnlyDictionary<int, string> storyboardSignatures = null)
     {
+        var plan = DragStackPlanner.Build(Model, storyboardSignatures);
         NoteIdToDragStackId.Clear();
+        foreach (var pair in plan.NoteIdToStackId)
+        {
+            NoteIdToDragStackId[pair.Key] = pair.Value;
+        }
+
         DragStackMembers.Clear();
-
-        var buckets = new Dictionary<long, List<int>>();
-        foreach (var note in Model.note_list)
+        foreach (var pair in plan.StackMembers)
         {
-            var type = (NoteType) note.type;
-            // CDragHead is Select-consumed (one per Down); do not stack-share its collider.
-            if (type != NoteType.DragHead && type != NoteType.DragChild &&
-                type != NoteType.CDragChild)
-            {
-                continue;
-            }
-
-            var key = MakeDragStackKey(type, note.start_time, note.x);
-            if (!buckets.TryGetValue(key, out var list))
-            {
-                list = new List<int>();
-                buckets[key] = list;
-            }
-
-            list.Add(note.id);
+            DragStackMembers[pair.Key] = pair.Value;
         }
 
-        var nextStackId = 1;
-        var pageHostCounts = new int[Model.page_list.Count];
-        foreach (var pair in buckets)
-        {
-            var ids = pair.Value;
-            if (ids.Count < 2) continue;
-
-            ids.Sort();
-            var stackId = nextStackId++;
-            DragStackMembers[stackId] = ids;
-            var pageIndex = Model.note_map[ids[0]].page_index;
-            if (pageIndex >= 0 && pageIndex < pageHostCounts.Length)
-            {
-                pageHostCounts[pageIndex]++;
-            }
-
-            foreach (var id in ids)
-            {
-                NoteIdToDragStackId[id] = stackId;
-            }
-        }
-
-        MaxSamePageDragStackHostCount = pageHostCounts.Length > 0 ? pageHostCounts.Max() : 0;
-    }
-
-    private static long MakeDragStackKey(NoteType type, float startTime, double x)
-    {
-        var t = (long) Mathf.Round(startTime * 1000f);
-        var xq = (long) Mathf.Round((float) x * 10000f);
-        return ((long) (int) type << 48) ^ (t << 20) ^ (xq & 0xFFFFF);
+        MaxSamePageDragStackHostCount = plan.MaxSamePageDragStackHostCount;
+        MaxSamePageDragLineCount = plan.MaxSamePageDragLineCount;
     }
 
     private float ConvertToTime(float tick)

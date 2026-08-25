@@ -43,10 +43,9 @@ public class ObjectPool
     /// </summary>
     public int Generation { get; private set; }
 
-    /// <summary>Geometry key → live shared drag line.</summary>
-    private readonly Dictionary<long, DragLineElement> dragLinesByGeometry = new Dictionary<long, DragLineElement>();
-    private readonly Dictionary<long, int> dragLineGeometryRefCount = new Dictionary<long, int>();
-    private readonly Dictionary<int, long> dragLineFromIdToGeometry = new Dictionary<int, long>();
+    /// <summary>Share key → live shared drag line.</summary>
+    private readonly Dictionary<long, DragLineElement> dragLinesByShareKey = new Dictionary<long, DragLineElement>();
+    private readonly Dictionary<int, long> dragLineFromIdToShareKey = new Dictionary<int, long>();
 
     public Game Game { get; }
 
@@ -72,26 +71,15 @@ public class ObjectPool
     {
         DragStacks.Bind(Game);
 
-        initialDragLineObjectCount = Mathf.Clamp(
-            initialNoteObjectCount[NoteType.DragHead]
-            + initialNoteObjectCount[NoteType.DragChild]
-            + initialNoteObjectCount[NoteType.CDragHead]
-            + initialNoteObjectCount[NoteType.CDragChild],
-            1,
-            MaxPooledDragLines);
-
-        // Prefer host count when stacks exist — far smaller than raw drag note peaks.
         var chart = Game.Chart;
-        if (chart.MaxSamePageDragStackHostCount > 0)
-        {
-            var hostBased = Mathf.Max(
-                chart.MaxSamePageDragStackHostCount * 2,
-                chart.MaxSamePageNoteCountByType.TryGetValue(NoteType.Click, out var clickCount) ? clickCount : 24);
-            initialDragLineObjectCount = Mathf.Clamp(
-                Mathf.Max(initialDragLineObjectCount / 4, hostBased),
-                1,
-                MaxPooledDragLines);
-        }
+        // Prefer the post-storyboard line bound (stack hosts + unshared edges) when present.
+        var dragLineBound = chart.MaxSamePageDragLineCount > 0
+            ? chart.MaxSamePageDragLineCount * 3
+            : initialNoteObjectCount[NoteType.DragHead]
+              + initialNoteObjectCount[NoteType.DragChild]
+              + initialNoteObjectCount[NoteType.CDragHead]
+              + initialNoteObjectCount[NoteType.CDragChild];
+        initialDragLineObjectCount = Mathf.Clamp(dragLineBound, 1, MaxPooledDragLines);
 
         var timer = new BenchmarkTimer("Game ObjectPool");
         foreach (var type in initialNoteObjectCount.Keys)
@@ -158,9 +146,8 @@ public class ObjectPool
         foreach (var line in SpawnedDragLines.Values) uniqueLines.Add(line);
         foreach (var line in uniqueLines) line.Dispose();
         SpawnedDragLines.Clear();
-        dragLinesByGeometry.Clear();
-        dragLineGeometryRefCount.Clear();
-        dragLineFromIdToGeometry.Clear();
+        dragLinesByShareKey.Clear();
+        dragLineFromIdToShareKey.Clear();
         dragLinePoolItem.Dispose();
         effectPoolItems.Values.ForEach(it => it.Dispose());
     }
@@ -186,11 +173,10 @@ public class ObjectPool
     {
         if (SpawnedDragLines.ContainsKey(from.id)) return SpawnedDragLines[from.id];
 
-        var geometryKey = MakeDragLineGeometryKey(from, to);
-        if (dragLinesByGeometry.TryGetValue(geometryKey, out var shared))
+        var shareKey = DragStackPlanner.MakeDragLineShareKey(from, to, Game.Chart.NoteIdToDragStackId);
+        if (shareKey != 0 && dragLinesByShareKey.TryGetValue(shareKey, out var shared))
         {
-            dragLineGeometryRefCount[geometryKey] = dragLineGeometryRefCount[geometryKey] + 1;
-            dragLineFromIdToGeometry[from.id] = geometryKey;
+            dragLineFromIdToShareKey[from.id] = shareKey;
             shared.AddGeometryRef(from.id);
             SpawnedDragLines[from.id] = shared;
             return shared;
@@ -198,11 +184,14 @@ public class ObjectPool
 
         var line = Spawn(dragLinePoolItem, new PoolItemInstantiateProvider(),
             new DragLineSpawnProvider {From = from, To = to});
-        line.GeometryKey = geometryKey;
+        line.GeometryKey = shareKey;
         line.AddGeometryRef(from.id);
-        dragLinesByGeometry[geometryKey] = line;
-        dragLineGeometryRefCount[geometryKey] = 1;
-        dragLineFromIdToGeometry[from.id] = geometryKey;
+        if (shareKey != 0)
+        {
+            dragLinesByShareKey[shareKey] = line;
+        }
+
+        dragLineFromIdToShareKey[from.id] = shareKey;
         SpawnedDragLines[from.id] = line;
         return line;
     }
@@ -214,39 +203,22 @@ public class ObjectPool
         var key = element.GeometryKey;
         if (key != 0)
         {
-            dragLinesByGeometry.Remove(key);
-            dragLineGeometryRefCount.Remove(key);
+            dragLinesByShareKey.Remove(key);
         }
 
         foreach (var fromId in element.DrainGeometryRefs())
         {
             SpawnedDragLines.Remove(fromId);
-            dragLineFromIdToGeometry.Remove(fromId);
+            dragLineFromIdToShareKey.Remove(fromId);
         }
 
         if (element.FromNoteModel != null)
         {
             SpawnedDragLines.Remove(element.FromNoteModel.id);
-            dragLineFromIdToGeometry.Remove(element.FromNoteModel.id);
+            dragLineFromIdToShareKey.Remove(element.FromNoteModel.id);
         }
 
         Collect(dragLinePoolItem, element);
-    }
-
-    private static long MakeDragLineGeometryKey(ChartModel.Note from, ChartModel.Note to)
-    {
-        // Include note type so Drag vs CDrag edges with matching quantized (t,x) do not share.
-        unchecked
-        {
-            long hash = 17;
-            hash = hash * 31 + from.type;
-            hash = hash * 31 + to.type;
-            hash = hash * 31 + (long) Mathf.Round(from.start_time * 1000f);
-            hash = hash * 31 + (long) Mathf.Round(to.start_time * 1000f);
-            hash = hash * 31 + (long) Mathf.Round((float) from.x * 10000f);
-            hash = hash * 31 + (long) Mathf.Round((float) to.x * 10000f);
-            return hash;
-        }
     }
 
     public ParticleSystem SpawnEffect(EffectController.Effect effect, Vector3 position, Transform parent = default)

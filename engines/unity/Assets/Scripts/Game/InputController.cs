@@ -284,7 +284,7 @@ public class InputController : MonoBehaviour
                 if (FlickingNotes.ContainsKey(finger.Index) || FlickingNotes.ContainsValue(flickNote))
                     continue;
                 if (flickNote.IsFlicking) continue;
-                if (!IsEligibleSelectAfterDrag(flickNote, acceptedDrag)) continue;
+                if (!IsEligibleSelectAfterDrag(flickNote, acceptedDrag, pressedPosition)) continue;
                 hitCandidates.Add(flickNote);
                 continue;
             }
@@ -293,12 +293,12 @@ public class InputController : MonoBehaviour
             {
                 // Lists are per-frame snapshots; same-frame multi-finger rebind uses Update.
                 if (holdNote.IsHolding || HoldingNotes.ContainsKey(finger.Index)) continue;
-                if (!IsEligibleSelectAfterDrag(holdNote, acceptedDrag)) continue;
+                if (!IsEligibleSelectAfterDrag(holdNote, acceptedDrag, pressedPosition)) continue;
                 hitCandidates.Add(holdNote);
                 continue;
             }
 
-            if (!IsEligibleSelectAfterDrag(note, acceptedDrag)) continue;
+            if (!IsEligibleSelectAfterDrag(note, acceptedDrag, pressedPosition)) continue;
             hitCandidates.Add(note);
         }
 
@@ -316,13 +316,20 @@ public class InputController : MonoBehaviour
     /// Same-Down select gate after an optional accepted Drag.
     /// Blocks only when select is more than <see cref="DragCoHitWindowSeconds"/> later
     /// than the Drag (<c>effectiveNoteTime</c>). Also keeps cross-page early suppress.
+    /// If no colliding Drag was accepted, an earlier DropDrag whose landing this tap
+    /// still occupies (later note's radius) uses the same 30ms window — DropDrag's
+    /// own hitbox is smaller than DropClick and often misses the shared landing.
     /// </summary>
-    private bool IsEligibleSelectAfterDrag(Note note, Note acceptedDrag)
+    private bool IsEligibleSelectAfterDrag(Note note, Note acceptedDrag, Vector2 tap)
     {
         if (acceptedDrag != null)
         {
             var delta = EffectiveNoteTime(note) - EffectiveNoteTime(acceptedDrag);
             if (delta > DragCoHitWindowSeconds) return false;
+        }
+        else if (IsOccludedByDropDrag(note, tap))
+        {
+            return false;
         }
 
         if (note.Model.page_index > game.Chart.CurrentPageId &&
@@ -333,6 +340,33 @@ public class InputController : MonoBehaviour
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// DropDrag stand-in for DragCoHit when the DropDrag collider itself missed.
+    /// Only DropDrag gates (same role as DragHead/Child); only live, hittable
+    /// or already-armed notes. Armed notes stay eligible to shield until they clear.
+    /// </summary>
+    private bool IsOccludedByDropDrag(Note select, Vector2 tap)
+    {
+        foreach (var id in game.SpawnedNotes.Keys)
+        {
+            var drag = game.SpawnedNotes[id];
+            if (drag == null || drag == select) continue;
+            if (drag.IsCollected || drag.IsCleared) continue;
+            if (!drag.HasEmerged || drag.Type != NoteType.DropDrag) continue;
+            if (EffectiveNoteTime(drag) >= EffectiveNoteTime(select)) continue;
+            if (!drag.IsArmed)
+            {
+                if (!IsTouchableNote(drag) || !drag.CanHandleTouch()) continue;
+                var grade = drag.GetTouchGrade();
+                if (grade == NoteGrade.None || grade == NoteGrade.Miss) continue;
+            }
+
+            if (DropNoteIsolation.OccludesSelect(drag, select, tap)) return true;
+        }
+
+        return false;
     }
 
     /// <summary>

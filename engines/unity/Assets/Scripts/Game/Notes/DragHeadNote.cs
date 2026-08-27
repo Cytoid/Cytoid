@@ -95,10 +95,10 @@ public class DragHeadNote : Note
             while (edgeSteps++ < maxEdgeSteps)
             {
                 var fromPos = (hasFromNote && fromNote != this)
-                    ? fromNote.transform.localPosition
+                    ? fromNote.StackVisualLocalPosition()
                     : FromNoteModel.CalculatePosition(Game.Chart);
                 var toPos = hasToNote
-                    ? toNote.transform.localPosition
+                    ? toNote.StackVisualLocalPosition()
                     : ToNoteModel.CalculatePosition(Game.Chart);
 
                 var span = ToNoteModel.start_time - FromNoteModel.start_time;

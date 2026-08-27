@@ -103,7 +103,7 @@ public class ObjectPool
             },
             {
                 EffectController.Effect.ClearDrag,
-                Mathf.Clamp(chart.MaxSamePageDragTypeNoteCount * 2, 1, MaxPooledClearEffects)
+                ClearDragPoolCount(chart)
             },
             {
                 EffectController.Effect.Miss,
@@ -131,6 +131,64 @@ public class ObjectPool
         }
         timer.Time("Effects");
         timer.Time();
+    }
+
+    /// <summary>
+    /// ClearDrag prewarm after stacking. Unstacked drag notes still need a slot each;
+    /// each stack contributes at most <see cref="EffectController.MaxClearFxPerDragBatch"/>.
+    /// <see cref="Chart.MaxSamePageDragStackHostCount"/> is the floor so a page of
+    /// hosts cannot prewarm below one slot per host.
+    /// </summary>
+    static int ClearDragPoolCount(Chart chart)
+    {
+        var fallback = Mathf.Clamp(chart.MaxSamePageDragTypeNoteCount * 2, 1, MaxPooledClearEffects);
+        var hostPeak = chart.MaxSamePageDragStackHostCount;
+        if (hostPeak <= 0) return fallback;
+
+        var pageCount = chart.Model?.page_list != null ? chart.Model.page_list.Count : 0;
+        if (pageCount <= 0) return fallback;
+
+        var perPage = new int[pageCount];
+        var stacked = chart.NoteIdToDragStackId;
+        var noteList = chart.Model.note_list;
+        if (noteList != null)
+        {
+            for (var i = 0; i < noteList.Count; i++)
+            {
+                var note = noteList[i];
+                if (note == null) continue;
+                var type = (NoteType) note.type;
+                if (type != NoteType.DragHead && type != NoteType.DragChild && type != NoteType.CDragChild)
+                    continue;
+                if (stacked != null && stacked.ContainsKey(note.id)) continue;
+                var page = note.page_index;
+                if (page < 0 || page >= pageCount) continue;
+                perPage[page]++;
+            }
+        }
+
+        if (chart.DragStackMembers != null)
+        {
+            var noteMap = chart.Model.note_map;
+            foreach (var pair in chart.DragStackMembers)
+            {
+                var members = pair.Value;
+                if (members == null || members.Count == 0) continue;
+                ChartModel.Note first = null;
+                if (noteMap != null) noteMap.TryGetValue(members[0], out first);
+                var page = first != null ? first.page_index : 0;
+                if (page < 0 || page >= pageCount) continue;
+                perPage[page] += Mathf.Min(EffectController.MaxClearFxPerDragBatch, members.Count);
+            }
+        }
+
+        var max = hostPeak;
+        for (var i = 0; i < perPage.Length; i++)
+        {
+            if (perPage[i] > max) max = perPage[i];
+        }
+
+        return Mathf.Clamp(max * 2, 1, MaxPooledClearEffects);
     }
 
     public void Dispose()

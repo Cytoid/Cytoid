@@ -287,9 +287,7 @@ public abstract class Note : MonoBehaviour
             Vector3 nextPosition;
             if (hasNextNote)
             {
-                nextPosition = nextNote.IsDragStackFollower && nextNote.DragStack?.Primary != null
-                    ? nextNote.DragStack.Primary.transform.localPosition
-                    : nextNote.transform.localPosition;
+                nextPosition = nextNote.StackVisualLocalPosition();
             }
             else
             {
@@ -466,6 +464,16 @@ public abstract class Note : MonoBehaviour
         return Renderer.DoesCollide(pos);
     }
 
+    /// <summary>
+    /// World/local pose used for stacking: followers are pinned to the primary.
+    /// </summary>
+    public Vector3 StackVisualLocalPosition()
+    {
+        if (IsDragStackFollower && DragStack?.Primary != null)
+            return DragStack.Primary.transform.localPosition;
+        return transform.localPosition;
+    }
+
     public void BecomeDragStackFollower()
     {
         if (IsDragStackFollower) return;
@@ -483,6 +491,8 @@ public abstract class Note : MonoBehaviour
         Game.onGameLateUpdate.RemoveListener(OnGameLateUpdate);
         Game.onGameUpdate.AddListener(OnGameUpdate);
         Game.onGameLateUpdate.AddListener(OnGameLateUpdate);
+        // Restore Ring/Fill/Mask this frame; waiting for the next Update leaves a blank host.
+        Renderer?.OnLateUpdate();
     }
 
     private void SetDragStackVisualsEnabled(bool enabled)
@@ -497,7 +507,6 @@ public abstract class Note : MonoBehaviour
             var masks = GetComponentsInChildren<SpriteMask>(true);
             for (var i = 0; i < masks.Length; i++) masks[i].enabled = false;
         }
-        // When enabling, ClassicNoteRenderer.OnLateUpdate restores sprite visibility.
     }
 
     public virtual bool IsAutoEnabled()

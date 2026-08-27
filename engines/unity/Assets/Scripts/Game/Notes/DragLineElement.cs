@@ -145,12 +145,7 @@ public class DragLineElement : MonoBehaviour
     static Vector3 VisualPosition(Note note)
     {
         if (note == null) return Vector3.zero;
-        if (note.IsDragStackFollower && note.DragStack?.Primary != null)
-        {
-            return note.DragStack.Primary.transform.localPosition;
-        }
-
-        return note.transform.localPosition;
+        return note.StackVisualLocalPosition();
     }
 
     private void OnGameUpdate(Game _)

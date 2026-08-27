@@ -10,7 +10,7 @@ using Cytoid.Storyboard;
 /// <list type="number">
 /// <item>Type is <see cref="NoteType.DragChild"/> or <see cref="NoteType.CDragChild"/>.
 /// Heads travel along their own chain and cannot share a host.</item>
-/// <item>Full visual/collision equivalence: type, start time, chart x, approach rate,
+/// <item>Full visual/collision equivalence: type, start time, intro time, chart x, approach rate,
 /// size, opacity, hitbox, colors, style, page index, scan direction, and is_forward.</item>
 /// <item>Storyboard note-controller signature matches. Signatures are computed from
 /// the parsed storyboard so selector expansion and <c>$note</c> substitution are
@@ -379,6 +379,7 @@ public static class DragStackPlanner
     {
         public readonly NoteType Type;
         public readonly int StartTimeMs;
+        public readonly int IntroTimeMs;
         public readonly int Xq;
         public readonly int ApproachRateQ;
         public readonly int SizeQ;
@@ -395,6 +396,7 @@ public static class DragStackPlanner
         EquivalenceKey(
             NoteType type,
             int startTimeMs,
+            int introTimeMs,
             int xq,
             int approachRateQ,
             int sizeQ,
@@ -410,6 +412,7 @@ public static class DragStackPlanner
         {
             Type = type;
             StartTimeMs = startTimeMs;
+            IntroTimeMs = introTimeMs;
             Xq = xq;
             ApproachRateQ = approachRateQ;
             SizeQ = sizeQ;
@@ -429,6 +432,7 @@ public static class DragStackPlanner
             return new EquivalenceKey(
                 (NoteType) note.type,
                 (int) Math.Round(note.start_time * 1000.0),
+                (int) Math.Round(note.intro_time * 1000.0),
                 (int) Math.Round(note.x * 10000.0),
                 Quantize(note.approach_rate),
                 Quantize(note.size),
@@ -453,6 +457,7 @@ public static class DragStackPlanner
         {
             return Type == other.Type &&
                    StartTimeMs == other.StartTimeMs &&
+                   IntroTimeMs == other.IntroTimeMs &&
                    Xq == other.Xq &&
                    ApproachRateQ == other.ApproachRateQ &&
                    SizeQ == other.SizeQ &&
@@ -475,6 +480,7 @@ public static class DragStackPlanner
             {
                 var hash = (int) Type;
                 hash = (hash * 397) ^ StartTimeMs;
+                hash = (hash * 397) ^ IntroTimeMs;
                 hash = (hash * 397) ^ Xq;
                 hash = (hash * 397) ^ ApproachRateQ;
                 hash = (hash * 397) ^ SizeQ;

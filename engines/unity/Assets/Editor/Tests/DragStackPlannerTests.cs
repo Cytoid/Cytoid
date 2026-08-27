@@ -40,6 +40,20 @@ public class DragStackPlannerTests
     }
 
     [Test]
+    public void DifferentIntroTimesDoNotStack()
+    {
+        var a = Child(1, 0.5, 1f);
+        var b = Child(2, 0.5, 1f);
+        a.intro_time = 0.1f;
+        b.intro_time = 0.4f;
+        var model = Model(a, b);
+
+        var plan = DragStackPlanner.Build(model);
+
+        Assert.That(plan.NoteIdToStackId, Is.Empty);
+    }
+
+    [Test]
     public void DifferentVisualFieldsDoNotStack()
     {
         var a = Child(1, 0.5, 1f);

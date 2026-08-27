@@ -35,7 +35,7 @@ public class Chart
     /// <summary>stack id → note ids sorted ascending (list-order / DragCoHit order).</summary>
     public Dictionary<int, List<int>> DragStackMembers { get; } = new Dictionary<int, List<int>>();
 
-    /// <summary>Peak distinct drag-stack hosts on one page (for pool sizing).</summary>
+    /// <summary>Peak distinct drag-stack hosts on one page (ClearDrag pool floor after stacking).</summary>
     public int MaxSamePageDragStackHostCount { get; private set; }
 
     /// <summary>

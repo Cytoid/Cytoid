@@ -317,8 +317,9 @@ public class InputController : MonoBehaviour
     /// Blocks only when select is more than <see cref="DragCoHitWindowSeconds"/> later
     /// than the Drag (<c>effectiveNoteTime</c>). Also keeps cross-page early suppress.
     /// If no colliding Drag was accepted, an earlier DropDrag whose landing this tap
-    /// still occupies (later note's radius) uses the same 30ms window — DropDrag's
-    /// own hitbox is smaller than DropClick and often misses the shared landing.
+    /// still occupies (later note's radius) uses the same 30ms window and is queued
+    /// into <see cref="dragBatchScratch"/> so the tap is attributed to DropDrag.
+    /// DropDrag's own hitbox is unchanged.
     /// </summary>
     private bool IsEligibleSelectAfterDrag(Note note, Note acceptedDrag, Vector2 tap)
     {
@@ -344,8 +345,12 @@ public class InputController : MonoBehaviour
 
     /// <summary>
     /// DropDrag stand-in for DragCoHit when the DropDrag collider itself missed.
-    /// Only DropDrag gates (same role as DragHead/Child); only live, hittable
-    /// or already-armed notes. Armed notes stay eligible to shield until they clear.
+    /// Only live hittable DropDrag notes gate (same role as DragHead/Child).
+    /// The matching DropDrag is queued into <see cref="dragBatchScratch"/> so
+    /// <see cref="SettleDragBatch"/> still attributes this Down — denying the
+    /// later Select without settling DropDrag would leave a dead zone between
+    /// DropDrag and DropClick radii. Armed notes do not shield later Downs
+    /// (same as DragHead once it leaves <see cref="TouchableDragNotes"/>).
     /// </summary>
     private bool IsOccludedByDropDrag(Note select, Vector2 tap)
     {
@@ -356,14 +361,14 @@ public class InputController : MonoBehaviour
             if (drag.IsCollected || drag.IsCleared) continue;
             if (!drag.HasEmerged || drag.Type != NoteType.DropDrag) continue;
             if (EffectiveNoteTime(drag) >= EffectiveNoteTime(select)) continue;
-            if (!drag.IsArmed)
-            {
-                if (!IsTouchableNote(drag) || !drag.CanHandleTouch()) continue;
-                var grade = drag.GetTouchGrade();
-                if (grade == NoteGrade.None || grade == NoteGrade.Miss) continue;
-            }
+            if (!IsTouchableNote(drag) || !drag.CanHandleTouch()) continue;
+            var grade = drag.GetTouchGrade();
+            if (grade == NoteGrade.None || grade == NoteGrade.Miss) continue;
+            if (!DropNoteIsolation.OccludesSelect(drag, select, tap)) continue;
 
-            if (DropNoteIsolation.OccludesSelect(drag, select, tap)) return true;
+            if (!dragBatchScratch.Contains(drag))
+                dragBatchScratch.Add(drag);
+            return true;
         }
 
         return false;

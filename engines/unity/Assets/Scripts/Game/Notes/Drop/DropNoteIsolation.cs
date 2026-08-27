@@ -4,7 +4,8 @@ using UnityEngine;
 // Landing colliders sit on the scanline while sprites fall in, so a later Select can
 // overlap this tap even when DropDrag's own smaller hitbox missed. The spatial test
 // uses the later note's radius around DropDrag's landing; the time test is
-// InputController.DragCoHitWindowSeconds.
+// InputController.DragCoHitWindowSeconds. InputController also queues that DropDrag
+// into the settle batch so the tap is attributed to it (hitbox size unchanged).
 internal static class DropNoteIsolation
 {
     public static float WorldHitboxRadius(Note note)

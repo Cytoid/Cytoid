@@ -26,6 +26,16 @@ public static class PositionFunction
     }
 
     /// <summary>
+    /// Sign of display-Y travel as time moves forward (+1 up, -1 down).
+    /// Negative <c>a</c> reverses the page, so this is scan × sign(a).
+    /// </summary>
+    public static int ChronologicalTravelSign(ChartModel.Page page)
+    {
+        var signA = page.position_arg_a < 0f ? -1 : 1;
+        return page.scan_line_direction * signA;
+    }
+
+    /// <summary>
     /// Normalized play-area Y in [-1, 1] (bottom = -1).
     /// </summary>
     public static float EvaluateDisplayY(ChartModel.Page page, float chronologicalT)

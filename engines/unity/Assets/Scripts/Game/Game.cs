@@ -262,6 +262,7 @@ public class Game : MonoBehaviour
         // Load storyboard
         var storyboardText = await contentProvider.LoadStoryboardText();
         StoryboardPath = contentProvider.IsExternal ? null : Level.Path + (chartMeta.storyboard?.path ?? "storyboard.json");
+        var storyboardReady = false;
         if (!string.IsNullOrEmpty(storyboardText))
         {
             Debug.Log($"[CYTOID-DBG] Game.Initialize: loading storyboard (text length={storyboardText.Length})");
@@ -271,6 +272,7 @@ public class Game : MonoBehaviour
                 Storyboard = new Cytoid.Storyboard.Storyboard(this, storyboardText);
                 Storyboard.Parse();
                 await Storyboard.Initialize();
+                storyboardReady = true;
                 Debug.Log("[CYTOID-DBG] Game.Initialize: storyboard loaded OK");
                 print(contentProvider.IsExternal ? "Loaded storyboard from external payload" : $"Loaded storyboard from {StoryboardPath}");
             }
@@ -288,6 +290,12 @@ public class Game : MonoBehaviour
         {
             Debug.Log("[CYTOID-DBG] Game.Initialize: storyboard text empty/null — skipping");
         }
+
+        // Drag-stack merge runs after a successful storyboard load only. A failed or
+        // partial Parse/Initialize must not feed NoteControllers into the planner.
+        Chart.ApplyDragStacks(storyboardReady
+            ? DragStackPlanner.SignaturesFromNoteControllers(Storyboard.NoteControllers.Values)
+            : null);
 
         // Load hit sound
         if (Context.Player.Settings.HitSound != "none")

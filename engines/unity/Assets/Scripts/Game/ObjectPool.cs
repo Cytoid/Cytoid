@@ -25,6 +25,15 @@ public class ObjectPool
     public readonly SortedDictionary<int, Note> SpawnedNotes = new SortedDictionary<int, Note>(); // Currently on-screen
     public readonly SortedDictionary<int, DragLineElement> SpawnedDragLines = new SortedDictionary<int, DragLineElement>();
 
+    public readonly DragStackManager DragStacks = new DragStackManager();
+
+    /// <summary>Hard caps so MaxSamePage on stress charts cannot preallocate thousands of FX.</summary>
+    public const int MaxPooledClearEffects = 64;
+    public const int MaxPooledMissEffects = 64;
+    public const int MaxPooledHoldEffects = 128;
+    public const int MaxPooledNotesPerType = 256;
+    public const int MaxPooledDragLines = 256;
+
     private readonly Dictionary<NoteType, NotePoolItem> notePoolItems = new Dictionary<NoteType, NotePoolItem>();
     private readonly DragLinePoolItem dragLinePoolItem = new DragLinePoolItem();
     private readonly Dictionary<EffectController.Effect, PrefabPoolItem> effectPoolItems = new Dictionary<EffectController.Effect, PrefabPoolItem>();
@@ -33,6 +42,10 @@ public class ObjectPool
     /// Bumped on <see cref="Dispose"/> so delayed FX collect callbacks can no-op.
     /// </summary>
     public int Generation { get; private set; }
+
+    /// <summary>Share key → live shared drag line.</summary>
+    private readonly Dictionary<long, DragLineElement> dragLinesByShareKey = new Dictionary<long, DragLineElement>();
+    private readonly Dictionary<int, long> dragLineFromIdToShareKey = new Dictionary<int, long>();
 
     public Game Game { get; }
 
@@ -51,15 +64,23 @@ public class ObjectPool
 
     public void UpdateNoteObjectCount(NoteType type, int count)
     {
-        initialNoteObjectCount[type] = count;
+        initialNoteObjectCount[type] = Mathf.Clamp(count, 1, MaxPooledNotesPerType);
     }
 
     public void Initialize()
     {
-        initialDragLineObjectCount = initialNoteObjectCount[NoteType.DragHead]
-                                     + initialNoteObjectCount[NoteType.DragChild]
-                                     + initialNoteObjectCount[NoteType.CDragHead]
-                                     + initialNoteObjectCount[NoteType.CDragChild];
+        DragStacks.Bind(Game);
+
+        var chart = Game.Chart;
+        // Prefer the post-storyboard line bound (stack hosts + unshared edges) when present.
+        var dragLineBound = chart.MaxSamePageDragLineCount > 0
+            ? chart.MaxSamePageDragLineCount * 3
+            : initialNoteObjectCount[NoteType.DragHead]
+              + initialNoteObjectCount[NoteType.DragChild]
+              + initialNoteObjectCount[NoteType.CDragHead]
+              + initialNoteObjectCount[NoteType.CDragChild];
+        initialDragLineObjectCount = Mathf.Clamp(dragLineBound, 1, MaxPooledDragLines);
+
         var timer = new BenchmarkTimer("Game ObjectPool");
         foreach (var type in initialNoteObjectCount.Keys)
         {
@@ -74,24 +95,23 @@ public class ObjectPool
             Collect(dragLinePoolItem, Instantiate(dragLinePoolItem, new PoolItemInstantiateProvider()));
         }
         timer.Time("DragLines");
-        var chart = Game.Chart;
         var map = new Dictionary<EffectController.Effect, int>
         {
             {
                 EffectController.Effect.Clear,
-                chart.MaxSamePageNonDragTypeNoteCount * 2
+                Mathf.Clamp(chart.MaxSamePageNonDragTypeNoteCount * 2, 1, MaxPooledClearEffects)
             },
             {
                 EffectController.Effect.ClearDrag,
-                chart.MaxSamePageDragTypeNoteCount * 2
+                ClearDragPoolCount(chart)
             },
             {
                 EffectController.Effect.Miss,
-                chart.MaxSamePageNoteCount * 2
+                Mathf.Clamp(chart.MaxSamePageNoteCount * 2, 1, MaxPooledMissEffects)
             },
             {
                 EffectController.Effect.Hold,
-                chart.MaxSamePageHoldTypeNoteCount * 16 * 2
+                Mathf.Clamp(chart.MaxSamePageHoldTypeNoteCount * 16 * 2, 1, MaxPooledHoldEffects)
             }
         };
         foreach (var pair in map)
@@ -113,20 +133,80 @@ public class ObjectPool
         timer.Time();
     }
 
+    /// <summary>
+    /// ClearDrag prewarm after stacking. Unstacked drag notes still need a slot each;
+    /// each stack contributes at most <see cref="EffectController.MaxClearFxPerDragBatch"/>.
+    /// <see cref="Chart.MaxSamePageDragStackHostCount"/> is the floor so a page of
+    /// hosts cannot prewarm below one slot per host.
+    /// </summary>
+    static int ClearDragPoolCount(Chart chart)
+    {
+        var fallback = Mathf.Clamp(chart.MaxSamePageDragTypeNoteCount * 2, 1, MaxPooledClearEffects);
+        var hostPeak = chart.MaxSamePageDragStackHostCount;
+        if (hostPeak <= 0) return fallback;
+
+        var pageCount = chart.Model?.page_list != null ? chart.Model.page_list.Count : 0;
+        if (pageCount <= 0) return fallback;
+
+        var perPage = new int[pageCount];
+        var stacked = chart.NoteIdToDragStackId;
+        var noteList = chart.Model.note_list;
+        if (noteList != null)
+        {
+            for (var i = 0; i < noteList.Count; i++)
+            {
+                var note = noteList[i];
+                if (note == null) continue;
+                var type = (NoteType) note.type;
+                if (type != NoteType.DragHead && type != NoteType.DragChild && type != NoteType.CDragChild)
+                    continue;
+                if (stacked != null && stacked.ContainsKey(note.id)) continue;
+                var page = note.page_index;
+                if (page < 0 || page >= pageCount) continue;
+                perPage[page]++;
+            }
+        }
+
+        if (chart.DragStackMembers != null)
+        {
+            var noteMap = chart.Model.note_map;
+            foreach (var pair in chart.DragStackMembers)
+            {
+                var members = pair.Value;
+                if (members == null || members.Count == 0) continue;
+                ChartModel.Note first = null;
+                if (noteMap != null) noteMap.TryGetValue(members[0], out first);
+                var page = first != null ? first.page_index : 0;
+                if (page < 0 || page >= pageCount) continue;
+                perPage[page] += Mathf.Min(EffectController.MaxClearFxPerDragBatch, members.Count);
+            }
+        }
+
+        var max = hostPeak;
+        for (var i = 0; i < perPage.Length; i++)
+        {
+            if (perPage[i] > max) max = perPage[i];
+        }
+
+        return Mathf.Clamp(max * 2, 1, MaxPooledClearEffects);
+    }
+
     public void Dispose()
     {
         Generation++;
-
+        DragStacks.Dispose();
         SpawnedNotes.Values.ForEach(it => it.Dispose());
         SpawnedNotes.Clear();
         notePoolItems.Values.ForEach(it => it.Dispose());
 
-        // Active drag lines are not in the pool queue.
-        foreach (var line in SpawnedDragLines.Values.ToList())
-            line.Dispose();
+        // Shared geometry may map many from-ids to one GO.
+        var uniqueLines = new HashSet<DragLineElement>();
+        foreach (var line in SpawnedDragLines.Values) uniqueLines.Add(line);
+        foreach (var line in uniqueLines) line.Dispose();
         SpawnedDragLines.Clear();
+        dragLinesByShareKey.Clear();
+        dragLineFromIdToShareKey.Clear();
         dragLinePoolItem.Dispose();
-
         effectPoolItems.Values.ForEach(it => it.Dispose());
     }
 
@@ -135,6 +215,7 @@ public class ObjectPool
         if (SpawnedNotes.ContainsKey(model.id)) return SpawnedNotes[model.id];
         var note = Spawn(notePoolItems[(NoteType) model.type], new NoteInstantiateProvider{Type = (NoteType) model.type}, new NoteSpawnProvider{Model = model});
         SpawnedNotes[model.id] = note;
+        DragStacks.Register(note);
         return note;
     }
 
@@ -149,15 +230,53 @@ public class ObjectPool
     public DragLineElement SpawnDragLine(ChartModel.Note from, ChartModel.Note to)
     {
         if (SpawnedDragLines.ContainsKey(from.id)) return SpawnedDragLines[from.id];
-        return SpawnedDragLines[from.id] = Spawn(dragLinePoolItem, new PoolItemInstantiateProvider(),
+
+        var shareKey = DragStackPlanner.MakeDragLineShareKey(from, to, Game.Chart.NoteIdToDragStackId);
+        if (shareKey != 0 && dragLinesByShareKey.TryGetValue(shareKey, out var shared))
+        {
+            dragLineFromIdToShareKey[from.id] = shareKey;
+            shared.AddGeometryRef(from.id);
+            SpawnedDragLines[from.id] = shared;
+            return shared;
+        }
+
+        var line = Spawn(dragLinePoolItem, new PoolItemInstantiateProvider(),
             new DragLineSpawnProvider {From = from, To = to});
+        line.GeometryKey = shareKey;
+        line.AddGeometryRef(from.id);
+        if (shareKey != 0)
+        {
+            dragLinesByShareKey[shareKey] = line;
+        }
+
+        dragLineFromIdToShareKey[from.id] = shareKey;
+        SpawnedDragLines[from.id] = line;
+        return line;
     }
 
     public void CollectDragLine(DragLineElement element)
     {
-        if (!SpawnedDragLines.ContainsKey(element.FromNoteModel.id)) return;
+        if (element == null) return;
+
+        var key = element.GeometryKey;
+        if (key != 0)
+        {
+            dragLinesByShareKey.Remove(key);
+        }
+
+        foreach (var fromId in element.DrainGeometryRefs())
+        {
+            SpawnedDragLines.Remove(fromId);
+            dragLineFromIdToShareKey.Remove(fromId);
+        }
+
+        if (element.FromNoteModel != null)
+        {
+            SpawnedDragLines.Remove(element.FromNoteModel.id);
+            dragLineFromIdToShareKey.Remove(element.FromNoteModel.id);
+        }
+
         Collect(dragLinePoolItem, element);
-        SpawnedDragLines.Remove(element.FromNoteModel.id);
     }
 
     public ParticleSystem SpawnEffect(EffectController.Effect effect, Vector3 position, Transform parent = default)
@@ -290,6 +409,8 @@ public class ObjectPool
         public override void OnCollect(Game game, Note note)
         {
             if (note == null || note.gameObject == null) return;
+            note.IsDragStackFollower = false;
+            note.DragStack = null;
             note.gameObject.SetActive(false);
         }
 
@@ -325,6 +446,7 @@ public class ObjectPool
         public override void OnCollect(Game game, DragLineElement dragLine)
         {
             if (dragLine == null || dragLine.gameObject == null) return;
+            dragLine.GeometryKey = 0;
             dragLine.gameObject.SetActive(false);
         }
 

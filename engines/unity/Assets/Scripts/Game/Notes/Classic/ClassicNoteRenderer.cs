@@ -85,6 +85,12 @@ public class ClassicNoteRenderer : NoteRenderer
 
     protected virtual void UpdateCollider()
     {
+        if (Note.IsDragStackFollower)
+        {
+            Collider.enabled = false;
+            return;
+        }
+
         Collider.enabled = Game.Time >= Note.Model.intro_time && Game.Time <= Note.Model.end_time + Note.MissThreshold;
         
         var radius = Note.Game.Config.NoteHitboxSizes[Note.Type]; // Default hitbox 
@@ -96,6 +102,14 @@ public class ClassicNoteRenderer : NoteRenderer
 
     protected virtual void UpdateComponentStates()
     {
+        if (Note.IsDragStackFollower)
+        {
+            Ring.enabled = false;
+            Fill.enabled = false;
+            if (DisplayNoteId) NoteId.gameObject.SetActive(false);
+            return;
+        }
+
         if (!Note.IsCleared && Game.Time >= Note.Model.intro_time && Game.Time <= Note.Model.end_time + Note.MissThreshold)
         {
             if (Game.State.Mods.Contains(Mod.HideNotes))

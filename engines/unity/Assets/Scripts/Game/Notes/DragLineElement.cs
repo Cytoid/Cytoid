@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class DragLineElement : MonoBehaviour
@@ -13,6 +14,11 @@ public class DragLineElement : MonoBehaviour
     public bool IsCollected { get; private set; }
     public ChartModel.Note FromNoteModel { get; private set; }
     public ChartModel.Note ToNoteModel { get; private set; }
+
+    /// <summary>Shared-geometry key assigned by <see cref="ObjectPool"/>; 0 when unset.</summary>
+    public long GeometryKey { get; set; }
+
+    private readonly HashSet<int> geometryFromIds = new HashSet<int>();
 
     private bool hasFromNote;
     private Note fromNote;
@@ -34,6 +40,18 @@ public class DragLineElement : MonoBehaviour
         Game = game;
     }
 
+    public void AddGeometryRef(int fromNoteId)
+    {
+        geometryFromIds.Add(fromNoteId);
+    }
+
+    public List<int> DrainGeometryRefs()
+    {
+        var ids = new List<int>(geometryFromIds);
+        geometryFromIds.Clear();
+        return ids;
+    }
+
     public void Dispose()
     {
         Destroy(gameObject);
@@ -49,6 +67,7 @@ public class DragLineElement : MonoBehaviour
         spriteRenderer.material.SetFloat(MaterialStart, 0.0f);
         UpdateTransform();
         spriteRenderer.sortingOrder = fromNoteModel.id;
+        Game.onGameUpdate.RemoveListener(OnGameUpdate);
         Game.onGameUpdate.AddListener(OnGameUpdate);
     }
 
@@ -87,8 +106,27 @@ public class DragLineElement : MonoBehaviour
             }
         }
 
-        var fromNotePosition = hasFromNote ? (fromNote is DragHeadNote dragHeadNote ? dragHeadNote.OriginalPosition : fromNote.transform.localPosition) : FromNoteModel.CalculatePosition(Game.Chart);
-        var toNotePosition = hasToNote ? toNote.transform.localPosition : ToNoteModel.CalculatePosition(Game.Chart);
+        Vector3 fromNotePosition;
+        if (!hasFromNote)
+        {
+            fromNotePosition = FromNoteModel.CalculatePosition(Game.Chart);
+        }
+        else if (fromNote is DragHeadNote dragHeadNote)
+        {
+            // OriginalPosition is only written while Time < start_time; unset (default)
+            // would anchor the line at the world origin and leave a visible stub.
+            fromNotePosition = dragHeadNote.OriginalPosition != default
+                ? dragHeadNote.OriginalPosition
+                : VisualPosition(dragHeadNote);
+        }
+        else
+        {
+            fromNotePosition = VisualPosition(fromNote);
+        }
+
+        var toNotePosition = hasToNote
+            ? VisualPosition(toNote)
+            : ToNoteModel.CalculatePosition(Game.Chart);
         
         var transform = this.transform;
         transform.localPosition = fromNotePosition;
@@ -97,8 +135,17 @@ public class DragLineElement : MonoBehaviour
             toNotePosition
         );
         spriteRenderer.material.mainTextureScale = new Vector2(1.0f, length / 0.16f);
-        transform.localEulerAngles = hasFromNote ? fromNote.transform.localEulerAngles : FromNoteModel.rotation;
+        // Compatible with Override.Rot*: aim with the from-note euler, not from→to.
+        transform.localEulerAngles = hasFromNote
+            ? fromNote.transform.localEulerAngles
+            : FromNoteModel.rotation;
         transform.localScale = new Vector3(1.0f, length / 0.16f);
+    }
+
+    static Vector3 VisualPosition(Note note)
+    {
+        if (note == null) return Vector3.zero;
+        return note.StackVisualLocalPosition();
     }
 
     private void OnGameUpdate(Game _)
@@ -107,27 +154,31 @@ public class DragLineElement : MonoBehaviour
         
         spriteRenderer.enabled = !Game.State.Mods.Contains(Mod.HideNotes);
 
-        if (outroRatio >= 1)
-        {
-            Collect();
-            return;
-        }
-
         if (Game.SpawnedNotes.ContainsKey(FromNoteModel.id))
         {
             var note = Game.SpawnedNotes[FromNoteModel.id];
             if (!note.IsCleared)
             {
-                if (note.Renderer is ClassicNoteRenderer classicNoteRenderer)
+                // Followers disable Fill; resolve opacity from the stack primary when present.
+                var visual = note;
+                if (note.IsDragStackFollower && note.DragStack?.Primary != null)
+                    visual = note.DragStack.Primary;
+
+                if (visual.Renderer is ClassicNoteRenderer classicNoteRenderer)
                 {
                     var fill = classicNoteRenderer.Fill;
-                    spriteRenderer.color = spriteRenderer.color.WithAlpha(fill.enabled ? fill.color.a : 0);
+                    if (fill != null && fill.enabled)
+                    {
+                        spriteRenderer.color = spriteRenderer.color.WithAlpha(fill.color.a);
+                    }
+                    else
+                    {
+                        spriteRenderer.color = Color.white.WithAlpha(FallbackAlpha(note));
+                    }
                 }
                 else
                 {
-                    var f = 1 - note.TimeUntilStart / (note.Model.start_time - note.Model.intro_time);
-                    f = Mathf.Clamp01(f);
-                    spriteRenderer.color = Color.white.WithAlpha(f);
+                    spriteRenderer.color = Color.white.WithAlpha(FallbackAlpha(note));
                 }
             }
         }
@@ -143,11 +194,18 @@ public class DragLineElement : MonoBehaviour
             introRatio = time < FromNoteModel.nextdraglinestarttime ? 1.0f : 0.0f;
         }
 
-        var outroSpan = ToNoteModel.start_time - FromNoteModel.start_time;
-        if (outroSpan > 0f)
-            outroRatio = (time - FromNoteModel.start_time) / outroSpan;
+        // Compute outro before Collect so completion happens on the same frame
+        // (avoids a one-frame remnant when _Start is never pulled to 1).
+        var outroDuration = ToNoteModel.start_time - FromNoteModel.start_time;
+        if (outroDuration > 0f)
+        {
+            outroRatio = (time - FromNoteModel.start_time) / outroDuration;
+        }
         else
+        {
+            // Simultaneous or reverse edge: finish once at/after from start (no NaN).
             outroRatio = time < FromNoteModel.start_time ? 0f : 1f;
+        }
 
         if (introRatio > 0 && introRatio < 1)
         {
@@ -162,10 +220,23 @@ public class DragLineElement : MonoBehaviour
             spriteRenderer.material.SetFloat(MaterialEnd, 0.0f);
         }
 
-        if (outroRatio > 0 && outroRatio < 1)
+        if (outroRatio >= 1f)
+        {
+            spriteRenderer.material.SetFloat(MaterialStart, 1f);
+            Collect();
+            return;
+        }
+
+        if (outroRatio > 0f)
         {
             spriteRenderer.material.SetFloat(MaterialStart, outroRatio);
         }
+    }
+
+    static float FallbackAlpha(Note note)
+    {
+        var denom = note.Model.start_time - note.Model.intro_time;
+        return denom > 0f ? Mathf.Clamp01(1f - note.TimeUntilStart / denom) : 1f;
     }
 
     public void Collect()
@@ -184,5 +255,7 @@ public class DragLineElement : MonoBehaviour
         introRatio = default;
         outroRatio = default;
         length = default;
+        GeometryKey = default;
+        geometryFromIds.Clear();
     }
 }

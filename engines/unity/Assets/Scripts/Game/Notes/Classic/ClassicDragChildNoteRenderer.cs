@@ -18,6 +18,14 @@ public class ClassicDragChildNoteRenderer : ClassicNoteRenderer
 
     protected override void UpdateComponentStates()
     {
+        if (Note.IsDragStackFollower)
+        {
+            Ring.enabled = false;
+            Fill.enabled = false;
+            SpriteMask.enabled = false;
+            return;
+        }
+
         base.UpdateComponentStates();
         Ring.enabled = false; // Always disable ring
         if (Note.IsCleared)

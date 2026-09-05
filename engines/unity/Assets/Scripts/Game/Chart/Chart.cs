@@ -28,6 +28,21 @@ public class Chart
     public int MaxSamePageNonDragTypeNoteCount { get; }
     public int MaxSamePageDragTypeNoteCount { get; }
     public int MaxSamePageHoldTypeNoteCount { get; }
+
+    /// <summary>note id → drag stack id (only multi-note stacks, size ≥ 2).</summary>
+    public Dictionary<int, int> NoteIdToDragStackId { get; } = new Dictionary<int, int>();
+
+    /// <summary>stack id → note ids sorted ascending (list-order / DragCoHit order).</summary>
+    public Dictionary<int, List<int>> DragStackMembers { get; } = new Dictionary<int, List<int>>();
+
+    /// <summary>Peak distinct drag-stack hosts on one page (ClearDrag pool floor after stacking).</summary>
+    public int MaxSamePageDragStackHostCount { get; private set; }
+
+    /// <summary>
+    /// Peak distinct drag-line GOs on one page after stack sharing.
+    /// Counts unshared edges plus one line per unique stacked endpoint pair.
+    /// </summary>
+    public int MaxSamePageDragLineCount { get; private set; }
     
     private readonly float baseSize;
     private readonly float horizontalRatio;
@@ -252,6 +267,30 @@ public class Chart
                     note.tint = note.direction == 1 ? 1.00f : 1.30f;
                     break;
             }
+    }
+
+    /// <summary>
+    /// Groups co-located drag children after storyboard parse. Call once from
+    /// <see cref="Game.Initialize"/> so note-controller signatures are already resolved.
+    /// Charts without storyboard pass a null signature map (uncontrolled notes only).
+    /// </summary>
+    public void ApplyDragStacks(IReadOnlyDictionary<int, string> storyboardSignatures = null)
+    {
+        var plan = DragStackPlanner.Build(Model, storyboardSignatures);
+        NoteIdToDragStackId.Clear();
+        foreach (var pair in plan.NoteIdToStackId)
+        {
+            NoteIdToDragStackId[pair.Key] = pair.Value;
+        }
+
+        DragStackMembers.Clear();
+        foreach (var pair in plan.StackMembers)
+        {
+            DragStackMembers[pair.Key] = pair.Value;
+        }
+
+        MaxSamePageDragStackHostCount = plan.MaxSamePageDragStackHostCount;
+        MaxSamePageDragLineCount = plan.MaxSamePageDragLineCount;
     }
 
     private float ConvertToTime(float tick)

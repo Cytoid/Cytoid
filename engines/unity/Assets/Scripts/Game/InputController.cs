@@ -168,6 +168,10 @@ public class InputController : MonoBehaviour
             // depends on whether a higher-priority Select candidate claims this fresh Down.
             // Misses still settle immediately and do not arm DragCoHit.
             var acceptedDrag = CollectCollidingDragBatch(pressedPosition);
+            // Collider miss: collect occluding DropDrags first so every Select on this
+            // Down shares one DragCoHit representative (and one batch window).
+            if (acceptedDrag == null)
+                acceptedDrag = CollectOccludingDropDragBatch(finger, pressedPosition);
 
             // Select is still gated by the accepted Drag before either candidate settles,
             // preserving DragCoHit and cross-page suppression without changing event order.
@@ -372,6 +376,72 @@ public class InputController : MonoBehaviour
             game.Chart.Model.page_list[game.Chart.CurrentPageId].Duration * 0.5f)
         {
             return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// DropDrag stand-in when the collider missed. Queues every occluding DropDrag
+    /// within <see cref="DragStackBatchGapSeconds"/> of the first match (same window
+    /// as <see cref="CollectCollidingDragBatch"/>) and returns that representative
+    /// so all Selects on this Down share one DragCoHit gate.
+    /// </summary>
+    private Note CollectOccludingDropDragBatch(GameFinger finger, Vector2 tap)
+    {
+        Note accepted = null;
+        var acceptedTime = 0f;
+        foreach (var drag in TouchableDragNotes)
+        {
+            if (drag.Type != NoteType.DropDrag) continue;
+            if (!IsTouchableNote(drag) || !drag.CanHandleTouch()) continue;
+            var grade = drag.GetTouchGrade();
+            if (grade == NoteGrade.None || grade == NoteGrade.Miss) continue;
+            if (!OccludesAnyCollidingSelect(drag, finger, tap)) continue;
+
+            if (accepted == null)
+            {
+                accepted = drag;
+                acceptedTime = EffectiveNoteTime(drag);
+                dragBatchScratch.Add(drag);
+                continue;
+            }
+
+            if (Math.Abs(EffectiveNoteTime(drag) - acceptedTime) > DragStackBatchGapSeconds)
+                continue;
+
+            dragBatchScratch.Add(drag);
+        }
+
+        return accepted;
+    }
+
+    private bool OccludesAnyCollidingSelect(Note drag, GameFinger finger, Vector2 tap)
+    {
+        foreach (var select in TouchableSelectNotes)
+        {
+            if (!IsCollidingSelectCandidate(select, finger, tap)) continue;
+            if (DropNoteIsolation.OccludesSelect(drag, select, tap)) return true;
+        }
+
+        return false;
+    }
+
+    private bool IsCollidingSelectCandidate(Note note, GameFinger finger, Vector2 tap)
+    {
+        if (!IsTouchableNote(note)) return false;
+        if (!note.DoesCollide(tap)) return false;
+
+        if (note is FlickNote flickNote)
+        {
+            if (FlickingNotes.ContainsKey(finger.Index) || FlickingNotes.ContainsValue(flickNote))
+                return false;
+            if (flickNote.IsFlicking) return false;
+        }
+
+        if (note is HoldNote holdNote)
+        {
+            if (holdNote.IsHolding || HoldingNotes.ContainsKey(finger.Index)) return false;
         }
 
         return true;

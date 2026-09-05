@@ -273,6 +273,7 @@ public class Chart
     /// Groups co-located drag children after storyboard parse. Call once from
     /// <see cref="Game.Initialize"/> so note-controller signatures are already resolved.
     /// Charts without storyboard pass a null signature map (uncontrolled notes only).
+    /// Notes touched by a NoteController stay on the per-note path; ids are unchanged.
     /// </summary>
     public void ApplyDragStacks(IReadOnlyDictionary<int, string> storyboardSignatures = null)
     {

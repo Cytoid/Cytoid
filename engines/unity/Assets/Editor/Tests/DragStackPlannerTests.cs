@@ -100,7 +100,7 @@ public class DragStackPlannerTests
     }
 
     [Test]
-    public void IdenticalStoryboardSignaturesStillStack()
+    public void IdenticalNoteControllersDoNotStack()
     {
         var model = Model(
             Child(1, 0.5, 1f),
@@ -113,6 +113,24 @@ public class DragStackPlannerTests
 
         var plan = DragStackPlanner.Build(model, signatures);
 
+        Assert.That(plan.NoteIdToStackId, Is.Empty);
+    }
+
+    [Test]
+    public void UncontrolledPairStillStacksBesideAControlledNote()
+    {
+        var model = Model(
+            Child(1, 0.5, 1f),
+            Child(2, 0.5, 1f),
+            Child(3, 0.5, 1f));
+        var signatures = new Dictionary<int, string>
+        {
+            {3, "dx=0.1"}
+        };
+
+        var plan = DragStackPlanner.Build(model, signatures);
+
+        Assert.That(plan.NoteIdToStackId.ContainsKey(3), Is.False);
         Assert.That(plan.NoteIdToStackId[1], Is.EqualTo(plan.NoteIdToStackId[2]));
     }
 

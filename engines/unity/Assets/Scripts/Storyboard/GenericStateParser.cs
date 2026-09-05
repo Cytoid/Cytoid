@@ -61,6 +61,9 @@ namespace Cytoid.Storyboard
             state.RotY = (float?) json.SelectToken("rot_y") ?? state.RotY;
             state.RotZ = (float?) json.SelectToken("rot_z") ?? state.RotZ;
 
+            state.PivotX = (float?) json.SelectToken("pivot_x") ?? state.PivotX;
+            state.PivotY = (float?) json.SelectToken("pivot_y") ?? state.PivotY;
+
             state.ScaleX = (float?) json.SelectToken("scale_x") ?? state.ScaleX;
             state.ScaleY = (float?) json.SelectToken("scale_y") ?? state.ScaleY;
             if (json["scale"] != null)

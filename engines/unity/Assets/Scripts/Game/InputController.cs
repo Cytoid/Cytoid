@@ -131,7 +131,7 @@ public class InputController : MonoBehaviour
 
             if (note.Type == NoteType.DragHead || note.Type == NoteType.DragChild || note.Type == NoteType.CDragChild || note.Type == NoteType.DropDrag)
             {
-                // Stack followers share the primary collider ? only scan primaries here.
+                // Stack followers share the primary collider — only scan primaries here.
                 if (note.IsDragStackFollower) continue;
                 TouchableDragNotes.Add(note);
                 continue;

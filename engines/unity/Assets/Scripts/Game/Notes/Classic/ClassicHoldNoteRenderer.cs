@@ -115,7 +115,8 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
             }
             if (!Note.IsCleared)
             {
-                Line.flipY = Note.Model.direction == -1;
+                var page = Game.Chart.Model.page_list[Note.Model.page_index];
+                Line.flipY = PositionFunction.ChronologicalTravelSign(page) < 0;
                 CompletedLine.flipY = Line.flipY;
                 CompletedLine.color = Fill.color;
                 var ringSortingOrder = Ring.sortingOrder;

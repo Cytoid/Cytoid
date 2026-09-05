@@ -12,10 +12,9 @@ using Cytoid.Storyboard;
 /// Heads travel along their own chain and cannot share a host.</item>
 /// <item>Full visual/collision equivalence: type, start time, intro time, chart x, approach rate,
 /// size, opacity, hitbox, colors, style, page index, scan direction, and is_forward.</item>
-/// <item>Storyboard note-controller signature matches. Signatures are computed from
-/// the parsed storyboard so selector expansion and <c>$note</c> substitution are
-/// already resolved. Empty signature = uncontrolled. Trigger-spawned controllers
-/// (unknown timeline until fire) force a unique per-note signature so they never merge.</item>
+/// <item>No storyboard note controller. A non-empty signature (parsed controller,
+/// including trigger-spawned) keeps the per-note path so a later destroy/spawn
+/// cannot desync a shared host. Chart ids are unchanged either way.</item>
 /// <item>Outgoing chain destinations match: every member has no next, or every next
 /// note shares the same visual/storyboard key. Origins whose next notes diverge
 /// stay independent so shared rotation cannot point a line at the wrong child.</item>
@@ -60,6 +59,10 @@ public static class DragStackPlanner
             {
                 signature = UncontrolledSignature;
             }
+
+            // Any NoteController contact opts out. Identical controllers used to stack;
+            // a later trigger destroy of one controller would freeze the primary.
+            if (signature != UncontrolledSignature) continue;
 
             var key = EquivalenceKey.From(note, signature);
             if (!buckets.TryGetValue(key, out var list))

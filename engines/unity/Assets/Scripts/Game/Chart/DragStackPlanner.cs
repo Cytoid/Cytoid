@@ -110,9 +110,16 @@ public static class DragStackPlanner
     }
 
     /// <summary>
-    /// Share key for coincident drag-line geometry. Uses stack ids when both
-    /// endpoints are stacked; otherwise the concrete note id so storyboard-divergent
+    /// Share key for coincident drag-line geometry. Each endpoint contributes its
+    /// stack id when stacked, otherwise its concrete note id, so storyboard-divergent
     /// endpoints never collapse onto one <see cref="DragLineElement"/>.
+    ///
+    /// Values are packed into disjoint bit segments (4+4 type bits, then 27 bits per
+    /// endpoint code) so distinct endpoint identities cannot alias. The previous
+    /// 31-based polynomial hash was not injective: unstacked DragChild edges 1→34 and
+    /// 2→3 both hashed to 15822768, which let <see cref="ObjectPool"/> reuse one live
+    /// line for both edges and recycle it while the other was still showing. Returns 0
+    /// ("never share") when a value overflows its segment.
     /// </summary>
     public static long MakeDragLineShareKey(
         ChartModel.Note from,
@@ -120,15 +127,36 @@ public static class DragStackPlanner
         IReadOnlyDictionary<int, int> noteIdToStackId)
     {
         if (from == null || to == null) return 0;
-        unchecked
+        if (from.type < 0 || from.type > NoteTypeMask || to.type < 0 || to.type > NoteTypeMask) return 0;
+
+        var fromCode = EncodeEndpoint(from.id, noteIdToStackId);
+        var toCode = EncodeEndpoint(to.id, noteIdToStackId);
+        if (fromCode > MaxEndpointCode || toCode > MaxEndpointCode) return 0;
+
+        return (from.type & NoteTypeMask)
+               | ((long) (to.type & NoteTypeMask) << TypeBits)
+               | (fromCode << (TypeBits * 2))
+               | (toCode << (TypeBits * 2 + EndpointBits));
+    }
+
+    const int NoteTypeMask = 0xF; // NoteType fits in 4 bits (max DropDrag = 9)
+    const int TypeBits = 4;
+    const int EndpointBits = 27; // 8 type bits + two 27-bit endpoint codes = 62 bits
+    const long MaxEndpointCode = (1L << EndpointBits) - 1;
+
+    /// <summary>
+    /// Stacked endpoints map to even codes (2 × stack id); unstacked notes map to odd
+    /// codes (2 × (id + 1) + 1), so a stack id can never alias an unstacked note id
+    /// even when the numbers coincide.
+    /// </summary>
+    static long EncodeEndpoint(int noteId, IReadOnlyDictionary<int, int> noteIdToStackId)
+    {
+        if (noteIdToStackId != null && noteIdToStackId.TryGetValue(noteId, out var stackId) && stackId > 0)
         {
-            long hash = 17;
-            hash = hash * 31 + from.type;
-            hash = hash * 31 + to.type;
-            hash = hash * 31 + EndpointIdentity(from.id, noteIdToStackId);
-            hash = hash * 31 + EndpointIdentity(to.id, noteIdToStackId);
-            return hash;
+            return (long) stackId << 1;
         }
+
+        return (((long) noteId + 1) << 1) | 1;
     }
 
     public static Dictionary<int, string> SignaturesFromNoteControllers(
@@ -186,17 +214,6 @@ public static class DragStackPlanner
         return result;
     }
 
-    static int EndpointIdentity(int noteId, IReadOnlyDictionary<int, int> noteIdToStackId)
-    {
-        if (noteIdToStackId != null && noteIdToStackId.TryGetValue(noteId, out var stackId) && stackId > 0)
-        {
-            return stackId;
-        }
-
-        // Unstacked notes keep a distinct identity in the negative range.
-        return -noteId - 1;
-    }
-
     static int CountMaxSamePageDragLines(
         ChartModel model,
         IReadOnlyDictionary<int, int> noteIdToStackId,
@@ -205,6 +222,11 @@ public static class DragStackPlanner
         if (pageCount <= 0) return 0;
         var perPage = new HashSet<long>[pageCount];
         for (var i = 0; i < pageCount; i++) perPage[i] = new HashSet<long>();
+
+        // Key 0 means "never share" (e.g. an endpoint code overflowing its bit
+        // segment), so each such edge needs its own line; it must not be
+        // deduplicated by the HashSet like the shareable nonzero keys.
+        var perPageUnshared = new int[pageCount];
 
         foreach (var note in model.note_list)
         {
@@ -223,13 +245,16 @@ public static class DragStackPlanner
 
             var pageIndex = note.page_index;
             if (pageIndex < 0 || pageIndex >= pageCount) continue;
-            perPage[pageIndex].Add(MakeDragLineShareKey(note, to, noteIdToStackId));
+            var key = MakeDragLineShareKey(note, to, noteIdToStackId);
+            if (key == 0) perPageUnshared[pageIndex]++;
+            else perPage[pageIndex].Add(key);
         }
 
         var max = 0;
         for (var i = 0; i < pageCount; i++)
         {
-            if (perPage[i].Count > max) max = perPage[i].Count;
+            var count = perPage[i].Count + perPageUnshared[i];
+            if (count > max) max = count;
         }
 
         return max;

@@ -172,6 +172,61 @@ public class DragStackPlannerTests
     }
 
     [Test]
+    public void IdenticalControllersOnNextNotesRefuseASharedStack()
+    {
+        // Successors with byte-identical controller fingerprints still diverge when a
+        // trigger destroys exactly one controller by storyboard id; the shared host's
+        // rotation would then point the surviving follower's drag line the wrong way.
+        var model = Model(
+            Child(1, 0.5, 1f, next: 3),
+            Child(2, 0.5, 1f, next: 4),
+            Child(3, 0.5, 2f),
+            Child(4, 0.5, 2f));
+        var signatures = new Dictionary<int, string>
+        {
+            {3, "dx=0.1"},
+            {4, "dx=0.1"}
+        };
+
+        var plan = DragStackPlanner.Build(model, signatures);
+
+        Assert.That(plan.NoteIdToStackId, Is.Empty);
+    }
+
+    [Test]
+    public void OneControlledNextNoteRefuseASharedStack()
+    {
+        var model = Model(
+            Child(1, 0.5, 1f, next: 3),
+            Child(2, 0.5, 1f, next: 4),
+            Child(3, 0.5, 2f),
+            Child(4, 0.5, 2f));
+        var signatures = new Dictionary<int, string>
+        {
+            {4, "dx=0.1"}
+        };
+
+        var plan = DragStackPlanner.Build(model, signatures);
+
+        Assert.That(plan.NoteIdToStackId, Is.Empty);
+    }
+
+    [Test]
+    public void UncontrolledNextNotesStillStack()
+    {
+        var model = Model(
+            Child(1, 0.5, 1f, next: 3),
+            Child(2, 0.5, 1f, next: 4),
+            Child(3, 0.5, 2f),
+            Child(4, 0.5, 2f));
+
+        var plan = DragStackPlanner.Build(model);
+
+        Assert.That(plan.NoteIdToStackId.ContainsKey(1), Is.True);
+        Assert.That(plan.NoteIdToStackId[1], Is.EqualTo(plan.NoteIdToStackId[2]));
+    }
+
+    [Test]
     public void UniformNoteControllersProduceMatchingSignatures()
     {
         var shared = Controller("same", 1, 0.1f);

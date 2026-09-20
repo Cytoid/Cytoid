@@ -227,6 +227,82 @@ public class DragStackPlannerTests
     }
 
     [Test]
+    public void ShareKeyOneToThirtyFourDoesNotCollideWithTwoToThree()
+    {
+        // Historical collision of the 31-based hash: both edges hashed to 15822768,
+        // letting the pool reuse one live line for both and recycle it early.
+        var model = Model(
+            Child(1, 0.5, 1f),
+            Child(2, 0.5, 1f),
+            Child(3, 0.5, 2f),
+            Child(34, 0.5, 2f));
+
+        var keyOneToThirtyFour = DragStackPlanner.MakeDragLineShareKey(
+            model.note_map[1], model.note_map[34], noteIdToStackId: null);
+        var keyTwoToThree = DragStackPlanner.MakeDragLineShareKey(
+            model.note_map[2], model.note_map[3], noteIdToStackId: null);
+
+        Assert.That(keyOneToThirtyFour, Is.Not.EqualTo(0));
+        Assert.That(keyOneToThirtyFour, Is.Not.EqualTo(keyTwoToThree));
+    }
+
+    [Test]
+    public void ShareKeysAreUniqueAcrossOrderedPairs()
+    {
+        var model = Model();
+        var notes = new List<ChartModel.Note>();
+        for (var id = 0; id <= 50; id++)
+        {
+            var note = Child(id, 0.5, 1f);
+            notes.Add(note);
+            model.note_list.Add(note);
+            model.note_map[id] = note;
+        }
+
+        var seen = new HashSet<long>();
+        for (var a = 0; a <= 50; a++)
+        for (var b = 0; b <= 50; b++)
+        {
+            if (a == b) continue;
+            var key = DragStackPlanner.MakeDragLineShareKey(model.note_map[a], model.note_map[b], noteIdToStackId: null);
+            Assert.That(key, Is.Not.EqualTo(0), $"edge {a}->{b} lost its share key");
+            Assert.That(seen.Add(key), Is.True, $"edges collide at {a}->{b}");
+        }
+    }
+
+    [Test]
+    public void ShareKeyStackedEndpointNeverCollidesWithUnstacked()
+    {
+        var model = Model(
+            Child(1, 0.5, 1f),
+            Child(2, 0.5, 1f),
+            Child(3, 0.5, 2f));
+        var stacked = new Dictionary<int, int> {{1, 1}, {2, 1}};
+
+        var stackedFrom = DragStackPlanner.MakeDragLineShareKey(model.note_map[1], model.note_map[3], stacked);
+        var unstackedFrom = DragStackPlanner.MakeDragLineShareKey(model.note_map[1], model.note_map[3], noteIdToStackId: null);
+
+        Assert.That(stackedFrom, Is.Not.EqualTo(0));
+        Assert.That(stackedFrom, Is.Not.EqualTo(unstackedFrom));
+    }
+
+    [Test]
+    public void ShareKeySeparatesNoteTypesAndEndpointOrder()
+    {
+        var model = Model(
+            Head(1, 0.5, 1f),
+            Child(2, 0.5, 1f),
+            Child(3, 0.5, 2f));
+
+        var headToChild = DragStackPlanner.MakeDragLineShareKey(model.note_map[1], model.note_map[3], noteIdToStackId: null);
+        var childToChild = DragStackPlanner.MakeDragLineShareKey(model.note_map[2], model.note_map[3], noteIdToStackId: null);
+        var reversed = DragStackPlanner.MakeDragLineShareKey(model.note_map[3], model.note_map[2], noteIdToStackId: null);
+
+        Assert.That(headToChild, Is.Not.EqualTo(childToChild));
+        Assert.That(childToChild, Is.Not.EqualTo(reversed));
+    }
+
+    [Test]
     public void UniformNoteControllersProduceMatchingSignatures()
     {
         var shared = Controller("same", 1, 0.1f);

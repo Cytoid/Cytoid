@@ -289,16 +289,20 @@ public class DragStackPlannerTests
     [Test]
     public void ShareKeySeparatesNoteTypesAndEndpointOrder()
     {
-        var model = Model(
-            Head(1, 0.5, 1f),
-            Child(2, 0.5, 1f),
-            Child(3, 0.5, 2f));
+        // Same ids on both sides of each comparison so only the type bits can differ;
+        // comparing notes with different ids would pass even without type segments.
+        var sourceHead = Head(1, 0.5, 1f);
+        var sourceChild = Child(1, 0.5, 1f);
+        var destinationHead = Head(3, 0.5, 2f);
+        var destinationChild = Child(3, 0.5, 2f);
 
-        var headToChild = DragStackPlanner.MakeDragLineShareKey(model.note_map[1], model.note_map[3], noteIdToStackId: null);
-        var childToChild = DragStackPlanner.MakeDragLineShareKey(model.note_map[2], model.note_map[3], noteIdToStackId: null);
-        var reversed = DragStackPlanner.MakeDragLineShareKey(model.note_map[3], model.note_map[2], noteIdToStackId: null);
+        var headToChild = DragStackPlanner.MakeDragLineShareKey(sourceHead, destinationChild, noteIdToStackId: null);
+        var childToChild = DragStackPlanner.MakeDragLineShareKey(sourceChild, destinationChild, noteIdToStackId: null);
+        var childToHead = DragStackPlanner.MakeDragLineShareKey(sourceChild, destinationHead, noteIdToStackId: null);
+        var reversed = DragStackPlanner.MakeDragLineShareKey(destinationChild, sourceChild, noteIdToStackId: null);
 
         Assert.That(headToChild, Is.Not.EqualTo(childToChild));
+        Assert.That(childToChild, Is.Not.EqualTo(childToHead));
         Assert.That(childToChild, Is.Not.EqualTo(reversed));
     }
 

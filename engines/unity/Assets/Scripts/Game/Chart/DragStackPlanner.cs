@@ -16,8 +16,12 @@ using Cytoid.Storyboard;
 /// including trigger-spawned) keeps the per-note path so a later destroy/spawn
 /// cannot desync a shared host. Chart ids are unchanged either way.</item>
 /// <item>Outgoing chain destinations match: every member has no next, or every next
-/// note shares the same visual/storyboard key. Origins whose next notes diverge
-/// stay independent so shared rotation cannot point a line at the wrong child.</item>
+/// note is uncontrolled and shares the same visual key. Controlled successors opt out
+/// even with byte-identical animation fingerprints — a trigger destroy of just one
+/// controller (by storyboard id) would split the destinations while the shared host's
+/// rotation (aimed at the primary's own successor) keeps driving every follower line.
+/// Origins whose next notes diverge stay independent so shared rotation cannot point
+/// a line at the wrong child.</item>
 /// <item>At least two notes share the same key.</item>
 /// </list>
 /// Drag-line sharing uses stack identity of both endpoints, not static chart x/time,
@@ -247,6 +251,8 @@ public static class DragStackPlanner
             var isNone = note == null || note.next_id <= 0 ||
                          (next = LookupNote(model, note.next_id)) == null;
 
+            if (!isNone && !SuccessorIsUncontrolled(next, storyboardSignatures)) return false;
+
             if (!haveFirst)
             {
                 firstIsNone = isNone;
@@ -264,6 +270,18 @@ public static class DragStackPlanner
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Chain destinations repeat the member-side opt-out from bucketing: any
+    /// NoteController on a successor makes equivalence unguaranteeable for the
+    /// lifetime of a shared host, byte-identical animation fingerprints included
+    /// (a trigger can destroy just one controller by storyboard id while the
+    /// other keeps driving its note).
+    /// </summary>
+    static bool SuccessorIsUncontrolled(ChartModel.Note next, IReadOnlyDictionary<int, string> storyboardSignatures)
+    {
+        return SignatureOf(next.id, storyboardSignatures) == UncontrolledSignature;
     }
 
     static string SignatureOf(int noteId, IReadOnlyDictionary<int, string> storyboardSignatures)

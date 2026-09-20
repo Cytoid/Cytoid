@@ -22,6 +22,18 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
         InitializeHoldComponents();
     }
 
+    /// <summary>
+    /// Hold body flip: a storyboard hold_direction is an absolute flip flag (-1 flips);
+    /// without one the body follows the page's chronological display-Y travel
+    /// (scan × sign(a)) so negative-a pages still render along their actual travel (#212).
+    /// </summary>
+    public static bool ComputeLineFlipY(ChartModel.Note note, ChartModel.Page page)
+    {
+        var holdDirection = note.Override.HoldDirection;
+        if (holdDirection.HasValue) return holdDirection.Value == -1;
+        return PositionFunction.ChronologicalTravelSign(page) < 0;
+    }
+
     protected override void UpdateCollider()
     {
         base.UpdateCollider();
@@ -116,7 +128,7 @@ public class ClassicHoldNoteRenderer : ClassicNoteRenderer
             if (!Note.IsCleared)
             {
                 var page = Game.Chart.Model.page_list[Note.Model.page_index];
-                Line.flipY = PositionFunction.ChronologicalTravelSign(page) < 0;
+                Line.flipY = ComputeLineFlipY(Note.Model, page);
                 CompletedLine.flipY = Line.flipY;
                 CompletedLine.color = Fill.color;
                 var ringSortingOrder = Ring.sortingOrder;

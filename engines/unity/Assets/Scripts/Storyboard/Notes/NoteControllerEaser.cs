@@ -149,7 +149,11 @@ namespace Cytoid.Storyboard.Notes
 
             if (From.HoldDirection != null)
             {
+                // Keep the legacy shared-field write (alt color / selectors read it),
+                // and mirror into Override so the hold renderer sees an explicit,
+                // absolute flip independent of page travel (#212).
                 Note.direction = From.HoldDirection.Value;
+                Note.Override.HoldDirection = From.HoldDirection;
             }
 
             if (From.Style != null)

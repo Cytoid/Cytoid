@@ -161,6 +161,14 @@ public class ChartModel
             public float OpacityMultiplier = 1;
             public float SizeMultiplier = 1;
             public float HitboxMultiplier = 1;
+
+            /// <summary>
+            /// Storyboard hold_direction override. Null = follow the page's
+            /// chronological travel; otherwise an absolute flip flag (-1 flips).
+            /// Kept separate from <see cref="Note.direction"/>, which stays the
+            /// chart-native/alt-color field the easer also mirrors into.
+            /// </summary>
+            public int? HoldDirection;
         }
         
         public float Duration => end_time - start_time;

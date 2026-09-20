@@ -287,6 +287,32 @@ public class DragStackPlannerTests
     }
 
     [Test]
+    public void OverflowedShareKeysEachCountAsTheirOwnLine()
+    {
+        // Unstacked endpoint codes overflow the 27-bit segment at id 2^26-1, where
+        // MakeDragLineShareKey falls back to key 0 ("never share"). Distinct x keeps
+        // the two origins out of one bucket, so both edges keep their overflowed ids.
+        const int overflowA = 67108863; // 2^26 - 1
+        const int overflowB = 67108864; // 2^26
+        var model = Model(
+            Child(overflowA, 0.5, 1f, next: 3),
+            Child(overflowB, 0.6, 1f, next: 4),
+            Child(3, 0.5, 2f),
+            Child(4, 0.5, 2f));
+
+        var edgeA = DragStackPlanner.MakeDragLineShareKey(
+            model.note_map[overflowA], model.note_map[3], noteIdToStackId: null);
+        var edgeB = DragStackPlanner.MakeDragLineShareKey(
+            model.note_map[overflowB], model.note_map[4], noteIdToStackId: null);
+        Assert.That(edgeA, Is.EqualTo(0));
+        Assert.That(edgeB, Is.EqualTo(0));
+
+        // Both never-share edges must be counted; a HashSet would collapse them to 1.
+        var plan = DragStackPlanner.Build(model);
+        Assert.That(plan.MaxSamePageDragLineCount, Is.EqualTo(2));
+    }
+
+    [Test]
     public void ShareKeySeparatesNoteTypesAndEndpointOrder()
     {
         // Same ids on both sides of each comparison so only the type bits can differ;

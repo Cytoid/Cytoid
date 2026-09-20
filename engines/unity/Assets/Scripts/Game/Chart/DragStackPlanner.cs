@@ -223,6 +223,11 @@ public static class DragStackPlanner
         var perPage = new HashSet<long>[pageCount];
         for (var i = 0; i < pageCount; i++) perPage[i] = new HashSet<long>();
 
+        // Key 0 means "never share" (e.g. an endpoint code overflowing its bit
+        // segment), so each such edge needs its own line; it must not be
+        // deduplicated by the HashSet like the shareable nonzero keys.
+        var perPageUnshared = new int[pageCount];
+
         foreach (var note in model.note_list)
         {
             if (note == null || note.next_id <= 0) continue;
@@ -240,13 +245,16 @@ public static class DragStackPlanner
 
             var pageIndex = note.page_index;
             if (pageIndex < 0 || pageIndex >= pageCount) continue;
-            perPage[pageIndex].Add(MakeDragLineShareKey(note, to, noteIdToStackId));
+            var key = MakeDragLineShareKey(note, to, noteIdToStackId);
+            if (key == 0) perPageUnshared[pageIndex]++;
+            else perPage[pageIndex].Add(key);
         }
 
         var max = 0;
         for (var i = 0; i < pageCount; i++)
         {
-            if (perPage[i].Count > max) max = perPage[i].Count;
+            var count = perPage[i].Count + perPageUnshared[i];
+            if (count > max) max = count;
         }
 
         return max;

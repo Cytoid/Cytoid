@@ -77,6 +77,25 @@ public class DragStackHost
         }
     }
 
+    /// <summary>
+    /// Detaches every member and restores followers to the independent per-note path
+    /// (visuals, colliders, update listeners). Used when planning is re-run and the
+    /// stack no longer exists under the new tables.
+    /// </summary>
+    public void Dissolve()
+    {
+        for (var i = 0; i < members.Count; i++)
+        {
+            var note = members[i];
+            if (note == null) continue;
+            note.DragStack = null;
+            if (note.IsDragStackFollower) note.PromoteToDragStackPrimary();
+        }
+
+        members.Clear();
+        Primary = null;
+    }
+
     public bool IsPrimary(Note note) => Primary == note;
 
     public void TickFollowers()

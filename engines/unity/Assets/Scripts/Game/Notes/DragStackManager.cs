@@ -45,4 +45,18 @@ public class DragStackManager
             hostsByStackId.Remove(host.StackId);
         }
     }
+
+    /// <summary>
+    /// Dissolves every live host, restoring followers to independent notes. The
+    /// registry is emptied so a subsequent replan can register against fresh tables.
+    /// </summary>
+    public void DissolveAll()
+    {
+        foreach (var host in hostsByStackId.Values)
+        {
+            host.Dissolve();
+        }
+
+        hostsByStackId.Clear();
+    }
 }

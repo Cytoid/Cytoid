@@ -279,6 +279,37 @@ public class ObjectPool
         Collect(dragLinePoolItem, element);
     }
 
+    /// <summary>
+    /// Rebuilds live drag-line sharing after drag-stack planning is re-run
+    /// (<see cref="Game.RebuildDragStacks"/>). Live lines are recycled and their edges
+    /// respawned under the current <see cref="Chart.NoteIdToDragStackId"/>, so edges
+    /// that stopped sharing split back into one line per from-note while still-sharing
+    /// edges collapse onto one object again. Respawn goes through SetData, so lines
+    /// caught mid-intro restart their intro progress.
+    /// </summary>
+    public void RebuildDragLinesAfterReplan()
+    {
+        if (Game?.Chart?.Model?.note_map == null) return;
+
+        // Snapshot per from-id before recycling: a shared line only remembers its
+        // first spawner's models, so recover each edge from the chart instead.
+        var fromIds = new List<int>(SpawnedDragLines.Keys);
+        var uniqueLines = new HashSet<DragLineElement>(SpawnedDragLines.Values);
+
+        foreach (var line in uniqueLines)
+        {
+            line.Collect();
+        }
+
+        var noteMap = Game.Chart.Model.note_map;
+        for (var i = 0; i < fromIds.Count; i++)
+        {
+            if (!noteMap.TryGetValue(fromIds[i], out var from) || from == null || from.next_id <= 0) continue;
+            if (!noteMap.ContainsKey(from.next_id)) continue;
+            SpawnDragLine(from, noteMap[from.next_id]);
+        }
+    }
+
     public ParticleSystem SpawnEffect(EffectController.Effect effect, Vector3 position, Transform parent = default)
     {
         return Spawn(effectPoolItems[effect],

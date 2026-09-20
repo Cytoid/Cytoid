@@ -346,6 +346,52 @@ public class Game : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Re-runs drag-stack planning against the current storyboard controller set and
+    /// migrates live state onto the new tables: live <see cref="DragStackHost"/>s are
+    /// dissolved (followers become independent notes again), spawned notes re-register
+    /// (stacks that survive the replan re-form with fresh ids), and live drag lines
+    /// are re-keyed so sharing follows the new plan. Signatures come from the live
+    /// note-controller renderers, so trigger spawn/destroy since
+    /// <see cref="Initialize"/> is reflected — the initialize-time table is otherwise
+    /// frozen and keeps registering notes onto stale stacks.
+    ///
+    /// No gameplay caller yet — reserved for editor tooling and tests; see
+    /// CytoidDragStackReplanEditor for the Play Mode demonstration.
+    /// </summary>
+    public void RebuildDragStacks()
+    {
+        if (!IsLoaded || Chart == null || ObjectPool == null) return;
+
+        Chart.ApplyDragStacks(
+            Storyboard != null
+                ? DragStackPlanner.SignaturesFromNoteControllers(LiveNoteControllers())
+                : null);
+
+        ObjectPool.DragStacks.DissolveAll();
+        foreach (var note in ObjectPool.SpawnedNotes.Values)
+        {
+            ObjectPool.DragStacks.Register(note);
+        }
+
+        ObjectPool.RebuildDragLinesAfterReplan();
+    }
+
+    IEnumerable<NoteController> LiveNoteControllers()
+    {
+        if (Storyboard?.Renderer == null) yield break;
+        if (!Storyboard.Renderer.TypedComponentRenderers.TryGetValue(typeof(NoteController), out var renderers))
+        {
+            yield break;
+        }
+
+        foreach (var renderer in renderers)
+        {
+            var controller = renderer?.Component as NoteController;
+            if (controller != null) yield return controller;
+        }
+    }
+
     protected virtual async void StartGame()
     {
         await UniTask.WhenAll(BeforeStartTasks);

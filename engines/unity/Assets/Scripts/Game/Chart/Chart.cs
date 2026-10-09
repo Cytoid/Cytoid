@@ -164,6 +164,8 @@ public class Chart
             if (isHoldType) pageHoldTypeNoteCounts[note.page_index]++;
             
             note.direction = page.scan_line_direction;
+            if (isVerticallyInverted && (type == NoteType.DropClick || type == NoteType.DropDrag))
+                note.NoteDirection = note.NoteDirection == 1 ? 0 : 1;
             var speed = note.page_index == 0 ? 1.0f : CalculateNoteSpeed(note);
 
             var modSpeed = 1f;
@@ -178,11 +180,13 @@ public class Chart
                 case NoteType.LongHold:
                 case NoteType.Flick:
                 case NoteType.CDragHead:
+                case NoteType.DropClick:
                     note.initial_scale = useExperimentalNoteAr ? 0.1f : 0.4f;
                     break;
                 case NoteType.DragHead:
                 case NoteType.DragChild:
                 case NoteType.CDragChild:
+                case NoteType.DropDrag:
                     note.initial_scale = useExperimentalNoteAr ? 0.4f : 0.7f;
                     break;
                 default:
@@ -218,6 +222,12 @@ public class Chart
             if (note.type == (int) NoteType.DragHead || note.type == (int) NoteType.DragChild || 
                 note.type == (int) NoteType.CDragHead || note.type == (int) NoteType.CDragChild)
                 note.intro_time = note.start_time - 1.175f / speed;
+            else if (type == NoteType.DropClick || type == NoteType.DropDrag)
+            {
+                // Drop notes enter five page tick spans before landing, including tempo changes.
+                var dropStartTick = (float) (note.tick - (page.end_tick - page.start_tick) * 5.0);
+                note.intro_time = ConvertToTime(dropStartTick);
+            }
             else
                 note.intro_time = note.start_time - 1.367f / speed;
         }
@@ -241,6 +251,8 @@ public class Chart
                     note.tint = note.direction == 1 ? 0.94f : 1.06f;
                     break;
                 case NoteType.LongHold:
+                case NoteType.DropClick:
+                case NoteType.DropDrag:
                     note.tint = note.direction == 1 ? 0.94f : 1.06f;
                     break;
                 case NoteType.DragHead:

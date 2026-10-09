@@ -15,12 +15,13 @@ public class InputController : MonoBehaviour
     public const float NoteClusterGapSeconds = 0.015f;
 
     /// <summary>
-    /// After a non-Miss Drag is accepted on the same FingerDown, block Click / CDrag head /
+    /// After an ordinary non-Miss Drag is accepted on the same FingerDown, block Click / CDrag head /
     /// Hold / Flick whose <c>effectiveNoteTime</c> is more than this many seconds later.
     /// Earlier or within-window selects stay eligible.
     /// Wider than <see cref="NoteClusterGapSeconds"/> (30ms vs 15ms) so short Drag+tap
     /// stacks co-clear on one Down without widening note-time clusters.
-    /// Replaces legacy collidedDrag + Page.Duration/8.
+    /// DropDrag shares the co-hit exemption but uses a landing/time guard for later Selects.
+    /// Replaces legacy collidedDrag + Page.Duration/8 for ordinary Drags.
     /// </summary>
     public const float DragCoHitWindowSeconds = 0.030f;
 
@@ -59,15 +60,24 @@ public class InputController : MonoBehaviour
     private readonly List<Note> hitCandidates = new List<Note>();
     private readonly List<Note> clusterScratch = new List<Note>();
     private readonly List<Note> dragBatchScratch = new List<Note>();
+    private readonly Dictionary<int, DropDragGuard> clearedDropGuards = new Dictionary<int, DropDragGuard>();
+    private readonly List<DropDragGuard> dropGuardsForDown = new List<DropDragGuard>();
+    private readonly List<int> expiredDropGuardIds = new List<int>();
+    private float lastDropGuardTime = float.NegativeInfinity;
+    private bool captureDropGuards;
 
     private void Awake()
     {
         game.onGameUpdate.AddListener(OnGameUpdate);
         game.onGamePaused.AddListener(OnGamePaused);
+        game.onGameStarted.AddListener(OnGameStarted);
+        game.onNoteJudged.AddListener(CaptureClearedDropDrag);
     }
 
     public void EnableInput()
     {
+        ResetDropGuards();
+        captureDropGuards = true;
         GameTouchInput.FingerDown += OnFingerDown;
         GameTouchInput.FingerUpdate += OnFingerUpdate;
         GameTouchInput.FingerUp += OnFingerUp;
@@ -75,10 +85,77 @@ public class InputController : MonoBehaviour
 
     public void DisableInput()
     {
+        captureDropGuards = false;
+        ResetDropGuards();
         GameTouchInput.FingerDown -= OnFingerDown;
         GameTouchInput.FingerUpdate -= OnFingerUpdate;
         GameTouchInput.FingerUp -= OnFingerUp;
         ResetBindingsWithoutJudgment();
+    }
+
+    private void OnDestroy()
+    {
+        GameTouchInput.FingerDown -= OnFingerDown;
+        GameTouchInput.FingerUpdate -= OnFingerUpdate;
+        GameTouchInput.FingerUp -= OnFingerUp;
+        if (game == null) return;
+        game.onGameUpdate.RemoveListener(OnGameUpdate);
+        game.onGamePaused.RemoveListener(OnGamePaused);
+        game.onGameStarted.RemoveListener(OnGameStarted);
+        game.onNoteJudged.RemoveListener(CaptureClearedDropDrag);
+    }
+
+    private void OnGameStarted(Game _) => ResetDropGuards();
+
+    public void ResetDropGuards()
+    {
+        clearedDropGuards.Clear();
+        dropGuardsForDown.Clear();
+        expiredDropGuardIds.Clear();
+        lastDropGuardTime = float.NegativeInfinity;
+    }
+
+    private void CaptureClearedDropDrag(Game g, Note note, JudgeData data)
+    {
+        if (!captureDropGuards || note == null || note.Model == null ||
+            note.Type != NoteType.DropDrag || data == null ||
+            data.Grade == NoteGrade.None || data.Grade == NoteGrade.Miss) return;
+        var guard = DropNoteIsolation.Snapshot(note);
+        if (g.Time < guard.EffectiveTime + DropNoteIsolation.LateWindowSeconds)
+            clearedDropGuards[guard.NoteId] = guard;
+    }
+
+    private void PruneDropGuards(float now)
+    {
+        // A retry/seek must not leave snapshots from the old chart position.
+        if (now < lastDropGuardTime) ResetDropGuards();
+        lastDropGuardTime = now;
+        expiredDropGuardIds.Clear();
+        foreach (var pair in clearedDropGuards)
+            if (now >= pair.Value.EffectiveTime + DropNoteIsolation.LateWindowSeconds)
+                expiredDropGuardIds.Add(pair.Key);
+        foreach (var id in expiredDropGuardIds) clearedDropGuards.Remove(id);
+    }
+
+    private void BuildDropGuardsForDown()
+    {
+        PruneDropGuards(game.Time);
+        dropGuardsForDown.Clear();
+        // Armed notes are deliberately absent from TouchableDragNotes. Read the
+        // live pool, then append immutable cleared snapshots (including same-frame clears).
+        foreach (var note in game.SpawnedNotes.Values)
+        {
+            if (note == null || note.Model == null || note.IsCollected || note.IsCleared ||
+                note.Type != NoteType.DropDrag || !note.HasEmerged) continue;
+            if (!note.IsArmed)
+            {
+                if (!note.CanHandleTouch()) continue;
+                var grade = note.GetTouchGrade();
+                if (grade == NoteGrade.None || grade == NoteGrade.Miss) continue;
+            }
+            dropGuardsForDown.Add(DropNoteIsolation.Snapshot(note));
+        }
+        foreach (var guard in clearedDropGuards.Values) dropGuardsForDown.Add(guard);
     }
 
     /// <summary>
@@ -121,6 +198,7 @@ public class InputController : MonoBehaviour
 
     public void OnGameUpdate(Game game)
     {
+        PruneDropGuards(game.Time);
         TouchableDragNotes.Clear();
         TouchableHoldNotes.Clear();
         TouchableSelectNotes.Clear();
@@ -157,6 +235,8 @@ public class InputController : MonoBehaviour
             ? game.camera.ScreenToWorldPoint(finger.ScreenPosition)
             : game.camera.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
 
+        BuildDropGuardsForDown();
+
         // Collect + settle under one drag-stack FX/SFX budget so Miss clears during
         // collection share the same caps as the co-located non-Miss batch.
         var effects = game.effectController;
@@ -173,8 +253,8 @@ public class InputController : MonoBehaviour
             if (acceptedDrag == null)
                 acceptedDrag = CollectOccludingDropDragBatch(finger, pressedPosition);
 
-            // Select is still gated by the accepted Drag before either candidate settles,
-            // preserving DragCoHit and cross-page suppression without changing event order.
+            // Filter Selects before either candidate settles. DropDrag uses the same
+            // spatial/time guard in every state; ordinary Drags retain DragCoHit.
             acceptedSelect = FindAcceptedSelect(finger, pressedPosition, acceptedDrag);
 
             SettleDragBatch(finger.ScreenPosition, deferred: acceptedSelect != null);
@@ -190,7 +270,7 @@ public class InputController : MonoBehaviour
     /// <summary>
     /// Collects a Drag settle batch and returns the DragCoHit representative.
     /// Representative is the first colliding non-Miss in <see cref="TouchableDragNotes"/>
-    /// list order -- same as legacy <c>FindAcceptedDrag</c>, so Select gating is unchanged.
+    /// list order -- same as legacy <c>FindAcceptedDrag</c>. Ordinary Drag gating is unchanged.
     /// Additional colliding non-Miss notes within
     /// <see cref="DragStackBatchGapSeconds"/> of that note are added to
     /// <see cref="dragBatchScratch"/> for co-clear. Misses before the representative
@@ -330,7 +410,7 @@ public class InputController : MonoBehaviour
                 if (FlickingNotes.ContainsKey(finger.Index) || FlickingNotes.ContainsValue(flickNote))
                     continue;
                 if (flickNote.IsFlicking) continue;
-                if (!IsEligibleSelectAfterDrag(flickNote, acceptedDrag)) continue;
+                if (!IsEligibleSelectAfterDrag(flickNote, acceptedDrag, pressedPosition)) continue;
                 hitCandidates.Add(flickNote);
                 continue;
             }
@@ -339,12 +419,12 @@ public class InputController : MonoBehaviour
             {
                 // Lists are per-frame snapshots; same-frame multi-finger rebind uses Update.
                 if (holdNote.IsHolding || HoldingNotes.ContainsKey(finger.Index)) continue;
-                if (!IsEligibleSelectAfterDrag(holdNote, acceptedDrag)) continue;
+                if (!IsEligibleSelectAfterDrag(holdNote, acceptedDrag, pressedPosition)) continue;
                 hitCandidates.Add(holdNote);
                 continue;
             }
 
-            if (!IsEligibleSelectAfterDrag(note, acceptedDrag)) continue;
+            if (!IsEligibleSelectAfterDrag(note, acceptedDrag, pressedPosition)) continue;
             hitCandidates.Add(note);
         }
 
@@ -356,19 +436,27 @@ public class InputController : MonoBehaviour
     /// Gate before touching Model or colliders.
     /// </summary>
     private static bool IsTouchableNote(Note note) =>
-        note != null && !note.IsCollected && !note.IsCleared && !note.IsArmed;
+        note != null && note.Model != null && !note.IsCollected && !note.IsCleared && !note.IsArmed;
 
     /// <summary>
     /// Same-Down select gate after an optional accepted Drag.
-    /// Blocks only when select is more than <see cref="DragCoHitWindowSeconds"/> later
-    /// than the Drag (<c>effectiveNoteTime</c>). Also keeps cross-page early suppress.
+    /// Ordinary Drags keep the 30ms gate. DropDrags use their uniform landing/time
+    /// guard so a fresh late Drag cannot block an on-time Click. Keeps cross-page suppression.
     /// </summary>
-    private bool IsEligibleSelectAfterDrag(Note note, Note acceptedDrag)
+    private bool IsEligibleSelectAfterDrag(Note note, Note acceptedDrag, Vector2 tap)
     {
-        if (acceptedDrag != null)
+        if (acceptedDrag != null && acceptedDrag.Type != NoteType.DropDrag)
         {
             var delta = EffectiveNoteTime(note) - EffectiveNoteTime(acceptedDrag);
             if (delta > DragCoHitWindowSeconds) return false;
+        }
+
+        var selectTime = EffectiveNoteTime(note);
+        var radius = DropNoteIsolation.WorldHitboxRadius(note);
+        foreach (var guard in dropGuardsForDown)
+        {
+            if (DropNoteIsolation.BlocksSelect(guard, selectTime, radius, tap,
+                    game.Time, game.Chart.CurrentPageId)) return false;
         }
 
         if (note.Model.page_index > game.Chart.CurrentPageId &&
@@ -385,7 +473,8 @@ public class InputController : MonoBehaviour
     /// DropDrag stand-in when the collider missed. Queues every occluding DropDrag
     /// within <see cref="DragStackBatchGapSeconds"/> of the first match (same window
     /// as <see cref="CollectCollidingDragBatch"/>) and returns that representative
-    /// so all Selects on this Down share one DragCoHit gate.
+    /// for settlement. Select eligibility uses the uniform DropDrag guard instead
+    /// of an unconditional representative-to-Select time gap.
     /// </summary>
     private Note CollectOccludingDropDragBatch(GameFinger finger, Vector2 tap)
     {
@@ -421,7 +510,9 @@ public class InputController : MonoBehaviour
         foreach (var select in TouchableSelectNotes)
         {
             if (!IsCollidingSelectCandidate(select, finger, tap)) continue;
-            if (DropNoteIsolation.OccludesSelect(drag, select, tap)) return true;
+            if (DropNoteIsolation.BlocksSelect(DropNoteIsolation.Snapshot(drag),
+                    EffectiveNoteTime(select), DropNoteIsolation.WorldHitboxRadius(select),
+                    tap, game.Time, game.Chart.CurrentPageId)) return true;
         }
 
         return false;

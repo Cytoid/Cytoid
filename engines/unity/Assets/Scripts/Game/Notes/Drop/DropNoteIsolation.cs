@@ -1,14 +1,17 @@
 using UnityEngine;
 
-// DropDrag uses the same 30ms subsequent-note gate as DragHead/Child (DragCoHit).
-// Landing colliders sit on the scanline while sprites fall in, so a later Select can
-// overlap this tap even when DropDrag's own smaller hitbox missed. The spatial test
-// uses the later note's radius around DropDrag's landing; the time test is
-// InputController.DragCoHitWindowSeconds. InputController collects occluding
-// DropDrags (same-tick stack within DragStackBatchGapSeconds) before choosing
-// Select, then gates every candidate with that representative.
-internal static class DropNoteIsolation
+// Drop sprites fall toward fixed landing colliders. Protect that landing while a
+// Down is temporally closer to the DropDrag; let Select win after the midpoint.
+// The same rule applies to fresh, armed and successfully cleared DropDrags.
+public static class DropNoteIsolation
 {
+    public const float LateWindowSeconds = 0.200f;
+
+    public static DropDragGuard Snapshot(Note note) =>
+        new DropDragGuard(note.Model.id, note.Model.start_time,
+            note.Model.start_time + note.JudgmentOffset, note.Model.page_index,
+            note.Page.Duration, note.transform.position);
+
     public static float WorldHitboxRadius(Note note)
     {
         if (note == null) return 0f;
@@ -21,23 +24,26 @@ internal static class DropNoteIsolation
     }
 
     /// <summary>
-    /// True when <paramref name="later"/> is more than
-    /// <see cref="InputController.DragCoHitWindowSeconds"/> after this DropDrag and the
-    /// tap still sits on the DropDrag landing (later note's radius).
+    /// Co-hits within 30ms stay eligible. A later Select is protected only while
+    /// the Down is no later than the midpoint and lies near the DropDrag landing.
+    /// Raw admission limits match DropDragNote; expiry uses its 200ms Perfect late
+    /// window, not the note's 300ms automatic Miss threshold.
     /// </summary>
-    public static bool OccludesSelect(Note dropDrag, Note later, Vector2 tap)
+    public static bool BlocksSelect(in DropDragGuard guard, float selectTime,
+        float selectRadius, Vector2 tap, float now, int currentPageId)
     {
-        if (dropDrag == null || later == null) return false;
-        if (dropDrag.Type != NoteType.DropDrag) return false;
-
-        var gap = (later.Model.start_time + later.JudgmentOffset)
-                  - (dropDrag.Model.start_time + dropDrag.JudgmentOffset);
-        if (gap <= InputController.DragCoHitWindowSeconds) return false;
-
-        var laterRadius = WorldHitboxRadius(later);
-        if (laterRadius <= 0f || !float.IsFinite(laterRadius)) return false;
-
-        Vector2 landing = dropDrag.transform.position;
-        return (tap - landing).sqrMagnitude <= laterRadius * laterRadius;
+        if (!float.IsFinite(guard.RawStartTime) || !float.IsFinite(guard.EffectiveTime) ||
+            !float.IsFinite(guard.PageDuration) || !float.IsFinite(selectTime) ||
+            !float.IsFinite(now) || !float.IsFinite(selectRadius) || selectRadius <= 0f ||
+            !float.IsFinite(tap.x) || !float.IsFinite(tap.y) ||
+            !float.IsFinite(guard.Landing.x) || !float.IsFinite(guard.Landing.y)) return false;
+        if (selectTime <= guard.EffectiveTime + InputController.DragCoHitWindowSeconds) return false;
+        if (guard.RawStartTime - now > 0.310f) return false;
+        if (guard.PageIndex > currentPageId &&
+            guard.RawStartTime - now > guard.PageDuration * 0.5f) return false;
+        if (now >= guard.EffectiveTime + LateWindowSeconds) return false;
+        var midpoint = guard.EffectiveTime + (selectTime - guard.EffectiveTime) * 0.5f;
+        if (now > midpoint) return false;
+        return (tap - guard.Landing).sqrMagnitude <= selectRadius * selectRadius;
     }
 }

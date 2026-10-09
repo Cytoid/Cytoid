@@ -63,7 +63,6 @@ public class InputController : MonoBehaviour
     private readonly Dictionary<int, DropDragGuard> clearedDropGuards = new Dictionary<int, DropDragGuard>();
     private readonly List<DropDragGuard> dropGuardsForDown = new List<DropDragGuard>();
     private readonly List<int> expiredDropGuardIds = new List<int>();
-    private float lastDropGuardTime = float.NegativeInfinity;
     private bool captureDropGuards;
 
     private void Awake()
@@ -107,12 +106,15 @@ public class InputController : MonoBehaviour
 
     private void OnGameStarted(Game _) => ResetDropGuards();
 
+    /// <summary>
+    /// Clears snapshots for an explicit new play or chart seek. Small DSP clock
+    /// corrections during the same play must not discard unexpired guards.
+    /// </summary>
     public void ResetDropGuards()
     {
         clearedDropGuards.Clear();
         dropGuardsForDown.Clear();
         expiredDropGuardIds.Clear();
-        lastDropGuardTime = float.NegativeInfinity;
     }
 
     private void CaptureClearedDropDrag(Game g, Note note, JudgeData data)
@@ -127,9 +129,8 @@ public class InputController : MonoBehaviour
 
     private void PruneDropGuards(float now)
     {
-        // A retry/seek must not leave snapshots from the old chart position.
-        if (now < lastDropGuardTime) ResetDropGuards();
-        lastDropGuardTime = now;
+        // Chart time can move backward during DSP synchronization. Only lifecycle
+        // resets discard all guards; normal updates remove expired entries only.
         expiredDropGuardIds.Clear();
         foreach (var pair in clearedDropGuards)
             if (now >= pair.Value.EffectiveTime + DropNoteIsolation.LateWindowSeconds)

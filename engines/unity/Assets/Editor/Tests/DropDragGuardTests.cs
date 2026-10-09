@@ -131,7 +131,7 @@ public class DropDragGuardTests
     }
 
     [Test]
-    public void MissAndRewindDoNotLeaveClearedGuards()
+    public void MissDoesNotCaptureAGuardAndExplicitResetClearsSuccessfulGuards()
     {
         using (var fixture = new InputFixture(GameMode.Standard))
         {
@@ -143,8 +143,82 @@ public class DropDragGuardTests
             Assert.That(fixture.Eligible(click, null), Is.True);
             fixture.Game.onNoteJudged.Invoke(fixture.Game, drag, new JudgeData(NoteGrade.Perfect, 0, 0));
             Assert.That(fixture.Eligible(click, null), Is.False);
-            fixture.Time(9.99f);
+            fixture.Input.ResetDropGuards();
             Assert.That(fixture.Eligible(click, null), Is.True);
+        }
+    }
+
+    [TestCase(0.005f)]
+    [TestCase(0.020f)]
+    public void BackwardClockCorrectionKeepsAnUnexpiredClearedGuard(float correction)
+    {
+        using (var fixture = new InputFixture(GameMode.Standard))
+        {
+            var drag = fixture.Drag(1, 10f);
+            var click = fixture.Click(2, 10.6f);
+            fixture.Time(10.03f);
+            fixture.Game.onNoteJudged.Invoke(fixture.Game, drag, new JudgeData(NoteGrade.Perfect, 0, 0));
+            fixture.Game.SpawnedNotes.Remove(1);
+            Assert.That(fixture.Eligible(click, null), Is.False);
+
+            fixture.Time(10.03f - correction);
+            Assert.That(fixture.Eligible(click, null), Is.False, "DSP correction is not a new play");
+            fixture.Time(10.201f);
+            Assert.That(fixture.Eligible(click, null), Is.True, "normal expiry still applies");
+        }
+    }
+
+    [Test]
+    public void NewPlayClearsGuardsThroughTheGameStartedEvent()
+    {
+        using (var fixture = new InputFixture(GameMode.Practice))
+        {
+            var drag = fixture.Drag(1, 10f);
+            var click = fixture.Click(2, 10.3f);
+            fixture.Time(10.01f);
+            fixture.Game.onNoteJudged.Invoke(fixture.Game, drag, new JudgeData(NoteGrade.Perfect, 0, 0));
+            fixture.Game.SpawnedNotes.Remove(1);
+            Assert.That(fixture.Eligible(click, null), Is.False);
+            fixture.Game.onGameStarted.Invoke(fixture.Game);
+            Assert.That(fixture.Eligible(click, null), Is.True);
+        }
+    }
+
+    [TestCase(GameMode.Practice)]
+    [TestCase(GameMode.Standard)]
+    public void TwoRealDownsInOneFrameCannotJudgeALaterClickAfterDragPoolReuse(GameMode mode)
+    {
+        using (var fixture = new InputFixture(mode))
+        {
+            var drag = fixture.Drag(1, 10f);
+            var click = fixture.Click(2, 10.33f);
+            var reusedModel = fixture.Model(3, 20f, NoteType.DropDrag);
+            fixture.PrepareJudgments(mode);
+            fixture.Time(10.01f);
+            var frame = Time.frameCount;
+
+            fixture.Down(0);
+            Assert.That(fixture.Game.State.IsJudged(1), Is.True, "first Down must really settle the Drag");
+            Assert.That(fixture.Game.State.IsJudged(2), Is.False, "guard must be built before Select selection");
+            Assert.That(fixture.Game.State.ClearCount, Is.EqualTo(1));
+
+            drag.Collect();
+            Assert.That(drag.Model, Is.Null, "real Collect resets the pooled model");
+            var reused = fixture.Game.ObjectPool.SpawnNote(reusedModel);
+            Assert.That(reused, Is.SameAs(drag), "the actual pool reuses the old object");
+            reused.transform.position = new Vector3(100, 100, 0);
+
+            // Do not refresh the per-frame touchable lists or yield between Downs.
+            fixture.Down(1);
+            Assert.That(Time.frameCount, Is.EqualTo(frame));
+            Assert.That(fixture.Game.State.IsJudged(2), Is.False, "cleared snapshot must survive pool reuse");
+            Assert.That(click.IsCleared, Is.False);
+            Assert.That(fixture.Game.State.ClearCount, Is.EqualTo(1));
+
+            fixture.Time(10.33f);
+            fixture.Down(2);
+            Assert.That(fixture.Game.State.IsJudged(2), Is.True, "the later real Click remains available");
+            Assert.That(fixture.Game.State.GetJudgement(2).Grade, Is.EqualTo(NoteGrade.Perfect));
         }
     }
 
@@ -172,6 +246,8 @@ public class DropDragGuardTests
         public readonly Game Game;
         public readonly InputController Input;
         private readonly List<GameObject> objects = new List<GameObject>();
+        private LocalPlayerSettings previousSettings;
+        private bool settingsOverridden;
 
         public InputFixture(GameMode mode)
         {
@@ -191,6 +267,12 @@ public class DropDragGuardTests
             Game.ObjectPool = new ObjectPool(Game);
             Input = go.AddComponent<InputController>();
             Input.game = Game;
+            Game.inputController = Input;
+            Game.effectController = go.AddComponent<EffectController>();
+            Game.effectController.game = Game;
+            Game.camera = Object("DropGuardCamera", true).AddComponent<Camera>();
+            Game.camera.orthographic = true;
+            Game.camera.transform.position = new Vector3(0, 0, -10);
             Invoke("Awake");
             Input.EnableInput();
         }
@@ -205,12 +287,42 @@ public class DropDragGuardTests
             var note = go.AddComponent<T>();
             SetProperty(note, nameof(Note.Game), Game);
             SetProperty(note, nameof(Note.Type), type);
-            SetProperty(note, nameof(Note.Model), new ChartModel.Note {id = id, start_time = time, page_index = 0});
+            SetProperty(note, nameof(Note.Model), Model(id, time, type));
             SetProperty(note, nameof(Note.Page), Game.Chart.Model.page_list[0]);
             note.MissThreshold = type.GetDefaultMissThreshold();
             note.Renderer = new NoteRenderer(note);
             Game.SpawnedNotes[id] = note;
             return note;
+        }
+
+        public ChartModel.Note Model(int id, float time, NoteType type)
+        {
+            var model = new ChartModel.Note {id = id, type = (int) type, start_time = time, end_time = time, page_index = 0};
+            Game.Chart.Model.note_list.Add(model);
+            Game.Chart.Model.note_map[id] = model;
+            return model;
+        }
+
+        public void PrepareJudgments(GameMode mode)
+        {
+            // Real pool spawning reads the player's judgment offset; restore it after the test.
+            previousSettings = Context.Player.Settings;
+            settingsOverridden = true;
+            SetProperty(Context.Player, nameof(Player.Settings), new LocalPlayerSettings());
+            SetProperty(Game, nameof(Game.Level), Level.FromExternal(new LevelMeta()));
+            SetProperty(Game, nameof(Game.Difficulty), Difficulty.Extreme);
+            var state = new GameState(Game, mode, new HashSet<Mod>()) {IsPlaying = true};
+            SetProperty(Game, nameof(Game.State), state);
+        }
+
+        public void Down(int finger)
+        {
+            Physics2D.SyncTransforms();
+            Invoke("OnFingerDown", new GameFinger
+            {
+                Index = finger,
+                ScreenPosition = Game.camera.WorldToScreenPoint(Vector3.zero)
+            });
         }
 
         public void Time(float time)
@@ -239,7 +351,14 @@ public class DropDragGuardTests
         public void Dispose()
         {
             Input.DisableInput();
+            // Drain pending Clear -> AwaitAndCollect callbacks safely even after pool reuse.
+            foreach (var go in objects)
+            {
+                var note = go.GetComponent<Note>();
+                if (note != null && note.Model != null) note.Collect();
+            }
             foreach (var go in objects) UnityEngine.Object.DestroyImmediate(go);
+            if (settingsOverridden) SetProperty(Context.Player, nameof(Player.Settings), previousSettings);
         }
     }
 }
@@ -249,6 +368,7 @@ public class DropDragGuardTestDrag : DropDragNote
 {
     protected override NoteRenderer CreateRenderer() => new NoteRenderer(this);
     public override bool IsAutoEnabled() => false;
+    public override void PlayHitSound() { }
     public new void OnDestroy() { }
 }
 
@@ -256,5 +376,6 @@ public class DropDragGuardTestClick : DropClickNote
 {
     protected override NoteRenderer CreateRenderer() => new NoteRenderer(this);
     public override bool IsAutoEnabled() => false;
+    public override void PlayHitSound() { }
     public new void OnDestroy() { }
 }

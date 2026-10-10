@@ -358,8 +358,12 @@ public class InputController : MonoBehaviour
     /// Settles <see cref="dragBatchScratch"/>. Caller must hold
     /// <see cref="EffectController.BeginClearBatch"/> so immediate Clears (including
     /// Misses collected earlier) share one co-located drag-stack FX/SFX budget.
-    /// When <paramref name="deferred"/> is false, only the DragCoHit representative
-    /// (index 0) uses immediate <see cref="Note.OnTouch"/> -- same as legacy Down.
+    /// The representative settles immediately only when no Select claimed this Down
+    /// (<paramref name="deferred"/> false) AND its effective time has arrived. An early
+    /// representative arms like every other early contact: whenever the in-front drag is
+    /// unavailable (armed by a Select-winning Down, cleared, or below admission), the
+    /// next colliding note inherits slot 0 and would otherwise be judged at tap time
+    /// with its contact grade up to its full early window before its trigger point.
     /// The rest of the stack uses <see cref="Note.OnTouchDeferred"/>, matching the
     /// legacy FingerUpdate path so early contacts still arm to perfect time.
     /// When <paramref name="deferred"/> is true (Select claimed the Down), every
@@ -380,7 +384,7 @@ public class InputController : MonoBehaviour
         {
             var note = dragBatchScratch[i];
             if (!IsTouchableNote(note)) continue;
-            if (deferred || i > 0)
+            if (deferred || i > 0 || game.Time < EffectiveNoteTime(note))
             {
                 note.OnTouchDeferred(screenPos);
                 if (budgetStack && note.IsArmed) note.MarkDragStackBudget(stackBudgetId);

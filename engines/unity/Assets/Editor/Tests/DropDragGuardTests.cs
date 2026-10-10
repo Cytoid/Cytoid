@@ -292,6 +292,45 @@ public class DropDragGuardTests
         }
     }
 
+    // Cyanine record 21347999 (C2v3-restored, engine timings): tapping note 14
+    // (DropClick 5.934) armed the overlapping note 15 (DropDrag 6.264) because the
+    // Select won that Down; the next tap at 6.2641 then made the still-early note 17
+    // (6.429) the first colliding drag and the representative slot judged it Perfect
+    // 164ms before its trigger point while 15 correctly resolved at its own trigger
+    // -- two simultaneous pops, one early. Tapping 15 directly (record 21348005)
+    // behaves as intended: the past-start 15 legally takes the immediate slot and 17
+    // arms via contact updates. All drag types share the settle pipeline, so the gate
+    // is type-agnostic: an early representative arms instead of judging at tap time.
+    [TestCase(GameMode.Practice)]
+    [TestCase(GameMode.Standard)]
+    public void EarlyDragRepresentativeArmsInsteadOfJudgingAtTapTime(GameMode mode)
+    {
+        using (var fixture = new InputFixture(mode))
+        {
+            var armed = fixture.Drag(15, 10.0f);
+            var early = fixture.Drag(17, 10.164f); // 164ms after the in-front note
+            armed.transform.position = Vector3.zero;
+            early.transform.position = Vector3.zero;
+            SetProperty(armed, nameof(Note.IsArmed), true); // the "14" tap armed it
+            fixture.PrepareJudgments(mode);
+
+            fixture.Time(10.0f);
+            fixture.Down(0);
+            Assert.That(fixture.Game.State.IsJudged(17), Is.False,
+                "an early representative must not judge at tap time");
+            Assert.That(early.IsArmed, Is.True, "it arms like any other early contact");
+            Assert.That(fixture.Game.State.IsJudged(15), Is.False,
+                "the already-armed in-front note is not consumed by this Down");
+
+            early.TickStackFollowerJudgment();
+            Assert.That(fixture.Game.State.IsJudged(17), Is.False,
+                "armed note resolves only at its trigger point");
+            fixture.Time(10.17f);
+            early.TickStackFollowerJudgment();
+            Assert.That(fixture.Game.State.GetJudgement(17).Grade, Is.EqualTo(NoteGrade.Perfect));
+        }
+    }
+
     private static DropDragGuard Guard(float time) =>
         new DropDragGuard(1, time, time, 0, 1f, Vector2.zero);
 

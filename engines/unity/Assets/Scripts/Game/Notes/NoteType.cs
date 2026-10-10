@@ -16,6 +16,7 @@ public static class NoteTypeExtensions
 {
     public static float GetDefaultMissThreshold(this NoteType type)
     {
+        if (type == NoteType.DropClick) return 0.2f;
         return type == NoteType.DragChild || type == NoteType.CDragChild ? 0.15f : 0.3f;
     }
 }

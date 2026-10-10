@@ -222,6 +222,76 @@ public class DropDragGuardTests
         }
     }
 
+    // GameTouchInput dispatches FingerUpdate only from Moved/Stationary phases -- never on
+    // the press frame. These tests lock that contract at the settle level using the timings
+    // of a recorded replay over two consecutive DropDrag landings (20ms apart, beyond
+    // DragStackBatchGapSeconds, so the pair can never co-batch): one Down settles exactly
+    // one note; the second settles on the next stationary contact update with the same
+    // grade (late pair), or arms and resolves at its own trigger point (early pair). A
+    // port over an event layer that co-dispatches Down+Update on the press frame (e.g.
+    // LeanTouch UpdateEvents) regresses both and settles two notes from one tap.
+    [TestCase(GameMode.Practice)]
+    [TestCase(GameMode.Standard)]
+    public void NextStationaryUpdateSettlesSecondConsecutiveDropDragWithSameGrade(GameMode mode)
+    {
+        using (var fixture = new InputFixture(mode))
+        {
+            var first = fixture.Drag(56, 5.056f);
+            var second = fixture.Drag(58, 5.076f); // 20ms apart: never co-batched
+            first.transform.position = Vector3.zero;
+            second.transform.position = Vector3.zero;
+            fixture.PrepareJudgments(mode);
+
+            fixture.Time(5.251f); // 195ms / 175ms late: both inside the late Perfect window
+            fixture.Down(0);
+            Assert.That(fixture.Game.State.IsJudged(56), Is.True, "the Down settles the first drag");
+            Assert.That(fixture.Game.State.GetJudgement(56).Grade, Is.EqualTo(NoteGrade.Perfect));
+            Assert.That(fixture.Game.State.IsJudged(58), Is.False,
+                "a Down must not settle the second consecutive drag");
+            Assert.That(second.IsArmed, Is.False, "and must not arm it either");
+
+            fixture.Time(5.259f); // next stationary contact frame (120Hz)
+            fixture.Update(0);
+            Assert.That(fixture.Game.State.IsJudged(58), Is.True,
+                "the first stationary update settles the second drag");
+            Assert.That(fixture.Game.State.GetJudgement(58).Grade, Is.EqualTo(NoteGrade.Perfect),
+                "same grade a press-frame judgment would have given");
+        }
+    }
+
+    [TestCase(GameMode.Practice)]
+    [TestCase(GameMode.Standard)]
+    public void EarlySecondConsecutiveDropDragArmsOnContactUpdateAndResolvesAtTriggerPoint(GameMode mode)
+    {
+        using (var fixture = new InputFixture(mode))
+        {
+            var first = fixture.Drag(44, 4.125f);
+            var second = fixture.Drag(47, 4.287f);
+            first.transform.position = Vector3.zero;
+            second.transform.position = Vector3.zero;
+            fixture.PrepareJudgments(mode);
+
+            fixture.Time(4.284f); // 159ms late / 2.7ms early
+            fixture.Down(0);
+            Assert.That(fixture.Game.State.GetJudgement(44).Grade, Is.EqualTo(NoteGrade.Perfect));
+            Assert.That(fixture.Game.State.IsJudged(47), Is.False,
+                "a Down must not settle the still-early second drag");
+
+            fixture.Time(4.285f); // contact while still before the trigger point
+            fixture.Update(0);
+            Assert.That(second.IsArmed, Is.True, "contact before start arms the note");
+            Assert.That(fixture.Game.State.IsJudged(47), Is.False);
+
+            second.TickStackFollowerJudgment();
+            Assert.That(fixture.Game.State.IsJudged(47), Is.False,
+                "armed note resolves only at its trigger point");
+            fixture.Time(4.292f);
+            second.TickStackFollowerJudgment();
+            Assert.That(fixture.Game.State.IsJudged(47), Is.True);
+            Assert.That(fixture.Game.State.GetJudgement(47).Grade, Is.EqualTo(NoteGrade.Perfect));
+        }
+    }
+
     private static DropDragGuard Guard(float time) =>
         new DropDragGuard(1, time, time, 0, 1f, Vector2.zero);
 
@@ -319,6 +389,20 @@ public class DropDragGuardTests
         {
             Physics2D.SyncTransforms();
             Invoke("OnFingerDown", new GameFinger
+            {
+                Index = finger,
+                ScreenPosition = Game.camera.WorldToScreenPoint(Vector3.zero)
+            });
+        }
+
+        /// <summary>
+        /// Raises the real OnFingerUpdate chain for a finger resting at world zero, as
+        /// GameTouchInput does on every Moved/Stationary frame after the press frame.
+        /// </summary>
+        public void Update(int finger)
+        {
+            Physics2D.SyncTransforms();
+            Invoke("OnFingerUpdate", new GameFinger
             {
                 Index = finger,
                 ScreenPosition = Game.camera.WorldToScreenPoint(Vector3.zero)

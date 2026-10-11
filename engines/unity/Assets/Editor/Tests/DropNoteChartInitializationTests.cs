@@ -81,6 +81,13 @@ public class DropNoteChartInitializationTests
         Assert.That(note.NoteDirection, Is.EqualTo(0));
     }
 
+    // Same configuration Context assigns to JsonConvert.DefaultSettings at startup.
+    private static readonly JsonSerializerSettings RuntimeJsonSettings = new JsonSerializerSettings
+    {
+        Converters = new List<JsonConverter> {new UnityColorConverter()},
+        ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+    };
+
     private static Chart Load(
         NoteType type, bool experimentalAr = false, float approachRate = 1f,
         int direction = 0, bool flip = false, int pageIndex = 5, double tick = 2640,
@@ -118,7 +125,11 @@ public class DropNoteChartInitializationTests
             });
         }
 
-        return new Chart(JsonConvert.SerializeObject(model), false, flip, true,
+        // Context assigns JsonConvert.DefaultSettings during runtime startup, which
+        // EditMode tests never execute. Mirror that production configuration here:
+        // without ReferenceLoopHandling.Ignore, serializing ChartModel's Vector3
+        // fields throws on the self-referencing getter-only `normalized` property.
+        return new Chart(JsonConvert.SerializeObject(model, RuntimeJsonSettings), false, flip, true,
             experimentalAr, approachRate, 5f);
     }
 }

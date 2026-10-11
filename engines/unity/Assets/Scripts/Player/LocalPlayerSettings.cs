@@ -102,6 +102,8 @@ public class LocalPlayerSettings
     [JsonProperty("skip_music_on_completion")]
     public bool SkipMusicOnCompletion { get; set; } = true;
 
+    [JsonProperty("collect_play_data")] public bool CollectPlayData { get; set; } = false;
+
     [JsonProperty("graphics_quality")]
     public GraphicsQuality GraphicsQuality { get; set; } =
         Application.platform == RuntimePlatform.Android ? GraphicsQuality.Medium : GraphicsQuality.High;

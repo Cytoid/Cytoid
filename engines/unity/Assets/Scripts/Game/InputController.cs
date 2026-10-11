@@ -44,11 +44,41 @@ public class InputController : MonoBehaviour
     /// </summary>
     public const float DragStackBatchGapSeconds = 0.015f;
 
+    /// <summary>
+    /// A recording only binds for release settlement after its finger has moved this far
+    /// (judgement-world units) from its press point: "swiped past". A stationary tap that
+    /// merely overlaps a neighbouring drag's hitbox still records it, but that recording
+    /// resolves at the note's own trigger point instead of popping at the tap's lift
+    /// (cyanine record 21348400: taps on 28/46 also popped 30/47, 330ms early).
+    /// </summary>
+    public const float SwipeBindMoveThreshold = 0.05f;
+
+    /// <summary>
+    /// A DropDrag press settles its representative immediately only while within this
+    /// window ahead of the trigger point (on-time feel). Earlier DropDrag presses merely
+    /// record the note (arm) and it resolves at its own trigger point -- a press aimed
+    /// at a just-consumed neighbour whose hitbox overlaps an earlier DropDrag must not
+    /// pop that note far above the line (cyanine record 21349071: 17 settled 116ms
+    /// early because 15 had been recorded by an overlapping stationary hold and already
+    /// tick-resolved when the player's own press for 15 landed). Ordinary travelling
+    /// drags are exempt: they are chased with the scan line and keep the instant settle.
+    /// </summary>
+    public const float PressSettleEarlyWindowSeconds = 0.070f;
+
     public Game game;
 
     public readonly Dictionary<int, FlickNote> FlickingNotes = new Dictionary<int, FlickNote>(); // Finger index to note
     public readonly Dictionary<int, HoldNote> HoldingNotes = new Dictionary<int, HoldNote>(); // Finger index to note
-    public readonly List<Note> TouchableDragNotes = new List<Note>(); // Drag head, Drag child, CDrag child
+    public readonly List<Note> TouchableDragNotes = new List<Note>(); // Drag head, Drag child, CDrag child, DropDrag
+    /// <summary>
+    /// Drag notes currently recorded (armed) and not yet settled -- a per-frame
+    /// snapshot like <see cref="TouchableDragNotes"/>. Armed drags are not settle
+    /// candidates (they stay absent from <see cref="TouchableDragNotes"/>) but a
+    /// Down touching an earlier one continues that in-flight chain instead of
+    /// settling the next note at tap time (see <see cref="PressedOnInFlightDragChain"/>).
+    /// Stack followers are absent; their primaries carry the shared position.
+    /// </summary>
+    public readonly List<Note> ArmedDragNotes = new List<Note>(); // Recorded (armed) drags
     public readonly List<HoldNote> TouchableHoldNotes = new List<HoldNote>(); // Hold, Long hold (FingerUpdate)
     /// <summary>
     /// Click / CDrag head / Flick / unheld Hold in SpawnedNotes id order.
@@ -60,6 +90,17 @@ public class InputController : MonoBehaviour
     private readonly List<Note> hitCandidates = new List<Note>();
     private readonly List<Note> clusterScratch = new List<Note>();
     private readonly List<Note> dragBatchScratch = new List<Note>();
+    /// <summary>
+    /// Drag notes recorded (armed) by each finger's swipe contact -- recordings made while
+    /// the finger was still at its press point never bind (see
+    /// <see cref="SwipeBindMoveThreshold"/>). Bound notes settle when that finger lifts
+    /// (<see cref="SettleArmedDrags"/>) or at their own trigger points, whichever comes
+    /// first. DropDrag notes are never bound here: they settle only at their own trigger
+    /// points. Entries for notes that already settled are pruned lazily.
+    /// </summary>
+    private readonly Dictionary<int, List<Note>> armedDragsByFinger = new Dictionary<int, List<Note>>();
+    /// <summary>Press-point (judgement-world) per finger; drives swipe detection for release binding.</summary>
+    private readonly Dictionary<int, Vector3> fingerDownPositions = new Dictionary<int, Vector3>();
     private readonly Dictionary<int, DropDragGuard> clearedDropGuards = new Dictionary<int, DropDragGuard>();
     private readonly List<DropDragGuard> dropGuardsForDown = new List<DropDragGuard>();
     private readonly List<int> expiredDropGuardIds = new List<int>();
@@ -160,8 +201,10 @@ public class InputController : MonoBehaviour
     }
 
     /// <summary>
-    /// Release Hold/Flick finger ownership without producing new judgments.
-    /// Used by pause, Fail/Complete/Dispose via <see cref="DisableInput"/>.
+    /// Release Hold/Flick finger ownership without producing new judgments. Armed drag
+    /// bindings drop too: those notes stay armed and settle at their own trigger points
+    /// via the judgment tick. Used by pause, Fail/Complete/Dispose via
+    /// <see cref="DisableInput"/>.
     /// </summary>
     public void ResetBindingsWithoutJudgment()
     {
@@ -176,6 +219,8 @@ public class InputController : MonoBehaviour
             if (!note.IsCleared) note.StopFlicking();
         });
         FlickingNotes.Clear();
+
+        armedDragsByFinger.Clear();
     }
 
     public void OnNoteCollected(Note note)
@@ -201,12 +246,26 @@ public class InputController : MonoBehaviour
     {
         PruneDropGuards(game.Time);
         TouchableDragNotes.Clear();
+        ArmedDragNotes.Clear();
         TouchableHoldNotes.Clear();
         TouchableSelectNotes.Clear();
         foreach (var id in game.SpawnedNotes.Keys)
         {
             var note = game.SpawnedNotes[id];
-            if (!note.HasEmerged || note.IsCleared || note.IsArmed || note.IsCollected) continue;
+            if (note.IsCleared || note.IsCollected) continue;
+            if (note.IsArmed)
+            {
+                // Armed drags are in-flight recordings, not settle candidates. Keeping
+                // them in a dedicated list lets a later Down detect chain continuation
+                // without rescanning the pool; they stay absent from TouchableDragNotes.
+                if (note.Type == NoteType.DragHead || note.Type == NoteType.DragChild ||
+                    note.Type == NoteType.CDragChild || note.Type == NoteType.DropDrag)
+                {
+                    if (!note.IsDragStackFollower) ArmedDragNotes.Add(note);
+                }
+                continue;
+            }
+            if (!note.HasEmerged) continue;
 
             if (note.Type == NoteType.DragHead || note.Type == NoteType.DragChild || note.Type == NoteType.CDragChild || note.Type == NoteType.DropDrag)
             {
@@ -235,6 +294,7 @@ public class InputController : MonoBehaviour
         var pressedPosition = game.camera.orthographic
             ? game.camera.ScreenToWorldPoint(finger.ScreenPosition)
             : game.camera.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
+        fingerDownPositions[finger.Index] = pressedPosition;
 
         BuildDropGuardsForDown();
 
@@ -258,7 +318,12 @@ public class InputController : MonoBehaviour
             // spatial/time guard in every state; ordinary Drags retain DragCoHit.
             acceptedSelect = FindAcceptedSelect(finger, pressedPosition, acceptedDrag);
 
-            SettleDragBatch(finger.ScreenPosition, deferred: acceptedSelect != null);
+            // A press onto an in-flight (already recorded) chain continues the recording:
+            // the series' first note is armed, so this Down must not settle the next one early.
+            var continuesInFlightChain = PressedOnInFlightDragChain(pressedPosition, acceptedDrag);
+            SettleDragBatch(finger.ScreenPosition,
+                deferred: acceptedSelect != null || continuesInFlightChain,
+                fingerIndex: finger.Index, bindRecordings: false);
         }
         finally
         {
@@ -358,21 +423,25 @@ public class InputController : MonoBehaviour
     /// Settles <see cref="dragBatchScratch"/>. Caller must hold
     /// <see cref="EffectController.BeginClearBatch"/> so immediate Clears (including
     /// Misses collected earlier) share one co-located drag-stack FX/SFX budget.
-    /// The representative settles immediately only when no Select claimed this Down
-    /// (<paramref name="deferred"/> false) AND its effective time has arrived. An early
-    /// representative arms like every other early contact: whenever the in-front drag is
-    /// unavailable (armed by a Select-winning Down, cleared, or below admission), the
-    /// next colliding note inherits slot 0 and would otherwise be judged at tap time
-    /// with its contact grade up to its full early window before its trigger point.
-    /// The rest of the stack uses <see cref="Note.OnTouchDeferred"/>, matching the
-    /// legacy FingerUpdate path so early contacts still arm to perfect time.
-    /// When <paramref name="deferred"/> is true (Select claimed the Down), every
-    /// note in the batch is deferred. Multi-note stacks that arm mark
-    /// <see cref="Note.MarkDragStackBudget"/> with one shared stack id so later
-    /// co-clears share caps via <see cref="EffectController.EnterDragStackClear"/>
-    /// without affecting Click/Flick/Hold/Auto feedback.
+    /// Press semantics: only the representative (slot 0) settles immediately, and only
+    /// when no Select claimed this Down (<paramref name="deferred"/> false), no earlier
+    /// colliding drag is already armed (an in-flight chain), and -- for DropDrag only --
+    /// the press is within <see cref="PressSettleEarlyWindowSeconds"/> of the trigger
+    /// point (or past it) -- with its contact grade. Ordinary travelling drags always
+    /// settle immediately (instant feel). Every other contact (far-early DropDrag
+    /// representatives, stack members, Select-deferred or in-flight-continuation
+    /// batches, swipe/hold updates) is recorded via <see cref="Note.OnTouchDeferred"/>
+    /// and settles when the contacting finger lifts or at the note's own trigger point,
+    /// whichever comes first -- but only recordings made after the finger moved from its
+    /// press point (<paramref name="bindRecordings"/>; Down-path recordings never bind)
+    /// bind for release settlement. Stationary-contact recordings and DropDrag (always)
+    /// resolve exclusively at their own trigger points.
+    /// Multi-note batches that arm mark <see cref="Note.MarkDragStackBudget"/> with one
+    /// shared stack id so later co-clears share caps via
+    /// <see cref="EffectController.EnterDragStackClear"/> without affecting
+    /// Click/Flick/Hold/Auto feedback.
     /// </summary>
-    private void SettleDragBatch(Vector2 screenPos, bool deferred)
+    private void SettleDragBatch(Vector2 screenPos, bool deferred, int fingerIndex, bool bindRecordings)
     {
         if (dragBatchScratch.Count == 0) return;
 
@@ -384,15 +453,90 @@ public class InputController : MonoBehaviour
         {
             var note = dragBatchScratch[i];
             if (!IsTouchableNote(note)) continue;
-            if (deferred || i > 0 || game.Time < EffectiveNoteTime(note))
+            var dropDragEarlyPress = note.Type == NoteType.DropDrag &&
+                                     game.Time < EffectiveNoteTime(note) - PressSettleEarlyWindowSeconds;
+            if (deferred || i > 0 || dropDragEarlyPress)
             {
                 note.OnTouchDeferred(screenPos);
-                if (budgetStack && note.IsArmed) note.MarkDragStackBudget(stackBudgetId);
+                if (note.IsArmed)
+                {
+                    // Drop drags never release-settle; and only swipe recordings bind --
+                    // a stationary tap overlapping a neighbour's hitbox records it for its
+                    // own trigger point instead of popping it at the tap's lift.
+                    if (bindRecordings && note.Type != NoteType.DropDrag) BindArmedDrag(fingerIndex, note);
+                    if (budgetStack) note.MarkDragStackBudget(stackBudgetId);
+                }
             }
             else note.OnTouch(screenPos);
         }
 
         dragBatchScratch.Clear();
+    }
+
+    /// <summary>
+    /// Records a freshly armed drag under the finger whose contact armed it, so that
+    /// finger's release settles it with its recorded grade. A note can only be armed
+    /// once; removing it from every other finger's list first also drops stale entries
+    /// left by notes that already settled and were pool-reused.
+    /// </summary>
+    private void BindArmedDrag(int fingerIndex, Note note)
+    {
+        foreach (var entry in armedDragsByFinger)
+        {
+            if (entry.Key != fingerIndex) entry.Value.Remove(note);
+        }
+        if (!armedDragsByFinger.TryGetValue(fingerIndex, out var list))
+        {
+            list = new List<Note>();
+            armedDragsByFinger[fingerIndex] = list;
+        }
+        if (!list.Contains(note)) list.Add(note);
+    }
+
+    /// <summary>
+    /// Settles drag notes this finger recorded but whose trigger points have not yet
+    /// arrived: releasing the finger judges them immediately with their contact grades.
+    /// Notes already settled at their trigger points (or pool-reused) no-op in
+    /// <see cref="Note.SettleArmed"/>.
+    /// </summary>
+    private void SettleArmedDrags(int fingerIndex)
+    {
+        if (!armedDragsByFinger.TryGetValue(fingerIndex, out var list)) return;
+        armedDragsByFinger.Remove(fingerIndex);
+        if (list.Count == 0 || !game.IsLoaded || !game.State.IsPlaying) return;
+
+        var effects = game.effectController;
+        effects.BeginClearBatch(DragBatchMaxClearFx, DragBatchMaxHitSounds);
+        try
+        {
+            foreach (var note in list) note.SettleArmed();
+        }
+        finally
+        {
+            effects.EndClearBatch();
+            list.Clear();
+        }
+    }
+
+    /// <summary>
+    /// True when an already-armed drag collides with this press ahead of the batch
+    /// representative: the press lands on a chain that is already being recorded, so
+    /// it continues the recording instead of settling the next note at tap time.
+    /// Iterates the per-frame <see cref="ArmedDragNotes"/> snapshot; entries are
+    /// re-checked live because a snapshot note may settle in the same frame's tick
+    /// after the rebuild.
+    /// </summary>
+    private bool PressedOnInFlightDragChain(Vector2 worldPos, Note representative)
+    {
+        if (representative == null) return false;
+        for (var i = 0; i < ArmedDragNotes.Count; i++)
+        {
+            var note = ArmedDragNotes[i];
+            if (note == null || note.Model == null || note.IsCollected || note.IsCleared || !note.IsArmed) continue;
+            if (!note.DoesCollide(worldPos)) continue;
+            if (EffectiveNoteTime(note) < EffectiveNoteTime(representative)) return true;
+        }
+        return false;
     }
 
     /// <summary>
@@ -635,13 +779,18 @@ public class InputController : MonoBehaviour
             }
         }
 
-        // Drag: continuous contact -- clear/arm colliding stack batch in one pass
+        // Drag: continuous contact -- record (arm) colliding stack batch in one pass.
+        // Only recordings made while the finger has moved away from its press point bind
+        // for release settlement; stationary-contact recordings wait for their triggers.
+        var swipeBind = fingerDownPositions.TryGetValue(finger.Index, out var downPos) &&
+                        (pos - downPos).sqrMagnitude > SwipeBindMoveThreshold * SwipeBindMoveThreshold;
         var effects = game.effectController;
         effects.BeginClearBatch(DragBatchMaxClearFx, DragBatchMaxHitSounds);
         try
         {
             CollectCollidingDragBatch(pos);
-            SettleDragBatch(finger.ScreenPosition, deferred: true);
+            SettleDragBatch(finger.ScreenPosition, deferred: true,
+                fingerIndex: finger.Index, bindRecordings: swipeBind);
         }
         finally
         {
@@ -711,6 +860,10 @@ public class InputController : MonoBehaviour
             flickingNote.ReleaseFinger(pos);
             FlickingNotes.Remove(finger.Index);
         }
+
+        // Drags this finger recorded settle now unless their trigger points already did.
+        SettleArmedDrags(finger.Index);
+        fingerDownPositions.Remove(finger.Index);
     }
 
     private static float EffectiveNoteTime(Note note) =>

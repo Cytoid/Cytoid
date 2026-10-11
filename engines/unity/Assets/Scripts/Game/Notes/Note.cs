@@ -353,9 +353,10 @@ public abstract class Note : MonoBehaviour
     }
 
     /// <summary>
-    /// Handles passive contact from an already-down finger. A valid early hit is armed
-    /// and resolves at the effective perfect time; a hit at or after that time resolves
-    /// immediately. Misses retain the existing immediate settlement behavior.
+    /// Handles passive contact from an already-down finger. A valid hit is recorded
+    /// (armed) with its contact grade; settlement happens when the contacting finger
+    /// lifts (<see cref="SettleArmed"/>) or at the note's effective perfect time,
+    /// whichever comes first. Misses retain immediate settlement.
     /// </summary>
     public virtual bool OnTouchDeferred(Vector2 screenPos)
     {
@@ -363,7 +364,7 @@ public abstract class Note : MonoBehaviour
 
         var grade = GetTouchGrade();
         if (grade == NoteGrade.None) return false;
-        if (grade == NoteGrade.Miss || Game.Time >= Model.start_time + JudgmentOffset)
+        if (grade == NoteGrade.Miss)
         {
             Clear(grade);
         }
@@ -373,6 +374,17 @@ public abstract class Note : MonoBehaviour
             armedGrade = grade;
         }
         return true;
+    }
+
+    /// <summary>
+    /// Judges an armed note immediately with its recorded contact grade -- the finger
+    /// that armed it lifted before the note's perfect point. No-ops for notes that
+    /// already settled at their trigger points or were pool-reused since.
+    /// </summary>
+    public void SettleArmed()
+    {
+        if (!IsArmed) return;
+        Clear(armedGrade);
     }
 
     /// <summary>

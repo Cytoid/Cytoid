@@ -294,6 +294,7 @@ public class InputController : MonoBehaviour
         var pressedPosition = game.camera.orthographic
             ? game.camera.ScreenToWorldPoint(finger.ScreenPosition)
             : game.camera.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
+        var downSequence = game.PlayRecordRecorder?.Record(finger.Index, "down", pressedPosition) ?? -1;
         fingerDownPositions[finger.Index] = pressedPosition;
 
         BuildDropGuardsForDown();
@@ -303,34 +304,42 @@ public class InputController : MonoBehaviour
         var effects = game.effectController;
         effects.BeginClearBatch(DragBatchMaxClearFx, DragBatchMaxHitSounds);
         Note acceptedSelect;
-        try
+        // Every settlement this press produces (drag representative, batch Misses,
+        // the accepted Select) shares the press attribution; a null recorder scope is a no-op.
+        using (game.PlayRecordRecorder?.PushJudgmentContext(
+            GamePlayRecordWire.CausePress, finger.Index,
+            downSequence >= 0 ? downSequence : (long?) null))
         {
-            // Collect all colliding eligible Drags without settling yet: Immediate vs Armed
-            // depends on whether a higher-priority Select candidate claims this fresh Down.
-            // Misses still settle immediately and do not arm DragCoHit.
-            var acceptedDrag = CollectCollidingDragBatch(pressedPosition);
-            // Collider miss: collect occluding DropDrags first so every Select on this
-            // Down shares one DragCoHit representative (and one batch window).
-            if (acceptedDrag == null)
-                acceptedDrag = CollectOccludingDropDragBatch(finger, pressedPosition);
+            try
+            {
+                // Collect all colliding eligible Drags without settling yet: Immediate vs Armed
+                // depends on whether a higher-priority Select candidate claims this fresh Down.
+                // Misses still settle immediately and do not arm DragCoHit.
+                var acceptedDrag = CollectCollidingDragBatch(pressedPosition);
+                // Collider miss: collect occluding DropDrags first so every Select on this
+                // Down shares one DragCoHit representative (and one batch window).
+                if (acceptedDrag == null)
+                    acceptedDrag = CollectOccludingDropDragBatch(finger, pressedPosition);
 
-            // Filter Selects before either candidate settles. DropDrag uses the same
-            // spatial/time guard in every state; ordinary Drags retain DragCoHit.
-            acceptedSelect = FindAcceptedSelect(finger, pressedPosition, acceptedDrag);
+                // Filter Selects before either candidate settles. DropDrag uses the same
+                // spatial/time guard in every state; ordinary Drags retain DragCoHit.
+                acceptedSelect = FindAcceptedSelect(finger, pressedPosition, acceptedDrag);
 
-            // A press onto an in-flight (already recorded) chain continues the recording:
-            // the series' first note is armed, so this Down must not settle the next one early.
-            var continuesInFlightChain = PressedOnInFlightDragChain(pressedPosition, acceptedDrag);
-            SettleDragBatch(finger.ScreenPosition,
-                deferred: acceptedSelect != null || continuesInFlightChain,
-                fingerIndex: finger.Index, bindRecordings: false);
+                // A press onto an in-flight (already recorded) chain continues the recording:
+                // the series' first note is armed, so this Down must not settle the next one early.
+                var continuesInFlightChain = PressedOnInFlightDragChain(pressedPosition, acceptedDrag);
+                SettleDragBatch(finger.ScreenPosition,
+                    deferred: acceptedSelect != null || continuesInFlightChain,
+                    fingerIndex: finger.Index, bindRecordings: false,
+                    inputSequence: downSequence >= 0 ? downSequence : (long?) null);
+            }
+            finally
+            {
+                effects.EndClearBatch();
+            }
+
+            AcceptSelect(acceptedSelect, finger, pressedPosition);
         }
-        finally
-        {
-            effects.EndClearBatch();
-        }
-
-        AcceptSelect(acceptedSelect, finger, pressedPosition);
     }
 
     /// <summary>
@@ -441,7 +450,8 @@ public class InputController : MonoBehaviour
     /// <see cref="EffectController.EnterDragStackClear"/> without affecting
     /// Click/Flick/Hold/Auto feedback.
     /// </summary>
-    private void SettleDragBatch(Vector2 screenPos, bool deferred, int fingerIndex, bool bindRecordings)
+    private void SettleDragBatch(Vector2 screenPos, bool deferred, int fingerIndex, bool bindRecordings,
+        long? inputSequence)
     {
         if (dragBatchScratch.Count == 0) return;
 
@@ -465,6 +475,7 @@ public class InputController : MonoBehaviour
                     // own trigger point instead of popping it at the tap's lift.
                     if (bindRecordings && note.Type != NoteType.DropDrag) BindArmedDrag(fingerIndex, note);
                     if (budgetStack) note.MarkDragStackBudget(stackBudgetId);
+                    game.PlayRecordRecorder?.RecordArm(fingerIndex, note, inputSequence);
                 }
             }
             else note.OnTouch(screenPos);
@@ -762,108 +773,121 @@ public class InputController : MonoBehaviour
         var pos = game.camera.orthographic
             ? game.camera.ScreenToWorldPoint(finger.ScreenPosition)
             : game.camera.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
+        var updateSequence = game.PlayRecordRecorder?.Record(finger.Index, "update", pos) ?? -1;
 
-        if (FlickingNotes.ContainsKey(finger.Index))
+        using (game.PlayRecordRecorder?.PushJudgmentContext(
+            GamePlayRecordWire.CauseContact, finger.Index,
+            updateSequence >= 0 ? updateSequence : (long?) null))
         {
-            var flickingNote = FlickingNotes[finger.Index];
-            if (!IsTouchableNote(flickingNote))
+            if (FlickingNotes.ContainsKey(finger.Index))
             {
-                flickingNote.StopFlicking();
-                FlickingNotes.Remove(finger.Index);
-            }
-            else
-            {
-                var result = flickingNote.UpdateFingerPosition(pos);
-                if (result == FlickFingerResult.Cleared)
-                    FlickingNotes.Remove(finger.Index);
-            }
-        }
-
-        // Drag: continuous contact -- record (arm) colliding stack batch in one pass.
-        // Only recordings made while the finger has moved away from its press point bind
-        // for release settlement; stationary-contact recordings wait for their triggers.
-        var swipeBind = fingerDownPositions.TryGetValue(finger.Index, out var downPos) &&
-                        (pos - downPos).sqrMagnitude > SwipeBindMoveThreshold * SwipeBindMoveThreshold;
-        var effects = game.effectController;
-        effects.BeginClearBatch(DragBatchMaxClearFx, DragBatchMaxHitSounds);
-        try
-        {
-            CollectCollidingDragBatch(pos);
-            SettleDragBatch(finger.ScreenPosition, deferred: true,
-                fingerIndex: finger.Index, bindRecordings: swipeBind);
-        }
-        finally
-        {
-            effects.EndClearBatch();
-        }
-
-        // If this is a new finger (Down did not already bind a Hold)
-        if (!HoldingNotes.ContainsKey(finger.Index))
-        {
-            var switchedToNewNote = false; // If the finger holds a new note
-
-            foreach (var note in TouchableHoldNotes)
-            {
-                if (!IsTouchableNote(note)) continue;
-                if (!game.IsLoaded || !game.State.IsPlaying) break;
-                if (!note.DoesCollide(pos)) continue;
-                HoldingNotes.Add(finger.Index, note);
-                note.UpdateFinger(finger.Index, true);
-                switchedToNewNote = true;
-                break;
-            }
-
-            // Query held hold notes (i.e. multiple fingers on the same hold note)
-            if (!switchedToNewNote && game.IsLoaded && game.State.IsPlaying)
-            {
-                foreach (var holdNote in HoldingNotes.Values)
+                var flickingNote = FlickingNotes[finger.Index];
+                if (!IsTouchableNote(flickingNote))
                 {
-                    if (!IsTouchableNote(holdNote)) continue;
-                    if (!holdNote.DoesCollide(pos)) continue;
-                    HoldingNotes.Add(finger.Index, holdNote);
-                    holdNote.UpdateFinger(finger.Index, true);
-                    break;
+                    flickingNote.StopFlicking();
+                    FlickingNotes.Remove(finger.Index);
+                }
+                else
+                {
+                    var result = flickingNote.UpdateFingerPosition(pos);
+                    if (result == FlickFingerResult.Cleared)
+                        FlickingNotes.Remove(finger.Index);
                 }
             }
-        }
-        else // The finger is already holding a note
-        {
-            var holdNote = HoldingNotes[finger.Index];
 
-            if (!IsTouchableNote(holdNote))
+            // Drag: continuous contact -- record (arm) colliding stack batch in one pass.
+            // Only recordings made while the finger has moved away from its press point bind
+            // for release settlement; stationary-contact recordings wait for their triggers.
+            var swipeBind = fingerDownPositions.TryGetValue(finger.Index, out var downPos) &&
+                            (pos - downPos).sqrMagnitude > SwipeBindMoveThreshold * SwipeBindMoveThreshold;
+            var effects = game.effectController;
+            effects.BeginClearBatch(DragBatchMaxClearFx, DragBatchMaxHitSounds);
+            try
             {
-                HoldingNotes.Remove(finger.Index);
+                CollectCollidingDragBatch(pos);
+                SettleDragBatch(finger.ScreenPosition, deferred: true,
+                    fingerIndex: finger.Index, bindRecordings: swipeBind,
+                    inputSequence: updateSequence >= 0 ? updateSequence : (long?) null);
             }
-            else if (!holdNote.DoesCollide(pos)) // If holding elsewhere
+            finally
             {
-                holdNote.UpdateFinger(finger.Index, false);
-                HoldingNotes.Remove(finger.Index);
+                effects.EndClearBatch();
+            }
+
+            // If this is a new finger (Down did not already bind a Hold)
+            if (!HoldingNotes.ContainsKey(finger.Index))
+            {
+                var switchedToNewNote = false; // If the finger holds a new note
+
+                foreach (var note in TouchableHoldNotes)
+                {
+                    if (!IsTouchableNote(note)) continue;
+                    if (!game.IsLoaded || !game.State.IsPlaying) break;
+                    if (!note.DoesCollide(pos)) continue;
+                    HoldingNotes.Add(finger.Index, note);
+                    note.UpdateFinger(finger.Index, true);
+                    switchedToNewNote = true;
+                    break;
+                }
+
+                // Query held hold notes (i.e. multiple fingers on the same hold note)
+                if (!switchedToNewNote && game.IsLoaded && game.State.IsPlaying)
+                {
+                    foreach (var holdNote in HoldingNotes.Values)
+                    {
+                        if (!IsTouchableNote(holdNote)) continue;
+                        if (!holdNote.DoesCollide(pos)) continue;
+                        HoldingNotes.Add(finger.Index, holdNote);
+                        holdNote.UpdateFinger(finger.Index, true);
+                        break;
+                    }
+                }
+            }
+            else // The finger is already holding a note
+            {
+                var holdNote = HoldingNotes[finger.Index];
+
+                if (!IsTouchableNote(holdNote))
+                {
+                    HoldingNotes.Remove(finger.Index);
+                }
+                else if (!holdNote.DoesCollide(pos)) // If holding elsewhere
+                {
+                    holdNote.UpdateFinger(finger.Index, false);
+                    HoldingNotes.Remove(finger.Index);
+                }
             }
         }
     }
 
     protected virtual void OnFingerUp(GameFinger finger)
     {
-        if (HoldingNotes.ContainsKey(finger.Index))
-        {
-            var holdNote = HoldingNotes[finger.Index];
-            holdNote.UpdateFinger(finger.Index, false);
-            HoldingNotes.Remove(finger.Index);
-        }
-        if (FlickingNotes.ContainsKey(finger.Index))
-        {
-            var pos = game.camera.orthographic
-                ? game.camera.ScreenToWorldPoint(finger.ScreenPosition)
-                : game.camera.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
+        var pos = game.camera.orthographic
+            ? game.camera.ScreenToWorldPoint(finger.ScreenPosition)
+            : game.camera.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
+        var upSequence = game.PlayRecordRecorder?.Record(finger.Index, "up", pos) ?? -1;
 
-            var flickingNote = FlickingNotes[finger.Index];
-            flickingNote.ReleaseFinger(pos);
-            FlickingNotes.Remove(finger.Index);
-        }
+        using (game.PlayRecordRecorder?.PushJudgmentContext(
+            GamePlayRecordWire.CauseRelease, finger.Index,
+            upSequence >= 0 ? upSequence : (long?) null))
+        {
+            if (HoldingNotes.ContainsKey(finger.Index))
+            {
+                var holdNote = HoldingNotes[finger.Index];
+                holdNote.UpdateFinger(finger.Index, false);
+                HoldingNotes.Remove(finger.Index);
+            }
+            if (FlickingNotes.ContainsKey(finger.Index))
+            {
+                var flickingNote = FlickingNotes[finger.Index];
+                flickingNote.ReleaseFinger(pos);
+                FlickingNotes.Remove(finger.Index);
+            }
 
-        // Drags this finger recorded settle now unless their trigger points already did.
-        SettleArmedDrags(finger.Index);
-        fingerDownPositions.Remove(finger.Index);
+            // Drags this finger recorded settle now unless their trigger points already did.
+            SettleArmedDrags(finger.Index);
+            fingerDownPositions.Remove(finger.Index);
+        }
     }
 
     private static float EffectiveNoteTime(Note note) =>

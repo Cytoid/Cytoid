@@ -229,7 +229,11 @@ public abstract class Note : MonoBehaviour
         {
             if (Game.Time >= Model.start_time + JudgmentOffset)
             {
-                Clear(armedGrade);
+                using (Game.PlayRecordRecorder?.PushJudgmentContext(
+                    GamePlayRecordWire.CauseTriggerTick, null, null))
+                {
+                    Clear(armedGrade);
+                }
             }
         }
         else
@@ -245,7 +249,11 @@ public abstract class Note : MonoBehaviour
                     }
                     else
                     {
-                        Clear(NoteGrade.Perfect);
+                        using (Game.PlayRecordRecorder?.PushJudgmentContext(
+                            GamePlayRecordWire.CauseAutoplay, null, null))
+                        {
+                            Clear(NoteGrade.Perfect);
+                        }
                     }
                 }
             }
@@ -253,7 +261,11 @@ public abstract class Note : MonoBehaviour
             // Check removable
             if (ShouldMiss())
             {
-                Clear(NoteGrade.Miss);
+                using (Game.PlayRecordRecorder?.PushJudgmentContext(
+                    GamePlayRecordWire.CauseMiss, null, null))
+                {
+                    Clear(NoteGrade.Miss);
+                }
             }
         }
     }

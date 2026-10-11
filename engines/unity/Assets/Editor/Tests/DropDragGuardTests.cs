@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using NUnit.Framework;
@@ -813,6 +814,92 @@ public class DropDragGuardTests
             Assert.That(fixture.Game.State.Judgements[2].IsJudged, Is.True);
             Assert.That(fixture.Game.State.Judgements[2].Grade, Is.EqualTo(NoteGrade.Perfect));
         }
+    }
+
+    [Test]
+    public void RecordV2JudgeCarriesPressAttribution()
+    {
+        using (var fixture = new InputFixture(GameMode.Practice))
+        {
+            var drag = fixture.Drag(1, 10.0f);
+            drag.transform.position = Vector3.zero;
+            fixture.PrepareJudgments(GameMode.Practice);
+            var recorder = AttachRecorder(fixture);
+
+            fixture.Time(10.01f);
+            var finger = fixture.Down(0);
+
+            var judge = SingleJudge(recorder.RecordedEvents);
+            Assert.That(judge.note, Is.EqualTo(1));
+            Assert.That(judge.grade, Is.EqualTo("perfect"));
+            Assert.That(judge.cause, Is.EqualTo(GamePlayRecordWire.CausePress));
+            Assert.That(judge.finger, Is.EqualTo(finger));
+            Assert.That(judge.hasInput, Is.True, "the judge back-references the down event");
+            Assert.That(judge.input, Is.EqualTo(0), "sequence 0 is the down touch");
+        }
+    }
+
+    [Test]
+    public void RecordV2AttributionAcrossArmReleaseAndTriggerTick()
+    {
+        using (var fixture = new InputFixture(GameMode.Practice))
+        {
+            var dropDrag = fixture.Drag(3, 10.0f);            // far-early press records, tick settles
+            dropDrag.transform.position = new Vector3(6f, 0f, 0f);
+            var swipeA = fixture.DragChild(1, 10.0f);         // swipe-recorded, release settles
+            swipeA.transform.position = Vector3.zero;
+            var swipeB = fixture.DragChild(2, 10.15f); // 0.23s early at the swipe: within DragChild admission+window
+            swipeB.transform.position = new Vector3(-3f, 0f, 0f);
+            fixture.PrepareJudgments(GameMode.Practice);
+            var recorder = AttachRecorder(fixture);
+
+            fixture.Time(9.9f);
+            var finger = fixture.Down(0, new Vector3(6f, 0f, 0f)); // press records dropDrag (0.1s early)
+            fixture.Update(finger, Vector3.zero);                  // moving swipe records swipeA
+            fixture.Time(9.92f);
+            fixture.Update(finger, new Vector3(-3f, 0f, 0f));      // ...and swipeB
+            fixture.Time(9.95f);
+            fixture.Up(finger, new Vector3(-3f, 0f, 0f));          // release settles both bindings
+            fixture.Time(10.0f);
+            dropDrag.TickStackFollowerJudgment();                   // trigger tick settles dropDrag
+
+            var judges = recorder.RecordedEvents.OfType<GamePlayJudgeEvent>().ToList();
+            Assert.That(judges.Count, Is.EqualTo(3));
+
+            var released = judges.Where(j => j.cause == GamePlayRecordWire.CauseRelease).ToList();
+            Assert.That(released.Select(j => j.note).OrderBy(n => n), Is.EqualTo(new[] {1, 2}),
+                "the release settles every note this finger recorded");
+            Assert.That(released.All(j => j.finger == finger && j.hasInput), Is.True,
+                "both batch members share the release attribution and input back-reference");
+
+            var ticked = judges.Single(j => j.cause == GamePlayRecordWire.CauseTriggerTick);
+            Assert.That(ticked.note, Is.EqualTo(3));
+            Assert.That(ticked.finger, Is.Null, "a timer-driven settlement has no direct finger");
+            Assert.That(ticked.hasInput, Is.False);
+
+            var arms = recorder.RecordedEvents.OfType<GamePlayArmEvent>().ToList();
+            Assert.That(arms.Count, Is.EqualTo(3), "dropDrag, swipeA, swipeB each record once");
+            var dropArm = arms.Single(a => a.note == 3);
+            Assert.That(dropArm.finger, Is.EqualTo(finger));
+            Assert.That(dropArm.hasInput, Is.True);
+            Assert.That(dropArm.input, Is.EqualTo(0), "the arm back-references the press");
+            CollectionAssert.AreEqual(new[] {2L, 4L},
+                arms.Where(a => a.note != 3).OrderBy(a => a.s).Select(a => a.input),
+                "swipe arms reference their own update events");
+        }
+    }
+
+    /// <summary>Attaches a live recorder to the fixture game.</summary>
+    private static GamePlayRecordRecorder AttachRecorder(InputFixture fixture)
+    {
+        var recorder = new GamePlayRecordRecorder(fixture.Game);
+        SetProperty(fixture.Game, nameof(Game.PlayRecordRecorder), recorder);
+        return recorder;
+    }
+
+    private static GamePlayJudgeEvent SingleJudge(IReadOnlyList<GamePlayRecordEvent> events)
+    {
+        return events.OfType<GamePlayJudgeEvent>().Single();
     }
 
     private static DropDragGuard Guard(float time) =>

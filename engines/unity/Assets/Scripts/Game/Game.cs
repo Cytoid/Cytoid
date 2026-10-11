@@ -29,6 +29,7 @@ public class Game : MonoBehaviour
     public GameRenderer Renderer { get; protected set; }
     public GameUiEventController UiEventController { get; protected set; }
     public GameEventPresentationController EventPresentationController { get; protected set; }
+    public GamePlayRecordRecorder PlayRecordRecorder { get; private set; }
 
     public Level Level { get; protected set; }
 
@@ -361,6 +362,10 @@ public class Game : MonoBehaviour
         State.IsStarted = true;
         State.IsPlaying = true;
         GamePlayEventRecorder.Begin(this);
+        if (GamePlayRecordRecorder.ShouldCollect(Context.Player.Settings.CollectPlayData, State.Mode))
+        {
+            PlayRecordRecorder = new GamePlayRecordRecorder(this);
+        }
         LayoutStaticizer.Staticize(levelInfoParent.transform);
         LayoutStaticizer.Staticize(modHolderParent.transform);
         onGameStarted.Invoke(this);
@@ -537,6 +542,7 @@ public class Game : MonoBehaviour
 
         unpauseToken?.Cancel();
         UnpauseCountdown = 0;
+        PlayRecordRecorder?.RecordControl("pause");
         State.IsPlaying = false;
         AudioListener.pause = true;
         GamePlayEventRecorder.Suspend();
@@ -600,6 +606,7 @@ public class Game : MonoBehaviour
         GameStartedOrResumedTimestamp = UnityEngine.Time.realtimeSinceStartup;
         AudioListener.pause = false;
         State.IsPlaying = true;
+        PlayRecordRecorder?.RecordControl("resume");
         GamePlayEventRecorder.Resume();
 
         onGameUnpaused.Invoke(this);
@@ -608,6 +615,7 @@ public class Game : MonoBehaviour
     public virtual async void Abort()
     {
         print("Game aborted");
+        DiscardPlayRecord();
 
         var shouldEmitCalibrationResult = GameEmbedMode.IsBridgeEmbedded &&
                                           (State.Mode == GameMode.Calibration ||
@@ -693,6 +701,7 @@ public class Game : MonoBehaviour
         }
 
         print("Game retried");
+        DiscardPlayRecord();
 
         // Unload resources
         Context.AudioManager.UnloadMusic();
@@ -717,6 +726,7 @@ public class Game : MonoBehaviour
         if (State.IsFailed) return;
         print("Game failed");
 
+        DiscardPlayRecord();
         State.IsFailed = true;
         State.OnFail();
         inputController.DisableInput();
@@ -735,6 +745,11 @@ public class Game : MonoBehaviour
         if (skipMusic == null) skipMusic = Chart.SkipMusicOnCompletion;
 
         State.IsCompleted = true;
+        if (PlayRecordRecorder != null)
+        {
+            State.PlayRecord = PlayRecordRecorder.Complete();
+            PlayRecordRecorder = null;
+        }
 
         State.OnComplete();
         inputController.DisableInput();
@@ -805,6 +820,7 @@ public class Game : MonoBehaviour
 
     public virtual void Dispose()
     {
+        DiscardPlayRecord();
         onGameUpdate.RemoveAllListeners();
         onGameLateUpdate.RemoveAllListeners();
 
@@ -823,6 +839,12 @@ public class Game : MonoBehaviour
         contentProvider = null;
         preserveContentProviderOnDispose = false;
         TierPlaySession = null;
+    }
+
+    private void DiscardPlayRecord()
+    {
+        PlayRecordRecorder?.Discard();
+        PlayRecordRecorder = null;
     }
 }
 

@@ -24,6 +24,8 @@ public sealed class GameState
 
     public bool IsFailed { get; set; }
     public HashSet<Mod> Mods { get; }
+    /// <summary>Completed v2 play record (see GamePlayRecordRecorder); null unless collected and completed.</summary>
+    public GamePlayRecordSnapshot PlayRecord { get; set; }
     public SecuredDouble MaxHealth { get; } = new SecuredDouble();
     public int NoteCount { get; }
 

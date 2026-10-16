@@ -35,6 +35,8 @@ namespace Cytoid.Storyboard.Sprites
 
             // TODO: Optimize this? Don't generate transforms if not in use
             notePlaceholderTransform = new GameObject("NoteControllerPlaceholder_" + Note.id).transform;
+            MainRenderer.NotePositions.Register(Component,
+                MainRenderer.IsInitializing ? float.NegativeInfinity : MainRenderer.Time);
             Clear();
         }
 
@@ -46,6 +48,7 @@ namespace Cytoid.Storyboard.Sprites
         public override void Dispose()
         {
             if (IsDisposed) return;
+            MainRenderer?.NotePositions.Stop(Component, MainRenderer.Time);
             if (notePlaceholderTransform != null)
             {
                 UnityEngine.Object.Destroy(notePlaceholderTransform.gameObject);
@@ -57,7 +60,8 @@ namespace Cytoid.Storyboard.Sprites
 
         public override void Update(NoteControllerState fromState, NoteControllerState toState)
         {
-            base.Update(fromState, toState);
+            // Control values were evaluated before gameplay. This pass only follows
+            // the final pose so sprites parented to the placeholder do not lag a frame.
             if (noteGameObject == null && MainRenderer.Game.SpawnedNotes.ContainsKey(Note.id))
             {
                 noteGameObject = MainRenderer.Game.SpawnedNotes[Note.id].gameObject;
@@ -72,6 +76,11 @@ namespace Cytoid.Storyboard.Sprites
                 return;
             }
             notePlaceholderTransform.position = noteGameObject.transform.position;
+        }
+
+        public void ApplyControls(NoteControllerState fromState, NoteControllerState toState)
+        {
+            base.Update(fromState, toState);
         }
 
     }

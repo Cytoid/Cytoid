@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -20,11 +19,6 @@ public class DragLineElement : MonoBehaviour
 
     private readonly HashSet<int> geometryFromIds = new HashSet<int>();
 
-    private bool hasFromNote;
-    private Note fromNote;
-    private bool hasToNote;
-    private Note toNote;
-    
     private float introRatio;
     private float outroRatio;
 
@@ -67,67 +61,15 @@ public class DragLineElement : MonoBehaviour
         spriteRenderer.material.SetFloat(MaterialStart, 0.0f);
         UpdateTransform();
         spriteRenderer.sortingOrder = fromNoteModel.id;
-        Game.onGameUpdate.RemoveListener(OnGameUpdate);
-        Game.onGameUpdate.AddListener(OnGameUpdate);
     }
 
     private void UpdateTransform()
     {
-        if (Game.SpawnedNotes.ContainsKey(FromNoteModel.id))
-        {
-            if (!hasFromNote)
-            {
-                hasFromNote = true;
-                fromNote = Game.SpawnedNotes[FromNoteModel.id];
-            }
-        }
-        else
-        {
-            if (hasFromNote)
-            {
-                hasFromNote = false;
-                fromNote = null;
-            }
-        }
-        if (Game.SpawnedNotes.ContainsKey(ToNoteModel.id))
-        {
-            if (!hasToNote)
-            {
-                hasToNote = true;
-                toNote = Game.SpawnedNotes[ToNoteModel.id];
-            }
-        }
-        else
-        {
-            if (hasToNote)
-            {
-                hasToNote = false;
-                toNote = null;
-            }
-        }
+        var fromNotePosition = DragPathGeometry.LineStart(VisualPosition(FromNoteModel),
+            Game.GetDragPathPosition(FromNoteModel), Game.GetDragPathPosition(ToNoteModel),
+            Game.Time, FromNoteModel.start_time, ToNoteModel.start_time);
+        var toNotePosition = VisualPosition(ToNoteModel);
 
-        Vector3 fromNotePosition;
-        if (!hasFromNote)
-        {
-            fromNotePosition = FromNoteModel.CalculatePosition(Game.Chart);
-        }
-        else if (fromNote is DragHeadNote dragHeadNote)
-        {
-            // OriginalPosition is only written while Time < start_time; unset (default)
-            // would anchor the line at the world origin and leave a visible stub.
-            fromNotePosition = dragHeadNote.OriginalPosition != default
-                ? dragHeadNote.OriginalPosition
-                : VisualPosition(dragHeadNote);
-        }
-        else
-        {
-            fromNotePosition = VisualPosition(fromNote);
-        }
-
-        var toNotePosition = hasToNote
-            ? VisualPosition(toNote)
-            : ToNoteModel.CalculatePosition(Game.Chart);
-        
         var transform = this.transform;
         transform.localPosition = fromNotePosition;
         length = Vector3.Distance(
@@ -135,23 +77,23 @@ public class DragLineElement : MonoBehaviour
             toNotePosition
         );
         spriteRenderer.material.mainTextureScale = new Vector2(1.0f, length / 0.16f);
-        // Compatible with Override.Rot*: aim with the from-note euler, not from→to.
-        transform.localEulerAngles = hasFromNote
-            ? fromNote.transform.localEulerAngles
-            : FromNoteModel.rotation;
+        transform.localEulerAngles = DragPathGeometry.Rotation(
+            fromNotePosition, toNotePosition, FromNoteModel.Override);
         transform.localScale = new Vector3(1.0f, length / 0.16f);
     }
 
-    static Vector3 VisualPosition(Note note)
+    private Vector3 VisualPosition(ChartModel.Note model)
     {
-        if (note == null) return Vector3.zero;
-        return note.StackVisualLocalPosition();
+        return Game.SpawnedNotes.TryGetValue(model.id, out var note)
+            ? note.StackVisualLocalPosition()
+            : model.CalculatePosition(Game.Chart);
     }
 
-    private void OnGameUpdate(Game _)
+    public void UpdateVisuals()
     {
+        if (IsCollected) return;
         UpdateTransform();
-        
+
         spriteRenderer.enabled = !Game.State.Mods.Contains(Mod.HideNotes);
 
         if (Game.SpawnedNotes.ContainsKey(FromNoteModel.id))
@@ -194,8 +136,7 @@ public class DragLineElement : MonoBehaviour
             introRatio = time < FromNoteModel.nextdraglinestarttime ? 1.0f : 0.0f;
         }
 
-        // Compute outro before Collect so completion happens on the same frame
-        // (avoids a one-frame remnant when _Start is never pulled to 1).
+        // Compute completion before Collect so no expired line survives this frame.
         var outroDuration = ToNoteModel.start_time - FromNoteModel.start_time;
         if (outroDuration > 0f)
         {
@@ -207,18 +148,10 @@ public class DragLineElement : MonoBehaviour
             outroRatio = time < FromNoteModel.start_time ? 0f : 1f;
         }
 
-        if (introRatio > 0 && introRatio < 1)
-        {
-            spriteRenderer.material.SetFloat(MaterialEnd, 1.0f - introRatio);
-        }
-        else if (introRatio <= 0)
-        {
-            spriteRenderer.material.SetFloat(MaterialEnd, 1.0f);
-        }
-        else
-        {
-            spriteRenderer.material.SetFloat(MaterialEnd, 0.0f);
-        }
+        var progress = DragPathGeometry.Progress(time, FromNoteModel.start_time, ToNoteModel.start_time);
+        spriteRenderer.material.SetFloat(MaterialEnd,
+            DragPathGeometry.RemainingReveal(Mathf.Clamp01(1f - introRatio), progress));
+        spriteRenderer.material.SetFloat(MaterialStart, 0f);
 
         if (outroRatio >= 1f)
         {
@@ -227,10 +160,6 @@ public class DragLineElement : MonoBehaviour
             return;
         }
 
-        if (outroRatio > 0f)
-        {
-            spriteRenderer.material.SetFloat(MaterialStart, outroRatio);
-        }
     }
 
     static float FallbackAlpha(Note note)
@@ -245,13 +174,8 @@ public class DragLineElement : MonoBehaviour
         IsCollected = true;
         
         Game.ObjectPool.CollectDragLine(this);
-        Game.onGameUpdate.RemoveListener(OnGameUpdate);
         FromNoteModel = default;
         ToNoteModel = default;
-        hasFromNote = default;
-        fromNote = default;
-        hasToNote = default;
-        toNote = default;
         introRatio = default;
         outroRatio = default;
         length = default;

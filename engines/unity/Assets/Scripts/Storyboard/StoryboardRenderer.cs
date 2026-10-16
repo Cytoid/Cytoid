@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cytoid.Storyboard.Controllers;
+using Cytoid.Storyboard.Notes;
 using Cytoid.Storyboard.PostProcess;
 using Cytoid.Storyboard.Sprites;
 using Cytoid.Storyboard.Texts;
@@ -24,6 +25,8 @@ namespace Cytoid.Storyboard
         public Game Game => Storyboard.Game;
         public Camera Camera { get; private set; }
         public float Time => Game.Time;
+        public NotePositionTimeline NotePositions { get; } = new NotePositionTimeline();
+        public bool IsInitializing { get; private set; }
         public StoryboardRendererProvider Provider => StoryboardRendererProvider.Instance;
         
         public readonly Dictionary<string, StoryboardComponentRenderer> ComponentRenderers = 
@@ -85,6 +88,7 @@ namespace Cytoid.Storyboard
         {
             ComponentRenderers.Values.ForEach(it => it.Dispose());
             ComponentRenderers.Clear();
+            NotePositions.Clear();
             TypedComponentRenderers.Clear();
             SpritePathRefCount.Clear();
             Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.Storyboard);
@@ -93,6 +97,7 @@ namespace Cytoid.Storyboard
 
         public async UniTask Initialize()
         {
+            IsInitializing = true;
             // Clear
             Clear();
 
@@ -119,9 +124,11 @@ namespace Cytoid.Storyboard
                 await SpawnObjects<Controller, ControllerState, ControllerRenderer>(Storyboard.Controllers.Values.ToList(), controller => new ControllerRenderer(this, controller), Predicate);
                 timer.Time("Controller");
                 timer.Time();
+                IsInitializing = false;
             }
             catch
             {
+                IsInitializing = false;
                 // SpawnObjects only rolls back its own batch. Earlier successful type batches would
                 // otherwise remain registered, and Game catches storyboard init failures without
                 // calling Dispose (listeners below are registered only on success).
@@ -307,6 +314,26 @@ namespace Cytoid.Storyboard
                 var id = renderersToDestroy[i];
                 if (!ComponentRenderers.TryGetValue(id, out var renderer)) continue;
                 DestroyObject(id, renderer);
+            }
+        }
+
+        public void UpdateNoteControls()
+        {
+            if (Time < 0 || Game.State.IsReadyToExit) return;
+            if (!TypedComponentRenderers.TryGetValue(typeof(NoteController), out var renderers)) return;
+            // Destroy can remove entries from this list. Iterate by index without
+            // skipping the next controller, preserving registration-order precedence.
+            for (var i = 0; i < renderers.Count;)
+            {
+                var renderer = (NoteControllerRenderer) renderers[i];
+                renderer.Component.FindStates(Time, out var from, out var to);
+                if (from?.Destroy == true)
+                {
+                    DestroyObjectsById(renderer.Component.Id);
+                    continue;
+                }
+                if (from != null) renderer.ApplyControls((NoteControllerState) from, (NoteControllerState) to);
+                i++;
             }
         }
 

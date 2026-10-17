@@ -123,3 +123,8 @@ flutter_plugin/example/android/build/
 
 # Free packages, but we don't have license to redistribute them
 /Assets/Native Audio/
+
+# FlatParity dev tool (build outputs + generated golden fixture)
+/Tools/FlatParity/bin/
+/Tools/FlatParity/obj/
+/Tools/FlatParity/golden.json

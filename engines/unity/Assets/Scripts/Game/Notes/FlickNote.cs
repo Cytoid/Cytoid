@@ -16,11 +16,17 @@ public class FlickNote : Note
     public bool IsFlicking { get; set; }
     public float FlickingStartTime { get; set; }
     public Vector2 FlickingStartPosition { get; set; }
+    /// <summary>
+    /// Sign of the swipe x that cleared this note (-1 left, 1 right); 0 when the clear
+    /// involved no directional swipe (auto). Consumed by the flat clear FX.
+    /// </summary>
+    public int LastSwipeDirection { get; private set; }
 
     private float age;
 
     protected override NoteRenderer CreateRenderer()
     {
+        if (Game.Config.UseFlatNoteDesign) return new FlatFlickNoteRenderer(this);
         return Game.Config.UseClassicStyle
             ? (NoteRenderer) new ClassicFlickNoteRenderer(this)
             : throw new NotSupportedException();
@@ -49,6 +55,7 @@ public class FlickNote : Note
         IsFlicking = default;
         FlickingStartTime = default;
         FlickingStartPosition = default;
+        LastSwipeDirection = default;
     }
 
     /// <summary>
@@ -65,8 +72,11 @@ public class FlickNote : Note
         if (Math.Abs(swipeVector.x) < Game.camera.orthographicSize * 0.01f)
             return FlickFingerResult.Pending;
 
+        // OnClear consumes the direction synchronously inside TryClear, so record it first.
+        LastSwipeDirection = Math.Sign(swipeVector.x);
         if (TryClear())
             return FlickFingerResult.Cleared;
+        LastSwipeDirection = 0;
 
         // Failed early/out-of-window attempt: keep binding; require a new threshold cross.
         FlickingStartPosition = screenPos;
@@ -85,7 +95,10 @@ public class FlickNote : Note
             var swipeVector = screenPos - FlickingStartPosition;
             // TODO: Consider rotation
             if (Math.Abs(swipeVector.x) >= Game.camera.orthographicSize * 0.01f)
+            {
+                LastSwipeDirection = Math.Sign(swipeVector.x);
                 TryClear();
+            }
         }
 
         if (!IsCleared)

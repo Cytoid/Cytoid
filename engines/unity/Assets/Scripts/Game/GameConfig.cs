@@ -14,6 +14,7 @@ public class GameConfig
     public readonly Dictionary<NoteType, Color[]> GlobalFillColorsOverride = new Dictionary<NoteType, Color[]>();
 
     public bool UseClassicStyle = true;
+    public bool UseFlatNoteDesign;
     public bool DisplayNoteIds;
     public readonly Dictionary<NoteType, float> NoteTransformSizes = new Dictionary<NoteType, float>();
     public readonly Dictionary<NoteType, float> NoteHitboxSizes = new Dictionary<NoteType, float>();
@@ -50,6 +51,8 @@ public class GameConfig
 
         UseScannerSmoothing = true;
         DisplayNoteIds = Context.Player.Settings.DisplayNoteIds;
+        UseFlatNoteDesign = lp.Settings.UseExperimentalNoteDesign;
+        FlatNoteRendererBase.ClearPaletteCache();
 
         GlobalRingColorOverride = chart.Model.ring_color?.ToColor() ?? Color.clear;
         foreach (NoteType type in Enum.GetValues(typeof(NoteType)))

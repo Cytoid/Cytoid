@@ -7,6 +7,7 @@ public class DragChildNote : Note
 
     protected override NoteRenderer CreateRenderer()
     {
+        if (Game.Config.UseFlatNoteDesign) return new FlatDragChildNoteRenderer(this);
         return Game.Config.UseClassicStyle
             ? (NoteRenderer) new ClassicDragChildNoteRenderer(this)
             : throw new NotSupportedException();

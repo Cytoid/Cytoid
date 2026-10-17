@@ -483,6 +483,8 @@ Starts exactly one gameplay session. The envelope `id` is the session id.
         "displayNoteIds": false,
         "useExperimentalNoteAr": false,
         "useExperimentalNoteAnimations": false,
+        "useExperimentalNoteDesign": false,
+        "displayJudgementText": true,
         "clearEffectsSize": 1.0,
         "displayProfiler": false,
         "adaptOverlayToSafeArea": true,
@@ -784,8 +786,10 @@ All fields not listed above MUST be reported in `deferredFields` if sent via
 | `skipMusicOnCompletion` | bool | Fade/skip outro after completion. |
 | `displayEarlyLateIndicators` | bool | Early/late UI. |
 | `displayNoteIds` | bool | Debug note ids. |
-| `useExperimentalNoteAr` | bool | Experimental note AR. |
+| `useExperimentalNoteAr` | bool | Experimental note AR. Ignored by the engine when `useExperimentalNoteDesign` is on. |
 | `useExperimentalNoteAnimations` | bool | Experimental note animations. |
+| `useExperimentalNoteDesign` | bool | Experimental flat note design skin. Forces the classic note AR path off. |
+| `displayJudgementText` | bool | Judgement text on clear/miss effects. |
 | `clearEffectsSize` | number | Clear effect size. |
 | `displayProfiler` | bool | In-engine profiler visibility. |
 | `adaptOverlayToSafeArea` | bool | Adapt overlays to safe area. |

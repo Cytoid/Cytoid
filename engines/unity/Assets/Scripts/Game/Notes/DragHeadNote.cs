@@ -8,6 +8,7 @@ public class DragHeadNote : Note
 {
     protected override NoteRenderer CreateRenderer()
     {
+        if (Game.Config.UseFlatNoteDesign) return new FlatDragHeadNoteRenderer(this);
         return Game.Config.UseClassicStyle
             ? (NoteRenderer) new ClassicDragHeadNoteRenderer(this)
             : throw new NotSupportedException();
@@ -28,6 +29,17 @@ public class DragHeadNote : Note
     private Note toNote;
 
     public bool IsCDrag => Model.type == (int) NoteType.CDragHead;
+
+    // The travelling indicator can appear on an early clear, before intro_time.
+    public bool IsChainEndPending(Game game) =>
+        !game.State.IsJudged(EndNoteModel.id) || game.Time < EndNoteModel.start_time;
+
+    public bool IsChainActive(Game game) =>
+        game.Time >= Model.intro_time && IsChainEndPending(game);
+
+    // CDrag's anchored head ID follows the click window, independently of the chain.
+    public bool IsHeadNoteIdActive(Game game) => !IsCleared &&
+        game.Time >= Model.intro_time && game.Time <= Model.end_time + MissThreshold;
 
     public override void SetData(int noteId)
     {

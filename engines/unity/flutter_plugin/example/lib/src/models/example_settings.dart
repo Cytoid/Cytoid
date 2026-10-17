@@ -33,6 +33,8 @@ class ExampleSettings {
     this.displayNoteIds = false,
     this.useExperimentalNoteAr = false,
     this.useExperimentalNoteAnimations = true,
+    this.useExperimentalNoteDesign = false,
+    this.displayJudgementText = true,
     this.clearEffectsSize = 0,
     this.displayProfiler = false,
     this.adaptOverlayToSafeArea = true,
@@ -80,6 +82,8 @@ class ExampleSettings {
   final bool displayNoteIds;
   final bool useExperimentalNoteAr;
   final bool useExperimentalNoteAnimations;
+  final bool useExperimentalNoteDesign;
+  final bool displayJudgementText;
   final double clearEffectsSize;
   final bool displayProfiler;
   final bool adaptOverlayToSafeArea;
@@ -158,6 +162,8 @@ class ExampleSettings {
     bool? displayNoteIds,
     bool? useExperimentalNoteAr,
     bool? useExperimentalNoteAnimations,
+    bool? useExperimentalNoteDesign,
+    bool? displayJudgementText,
     double? clearEffectsSize,
     bool? displayProfiler,
     bool? adaptOverlayToSafeArea,
@@ -211,6 +217,10 @@ class ExampleSettings {
           useExperimentalNoteAr ?? this.useExperimentalNoteAr,
       useExperimentalNoteAnimations:
           useExperimentalNoteAnimations ?? this.useExperimentalNoteAnimations,
+      useExperimentalNoteDesign:
+          useExperimentalNoteDesign ?? this.useExperimentalNoteDesign,
+      displayJudgementText:
+          displayJudgementText ?? this.displayJudgementText,
       clearEffectsSize: clearEffectsSize ?? this.clearEffectsSize,
       displayProfiler: displayProfiler ?? this.displayProfiler,
       adaptOverlayToSafeArea:
@@ -341,6 +351,8 @@ class ExampleSettings {
         displayNoteIds: displayNoteIds,
         useExperimentalNoteAr: useExperimentalNoteAr,
         useExperimentalNoteAnimations: useExperimentalNoteAnimations,
+        useExperimentalNoteDesign: useExperimentalNoteDesign,
+        displayJudgementText: displayJudgementText,
         clearEffectsSize: clearEffectsSize,
         displayProfiler: displayProfiler,
         adaptOverlayToSafeArea: adaptOverlayToSafeArea,
@@ -384,6 +396,8 @@ class ExampleSettings {
       displayNoteIds: displayNoteIds,
       useExperimentalNoteAr: useExperimentalNoteAr,
       useExperimentalNoteAnimations: useExperimentalNoteAnimations,
+      useExperimentalNoteDesign: useExperimentalNoteDesign,
+      displayJudgementText: displayJudgementText,
       clearEffectsSize: clearEffectsSize,
       displayProfiler: displayProfiler,
       adaptOverlayToSafeArea: adaptOverlayToSafeArea,

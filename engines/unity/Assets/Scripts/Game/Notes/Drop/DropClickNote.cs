@@ -16,6 +16,7 @@ public class DropClickNote : ClickNote
 
     protected override NoteRenderer CreateRenderer()
     {
+        if (Game.Config.UseFlatNoteDesign) return new FlatDropClickNoteRenderer(this);
         return new DropClickNoteRenderer(this);
     }
 }

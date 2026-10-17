@@ -177,6 +177,7 @@ public sealed class GamePlayRecordSnapshot
     public Dictionary<string, int> HitboxSettings;
     public Dictionary<string, int> HitboxSizes;
     public bool ExperimentalNoteAr;
+    public bool ExperimentalNoteDesign;
     public GamePlayRecordEvent[] Events;
 
     public int EventCount => Events?.Length ?? 0;
@@ -384,6 +385,7 @@ public sealed class GamePlayRecordRecorder
             HitboxSizes = game.Config.NoteHitboxSizes.ToDictionary(
                 it => it.Key.ToString(), it => ToFixedInt(it.Value)),
             ExperimentalNoteAr = settings.UseExperimentalNoteAr,
+            ExperimentalNoteDesign = settings.UseExperimentalNoteDesign,
             Events = events.ToArray()
         };
     }
@@ -502,7 +504,8 @@ public static class GamePlayRecordCodec
                 ["hitboxSettings"] = JObject.FromObject(
                     snapshot.HitboxSettings ?? new Dictionary<string, int>()),
                 ["hitboxSizes"] = JObject.FromObject(snapshot.HitboxSizes ?? new Dictionary<string, int>()),
-                ["experimentalNoteAr"] = snapshot.ExperimentalNoteAr
+                ["experimentalNoteAr"] = snapshot.ExperimentalNoteAr,
+                ["experimentalNoteDesign"] = snapshot.ExperimentalNoteDesign
             },
             ["eventCount"] = snapshot.EventCount
         };

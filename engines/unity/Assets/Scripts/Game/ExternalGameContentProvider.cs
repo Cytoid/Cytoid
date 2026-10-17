@@ -156,6 +156,8 @@ public sealed class ExternalGameContentProvider : IGameContentProvider
         if (settings.displayNoteIds.HasValue) target.DisplayNoteIds = settings.displayNoteIds.Value;
         if (settings.useExperimentalNoteAr.HasValue) target.UseExperimentalNoteAr = settings.useExperimentalNoteAr.Value;
         if (settings.useExperimentalNoteAnimations.HasValue) target.UseExperimentalNoteAnimations = settings.useExperimentalNoteAnimations.Value;
+        if (settings.useExperimentalNoteDesign.HasValue) target.UseExperimentalNoteDesign = settings.useExperimentalNoteDesign.Value;
+        if (settings.displayJudgementText.HasValue) target.DisplayJudgementText = settings.displayJudgementText.Value;
         if (settings.clearEffectsSize.HasValue) target.ClearEffectsSize = settings.clearEffectsSize.Value;
         if (settings.adaptOverlayToSafeArea.HasValue) target.AdaptOverlayToSafeArea = settings.adaptOverlayToSafeArea.Value;
         if (settings.displayProfiler.HasValue)
@@ -406,6 +408,8 @@ public sealed class ExternalGameContentProvider : IGameContentProvider
         settings.displayNoteIds = OptionalBool(visual, "displayNoteIds");
         settings.useExperimentalNoteAr = OptionalBool(visual, "useExperimentalNoteAr");
         settings.useExperimentalNoteAnimations = OptionalBool(visual, "useExperimentalNoteAnimations");
+        settings.useExperimentalNoteDesign = OptionalBool(visual, "useExperimentalNoteDesign");
+        settings.displayJudgementText = OptionalBool(visual, "displayJudgementText");
         settings.clearEffectsSize = OptionalFloat(visual, "clearEffectsSize");
         settings.displayProfiler = OptionalBool(visual, "displayProfiler");
         settings.adaptOverlayToSafeArea = OptionalBool(visual, "adaptOverlayToSafeArea");
@@ -622,6 +626,8 @@ public sealed class ExternalGameContentProvider : IGameContentProvider
         "visual.displayNoteIds",
         "visual.useExperimentalNoteAr",
         "visual.useExperimentalNoteAnimations",
+        "visual.useExperimentalNoteDesign",
+        "visual.displayJudgementText",
         "visual.clearEffectsSize",
         "visual.displayProfiler",
         "visual.adaptOverlayToSafeArea",

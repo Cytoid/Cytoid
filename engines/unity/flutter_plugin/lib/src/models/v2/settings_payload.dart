@@ -136,6 +136,8 @@ class VisualSettings {
     required this.displayNoteIds,
     required this.useExperimentalNoteAr,
     required this.useExperimentalNoteAnimations,
+    required this.useExperimentalNoteDesign,
+    required this.displayJudgementText,
     required this.clearEffectsSize,
     required this.displayProfiler,
     required this.adaptOverlayToSafeArea,
@@ -154,6 +156,8 @@ class VisualSettings {
   final bool displayNoteIds;
   final bool useExperimentalNoteAr;
   final bool useExperimentalNoteAnimations;
+  final bool useExperimentalNoteDesign;
+  final bool displayJudgementText;
   final double clearEffectsSize;
   final bool displayProfiler;
   final bool adaptOverlayToSafeArea;
@@ -181,6 +185,8 @@ class VisualSettings {
       useExperimentalNoteAr: json['useExperimentalNoteAr'] as bool,
       useExperimentalNoteAnimations:
           json['useExperimentalNoteAnimations'] as bool,
+      useExperimentalNoteDesign: json['useExperimentalNoteDesign'] as bool,
+      displayJudgementText: json['displayJudgementText'] as bool,
       clearEffectsSize: _readDouble(json, 'clearEffectsSize'),
       displayProfiler: json['displayProfiler'] as bool,
       adaptOverlayToSafeArea: json['adaptOverlayToSafeArea'] as bool,
@@ -202,6 +208,8 @@ class VisualSettings {
       'displayNoteIds': displayNoteIds,
       'useExperimentalNoteAr': useExperimentalNoteAr,
       'useExperimentalNoteAnimations': useExperimentalNoteAnimations,
+      'useExperimentalNoteDesign': useExperimentalNoteDesign,
+      'displayJudgementText': displayJudgementText,
       'clearEffectsSize': clearEffectsSize,
       'displayProfiler': displayProfiler,
       'adaptOverlayToSafeArea': adaptOverlayToSafeArea,

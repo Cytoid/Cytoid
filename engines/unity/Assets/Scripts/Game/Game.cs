@@ -240,7 +240,7 @@ public class Game : MonoBehaviour
             mods.Contains(Mod.FlipX) || mods.Contains(Mod.FlipAll),
             mods.Contains(Mod.FlipY) || mods.Contains(Mod.FlipAll),
             true,
-            Context.Player.Settings.UseExperimentalNoteAr,
+            Context.Player.Settings.UseExperimentalNoteAr && !Context.Player.Settings.UseExperimentalNoteDesign,
             mods.Contains(Mod.Fast) ? 1.5f : (mods.Contains(Mod.Slow) ? 0.75f : 1),
             camera.orthographicSize
         );

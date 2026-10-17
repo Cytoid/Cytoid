@@ -20,6 +20,8 @@ class GameLaunchSettings {
     this.displayNoteIds,
     this.useExperimentalNoteAr,
     this.useExperimentalNoteAnimations,
+    this.useExperimentalNoteDesign,
+    this.displayJudgementText,
     this.clearEffectsSize,
     this.displayProfiler,
     this.adaptOverlayToSafeArea,
@@ -54,6 +56,8 @@ class GameLaunchSettings {
   final bool? displayNoteIds;
   final bool? useExperimentalNoteAr;
   final bool? useExperimentalNoteAnimations;
+  final bool? useExperimentalNoteDesign;
+  final bool? displayJudgementText;
   final double? clearEffectsSize;
   final bool? displayProfiler;
   final bool? adaptOverlayToSafeArea;
@@ -90,6 +94,9 @@ class GameLaunchSettings {
       useExperimentalNoteAr: json['useExperimentalNoteAr'] as bool?,
       useExperimentalNoteAnimations:
           json['useExperimentalNoteAnimations'] as bool?,
+      useExperimentalNoteDesign:
+          json['useExperimentalNoteDesign'] as bool?,
+      displayJudgementText: json['displayJudgementText'] as bool?,
       clearEffectsSize: _readDouble(json, 'clearEffectsSize'),
       displayProfiler: json['displayProfiler'] as bool?,
       adaptOverlayToSafeArea: json['adaptOverlayToSafeArea'] as bool?,
@@ -134,6 +141,10 @@ class GameLaunchSettings {
         'useExperimentalNoteAr': useExperimentalNoteAr,
       if (useExperimentalNoteAnimations != null)
         'useExperimentalNoteAnimations': useExperimentalNoteAnimations,
+      if (useExperimentalNoteDesign != null)
+        'useExperimentalNoteDesign': useExperimentalNoteDesign,
+      if (displayJudgementText != null)
+        'displayJudgementText': displayJudgementText,
       if (clearEffectsSize != null) 'clearEffectsSize': clearEffectsSize,
       if (displayProfiler != null) 'displayProfiler': displayProfiler,
       if (adaptOverlayToSafeArea != null)

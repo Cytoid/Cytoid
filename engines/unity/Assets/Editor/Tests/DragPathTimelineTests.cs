@@ -129,8 +129,11 @@ public class DragPathTimelineTests
         timeline.Register(track, 0);
         var note = Note(1, 2, Vector3.zero);
         AssertVector(timeline.GetEndpoint(note, null), new Vector3(2, 2));
+        var applied = new ChartModel.Note.NoteOverride();
+        NotePositionSampler.Apply(applied, track.States[0], track.States[1], .25f);
+        timeline.RecordApplied(track, track.States[0], applied, .25f);
         timeline.Stop(track, .5f);
-        AssertVector(timeline.GetEndpoint(note, null), new Vector3(.5f, .5f));
+        AssertVector(timeline.GetEndpoint(note, null), new Vector3(.25f, .25f));
     }
 
     [Test]
@@ -140,6 +143,9 @@ public class DragPathTimelineTests
         timeline.Register(Track(1, State(0, .1f, .1f)), 0);
         var later = Track(1, State(.2f, .9f, .9f));
         timeline.Register(later, .2f);
+        var applied = new ChartModel.Note.NoteOverride();
+        NotePositionSampler.Apply(applied, later.States[0], later.States[0], .4f);
+        timeline.RecordApplied(later, later.States[0], applied, .4f);
         timeline.Stop(later, .5f);
         AssertVector(timeline.GetEndpoint(Note(1, 1, Vector3.zero), null), new Vector3(.1f, .1f));
     }

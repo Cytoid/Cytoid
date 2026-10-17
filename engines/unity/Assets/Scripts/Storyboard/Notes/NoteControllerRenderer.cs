@@ -81,6 +81,7 @@ namespace Cytoid.Storyboard.Sprites
         public void ApplyControls(NoteControllerState fromState, NoteControllerState toState)
         {
             base.Update(fromState, toState);
+            MainRenderer.NotePositions.RecordApplied(Component, fromState, Note.Override, MainRenderer.Time);
         }
 
     }

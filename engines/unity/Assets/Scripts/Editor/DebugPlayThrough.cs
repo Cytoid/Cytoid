@@ -122,34 +122,24 @@ public static class DebugPlayThrough
 
     private static void PumpPlaying()
     {
+        // Exit check first: teardown destroys the Game, so don't require it to be
+        // alive to finish the run.
+        var completed = SessionState.GetString(CompletedAtKey, string.Empty);
+        if (completed.Length > 0)
+        {
+            if ((DateTime.UtcNow - new DateTime(long.Parse(completed))).TotalSeconds < 5) return;
+            Finish(0);
+            return;
+        }
+
         var game = UnityEngine.Object.FindFirstObjectByType<Game>();
         // During the Navigation→Game scene swap a stale Game can surface as
         // Unity-fake-null; touching .State on it throws.
         if (game == null || !game || game.State == null) return;
-        if (!game.State.IsCompleted && !game.State.IsFailed)
-        {
-            if (CompletedAtTicks == 0) return;
-        }
-        else if (CompletedAtTicks == 0)
-        {
-            SessionState.SetString(CompletedAtKey, DateTime.UtcNow.Ticks.ToString());
-            Debug.Log("[DebugPlayThrough] game finished, giving the async tail 5s");
-        }
+        if (!game.State.IsCompleted && !game.State.IsFailed) return;
 
-        // Keep pumping a few seconds so the async Complete() tail (dispose, result
-        // emit) runs to its exception/completion before we exit.
-        var completedAt = new DateTime(CompletedAtTicks);
-        if ((DateTime.UtcNow - completedAt).TotalSeconds < 5) return;
-        Finish(0);
-    }
-
-    private static long CompletedAtTicks
-    {
-        get
-        {
-            var stored = SessionState.GetString(CompletedAtKey, string.Empty);
-            return stored.Length > 0 ? long.Parse(stored) : 0;
-        }
+        SessionState.SetString(CompletedAtKey, DateTime.UtcNow.Ticks.ToString());
+        Debug.Log("[DebugPlayThrough] game finished, giving the async tail 5s");
     }
 
     private static MonoBehaviour navigationController;

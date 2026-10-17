@@ -36,6 +36,8 @@ namespace Cytoid.Storyboard
             new Dictionary<Type, List<StoryboardComponentRenderer>>();
         
         public readonly Dictionary<string, int> SpritePathRefCount = new Dictionary<string, int>();
+
+        private readonly List<NoteControllerRenderer> noteControlUpdateSnapshot = new List<NoteControllerRenderer>();
         
         public StoryboardConstants Constants { get; } = new StoryboardConstants();
         
@@ -89,6 +91,7 @@ namespace Cytoid.Storyboard
             ComponentRenderers.Values.ForEach(it => it.Dispose());
             ComponentRenderers.Clear();
             NotePositions.Clear();
+            noteControlUpdateSnapshot.Clear();
             TypedComponentRenderers.Clear();
             SpritePathRefCount.Clear();
             Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.Storyboard);
@@ -321,19 +324,24 @@ namespace Cytoid.Storyboard
         {
             if (Time < 0 || Game.State.IsReadyToExit) return;
             if (!TypedComponentRenderers.TryGetValue(typeof(NoteController), out var renderers)) return;
-            // Destroy can remove entries from this list. Iterate by index without
-            // skipping the next controller, preserving registration-order precedence.
-            for (var i = 0; i < renderers.Count;)
+            // Destroying a target can remove an earlier owner and its descendants.
+            // Reuse a snapshot so surviving controllers still update in registration order.
+            noteControlUpdateSnapshot.Clear();
+            foreach (var renderer in renderers)
+                noteControlUpdateSnapshot.Add((NoteControllerRenderer) renderer);
+            foreach (var renderer in noteControlUpdateSnapshot)
             {
-                var renderer = (NoteControllerRenderer) renderers[i];
+                if (renderer.IsDisposed) continue;
                 renderer.Component.FindStates(Time, out var from, out var to);
                 if (from?.Destroy == true)
                 {
-                    DestroyObjectsById(renderer.Component.Id);
+                    var root = renderer.Parent != null && renderer.Component.TargetId != null
+                        ? renderer.Parent.Component.Id
+                        : renderer.Component.Id;
+                    DestroyObjectsById(root);
                     continue;
                 }
                 if (from != null) renderer.ApplyControls((NoteControllerState) from, (NoteControllerState) to);
-                i++;
             }
         }
 

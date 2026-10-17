@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.Serialization;
 using Cytoid.Storyboard;
+using Cytoid.Storyboard.Sprites;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -69,6 +71,42 @@ public class DragPathRuntimeTests
         game.Seek(.6f);
         game.PrepareNotePositions();
         Assert.That(head.transform.localPosition.y, Is.EqualTo(.6f).Within(1e-6f));
+    }
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public void DestroyingATargetedControllerAlsoDestroysItsOwner(bool ownerFirst)
+    {
+        game.Seek(0);
+        var main = game.Storyboard.Renderer;
+        var owner = new NoteController {Id = "owner"};
+        owner.States.Add(new NoteControllerState {Note = a.id, Time = 10});
+        var borrower = new NoteController {Id = "borrower", TargetId = owner.Id};
+        borrower.States.Add(new NoteControllerState {Note = b.id, Time = 0, Destroy = true});
+        var ownerRenderer = new NoteControllerRenderer(main, owner);
+        var borrowerRenderer = new NoteControllerRenderer(main, borrower) {Parent = ownerRenderer};
+        var survivor = new NoteController {Id = "survivor"};
+        survivor.States.Add(new NoteControllerState {Note = c.id, Time = 0,
+            OverrideY = true, Y = new UnitFloat(.75f, ReferenceUnit.World, false, false)});
+        var survivorRenderer = new NoteControllerRenderer(main, survivor);
+        Set(typeof(NoteControllerRenderer), survivorRenderer, "Note", c);
+        ownerRenderer.Children.Add(borrowerRenderer);
+        main.ComponentRenderers.Add(owner.Id, ownerRenderer);
+        main.ComponentRenderers.Add(borrower.Id, borrowerRenderer);
+        main.ComponentRenderers.Add(survivor.Id, survivorRenderer);
+        main.TypedComponentRenderers.Add(typeof(NoteController),
+            ownerFirst
+                ? new List<StoryboardComponentRenderer> {ownerRenderer, borrowerRenderer, survivorRenderer}
+                : new List<StoryboardComponentRenderer> {borrowerRenderer, ownerRenderer, survivorRenderer});
+
+        main.UpdateNoteControls();
+
+        Assert.That(main.ComponentRenderers.Keys, Is.EquivalentTo(new[] {survivor.Id}));
+        Assert.That(main.TypedComponentRenderers[typeof(NoteController)],
+            Is.EqualTo(new[] {survivorRenderer}));
+        Assert.That(ownerRenderer.IsDisposed, Is.True);
+        Assert.That(borrowerRenderer.IsDisposed, Is.True);
+        Assert.That(c.Override.Y, Is.EqualTo(.75f));
     }
 
     [Test]

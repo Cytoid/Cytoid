@@ -16,41 +16,7 @@ namespace Cytoid.Storyboard.Notes
 
         public override void OnUpdate()
         {
-            if (From.OverrideX != null)
-            {
-                if (From.OverrideX.Value)
-                {
-                    Note.Override.X = From.X != null ? EaseFloat(From.X, To.X) : 0.5f;
-                }
-                else
-                {
-                    Note.Override.X = null;
-                }
-            }
-
-            if (From.OverrideY != null)
-            {
-                if (From.OverrideY.Value)
-                {
-                    Note.Override.Y = From.Y != null ? EaseFloat(From.Y, To.Y) : 0.5f;
-                }
-                else
-                {
-                    Note.Override.Y = null;
-                }
-            }
-
-            if (From.OverrideZ != null)
-            {
-                if (From.OverrideZ.Value)
-                {
-                    Note.Override.Z = From.Z != null ? EaseFloat(From.Z, To.Z) : 0;
-                }
-                else
-                {
-                    Note.Override.Z = null;
-                }
-            }
+            NotePositionSampler.Apply(Note.Override, From, To, Time);
 
             if (From.OverrideRotX != null)
             {
@@ -125,26 +91,6 @@ namespace Cytoid.Storyboard.Notes
             if (From.HitboxMultiplier != null)
             {
                 Note.Override.HitboxMultiplier = EaseFloat(From.HitboxMultiplier, To.HitboxMultiplier);
-            }
-
-            if (From.XMultiplier != null)
-            {
-                Note.Override.XMultiplier = EaseFloat(From.XMultiplier, To.XMultiplier);
-            }
-
-            if (From.YMultiplier != null)
-            {
-                Note.Override.YMultiplier = EaseFloat(From.YMultiplier, To.YMultiplier);
-            }
-
-            if (From.XOffset != null)
-            {
-                Note.Override.XOffset = EaseFloat(From.XOffset, To.XOffset);
-            }
-
-            if (From.YOffset != null)
-            {
-                Note.Override.YOffset = EaseFloat(From.YOffset, To.YOffset);
             }
 
             if (From.HoldDirection != null)

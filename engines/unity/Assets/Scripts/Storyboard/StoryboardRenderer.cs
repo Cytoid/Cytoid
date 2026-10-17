@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cytoid.Storyboard.Controllers;
+using Cytoid.Storyboard.Notes;
 using Cytoid.Storyboard.PostProcess;
 using Cytoid.Storyboard.Sprites;
 using Cytoid.Storyboard.Texts;
@@ -24,6 +25,8 @@ namespace Cytoid.Storyboard
         public Game Game => Storyboard.Game;
         public Camera Camera { get; private set; }
         public float Time => Game.Time;
+        public NotePositionTimeline NotePositions { get; } = new NotePositionTimeline();
+        public bool IsInitializing { get; private set; }
         public StoryboardRendererProvider Provider => StoryboardRendererProvider.Instance;
         
         public readonly Dictionary<string, StoryboardComponentRenderer> ComponentRenderers = 
@@ -33,6 +36,8 @@ namespace Cytoid.Storyboard
             new Dictionary<Type, List<StoryboardComponentRenderer>>();
         
         public readonly Dictionary<string, int> SpritePathRefCount = new Dictionary<string, int>();
+
+        private readonly List<NoteControllerRenderer> noteControlUpdateSnapshot = new List<NoteControllerRenderer>();
         
         public StoryboardConstants Constants { get; } = new StoryboardConstants();
         
@@ -85,6 +90,8 @@ namespace Cytoid.Storyboard
         {
             ComponentRenderers.Values.ForEach(it => it.Dispose());
             ComponentRenderers.Clear();
+            NotePositions.Clear();
+            noteControlUpdateSnapshot.Clear();
             TypedComponentRenderers.Clear();
             SpritePathRefCount.Clear();
             Context.AssetMemory.DisposeTaggedCacheAssets(AssetTag.Storyboard);
@@ -93,6 +100,7 @@ namespace Cytoid.Storyboard
 
         public async UniTask Initialize()
         {
+            IsInitializing = true;
             // Clear
             Clear();
 
@@ -119,9 +127,11 @@ namespace Cytoid.Storyboard
                 await SpawnObjects<Controller, ControllerState, ControllerRenderer>(Storyboard.Controllers.Values.ToList(), controller => new ControllerRenderer(this, controller), Predicate);
                 timer.Time("Controller");
                 timer.Time();
+                IsInitializing = false;
             }
             catch
             {
+                IsInitializing = false;
                 // SpawnObjects only rolls back its own batch. Earlier successful type batches would
                 // otherwise remain registered, and Game catches storyboard init failures without
                 // calling Dispose (listeners below are registered only on success).
@@ -307,6 +317,31 @@ namespace Cytoid.Storyboard
                 var id = renderersToDestroy[i];
                 if (!ComponentRenderers.TryGetValue(id, out var renderer)) continue;
                 DestroyObject(id, renderer);
+            }
+        }
+
+        public void UpdateNoteControls()
+        {
+            if (Time < 0 || Game.State.IsReadyToExit) return;
+            if (!TypedComponentRenderers.TryGetValue(typeof(NoteController), out var renderers)) return;
+            // Destroying a target can remove an earlier owner and its descendants.
+            // Reuse a snapshot so surviving controllers still update in registration order.
+            noteControlUpdateSnapshot.Clear();
+            foreach (var renderer in renderers)
+                noteControlUpdateSnapshot.Add((NoteControllerRenderer) renderer);
+            foreach (var renderer in noteControlUpdateSnapshot)
+            {
+                if (renderer.IsDisposed) continue;
+                renderer.Component.FindStates(Time, out var from, out var to);
+                if (from?.Destroy == true)
+                {
+                    var root = renderer.Parent != null && renderer.Component.TargetId != null
+                        ? renderer.Parent.Component.Id
+                        : renderer.Component.Id;
+                    DestroyObjectsById(root);
+                    continue;
+                }
+                if (from != null) renderer.ApplyControls((NoteControllerState) from, (NoteControllerState) to);
             }
         }
 

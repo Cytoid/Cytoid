@@ -16,9 +16,31 @@ namespace Cytoid.Storyboard.Notes
             public float StoppedAt = float.PositiveInfinity;
         }
 
+        private sealed class Endpoint
+        {
+            public Vector3 Position;
+            private readonly Dictionary<UnitFloat, float> conversions = new Dictionary<UnitFloat, float>();
+
+            public float ConvertUnit(UnitFloat value)
+            {
+                var converted = value.PeekConvertedValue();
+                conversions[value] = converted;
+                return converted;
+            }
+
+            public bool IsCurrent()
+            {
+                // Unconverted units can change with the camera, screen or canvas.
+                // A later live conversion may also fix their value on a new basis.
+                foreach (var pair in conversions)
+                    if (!pair.Key.PeekConvertedValue().Equals(pair.Value)) return false;
+                return true;
+            }
+        }
+
         private readonly Dictionary<int, List<Track>> tracks = new Dictionary<int, List<Track>>();
         private readonly Dictionary<NoteController, Track> live = new Dictionary<NoteController, Track>();
-        private readonly Dictionary<int, Vector3> endpoints = new Dictionary<int, Vector3>();
+        private readonly Dictionary<int, Endpoint> endpoints = new Dictionary<int, Endpoint>();
 
         public void Register(NoteController controller, float availableFrom)
         {
@@ -48,22 +70,23 @@ namespace Cytoid.Storyboard.Notes
 
         public Vector3 GetEndpoint(ChartModel.Note note, Chart chart)
         {
-            if (endpoints.TryGetValue(note.id, out var position)) return position;
+            if (endpoints.TryGetValue(note.id, out var endpoint) && endpoint.IsCurrent()) return endpoint.Position;
+            endpoint = new Endpoint();
             var result = new ChartModel.Note.NoteOverride();
             if (tracks.TryGetValue(note.id, out var list))
             {
                 var writtenAt = new float[NotePositionSampler.ChannelCount];
                 for (var i = 0; i < writtenAt.Length; i++) writtenAt[i] = float.NegativeInfinity;
                 foreach (var track in list)
-                    Sample(track, note.start_time, result, writtenAt);
+                    Sample(track, note.start_time, result, writtenAt, endpoint);
             }
-            position = note.CalculatePosition(chart, result);
-            endpoints[note.id] = position;
-            return position;
+            endpoint.Position = note.CalculatePosition(chart, result);
+            endpoints[note.id] = endpoint;
+            return endpoint.Position;
         }
 
         private static void Sample(Track track, float time, ChartModel.Note.NoteOverride result,
-            float[] writtenAt)
+            float[] writtenAt, Endpoint endpoint)
         {
             if (time < track.AvailableFrom) return;
             var states = track.Controller.States;
@@ -75,7 +98,7 @@ namespace Cytoid.Storyboard.Notes
                 var to = i + 1 < states.Count ? states[i + 1] : from;
                 var sampleAt = i + 1 < states.Count ? Mathf.Min(until, to.Time) : until;
                 if (sampleAt < track.AvailableFrom) continue;
-                NotePositionSampler.Apply(result, from, to, sampleAt, writtenAt);
+                NotePositionSampler.Apply(result, from, to, sampleAt, writtenAt, endpoint.ConvertUnit);
             }
         }
     }

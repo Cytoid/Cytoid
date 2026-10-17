@@ -84,9 +84,11 @@ public class DragLineElement : MonoBehaviour
 
     private Vector3 VisualPosition(ChartModel.Note model)
     {
+        // Note controls also update unspawned models before this pass. Keep the
+        // current approach pose so the line tip stays continuous when they spawn.
         return Game.SpawnedNotes.TryGetValue(model.id, out var note)
             ? note.StackVisualLocalPosition()
-            : Game.GetDragPathPosition(model);
+            : model.CalculatePosition(Game.Chart);
     }
 
     public void UpdateVisuals()

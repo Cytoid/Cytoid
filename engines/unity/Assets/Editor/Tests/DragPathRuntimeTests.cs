@@ -55,7 +55,7 @@ public class DragPathRuntimeTests
     }
 
     [Test]
-    public void UnspawnedLineEndpointUsesTheSampledLandingPosition()
+    public void UnspawnedLineEndpointUsesTheLiveApproachPosition()
     {
         game.Seek(.5f);
         b.Override.Y = .8f;
@@ -69,9 +69,40 @@ public class DragPathRuntimeTests
 
         var endpoint = LineEndpoint(b);
 
-        Assert.That(endpoint, Is.EqualTo(new Vector3(1, .25f)));
-        Assert.That(endpoint, Is.EqualTo(game.GetDragPathPosition(b)));
+        Assert.That(endpoint, Is.EqualTo(new Vector3(1, .8f)));
+        Assert.That(game.GetDragPathPosition(b), Is.EqualTo(new Vector3(1, .25f)));
         Assert.That(b.Override.Y, Is.EqualTo(.8f), "sampling must preserve the live approach pose");
+    }
+
+    [Test]
+    public void SpawningATargetPreservesAnAlreadyVisibleLineEndpoint()
+    {
+        a.nextdraglinestarttime = -1.5f;
+        a.nextdraglinestoptime = 1.501f;
+        b.start_time = 3f;
+        b.intro_time = 1.633f;
+        b.Override.Y = .8f;
+        var track = new NoteController();
+        track.States.Add(new NoteControllerState {Note = b.id, Time = 0,
+            OverrideY = true, Y = new UnitFloat(1.4f, ReferenceUnit.World, false, false)});
+        track.States.Add(new NoteControllerState {Note = b.id, Time = b.start_time,
+            OverrideY = true, Y = new UnitFloat(0, ReferenceUnit.World, false, false)});
+        game.Storyboard.Renderer.NotePositions.Register(track, float.NegativeInfinity);
+        game.Seek(b.intro_time - 1f);
+        var before = LineEndpoint(b);
+        var reveal = (game.Time - a.nextdraglinestarttime) /
+                     (a.nextdraglinestoptime - a.nextdraglinestarttime);
+        Assert.That(DragPathGeometry.RemainingReveal(reveal,
+            DragPathGeometry.Progress(game.Time, a.start_time, b.start_time)), Is.GreaterThan(0f));
+
+        var targetObject = new GameObject("newly spawned drag target");
+        targetObject.transform.SetParent(root.transform);
+        var target = targetObject.AddComponent<DragPathTestHead>();
+        target.transform.localPosition = b.CalculatePosition(game.Chart);
+        game.SpawnedNotes.Add(b.id, target);
+
+        Assert.That(LineEndpoint(b), Is.EqualTo(before));
+        Assert.That(before, Is.EqualTo(new Vector3(1, .8f)));
     }
 
     [Test]

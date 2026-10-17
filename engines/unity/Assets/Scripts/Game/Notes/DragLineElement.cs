@@ -86,7 +86,7 @@ public class DragLineElement : MonoBehaviour
     {
         return Game.SpawnedNotes.TryGetValue(model.id, out var note)
             ? note.StackVisualLocalPosition()
-            : model.CalculatePosition(Game.Chart);
+            : Game.GetDragPathPosition(model);
     }
 
     public void UpdateVisuals()

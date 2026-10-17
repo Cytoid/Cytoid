@@ -55,6 +55,43 @@ public class DragPathRuntimeTests
     }
 
     [Test]
+    public void UnspawnedLineEndpointUsesTheSampledLandingPosition()
+    {
+        game.Seek(.5f);
+        b.Override.Y = .8f;
+        var track = new NoteController();
+        track.States.Add(new NoteControllerState {Note = b.id, Time = 0,
+            OverrideY = true, Y = new UnitFloat(1.4f, ReferenceUnit.World, false, false)});
+        track.States.Add(new NoteControllerState {Note = b.id, Time = 1,
+            OverrideY = true, Y = new UnitFloat(.25f, ReferenceUnit.World, false, false)});
+        game.Storyboard.Renderer.NotePositions.Register(track, float.NegativeInfinity);
+        game.PrepareNotePositions();
+
+        var endpoint = LineEndpoint(b);
+
+        Assert.That(endpoint, Is.EqualTo(new Vector3(1, .25f)));
+        Assert.That(endpoint, Is.EqualTo(game.GetDragPathPosition(b)));
+        Assert.That(b.Override.Y, Is.EqualTo(.8f), "sampling must preserve the live approach pose");
+    }
+
+    [Test]
+    public void SpawnedLineEndpointUsesTheStackPrimaryPose()
+    {
+        var followerObject = new GameObject("drag follower");
+        followerObject.transform.SetParent(root.transform);
+        var follower = followerObject.AddComponent<DragPathTestHead>();
+        follower.transform.localPosition = new Vector3(9, 9);
+        follower.IsDragStackFollower = true;
+        follower.DragStack = new DragStackHost(1);
+        Set(typeof(DragStackHost), follower.DragStack, "Primary", head);
+        head.transform.localPosition = new Vector3(.3f, .9f);
+        game.SpawnedNotes.Add(b.id, follower);
+
+        Assert.That(LineEndpoint(b), Is.EqualTo(head.transform.localPosition));
+        Assert.That(LineEndpoint(b), Is.Not.EqualTo(game.GetDragPathPosition(b)));
+    }
+
+    [Test]
     public void TriggerDuringJudgmentCannotSeparateLineAndHeadInTheSameFrame()
     {
         game.Seek(.5f);
@@ -117,6 +154,15 @@ public class DragPathRuntimeTests
         game.PrepareNotePositions();
         Assert.That(head.FromNoteModel, Is.SameAs(b));
         Assert.That(head.transform.localPosition.x, Is.EqualTo(1.25f));
+    }
+
+    private Vector3 LineEndpoint(ChartModel.Note model)
+    {
+        var line = root.AddComponent<DragLineElement>();
+        line.Initialize(game);
+        return (Vector3) typeof(DragLineElement)
+            .GetMethod("VisualPosition", BindingFlags.Instance | BindingFlags.NonPublic)
+            .Invoke(line, new object[] {model});
     }
 
     private static void Set(System.Type type, object target, string name, object value)

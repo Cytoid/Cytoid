@@ -319,6 +319,14 @@ public class ObjectPool
         where TI : PoolItemInstantiateProvider
         where TS : PoolItemSpawnProvider
     {
+        // A null in the queue would explode ObjectPool.Dispose and kill the whole
+        // game teardown; log loudly and drop it instead.
+        if (obj == null)
+        {
+            Debug.LogError($"[ObjectPool] {poolItem.GetType().Name} produced a null instance; " +
+                           "check the prefab reference points at the prefab ROOT");
+            return;
+        }
         poolItem.OnCollect(Game, obj);
         poolItem.PooledItems.Enqueue(obj);
     }

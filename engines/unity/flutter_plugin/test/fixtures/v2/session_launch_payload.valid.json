@@ -45,6 +45,8 @@
       "displayNoteIds": false,
       "useExperimentalNoteAr": false,
       "useExperimentalNoteAnimations": false,
+      "useExperimentalNoteDesign": false,
+      "displayJudgementText": true,
       "clearEffectsSize": 1.0,
       "displayProfiler": false,
       "adaptOverlayToSafeArea": true,

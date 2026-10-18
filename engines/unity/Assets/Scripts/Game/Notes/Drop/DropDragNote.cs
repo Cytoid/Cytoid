@@ -10,6 +10,7 @@ public class DropDragNote : Note
 {
     protected override NoteRenderer CreateRenderer()
     {
+        if (Game.Config.UseFlatNoteDesign) return new FlatDropDragNoteRenderer(this);
         return new DropDragNoteRenderer(this);
     }
 

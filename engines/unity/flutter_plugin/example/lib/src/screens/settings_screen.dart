@@ -444,6 +444,23 @@ class _VisualTab extends StatelessWidget {
             settings.copyWith(useFillColorForDragChildNodes: value),
           ),
         ),
+        // Upstream visual-settings tail (SettingsFactory): note animations and
+        // judgement text live at the bottom of the visual tab.
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Experimental note animations'),
+          value: settings.useExperimentalNoteAnimations,
+          onChanged: (value) => onChanged(
+            settings.copyWith(useExperimentalNoteAnimations: value),
+          ),
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Judgement text'),
+          value: settings.displayJudgementText,
+          onChanged: (value) =>
+              onChanged(settings.copyWith(displayJudgementText: value)),
+        ),
       ],
     );
   }
@@ -499,12 +516,14 @@ class _AdvancedTab extends StatelessWidget {
           onChanged: (value) =>
               onChanged(settings.copyWith(useExperimentalNoteAr: value)),
         ),
+        // Upstream advanced settings replace the animations row with the flat
+        // design toggle (animations moved to the visual tab).
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('Experimental note animations'),
-          value: settings.useExperimentalNoteAnimations,
+          title: const Text('Experimental note design (flat)'),
+          value: settings.useExperimentalNoteDesign,
           onChanged: (value) => onChanged(
-            settings.copyWith(useExperimentalNoteAnimations: value),
+            settings.copyWith(useExperimentalNoteDesign: value),
           ),
         ),
         _SliderTile(

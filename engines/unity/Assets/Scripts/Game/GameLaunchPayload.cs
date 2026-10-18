@@ -48,6 +48,8 @@ public class GameLaunchSettings
     public bool? displayNoteIds;
     public bool? useExperimentalNoteAr;
     public bool? useExperimentalNoteAnimations;
+    public bool? useExperimentalNoteDesign;
+    public bool? displayJudgementText;
     public float? clearEffectsSize;
     public bool? displayProfiler;
     public bool? adaptOverlayToSafeArea;

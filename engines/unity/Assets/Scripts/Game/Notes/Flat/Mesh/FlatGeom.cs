@@ -88,33 +88,70 @@ public static class FlatGeom
         if (!(w > 0) || !(h > 0)) return;
         rx = Math.Max(0, Math.Min(rx, Math.Min(w, h) / 2));
         var segments = Math.Max(7, SweepSegments(rx + Inset, Math.PI / 2, 1));
-        var inner = new Point[4 * (segments + 1)];
-        var outer = new Point[inner.Length];
-        var insetX = Math.Min(Inset, w / 2);
-        var insetY = Math.Min(Inset, h / 2);
-        RoundedContour(inner, x + insetX, y + insetY, Math.Max(0, w - EdgeFeather),
-            Math.Max(0, h - EdgeFeather), Math.Max(0, rx - Inset), segments);
-        RoundedContour(outer, x - Inset, y - Inset, w + EdgeFeather, h + EdgeFeather, rx + Inset, segments);
-        FeatherFill(b, inner, outer, inner.Length, Alpha(fill, Math.Min(1, Math.Min(w, h) / EdgeFeather)), z);
+        // Contours are emitted straight into the builder: holds draw these every
+        // frame, so no per-call contour arrays. Same per-corner clamps and
+        // expressions as the RoundedContour they replace.
+        var innerX = x + Math.Min(Inset, w / 2);
+        var innerY = y + Math.Min(Inset, h / 2);
+        var innerW = Math.Max(0, w - EdgeFeather);
+        var innerH = Math.Max(0, h - EdgeFeather);
+        var innerRadius = Math.Min(Math.Max(0, rx - Inset), Math.Min(innerW, innerH) / 2);
+        var outerX = x - Inset;
+        var outerY = y - Inset;
+        var outerW = w + EdgeFeather;
+        var outerH = h + EdgeFeather;
+        var outerRadius = Math.Min(rx + Inset, Math.Min(outerW, outerH) / 2);
+        var solid = Alpha(fill, Math.Min(1, Math.Min(w, h) / EdgeFeather));
+        var clear = Alpha(solid, 0);
+        var count = 4 * (segments + 1);
+        var first = b.VertCount;
+        for (var i = 0; i < count; i++)
+        {
+            var corner = i / (segments + 1);
+            var step = i % (segments + 1);
+            var angle = -Math.PI / 2 + corner * Math.PI / 2 + step * Math.PI / (2 * segments);
+            var cos = Math.Cos(angle);
+            var sin = Math.Sin(angle);
+            var innerCx = corner < 2 ? innerX + innerW - innerRadius : innerX + innerRadius;
+            var innerCy = corner == 0 || corner == 3 ? innerY + innerRadius : innerY + innerH - innerRadius;
+            b.Vert(innerCx + cos * innerRadius, innerCy + sin * innerRadius, z, solid);
+            var outerCx = corner < 2 ? outerX + outerW - outerRadius : outerX + outerRadius;
+            var outerCy = corner == 0 || corner == 3 ? outerY + outerRadius : outerY + outerH - outerRadius;
+            b.Vert(outerCx + cos * outerRadius, outerCy + sin * outerRadius, z, clear);
+        }
+        for (var i = 1; i + 1 < count; i++)
+            Triangle(b, first, first + i * 2, first + (i + 1) * 2);
+        for (var i = 0; i < count; i++)
+        {
+            var next = (i + 1) % count;
+            Strip(b, first + i * 2, first + next * 2, first + i * 2 + 1, first + next * 2 + 1);
+        }
     }
 
     /// <summary>pts = flat x,y pairs. Stroke with join/cap control (chevrons, diamonds, edges).</summary>
     public static void PolyStroke(FlatMeshBuilder b, double[] pts, bool closed, double width, Rgba stroke,
         FlatJoin join, FlatCap cap, double z = 0)
+        => PolyStroke(b, pts, pts?.Length ?? 0, closed, width, stroke, join, cap, z);
+
+    /// <summary>Scratch-friendly variant: only the first `length` entries of pts are stroked,
+    /// so a shared buffer longer than this stroke carries no stale tail geometry.</summary>
+    public static void PolyStroke(FlatMeshBuilder b, double[] pts, int length, bool closed, double width,
+        Rgba stroke, FlatJoin join, FlatCap cap, double z = 0)
     {
-        if (pts == null || pts.Length < 4 || !(width > 0)) return;
-        var points = CleanPoints(pts, closed, out var count);
+        if (pts == null || pts.Length < 4 || length < 4 || length > pts.Length || !(width > 0)) return;
+        var points = CleanPoints(pts, length, closed, out var count);
         if (count < 2) return;
         var half = width / 2;
         var innerHalf = Math.Max(0, half - Inset);
         var outerHalf = half + Inset;
         var solid = Alpha(stroke, Math.Min(1, width / EdgeFeather));
-        var inner = StrokeSegments(points, count, closed, innerHalf);
-        var outer = StrokeSegments(points, count, closed, outerHalf);
+        var segmentCount = closed ? count : count - 1;
+        var inner = StrokeSegments(points, count, closed, innerHalf, ref innerScratch);
+        var outer = StrokeSegments(points, count, closed, outerHalf, ref outerScratch);
         for (var i = closed ? 0 : 1; i < (closed ? count : count - 1); i++)
         {
-            var previous = (i + inner.Length - 1) % inner.Length;
-            var next = i % inner.Length;
+            var previous = (i + segmentCount - 1) % segmentCount;
+            var next = i % segmentCount;
             Join(b, points[i], ref inner[previous], ref inner[next], ref outer[previous], ref outer[next],
                 innerHalf, outerHalf, join, solid, z);
         }
@@ -124,15 +161,15 @@ public static class FlatGeom
             var startInset = Math.Min(Inset, Distance(points[0], points[1]) / 2);
             var endInset = Math.Min(Inset, Distance(points[count - 2], points[count - 1]) / 2);
             MoveStart(ref inner[0], cap == FlatCap.Square ? -innerHalf : startInset);
-            MoveEnd(ref inner[inner.Length - 1], cap == FlatCap.Square ? innerHalf : -endInset);
+            MoveEnd(ref inner[segmentCount - 1], cap == FlatCap.Square ? innerHalf : -endInset);
             MoveStart(ref outer[0], cap == FlatCap.Square ? -outerHalf : -Inset);
-            MoveEnd(ref outer[outer.Length - 1], cap == FlatCap.Square ? outerHalf : Inset);
+            MoveEnd(ref outer[segmentCount - 1], cap == FlatCap.Square ? outerHalf : Inset);
             if (count == 2 && cap == FlatCap.Butt)
                 solid = Alpha(solid, Math.Min(1, Distance(points[0], points[1]) / EdgeFeather));
         }
         var firstSegment = b.VertCount;
         var lastSegment = firstSegment;
-        for (var i = 0; i < inner.Length; i++)
+        for (var i = 0; i < segmentCount; i++)
             lastSegment = Segment(b, inner[i], outer[i], solid, z);
         if (closed) return;
         if (cap == FlatCap.Round)
@@ -256,7 +293,7 @@ public static class FlatGeom
     public static void PolyFill(FlatMeshBuilder b, double[] pts, Rgba fill, double z = 0)
     {
         if (pts == null || pts.Length < 6) return;
-        var points = CleanPoints(pts, true, out var count);
+        var points = CleanPoints(pts, pts.Length, true, out var count);
         if (count < 3) return;
         // Fills stay hard-edged on purpose: canvas AA is only meaningful on long
         // smooth outlines (strokes), while small interior fills (chain arrows,
@@ -291,7 +328,11 @@ public static class FlatGeom
     {
         var half = width / 2;
         var innerHalf = Math.Max(0, half - Inset);
-        var radii = new[] { Math.Max(0, r - half - Inset), Math.Max(0, r - innerHalf), r + innerHalf, r + half + Inset };
+        // Locals, not an array: Annulus runs on every Ring/Arc of every animated frame.
+        var innerFeather = Math.Max(0, r - half - Inset);
+        var innerSolid = Math.Max(0, r - innerHalf);
+        var outerSolid = r + innerHalf;
+        var outerFeather = r + half + Inset;
         var peak = Math.Min(1, width / EdgeFeather);
         // Very short butt arcs lose their solid length, just like short straight dashes.
         if (buttCaps) peak *= Math.Min(1, r * Math.Abs(sweep) / EdgeFeather);
@@ -303,6 +344,7 @@ public static class FlatGeom
             var progress = (double) i / segments;
             for (var j = 0; j < 4; j++)
             {
+                var radius = j == 0 ? innerFeather : j == 1 ? innerSolid : j == 2 ? outerSolid : outerFeather;
                 var opaque = j == 1 || j == 2;
                 var angle = start + sweep * progress;
                 if (buttCaps)
@@ -310,13 +352,13 @@ public static class FlatGeom
                     // Intersect each circle with the transverse cap planes and
                     // sample between those intersections. Moving only the end
                     // vertices would fold strips on arcs shorter than a feather.
-                    var offset = Math.Asin(Math.Min(1, Inset / Math.Max(radii[j], Epsilon)));
+                    var offset = Math.Asin(Math.Min(1, Inset / Math.Max(radius, Epsilon)));
                     if (opaque) offset = Math.Min(offset, Math.Abs(sweep) / 2);
                     else offset = -offset;
                     angle += Math.Sign(sweep) * offset * (1 - 2 * progress);
                     if (opaque && r * Math.Abs(sweep) <= EdgeFeather) angle = start + sweep / 2;
                 }
-                b.Vert(cx + Math.Sin(angle) * radii[j], cy - Math.Cos(angle) * radii[j], z, opaque ? solid : clear);
+                b.Vert(cx + Math.Sin(angle) * radius, cy - Math.Cos(angle) * radius, z, opaque ? solid : clear);
             }
             if (i == 0) continue;
             var previous = first + (i - 1) * 4;
@@ -333,49 +375,24 @@ public static class FlatGeom
         }
     }
 
-    private static void RoundedContour(Point[] points, double x, double y, double w, double h, double radius, int segments)
-    {
-        radius = Math.Min(radius, Math.Min(w, h) / 2);
-        for (var corner = 0; corner < 4; corner++)
-        {
-            var cx = corner < 2 ? x + w - radius : x + radius;
-            var cy = corner == 0 || corner == 3 ? y + radius : y + h - radius;
-            for (var i = 0; i <= segments; i++)
-            {
-                var angle = -Math.PI / 2 + corner * Math.PI / 2 + i * Math.PI / (2 * segments);
-                points[corner * (segments + 1) + i] = new Point(cx + Math.Cos(angle) * radius, cy + Math.Sin(angle) * radius);
-            }
-        }
-    }
+    // Shared scratch for the per-frame stroke path (renderers draw on Unity's main
+    // thread only). Grows monotonically, so steady-state rebuilds never allocate.
+    private static Point[] cleanScratch = Array.Empty<Point>();
+    private static StrokeSegment[] innerScratch = Array.Empty<StrokeSegment>();
+    private static StrokeSegment[] outerScratch = Array.Empty<StrokeSegment>();
 
-    private static void FeatherFill(FlatMeshBuilder b, Point[] inner, Point[] outer, int count, Rgba solid, double z)
+    private static StrokeSegment[] StrokeSegments(Point[] points, int count, bool closed, double half,
+        ref StrokeSegment[] scratch)
     {
-        var first = b.VertCount;
-        var clear = Alpha(solid, 0);
-        for (var i = 0; i < count; i++)
-        {
-            b.Vert(inner[i].X, inner[i].Y, z, solid);
-            b.Vert(outer[i].X, outer[i].Y, z, clear);
-        }
-        for (var i = 1; i + 1 < count; i++)
-            Triangle(b, first, first + i * 2, first + (i + 1) * 2);
-        for (var i = 0; i < count; i++)
-        {
-            var next = (i + 1) % count;
-            Strip(b, first + i * 2, first + next * 2, first + i * 2 + 1, first + next * 2 + 1);
-        }
-    }
-
-    private static StrokeSegment[] StrokeSegments(Point[] points, int count, bool closed, double half)
-    {
-        var segments = new StrokeSegment[closed ? count : count - 1];
-        for (var i = 0; i < segments.Length; i++)
+        var segments = closed ? count : count - 1;
+        if (scratch.Length < segments) scratch = new StrokeSegment[segments];
+        for (var i = 0; i < segments; i++)
         {
             var a = points[i];
             var c = points[(i + 1) % count];
-            segments[i] = MakeSegment(a, c, Scale(Subtract(c, a), 1 / Distance(a, c)), half);
+            scratch[i] = MakeSegment(a, c, Scale(Subtract(c, a), 1 / Distance(a, c)), half);
         }
-        return segments;
+        return scratch;
     }
 
     private static StrokeSegment MakeSegment(Point a, Point c, Point direction, double half)
@@ -522,11 +539,12 @@ public static class FlatGeom
         }
     }
 
-    private static Point[] CleanPoints(double[] pts, bool closed, out int count)
+    private static Point[] CleanPoints(double[] pts, int length, bool closed, out int count)
     {
-        var points = new Point[pts.Length / 2];
+        if (cleanScratch.Length < length / 2) cleanScratch = new Point[length / 2];
+        var points = cleanScratch;
         count = 0;
-        for (var i = 0; i + 1 < pts.Length; i += 2)
+        for (var i = 0; i + 1 < length; i += 2)
         {
             var point = new Point(pts[i], pts[i + 1]);
             if (count == 0 || Distance(points[count - 1], point) > Epsilon)

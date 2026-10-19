@@ -248,7 +248,13 @@ public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
         var alpha = FlatEase.OutCubic(FlatEase.Seg(p, 0, 0.1));
         var build = FlatEase.OutQuart(FlatEase.Seg(p, 0, 0.4));
         var split = FlatEase.OutQuad(FlatEase.Seg(p, 0.4, 0.85));
-        var coreR = inner * 0.8 * FlatEase.Lerp(0.36, 1, FlatEase.InQuad(FlatEase.Seg(p, 0.42, 0.94)));
+        // The click-drag head is the click enter with an arrow glyph (click.ts
+        // clickDragHeadEnter), so it carries the click's frame thickening: the
+        // frame grows inward by half a stroke over p 0.7-1 while the core rises
+        // onto its final inner edge — no base rim left at the hit.
+        var frameW = FlatEase.Lerp(w * 0.45, w, build) *
+                     FlatEase.Lerp(1, 1.5, FlatEase.InQuad(FlatEase.Seg(p, 0.7, 1)));
+        var coreR = (inner - w / 2) * FlatEase.Lerp(0.36, 1, FlatEase.InQuad(FlatEase.Seg(p, 0.42, 0.94)));
         var blink = Math.Max(FlatEase.Bump(p, 0.86, 0.92), FlatEase.Bump(p, 0.92, 1));
 
         // click.ts places the approach outside the scaled body group.
@@ -270,7 +276,8 @@ public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
         // dragArrow(ctx, inner * 0.62, outCubic(seg(p, 0.1, 0.3)), splitShades(p).k)
         BuildArrow(b, inner * 0.62, exiting ? 1 : FlatEase.OutCubic(FlatEase.Seg(p, 0.1, 0.3)),
             split, exiting ? 1 : alpha, palette);
-        AssemblingRing(b, r - w / 2, FlatEase.Lerp(w * 0.45, w, build),
+        // frame: outer edge pinned at R, thickens inward by half a stroke over 0.7-1
+        AssemblingRing(b, r - frameW / 2, frameW,
             WithOpacity(palette.RingTone(split), alpha), 3, build, FlatEase.Lerp(-Math.PI / 3, 0, build),
             WithOpacity(Edge, alpha), FlatTokens.StrokeEdgeFraction);
     }

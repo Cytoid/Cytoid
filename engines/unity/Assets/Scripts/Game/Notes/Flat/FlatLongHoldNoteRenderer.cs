@@ -124,6 +124,9 @@ public class FlatLongHoldNoteRenderer : FlatHoldNoteRenderer
 
     protected override void BuildBodyGeometry(FlatMeshBuilder b)
     {
+        // Style-agnostic, like classic: ClassicLongHoldNoteRenderer's fill runs
+        // for both styles (its base style-2 rail stomp is a legacy artifact that
+        // mostly stays off-screen) — only the scanner triangle is style-gated.
         rail.Draw(b, Palette, BodyTop / BodySizeMultiplier, BodyBottom / BodySizeMultiplier,
             BodyProgress, BodyTime, Note.Model.Duration, EnterProgress);
     }

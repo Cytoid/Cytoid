@@ -59,6 +59,8 @@ public static class FlatEase
 
     public static double OutQuart(double t) => 1 - Math.Pow(1 - t, 4);
 
+    public static double OutQuint(double t) => 1 - Math.Pow(1 - t, 5);
+
     public static double OutExpo(double t) => t >= 1 ? 1 : 1 - Math.Pow(2, -10 * t);
 
     public static double InExpo(double t) => t <= 0 ? 0 : Math.Pow(2, 10 * t - 10);

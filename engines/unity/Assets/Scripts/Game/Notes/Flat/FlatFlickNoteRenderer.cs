@@ -59,6 +59,14 @@ public class FlatFlickNoteRenderer : FlatNoteRendererBase
         var splitK = FlatEase.OutQuad(FlatEase.Seg(p, 0.4, 0.85));
         var core = FlatEase.Lerp(0.36, 1, FlatEase.InQuad(FlatEase.Seg(p, 0.42, 0.94)));
         var blink = Math.Max(FlatEase.Bump(p, 0.86, 0.92), FlatEase.Bump(p, 0.92, 1));
+        // Click's frame thickening: from p 0.7 the outline thickens inward (outer
+        // edge pinned — the centreline shifts inward by (thick-1)*w / 2cos45) while
+        // the core rises onto its final inner edge: a core diamond of vertex radius
+        // rv - w/cos45 has its edges on that boundary, so the two coincide at p = 1.
+        var thick = FlatEase.Lerp(1, 1.5, FlatEase.InQuad(FlatEase.Seg(p, 0.7, 1)));
+        var fw = FlatEase.Lerp(w * 0.45, w, build) * thick;
+        var fr = rv - (thick - 1) * w / (2 * Math.Cos(Math.PI / 4));
+        var coreMax = rv - w / Math.Cos(Math.PI / 4);
 
         // The chevron pairs live outside the scaled body group, so they cancel the
         // mesh-level enterScale exactly like the click approach ring does.
@@ -81,13 +89,13 @@ public class FlatFlickNoteRenderer : FlatNoteRendererBase
         // = flick.ts body children (fill, core, blink, slit, outline).
         FillDiamond(b, inner + w * 0.15, WithOpacity(palette.Tone(FlatEase.Lerp(700, 800, splitK)), a));
         if (splitK > 0)
-            FillDiamond(b, inner * 0.8 * core, WithOpacity(palette.Tone(FlatEase.Lerp(700, 400, splitK)), a * splitK));
+            FillDiamond(b, coreMax * core, WithOpacity(palette.Tone(FlatEase.Lerp(700, 400, splitK)), a * splitK));
         if (blink > 0)
-            FillDiamond(b, inner * 0.8 * core, WithOpacity(palette.RingColor, a * 0.3 * blink));
+            FillDiamond(b, coreMax * core, WithOpacity(palette.RingColor, a * 0.3 * blink));
         // centre slit: flat nod to Cytoid's split-diamond flick fill
         FlatGeom.Line(b, 0, -inner * 0.5 * core, 0, inner * 0.5 * core, w * 0.5,
             WithOpacity(palette.Shade(600), a * FlatEase.OutCubic(FlatEase.Seg(p, 0.4, 0.75))), FlatCap.Butt);
-        BuildingDiamond(b, rv, FlatEase.Lerp(w * 0.45, w, build),
+        BuildingDiamond(b, fr, fw,
             WithOpacity(palette.RingTone(splitK), a), build, WithOpacity(Edge, a));
     }
 

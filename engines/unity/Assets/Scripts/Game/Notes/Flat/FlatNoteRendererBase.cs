@@ -41,7 +41,7 @@ public abstract class FlatNoteRendererBase : NoteRenderer
     protected bool ClearedSuccessfully => Note.IsCleared && !Missed;
     protected virtual bool CanExit => true;
     protected bool UsesExit => Kind != NoteKind.DropClick && Kind != NoteKind.DropDrag;
-    protected bool Exiting => UsesExit && (Note.IsCleared ? Missed : CanExit && Game.Time > Note.Model.start_time);
+    protected virtual bool Exiting => UsesExit && (Note.IsCleared ? Missed : CanExit && Game.Time > Note.Model.start_time);
     protected virtual double ExitAnchor => Note.Model.start_time;
     protected double ExitTime => (double) Game.Time - ExitAnchor;
     protected ExitCurve HeadExitCurve => Kind == NoteKind.Hold || Kind == NoteKind.LongHold

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 // Unity boundary for the flat note vector renderer: converts a FlatMeshBuilder's
@@ -18,9 +19,12 @@ public class FlatNoteMesh : MonoBehaviour
     private MeshRenderer meshRenderer;
     private MaterialPropertyBlock propertyBlock;
 
-    private Vector3[] verts = new Vector3[0];
-    private Color[] colors = new Color[0];
-    private int[] tris = new int[0];
+    // Lists, not arrays: animated geometry shifts its vertex count every frame, and
+    // exact-size staging arrays reallocated on each shift. Lists keep their capacity
+    // and feed Mesh's non-allocating Set* overloads.
+    private readonly List<Vector3> verts = new List<Vector3>();
+    private readonly List<Color> colors = new List<Color>();
+    private readonly List<int> tris = new List<int>();
 
     private float worldScale = 1f;
 
@@ -90,26 +94,22 @@ public class FlatNoteMesh : MonoBehaviour
     public void Upload(FlatMeshBuilder b)
     {
         var count = b.VertCount;
-        if (verts.Length != count)
-        {
-            verts = new Vector3[count];
-            colors = new Color[count];
-        }
+        verts.Clear();
+        colors.Clear();
         var v = b.Verts;
         for (var i = 0; i < count; i++)
         {
             var o = i * 7;
-            verts[i] = new Vector3(v[o] * worldScale, -v[o + 1] * worldScale, v[o + 2]);
-            colors[i] = new Color(v[o + 3], v[o + 4], v[o + 5], v[o + 6]);
+            verts.Add(new Vector3(v[o] * worldScale, -v[o + 1] * worldScale, v[o + 2]));
+            colors.Add(new Color(v[o + 3], v[o + 4], v[o + 5], v[o + 6]));
         }
-        var triCount = b.Tris.Count;
-        if (tris.Length != triCount) tris = new int[triCount];
-        for (var i = 0; i < triCount; i++) tris[i] = b.Tris[i];
+        tris.Clear();
+        tris.AddRange(b.Tris);
 
         mesh.Clear(false);
-        mesh.vertices = verts;
-        mesh.colors = colors;
-        mesh.triangles = tris;
+        mesh.SetVertices(verts);
+        mesh.SetColors(colors);
+        mesh.SetTriangles(tris, 0);
         mesh.RecalculateBounds();
 
         // Sprites/Default has no per-renderer color; keep the block empty so the

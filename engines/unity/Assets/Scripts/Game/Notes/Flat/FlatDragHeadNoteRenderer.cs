@@ -23,6 +23,18 @@ public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
     private bool IsCDrag => Note.Type == NoteType.CDragHead;
     protected override Quaternion ExitLocalRotation => pinnedRotation ?? base.ExitLocalRotation;
 
+    // A connected regular drag head is the chain's anchor: past its hit time it
+    // holds its last frame instead of riding the exit — the children keep
+    // travelling, so a rewind or fade would strand the drag without a head. The
+    // hold starts in the unjudged window, so the miss never pops the size back
+    // mid-rewind, and a late save is seamless. Chainless heads and click-drag
+    // heads (pinned at their anchor; the separate indicator owns the chain)
+    // keep the design's exit.
+    private bool HoldsSteady =>
+        !IsCDrag && ((DragHeadNote) Note).EndNoteModel != null && Game.Time > Note.Model.start_time;
+
+    protected override bool Exiting => base.Exiting && !HoldsSteady;
+
     // Following changes the counter-offset even when progress and palette settle.
     protected override bool GeometryChangesEveryFrame => IsCDrag;
 
@@ -73,11 +85,12 @@ public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
     protected override void UpdateComponentStates()
     {
         base.UpdateComponentStates();
-        if (IsCDrag || HeadVisible || !ClearedSuccessfully || Note.IsDragStackFollower ||
-            Game.State.Mods.Contains(Mod.HideNotes))
+        if (IsCDrag || HeadVisible || !(ClearedSuccessfully || HoldsSteady) ||
+            Note.IsDragStackFollower || Game.State.Mods.Contains(Mod.HideNotes))
             return;
-        // Regular drag heads are their own travelling indicator. CDrag heads
-        // disappear on success; their separate indicator owns the chain window.
+        // Regular drag heads are their own travelling indicator — on a clear and,
+        // via HoldsSteady, on a miss past the hit time. CDrag heads disappear on
+        // success; their separate indicator owns the chain window.
         var end = ((DragHeadNote) Note).EndNoteModel;
         if (end != null && ((DragHeadNote) Note).IsChainActive(Game))
         {

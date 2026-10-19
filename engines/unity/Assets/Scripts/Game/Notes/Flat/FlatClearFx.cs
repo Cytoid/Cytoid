@@ -276,7 +276,7 @@ public class FlatClearFx : MonoBehaviour
         var k = FlatEase.OutQuart(FlatEase.Seg(u, 0.05, 1));
         var duty = FlatEase.Lerp(0.62, 0.12, k);
         var radius = r * FlatEase.Lerp(reach * 0.8, reach * 1.02, k);
-        var tint = Alpha(color, 1 - FlatEase.Seg(u, 0.55, 1));
+        var tint = Alpha(color, 1 - FlatEase.Seg(u, 0.5, 0.725));
         for (var i = 0; i < sectorCount; i++)
         {
             var center = sectorCount == 4 ? i * Tau / 4 + Tau / 8 : k * 0.35 + i * Tau / sectorCount;

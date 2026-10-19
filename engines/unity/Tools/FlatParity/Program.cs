@@ -316,7 +316,7 @@ if (File.Exists("Assets/Scripts/Game/Notes/Flat/Mesh/FlatGeom.cs"))
             var mesh = new FlatMeshBuilder();
             var t = c.GetProperty("t").GetDouble();
             FlatText.DrawText(mesh, c.GetProperty("text").GetString()!, c.GetProperty("H").GetDouble(), FlatTokens.GradeColor("perfect"),
-                gap: c.GetProperty("gap").GetDouble(), pop: i => FlatEase.OutBack(FlatEase.Seg(t, 0.02 + i * 0.035, 0.2 + i * 0.035), 2));
+                gap: c.GetProperty("gap").GetDouble(), pop: new GlyphPop(t, 0.02, 0.035, 0.2, 2));
             CheckTextGeometry($"drawText {c.GetProperty("text")} t={t}", c.GetProperty("geometry"), mesh);
         }
         foreach (var c in holdGolden.GetProperty("textGlyphs").EnumerateArray())

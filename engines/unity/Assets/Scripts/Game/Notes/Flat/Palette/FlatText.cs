@@ -6,6 +6,25 @@
 using System;
 using System.Collections.Generic;
 
+/// <summary>Per-glyph pop curve for DrawText: At(i) = OutBack(Seg(u, from + i*step, to + i*step), back).
+/// A value type standing in for the captured lambda the TS port used — judgement/timing text
+/// redraws every animated frame, so the closure showed up as steady GC garbage.</summary>
+public readonly struct GlyphPop
+{
+    private readonly double u, from, step, to, back;
+
+    public GlyphPop(double u, double from, double step, double to, double back)
+    {
+        this.u = u;
+        this.from = from;
+        this.step = step;
+        this.to = to;
+        this.back = back;
+    }
+
+    public double At(int index) => FlatEase.OutBack(FlatEase.Seg(u, from + index * step, to + index * step), back);
+}
+
 /// <summary>Chamfered monoline glyphs. Text is case-sensitive; unknown glyphs are skipped.</summary>
 public static class FlatText
 {
@@ -75,7 +94,7 @@ public static class FlatText
     /// <summary>Centred static layout. pop returns the TS outBack value (may exceed 1).
     /// x/y translate the text centre; stroke width scales with each glyph's pop.</summary>
     public static void DrawText(FlatMeshBuilder b, string text, double H, Rgba color,
-        double? gap = null, double? stroke = null, Func<int, double>? pop = null,
+        double? gap = null, double? stroke = null, GlyphPop? pop = null,
         double alpha = 1, double x = 0, double y = 0, double z = 0)
     {
         var g = gap ?? H * 0.32;
@@ -85,7 +104,7 @@ public static class FlatText
         foreach (var ch in text)
         {
             if (!Glyphs.TryGetValue(ch, out var glyph)) continue;
-            var k = pop != null ? pop(index) : 1;
+            var k = pop != null ? pop.Value.At(index) : 1;
             var cx = cursor + glyph.Width * H / 2;
             if (k > 0)
             {
@@ -94,13 +113,17 @@ public static class FlatText
                 for (var j = 0; j < glyph.Strokes.Length; j++)
                 {
                     var source = glyph.Strokes[j];
-                    var points = new double[source.Length];
+                    // Shared scratch (main-thread-only renderers): one buffer reused
+                    // across glyph strokes keeps animated text out of the GC.
+                    if (scratch.Length < source.Length) scratch = new double[source.Length];
+                    var points = scratch;
                     for (var p = 0; p < source.Length; p += 2)
                     {
                         points[p] = x + cx + (source[p] - glyph.Width / 2) * H * scale;
                         points[p + 1] = y + (source[p + 1] - 0.5) * H * scale;
                     }
-                    FlatGeom.PolyStroke(b, points, glyph.Closed != null && j < glyph.Closed.Length && glyph.Closed[j],
+                    FlatGeom.PolyStroke(b, points, source.Length,
+                        glyph.Closed != null && j < glyph.Closed.Length && glyph.Closed[j],
                         sw * scale, tint, FlatJoin.Miter, FlatCap.Square, z);
                 }
             }
@@ -108,6 +131,8 @@ public static class FlatText
             index++;
         }
     }
+
+    private static double[] scratch = Array.Empty<double>();
 
     internal static Rgba Opacity(Rgba color, double alpha) =>
         new Rgba(color.R, color.G, color.B, (float)(color.A * alpha));
@@ -144,13 +169,15 @@ public static class FlatJudgement
         var miss = grade == "miss";
         if (miss)
         {
-            // TS mix returns a hex string: preserve its 8-bit RGB rounding.
-            var lifted = FlatColor.ParseHex(FlatColor.ToHex(FlatColor.Mix(color, new Rgba(1, 1, 1), 0.35)));
-            color = new Rgba(lifted.R, lifted.G, lifted.B, color.A);
+            // TS mix returns a hex string; the design's 8-bit RGB rounding is
+            // reproduced numerically (HexChannel's Floor(v*255+0.5) → /255) so the
+            // animated label no longer allocates strings every frame.
+            var mixed = FlatColor.Mix(color, new Rgba(1, 1, 1), 0.35);
+            color = new Rgba(HexQuantized(mixed.R), HexQuantized(mixed.G), HexQuantized(mixed.B), color.A);
         }
         var text = Text(grade);
         var gap = FlatEase.Lerp(H, H * 0.32, FlatEase.OutCubic(FlatEase.Seg(u, 0, 0.4)));
-        Func<int, double> pop = i => FlatEase.OutBack(FlatEase.Seg(u, 0.02 + i * 0.035, 0.2 + i * 0.035), 2);
+        var pop = new GlyphPop(u, 0.02, 0.035, 0.2, 2);
         var dy = (miss ? 1 : -1) * H * 0.12 * FlatEase.OutCubic(u);
         var opacity = alpha * (1 - FlatEase.Seg(u, 0.7, 1));
         FlatText.DrawText(b, text, H, color, gap: gap, pop: pop, alpha: opacity, y: dy, z: z);
@@ -161,10 +188,21 @@ public static class FlatJudgement
             var left = (-finalW / 2 - H * 0.3) * lk;
             var right = left + (finalW + H * 0.6) * lk;
             var top = H * 0.8 + dy;
-            FlatGeom.PolyFill(b, new[] { left, top, right, top, right, top + H * 0.08, left, top + H * 0.08 },
-                FlatText.Opacity(color, opacity * 0.7), z);
+            underline[0] = left;
+            underline[1] = top;
+            underline[2] = right;
+            underline[3] = top;
+            underline[4] = right;
+            underline[5] = top + H * 0.08;
+            underline[6] = left;
+            underline[7] = top + H * 0.08;
+            FlatGeom.PolyFill(b, underline, FlatText.Opacity(color, opacity * 0.7), z);
         }
     }
+
+    private static float HexQuantized(double v) => (long) Math.Floor(v * 255 + 0.5) / 255f;
+
+    private static readonly double[] underline = new double[8];
 }
 
 /// <summary>timing is fast/slow, grade uses lowercase TS names. Draw is around
@@ -183,7 +221,7 @@ public static class FlatTiming
         stacked ? (0, FlatJudgement.CapHeight(unit) * 1.18 + CapHeight(true, unit) / 2) : (0, 0);
 
     public static void DrawLabel(FlatMeshBuilder b, string timing, double H, Rgba color,
-        Func<int, double>? pop = null, double alpha = 1, double x = 0, double y = 0, double z = 0)
+        GlyphPop? pop = null, double alpha = 1, double x = 0, double y = 0, double z = 0)
     {
         if (timing != "fast" && timing != "slow") throw new ArgumentOutOfRangeException(nameof(timing));
         var fast = timing == "fast";
@@ -195,10 +233,17 @@ public static class FlatTiming
         var cx = fast ? -total / 2 + chevW / 2 : total / 2 - chevW / 2;
         var tx = fast ? total / 2 - textW / 2 : -total / 2 + textW / 2;
         var tip = fast ? -chevW / 2 : chevW / 2;
-        FlatGeom.PolyStroke(b, new[] { x + cx - tip, y - H * 0.4, x + cx + tip, y, x + cx - tip, y + H * 0.4 },
-            false, sw, FlatText.Opacity(color, alpha), FlatJoin.Miter, FlatCap.Square, z);
+        chevron[0] = x + cx - tip;
+        chevron[1] = y - H * 0.4;
+        chevron[2] = x + cx + tip;
+        chevron[3] = y;
+        chevron[4] = x + cx - tip;
+        chevron[5] = y + H * 0.4;
+        FlatGeom.PolyStroke(b, chevron, false, sw, FlatText.Opacity(color, alpha), FlatJoin.Miter, FlatCap.Square, z);
         FlatText.DrawText(b, text, H, color, stroke: sw, pop: pop, alpha: alpha, x: x + tx, y: y, z: z);
     }
+
+    private static readonly double[] chevron = new double[6];
 
     public static void Draw(FlatMeshBuilder b, string timing, string grade, double t,
         bool stacked, double alpha = 1, double unit = FlatTokens.Unit, double z = 0)
@@ -209,7 +254,7 @@ public static class FlatTiming
         var H = CapHeight(stacked, unit);
         var dir = timing == "fast" ? -1 : 1;
         var k = FlatEase.OutCubic(FlatEase.Seg(u, 0.06, 0.4));
-        Func<int, double> pop = i => FlatEase.OutBack(FlatEase.Seg(u, 0.06 + i * 0.03, 0.24 + i * 0.03), 1.6);
+        var pop = new GlyphPop(u, 0.06, 0.03, 0.24, 1.6);
         var dx = dir * H * 0.5 * (k - 1);
         var dy = -FlatJudgement.CapHeight(unit) * 0.12 * FlatEase.OutCubic(u);
         var opacity = FlatEase.Lerp(0, 1, FlatEase.Seg(u, 0.06, 0.2)) * (1 - FlatEase.Seg(u, 0.7, 1));

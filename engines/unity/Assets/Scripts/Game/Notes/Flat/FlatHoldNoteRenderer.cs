@@ -29,6 +29,14 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
     private Vector3 initialProgressRingScale;
     private MeshTriangle Triangle;
     private double pressT;
+
+    // sb style 2: the body shrinks toward the head while pressing (classic's Line
+    // shrink) instead of filling up. Drawn as a shorter body at progress 0, with
+    // the shrink and the conveyor phase frozen at release — resetting them would
+    // regrow the body to full length mid-exit.
+    protected bool StyleTwo => Note.Model.style == 2;
+    protected double styleTwoShrink = 1;
+    protected double styleTwoTime;
     private float BodyOpacity => EasedOpacity *
         (Exiting ? (float) FlatEase.ExitAlpha(ExitTime, FlatTokens.Time.Exit.HoldBody) : 1);
     protected double BodyTop;
@@ -100,9 +108,17 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         var livePressT = pressT;
         if (HoldNote.IsHolding)
             livePressT = Math.Max(0, Game.Time - (Note.Model.start_time + Note.JudgmentOffset));
+        var liveShrink = styleTwoShrink;
+        var liveStyleTwoTime = styleTwoTime;
+        if (StyleTwo && HoldNote.IsHolding)
+        {
+            liveShrink = 1 - progress;
+            liveStyleTwoTime = time;
+        }
         if (headPartVisible != headVisible || BodyVisible != bodyVisible || wasHolding != HoldNote.IsHolding ||
             BodyTop != top || BodyBottom != bottom || BodyFlipY != flipY || BodyProgress != progress ||
-            BodyTime != time || BodySizeMultiplier != sizeMultiplier || pressT != livePressT)
+            BodyTime != time || BodySizeMultiplier != sizeMultiplier || pressT != livePressT ||
+            styleTwoShrink != liveShrink || styleTwoTime != liveStyleTwoTime)
             InvalidateGeometry();
         headPartVisible = headVisible;
         BodyVisible = bodyVisible;
@@ -114,6 +130,8 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         BodyTime = time;
         BodySizeMultiplier = sizeMultiplier;
         pressT = livePressT;
+        styleTwoShrink = liveShrink;
+        styleTwoTime = liveStyleTwoTime;
 
         // Head and body now live on separate meshes with independent visibility.
         HeadVisible = headPartVisible;
@@ -254,15 +272,20 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
     {
         if (BodySizeMultiplier == 0) return null;
         var palette = Palette;
-        var length = BodyTop / BodySizeMultiplier;
+        var length = BodyTop / BodySizeMultiplier * (StyleTwo ? styleTwoShrink : 1);
+        var time = StyleTwo ? styleTwoTime : 0;
         var flipY = BodyFlipY;
-        return (b, p) => body.Draw(b, palette, length, 0, 0, p, flipY);
+        return (b, p) => body.Draw(b, palette, length, 0, time, p, flipY);
     }
 
     protected virtual void BuildBodyGeometry(FlatMeshBuilder b)
     {
         // Compensate lengths, not vertex Y: endpoints stay fixed while caps/dots remain round.
-        body.Draw(b, Palette, BodyTop / BodySizeMultiplier, BodyProgress, BodyTime, EnterProgress, BodyFlipY);
+        if (StyleTwo)
+            body.Draw(b, Palette, BodyTop / BodySizeMultiplier * styleTwoShrink, 0,
+                styleTwoTime, EnterProgress, BodyFlipY);
+        else
+            body.Draw(b, Palette, BodyTop / BodySizeMultiplier, BodyProgress, BodyTime, EnterProgress, BodyFlipY);
     }
 
     private void DrawHead(FlatMeshBuilder b, double p, double size, FlatPalette palette, double approach, bool flipY)
@@ -401,6 +424,8 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         releaseExitAnchor = null;
         headPartVisible = BodyVisible = wasHolding = BodyFlipY = false;
         BodyTop = BodyBottom = BodyProgress = BodyTime = pressT = 0;
+        styleTwoShrink = 1;
+        styleTwoTime = 0;
         BodySizeMultiplier = 1;
     }
 }

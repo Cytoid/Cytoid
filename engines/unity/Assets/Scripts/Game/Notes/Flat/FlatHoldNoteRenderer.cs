@@ -20,6 +20,15 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
     protected HoldNote HoldNote => (HoldNote) Note;
     protected bool BodyVisible;
     protected override bool CanExit => !HoldNote.IsHolding;
+
+    // hold.ts press clip: the head sinks to PRESSED while the lock brackets clamp
+    // onto the ring and fade out over the second half of the press.
+    private const double PressedScale = 0.86;
+
+    private ProgressRing ProgressRing;
+    private Vector3 initialProgressRingScale;
+    private MeshTriangle Triangle;
+    private double pressT;
     private float BodyOpacity => EasedOpacity *
         (Exiting ? (float) FlatEase.ExitAlpha(ExitTime, FlatTokens.Time.Exit.HoldBody) : 1);
     protected double BodyTop;
@@ -37,6 +46,18 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
     {
         BodyMesh = FlatNoteMesh.Create(Note.transform, "FlatBodyMesh", false, BodySortingOrder);
         BodyMesh.SetVisible(false);
+        // Classic's hold companions, reused verbatim: the progress ring rides the
+        // head (shader cutoffs, render-queue ordering) and the scanner triangle
+        // fills the body-to-line gap. The flat body bar replaces Line/CompletedLine.
+        var provider = ClassicHoldNoteRendererProvider.Instance;
+        ProgressRing = UnityEngine.Object.Instantiate(provider.progressRingPrefab, Note.transform, false)
+            .GetComponent<ProgressRing>();
+        initialProgressRingScale = ProgressRing.transform.localScale;
+        ProgressRing.maxCutoff = 0;
+        ProgressRing.fillCutoff = 0;
+        Triangle = UnityEngine.Object.Instantiate(provider.trianglePrefab, Game.contentParent.transform)
+            .GetComponent<MeshTriangle>();
+        Triangle.gameObject.SetActive(false);
         HoldFx = UnityEngine.Object.Instantiate(Game.effectController.holdFx, Note.transform, false);
         HoldFx.transform.DeltaZ(-0.001f);
         HoldFx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
@@ -51,6 +72,10 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         // Classic's fill is ring order - 1, and its hold particles are another order below.
         HoldFx.GetComponent<ParticleSystemRenderer>().sortingOrder = SortingOrder - 2;
         HoldFx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        Triangle.gameObject.SetActive(true);
+        Triangle.Note = Note;
+        ProgressRing.spriteRenderer.enabled = true;
+        ProgressRing.spriteRenderer.material.renderQueue = 3000 + Note.Model.id;
     }
 
     protected override void UpdateComponentStates()
@@ -67,9 +92,17 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         // Anchor to chart time, not elapsed render frames or press time: late hits still finish on time.
         var time = HoldNote.IsHolding ? Math.Max(0, Game.Time - (Note.Model.start_time + Note.JudgmentOffset)) : 0;
         var sizeMultiplier = Note.Model.Override.SizeMultiplier;
+        // Keyed to the hold's chart start, not the press moment (holdPress's t is
+        // "seconds since hold start"): an early press must not sink the head
+        // before the hold actually begins. Frozen at release (not reset): the
+        // head was pressed when it died, so the exit must not pop the sink back
+        // to full size.
+        var livePressT = pressT;
+        if (HoldNote.IsHolding)
+            livePressT = Math.Max(0, Game.Time - (Note.Model.start_time + Note.JudgmentOffset));
         if (headPartVisible != headVisible || BodyVisible != bodyVisible || wasHolding != HoldNote.IsHolding ||
             BodyTop != top || BodyBottom != bottom || BodyFlipY != flipY || BodyProgress != progress ||
-            BodyTime != time || BodySizeMultiplier != sizeMultiplier)
+            BodyTime != time || BodySizeMultiplier != sizeMultiplier || pressT != livePressT)
             InvalidateGeometry();
         headPartVisible = headVisible;
         BodyVisible = bodyVisible;
@@ -80,6 +113,7 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         BodyProgress = progress;
         BodyTime = time;
         BodySizeMultiplier = sizeMultiplier;
+        pressT = livePressT;
 
         // Head and body now live on separate meshes with independent visibility.
         HeadVisible = headPartVisible;
@@ -95,6 +129,40 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
             HoldFx.Stop(true, ParticleSystemStopBehavior.StopEmitting);
         if (Note.IsDragStackFollower || Game.State.Mods.Contains(Mod.HideNotes))
             HoldFx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+        // The ring and the scanner triangle share classic's window: armed with the
+        // note's own judgement window, driven only while the hold is live.
+        var inHoldWindow = !Note.IsCleared &&
+                           Game.Time >= Note.Model.intro_time + Note.JudgmentOffset &&
+                           Game.Time <= Note.Model.end_time + Note.MissThreshold + Note.JudgmentOffset;
+        if (inHoldWindow)
+        {
+            ProgressRing.enabled = true;
+            switch (Note.Model.style)
+            {
+                case 1: Triangle.enabled = true; break;
+                case 2: Triangle.enabled = false; break;
+            }
+            if (Game.State.Mods.Contains(Mod.HideNotes)) Triangle.enabled = false;
+            if (HoldNote.IsHolding && Game.Time >= Note.Model.start_time)
+            {
+                if (Game.Time > Note.Model.start_time + Note.JudgmentOffset)
+                {
+                    ProgressRing.fillColor = BaseFillColor;
+                    ProgressRing.maxCutoff = Mathf.Min(1, 1.333f * (float) HoldNote.HoldProgress);
+                    ProgressRing.fillCutoff = Mathf.Min(1, (float) HoldNote.HoldProgress);
+                }
+                ProgressRing.OnUpdate();
+                Triangle.OnUpdate();
+            }
+        }
+        else
+        {
+            ProgressRing.enabled = false;
+            ProgressRing.Reset();
+            Triangle.enabled = false;
+            Triangle.Reset();
+        }
     }
 
     protected virtual void GetBodyDimensions(out double top, out double bottom, out bool flipY)
@@ -114,6 +182,13 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         var fxScale = (float) Note.Chart.size * Note.Model.Override.SizeMultiplier;
         if (Note.Model.size != double.MinValue) fxScale *= (float) Note.Model.size;
         HoldFx.transform.SetLocalScale(5 * (1 + Context.Player.Settings.ClearEffectsSize) * fxScale);
+        // Classic never enter-scales the ring; cancel the note GO's scale so the
+        // ring keeps classic's world size (BaseTransformSize = size factor × BaseTransformScale).
+        var ratio = BaseTransformSize != 0 && EnterScale != 0
+            ? BaseTransformScale / (BaseTransformSize * EnterScale) : 0f;
+        ProgressRing.transform.localScale = new Vector3(
+            initialProgressRingScale.x * ratio, initialProgressRingScale.y * ratio,
+            initialProgressRingScale.z);
     }
 
     protected override void UpdateComponentOpacity()
@@ -194,6 +269,7 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
     {
         // Always by approach progress: an early press keeps animating by time
         // (the settled pose is simply enter at p = 1).
+        var first = b.VertCount;
         var r = size / 2;
         var w = FlatTokens.Unit * FlatTokens.StrokeRing * Math.Sqrt(size / FlatTokens.Unit);
         var inner = r - w;
@@ -202,19 +278,45 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         var split = FlatEase.InOutQuad(FlatEase.Seg(p, 0.08, 0.35));
         var wake = FlatHoldDesign.Wake(p);
         var alpha = FlatEase.Seg(p, 0, 0.08);
-        // Fixed-radius lock arcs sit perpendicular to the body at rest. A body
-        // flip rotates the pair by pi; it never changes their radius or damping.
-        var bracketAlpha = alpha * FlatEase.Seg(p, FlatHoldDesign.BracketFrom, FlatHoldDesign.BracketFadeTo);
-        if (bracketAlpha > 0)
+        var pressK = FlatEase.OutCubic(FlatEase.Seg(pressT, 0, FlatTokens.Time.HoldPress));
+        if (pressK > 0)
         {
-            var spin = FlatHoldDesign.BracketSpin(p, approach) + (flipY ? Math.PI : 0);
-            var color = WithOpacity(palette.RingTone(wake), bracketAlpha);
-            var width = FlatTokens.Unit * FlatTokens.StrokeHair * FlatHoldDesign.BracketWidth;
-            for (var i = 0; i < 2; i++)
+            // Press clip: the brackets clamp onto the ring (radius R*1.2 -> R - W/2,
+            // width hair*2.6 -> W, spin already at rest) and fade out over the second
+            // half of the press. They replace the enter brackets, not stack on them.
+            var lockAlpha = alpha * (1 - FlatEase.Seg(pressT,
+                FlatTokens.Time.HoldPress * 0.5, FlatTokens.Time.HoldPress));
+            if (lockAlpha > 0)
             {
-                var mid = Math.PI / 2 + i * Math.PI + spin;
-                FlatGeom.Arc(b, 0, 0, r * FlatHoldDesign.BracketRadius,
-                    mid - FlatHoldDesign.BracketHalf, mid + FlatHoldDesign.BracketHalf, width, color, false);
+                var spin = flipY ? Math.PI : 0;
+                var color = WithOpacity(palette.RingColor, lockAlpha);
+                var width = FlatEase.Lerp(
+                    FlatTokens.Unit * FlatTokens.StrokeHair * FlatHoldDesign.BracketWidth, w, pressK);
+                var radius = FlatEase.Lerp(r * FlatHoldDesign.BracketRadius, r - w / 2, pressK);
+                for (var i = 0; i < 2; i++)
+                {
+                    var mid = Math.PI / 2 + i * Math.PI + spin;
+                    FlatGeom.Arc(b, 0, 0, radius,
+                        mid - FlatHoldDesign.BracketHalf, mid + FlatHoldDesign.BracketHalf, width, color, false);
+                }
+            }
+        }
+        else
+        {
+            // Fixed-radius lock arcs sit perpendicular to the body at rest. A body
+            // flip rotates the pair by pi; it never changes their radius or damping.
+            var bracketAlpha = alpha * FlatEase.Seg(p, FlatHoldDesign.BracketFrom, FlatHoldDesign.BracketFadeTo);
+            if (bracketAlpha > 0)
+            {
+                var spin = FlatHoldDesign.BracketSpin(p, approach) + (flipY ? Math.PI : 0);
+                var color = WithOpacity(palette.RingTone(wake), bracketAlpha);
+                var width = FlatTokens.Unit * FlatTokens.StrokeHair * FlatHoldDesign.BracketWidth;
+                for (var i = 0; i < 2; i++)
+                {
+                    var mid = Math.PI / 2 + i * Math.PI + spin;
+                    FlatGeom.Arc(b, 0, 0, r * FlatHoldDesign.BracketRadius,
+                        mid - FlatHoldDesign.BracketHalf, mid + FlatHoldDesign.BracketHalf, width, color, false);
+                }
             }
         }
         FlatGeom.Disk(b, 0, 0, inner + 0.5,
@@ -232,6 +334,9 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         AssemblingRing(b, r - w / 2, FlatEase.Lerp(w * 0.5, w, k),
             WithOpacity(palette.RingTone(wake), alpha), 2, FlatEase.OutQuart(k),
             FlatEase.Lerp(-Math.PI / 2, 0, k), WithOpacity(Edge, alpha), FlatTokens.StrokeEdgeFraction);
+        // The press sink wraps brackets AND head, like the design's scaled group.
+        if (pressK > 0)
+            ScaleGeometry(b, first, FlatEase.Lerp(1, PressedScale, pressK));
     }
 
     protected virtual void BuildGlyphGeometry(FlatMeshBuilder b, double radius, double width, Rgba color)
@@ -264,6 +369,10 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
             BodyMesh.SetVisible(false);
         }
         HoldFx.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+        ProgressRing.Reset();
+        ProgressRing.enabled = false;
+        Triangle.Reset();
+        Triangle.enabled = false;
         InvalidateGeometry();
     }
 
@@ -273,12 +382,17 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         ResetHoldState();
         BodyMesh.SetVisible(false);
         HoldFx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        ProgressRing.Reset();
+        Triangle.Reset();
+        Triangle.gameObject.SetActive(false);
     }
 
     public override void Dispose()
     {
         base.Dispose();
         if (HoldFx != null) UnityEngine.Object.Destroy(HoldFx.gameObject);
+        if (ProgressRing != null) UnityEngine.Object.Destroy(ProgressRing.gameObject);
+        if (Triangle != null) UnityEngine.Object.Destroy(Triangle.gameObject);
         BodyMesh.Dispose();
     }
 
@@ -286,7 +400,7 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
     {
         releaseExitAnchor = null;
         headPartVisible = BodyVisible = wasHolding = BodyFlipY = false;
-        BodyTop = BodyBottom = BodyProgress = BodyTime = 0;
+        BodyTop = BodyBottom = BodyProgress = BodyTime = pressT = 0;
         BodySizeMultiplier = 1;
     }
 }

@@ -45,12 +45,11 @@ public sealed class FlatHoldBody
                 Alpha(palette.RingColor, opacity), FlatCap.Butt);
         }
 
-        // Two thin side rails replace the capsule border: unclipped so their full
-        // hair width reads, the far end open (no cap line across it), the near end
-        // hidden under the head. The fill later covers their inner half.
-        FlatGeom.Line(b, -r, Y(-r, flipY), -r, Y(shown, flipY), hair * 1.6,
+        // Open far end: the two side rails stop on the end point (no cap line);
+        // the near end stops on the head centre, hidden under the head drawn above it.
+        FlatGeom.Line(b, -r, 0, -r, Y(shown, flipY), hair * 1.6,
             Alpha(palette.Shade(400), opacity * 0.9), FlatCap.Butt);
-        FlatGeom.Line(b, r, Y(-r, flipY), r, Y(shown, flipY), hair * 1.6,
+        FlatGeom.Line(b, r, 0, r, Y(shown, flipY), hair * 1.6,
             Alpha(palette.Shade(400), opacity * 0.9), FlatCap.Butt);
     }
 

@@ -25,8 +25,13 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
     // onto the ring and fade out over the second half of the press.
     private const double PressedScale = 0.86;
 
-    private ProgressRing ProgressRing;
-    private Vector3 initialProgressRingScale;
+    // hold.ts holdProgress: the ring rides PROGRESS_RADIUS around the head with a
+    // fixed stroke; track 800 (0.9), lead 50 at 4/3·p, fill 500 at p. Cloned as a
+    // flat-native ring because classic's sprite ring bakes its lead into the
+    // texture and discards everything past maxCutoff — no track band, no shades.
+    private const double ProgressRadius = 1.34;
+    private const double ProgressStroke = 0.083;
+
     private MeshTriangle Triangle;
     private double pressT;
 
@@ -54,17 +59,11 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
     {
         BodyMesh = FlatNoteMesh.Create(Note.transform, "FlatBodyMesh", false, BodySortingOrder);
         BodyMesh.SetVisible(false);
-        // Classic's hold companions, reused verbatim: the progress ring rides the
-        // head (shader cutoffs, render-queue ordering) and the scanner triangle
-        // fills the body-to-line gap. The flat body bar replaces Line/CompletedLine.
-        var provider = ClassicHoldNoteRendererProvider.Instance;
-        ProgressRing = UnityEngine.Object.Instantiate(provider.progressRingPrefab, Note.transform, false)
-            .GetComponent<ProgressRing>();
-        initialProgressRingScale = ProgressRing.transform.localScale;
-        ProgressRing.maxCutoff = 0;
-        ProgressRing.fillCutoff = 0;
-        Triangle = UnityEngine.Object.Instantiate(provider.trianglePrefab, Game.contentParent.transform)
-            .GetComponent<MeshTriangle>();
+        // Classic's scanner triangle, reused verbatim: it fills the body-to-line
+        // gap. The flat body bar replaces Line/CompletedLine, and the progress
+        // ring is drawn in the flat mesh (see BuildProgressRing).
+        Triangle = UnityEngine.Object.Instantiate(ClassicHoldNoteRendererProvider.Instance.trianglePrefab,
+            Game.contentParent.transform).GetComponent<MeshTriangle>();
         Triangle.gameObject.SetActive(false);
         HoldFx = UnityEngine.Object.Instantiate(Game.effectController.holdFx, Note.transform, false);
         HoldFx.transform.DeltaZ(-0.001f);
@@ -82,8 +81,6 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         HoldFx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         Triangle.gameObject.SetActive(true);
         Triangle.Note = Note;
-        ProgressRing.spriteRenderer.enabled = true;
-        ProgressRing.spriteRenderer.material.renderQueue = 3000 + Note.Model.id;
     }
 
     protected override void UpdateComponentStates()
@@ -148,14 +145,14 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         if (Note.IsDragStackFollower || Game.State.Mods.Contains(Mod.HideNotes))
             HoldFx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
 
-        // The ring and the scanner triangle share classic's window: armed with the
-        // note's own judgement window, driven only while the hold is live.
+        // The scanner triangle shares classic's window: armed with the note's own
+        // judgement window, driven only while the hold is live. The progress ring
+        // draws in the flat mesh below (BuildProgressRing).
         var inHoldWindow = !Note.IsCleared &&
                            Game.Time >= Note.Model.intro_time + Note.JudgmentOffset &&
                            Game.Time <= Note.Model.end_time + Note.MissThreshold + Note.JudgmentOffset;
         if (inHoldWindow)
         {
-            ProgressRing.enabled = true;
             switch (Note.Model.style)
             {
                 case 1: Triangle.enabled = true; break;
@@ -163,21 +160,10 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
             }
             if (Game.State.Mods.Contains(Mod.HideNotes)) Triangle.enabled = false;
             if (HoldNote.IsHolding && Game.Time >= Note.Model.start_time)
-            {
-                if (Game.Time > Note.Model.start_time + Note.JudgmentOffset)
-                {
-                    ProgressRing.fillColor = BaseFillColor;
-                    ProgressRing.maxCutoff = Mathf.Min(1, 1.333f * (float) HoldNote.HoldProgress);
-                    ProgressRing.fillCutoff = Mathf.Min(1, (float) HoldNote.HoldProgress);
-                }
-                ProgressRing.OnUpdate();
                 Triangle.OnUpdate();
-            }
         }
         else
         {
-            ProgressRing.enabled = false;
-            ProgressRing.Reset();
             Triangle.enabled = false;
             Triangle.Reset();
         }
@@ -200,13 +186,6 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         var fxScale = (float) Note.Chart.size * Note.Model.Override.SizeMultiplier;
         if (Note.Model.size != double.MinValue) fxScale *= (float) Note.Model.size;
         HoldFx.transform.SetLocalScale(5 * (1 + Context.Player.Settings.ClearEffectsSize) * fxScale);
-        // Classic never enter-scales the ring; cancel the note GO's scale so the
-        // ring keeps classic's world size (BaseTransformSize = size factor × BaseTransformScale).
-        var ratio = BaseTransformSize != 0 && EnterScale != 0
-            ? BaseTransformScale / (BaseTransformSize * EnterScale) : 0f;
-        ProgressRing.transform.localScale = new Vector3(
-            initialProgressRingScale.x * ratio, initialProgressRingScale.y * ratio,
-            initialProgressRingScale.z);
     }
 
     protected override void UpdateComponentOpacity()
@@ -248,10 +227,31 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         bodyBuilder.Reset();
         var first = bodyBuilder.VertCount;
         BuildBodyGeometry(bodyBuilder);
+        // hold.ts draws the progress clip outside the head's size curve, so the
+        // ring rides the body mesh's enter-scale cancellation. It appears when the
+        // hold is live past the press, same gate classic's cutoffs used.
+        if (HoldNote.IsHolding && Game.Time > Note.Model.start_time + Note.JudgmentOffset)
+            BuildProgressRing(bodyBuilder);
         // The stretched body is outside holdEnter's scaled group. Only the head pulses in size.
         ScaleGeometry(bodyBuilder, first, 1 / EnterScale);
         for (var i = 6; i < bodyBuilder.Verts.Count; i += 7) bodyBuilder.Verts[i] *= BodyOpacity;
         BodyMesh.Upload(bodyBuilder);
+    }
+
+    // hold.ts holdProgress: an 800 track ring at 0.9, a 50 lead arc to 4/3·p and a
+    // 500 fill arc to p — around the head at 1.34 R with a fixed 0.083 u stroke,
+    // starting at 12 o'clock, clockwise.
+    private void BuildProgressRing(FlatMeshBuilder b)
+    {
+        var r = DesignSize / 2 * ProgressRadius;
+        var w = FlatTokens.Unit * ProgressStroke;
+        var p = BodyProgress;
+        FlatGeom.Ring(b, 0, 0, r, w, WithOpacity(Palette.Shade(800), 0.9));
+        var lead = Math.Min(1, p * 4 / 3);
+        if (lead > 0)
+            FlatGeom.Arc(b, 0, 0, r, 0, Math.PI * 2 * lead, w, WithOpacity(Palette.Shade(50), 1));
+        if (p > 0)
+            FlatGeom.Arc(b, 0, 0, r, 0, Math.PI * 2 * p, w, WithOpacity(Palette.Shade(500), 1));
     }
 
     protected override void BuildGeometry(FlatMeshBuilder b)
@@ -392,8 +392,6 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
             BodyMesh.SetVisible(false);
         }
         HoldFx.Stop(true, ParticleSystemStopBehavior.StopEmitting);
-        ProgressRing.Reset();
-        ProgressRing.enabled = false;
         Triangle.Reset();
         Triangle.enabled = false;
         InvalidateGeometry();
@@ -405,7 +403,6 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         ResetHoldState();
         BodyMesh.SetVisible(false);
         HoldFx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-        ProgressRing.Reset();
         Triangle.Reset();
         Triangle.gameObject.SetActive(false);
     }
@@ -414,7 +411,6 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
     {
         base.Dispose();
         if (HoldFx != null) UnityEngine.Object.Destroy(HoldFx.gameObject);
-        if (ProgressRing != null) UnityEngine.Object.Destroy(ProgressRing.gameObject);
         if (Triangle != null) UnityEngine.Object.Destroy(Triangle.gameObject);
         BodyMesh.Dispose();
     }

@@ -179,7 +179,7 @@ public static class FlatJudgement
         var gap = FlatEase.Lerp(H, H * 0.32, FlatEase.OutCubic(FlatEase.Seg(u, 0, 0.4)));
         var pop = new GlyphPop(u, 0.02, 0.035, 0.2, 2);
         var dy = (miss ? 1 : -1) * H * 0.12 * FlatEase.OutCubic(u);
-        var opacity = alpha * (1 - FlatEase.Seg(u, 0.7, 1));
+        var opacity = alpha * (1 - FlatEase.Seg(u, 0.55, 0.85));
         FlatText.DrawText(b, text, H, color, gap: gap, pop: pop, alpha: opacity, y: dy, z: z);
         var lk = FlatEase.OutCubic(FlatEase.Seg(u, 0.05, 0.4));
         if (!miss && lk > 0)
@@ -257,7 +257,7 @@ public static class FlatTiming
         var pop = new GlyphPop(u, 0.06, 0.03, 0.24, 1.6);
         var dx = dir * H * 0.5 * (k - 1);
         var dy = -FlatJudgement.CapHeight(unit) * 0.12 * FlatEase.OutCubic(u);
-        var opacity = FlatEase.Lerp(0, 1, FlatEase.Seg(u, 0.06, 0.2)) * (1 - FlatEase.Seg(u, 0.7, 1));
+        var opacity = FlatEase.Lerp(0, 1, FlatEase.Seg(u, 0.06, 0.2)) * (1 - FlatEase.Seg(u, 0.55, 0.85));
         DrawLabel(b, timing, H, FlatTokens.GradeColor(timing == "fast" ? "bad" : "good"), pop, alpha * opacity, dx, dy, z);
     }
 }

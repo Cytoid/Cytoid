@@ -4,7 +4,10 @@ using UnityEngine;
 public class FlatClearFx : MonoBehaviour
 {
     private const double Tau = Math.PI * 2;
-    private const double EffectAlpha = 0.5;
+    // Overall opacity multiplier for the clear/miss effects (judgement text
+    // aside). 1 — classic's burst starts at full alpha, and 0.5 read as too
+    // faint (player feedback). Kept as a knob for tuning back down.
+    private const double EffectAlpha = 1;
     private enum EffectShape { Circle, Diamond, Capsule }
     private enum Extra { None, Double, Beam, Streaks }
 
@@ -245,8 +248,10 @@ public class FlatClearFx : MonoBehaviour
         }
 
         var sk = FlatEase.OutExpo(FlatEase.Seg(u, 0, 0.85));
+        // The shock ring fade rides classic's curve — 1 - quintic-out over the
+        // whole effect, no delay or early cutoff — at the design's 0.5 peak.
         Outline(r * FlatEase.Lerp(0.95, reach, sk), w * FlatEase.Lerp(1.6, 0.35, sk),
-            Alpha(color, 0.5 * (1 - FlatEase.OutCubic(FlatEase.Seg(u, 0.12, 0.8)))));
+            Alpha(color, 0.5 * (1 - FlatEase.OutQuint(u))));
         if (extra == Extra.Double)
             Outline(r * FlatEase.Lerp(0.7, reach * 0.78, FlatEase.OutQuart(FlatEase.Seg(u, 0.08, 0.9))),
                 w * FlatEase.Lerp(0.9, 0.2, FlatEase.Seg(u, 0.08, 0.9)), Alpha(color, 1 - FlatEase.Seg(u, 0.4, 0.95)));

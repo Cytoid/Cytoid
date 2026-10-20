@@ -180,6 +180,9 @@ public abstract class FlatNoteRendererBase : NoteRenderer
     // scratch arrays: live heads and detached exits both render on Unity's main thread.
     protected virtual Action<FlatMeshBuilder, float, float> CaptureExitHead() => null;
     protected virtual Action<FlatMeshBuilder, float> CaptureExitBody() => null;
+    // Sorting layer of the live and detached exit body; 0 is Default. Holds put
+    // theirs on classic's hold-line layers, beneath the chain layer.
+    protected virtual int BodySortingLayerId => 0;
 
     protected void InvalidateGeometry() => geometryDirty = true;
 
@@ -335,7 +338,7 @@ public abstract class FlatNoteRendererBase : NoteRenderer
         var spawn = spawnScale;
         var initial = Note.Model.initial_scale;
         var maxOpacity = Note.Model.opacity == double.MinValue ? (float) Note.Chart.opacity : (float) Note.Model.opacity;
-        FlatNoteExitVisual.Play(Note, WorldScale, SortingOrder, HeadExitCurve, maxOpacity,
+        FlatNoteExitVisual.Play(Note, WorldScale, SortingOrder, BodySortingLayerId, HeadExitCurve, maxOpacity,
             p => ScaleAt(p, curve, spawn, initial), drawHead, CaptureExitBody(), ExitAnchor, missedAt, missTextEnabled,
             ExitLocalRotation);
     }

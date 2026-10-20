@@ -24,8 +24,8 @@ public sealed class FlatNoteExitVisual : MonoBehaviour
     private double missTime;
     private bool missText;
 
-    internal static void Play(Note note, float worldScale, int sortingOrder, ExitCurve curve, float maxOpacity,
-        Func<float, float> scaleAt, Action<FlatMeshBuilder, float, float> drawHead,
+    internal static void Play(Note note, float worldScale, int sortingOrder, int bodySortingLayer, ExitCurve curve,
+        float maxOpacity, Func<float, float> scaleAt, Action<FlatMeshBuilder, float, float> drawHead,
         Action<FlatMeshBuilder, float> drawBody, double exitAnchor, double missTime, bool missText,
         Quaternion localRotation)
     {
@@ -57,7 +57,10 @@ public sealed class FlatNoteExitVisual : MonoBehaviour
         visual.head.SetWorldScale(scale);
         if (drawBody != null)
         {
-            visual.body = FlatNoteMesh.Create(go.transform, "Body", false, 0);
+            // Same layer and order as the live body, so collection never pops the
+            // bar above the chain for its last frames.
+            visual.body = FlatNoteMesh.Create(go.transform, "Body", false, sortingOrder);
+            visual.body.SetSortingLayer(bodySortingLayer);
             visual.body.SetWorldScale(scale);
         }
         visual.Render();

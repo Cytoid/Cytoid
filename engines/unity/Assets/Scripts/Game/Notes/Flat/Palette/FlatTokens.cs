@@ -83,7 +83,6 @@ public static class FlatTokens
 
     // tokens.stroke — relative to unit
     public const double StrokeRing = 0.085;
-    public const double StrokeEdgeFraction = 0.34;
     public const double StrokeHair = 0.022;
     public const double StrokeHoldBody = 0.284;
 
@@ -144,6 +143,49 @@ public static class FlatTokens
 }
 
 // Shared pure math from hold.ts / bodies.ts, exercised by Tools/FlatParity.
+// tokens.stroke.edge: the dark edge on a band's outer silhouette — the flat answer
+// to overlapping notes (two white rings would merge; the edge keeps a boundary).
+// Instead of one solid keyline it is a stepped falloff: abutting, non-overlapping
+// bands of tokens.edge, widths as fractions of the ring band, opacity falling off
+// from the silhouette away — a shadow read without blur, filters or gradients.
+// Placed outside the silhouette by default: a cast-shadow halo, near-invisible on
+// the stage, a boundary on whatever note lies below. 'Inside' would eat into the
+// ring band instead, keeping the calibrated silhouette.
+public static class FlatEdge
+{
+    public const int Count = 3;
+    public const bool Outside = true;
+    private static readonly double[] Fractions = { 0.10, 0.10, 0.10 };
+    private static readonly double[] Opacities = { 0.9, 0.5, 0.2 };
+
+    // Band i resolved against a band of `width`: centreline offset from the
+    // silhouette (negative = inward), band width, opacity. Bands abut exactly, so
+    // semi-transparent steps never double up; inside bands are clamped to the
+    // ring band. Allocation-free: callers loop i over Count.
+    public static bool Band(int i, double width, out double offset, out double bandWidth, out double opacity)
+    {
+        offset = bandWidth = opacity = 0;
+        if (!(width > 0) || i < 0 || i >= Count) return false;
+        var cursor = 0.0;
+        for (var j = 0; j <= i; j++)
+        {
+            var w = width * Math.Max(0, Fractions[j]);
+            if (!Outside) w = Math.Min(w, width - cursor);
+            if (j == i)
+            {
+                if (!(w > 0) || !(Opacities[j] > 0)) return false;
+                var c = cursor + w / 2;
+                offset = Outside ? c : -c;
+                bandWidth = w;
+                opacity = Math.Min(1, Opacities[j]);
+                return true;
+            }
+            cursor += Math.Max(0, w);
+        }
+        return false;
+    }
+}
+
 // drop.ts: the classic drop sprites' proportions, measured at the 50 % alpha
 // contour at PPU = canvas width (Note-DropClick-Ring 536 × 76.8, its fill
 // 360.8 × 68.8 and core 144.8 × 32.8; Note-DropDrag-Ring 404 × 76.8, its fill

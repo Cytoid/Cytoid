@@ -100,14 +100,20 @@ public class FlatFlickNoteRenderer : FlatNoteRendererBase
     }
 
     // flick.ts buildingDiamond: each edge grows from its midpoint (square-capped segments)
-    // until the outline closes into one miter-stroked square; the dark keyline band rides
-    // the outer edge with its centreline pushed out by (width-e)/(2·cos 45°) so the miter
-    // tips coincide with the white band's silhouette.
+    // until the outline closes into one miter-stroked square; the stepped dark edge
+    // (FlatEdge) rides the outer silhouette — a band whose centreline sits `offset`
+    // from the silhouette along the edge normal has vertex radius
+    // r + (width/2 + offset)/cos 45°, so every band's boundaries (miter tips included)
+    // stay parallel to the white band's.
     private void BuildingDiamond(FlatMeshBuilder b, double r, double width, Rgba color, double k, Rgba edgeColor)
     {
         DiamondBand(b, r, width, color, k);
-        var e = width * FlatTokens.StrokeEdgeFraction;
-        if (e > 0) DiamondBand(b, r + (width - e) / (2 * Math.Cos(Math.PI / 4)), e, edgeColor, k);
+        var c45 = Math.Cos(Math.PI / 4);
+        for (var i = 0; i < FlatEdge.Count; i++)
+        {
+            if (!FlatEdge.Band(i, width, out var offset, out var bandWidth, out var opacity)) continue;
+            DiamondBand(b, r + (width / 2 + offset) / c45, bandWidth, WithOpacity(edgeColor, opacity), k);
+        }
     }
 
     private void DiamondBand(FlatMeshBuilder b, double r, double width, Rgba color, double k)

@@ -248,7 +248,7 @@ public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
         BuildArrow(b, (r - w) * 0.95, exiting ? 1 : FlatEase.OutCubic(FlatEase.Seg(p, Steady * 0.3, Steady)),
             wake, exiting ? 1 : alpha, palette);
         AssemblingRing(b, r - w / 2, w, WithOpacity(palette.RingTone(wake), alpha), 2, k,
-            FlatEase.Lerp(-Math.PI / 2, 0, k), WithOpacity(Edge, alpha), FlatTokens.StrokeEdgeFraction);
+            FlatEase.Lerp(-Math.PI / 2, 0, k), WithOpacity(Edge, alpha));
     }
 
     // click.ts clickDragHead: clickEnter with a dragArrow glyph at inner * 0.62.
@@ -292,7 +292,7 @@ public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
         // frame: outer edge pinned at R, thickens inward by half a stroke over 0.7-1
         AssemblingRing(b, r - frameW / 2, frameW,
             WithOpacity(palette.RingTone(split), alpha), 3, build, FlatEase.Lerp(-Math.PI / 3, 0, build),
-            WithOpacity(Edge, alpha), FlatTokens.StrokeEdgeFraction);
+            WithOpacity(Edge, alpha));
     }
 
     // drag.ts dragArrow: arrowHead(inner * 1.05), opacity show, scale lerp(0.6, 1, show).

@@ -54,6 +54,6 @@ public class FlatClickNoteRenderer : FlatNoteRendererBase
         // frame: outer edge pinned at R, thickens inward by half a stroke over 0.7-1
         AssemblingRing(b, r - frameW / 2, frameW,
             WithOpacity(palette.RingTone(split), alpha), 3, build, FlatEase.Lerp(-Math.PI / 3, 0, build),
-            WithOpacity(Edge, alpha), FlatTokens.StrokeEdgeFraction);
+            WithOpacity(Edge, alpha));
     }
 }

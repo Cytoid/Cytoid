@@ -6,17 +6,23 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
     private static readonly Rgba Edge = FlatColor.ParseHex("#1A1B22");
 
     /// <summary>
-    /// Design stage layering puts bodies under EVERY note head (scanline < bodies
-    /// < connections < notes < effects), so the bar lives on its own mesh below the
-    /// per-note scale: note meshes start at (count - id) * 3 >= 3 and drag chain
-    /// lines sit at raw ids >= 1.
+    /// Classic's layer scheme: the body renders on the dedicated GameHoldLine sorting
+    /// layer (long holds: GameLongHoldLine), which sits below GameDragLine and
+    /// Default. Sorting layers outrank sorting orders, so this — not a low order —
+    /// is what keeps the bar under chains and every note head; the note's own order
+    /// then keeps overlapping bars deterministic. The progress ring stays on Default
+    /// like classic's ProgressRing: above chains, below every head (negative order),
+    /// later ids on top.
     /// </summary>
-    private const int BodySortingOrder = 0;
+    private static readonly int HoldLineLayer = SortingLayer.NameToID("GameHoldLine");
+    protected override int BodySortingLayerId => HoldLineLayer;
 
     private readonly FlatHoldBody body = new FlatHoldBody();
     private readonly FlatMeshBuilder bodyBuilder = new FlatMeshBuilder();
+    private readonly FlatMeshBuilder ringBuilder = new FlatMeshBuilder();
     protected readonly ParticleSystem HoldFx;
     private readonly FlatNoteMesh BodyMesh;
+    private readonly FlatNoteMesh RingMesh;
     protected HoldNote HoldNote => (HoldNote) Note;
     protected bool BodyVisible;
     protected override bool CanExit => !HoldNote.IsHolding;
@@ -57,11 +63,13 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
 
     public FlatHoldNoteRenderer(HoldNote note) : base(note)
     {
-        BodyMesh = FlatNoteMesh.Create(Note.transform, "FlatBodyMesh", false, BodySortingOrder);
+        BodyMesh = FlatNoteMesh.Create(Note.transform, "FlatBodyMesh", false, 0);
         BodyMesh.SetVisible(false);
+        RingMesh = FlatNoteMesh.Create(Note.transform, "FlatProgressRingMesh", false, 0);
+        RingMesh.SetVisible(false);
         // Classic's scanner triangle, reused verbatim: it fills the body-to-line
         // gap. The flat body bar replaces Line/CompletedLine, and the progress
-        // ring is drawn in the flat mesh (see BuildProgressRing).
+        // ring is drawn on its own flat mesh (see BuildProgressRing).
         Triangle = UnityEngine.Object.Instantiate(ClassicHoldNoteRendererProvider.Instance.trianglePrefab,
             Game.contentParent.transform).GetComponent<MeshTriangle>();
         Triangle.gameObject.SetActive(false);
@@ -78,6 +86,9 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         main.startColor = BaseFillColor;
         // Classic's fill is ring order - 1, and its hold particles are another order below.
         HoldFx.GetComponent<ParticleSystemRenderer>().sortingOrder = SortingOrder - 2;
+        BodyMesh.SetSortingLayer(BodySortingLayerId);
+        BodyMesh.SetSortingOrder(SortingOrder);
+        RingMesh.SetSortingOrder(-SortingOrder);
         HoldFx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         Triangle.gameObject.SetActive(true);
         Triangle.Note = Note;
@@ -216,26 +227,39 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         if (!BodyVisible || WorldScale == 0f || BodySizeMultiplier == 0f)
         {
             BodyMesh.SetVisible(false);
+            RingMesh.SetVisible(false);
             return;
         }
-        BodyMesh.SetVisible(true);
-        BodyMesh.SetWorldScale(WorldScale);
         // Cancel the parent's BaseTransformSize/EnterScale the same way the head mesh
         // does; the bar must not pulse with the enter curve (it has its own grow-in).
-        var bodyMeshScale = BaseTransformSize != 0 ? 1 / BaseTransformSize : 1;
-        BodyMesh.transform.localScale = new Vector3(bodyMeshScale, bodyMeshScale, 1);
+        var meshScale = BaseTransformSize != 0 ? 1 / BaseTransformSize : 1;
         bodyBuilder.Reset();
-        var first = bodyBuilder.VertCount;
         BuildBodyGeometry(bodyBuilder);
+        UploadBodyPart(BodyMesh, bodyBuilder, meshScale);
+
         // hold.ts draws the progress clip outside the head's size curve, so the
-        // ring rides the body mesh's enter-scale cancellation. It appears when the
+        // ring shares the body's enter-scale cancellation. It appears when the
         // hold is live past the press, same gate classic's cutoffs used.
-        if (HoldNote.IsHolding && Game.Time > Note.Model.start_time + Note.JudgmentOffset)
-            BuildProgressRing(bodyBuilder);
+        var ringVisible = HoldNote.IsHolding && Game.Time > Note.Model.start_time + Note.JudgmentOffset;
+        if (!ringVisible)
+        {
+            RingMesh.SetVisible(false);
+            return;
+        }
+        ringBuilder.Reset();
+        BuildProgressRing(ringBuilder);
+        UploadBodyPart(RingMesh, ringBuilder, meshScale);
+    }
+
+    private void UploadBodyPart(FlatNoteMesh mesh, FlatMeshBuilder b, float meshScale)
+    {
+        mesh.SetVisible(true);
+        mesh.SetWorldScale(WorldScale);
+        mesh.transform.localScale = new Vector3(meshScale, meshScale, 1);
         // The stretched body is outside holdEnter's scaled group. Only the head pulses in size.
-        ScaleGeometry(bodyBuilder, first, 1 / EnterScale);
-        for (var i = 6; i < bodyBuilder.Verts.Count; i += 7) bodyBuilder.Verts[i] *= BodyOpacity;
-        BodyMesh.Upload(bodyBuilder);
+        ScaleGeometry(b, 0, 1 / EnterScale);
+        for (var i = 6; i < b.Verts.Count; i += 7) b.Verts[i] *= BodyOpacity;
+        mesh.Upload(b);
     }
 
     // hold.ts holdProgress: an 800 track ring at 0.9, a 50 lead arc to 4/3·p and a
@@ -390,6 +414,7 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         {
             headPartVisible = BodyVisible = false;
             BodyMesh.SetVisible(false);
+            RingMesh.SetVisible(false);
         }
         HoldFx.Stop(true, ParticleSystemStopBehavior.StopEmitting);
         Triangle.Reset();
@@ -402,6 +427,7 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         base.OnCollect();
         ResetHoldState();
         BodyMesh.SetVisible(false);
+        RingMesh.SetVisible(false);
         HoldFx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         Triangle.Reset();
         Triangle.gameObject.SetActive(false);
@@ -413,6 +439,7 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         if (HoldFx != null) UnityEngine.Object.Destroy(HoldFx.gameObject);
         if (Triangle != null) UnityEngine.Object.Destroy(Triangle.gameObject);
         BodyMesh.Dispose();
+        RingMesh.Dispose();
     }
 
     private void ResetHoldState()

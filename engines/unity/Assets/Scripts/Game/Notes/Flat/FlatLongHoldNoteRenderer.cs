@@ -3,6 +3,9 @@ using UnityEngine;
 
 public class FlatLongHoldNoteRenderer : FlatHoldNoteRenderer
 {
+    private static readonly int LongHoldLineLayer = SortingLayer.NameToID("GameLongHoldLine");
+    protected override int BodySortingLayerId => LongHoldLineLayer;
+
     private readonly double[] square = new double[8];
     private readonly FlatLongHoldRail rail = new FlatLongHoldRail();
 

@@ -85,6 +85,11 @@ public class FlatNoteMesh : MonoBehaviour
         meshRenderer.sortingOrder = order;
     }
 
+    public void SetSortingLayer(int layerId)
+    {
+        meshRenderer.sortingLayerID = layerId;
+    }
+
     public void SetVisible(bool visible)
     {
         if (meshRenderer.enabled != visible) meshRenderer.enabled = visible;

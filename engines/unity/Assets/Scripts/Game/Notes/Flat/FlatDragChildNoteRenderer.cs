@@ -1,10 +1,13 @@
 using System;
 
-// Flat drag child (drag.ts childDraw): solid bead + faint 600 hairline ring, so the
-// centre never draws the eye. Click-drag child reuses the same design with the
-// click-drag family palette (phase-1 scope decision).
+// Flat drag child (drag.ts childDraw): solid bead + faint 600 hairline ring inside, so
+// the centre never draws the eye; the stepped edge sits on the bead's own silhouette.
+// Click-drag child reuses the same design with the click-drag family palette (phase-1
+// scope decision).
 public class FlatDragChildNoteRenderer : FlatNoteRendererBase
 {
+    private static readonly Rgba Edge = FlatColor.ParseHex("#1A1B22");
+
     public FlatDragChildNoteRenderer(DragChildNote note) : base(note)
     {
     }
@@ -43,6 +46,14 @@ public class FlatDragChildNoteRenderer : FlatNoteRendererBase
         var wake = WakeAmount(p);
 
         FlatGeom.Disk(b, 0, 0, r, WithOpacity(palette.Tone(WakeShade(400, wake)), alpha));
+        // The bead has no ring band, so the stepped edge (FlatEdge) sits on the disk
+        // silhouette itself, sized off ringWidth like the rest of the family.
+        var ringWidth = FlatTokens.Unit * FlatTokens.StrokeRing * Math.Sqrt(size / FlatTokens.Unit);
+        for (var i = 0; i < FlatEdge.Count; i++)
+        {
+            if (!FlatEdge.Band(i, ringWidth, out var offset, out var bandWidth, out var opacity)) continue;
+            FlatGeom.Ring(b, 0, 0, r + offset, bandWidth, WithOpacity(Edge, alpha * opacity));
+        }
         FlatGeom.Ring(b, 0, 0, r * 0.62, FlatTokens.Unit * FlatTokens.StrokeHair,
             WithOpacity(palette.Tone(WakeShade(600, wake)), alpha * 0.7 * k));
     }

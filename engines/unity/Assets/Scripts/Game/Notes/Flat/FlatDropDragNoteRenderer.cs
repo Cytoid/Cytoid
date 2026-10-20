@@ -52,14 +52,17 @@ public class FlatDropDragNoteRenderer : FlatNoteRendererBase
     {
         var w = DesignSize * FlatDropDesign.DragCapsule.W;
         var h = DesignSize * FlatDropDesign.DragCapsule.H;
-        // Keyline path inset by e so the stroke's outer edge lands on the capsule
-        // silhouette: the ring-colour body's outer e becomes the rim.
-        var e = FlatTokens.Unit * FlatTokens.StrokeRing * Math.Sqrt(DesignSize / FlatTokens.Unit) *
-                FlatTokens.StrokeEdgeFraction;
+        var ringWidth = FlatTokens.Unit * FlatTokens.StrokeRing * Math.Sqrt(DesignSize / FlatTokens.Unit);
 
         CapsuleFill(b, w, h, Palette.RingColor);
         CapsuleFill(b, w * FlatDropDesign.DragFill.W, h * FlatDropDesign.DragFill.H, Palette.Shade(400));
-        CapsuleStroke(b, w - e, h - e, e, Edge);
+        // Stepped edge (FlatEdge): a band whose centreline sits `offset` from the
+        // silhouette is the capsule grown by 2·offset (rx = h/2 keeps it parallel).
+        for (var i = 0; i < FlatEdge.Count; i++)
+        {
+            if (!FlatEdge.Band(i, ringWidth, out var offset, out var bandWidth, out var opacity)) continue;
+            CapsuleStroke(b, w + 2 * offset, h + 2 * offset, bandWidth, WithOpacity(Edge, opacity));
+        }
     }
 
     private static void CapsuleFill(FlatMeshBuilder b, double w, double h, Rgba color)

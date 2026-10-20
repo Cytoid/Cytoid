@@ -461,12 +461,19 @@ public abstract class FlatNoteRendererBase : NoteRenderer
     protected static double WakeAmount(double p) => FlatEase.InOutQuad(FlatEase.Seg(p, 0.45, 0.7));
     protected static double WakeShade(double lit, double wake) => lit + 200 * (1 - wake);
 
+    // parts.ts assemblingRing: the band, then the stepped edge on its outer
+    // silhouette (FlatEdge) — each edge band centred `offset` from `r + width/2`,
+    // sharing the band's segment/spin build so it assembles with the ring.
     protected static void AssemblingRing(FlatMeshBuilder b, double r, double width, Rgba color,
-        int segments, double k, double spin, Rgba edge, double edgeFraction)
+        int segments, double k, double spin, Rgba edge)
     {
         RingBand(b, r, width, color, segments, k, spin);
-        var e = width * FlatEase.Clamp01(edgeFraction);
-        if (e > 0) RingBand(b, r + (width - e) / 2, e, edge, segments, k, spin);
+        var outer = r + width / 2;
+        for (var i = 0; i < FlatEdge.Count; i++)
+        {
+            if (!FlatEdge.Band(i, width, out var offset, out var bandWidth, out var opacity)) continue;
+            RingBand(b, outer + offset, bandWidth, WithOpacity(edge, opacity), segments, k, spin);
+        }
     }
 
     private static void RingBand(FlatMeshBuilder b, double r, double width, Rgba color, int segments, double k, double spin)

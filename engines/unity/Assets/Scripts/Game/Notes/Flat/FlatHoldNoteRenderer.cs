@@ -356,7 +356,7 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         }
         AssemblingRing(b, r - w / 2, FlatEase.Lerp(w * 0.5, w, k),
             WithOpacity(palette.RingTone(wake), alpha), 2, FlatEase.OutQuart(k),
-            FlatEase.Lerp(-Math.PI / 2, 0, k), WithOpacity(Edge, alpha), FlatTokens.StrokeEdgeFraction);
+            FlatEase.Lerp(-Math.PI / 2, 0, k), WithOpacity(Edge, alpha));
         // The press sink wraps brackets AND head, like the design's scaled group.
         if (pressK > 0)
             ScaleGeometry(b, first, FlatEase.Lerp(1, PressedScale, pressK));

@@ -24,6 +24,8 @@ public class FlatClearFx : MonoBehaviour
     private NoteKind kind;
     private Rgba color;
     private EffectShape shape;
+    // capsule notes only: the note's outer silhouette relative to its size
+    private (double W, double H) capsule;
     private Extra extra;
     private double size;
     private float textWorldScale;
@@ -215,10 +217,10 @@ public class FlatClearFx : MonoBehaviour
                 flavorReach = 1.4; flavorSeed = 7;
                 break;
             case NoteKind.DropClick:
-                shape = EffectShape.Capsule; flavorReach = 1.3; flavorSeed = 8;
+                shape = EffectShape.Capsule; capsule = FlatDropDesign.ClickCapsule; flavorReach = 1.3; flavorSeed = 8;
                 break;
             case NoteKind.DropDrag:
-                shape = EffectShape.Capsule; flavorReach = 1.3; flavorSeed = 9;
+                shape = EffectShape.Capsule; capsule = FlatDropDesign.DragCapsule; flavorReach = 1.3; flavorSeed = 9;
                 break;
             default: throw new ArgumentOutOfRangeException(nameof(kind));
         }
@@ -358,8 +360,8 @@ public class FlatClearFx : MonoBehaviour
         else if (shape == EffectShape.Capsule)
         {
             var ratio = r / (size / 2);
-            var w = size * 1.15 * ratio;
-            var h = size * 0.3 * ratio;
+            var w = size * capsule.W * ratio;
+            var h = size * capsule.H * ratio;
             FlatGeom.RoundedRect(b, -w / 2, -h / 2, w, h, h / 2, tint);
         }
         else FlatGeom.Disk(b, 0, 0, r, tint);
@@ -376,8 +378,8 @@ public class FlatClearFx : MonoBehaviour
         {
             // effects.ts expands the capsule path by one stroke width before stroking.
             var ratio = r / (size / 2);
-            var w = size * 1.15 * ratio + width;
-            var h = size * 0.3 * ratio + width;
+            var w = size * capsule.W * ratio + width;
+            var h = size * capsule.H * ratio + width;
             var radius = h / 2;
             var end = (w - h) / 2;
             FlatGeom.Line(normal, -end, -radius, end, -radius, width, tint, FlatCap.Butt);

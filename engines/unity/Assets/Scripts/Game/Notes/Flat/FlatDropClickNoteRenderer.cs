@@ -1,13 +1,17 @@
 using System;
 using UnityEngine;
 
-// Flat drop click (drop.ts dropClick): a static capsule — fill + white ring band + dark
-// keyline + white core bar. Drop notes have no enter curve (a still image that falls into
-// the scanline), mirroring DropClickNoteRenderer; the fall offset moves only the
-// FlatNoteMesh child so the collider stays anchored at the landing scanline.
+// Flat drop click (drop.ts dropClick): a static capsule ported from Cytoid's Classic
+// sprite design — ring-colour body capsule, fill capsule on top, dark keyline on the
+// outer edge, pure white core bar, at the sprites' measured proportions. Drop notes
+// have no enter curve (a still image that falls into the scanline), mirroring
+// DropClickNoteRenderer; the fall offset moves only the FlatNoteMesh child so the
+// collider stays anchored at the landing scanline.
 public class FlatDropClickNoteRenderer : FlatNoteRendererBase
 {
     private static readonly Rgba Edge = FlatColor.ParseHex("#1A1B22");
+    // The classic core bar is pure white, not palette-driven (Cytoid: Color.white).
+    private static readonly Rgba Core = new Rgba(1, 1, 1, 1);
 
     // Base localPosition of the mesh child, snapshotted ONCE from the pristine child
     // (pool-reuse safety: see DropClickNoteRenderer).
@@ -48,18 +52,17 @@ public class FlatDropClickNoteRenderer : FlatNoteRendererBase
 
     protected override void BuildGeometry(FlatMeshBuilder b)
     {
-        // drop.ts DROP_ASPECT { w: 1.15, h: 0.3 }
-        var w = DesignSize * 1.15;
-        var h = DesignSize * 0.3;
-        var sw = h * 0.2;
-        // dark keyline on the ring's outer edge (flat overlap separator): the keyline
-        // path is grown by (sw - e) so the capsule silhouette is unchanged
-        var e = sw * FlatTokens.StrokeEdgeFraction;
+        var w = DesignSize * FlatDropDesign.ClickCapsule.W;
+        var h = DesignSize * FlatDropDesign.ClickCapsule.H;
+        // Keyline path inset by e so the stroke's outer edge lands on the capsule
+        // silhouette: the ring-colour body's outer e becomes the rim.
+        var e = FlatTokens.Unit * FlatTokens.StrokeRing * Math.Sqrt(DesignSize / FlatTokens.Unit) *
+                FlatTokens.StrokeEdgeFraction;
 
-        CapsuleFill(b, w - sw, h - sw, Palette.Shade(400));
-        CapsuleStroke(b, w - sw / 2, h - sw / 2, sw, Palette.RingColor);
-        CapsuleStroke(b, w - sw / 2 + (sw - e), h - sw / 2 + (sw - e), e, Edge);
-        CapsuleFill(b, w * 0.5, h * 0.26, Palette.RingColor);
+        CapsuleFill(b, w, h, Palette.RingColor);
+        CapsuleFill(b, w * FlatDropDesign.ClickFill.W, h * FlatDropDesign.ClickFill.H, Palette.Shade(400));
+        CapsuleStroke(b, w - e, h - e, e, Edge);
+        CapsuleFill(b, w * FlatDropDesign.ClickCore.W, h * FlatDropDesign.ClickCore.H, Core);
     }
 
     private static void CapsuleFill(FlatMeshBuilder b, double w, double h, Rgba color)

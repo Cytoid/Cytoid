@@ -37,12 +37,12 @@ public sealed class FlatPalette
         for (var i = 0; i < Shades.Length; i++)
         {
             // TS stores hex strings: interpolation starts from these rounded RGBs.
-            shades[i] = FlatColor.ParseHex(FlatColor.ToHex(colors[i]));
+            shades[i] = QuantizedRgb(colors[i]);
             parsedShades[i] = FlatColor.RgbToOklch(shades[i]);
         }
         RingColor = ring ?? FlatColor.ParseHex("#FAFAFA");
         ringTarget = FlatColor.RgbToOklch(RingColor);
-        Ink = FlatColor.ParseHex(FlatColor.ToHex(ink));
+        Ink = QuantizedRgb(ink);
         Hue = hue;
     }
 
@@ -99,7 +99,17 @@ public sealed class FlatPalette
 
     public double Hue { get; }
 
-    private static Rgba QuantizedRgb(Oklch c) => FlatColor.ParseHex(FlatColor.ToHex(FlatColor.OklchToRgb(c)));
+    private static Rgba QuantizedRgb(Oklch c) => QuantizedRgb(FlatColor.OklchToRgb(c));
+
+    private static Rgba QuantizedRgb(Rgba rgb)
+    {
+        // Match ToHex/ParseHex's 8-bit rounding and opaque alpha without strings.
+        // HexChannel promotes each float channel to double before multiplying.
+        return new Rgba(
+            (float) Math.Floor((double) rgb.R * 255 + 0.5) / 255f,
+            (float) Math.Floor((double) rgb.G * 255 + 0.5) / 255f,
+            (float) Math.Floor((double) rgb.B * 255 + 0.5) / 255f);
+    }
 }
 
 public static class FlatPaletteDerive

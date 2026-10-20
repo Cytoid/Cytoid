@@ -109,7 +109,7 @@ public class FlatNoteMesh : MonoBehaviour
         mesh.Clear(false);
         mesh.SetVertices(verts);
         mesh.SetColors(colors);
-        mesh.SetTriangles(tris, 0);
+        mesh.SetTriangles(tris, 0, calculateBounds: false);
         mesh.RecalculateBounds();
 
         // Sprites/Default has no per-renderer color; keep the block empty so the

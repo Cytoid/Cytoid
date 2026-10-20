@@ -1,8 +1,9 @@
 using System;
 using UnityEngine;
 
-// Flat drop drag (drop.ts dropDrag): a shorter static capsule with two notches instead of
-// a core (drop drags are never connected). Same falling/size behavior as
+// Flat drop drag (drop.ts dropDrag): the classic capsule build, shorter and squatter,
+// no core — the classic sprites carry no drag marker, the 0.8 kind size is the only
+// cue (drop drags are never connected). Same falling/size behavior as
 // FlatDropClickNoteRenderer — SYNC-WARNING: the offset plumbing deliberately mirrors the
 // Classic drop renderer pair (DropClickNoteRenderer / DropDragNoteRenderer), which also
 // keep two parallel implementations instead of a shared base.
@@ -49,23 +50,16 @@ public class FlatDropDragNoteRenderer : FlatNoteRendererBase
 
     protected override void BuildGeometry(FlatMeshBuilder b)
     {
-        // drop.ts DROP_ASPECT { w: 1.15, h: 0.3 }
-        var w = DesignSize * 1.15;
-        var h = DesignSize * 0.3;
-        var sw = h * 0.2;
-        var e = sw * FlatTokens.StrokeEdgeFraction;
+        var w = DesignSize * FlatDropDesign.DragCapsule.W;
+        var h = DesignSize * FlatDropDesign.DragCapsule.H;
+        // Keyline path inset by e so the stroke's outer edge lands on the capsule
+        // silhouette: the ring-colour body's outer e becomes the rim.
+        var e = FlatTokens.Unit * FlatTokens.StrokeRing * Math.Sqrt(DesignSize / FlatTokens.Unit) *
+                FlatTokens.StrokeEdgeFraction;
 
-        CapsuleFill(b, w - sw, h - sw, Palette.Shade(400));
-        CapsuleStroke(b, w - sw / 2, h - sw / 2, sw, Palette.RingColor);
-        CapsuleStroke(b, w - sw / 2 + (sw - e), h - sw / 2 + (sw - e), e, Edge);
-
-        // two vertical notches mark the note as a drag
-        var nh = h * 0.42;
-        for (var s = -1; s <= 1; s += 2)
-        {
-            var x = s * w * 0.16;
-            FlatGeom.Line(b, x, -nh / 2, x, nh / 2, sw * 0.9, Palette.Shade(600), FlatCap.Round);
-        }
+        CapsuleFill(b, w, h, Palette.RingColor);
+        CapsuleFill(b, w * FlatDropDesign.DragFill.W, h * FlatDropDesign.DragFill.H, Palette.Shade(400));
+        CapsuleStroke(b, w - e, h - e, e, Edge);
     }
 
     private static void CapsuleFill(FlatMeshBuilder b, double w, double h, Rgba color)

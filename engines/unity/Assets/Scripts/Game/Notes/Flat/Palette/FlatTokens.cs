@@ -144,6 +144,20 @@ public static class FlatTokens
 }
 
 // Shared pure math from hold.ts / bodies.ts, exercised by Tools/FlatParity.
+// drop.ts: the classic drop sprites' proportions, measured at the 50 % alpha
+// contour at PPU = canvas width (Note-DropClick-Ring 536 × 76.8, its fill
+// 360.8 × 68.8 and core 144.8 × 32.8; Note-DropDrag-Ring 404 × 76.8, its fill
+// 244.8 × 60.8). Capsules are relative to the kind size; fill and core are
+// fractions of the body capsule.
+public static class FlatDropDesign
+{
+    public static readonly (double W, double H) ClickCapsule = (1, 76.8 / 536);
+    public static readonly (double W, double H) ClickFill = (360.8 / 536, 68.8 / 76.8);
+    public static readonly (double W, double H) ClickCore = (144.8 / 536, 32.8 / 76.8);
+    public static readonly (double W, double H) DragCapsule = (1, 76.8 / 404);
+    public static readonly (double W, double H) DragFill = (244.8 / 404, 60.8 / 76.8);
+}
+
 public static class FlatHoldDesign
 {
     public const double CoreRadius = 0.6;

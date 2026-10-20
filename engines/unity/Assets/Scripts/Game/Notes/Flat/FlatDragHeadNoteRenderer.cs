@@ -3,11 +3,11 @@ using UnityEngine;
 
 // Flat drag head. Regular drags port drag.ts headDraw: fill disk + chain arrow +
 // two-arc assembling ring, waking 200 shade steps over the click's WAKE window.
-// Click-drag heads port click.ts clickDragHead: the CLICK enter design with a
-// smaller chain-arrow glyph (inner * 0.62, showing over p 0.1-0.3), click-drag
-// family palette. The note GameObject already faces the chain
-// (Note.OnGameLateUpdate), so arrows are drawn at heading 0 and the GO rotation
-// carries them.
+// Click-drag heads port click.ts clickDragHead: drawn exactly like a CLICK, no
+// arrow — only the chain (child beads + path) says it is a drag start — with the
+// click-drag family palette. The note GameObject already faces the chain
+// (Note.OnGameLateUpdate), so the regular head's arrow is drawn at heading 0 and
+// the GO rotation carries it.
 public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
 {
     private static readonly Rgba Edge = FlatColor.ParseHex("#1A1B22");
@@ -171,7 +171,7 @@ public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
         if (ClearedSuccessfully) return;
         if (Exiting && !pinnedRotation.HasValue) pinnedRotation = Note.transform.localRotation;
         var first = b.VertCount;
-        BuildClickDragGeometry(b, EnterProgress, EnterScale, DesignSize, Palette, Exiting);
+        BuildClickDragGeometry(b, EnterProgress, EnterScale, DesignSize, Palette);
         PinToAnchor(b, first, Exiting ? pinnedRotation : null);
     }
 
@@ -227,11 +227,12 @@ public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
     private void DrawHead(FlatMeshBuilder b, double p, float enterScale, double designSize,
         FlatPalette palette, bool clickDrag, bool indicator, bool exiting)
     {
-        // The body rewinds its own approach; the directional arrow stays built
-        // throughout the exit. Only a successful regular-drag clear settles the head.
-        // CDrag indicators use their separate mesh; this wrapper never draws one.
+        // The body rewinds its own approach; the regular head's directional arrow
+        // stays built throughout the exit. Only a successful regular-drag clear
+        // settles the head. CDrag indicators use their separate mesh; this wrapper
+        // never draws one.
         if (clickDrag)
-            BuildClickDragGeometry(b, p, enterScale, designSize, palette, exiting);
+            BuildClickDragGeometry(b, p, enterScale, designSize, palette);
         else
             BuildDragHeadGeometry(b, indicator ? 1 : p, designSize, designSize, palette, exiting);
     }
@@ -251,8 +252,8 @@ public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
             FlatEase.Lerp(-Math.PI / 2, 0, k), WithOpacity(Edge, alpha));
     }
 
-    // click.ts clickDragHead: clickEnter with a dragArrow glyph at inner * 0.62.
-    private void BuildClickDragGeometry(FlatMeshBuilder b, double p, float enterScale, double designSize, FlatPalette palette, bool exiting)
+    // click.ts clickDragHead: the click enter, verbatim — no arrow glyph.
+    private void BuildClickDragGeometry(FlatMeshBuilder b, double p, float enterScale, double designSize, FlatPalette palette)
     {
         var r = designSize / 2;
         var w = FlatTokens.Unit * FlatTokens.StrokeRing * Math.Sqrt(designSize / FlatTokens.Unit);
@@ -261,10 +262,10 @@ public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
         var alpha = FlatEase.OutCubic(FlatEase.Seg(p, 0, 0.1));
         var build = FlatEase.OutQuart(FlatEase.Seg(p, 0, 0.4));
         var split = FlatEase.OutQuad(FlatEase.Seg(p, 0.4, 0.85));
-        // The click-drag head is the click enter with an arrow glyph (click.ts
-        // clickDragHeadEnter), so it carries the click's frame thickening: the
-        // frame grows inward by half a stroke over p 0.7-1 while the core rises
-        // onto its final inner edge — no base rim left at the hit.
+        // The click-drag head is the click enter (click.ts clickDragHead), so it
+        // carries the click's frame thickening: the frame grows inward by half a
+        // stroke over p 0.7-1 while the core rises onto its final inner edge — no
+        // base rim left at the hit.
         var frameW = FlatEase.Lerp(w * 0.45, w, build) *
                      FlatEase.Lerp(1, 1.5, FlatEase.InQuad(FlatEase.Seg(p, 0.7, 1)));
         var coreR = (inner - w / 2) * FlatEase.Lerp(0.36, 1, FlatEase.InQuad(FlatEase.Seg(p, 0.42, 0.94)));
@@ -286,9 +287,6 @@ public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
             FlatGeom.Disk(b, 0, 0, coreR, WithOpacity(palette.Tone(FlatEase.Lerp(700, 400, split)), alpha * split));
         if (blink > 0)
             FlatGeom.Disk(b, 0, 0, coreR, WithOpacity(palette.RingColor, alpha * 0.3 * blink));
-        // dragArrow(ctx, inner * 0.62, outCubic(seg(p, 0.1, 0.3)), splitShades(p).k)
-        BuildArrow(b, inner * 0.62, exiting ? 1 : FlatEase.OutCubic(FlatEase.Seg(p, 0.1, 0.3)),
-            split, exiting ? 1 : alpha, palette);
         // frame: outer edge pinned at R, thickens inward by half a stroke over 0.7-1
         AssemblingRing(b, r - frameW / 2, frameW,
             WithOpacity(palette.RingTone(split), alpha), 3, build, FlatEase.Lerp(-Math.PI / 3, 0, build),

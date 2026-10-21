@@ -8,6 +8,14 @@ public abstract class FlatNoteRendererBase : NoteRenderer
     public static readonly Dictionary<(FlatFamily Family, int SeedPacked, int RingPacked), FlatPalette> FlatPaletteCache =
         new Dictionary<(FlatFamily, int, int), FlatPalette>();
 
+    // These curves capture only immutable design tokens; initial_scale is applied per note in ScaleAt.
+    private static readonly Func<double, double> ClickSizeCurve =
+        FlatEase.RiseSettleCurve(FlatTokens.SizeCurve(SizeKind.Click), FlatTokens.SizeCurveShape);
+    private static readonly Func<double, double> DragHeadSizeCurve =
+        FlatEase.RiseSettleCurve(FlatTokens.SizeCurve(SizeKind.DragHead), FlatTokens.SizeCurveShape);
+    private static readonly Func<double, double> DragChildSizeCurve =
+        FlatEase.RiseSettleCurve(FlatTokens.SizeCurve(SizeKind.DragChild), FlatTokens.SizeCurveShape);
+
     private static Game paletteGame;
     private readonly FlatMeshBuilder geometry = new FlatMeshBuilder();
     private readonly FlatMeshBuilder upload = new FlatMeshBuilder();
@@ -101,7 +109,7 @@ public abstract class FlatNoteRendererBase : NoteRenderer
         {
             var curve = FlatTokens.SizeCurve(SizeKindFor(Kind));
             spawnScale = curve.Spawn;
-            sizeCurve = FlatEase.RiseSettleCurve(curve, FlatTokens.SizeCurveShape);
+            sizeCurve = SharedSizeCurve(SizeKindFor(Kind));
         }
         EnterProgress = EasedOpacity = 0;
         EnterScale = 1;
@@ -432,6 +440,17 @@ public abstract class FlatNoteRendererBase : NoteRenderer
             case NoteType.DropClick: return NoteKind.DropClick;
             case NoteType.DropDrag: return NoteKind.DropDrag;
             default: throw new ArgumentOutOfRangeException(nameof(type));
+        }
+    }
+
+    private static Func<double, double> SharedSizeCurve(SizeKind kind)
+    {
+        switch (kind)
+        {
+            case SizeKind.Click: return ClickSizeCurve;
+            case SizeKind.DragHead: return DragHeadSizeCurve;
+            case SizeKind.DragChild: return DragChildSizeCurve;
+            default: throw new ArgumentOutOfRangeException(nameof(kind));
         }
     }
 

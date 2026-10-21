@@ -43,6 +43,9 @@ public static class FlatText
     }
 
     private const double W = 0.62, K = 0.18, M = 0.82;
+    /// <summary>Resting letter gap, × cap height: the judgement text's tracking
+    /// (TS judgement.ts GAP). The timing label passes its own narrower gap.</summary>
+    public const double Gap = 0.75;
     // Normalized 1-unit cap box, y down. R has a bowl lead-in, 45-degree
     // leg and vertical foot; M/W use chamfered corners and a centre stem.
     private static readonly Dictionary<char, Glyph> Glyphs = new Dictionary<char, Glyph>
@@ -88,7 +91,7 @@ public static class FlatText
             width += g.Width * H;
             count++;
         }
-        return width + (gap ?? H * 0.32) * Math.Max(0, count - 1);
+        return width + (gap ?? H * Gap) * Math.Max(0, count - 1);
     }
 
     /// <summary>Centred static layout. pop returns the TS outBack value (may exceed 1).
@@ -97,7 +100,7 @@ public static class FlatText
         double? gap = null, double? stroke = null, GlyphPop? pop = null,
         double alpha = 1, double x = 0, double y = 0, double z = 0)
     {
-        var g = gap ?? H * 0.32;
+        var g = gap ?? H * Gap;
         var sw = stroke ?? H * 0.18;
         var cursor = -MeasureText(text, H, g) / 2;
         var index = 0;
@@ -143,7 +146,8 @@ public static class FlatText
 /// Draw is centred on the effect, as judgementOffset is (0,0).</summary>
 public static class FlatJudgement
 {
-    public static double CapHeight(double unit = FlatTokens.Unit) => unit * 0.12;
+    /// <summary>0.17 → 0.12 → 0.10 → 0.09: smaller text glares less.</summary>
+    public static double CapHeight(double unit = FlatTokens.Unit) => unit * 0.09;
 
     public static (double X, double Y) Offset() => (0, 0);
 
@@ -176,7 +180,7 @@ public static class FlatJudgement
             color = new Rgba(HexQuantized(mixed.R), HexQuantized(mixed.G), HexQuantized(mixed.B), color.A);
         }
         var text = Text(grade);
-        var gap = FlatEase.Lerp(H, H * 0.32, FlatEase.OutCubic(FlatEase.Seg(u, 0, 0.4)));
+        var gap = FlatEase.Lerp(H, H * FlatText.Gap, FlatEase.OutCubic(FlatEase.Seg(u, 0, 0.4)));
         var pop = new GlyphPop(u, 0.02, 0.035, 0.2, 2);
         var dy = (miss ? 1 : -1) * H * 0.12 * FlatEase.OutCubic(u);
         var opacity = alpha * (1 - FlatEase.Seg(u, 0.55, 0.85));
@@ -214,8 +218,15 @@ public static class FlatTiming
 
     public static string TimingOf(double error) => error < 0 ? "fast" : "slow";
 
+    /// <summary>Cap height, × unit: the judgement text's original 0.12, shrunk.</summary>
+    private const double Cap = 0.10;
+    /// <summary>Resting letter gap, × cap height: the judgement text's original
+    /// tracking — the label's size shrank, its tracking did not follow the
+    /// judgement's widening.</summary>
+    private const double Gap = 0.32;
+
     public static double CapHeight(bool stacked, double unit = FlatTokens.Unit) =>
-        FlatJudgement.CapHeight(unit) * (stacked ? 0.6 : 1);
+        unit * Cap * (stacked ? 0.6 : 1);
 
     public static (double X, double Y) Offset(bool stacked, double unit = FlatTokens.Unit) =>
         stacked ? (0, FlatJudgement.CapHeight(unit) * 1.18 + CapHeight(true, unit) / 2) : (0, 0);
@@ -227,7 +238,7 @@ public static class FlatTiming
         var fast = timing == "fast";
         var text = fast ? "FAST" : "SLOW";
         var sw = H * 0.22;
-        var textW = FlatText.MeasureText(text, H);
+        var textW = FlatText.MeasureText(text, H, H * Gap);
         var chevW = H * 0.34;
         var total = textW + H * 0.72 + chevW;
         var cx = fast ? -total / 2 + chevW / 2 : total / 2 - chevW / 2;
@@ -240,7 +251,7 @@ public static class FlatTiming
         chevron[4] = x + cx - tip;
         chevron[5] = y + H * 0.4;
         FlatGeom.PolyStroke(b, chevron, false, sw, FlatText.Opacity(color, alpha), FlatJoin.Miter, FlatCap.Square, z);
-        FlatText.DrawText(b, text, H, color, stroke: sw, pop: pop, alpha: alpha, x: x + tx, y: y, z: z);
+        FlatText.DrawText(b, text, H, color, gap: H * Gap, stroke: sw, pop: pop, alpha: alpha, x: x + tx, y: y, z: z);
     }
 
     private static readonly double[] chevron = new double[6];

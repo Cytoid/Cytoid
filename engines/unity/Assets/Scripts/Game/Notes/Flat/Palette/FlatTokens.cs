@@ -42,16 +42,22 @@ public static class FlatTokens
 {
     public const double Unit = 128;
 
+    private static readonly Rgba PerfectColor = FlatColor.ParseHex("#5BC0EB");
+    private static readonly Rgba GreatColor = FlatColor.ParseHex("#FDE74C");
+    private static readonly Rgba GoodColor = FlatColor.ParseHex("#9BC53D");
+    private static readonly Rgba BadColor = FlatColor.ParseHex("#E55934");
+    private static readonly Rgba MissColor = FlatColor.ParseHex("#6B6F7A");
+
     /// <summary>tokens.grade defaults; grade uses the lowercase TS names.</summary>
     public static Rgba GradeColor(string grade)
     {
         switch (grade)
         {
-            case "perfect": return FlatColor.ParseHex("#5BC0EB");
-            case "great": return FlatColor.ParseHex("#FDE74C");
-            case "good": return FlatColor.ParseHex("#9BC53D");
-            case "bad": return FlatColor.ParseHex("#E55934");
-            case "miss": return FlatColor.ParseHex("#6B6F7A");
+            case "perfect": return PerfectColor;
+            case "great": return GreatColor;
+            case "good": return GoodColor;
+            case "bad": return BadColor;
+            case "miss": return MissColor;
             default: throw new ArgumentOutOfRangeException(nameof(grade));
         }
     }

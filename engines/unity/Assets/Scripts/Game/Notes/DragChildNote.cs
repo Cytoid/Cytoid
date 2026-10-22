@@ -5,6 +5,14 @@ using UnityEngine;
 public class DragChildNote : Note
 {
 
+    public override void PreparePosition()
+    {
+        // An early-cleared child stays visible until its chart time. Keep its
+        // approach animation moving rather than freezing at the early hit pose.
+        if (!IsDragStackFollower)
+            transform.localPosition = Model.CalculatePosition(Game.Chart);
+    }
+
     protected override NoteRenderer CreateRenderer()
     {
         if (Game.Config.UseFlatNoteDesign) return new FlatDragChildNoteRenderer(this);

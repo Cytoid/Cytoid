@@ -23,11 +23,6 @@ public class DragHeadNote : Note
     public ChartModel.Note EndNoteModel { get; protected set; }
     public Vector3 OriginalPosition { get; protected set; }
     
-    private bool hasFromNote;
-    private Note fromNote;
-    private bool hasToNote;
-    private Note toNote;
-
     public bool IsCDrag => Model.type == (int) NoteType.CDragHead;
 
     // The travelling indicator can appear on an early clear, before intro_time.
@@ -50,142 +45,52 @@ public class DragHeadNote : Note
         EndNoteModel = FromNoteModel.GetDragEndNote(Game.Chart.Model);
     }
 
-    protected override void OnGameUpdate(Game _)
+    public override void PreparePosition()
     {
-        base.OnGameUpdate(_);
+        if (IsDragStackFollower) return;
+        OriginalPosition = Game.GetDragPathPosition(Model);
         if (Game.Time < Model.start_time)
         {
-            OriginalPosition = transform.localPosition;
+            FromNoteModel = Model;
+            ToNoteModel = StartToNoteModel;
+            transform.localPosition = Model.CalculatePosition(Game.Chart);
+            return;
         }
+
+        // Advance all crossed edges in this frame, including simultaneous nodes.
+        // Endpoints never depend on a spawned/cleared/recycled Note instance.
+        var steps = 0;
+        while (Game.Time >= ToNoteModel.start_time && ToNoteModel != EndNoteModel &&
+               steps++ <= Chart.note_map.Count)
+        {
+            FromNoteModel = ToNoteModel;
+            ToNoteModel = Chart.note_map[FromNoteModel.next_id];
+        }
+        transform.localPosition = DragPathGeometry.HeadPosition(
+            Game.GetDragPathPosition(FromNoteModel), Game.GetDragPathPosition(ToNoteModel),
+            Game.Time, FromNoteModel.start_time, ToNoteModel.start_time);
     }
 
     protected override void OnGameLateUpdate(Game _)
     {
-        base.OnGameLateUpdate(_);
+        var approaching = Game.Time < Model.start_time;
+        var from = approaching ? transform.localPosition : Game.GetDragPathPosition(FromNoteModel);
+        var to = approaching ? ToNoteModel.CalculatePosition(Game.Chart) : Game.GetDragPathPosition(ToNoteModel);
+        transform.localEulerAngles = Model.rotation =
+            DragPathGeometry.Rotation(from, to, FromNoteModel.Override);
 
-        transform.localEulerAngles = FromNoteModel.rotation;
-
-        if (Game.SpawnedNotes.ContainsKey(FromNoteModel.id))
+        if (Game.Time >= Model.start_time && ToNoteModel == EndNoteModel)
         {
-            if (!hasFromNote)
+            if (!Game.SpawnedNotes.TryGetValue(ToNoteModel.id, out var last) || last.IsCleared)
             {
-                hasFromNote = true;
-                fromNote = Game.SpawnedNotes[FromNoteModel.id];
+                if (!IsCleared && ShouldMiss()) Clear(NoteGrade.Miss);
             }
         }
-        else
-        {
-            if (hasFromNote)
-            {
-                hasFromNote = false;
-                fromNote = null;
-            }
-        }
-        if (Game.SpawnedNotes.ContainsKey(ToNoteModel.id))
-        {
-            if (!hasToNote)
-            {
-                hasToNote = true;
-                toNote = Game.SpawnedNotes[ToNoteModel.id];
-            }
-        }
-        else
-        {
-            if (hasToNote)
-            {
-                hasToNote = false;
-                toNote = null;
-            }
-        }
-
-        if (Game.Time >= Model.start_time)
-        {
-            // Consume zero-span edges in the same frame so same-tick chains do not linger on NaN/u=Inf.
-            // Cap iterations against malformed charts with cyclic next_id and non-increasing start_time.
-            var maxEdgeSteps = Chart.note_map.Count + 1;
-            var edgeSteps = 0;
-            while (edgeSteps++ < maxEdgeSteps)
-            {
-                var fromPos = (hasFromNote && fromNote != this)
-                    ? fromNote.StackVisualLocalPosition()
-                    : FromNoteModel.CalculatePosition(Game.Chart);
-                var toPos = hasToNote
-                    ? toNote.StackVisualLocalPosition()
-                    : ToNoteModel.CalculatePosition(Game.Chart);
-
-                var span = ToNoteModel.start_time - FromNoteModel.start_time;
-                float u;
-                if (span > 0f)
-                    u = Mathf.Clamp01((Game.Time - FromNoteModel.start_time) / span);
-                else
-                    u = Game.Time >= ToNoteModel.start_time ? 1f : 0f;
-
-                transform.localPosition = Vector3.Lerp(fromPos, toPos, u);
-
-                if (Game.Time < ToNoteModel.start_time)
-                    break;
-
-                if (ToNoteModel == EndNoteModel)
-                {
-                    transform.localPosition = toPos;
-                    break;
-                }
-
-                FromNoteModel = ToNoteModel;
-                ToNoteModel = Chart.note_map[FromNoteModel.next_id];
-                hasFromNote = false;
-                hasToNote = false;
-                fromNote = null;
-                toNote = null;
-
-                if (Game.SpawnedNotes.TryGetValue(FromNoteModel.id, out fromNote))
-                    hasFromNote = true;
-                if (Game.SpawnedNotes.TryGetValue(ToNoteModel.id, out toNote))
-                    hasToNote = true;
-            }
-
-            // Moving to or already at last note
-            if (ToNoteModel == EndNoteModel)
-            {
-                // Last note does not exist?
-                if (!Game.SpawnedNotes.ContainsKey(ToNoteModel.id))
-                {
-                    // Clear this
-                    if (!IsCleared && ShouldMiss())
-                    {
-                        Clear(NoteGrade.Miss);
-                    }
-                    SyncDragStackFollowersIfPrimary();
-                    return;
-                }
-
-                // Last note does exist and is cleared?
-                var lastNote = Game.SpawnedNotes[ToNoteModel.id];
-                if (lastNote.IsCleared)
-                {
-                    // Clear this
-                    if (!IsCleared && ShouldMiss())
-                    {
-                        Clear(NoteGrade.Miss);
-                    }
-                }
-            }
-        }
-        else
-        {
-            hasFromNote = false;
-            hasToNote = false;
-            fromNote = null;
-            toNote = null;
-            FromNoteModel = Model;
-            ToNoteModel = StartToNoteModel;
-        }
-
         SyncDragStackFollowersIfPrimary();
     }
 
     // SYNC-WARNING: DropDrag judgment is a verbatim copy of DragHeadNote's CanHandleTouch, CalculateGrade,
-    // IsAutoEnabled, and PlayHitSound (DragHeadNote.cs:165-252). If you change judgment in either
+    // IsAutoEnabled, and PlayHitSound. If you change judgment in either
     // file, update the other. DragHead chain logic (OnGameLateUpdate, Collect, FromNoteModel/ToNoteModel)
     // is INTENTIONALLY NOT inherited — DropDrag is standalone per design decision.
     // NOTE: DragHead's cross-page check is redundant for drop notes (5×pageDuration >> Page.Duration/2
@@ -218,10 +123,6 @@ public class DragHeadNote : Note
             StartToNoteModel = default;
             EndNoteModel = default;
             OriginalPosition = default;
-            hasFromNote = default;
-            fromNote = default;
-            hasToNote = default;
-            toNote = default;
         }
         bool CanCollect() => Game.Time >= EndNoteModel.end_time +
             (IsCDrag ? NoteType.CDragChild : NoteType.DragChild).GetDefaultMissThreshold();

@@ -130,7 +130,11 @@ public class ChartModel
 
         public Vector3 CalculatePosition(Chart chart)
         {
-            var ovr = Override;
+            return CalculatePosition(chart, Override);
+        }
+
+        public Vector3 CalculatePosition(Chart chart, NoteOverride ovr)
+        {
             var pos = position;
 
             if (ovr.XMultiplier != 1 || ovr.XOffset != 0) pos.x = chart.ConvertChartXToScreenX((float) x * ovr.XMultiplier + ovr.XOffset);

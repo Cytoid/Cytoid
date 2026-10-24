@@ -25,6 +25,7 @@ public abstract class Note : MonoBehaviour
     public float MissThreshold { get; set; }
 
     public bool IsCleared { get; private set; }
+    private bool isAutoplayClear;
     public bool IsArmed { get; private set; }
     private NoteGrade armedGrade = NoteGrade.None;
     /// <summary>
@@ -152,8 +153,11 @@ public abstract class Note : MonoBehaviour
         try
         {
             Renderer.OnClear(grade);
-            Game.State.Judge(this, grade, -TimeUntilEnd, GreatGradeWeight);
-            Game.onNoteJudged.Invoke(Game, this, new JudgeData(grade, -TimeUntilEnd, GreatGradeWeight));
+            // Only the non-hold autoplay path settles against raw chart time.
+            var timingOffset = isAutoplayClear ? 0 : JudgmentOffset;
+            var error = -TimeUntilEnd - timingOffset;
+            Game.State.Judge(this, grade, error, GreatGradeWeight);
+            Game.onNoteJudged.Invoke(Game, this, new JudgeData(grade, error, GreatGradeWeight));
 
             // Hit sound (drag-stack budget via EffectController when this clear participates)
             if (grade != NoteGrade.Miss &&
@@ -252,7 +256,15 @@ public abstract class Note : MonoBehaviour
                         using (Game.PlayRecordRecorder?.PushJudgmentContext(
                             GamePlayRecordWire.CauseAutoplay, null, null))
                         {
-                            Clear(NoteGrade.Perfect);
+                            isAutoplayClear = true;
+                            try
+                            {
+                                Clear(NoteGrade.Perfect);
+                            }
+                            finally
+                            {
+                                isAutoplayClear = false;
+                            }
                         }
                     }
                 }

@@ -125,7 +125,9 @@ public class JudgmentOffsetErrorTests
             }
             finally
             {
+                fixture.Time(2f);
                 note.Collect();
+                Assert.That(note.IsCollected, Is.True);
                 Object.DestroyImmediate(go);
             }
         }

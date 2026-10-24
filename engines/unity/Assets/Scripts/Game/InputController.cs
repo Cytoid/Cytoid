@@ -225,6 +225,8 @@ public class InputController : MonoBehaviour
 
     public void OnNoteCollected(Note note)
     {
+        foreach (var notes in armedDragsByFinger.Values) notes.Remove(note);
+
         if (note.Type == NoteType.Hold || note.Type == NoteType.LongHold)
         {
             // Since you only have 10 fingers, this doesn't need to be optimized

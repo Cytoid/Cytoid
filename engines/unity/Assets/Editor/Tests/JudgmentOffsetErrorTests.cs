@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using UnityEngine;
 
 public class JudgmentOffsetErrorTests
 {
@@ -49,4 +50,48 @@ public class JudgmentOffsetErrorTests
             Assert.That(fixture.Game.State.Judgements[1].Error, Is.EqualTo(0.05f).Within(1e-6));
         }
     }
+
+    [TestCase(0.1f)]
+    [TestCase(-0.1f)]
+    public void AutoplayKeepsRawChartTimingError(float offset)
+    {
+        using (var fixture = new DropDragGuardTests.InputFixture(GameMode.Standard))
+        {
+            var model = fixture.Model(1, 1f, NoteType.DropClick);
+            fixture.PrepareJudgments(GameMode.Standard);
+            fixture.Game.State.Mods.Add(Mod.Auto);
+            var go = new GameObject("AutoplayOffsetTest");
+            go.AddComponent<CircleCollider2D>();
+            var note = go.AddComponent<JudgmentOffsetTestAutoClick>();
+            try
+            {
+                note.Initialize(fixture.Game);
+                note.SetData(model.id);
+                fixture.Game.SpawnedNotes[model.id] = note;
+                DropDragGuardTests.SetProperty(note, nameof(Note.JudgmentOffset), offset);
+                JudgeData observed = null;
+                fixture.Game.onNoteJudged.AddListener((game, judged, data) => observed = data);
+                fixture.Time(1.001f);
+
+                note.TickStackFollowerJudgment();
+
+                Assert.That(fixture.Game.State.Judgements[1].Grade, Is.EqualTo(NoteGrade.Perfect));
+                Assert.That(fixture.Game.State.Judgements[1].Error, Is.EqualTo(0.001f).Within(1e-6));
+                Assert.That(observed, Is.Not.Null);
+                Assert.That(observed.Error, Is.EqualTo(0.001f).Within(1e-6));
+            }
+            finally
+            {
+                note.Collect();
+                Object.DestroyImmediate(go);
+            }
+        }
+    }
+}
+
+public class JudgmentOffsetTestAutoClick : DropClickNote
+{
+    protected override NoteRenderer CreateRenderer() => new NoteRenderer(this);
+    public override void PlayHitSound() { }
+    public new void OnDestroy() { }
 }

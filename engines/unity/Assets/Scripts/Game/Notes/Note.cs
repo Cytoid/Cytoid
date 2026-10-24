@@ -152,7 +152,9 @@ public abstract class Note : MonoBehaviour
         try
         {
             Renderer.OnClear(grade);
-            var error = -TimeUntilEnd - JudgmentOffset;
+            // Non-hold autoplay follows raw chart time; holds finish at the adjusted end time.
+            var timingOffset = IsAutoEnabled() && !(this is HoldNote) ? 0 : JudgmentOffset;
+            var error = -TimeUntilEnd - timingOffset;
             Game.State.Judge(this, grade, error, GreatGradeWeight);
             Game.onNoteJudged.Invoke(Game, this, new JudgeData(grade, error, GreatGradeWeight));
 

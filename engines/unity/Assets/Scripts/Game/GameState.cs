@@ -69,8 +69,9 @@ public sealed class GameState
         get
         {
             OnCompleteGuard();
+            var averageTimingError = AverageTimingError;
             var difference = 0.0;
-            Judgements.Values.ForEach(it => difference += Math.Pow(AverageTimingError - it.Error, 2));
+            Judgements.Values.ForEach(it => difference += Math.Pow(averageTimingError - it.Error, 2));
             return Math.Sqrt(difference / Judgements.Count);
         }
     }

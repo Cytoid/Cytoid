@@ -152,8 +152,9 @@ public abstract class Note : MonoBehaviour
         try
         {
             Renderer.OnClear(grade);
-            Game.State.Judge(this, grade, -TimeUntilEnd, GreatGradeWeight);
-            Game.onNoteJudged.Invoke(Game, this, new JudgeData(grade, -TimeUntilEnd, GreatGradeWeight));
+            var error = -TimeUntilEnd - JudgmentOffset;
+            Game.State.Judge(this, grade, error, GreatGradeWeight);
+            Game.onNoteJudged.Invoke(Game, this, new JudgeData(grade, error, GreatGradeWeight));
 
             // Hit sound (drag-stack budget via EffectController when this clear participates)
             if (grade != NoteGrade.Miss &&

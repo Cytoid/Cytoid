@@ -15,9 +15,20 @@ public class TimingStandardDeviationTests
     }
 
     [Test]
+    public void MatchesShiftedPopulationDeviation()
+    {
+        var state = CompletedState(0.01, 0.02, 0.03);
+
+        Assert.That(state.AverageTimingError, Is.EqualTo(0.02).Within(1e-12));
+        Assert.That(state.StandardTimingError, Is.EqualTo(Math.Sqrt(0.0002 / 3)).Within(1e-12));
+    }
+
+    [Test]
     public void LargeConstantChartHasZeroDeviation()
     {
-        var state = CompletedState(new double[16000]);
+        var errors = new double[16000];
+        for (var i = 0; i < errors.Length; i++) errors[i] = 0.125;
+        var state = CompletedState(errors);
 
         Assert.That(state.StandardTimingError, Is.EqualTo(0));
     }

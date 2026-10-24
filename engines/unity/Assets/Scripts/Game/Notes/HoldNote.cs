@@ -134,7 +134,7 @@ public class HoldNote : Note
             else
             {
                 rankedGrade = grade;
-                if (rankedGrade == NoteGrade.Great) GreatGradeWeight = 1.0f - (HeldDuration - Model.Duration * 0.70f) /
+                if (rankedGrade == NoteGrade.Great) GreatGradeWeight = (HeldDuration - Model.Duration * 0.70f) /
                                        (Model.Duration - 0.050f - Model.Duration * 0.70f);
             }
         }

@@ -69,8 +69,19 @@ namespace Cytoid.Storyboard
             var cameraTransform = Camera.transform;
             cameraTransform.position = new Vector3(0, 0, -10);
             cameraTransform.eulerAngles = Vector3.zero;
-            Camera.orthographic = true;
+            SetCameraOrthographic(true);
             Camera.fieldOfView = 53.2f;
+        }
+
+        public void SetCameraOrthographic(bool orthographic)
+        {
+            if (Camera.orthographic == orthographic) return;
+            Camera.orthographic = orthographic;
+
+            // Transform and camera changes can reuse a cached UI mesh.
+            foreach (var renderer in ComponentRenderers.Values)
+                if (renderer is SpriteRenderer sprite && sprite.Image != null)
+                    sprite.Image.SetVerticesDirty();
         }
 
         private void ResetCameraFilters()

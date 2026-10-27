@@ -56,7 +56,7 @@ namespace Cytoid.Storyboard.Controllers
             // Perspective
             if (From.Perspective != null)
             {
-                camera.orthographic = !From.Perspective.Value;
+                Renderer.SetCameraOrthographic(!From.Perspective.Value);
                 if (From.Perspective.Value && From.Fov != null)
                 {
                     camera.fieldOfView = EaseFloat(From.Fov, To.Fov);

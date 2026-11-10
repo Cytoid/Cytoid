@@ -562,7 +562,28 @@ public class InputController : MonoBehaviour
         hitCandidates.Clear();
         foreach (var note in TouchableSelectNotes)
         {
-            if (!IsCollidingSelectCandidate(note, finger, pressedPosition)) continue;
+            if (!IsTouchableNote(note)) continue;
+            if (!note.DoesCollide(pressedPosition)) continue;
+
+            if (note is FlickNote flickNote)
+            {
+                if (FlickingNotes.ContainsKey(finger.Index) || FlickingNotes.ContainsValue(flickNote))
+                    continue;
+                if (flickNote.IsFlicking || !flickNote.CanHandleTouch()) continue;
+                if (!IsEligibleSelectAfterDrag(flickNote, acceptedDrag, pressedPosition)) continue;
+                hitCandidates.Add(flickNote);
+                continue;
+            }
+
+            if (note is HoldNote holdNote)
+            {
+                // Lists are per-frame snapshots; same-frame multi-finger rebind uses Update.
+                if (holdNote.IsHolding || HoldingNotes.ContainsKey(finger.Index)) continue;
+                if (!IsEligibleSelectAfterDrag(holdNote, acceptedDrag, pressedPosition)) continue;
+                hitCandidates.Add(holdNote);
+                continue;
+            }
+
             if (!IsEligibleSelectAfterDrag(note, acceptedDrag, pressedPosition)) continue;
             hitCandidates.Add(note);
         }

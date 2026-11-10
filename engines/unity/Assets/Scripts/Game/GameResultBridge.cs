@@ -18,7 +18,9 @@ public static class GameResultBridge
     {
         var activeSessionId = ResolveSessionId(sessionId);
         var usedAutoMod = state != null && HasAutoMod(state);
-        var telemetry = CaptureTelemetry(activeSessionId, usedAutoMod);
+        var telemetry = state?.IsCy1Practice == true
+            ? EmptyTelemetrySummary()
+            : CaptureTelemetry(activeSessionId, usedAutoMod);
         var payload = BuildResultPayload(state, tierPlaySession, error, activeSessionId, telemetry);
         EmitResultEnvelope(activeSessionId, payload, logAsError: error != null);
     }
@@ -282,6 +284,7 @@ public static class GameResultBridge
             case Mod.AutoHold: return "autoHold";
             case Mod.AutoFlick: return "autoFlick";
             case Mod.Auto: return "auto";
+            case Mod.CY1: return "cy1";
             default: throw new ArgumentOutOfRangeException(nameof(mod), mod, null);
         }
     }

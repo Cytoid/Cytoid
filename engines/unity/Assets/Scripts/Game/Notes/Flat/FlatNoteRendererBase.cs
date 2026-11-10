@@ -198,7 +198,7 @@ public abstract class FlatNoteRendererBase : NoteRenderer
     {
         // Once exiting, the visual window belongs to the curve, not gameplay's miss deadline.
         var inWindow = Exiting ? FlatEase.ExitAlpha(ExitTime, HeadExitCurve) > 0 :
-            Game.Time >= Note.Model.intro_time && Game.Time <= Note.Model.end_time + Note.MissThreshold;
+            Note.IsWithinNoteWindow;
         HeadVisible = !Note.IsDragStackFollower && (!Note.IsCleared || Missed && UsesExit) &&
                       (inWindow || MissTextActive()) &&
                       !Game.State.Mods.Contains(Mod.HideNotes);
@@ -209,7 +209,7 @@ public abstract class FlatNoteRendererBase : NoteRenderer
     // Classic's NoteId window: the note's own click lifecycle, independent of the
     // Flat exit curves. Drag-head renderers override this with the chain window.
     protected virtual bool NoteIdVisible => !Note.IsCleared &&
-        Game.Time >= Note.Model.intro_time && Game.Time <= Note.Model.end_time + Note.MissThreshold;
+        Note.IsWithinNoteWindow;
 
     // Mirrors ClassicNoteRenderer's NoteId rules: stack-follower and HideNotes
     // suppression, and per-frame counter-rotation so the label stays upright
@@ -283,7 +283,7 @@ public abstract class FlatNoteRendererBase : NoteRenderer
             return;
         }
 
-        Collider.enabled = Game.Time >= Note.Model.intro_time && Game.Time <= Note.Model.end_time + Note.MissThreshold;
+        Collider.enabled = Note.IsWithinNoteWindow;
 
         var radius = Note.Game.Config.NoteHitboxSizes[Note.Type];
         if (Note.Model.hitbox != double.MinValue) radius *= (float) Note.Model.hitbox;

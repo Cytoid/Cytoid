@@ -25,6 +25,14 @@ public abstract class Note : MonoBehaviour
     public float MissThreshold { get; set; }
 
     public bool IsCleared { get; private set; }
+    internal bool UsesCy1Judgment { get; private set; }
+    internal bool UsesCy1Drag => UsesCy1Judgment && (Type == NoteType.DragHead || Type == NoteType.DragChild);
+    internal long Cy1Start { get; private set; }
+    internal long Cy1End { get; private set; }
+    internal long Cy1Now => Cy1Judgment.ToMicroseconds(Game.Time);
+    internal double? Cy1TimingError { get; private set; }
+    private long Cy1Deadline => Cy1Start + (UsesCy1Drag ? Cy1Judgment.DragClose : Cy1Judgment.ClickClose);
+
     public bool IsArmed { get; private set; }
     private NoteGrade armedGrade = NoteGrade.None;
     /// <summary>
@@ -84,6 +92,13 @@ public abstract class Note : MonoBehaviour
 
         MissThreshold = Type.GetDefaultMissThreshold();
         JudgmentOffset = Context.Player.Settings.JudgmentOffset;
+        UsesCy1Judgment = Game.State.IsCy1Practice && Cy1Judgment.Supports(Type, Model.Duration);
+        if (UsesCy1Judgment)
+        {
+            Cy1Start = Cy1Judgment.ToMicroseconds((double)Model.start_time + JudgmentOffset);
+            Cy1End = Cy1Judgment.ToMicroseconds((double)Model.end_time + JudgmentOffset);
+            if (Type == NoteType.Hold && Cy1End <= Cy1Start) UsesCy1Judgment = false;
+        }
 
         Game.onGameUpdate.RemoveListener(OnGameUpdate);
         Game.onGameLateUpdate.RemoveListener(OnGameLateUpdate);
@@ -121,6 +136,8 @@ public abstract class Note : MonoBehaviour
         dragStackBudgetId = 0;
         GreatGradeWeight = default;
         JudgmentOffset = default;
+        UsesCy1Judgment = false;
+        Cy1TimingError = null;
         DragStack = null;
         IsDragStackFollower = default;
     }
@@ -227,7 +244,7 @@ public abstract class Note : MonoBehaviour
     {
         if (IsArmed)
         {
-            if (Game.Time >= Model.start_time + JudgmentOffset)
+            if (UsesCy1Drag ? Cy1Now >= Cy1Start : Game.Time >= Model.start_time + JudgmentOffset)
             {
                 using (Game.PlayRecordRecorder?.PushJudgmentContext(
                     GamePlayRecordWire.CauseTriggerTick, null, null))
@@ -239,13 +256,14 @@ public abstract class Note : MonoBehaviour
         else
         {
             // Autoplay
-            if (IsAutoEnabled())
+            var auto = IsAutoEnabled();
+            if (auto)
             {
-                if (TimeUntilStart < 0)
+                if (UsesCy1Judgment ? Cy1Now >= Cy1Start : TimeUntilStart < 0)
                 {
-                    if (this is HoldNote)
+                    if (this is HoldNote hold)
                     {
-                        ((HoldNote) this).UpdateFinger(0, true);
+                        if (!UsesCy1Judgment || !hold.IsHolding) hold.UpdateFinger(0, true);
                     }
                     else
                     {
@@ -259,7 +277,7 @@ public abstract class Note : MonoBehaviour
             }
 
             // Check removable
-            if (ShouldMiss())
+            if ((!UsesCy1Judgment || !auto) && ShouldMiss())
             {
                 using (Game.PlayRecordRecorder?.PushJudgmentContext(
                     GamePlayRecordWire.CauseMiss, null, null))
@@ -343,7 +361,52 @@ public abstract class Note : MonoBehaviour
 
     public virtual bool ShouldMiss()
     {
+        if (UsesCy1Judgment) return !IsArmed && Cy1Now >= Cy1Deadline;
         return Game.Time - (Model.start_time + JudgmentOffset) > MissThreshold;
+    }
+
+    internal bool IsWithinNoteWindow => UsesCy1Judgment
+        ? !IsCleared && HasEmerged &&
+          (this is HoldNote hold ? hold.Cy1ColliderActiveForHold : Cy1Now < Cy1Deadline)
+        : HasEmerged && Game.Time <= Model.end_time + MissThreshold;
+
+    protected bool CanHandleNativeDragTouch()
+    {
+        var until = Model.start_time - Game.Time;
+        return until <= 0.31f &&
+               (Model.page_index <= Game.Chart.CurrentPageId || until <= Page.Duration / 2f);
+    }
+
+    protected NoteGrade CalculateNativeDragGrade(float early, float late)
+    {
+        var until = TimeUntilStart + JudgmentOffset;
+        if (until >= 0) return until < early ? NoteGrade.Perfect : NoteGrade.None;
+        return -until < late ? NoteGrade.Perfect : NoteGrade.Miss;
+    }
+
+    internal virtual bool CanRepresentNativeDrag() => true;
+
+    private NoteGrade Cy1TouchGrade(long delta) =>
+        UsesCy1Drag ? Cy1Judgment.Drag(delta) : Cy1Judgment.Click(delta);
+
+    private bool HandleCy1Touch()
+    {
+        if (IsAutoEnabled()) return false;
+        var delta = Cy1Now - Cy1Start;
+        var grade = Cy1TouchGrade(delta);
+        if (grade == NoteGrade.None) return false;
+
+        Cy1TimingError = delta / 1_000_000d;
+        if (UsesCy1Drag && delta < 0)
+        {
+            IsArmed = true;
+            armedGrade = grade;
+        }
+        else
+        {
+            Clear(grade);
+        }
+        return true;
     }
 
     public void OnDestroy()
@@ -373,6 +436,7 @@ public abstract class Note : MonoBehaviour
     public virtual bool OnTouchDeferred(Vector2 screenPos)
     {
         if (!CanHandleTouch() || IsArmed) return false;
+        if (UsesCy1Drag) return HandleCy1Touch();
 
         var grade = GetTouchGrade();
         if (grade == NoteGrade.None) return false;
@@ -395,7 +459,7 @@ public abstract class Note : MonoBehaviour
     /// </summary>
     public void SettleArmed()
     {
-        if (!IsArmed) return;
+        if (!IsArmed || (UsesCy1Drag && Cy1Now < Cy1Start)) return;
         Clear(armedGrade);
     }
 
@@ -414,6 +478,8 @@ public abstract class Note : MonoBehaviour
     /// </summary>
     public NoteGrade GetTouchGrade()
     {
+        if (UsesCy1Judgment && Type != NoteType.Hold)
+            return IsAutoEnabled() ? NoteGrade.None : Cy1TouchGrade(Cy1Now - Cy1Start);
         if (IsAutoEnabled()) return NoteGrade.Perfect;
         if (ShouldMiss()) return NoteGrade.Miss;
         return CalculateGrade();
@@ -426,6 +492,7 @@ public abstract class Note : MonoBehaviour
     public virtual bool TryClear()
     {
         if (IsCleared || IsArmed) return false;
+        if (UsesCy1Judgment && Type != NoteType.Hold) return HandleCy1Touch();
         var grade = GetTouchGrade();
         if (grade != NoteGrade.None) Clear(grade);
         return IsCleared;
@@ -433,6 +500,7 @@ public abstract class Note : MonoBehaviour
 
     public virtual NoteGrade CalculateGrade()
     {
+        if (UsesCy1Judgment) return Cy1TouchGrade(Cy1Now - Cy1Start);
         var grade = NoteGrade.None;
         var timeUntil = TimeUntilStart + JudgmentOffset;
 

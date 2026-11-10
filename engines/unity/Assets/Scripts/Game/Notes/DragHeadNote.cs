@@ -184,26 +184,11 @@ public class DragHeadNote : Note
         SyncDragStackFollowersIfPrimary();
     }
 
-    // SYNC-WARNING: DropDrag judgment is a verbatim copy of DragHeadNote's CanHandleTouch, CalculateGrade,
-    // IsAutoEnabled, and PlayHitSound (DragHeadNote.cs:165-252). If you change judgment in either
-    // file, update the other. DragHead chain logic (OnGameLateUpdate, Collect, FromNoteModel/ToNoteModel)
-    // is INTENTIONALLY NOT inherited — DropDrag is standalone per design decision.
-    // NOTE: DragHead's cross-page check is redundant for drop notes (5×pageDuration >> Page.Duration/2
-    // always, so the 0.31s check dominates) — safe to copy verbatim, do not remove.
-    // Mirror: Assets/Scripts/Game/Notes/Drop/DropDragNote.cs
-    public override bool CanHandleTouch()
-    {
-        if (!base.CanHandleTouch()) return false;
-        if (!IsCDrag)
-        {
-            // Do not handle touch event if touched too ahead of scanner
-            if (Model.start_time - Game.Time > 0.31f) return false;
-            // Do not handle touch event if in a later page, unless the timing is close (half a screen) TODO: Fix inaccurate algorithm
-            if (Model.page_index > Game.Chart.CurrentPageId &&
-                Model.start_time - Game.Time > Page.Duration / 2f) return false;
-        }
-        return true;
-    }
+    public override bool CanHandleTouch() =>
+        base.CanHandleTouch() && (UsesCy1Drag || IsCDrag || CanHandleNativeDragTouch());
+
+    internal override bool CanRepresentNativeDrag() =>
+        CanHandleNativeDragTouch() && CalculateNativeDragGrade(0.500f, 0.200f) == NoteGrade.Perfect;
 
     public override async void Collect()
     {
@@ -223,8 +208,17 @@ public class DragHeadNote : Note
             hasToNote = default;
             toNote = default;
         }
-        bool CanCollect() => Game.Time >= EndNoteModel.end_time +
-            (IsCDrag ? NoteType.CDragChild : NoteType.DragChild).GetDefaultMissThreshold();
+        bool CanCollect()
+        {
+            var nativeDeadline = EndNoteModel.end_time +
+                (IsCDrag ? NoteType.CDragChild : NoteType.DragChild).GetDefaultMissThreshold();
+            if (Game.Time < nativeDeadline) return false;
+            if (!UsesCy1Drag) return true;
+
+            // A positive judgment offset can leave the tail hittable past the native deadline.
+            var cy1TailTime = Cy1Judgment.ToMicroseconds((double)EndNoteModel.start_time + JudgmentOffset);
+            return Cy1Now >= cy1TailTime + Cy1Judgment.DragClose;
+        }
         if (CanCollect())
         {
             IsCollecting = false;
@@ -240,32 +234,9 @@ public class DragHeadNote : Note
         base.Collect();
     }
 
-    public override NoteGrade CalculateGrade()
-    {
-        if (IsCDrag)
-        {
-            return base.CalculateGrade();
-        }
-        var grade = NoteGrade.Miss;
-        var timeUntilStart = TimeUntilStart + JudgmentOffset;
-        if (timeUntilStart >= 0)
-        {
-            grade = NoteGrade.None;
-            if (timeUntilStart < 0.500f)
-            {
-                grade = NoteGrade.Perfect;
-            }
-        }
-        else
-        {
-            var timePassed = -timeUntilStart;
-            if (timePassed < 0.200f)
-            {
-                grade = NoteGrade.Perfect;
-            }
-        }
-        return grade;
-    }
+    public override NoteGrade CalculateGrade() => UsesCy1Drag || IsCDrag
+        ? base.CalculateGrade()
+        : CalculateNativeDragGrade(0.500f, 0.200f);
 
     public override bool IsAutoEnabled()
     {

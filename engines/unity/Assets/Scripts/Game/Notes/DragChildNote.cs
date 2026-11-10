@@ -13,39 +13,15 @@ public class DragChildNote : Note
             : throw new NotSupportedException();
     }
 
-    public override bool CanHandleTouch()
-    {
-        if (!base.CanHandleTouch()) return false;
-        // Do not handle touch event if touched too ahead of scanner
-        if (Model.start_time - Game.Time > 0.31f) return false;
-        // Do not handle touch event if in a later page, unless the timing is close (half a screen)
-        if (Model.page_index > Game.Chart.CurrentPageId && Model.start_time - Game.Time > Page.Duration / 2f) return false;
-        return true;
-    }
+    public override bool CanHandleTouch() =>
+        base.CanHandleTouch() && (UsesCy1Drag || CanHandleNativeDragTouch());
 
-    public override NoteGrade CalculateGrade()
-    {
-        var grade = NoteGrade.Miss;
-        var timeUntil = TimeUntilStart + JudgmentOffset;
-        if (timeUntil >= 0)
-        {
-            grade = NoteGrade.None;
-            if (timeUntil < 0.250f)
-            {
-                grade = NoteGrade.Perfect;
-            }
-        }
-        else
-        {
-            var timePassed = -timeUntil;
-            if (timePassed < 0.100f)
-            {
-                grade = NoteGrade.Perfect;
-            }
-        }
+    internal override bool CanRepresentNativeDrag() =>
+        CanHandleNativeDragTouch() && CalculateNativeDragGrade(0.250f, 0.100f) == NoteGrade.Perfect;
 
-        return grade;
-    }
+    public override NoteGrade CalculateGrade() => UsesCy1Drag
+        ? base.CalculateGrade()
+        : CalculateNativeDragGrade(0.250f, 0.100f);
 
     public override async void Collect()
     {

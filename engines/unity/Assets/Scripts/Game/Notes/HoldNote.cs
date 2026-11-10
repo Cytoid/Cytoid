@@ -10,6 +10,16 @@ public class HoldNote : Note
     public List<int> HoldingFingers { get; } = new List<int>(2);
 
     private bool playedHitSoundAtBegin;
+    private long cy1BoundAt;
+    private long? cy1PausedAt;
+
+    private long Cy1Close => Cy1Judgment.HoldClose(Cy1Start, Cy1End);
+    internal bool Cy1ColliderActiveForHold =>
+        Cy1Now < (IsHolding || cy1PausedAt.HasValue || IsAutoEnabled() ? Cy1End : Cy1Close);
+
+    internal bool CanBindFinger =>
+        !UsesCy1Judgment || (!IsAutoEnabled() && !cy1PausedAt.HasValue &&
+            (IsHolding ? Cy1Now < Cy1End : Cy1Judgment.CanStartHold(Cy1Now, Cy1Start, Cy1End)));
     
     public bool IsHolding => HoldingFingers.Count > 0;
 
@@ -30,6 +40,8 @@ public class HoldNote : Note
         HoldProgress = default;
         HoldingFingers.Clear();
         playedHitSoundAtBegin = false;
+        cy1BoundAt = default;
+        cy1PausedAt = null;
         base.Collect();
     }
 
@@ -38,7 +50,11 @@ public class HoldNote : Note
         base.OnGameUpdate(_);
         if (IsHolding)
         {
-            if (Game.Time >= Model.start_time + JudgmentOffset)
+            if (UsesCy1Judgment)
+            {
+                HeldDuration = Cy1HeldTime(Cy1Now) / 1_000_000f;
+            }
+            else if (Game.Time >= Model.start_time + JudgmentOffset)
             {
                 HeldDuration = Game.Time - Mathf.Max(Model.start_time + JudgmentOffset, HoldingStartTime);
             }
@@ -57,7 +73,11 @@ public class HoldNote : Note
             }
 
             // Already completed?
-            if (Game.Time >= Model.end_time + JudgmentOffset)
+            if (UsesCy1Judgment)
+            {
+                if (Cy1Now >= Cy1End) FinishCy1Hold(Cy1End);
+            }
+            else if (Game.Time >= Model.end_time + JudgmentOffset)
             {
                 HoldingFingers.Clear();
                 if (Game.Time > Model.start_time + JudgmentOffset && Game.State.IsPlaying)
@@ -74,6 +94,8 @@ public class HoldNote : Note
 
     public override bool ShouldMiss()
     {
+        if (UsesCy1Judgment)
+            return !IsHolding && !cy1PausedAt.HasValue && Cy1Now >= Cy1Close;
         return !IsHolding && base.ShouldMiss();
     }
     
@@ -86,6 +108,26 @@ public class HoldNote : Note
 
     public void UpdateFinger(int finger, bool isHolding)
     {
+        if (UsesCy1Judgment)
+        {
+            if (!Game.State.IsPlaying || IsCleared) return;
+            if (isHolding)
+            {
+                if (HoldingFingers.Contains(finger)) return;
+                if (!IsHolding)
+                {
+                    HoldingStartTime = Game.Time;
+                    cy1BoundAt = Cy1Now;
+                }
+                HoldingFingers.Add(finger);
+            }
+            else if (HoldingFingers.Remove(finger) && !IsHolding)
+            {
+                ReleaseCy1Hold(Cy1Now);
+            }
+            return;
+        }
+
         var previouslyHolding = IsHolding;
         
         if (isHolding)
@@ -110,8 +152,45 @@ public class HoldNote : Note
         }
     }
 
+    internal void SuspendCy1Hold()
+    {
+        if (UsesCy1Judgment && IsHolding) cy1PausedAt = Cy1Now;
+    }
+
+    internal void ResumeCy1Hold()
+    {
+        if (!cy1PausedAt.HasValue) return;
+        var pausedAt = cy1PausedAt.Value;
+        cy1PausedAt = null;
+        if (!IsHolding) ReleaseCy1Hold(pausedAt);
+    }
+
+    private void ReleaseCy1Hold(long time)
+    {
+        if (time >= Cy1Start)
+        {
+            FinishCy1Hold(time);
+        }
+        else
+        {
+            HoldingStartTime = float.MaxValue;
+            HeldDuration = 0;
+        }
+    }
+
+    private long Cy1HeldTime(long time) => Cy1Judgment.HeldTime(Cy1Start, Cy1End, cy1BoundAt, time);
+
+    private void FinishCy1Hold(long time)
+    {
+        var held = Cy1HeldTime(time);
+        HeldDuration = held / 1_000_000f;
+        HoldingFingers.Clear();
+        Clear(IsAutoEnabled() ? NoteGrade.Perfect : Cy1Judgment.Hold(Cy1End - Cy1Start, held));
+    }
+
     public override NoteGrade CalculateGrade()
     {
+        if (UsesCy1Judgment) return Cy1Judgment.Hold(Cy1End - Cy1Start, Cy1HeldTime(Cy1Now));
         var grade = NoteGrade.Miss;
         var rankedGrade = NoteGrade.Miss;
         // print($"HeldDuration: {HeldDuration}, ModelDuration: {Model.Duration}, HoldingStartTime: {HoldingStartTime}, ModelStartTime: {Model.start_time}");

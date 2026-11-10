@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.EnhancedTouch;
@@ -58,6 +59,16 @@ public class GameTouchInput : MonoBehaviour
         {
             EnhancedTouchSupport.Disable();
             enhancedTouchEnabled = false;
+        }
+    }
+
+    internal static IEnumerable<GameFinger> ActiveFingers()
+    {
+        foreach (var touch in Touch.activeTouches)
+        {
+            if (touch.phase == TouchPhase.Began || touch.phase == TouchPhase.Moved ||
+                touch.phase == TouchPhase.Stationary)
+                yield return GameFinger.FromTouch(touch);
         }
     }
 

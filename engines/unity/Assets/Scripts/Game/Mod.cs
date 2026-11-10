@@ -18,5 +18,6 @@
     AutoDrag,
     AutoHold,
     AutoFlick,
-    Auto
+    Auto,
+    CY1
 }

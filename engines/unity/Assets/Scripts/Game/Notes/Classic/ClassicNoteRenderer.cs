@@ -91,7 +91,7 @@ public class ClassicNoteRenderer : NoteRenderer
             return;
         }
 
-        Collider.enabled = Game.Time >= Note.Model.intro_time && Game.Time <= Note.Model.end_time + Note.MissThreshold;
+        Collider.enabled = Note.IsWithinNoteWindow;
         
         var radius = Note.Game.Config.NoteHitboxSizes[Note.Type]; // Default hitbox 
         if (Note.Model.hitbox != double.MinValue) radius *= (float) Note.Model.hitbox;
@@ -110,7 +110,7 @@ public class ClassicNoteRenderer : NoteRenderer
             return;
         }
 
-        if (!Note.IsCleared && Game.Time >= Note.Model.intro_time && Game.Time <= Note.Model.end_time + Note.MissThreshold)
+        if (!Note.IsCleared && Note.IsWithinNoteWindow)
         {
             if (Game.State.Mods.Contains(Mod.HideNotes))
             {

@@ -967,7 +967,7 @@ public class DropDragGuardTests
         public DropDragGuardTestDragChild DragChild(int id, float time) => Make<DropDragGuardTestDragChild>(id, time, NoteType.DragChild);
         public DropDragGuardTestClick Click(int id, float time) => Make<DropDragGuardTestClick>(id, time, NoteType.DropClick);
 
-        private T Make<T>(int id, float time, NoteType type) where T : Note
+        public T Make<T>(int id, float time, NoteType type) where T : Note
         {
             var go = Object(type.ToString(), true);
             go.AddComponent<CircleCollider2D>().radius = 2f;

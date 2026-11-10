@@ -569,7 +569,7 @@ public class InputController : MonoBehaviour
             {
                 if (FlickingNotes.ContainsKey(finger.Index) || FlickingNotes.ContainsValue(flickNote))
                     continue;
-                if (flickNote.IsFlicking) continue;
+                if (flickNote.IsFlicking || !flickNote.CanHandleTouch()) continue;
                 if (!IsEligibleSelectAfterDrag(flickNote, acceptedDrag, pressedPosition)) continue;
                 hitCandidates.Add(flickNote);
                 continue;
@@ -687,7 +687,7 @@ public class InputController : MonoBehaviour
         {
             if (FlickingNotes.ContainsKey(finger.Index) || FlickingNotes.ContainsValue(flickNote))
                 return false;
-            if (flickNote.IsFlicking) return false;
+            if (flickNote.IsFlicking || !flickNote.CanHandleTouch()) return false;
         }
 
         if (note is HoldNote holdNote)

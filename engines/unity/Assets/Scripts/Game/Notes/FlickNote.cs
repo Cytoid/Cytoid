@@ -38,6 +38,17 @@ public class FlickNote : Note
         throw new InvalidOperationException();
     }
 
+    public override bool CanHandleTouch()
+    {
+        if (!base.CanHandleTouch()) return false;
+
+        // A finger can start early and swipe later, but a new reservation cannot
+        // recover a Flick whose late grading window has already closed.
+        if (TimeUntilStart + JudgmentOffset >= 0f) return true;
+        var grade = CalculateGrade();
+        return grade != NoteGrade.None && grade != NoteGrade.Miss;
+    }
+
     public void StartFlicking(Vector2 screenPos)
     {
         if (!Game.State.IsPlaying || IsFlicking) return;

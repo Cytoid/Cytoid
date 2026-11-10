@@ -69,6 +69,7 @@ public class InputController : MonoBehaviour
 
     public readonly Dictionary<int, FlickNote> FlickingNotes = new Dictionary<int, FlickNote>(); // Finger index to note
     public readonly Dictionary<int, HoldNote> HoldingNotes = new Dictionary<int, HoldNote>(); // Finger index to note
+    private readonly List<HoldNote> pausedHolds = new List<HoldNote>();
     public readonly List<Note> TouchableDragNotes = new List<Note>(); // Drag head, Drag child, CDrag child, DropDrag
     /// <summary>
     /// Drag notes currently recorded (armed) and not yet settled -- a per-frame
@@ -110,6 +111,7 @@ public class InputController : MonoBehaviour
     {
         game.onGameUpdate.AddListener(OnGameUpdate);
         game.onGamePaused.AddListener(OnGamePaused);
+        game.onGameUnpaused.AddListener(OnGameUnpaused);
         game.onGameStarted.AddListener(OnGameStarted);
         game.onNoteJudged.AddListener(CaptureClearedDropDrag);
     }
@@ -130,6 +132,7 @@ public class InputController : MonoBehaviour
         GameTouchInput.FingerDown -= OnFingerDown;
         GameTouchInput.FingerUpdate -= OnFingerUpdate;
         GameTouchInput.FingerUp -= OnFingerUp;
+        pausedHolds.Clear();
         ResetBindingsWithoutJudgment();
     }
 
@@ -141,6 +144,7 @@ public class InputController : MonoBehaviour
         if (game == null) return;
         game.onGameUpdate.RemoveListener(OnGameUpdate);
         game.onGamePaused.RemoveListener(OnGamePaused);
+        game.onGameUnpaused.RemoveListener(OnGameUnpaused);
         game.onGameStarted.RemoveListener(OnGameStarted);
         game.onNoteJudged.RemoveListener(CaptureClearedDropDrag);
     }
@@ -229,6 +233,7 @@ public class InputController : MonoBehaviour
         {
             // Since you only have 10 fingers, this doesn't need to be optimized
             HoldingNotes.RemoveAll(it => it == note);
+            pausedHolds.Remove((HoldNote) note);
         }
         if (note.Type == NoteType.Flick)
         {
@@ -239,7 +244,41 @@ public class InputController : MonoBehaviour
 
     public void OnGamePaused(Game game)
     {
+        pausedHolds.Clear();
+        foreach (var note in HoldingNotes.Values)
+        {
+            if (IsTouchableNote(note) && note.IsHolding && !pausedHolds.Contains(note))
+                pausedHolds.Add(note);
+        }
         ResetBindingsWithoutJudgment();
+    }
+
+    private void OnGameUnpaused(Game _) => pausedHolds.Clear();
+
+    private void UpdatePausedHoldContact(GameFinger finger, Vector2 pos)
+    {
+        if (HoldingNotes.TryGetValue(finger.Index, out var held))
+        {
+            if (IsTouchableNote(held) && held.DoesCollide(pos)) return;
+            held.HoldingFingers.Remove(finger.Index);
+            HoldingNotes.Remove(finger.Index);
+            return;
+        }
+
+        HoldNote target = null;
+        foreach (var note in pausedHolds)
+        {
+            if (!IsTouchableNote(note) || !note.DoesCollide(pos)) continue;
+            target ??= note; // Allow a second finger if no unheld candidate overlaps.
+            if (note.IsHolding) continue;
+            target = note;
+            break;
+        }
+        if (target == null) return;
+
+        // Restore the contact while keeping the original start time and grade timing.
+        HoldingNotes.Add(finger.Index, target);
+        target.HoldingFingers.Add(finger.Index);
     }
 
     public void OnGameUpdate(Game game)
@@ -296,6 +335,11 @@ public class InputController : MonoBehaviour
             : game.camera.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
         var downSequence = game.PlayRecordRecorder?.Record(finger.Index, "down", pressedPosition) ?? -1;
         fingerDownPositions[finger.Index] = pressedPosition;
+        if (game.UnpauseCountdown > 0 && !game.State.IsPlaying)
+        {
+            UpdatePausedHoldContact(finger, pressedPosition);
+            return;
+        }
 
         BuildDropGuardsForDown();
 
@@ -774,6 +818,11 @@ public class InputController : MonoBehaviour
             ? game.camera.ScreenToWorldPoint(finger.ScreenPosition)
             : game.camera.ScreenToWorldPoint(new Vector3(finger.ScreenPosition.x, finger.ScreenPosition.y, 10));
         var updateSequence = game.PlayRecordRecorder?.Record(finger.Index, "update", pos) ?? -1;
+        if (game.UnpauseCountdown > 0 && !game.State.IsPlaying)
+        {
+            UpdatePausedHoldContact(finger, pos);
+            return;
+        }
 
         using (game.PlayRecordRecorder?.PushJudgmentContext(
             GamePlayRecordWire.CauseContact, finger.Index,

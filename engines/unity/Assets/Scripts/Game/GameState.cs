@@ -87,7 +87,6 @@ public sealed class GameState
     private readonly Dictionary<NoteGrade, int> gradeCounts = new Dictionary<NoteGrade, int>();
     private readonly double noteScoreMultiplierFactor;
     private double accumulatedAccuracy;
-    private readonly Dictionary<int, float> cy1DragOpenTimes;
     private int cy1EarlyCount;
     private int cy1LateCount;
     private double cy1MeanError;
@@ -114,7 +113,6 @@ public sealed class GameState
         Mode = mode;
         Mods = new HashSet<Mod>(mods);
         IsCy1Practice = mode == GameMode.Practice && Mods.Contains(Mod.CY1);
-        if (IsCy1Practice) cy1DragOpenTimes = Cy1Judgment.BuildDragOpenTimes(game.Chart.Model);
 
         NoteCount = game.Chart.Model.note_list.Count;
         game.Chart.Model.note_list.ForEach(it => Judgements[it.id] = new NoteJudgement());
@@ -357,13 +355,6 @@ public sealed class GameState
         {
             ShouldFail = true;
         }
-    }
-
-    internal long Cy1DragOpensAt(int noteId, float judgmentOffset)
-    {
-        if (cy1DragOpenTimes == null || !cy1DragOpenTimes.TryGetValue(noteId, out var opensAt) ||
-            float.IsNegativeInfinity(opensAt)) return long.MinValue;
-        return Cy1Judgment.ToMicroseconds((double)opensAt + judgmentOffset);
     }
 
     public bool IsJudged(int noteId) => Judgements[noteId].IsJudged;

@@ -244,7 +244,7 @@ public abstract class Note : MonoBehaviour
     {
         if (IsArmed)
         {
-            if (UsesCy1Drag ? Cy1Now >= Cy1Start : Game.Time >= Model.start_time + JudgmentOffset)
+            if (Game.Time >= Model.start_time + JudgmentOffset)
             {
                 using (Game.PlayRecordRecorder?.PushJudgmentContext(
                     GamePlayRecordWire.CauseTriggerTick, null, null))
@@ -397,15 +397,7 @@ public abstract class Note : MonoBehaviour
         if (grade == NoteGrade.None) return false;
 
         Cy1TimingError = delta / 1_000_000d;
-        if (UsesCy1Drag && delta < 0)
-        {
-            IsArmed = true;
-            armedGrade = grade;
-        }
-        else
-        {
-            Clear(grade);
-        }
+        Clear(grade);
         return true;
     }
 
@@ -459,7 +451,7 @@ public abstract class Note : MonoBehaviour
     /// </summary>
     public void SettleArmed()
     {
-        if (!IsArmed || (UsesCy1Drag && Cy1Now < Cy1Start)) return;
+        if (!IsArmed) return;
         Clear(armedGrade);
     }
 

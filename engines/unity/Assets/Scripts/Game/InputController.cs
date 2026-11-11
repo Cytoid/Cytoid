@@ -477,6 +477,7 @@ public class InputController : MonoBehaviour
     /// press point (<paramref name="bindRecordings"/>; Down-path recordings never bind)
     /// bind for release settlement. Stationary-contact recordings and DropDrag (always)
     /// resolve exclusively at their own trigger points.
+    /// CY1 drags settle at contact within the same effect budget.
     /// Multi-note batches that arm mark <see cref="Note.MarkDragStackBudget"/> with one
     /// shared stack id so later co-clears share caps via
     /// <see cref="EffectController.EnterDragStackClear"/> without affecting
@@ -497,7 +498,7 @@ public class InputController : MonoBehaviour
             if (!IsTouchableNote(note)) continue;
             var dropDragEarlyPress = note.Type == NoteType.DropDrag &&
                                      game.Time < EffectiveNoteTime(note) - PressSettleEarlyWindowSeconds;
-            if (note.UsesCy1Drag || deferred || i > 0 || dropDragEarlyPress)
+            if (!note.UsesCy1Drag && (deferred || i > 0 || dropDragEarlyPress))
             {
                 note.OnTouchDeferred(screenPos);
                 if (note.IsArmed)
@@ -505,7 +506,7 @@ public class InputController : MonoBehaviour
                     // Drop drags never release-settle; and only swipe recordings bind --
                     // a stationary tap overlapping a neighbour's hitbox records it for its
                     // own trigger point instead of popping it at the tap's lift.
-                    if (bindRecordings && note.Type != NoteType.DropDrag && !note.UsesCy1Drag)
+                    if (bindRecordings && note.Type != NoteType.DropDrag)
                         BindArmedDrag(fingerIndex, note);
                     if (budgetStack) note.MarkDragStackBudget(stackBudgetId);
                     game.PlayRecordRecorder?.RecordArm(fingerIndex, note, inputSequence);
@@ -577,7 +578,7 @@ public class InputController : MonoBehaviour
         {
             var note = ArmedDragNotes[i];
             if (note == null || note.Model == null || note.IsCollected || note.IsCleared || !note.IsArmed) continue;
-            if (note.UsesCy1Drag || !note.DoesCollide(worldPos)) continue;
+            if (!note.DoesCollide(worldPos)) continue;
             if (EffectiveNoteTime(note) < EffectiveNoteTime(representative)) return true;
         }
         return false;

@@ -31,6 +31,7 @@ public abstract class Note : MonoBehaviour
     internal long Cy1End { get; private set; }
     internal long Cy1Now => Cy1Judgment.ToMicroseconds(Game.Time);
     internal double? Cy1TimingError { get; private set; }
+    private long cy1DragOpensAt;
     private long Cy1Deadline => Cy1Start + (UsesCy1Drag ? Cy1Judgment.DragClose : Cy1Judgment.ClickClose);
 
     public bool IsArmed { get; private set; }
@@ -98,6 +99,7 @@ public abstract class Note : MonoBehaviour
             Cy1Start = Cy1Judgment.ToMicroseconds((double)Model.start_time + JudgmentOffset);
             Cy1End = Cy1Judgment.ToMicroseconds((double)Model.end_time + JudgmentOffset);
             if (Type == NoteType.Hold && Cy1End <= Cy1Start) UsesCy1Judgment = false;
+            if (UsesCy1Drag) cy1DragOpensAt = Game.State.Cy1DragOpensAt(Model.id, JudgmentOffset);
         }
 
         Game.onGameUpdate.RemoveListener(OnGameUpdate);
@@ -137,6 +139,7 @@ public abstract class Note : MonoBehaviour
         GreatGradeWeight = default;
         JudgmentOffset = default;
         UsesCy1Judgment = false;
+        cy1DragOpensAt = default;
         Cy1TimingError = null;
         DragStack = null;
         IsDragStackFollower = default;
@@ -386,18 +389,19 @@ public abstract class Note : MonoBehaviour
 
     internal virtual bool CanRepresentNativeDrag() => true;
 
-    private NoteGrade Cy1TouchGrade(long delta) =>
-        UsesCy1Drag ? Cy1Judgment.Drag(delta) : Cy1Judgment.Click(delta);
+    private NoteGrade Cy1TouchGrade(long time) => UsesCy1Drag
+        ? Cy1Judgment.DragAt(time, Cy1Start, cy1DragOpensAt)
+        : Cy1Judgment.Click(time - Cy1Start);
 
     private bool HandleCy1Touch()
     {
         if (IsAutoEnabled()) return false;
-        var delta = Cy1Now - Cy1Start;
-        var grade = Cy1TouchGrade(delta);
+        var time = Cy1Now;
+        var grade = Cy1TouchGrade(time);
         if (grade == NoteGrade.None) return false;
 
-        Cy1TimingError = delta / 1_000_000d;
-        if (UsesCy1Drag && delta < 0)
+        Cy1TimingError = (time - Cy1Start) / 1_000_000d;
+        if (UsesCy1Drag && time < Cy1Start)
         {
             IsArmed = true;
             armedGrade = grade;
@@ -479,7 +483,7 @@ public abstract class Note : MonoBehaviour
     public NoteGrade GetTouchGrade()
     {
         if (UsesCy1Judgment && Type != NoteType.Hold)
-            return IsAutoEnabled() ? NoteGrade.None : Cy1TouchGrade(Cy1Now - Cy1Start);
+            return IsAutoEnabled() ? NoteGrade.None : Cy1TouchGrade(Cy1Now);
         if (IsAutoEnabled()) return NoteGrade.Perfect;
         if (ShouldMiss()) return NoteGrade.Miss;
         return CalculateGrade();
@@ -500,7 +504,7 @@ public abstract class Note : MonoBehaviour
 
     public virtual NoteGrade CalculateGrade()
     {
-        if (UsesCy1Judgment) return Cy1TouchGrade(Cy1Now - Cy1Start);
+        if (UsesCy1Judgment) return Cy1TouchGrade(Cy1Now);
         var grade = NoteGrade.None;
         var timeUntil = TimeUntilStart + JudgmentOffset;
 

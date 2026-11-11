@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 internal static class Cy1Judgment
 {
@@ -23,6 +24,31 @@ internal static class Cy1Judgment
         if (delta <= -70_000 || delta >= 70_000) return NoteGrade.Great;
         return NoteGrade.Perfect;
     }
+
+    internal static Dictionary<int, float> BuildDragOpenTimes(ChartModel chart)
+    {
+        var openTimes = new Dictionary<int, float>();
+        foreach (var head in chart.note_list)
+        {
+            if (head.type != (int)NoteType.DragHead) continue;
+
+            var current = head;
+            var opensAt = float.NegativeInfinity;
+            while (current.next_id > 0 && chart.note_map.TryGetValue(current.next_id, out var next) &&
+                   next.type == (int)NoteType.DragChild && next.start_time >= current.start_time)
+            {
+                // Same-time nodes share an opening. Later nodes wait for the previous
+                // timestamp, even if the player missed or skipped those nodes.
+                if (next.start_time > current.start_time) opensAt = current.start_time;
+                if (!openTimes.TryAdd(next.id, opensAt)) break;
+                current = next;
+            }
+        }
+        return openTimes;
+    }
+
+    internal static NoteGrade DragAt(long time, long noteTime, long opensAt) =>
+        time < opensAt ? NoteGrade.None : Drag(time - noteTime);
 
     internal static NoteGrade Drag(long delta)
     {

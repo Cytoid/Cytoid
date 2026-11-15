@@ -39,6 +39,29 @@ public class Game : MonoBehaviour
 
     public Cytoid.Storyboard.Storyboard Storyboard { get; protected set; }
 
+    private readonly Dictionary<int, Vector3> dragPathFramePositions = new Dictionary<int, Vector3>();
+
+    public Vector3 GetDragPathPosition(ChartModel.Note note)
+    {
+        if (dragPathFramePositions.TryGetValue(note.id, out var position)) return position;
+        position = Storyboard != null
+            ? Storyboard.Renderer.NotePositions.GetEndpoint(note, Chart)
+            : note.position;
+        dragPathFramePositions[note.id] = position;
+        return position;
+    }
+
+    public void PrepareNotePositions()
+    {
+        dragPathFramePositions.Clear();
+        Storyboard?.Renderer.UpdateNoteControls();
+        // Prepare all poses before input/armed judgments consume them. A trigger
+        // during judgment may change the next frame, never half of this frame.
+        foreach (var note in SpawnedNotes.Values) note.PreparePosition();
+        foreach (var note in SpawnedNotes.Values)
+            if (!note.IsDragStackFollower) note.DragStack?.SyncFollowers();
+    }
+
     public string StoryboardPath { get; protected set; }
 
     public float Time { get; protected set; }
@@ -507,9 +530,11 @@ public class Game : MonoBehaviour
             }
         }
 
+        PrepareNotePositions();
         UiEventController?.ApplyBeforeGameUpdate(Time);
         onGameUpdate.Invoke(this);
         onGameLateUpdate.Invoke(this);
+        ObjectPool.UpdateDragLines();
         UiEventController?.Apply(Time);
         EventPresentationController?.Apply(Time);
     }
@@ -820,6 +845,7 @@ public class Game : MonoBehaviour
 
     public virtual void Dispose()
     {
+        dragPathFramePositions.Clear();
         DiscardPlayRecord();
         onGameUpdate.RemoveAllListeners();
         onGameLateUpdate.RemoveAllListeners();

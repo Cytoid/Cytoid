@@ -79,7 +79,7 @@ public class DragStackHost
 
     public bool IsPrimary(Note note) => Primary == note;
 
-    public void TickFollowers()
+    public void SyncFollowers()
     {
         if (Primary == null || members.Count == 0) return;
 
@@ -93,11 +93,18 @@ public class DragStackHost
 
             note.transform.localPosition = primaryPos;
             note.transform.localEulerAngles = primaryRot;
+        }
+    }
 
-            if (!note.IsCleared)
-            {
+    public void TickFollowers()
+    {
+        SyncFollowers();
+        if (Primary == null) return;
+        for (var i = 0; i < members.Count; i++)
+        {
+            var note = members[i];
+            if (note != null && note != Primary && !note.IsCollected && !note.IsCleared)
                 note.TickStackFollowerJudgment();
-            }
         }
     }
 

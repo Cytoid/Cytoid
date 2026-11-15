@@ -141,6 +141,10 @@ namespace Cytoid.Storyboard
 
         [JsonIgnore] private float? convertedValue;
 
+        // Lookahead must honor an existing live conversion without fixing the
+        // conversion basis of a state the live renderer has not reached yet.
+        public float PeekConvertedValue() => convertedValue ?? Convert();
+
         public UnitFloat(float value, ReferenceUnit unit, bool scaleToCanvas, bool span)
         {
             Value = value;

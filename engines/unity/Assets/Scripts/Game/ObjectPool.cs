@@ -26,6 +26,7 @@ public class ObjectPool
     public readonly SortedDictionary<int, DragLineElement> SpawnedDragLines = new SortedDictionary<int, DragLineElement>();
 
     public readonly DragStackManager DragStacks = new DragStackManager();
+    private readonly HashSet<DragLineElement> dragLineUpdateSet = new HashSet<DragLineElement>();
 
     /// <summary>Hard caps so MaxSamePage on stress charts cannot preallocate thousands of FX.</summary>
     public const int MaxPooledClearEffects = 64;
@@ -204,10 +205,20 @@ public class ObjectPool
         foreach (var line in SpawnedDragLines.Values) uniqueLines.Add(line);
         foreach (var line in uniqueLines) line.Dispose();
         SpawnedDragLines.Clear();
+        dragLineUpdateSet.Clear();
         dragLinesByShareKey.Clear();
         dragLineFromIdToShareKey.Clear();
         dragLinePoolItem.Dispose();
         effectPoolItems.Values.ForEach(it => it.Dispose());
+    }
+
+    public void UpdateDragLines()
+    {
+        dragLineUpdateSet.Clear();
+        foreach (var line in SpawnedDragLines.Values) dragLineUpdateSet.Add(line);
+        // Updating a completed line removes its pool dictionary entries. Snapshot
+        // unique instances first, including geometries shared by multiple stacks.
+        foreach (var line in dragLineUpdateSet) line.UpdateVisuals();
     }
 
     public Note SpawnNote(ChartModel.Note model)

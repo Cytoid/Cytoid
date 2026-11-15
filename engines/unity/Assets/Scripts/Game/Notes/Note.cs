@@ -192,22 +192,25 @@ public abstract class Note : MonoBehaviour
         Context.Haptic(HapticTypes.LightImpact, false);
     }
 
+    public virtual void PreparePosition()
+    {
+        if (!IsDragStackFollower && !IsCleared)
+            transform.localPosition = Model.CalculatePosition(Game.Chart);
+    }
+
     protected virtual void OnGameUpdate(Game _)
     {
         if (IsDragStackFollower) return;
 
         if (!IsCleared)
         {
-            // Update position
-            gameObject.transform.localPosition = Model.CalculatePosition(Game.Chart);
-
             TickJudgmentState();
         }
 
         Renderer.OnLateUpdate();
 
         // Pin followers before LateUpdate so stacked origins match the primary this frame
-        // (lines still lag one Update like unstacked notes; they must not see a pooled pose).
+        // before the final drag-line pass.
         if (!(this is DragHeadNote))
         {
             SyncDragStackFollowersIfPrimary();

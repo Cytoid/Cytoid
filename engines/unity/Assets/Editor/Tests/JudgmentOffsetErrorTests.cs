@@ -113,15 +113,18 @@ public class JudgmentOffsetErrorTests
                 fixture.Time(0.8f);
                 Assert.That(note.OnTouchDeferred(Vector2.zero), Is.True);
                 Assert.That(note.IsArmed, Is.True);
-                fixture.Time(1f + offset);
+                // Let the judgment tick cross the trigger, as it would on the next frame.
+                var expectedError = release ? 0f : 0.001f;
+                fixture.Time(model.start_time + offset + expectedError);
 
                 if (release) note.SettleArmed();
                 else note.TickStackFollowerJudgment();
 
+                Assert.That(fixture.Game.State.IsJudged(1), Is.True);
                 Assert.That(fixture.Game.State.Judgements[1].Grade, Is.EqualTo(NoteGrade.Perfect));
-                Assert.That(fixture.Game.State.Judgements[1].Error, Is.EqualTo(0).Within(1e-6));
+                Assert.That(fixture.Game.State.Judgements[1].Error, Is.EqualTo(expectedError).Within(1e-6));
                 Assert.That(observed, Is.Not.Null);
-                Assert.That(observed.Error, Is.EqualTo(0).Within(1e-6));
+                Assert.That(observed.Error, Is.EqualTo(expectedError).Within(1e-6));
             }
             finally
             {

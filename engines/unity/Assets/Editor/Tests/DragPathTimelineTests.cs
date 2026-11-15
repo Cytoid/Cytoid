@@ -171,6 +171,16 @@ public class DragPathTimelineTests
     }
 
     [Test]
+    public void AControllerRegisteredAtAResetCannotWriteFromItsExpiredState()
+    {
+        var timeline = new NotePositionTimeline();
+        var note = Note(1, 1, new Vector3(.2f, .3f));
+        timeline.Register(Track(1, State(0, .7f, .8f), new NoteControllerState {Time = 1}), 1);
+
+        AssertVector(timeline.GetEndpoint(note, null), note.position);
+    }
+
+    [Test]
     public void DestroyStateStopsSamplingAtItsBoundary()
     {
         var timeline = new NotePositionTimeline();

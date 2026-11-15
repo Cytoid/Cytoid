@@ -103,7 +103,7 @@ namespace Cytoid.Storyboard.Notes
             var result = new ChartModel.Note.NoteOverride();
             if (tracks.TryGetValue(note.id, out var list))
             {
-                var writtenAt = NewWriteTimes();
+                var writtenAt = new NotePositionSampler.WriteTime[NotePositionSampler.ChannelCount];
                 foreach (var track in list)
                     Sample(track, note.start_time, result, writtenAt, endpoint);
             }
@@ -113,7 +113,7 @@ namespace Cytoid.Storyboard.Notes
         }
 
         private static void Sample(Track track, float time, ChartModel.Note.NoteOverride result,
-            float[] writtenAt, Endpoint endpoint)
+            NotePositionSampler.WriteTime[] writtenAt, Endpoint endpoint)
         {
             if (time < track.AvailableFrom) return;
             if (time >= track.StoppedAt)
@@ -122,7 +122,6 @@ namespace Cytoid.Storyboard.Notes
                 return;
             }
             var states = track.Controller.States;
-            var until = Mathf.Min(time, track.StoppedAt);
             var observedUntil = time >= track.LastAppliedAt ? track.LastAppliedAt : float.NegativeInfinity;
             if (!float.IsNegativeInfinity(observedUntil)) MergeApplied(track, result, writtenAt);
             for (var i = 0; i < states.Count; i++)
@@ -131,11 +130,16 @@ namespace Cytoid.Storyboard.Notes
                 // FindStates selects the last state at a timestamp. Earlier states
                 // in that group never become the live easing source.
                 if (i + 1 < states.Count && states[i + 1].Time == from.Time) continue;
-                if (from.Time > until || from.Destroy == true) break;
+                if (from.Time > time || from.Destroy == true) break;
                 var to = i + 1 < states.Count ? states[i + 1] : from;
-                var sampleAt = i + 1 < states.Count ? Mathf.Min(until, to.Time) : until;
-                if (sampleAt < track.AvailableFrom || sampleAt <= observedUntil) continue;
-                NotePositionSampler.Apply(result, from, to, sampleAt, writtenAt, endpoint.ConvertUnit);
+                // The old state's value at the transition is a limit from before it.
+                // A current state writing at the same time wins in any registration order.
+                var beforeTransition = i + 1 < states.Count && time >= to.Time;
+                var sampleAt = beforeTransition ? to.Time : time;
+                if (sampleAt < track.AvailableFrom || (beforeTransition && sampleAt == track.AvailableFrom) ||
+                    sampleAt <= observedUntil) continue;
+                var writeTime = new NotePositionSampler.WriteTime(sampleAt, beforeTransition);
+                NotePositionSampler.Apply(result, from, to, sampleAt, writeTime, writtenAt, endpoint.ConvertUnit);
             }
         }
 
@@ -147,7 +151,8 @@ namespace Cytoid.Storyboard.Notes
                 endpoints.Remove(id);
         }
 
-        private static void MergeApplied(Track track, ChartModel.Note.NoteOverride result, float[] writtenAt)
+        private static void MergeApplied(Track track, ChartModel.Note.NoteOverride result,
+            NotePositionSampler.WriteTime[] writtenAt)
         {
             var last = track.LastApplied;
             if (AcceptApplied(track, 0, writtenAt)) result.X = last.X;
@@ -159,12 +164,11 @@ namespace Cytoid.Storyboard.Notes
             if (AcceptApplied(track, 6, writtenAt)) result.YOffset = last.YOffset;
         }
 
-        private static bool AcceptApplied(Track track, int channel, float[] writtenAt)
+        private static bool AcceptApplied(Track track, int channel, NotePositionSampler.WriteTime[] writtenAt)
         {
             var time = track.WrittenAt[channel];
-            if (float.IsNegativeInfinity(time) || time < writtenAt[channel]) return false;
-            writtenAt[channel] = time;
-            return true;
+            return !float.IsNegativeInfinity(time) &&
+                new NotePositionSampler.WriteTime(time).TryWrite(writtenAt, channel);
         }
 
         private static float[] NewWriteTimes()

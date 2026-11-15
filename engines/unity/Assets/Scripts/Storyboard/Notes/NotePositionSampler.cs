@@ -7,34 +7,52 @@ namespace Cytoid.Storyboard.Notes
     {
         public const int ChannelCount = 7;
 
-        // writtenAt is only used when merging controller histories. A controller which
-        // stopped writing must not obscure a more recent write from another controller.
-        public static void Apply(ChartModel.Note.NoteOverride target, NoteControllerState from,
-            NoteControllerState to, float time, float[] writtenAt = null,
-            Func<UnitFloat, float> convertUnit = null)
+        internal readonly struct WriteTime
         {
-            if (from.OverrideX != null && Accept(0, time, writtenAt))
-                target.X = from.OverrideX.Value ? Sample(from.X, to.X, .5f, from, to, time, convertUnit) : (float?) null;
-            if (from.OverrideY != null && Accept(1, time, writtenAt))
-                target.Y = from.OverrideY.Value ? Sample(from.Y, to.Y, .5f, from, to, time, convertUnit) : (float?) null;
-            if (from.OverrideZ != null && Accept(2, time, writtenAt))
-                target.Z = from.OverrideZ.Value ? Sample(from.Z, to.Z, 0f, from, to, time, convertUnit) : (float?) null;
-            if (from.XMultiplier != null && Accept(3, time, writtenAt))
-                target.XMultiplier = Sample(from.XMultiplier.Value, to.XMultiplier, from, to, time);
-            if (from.YMultiplier != null && Accept(4, time, writtenAt))
-                target.YMultiplier = Sample(from.YMultiplier.Value, to.YMultiplier, from, to, time);
-            if (from.XOffset != null && Accept(5, time, writtenAt))
-                target.XOffset = Sample(from.XOffset.Value, to.XOffset, from, to, time);
-            if (from.YOffset != null && Accept(6, time, writtenAt))
-                target.YOffset = Sample(from.YOffset.Value, to.YOffset, from, to, time);
+            private readonly float time;
+            private readonly bool beforeTransition;
+            private readonly bool hasValue;
+
+            public WriteTime(float time, bool beforeTransition = false)
+            {
+                this.time = time;
+                this.beforeTransition = beforeTransition;
+                hasValue = true;
+            }
+
+            public bool TryWrite(WriteTime[] writtenAt, int channel)
+            {
+                if (writtenAt == null) return true;
+                var previous = writtenAt[channel];
+                if (previous.hasValue && (time < previous.time ||
+                    (time == previous.time && beforeTransition && !previous.beforeTransition))) return false;
+                writtenAt[channel] = this;
+                return true;
+            }
         }
 
-        private static bool Accept(int channel, float time, float[] writtenAt)
+        public static void Apply(ChartModel.Note.NoteOverride target, NoteControllerState from,
+            NoteControllerState to, float time)
+            => Apply(target, from, to, time, default, null, null);
+
+        internal static void Apply(ChartModel.Note.NoteOverride target, NoteControllerState from,
+            NoteControllerState to, float time, WriteTime writeTime, WriteTime[] writtenAt,
+            Func<UnitFloat, float> convertUnit)
         {
-            if (writtenAt == null) return true;
-            if (time < writtenAt[channel]) return false;
-            writtenAt[channel] = time;
-            return true;
+            if (from.OverrideX != null && writeTime.TryWrite(writtenAt, 0))
+                target.X = from.OverrideX.Value ? Sample(from.X, to.X, .5f, from, to, time, convertUnit) : (float?) null;
+            if (from.OverrideY != null && writeTime.TryWrite(writtenAt, 1))
+                target.Y = from.OverrideY.Value ? Sample(from.Y, to.Y, .5f, from, to, time, convertUnit) : (float?) null;
+            if (from.OverrideZ != null && writeTime.TryWrite(writtenAt, 2))
+                target.Z = from.OverrideZ.Value ? Sample(from.Z, to.Z, 0f, from, to, time, convertUnit) : (float?) null;
+            if (from.XMultiplier != null && writeTime.TryWrite(writtenAt, 3))
+                target.XMultiplier = Sample(from.XMultiplier.Value, to.XMultiplier, from, to, time);
+            if (from.YMultiplier != null && writeTime.TryWrite(writtenAt, 4))
+                target.YMultiplier = Sample(from.YMultiplier.Value, to.YMultiplier, from, to, time);
+            if (from.XOffset != null && writeTime.TryWrite(writtenAt, 5))
+                target.XOffset = Sample(from.XOffset.Value, to.XOffset, from, to, time);
+            if (from.YOffset != null && writeTime.TryWrite(writtenAt, 6))
+                target.YOffset = Sample(from.YOffset.Value, to.YOffset, from, to, time);
         }
 
         private static float Sample(UnitFloat from, UnitFloat to, float fallback,

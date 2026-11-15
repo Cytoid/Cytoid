@@ -98,6 +98,35 @@ public class DragPathLifecycleTests
             Is.EqualTo(target.CalculatePosition(game.Chart)));
     }
 
+    [TestCase(1f, false)]
+    [TestCase(1.01f, false)]
+    [TestCase(1f, true)]
+    [TestCase(1.01f, true)]
+    public void AResetAtTheEndpointDoesNotOverrideAControllerThatStillWrites(float nextFrame, bool disable)
+    {
+        target.start_time = 1;
+        var continuing = new NoteController {Id = "continuing"};
+        continuing.States.Add(State(0, .8f));
+        if (disable)
+            continuing.States.Add(new NoteControllerState {Note = target.id, Time = target.start_time,
+                OverrideY = false});
+        var resetting = new NoteController {Id = "resetting"};
+        resetting.States.Add(State(0, .2f));
+        resetting.States.Add(new NoteControllerState {Note = target.id, Time = target.start_time});
+        Use(Renderer(continuing, target), Renderer(resetting, target));
+
+        var timeline = game.Storyboard.Renderer.NotePositions;
+        Tick(.99f);
+        Assert.That(target.Override.Y, Is.EqualTo(.2f));
+        var projected = timeline.GetEndpoint(target, game.Chart);
+
+        Tick(nextFrame);
+        var expected = disable ? target.position.y : .8f;
+        Assert.That(target.CalculatePosition(game.Chart).y, Is.EqualTo(expected));
+        Assert.That(new[] {projected.y, timeline.GetEndpoint(target, game.Chart).y},
+            Is.EqualTo(new[] {expected, expected}), "the forecast and crossed endpoint agree with the live write");
+    }
+
     [Test]
     public void DestroyAfterTheLivePassRetainsThatFramesWrite()
     {

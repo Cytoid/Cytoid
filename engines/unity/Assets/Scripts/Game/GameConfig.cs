@@ -53,6 +53,8 @@ public class GameConfig
         DisplayNoteIds = Context.Player.Settings.DisplayNoteIds;
         UseFlatNoteDesign = lp.Settings.UseExperimentalNoteDesign;
         FlatNoteRendererBase.ClearPaletteCache();
+        FlatSkinRuntime.ClearCaches();
+        FlatSkinRuntime.WarmUp();
 
         GlobalRingColorOverride = chart.Model.ring_color?.ToColor() ?? Color.clear;
         foreach (NoteType type in Enum.GetValues(typeof(NoteType)))

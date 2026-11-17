@@ -323,6 +323,24 @@ public class Game : MonoBehaviour
         Application.targetFrameRate = 120;
         Context.SetAutoRotation(false);
 
+        // Compile the note skin before the note pool initializes: renderer
+        // selection runs once per pool and must see the compiled registry.
+        // WarmUp is idempotent; the await yields to the player loop (no
+        // main-thread blocking - the Android fetch completes on it). The flat
+        // path has no classic fallback: a failed download or compile throws
+        // here and Game.Start surfaces the load-error dialog instead of
+        // silently playing on classic renderers. Reads the raw setting:
+        // GameConfig.UseFlatNoteDesign is filled by onGameLoaded below.
+        FlatSkinRuntime.WarmUp();
+        if (Context.Player.Settings.UseExperimentalNoteDesign)
+        {
+            var skinReady = FlatSkinRuntime.WhenReady();
+            if (skinReady != null) await skinReady;
+            if (!FlatSkinRuntime.Ready)
+                throw new Exception(
+                    "Flat note design is enabled but the note skin failed to load");
+        }
+
         // Initialize note pool
         ObjectPool.Initialize();
 

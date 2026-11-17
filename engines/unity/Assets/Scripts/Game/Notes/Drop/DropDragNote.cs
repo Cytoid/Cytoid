@@ -10,6 +10,8 @@ public class DropDragNote : Note
 {
     protected override NoteRenderer CreateRenderer()
     {
+        // Flat is exclusive under its setting: Game.Initialize aborts the load
+        // when the skin is unavailable, so selection never defers to classic.
         if (Game.Config.UseFlatNoteDesign) return new FlatDropDragNoteRenderer(this);
         return new DropDragNoteRenderer(this);
     }

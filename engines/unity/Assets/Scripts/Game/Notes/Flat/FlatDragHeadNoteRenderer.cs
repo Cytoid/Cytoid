@@ -1,13 +1,13 @@
 using System;
 using UnityEngine;
 
-// Flat drag head. Regular drags port drag.ts headDraw: fill disk + chain arrow +
-// two-arc assembling ring, waking 200 shade steps over the click's WAKE window.
-// Click-drag heads port click.ts clickDragHead: drawn exactly like a CLICK, no
-// arrow — only the chain (child beads + path) says it is a drag start — with the
-// click-drag family palette. The note GameObject already faces the chain
-// (Note.OnGameLateUpdate), so the regular head's arrow is drawn at heading 0 and
-// the GO rotation carries it.
+// Flat drag head: the head visuals (regular drags AND click-drag heads) draw from
+// the compiled skin's slots in FlatNoteRendererBase (DrawSkinHead). This subclass
+// keeps the chain lifecycle: a connected regular drag head holds its last frame
+// instead of rewinding (the children keep travelling), click-drag heads pin their
+// drawn head and NoteId to the anchored head pose (Classic's UpdateCDragHeadPosition),
+// and the SEPARATE chain indicator — the drag arrow shown while the chain is
+// pending — is still drawn imperatively here (it has no skin slot).
 public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
 {
     private static readonly Rgba Edge = FlatColor.ParseHex("#1A1B22");
@@ -20,6 +20,7 @@ public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
     private readonly FlatNoteMesh IndicatorMesh;
     private readonly Vector3 noteIdBaseLocal;
     private Quaternion? pinnedRotation;
+    private Quaternion? approachRotation;
     private bool IsCDrag => Note.Type == NoteType.CDragHead;
     protected override Quaternion ExitLocalRotation => pinnedRotation ?? base.ExitLocalRotation;
 
@@ -35,9 +36,6 @@ public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
 
     protected override bool Exiting => base.Exiting && !HoldsSteady;
 
-    // Following changes the counter-offset even when progress and palette settle.
-    protected override bool GeometryChangesEveryFrame => IsCDrag;
-
     public FlatDragHeadNoteRenderer(DragHeadNote note) : base(note)
     {
         IndicatorMesh = FlatNoteMesh.Create(note.transform, "FlatDragIndicator", false, 0);
@@ -51,6 +49,9 @@ public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
     {
         base.OnNoteLoaded();
         pinnedRotation = null;
+        approachRotation = null;
+        HeadMesh.transform.localPosition = Vector3.zero;
+        HeadMesh.transform.localRotation = Quaternion.identity;
         IndicatorMesh.SetSortingOrder(SortingOrder - 1);
         IndicatorMesh.SetWorldScale(WorldScale);
         IndicatorMesh.SetVisible(false);
@@ -65,6 +66,9 @@ public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
         IndicatorMesh.SetVisible(false);
         base.OnCollect();
         pinnedRotation = null;
+        approachRotation = null;
+        HeadMesh.transform.localPosition = Vector3.zero;
+        HeadMesh.transform.localRotation = Quaternion.identity;
         if (DisplayNoteId)
         {
             NoteId.transform.localPosition = noteIdBaseLocal;
@@ -76,7 +80,11 @@ public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
     {
         if (IsCDrag)
         {
-            pinnedRotation = Note.transform.localRotation;
+            // A miss freezes the head at its approach direction, not wherever the
+            // travelling transform was pointing when the miss threshold fired.
+            pinnedRotation = grade == NoteGrade.Miss
+                ? approachRotation ?? Note.transform.localRotation
+                : Note.transform.localRotation;
             if (DisplayNoteId) NoteId.gameObject.SetActive(false);
         }
         base.OnClear(grade);
@@ -96,7 +104,6 @@ public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
         {
             HeadVisible = true;
             HeadMesh.SetVisible(true);
-            // Entering indicator mode changes the geometry even if progress is 1.
             InvalidateGeometry();
         }
     }
@@ -129,8 +136,8 @@ public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
         base.UpdateNoteId();
         if (!DisplayNoteId || !IsCDrag || !NoteId.gameObject.activeSelf) return;
         // The CDrag transform travels with the chain while the drawn head stays
-        // anchored (PinToAnchor, mesh space). The NoteId GameObject needs the same
-        // pin in transform space: convert the anchor offset into child space,
+        // anchored (mesh space). The NoteId GameObject needs the same pin in
+        // transform space: convert the anchor offset into child space,
         // cancelling the travelling parent's rotation AND scale.
         var transform = Note.transform;
         var scale = transform.localScale;
@@ -142,16 +149,80 @@ public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
         NoteId.transform.localPosition = noteIdBaseLocal + offset;
     }
 
+    // A regular head past its hit time (chain alive) draws the declarative `active`
+    // slot — seconds since the trigger — instead of the frozen enter pose. Falls
+    // back to the enter slot at progress 1 when the skin doesn't bind it (the
+    // previous behaviour). CDrag heads keep the base lifecycle: they pin at the
+    // anchor and the separate indicator owns the chain window.
+    private bool UsesActiveSlot(CompiledSkin skin)
+    {
+        if (IsCDrag || Exiting || !HoldsSteady) return false;
+        var active = skin.Slot(Kind, "active");
+        return active is { UsesUnsupported: false, UsesImages: false };
+    }
+
+    // While the head follows its chain, the active slot's clock (seconds since
+    // the trigger) drives rebuilds — the base enter progress saturates at 1 and
+    // would freeze the mesh even for animated active slots.
+    protected override double SkinHeadDriver(CompiledSkin skin)
+    {
+        if (UsesActiveSlot(skin)) return Game.Time - Note.Model.start_time;
+        return base.SkinHeadDriver(skin);
+    }
+
+    protected override void DrawSkinHead(FlatMeshBuilder b)
+    {
+        var skin = FlatSkinRuntime.Current;
+        if (UsesActiveSlot(skin))
+        {
+            using (FlatSkinRuntime.PaintMarker.Auto())
+                SkinPainterInstance.DrawNoteSlot(skin.Slot(Kind, "active"), SkinHeadDriver(skin), SkinHeadContext(), new SkinSinks(b));
+            return;
+        }
+        base.DrawSkinHead(b);
+    }
+
+    // A CDrag note's transform travels its chain (DragHeadNote.OnGameLateUpdate),
+    // but the drawn head must hold the tap spot — Classic pins its sprites every
+    // frame (UpdateCDragHeadPosition); the skin path does the same in mesh-
+    // transform space, which needs no geometry rebuilds. The direction freezes at
+    // the chain's departure (approach) and again at judgment (pinnedRotation);
+    // cleared heads hide entirely in OnClear, so this only ever shows an
+    // unjudged or missed head holding its anchor.
+    private void UpdateAnchorPin()
+    {
+        var transform = Note.transform;
+        var scale = transform.localScale;
+        if (scale.x == 0 || scale.y == 0 || scale.z == 0 ||
+            float.IsNaN(scale.sqrMagnitude) || float.IsInfinity(scale.sqrMagnitude)) return;
+        if (Game.Time >= Note.Model.start_time && approachRotation == null)
+            approachRotation = transform.localRotation;
+        var inverse = Quaternion.Inverse(transform.localRotation);
+        var offset = inverse * (Note.Model.CalculatePosition(Game.Chart) - transform.localPosition);
+        var position = new Vector3(offset.x / scale.x, offset.y / scale.y, offset.z / scale.z);
+        var frozen = pinnedRotation ?? approachRotation;
+        var rotation = frozen.HasValue
+            ? Quaternion.Euler(0, 0, frozen.Value.eulerAngles.z - transform.localEulerAngles.z)
+            : Quaternion.identity;
+        HeadMesh.transform.localPosition = position;
+        HeadMesh.transform.localRotation = rotation;
+        if (additiveHeadMesh != null)
+        {
+            additiveHeadMesh.transform.localPosition = position;
+            additiveHeadMesh.transform.localRotation = rotation;
+        }
+    }
+
     protected override void Render()
     {
         base.Render();
+        if (IsCDrag) UpdateAnchorPin();
         var visible = IndicatorVisible();
         IndicatorMesh.SetVisible(visible);
         if (!visible) return;
         // The chain departs on chart time, independently of the anchored head's
         // judgement, rewind, scale and alpha. Retain storyboard size/opacity.
-        var scale = BaseTransformSize * EnterScale;
-        var cancel = scale != 0 ? 1 / scale : 1;
+        var cancel = BaseTransformSize != 0 ? 1 / BaseTransformSize : 1;
         IndicatorMesh.transform.localScale = new Vector3(cancel, cancel, 1);
         indicatorBuilder.Reset();
         BuildDragHeadGeometry(indicatorBuilder, 1, FlatTokens.Unit * FlatTokens.Size(NoteKind.DragHead),
@@ -160,83 +231,15 @@ public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
         IndicatorMesh.Upload(indicatorBuilder);
     }
 
-    protected override void BuildGeometry(FlatMeshBuilder b)
-    {
-        if (!IsCDrag)
-        {
-            DrawHead(b, EnterProgress, EnterScale, DesignSize, Palette, false, ClearedSuccessfully, Exiting);
-            return;
-        }
-
-        if (ClearedSuccessfully) return;
-        if (Exiting && !pinnedRotation.HasValue) pinnedRotation = Note.transform.localRotation;
-        var first = b.VertCount;
-        BuildClickDragGeometry(b, EnterProgress, EnterScale, DesignSize, Palette);
-        PinToAnchor(b, first, Exiting ? pinnedRotation : null);
-    }
-
     public override void Dispose()
     {
         IndicatorMesh.Dispose();
         base.Dispose();
     }
 
-    protected override void DrawMissJudgement(FlatMeshBuilder b)
-    {
-        var first = b.VertCount;
-        base.DrawMissJudgement(b);
-        // The base already counter-rotates text into the world frame. Only its
-        // origin needs pinning; rotating it again would undo that compensation.
-        if (IsCDrag) PinToAnchor(b, first);
-    }
-
-    private void PinToAnchor(FlatMeshBuilder b, int firstVertex, Quaternion? orientation = null)
-    {
-        // CalculatePosition and localPosition are in the note layer's frame.
-        // Undo the note's LOCAL rotation before upload re-applies it; using world
-        // rotation here would incorrectly undo the layer's rotation as well.
-        var offset = Quaternion.Inverse(Note.transform.localRotation) *
-                     (Note.Model.CalculatePosition(Game.Chart) - Note.transform.localPosition);
-        // The mesh cancels BaseTransformSize, leaving enter/storyboard scale.
-        // Upload scales x/y by WorldScale and flips y, but leaves z in world units.
-        var scale = Vector3.Scale(Note.transform.localScale, HeadMesh.transform.localScale);
-        if (WorldScale == 0 || scale.x == 0 || scale.y == 0 || scale.z == 0) return;
-        // Freeze the head at its captured pose before adding the anchor offset.
-        // Work in upload's (x, -y) frame so inverse live Z rotation has the right
-        // sign, including on a rotated note layer.
-        var rotation = orientation.HasValue
-            ? Quaternion.Inverse(Note.transform.localRotation) * orientation.Value : Quaternion.identity;
-        for (var i = firstVertex * 7; i < b.Verts.Count; i += 7)
-        {
-            var point = rotation * new Vector3(b.Verts[i] * WorldScale * scale.x,
-                -b.Verts[i + 1] * WorldScale * scale.y, b.Verts[i + 2] * scale.z);
-            b.Verts[i] = (point.x + offset.x) / (WorldScale * scale.x);
-            b.Verts[i + 1] = -(point.y + offset.y) / (WorldScale * scale.y);
-            b.Verts[i + 2] = (point.z + offset.z) / scale.z;
-        }
-    }
-
-    protected override Action<FlatMeshBuilder, float, float> CaptureExitHead()
-    {
-        var size = DesignSize;
-        var palette = Palette;
-        var clickDrag = Note.Type == NoteType.CDragHead;
-        return (b, p, scale) => DrawHead(b, p, scale, size, palette, clickDrag, false, true);
-    }
-
-    private void DrawHead(FlatMeshBuilder b, double p, float enterScale, double designSize,
-        FlatPalette palette, bool clickDrag, bool indicator, bool exiting)
-    {
-        // The body rewinds its own approach; the regular head's directional arrow
-        // stays built throughout the exit. Only a successful regular-drag clear
-        // settles the head. CDrag indicators use their separate mesh; this wrapper
-        // never draws one.
-        if (clickDrag)
-            BuildClickDragGeometry(b, p, enterScale, designSize, palette);
-        else
-            BuildDragHeadGeometry(b, indicator ? 1 : p, designSize, designSize, palette, exiting);
-    }
-
+    // Chain-indicator head: drag.ts headDraw at p = 1 (settled pose) — fill disk +
+    // chain arrow + assembling ring. Drawn on the separate indicator mesh, which
+    // rides the travelling note transform; the SKIN head stays anchored elsewhere.
     private void BuildDragHeadGeometry(FlatMeshBuilder b, double p, double size, double designSize, FlatPalette palette, bool exiting)
     {
         var r = size / 2;
@@ -250,47 +253,6 @@ public class FlatDragHeadNoteRenderer : FlatNoteRendererBase
             wake, exiting ? 1 : alpha, palette);
         AssemblingRing(b, r - w / 2, w, WithOpacity(palette.RingTone(wake), alpha), 2, k,
             FlatEase.Lerp(-Math.PI / 2, 0, k), WithOpacity(Edge, alpha));
-    }
-
-    // click.ts clickDragHead: the click enter, verbatim — no arrow glyph.
-    private void BuildClickDragGeometry(FlatMeshBuilder b, double p, float enterScale, double designSize, FlatPalette palette)
-    {
-        var r = designSize / 2;
-        var w = FlatTokens.Unit * FlatTokens.StrokeRing * Math.Sqrt(designSize / FlatTokens.Unit);
-        var hair = FlatTokens.Unit * FlatTokens.StrokeHair;
-        var inner = r - w;
-        var alpha = FlatEase.OutCubic(FlatEase.Seg(p, 0, 0.1));
-        var build = FlatEase.OutQuart(FlatEase.Seg(p, 0, 0.4));
-        var split = FlatEase.OutQuad(FlatEase.Seg(p, 0.4, 0.85));
-        // The click-drag head is the click enter (click.ts clickDragHead), so it
-        // carries the click's frame thickening: the frame grows inward by half a
-        // stroke over p 0.7-1 while the core rises onto its final inner edge — no
-        // base rim left at the hit.
-        var frameW = FlatEase.Lerp(w * 0.45, w, build) *
-                     FlatEase.Lerp(1, 1.5, FlatEase.InQuad(FlatEase.Seg(p, 0.7, 1)));
-        var coreR = (inner - w / 2) * FlatEase.Lerp(0.36, 1, FlatEase.InQuad(FlatEase.Seg(p, 0.42, 0.94)));
-        var blink = Math.Max(FlatEase.Bump(p, 0.86, 0.92), FlatEase.Bump(p, 0.92, 1));
-
-        // click.ts places the approach outside the scaled body group.
-        var approach = FlatEase.Seg(p, 0.7, 1);
-        if (approach > 0 && approach < 1 && enterScale != 0)
-        {
-            var first = b.VertCount;
-            FlatGeom.Ring(b, 0, 0, FlatEase.Lerp(r * 1.83, r - w / 2, approach),
-                hair * FlatEase.Lerp(0.375, 0.525, approach),
-                WithOpacity(palette.RingColor, alpha * 0.5 * FlatEase.Seg(approach, 0, 0.15)));
-            ScaleGeometry(b, first, 1 / enterScale);
-        }
-
-        FlatGeom.Disk(b, 0, 0, inner + 0.5, WithOpacity(palette.Tone(FlatEase.Lerp(700, 800, split)), alpha));
-        if (split > 0)
-            FlatGeom.Disk(b, 0, 0, coreR, WithOpacity(palette.Tone(FlatEase.Lerp(700, 400, split)), alpha * split));
-        if (blink > 0)
-            FlatGeom.Disk(b, 0, 0, coreR, WithOpacity(palette.RingColor, alpha * 0.3 * blink));
-        // frame: outer edge pinned at R, thickens inward by half a stroke over 0.7-1
-        AssemblingRing(b, r - frameW / 2, frameW,
-            WithOpacity(palette.RingTone(split), alpha), 3, build, FlatEase.Lerp(-Math.PI / 3, 0, build),
-            WithOpacity(Edge, alpha));
     }
 
     // drag.ts dragArrow: arrowHead(inner * 1.05), opacity show, scale lerp(0.6, 1, show).

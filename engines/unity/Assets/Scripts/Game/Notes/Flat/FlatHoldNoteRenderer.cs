@@ -3,8 +3,6 @@ using UnityEngine;
 
 public class FlatHoldNoteRenderer : FlatNoteRendererBase
 {
-    private static readonly Rgba Edge = FlatColor.ParseHex("#1A1B22");
-
     /// <summary>
     /// Classic's layer scheme: the body renders on the dedicated GameHoldLine sorting
     /// layer (long holds: GameLongHoldLine), which sits below GameDragLine and
@@ -17,7 +15,6 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
     private static readonly int HoldLineLayer = SortingLayer.NameToID("GameHoldLine");
     protected override int BodySortingLayerId => HoldLineLayer;
 
-    private readonly FlatHoldBody body = new FlatHoldBody();
     private readonly FlatMeshBuilder bodyBuilder = new FlatMeshBuilder();
     private readonly FlatMeshBuilder ringBuilder = new FlatMeshBuilder();
     protected readonly ParticleSystem HoldFx;
@@ -26,17 +23,6 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
     protected HoldNote HoldNote => (HoldNote) Note;
     protected bool BodyVisible;
     protected override bool CanExit => !HoldNote.IsHolding;
-
-    // hold.ts press clip: the head sinks to PRESSED while the lock brackets clamp
-    // onto the ring and fade out over the second half of the press.
-    private const double PressedScale = 0.86;
-
-    // hold.ts holdProgress: the ring rides PROGRESS_RADIUS around the head with a
-    // fixed stroke; track 800 (0.9), lead 50 at 4/3·p, fill 500 at p. Cloned as a
-    // flat-native ring because classic's sprite ring bakes its lead into the
-    // texture and discards everything past maxCutoff — no track band, no shades.
-    private const double ProgressRadius = 1.34;
-    private const double ProgressStroke = 0.083;
 
     private MeshTriangle Triangle;
     private double pressT;
@@ -68,8 +54,8 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         RingMesh = FlatNoteMesh.Create(Note.transform, "FlatProgressRingMesh", false, 0);
         RingMesh.SetVisible(false);
         // Classic's scanner triangle, reused verbatim: it fills the body-to-line
-        // gap. The flat body bar replaces Line/CompletedLine, and the progress
-        // ring is drawn on its own flat mesh (see BuildProgressRing).
+        // gap. The flat body bar draws from the skin's body slot, and the progress
+        // ring from the skin's progress slot (both on their own flat meshes).
         Triangle = UnityEngine.Object.Instantiate(ClassicHoldNoteRendererProvider.Instance.trianglePrefab,
             Game.contentParent.transform).GetComponent<MeshTriangle>();
         Triangle.gameObject.SetActive(false);
@@ -158,7 +144,7 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
 
         // The scanner triangle shares classic's window: armed with the note's own
         // judgement window, driven only while the hold is live. The progress ring
-        // draws in the flat mesh below (BuildProgressRing).
+        // draws in the flat mesh below (RenderBody).
         var inHoldWindow = !Note.IsCleared &&
                            Game.Time >= Note.Model.intro_time + Note.JudgmentOffset &&
                            Game.Time <= Note.Model.end_time + Note.MissThreshold + Note.JudgmentOffset;
@@ -230,15 +216,15 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
             RingMesh.SetVisible(false);
             return;
         }
-        // Cancel the parent's BaseTransformSize/EnterScale the same way the head mesh
-        // does; the bar must not pulse with the enter curve (it has its own grow-in).
+        // Cancel the parent's BaseTransformSize the same way the head mesh does; the
+        // bar must not pulse with the enter curve (it has its own grow-in).
         var meshScale = BaseTransformSize != 0 ? 1 / BaseTransformSize : 1;
         bodyBuilder.Reset();
         BuildBodyGeometry(bodyBuilder);
         UploadBodyPart(BodyMesh, bodyBuilder, meshScale);
 
         // hold.ts draws the progress clip outside the head's size curve, so the
-        // ring shares the body's enter-scale cancellation. It appears when the
+        // ring shares the body's parent-scale cancellation. It appears when the
         // hold is live past the press, same gate classic's cutoffs used.
         var ringVisible = HoldNote.IsHolding && Game.Time > Note.Model.start_time + Note.JudgmentOffset;
         if (!ringVisible)
@@ -247,7 +233,16 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
             return;
         }
         ringBuilder.Reset();
-        BuildProgressRing(ringBuilder);
+        // The skin's hold-progress slot is the only ring implementation.
+        holdSlots.Resolve(FlatSkinRuntime.Current, Kind);
+        var progressSlot = holdSlots.Progress;
+        if (progressSlot == null || progressSlot.UsesUnsupported || progressSlot.UsesImages)
+        {
+            WarnSlotMissingOnce(Kind, "progress");
+            RingMesh.SetVisible(false);
+            return;
+        }
+        SkinPainterInstance.DrawNoteSlot(progressSlot, BodyProgress, SkinHeadContext(), new SkinSinks(ringBuilder));
         UploadBodyPart(RingMesh, ringBuilder, meshScale);
     }
 
@@ -256,139 +251,127 @@ public class FlatHoldNoteRenderer : FlatNoteRendererBase
         mesh.SetVisible(true);
         mesh.SetWorldScale(WorldScale);
         mesh.transform.localScale = new Vector3(meshScale, meshScale, 1);
-        // The stretched body is outside holdEnter's scaled group. Only the head pulses in size.
-        ScaleGeometry(b, 0, 1 / EnterScale);
         for (var i = 6; i < b.Verts.Count; i += 7) b.Verts[i] *= BodyOpacity;
         mesh.Upload(b);
     }
 
-    // hold.ts holdProgress: an 800 track ring at 0.9, a 50 lead arc to 4/3·p and a
-    // 500 fill arc to p — around the head at 1.34 R with a fixed 0.083 u stroke,
-    // starting at 12 o'clock, clockwise.
-    private void BuildProgressRing(FlatMeshBuilder b)
+    // =================================================================
+    // Skin-mode holding composition (loopUnder + press).
+    //
+    // Deviation from TS (packages/notes): TypeScript composes the holding state as
+    // loopUnder → body → press → loopOver → progress. Unity keeps the body bar on
+    // its own sorting layer (the skin's body slot), so loopUnder draws under the
+    // press head on the head mesh; loopOver is skipped (no equivalent sink);
+    // progress draws on the ring mesh, which sorts below every head (see RenderBody).
+    // =================================================================
+
+    // Raw pressT while a loopUnder is bound keeps the looping under-layer rebuilding
+    // every frame; the clamped value lets a steady press pose hit the rebuild skip.
+    protected override double SkinHeadDriver(CompiledSkin skin)
     {
-        var r = DesignSize / 2 * ProgressRadius;
-        var w = FlatTokens.Unit * ProgressStroke;
-        var p = BodyProgress;
-        FlatGeom.Ring(b, 0, 0, r, w, WithOpacity(Palette.Shade(800), 0.9));
-        var lead = Math.Min(1, p * 4 / 3);
-        if (lead > 0)
-            FlatGeom.Arc(b, 0, 0, r, 0, Math.PI * 2 * lead, w, WithOpacity(Palette.Shade(50), 1));
-        if (p > 0)
-            FlatGeom.Arc(b, 0, 0, r, 0, Math.PI * 2 * p, w, WithOpacity(Palette.Shade(500), 1));
+        holdSlots.Resolve(skin, Kind);
+        // pressT is chart-anchored (clamped at 0 before the hold's start): an
+        // early press keeps the settled enter pose instead of triggering the
+        // hold layers, exactly like the press-clock gate.
+        if (!Exiting && HoldNote.IsHolding && pressT > 0)
+        {
+            var press = holdSlots.Press;
+            if (press is { UsesUnsupported: false, UsesImages: false })
+                return holdSlots.LoopUnder is { UsesUnsupported: false, UsesImages: false }
+                    ? pressT : Math.Min(pressT, press.Contract.Duration);
+        }
+        return base.SkinHeadDriver(skin);
     }
 
-    protected override void BuildGeometry(FlatMeshBuilder b)
+    protected override void DrawSkinHead(FlatMeshBuilder b)
     {
-        if (headPartVisible) DrawHead(b, EnterProgress, DesignSize, Palette, ApproachSeconds, BodyFlipY);
-    }
-
-    protected override Action<FlatMeshBuilder, float, float> CaptureExitHead()
-    {
-        var size = DesignSize;
-        var palette = Palette;
-        var approach = ApproachSeconds;
-        var flipY = BodyFlipY;
-        return (b, p, scale) => DrawHead(b, p, size, palette, approach, flipY);
+        var skin = FlatSkinRuntime.Current;
+        if (Exiting || !HoldNote.IsHolding || pressT <= 0) { base.DrawSkinHead(b); return; }
+        holdSlots.Resolve(skin, Kind);
+        var press = holdSlots.Press;
+        var under = holdSlots.LoopUnder;
+        // No usable press slot: the head draws nothing while holding — the flat
+        // path has no cross-slot fallback (image slots have no head sink either).
+        if (press == null || press.UsesUnsupported || press.UsesImages)
+        {
+            WarnSlotMissingOnce(Kind, "press");
+            return;
+        }
+        var painter = SkinPainterInstance;
+        using (FlatSkinRuntime.PaintMarker.Auto())
+        {
+            if (under is { UsesUnsupported: false, UsesImages: false })
+                painter.DrawNoteSlot(under, pressT, SkinHeadContext(), new SkinSinks(b, additiveGeometry));
+            painter.DrawNoteSlot(press, Math.Min(pressT, press.Contract.Duration), SkinHeadContext(), new SkinSinks(b, additiveGeometry));
+        }
     }
 
     protected override Action<FlatMeshBuilder, float> CaptureExitBody()
     {
         if (BodySizeMultiplier == 0) return null;
-        var palette = Palette;
-        var length = BodyTop / BodySizeMultiplier * (StyleTwo ? styleTwoShrink : 1);
-        var time = StyleTwo ? styleTwoTime : 0;
-        var flipY = BodyFlipY;
-        return (b, p) => body.Draw(b, palette, length, 0, time, p, flipY);
+        // Detached exits ride the skin body slot too: independent snapshots
+        // (slot, options, context) — pure function, no pooled-state references.
+        // Without the slot the detached body simply doesn't draw (the live bar
+        // has the same contract).
+        holdSlots.Resolve(FlatSkinRuntime.Current, Kind);
+        var slot = holdSlots.Body;
+        if (slot == null || slot.UsesUnsupported || slot.UsesImages) return null;
+        var painter = SkinPainterInstance;
+        var context = FlatSkinRuntime.HeadContextOf(Note, Family, SkinHeadContext().Palettes, ApproachSeconds);
+        context.BodyDirection = BodyFlipY ? FlatDirection.Down : FlatDirection.Up;
+        var options = new SkinInputs.BodyOptions
+        {
+            Length = BodyTop / BodySizeMultiplier * (StyleTwo ? styleTwoShrink : 1),
+            Progress = 0,
+            T = StyleTwo ? styleTwoTime : 0,
+            // Appear rides the exit rewind progress per frame (offline
+            // semantics: HoldDuration stays null, conveyor frozen).
+        };
+        return (b, p) =>
+        {
+            options.Appear = p;
+            painter.DrawBodySlot(slot, options, context, new SkinSinks(b));
+        };
     }
 
+    // Reused body-options payload (fields fully overwritten per draw).
+    protected SkinInputs.BodyOptions bodyOptions;
+
+    // Per-skin slot cache (press/loopUnder/progress/body): CompiledSkin.Slot()
+    // builds a key string per call, so the hold path's per-frame queries ride a
+    // reference check instead. Long-hold reuses it for its body slots.
+    protected readonly SkinSlotCache holdSlots = new SkinSlotCache();
+
+    /// <summary>The parametric body slot is the only body implementation (clip
+    /// CPU-clipped at emission). Style-2 keeps the engine-side shrink (the skin
+    /// cannot read collapse on holds); reveal/appear ride EnterProgress. Without
+    /// the slot the bar simply doesn't draw — warned once.</summary>
     protected virtual void BuildBodyGeometry(FlatMeshBuilder b)
     {
-        // Compensate lengths, not vertex Y: endpoints stay fixed while caps/dots remain round.
-        if (StyleTwo)
-            body.Draw(b, Palette, BodyTop / BodySizeMultiplier * styleTwoShrink, 0,
-                styleTwoTime, EnterProgress, BodyFlipY);
-        else
-            body.Draw(b, Palette, BodyTop / BodySizeMultiplier, BodyProgress, BodyTime, EnterProgress, BodyFlipY);
+        if (TryDrawSkinBody(b)) return;
+        WarnSlotMissingOnce(Kind, "body");
     }
 
-    private void DrawHead(FlatMeshBuilder b, double p, double size, FlatPalette palette, double approach, bool flipY)
+    /// <summary>Skin-mode body: the parametric body slot (clip CPU-clipped at emission).</summary>
+    protected bool TryDrawSkinBody(FlatMeshBuilder b)
     {
-        // Always by approach progress: an early press keeps animating by time
-        // (the settled pose is simply enter at p = 1).
-        var first = b.VertCount;
-        var r = size / 2;
-        var w = FlatTokens.Unit * FlatTokens.StrokeRing * Math.Sqrt(size / FlatTokens.Unit);
-        var inner = r - w;
-        var k = FlatEase.OutCubic(FlatEase.Seg(p, 0, 0.35));
-        var glyph = FlatEase.Seg(p, 0.2, 0.42);
-        var split = FlatEase.InOutQuad(FlatEase.Seg(p, 0.08, 0.35));
-        var wake = FlatHoldDesign.Wake(p);
-        var alpha = FlatEase.Seg(p, 0, 0.08);
-        var pressK = FlatEase.OutCubic(FlatEase.Seg(pressT, 0, FlatTokens.Time.HoldPress));
-        if (pressK > 0)
-        {
-            // Press clip: the brackets clamp onto the ring (radius R*1.2 -> R - W/2,
-            // width hair*2.6 -> W, spin already at rest) and fade out over the second
-            // half of the press. They replace the enter brackets, not stack on them.
-            var lockAlpha = alpha * (1 - FlatEase.Seg(pressT,
-                FlatTokens.Time.HoldPress * 0.5, FlatTokens.Time.HoldPress));
-            if (lockAlpha > 0)
-            {
-                var spin = flipY ? Math.PI : 0;
-                var color = WithOpacity(palette.RingColor, lockAlpha);
-                var width = FlatEase.Lerp(
-                    FlatTokens.Unit * FlatTokens.StrokeHair * FlatHoldDesign.BracketWidth, w, pressK);
-                var radius = FlatEase.Lerp(r * FlatHoldDesign.BracketRadius, r - w / 2, pressK);
-                for (var i = 0; i < 2; i++)
-                {
-                    var mid = Math.PI / 2 + i * Math.PI + spin;
-                    FlatGeom.Arc(b, 0, 0, radius,
-                        mid - FlatHoldDesign.BracketHalf, mid + FlatHoldDesign.BracketHalf, width, color, false);
-                }
-            }
-        }
-        else
-        {
-            // Fixed-radius lock arcs sit perpendicular to the body at rest. A body
-            // flip rotates the pair by pi; it never changes their radius or damping.
-            var bracketAlpha = alpha * FlatEase.Seg(p, FlatHoldDesign.BracketFrom, FlatHoldDesign.BracketFadeTo);
-            if (bracketAlpha > 0)
-            {
-                var spin = FlatHoldDesign.BracketSpin(p, approach) + (flipY ? Math.PI : 0);
-                var color = WithOpacity(palette.RingTone(wake), bracketAlpha);
-                var width = FlatTokens.Unit * FlatTokens.StrokeHair * FlatHoldDesign.BracketWidth;
-                for (var i = 0; i < 2; i++)
-                {
-                    var mid = Math.PI / 2 + i * Math.PI + spin;
-                    FlatGeom.Arc(b, 0, 0, r * FlatHoldDesign.BracketRadius,
-                        mid - FlatHoldDesign.BracketHalf, mid + FlatHoldDesign.BracketHalf, width, color, false);
-                }
-            }
-        }
-        FlatGeom.Disk(b, 0, 0, inner + 0.5,
-            WithOpacity(palette.Tone(FlatEase.Lerp(600, WakeShade(400, wake), split)), alpha));
-        FlatGeom.Disk(b, 0, 0, FlatEase.Lerp(inner + 0.5, r * FlatHoldDesign.CoreRadius, split),
-            WithOpacity(palette.Tone(FlatEase.Lerp(600, WakeShade(FlatHoldDesign.CoreShade, wake), split)), alpha));
-        if (glyph > 0)
-        {
-            var scale = FlatEase.Lerp(0.4, 1, FlatEase.OutBack(glyph, 2));
-            var glyphRadius = r * 0.2 * scale;
-            var glyphWidth = FlatTokens.Unit * FlatTokens.StrokeHair * 1.6 * scale;
-            var color = WithOpacity(palette.RingTone(wake), alpha * FlatEase.Seg(glyph, 0, 0.5));
-            BuildGlyphGeometry(b, glyphRadius, glyphWidth, color);
-        }
-        AssemblingRing(b, r - w / 2, FlatEase.Lerp(w * 0.5, w, k),
-            WithOpacity(palette.RingTone(wake), alpha), 2, FlatEase.OutQuart(k),
-            FlatEase.Lerp(-Math.PI / 2, 0, k), WithOpacity(Edge, alpha));
-        // The press sink wraps brackets AND head, like the design's scaled group.
-        if (pressK > 0)
-            ScaleGeometry(b, first, FlatEase.Lerp(1, PressedScale, pressK));
-    }
-
-    protected virtual void BuildGlyphGeometry(FlatMeshBuilder b, double radius, double width, Rgba color)
-    {
-        FlatGeom.Ring(b, 0, 0, radius, width, color);
+        holdSlots.Resolve(FlatSkinRuntime.Current, Kind);
+        var slot = holdSlots.Body;
+        if (slot == null || slot.UsesUnsupported || slot.UsesImages) return false;
+        bodyOptions ??= new SkinInputs.BodyOptions();
+        var options = bodyOptions;
+        var length = BodyTop / BodySizeMultiplier;
+        options.Length = StyleTwo ? length * styleTwoShrink : length;
+        options.Progress = StyleTwo ? 0 : BodyProgress;
+        options.T = StyleTwo ? styleTwoTime : BodyTime;
+        options.Top = double.NaN;
+        options.Bottom = double.NaN;
+        options.HoldDuration = null;
+        options.Appear = EnterProgress;
+        var context = SkinHeadContext();
+        context.BodyDirection = BodyFlipY ? FlatDirection.Down : FlatDirection.Up;
+        SkinPainterInstance.DrawBodySlot(slot, options, context, new SkinSinks(b));
+        return true;
     }
 
     // The renderer's only OnClear fires at the hold end (HoldNote.OnGameUpdate /

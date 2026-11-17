@@ -6,22 +6,8 @@ public class FlatLongHoldNoteRenderer : FlatHoldNoteRenderer
     private static readonly int LongHoldLineLayer = SortingLayer.NameToID("GameLongHoldLine");
     protected override int BodySortingLayerId => LongHoldLineLayer;
 
-    private readonly double[] square = new double[8];
-    private readonly FlatLongHoldRail rail = new FlatLongHoldRail();
-
     public FlatLongHoldNoteRenderer(LongHoldNote note) : base(note)
     {
-    }
-
-    protected override void BuildGlyphGeometry(FlatMeshBuilder b, double radius, double width, Rgba color)
-    {
-        // 0.82 half-size gives the square the same visual area as the hold circle.
-        var s = radius * 0.82;
-        square[0] = square[6] = -s;
-        square[2] = square[4] = s;
-        square[1] = square[3] = -s;
-        square[5] = square[7] = s;
-        FlatGeom.PolyStroke(b, square, true, width, color, FlatJoin.Miter, FlatCap.Butt);
     }
 
     protected override void GetBodyDimensions(out double top, out double bottom, out bool flipY)
@@ -125,22 +111,59 @@ public class FlatLongHoldNoteRenderer : FlatHoldNoteRenderer
         return tExit < tEnter ? 0 : Math.Max(0, tExit);
     }
 
+    /// <summary>Skin-only long-hold body: top/bottom/progress/t plus the live hold
+    /// duration so the slot's collapse track drives the 0.6 s finish window (TS
+    /// live-body semantics); the engine supplies geometry inputs, the skin the
+    /// visuals. Style-agnostic, like classic.</summary>
     protected override void BuildBodyGeometry(FlatMeshBuilder b)
     {
-        // Style-agnostic, like classic: ClassicLongHoldNoteRenderer's fill runs
-        // for both styles (its base style-2 rail stomp is a legacy artifact that
-        // mostly stays off-screen) — only the scanner triangle is style-gated.
-        rail.Draw(b, Palette, BodyTop / BodySizeMultiplier, BodyBottom / BodySizeMultiplier,
-            BodyProgress, BodyTime, Note.Model.Duration, EnterProgress);
+        if (TryDrawSkinLongHoldBody(b)) return;
+        WarnSlotMissingOnce(Kind, "body");
+    }
+
+    private bool TryDrawSkinLongHoldBody(FlatMeshBuilder b)
+    {
+        holdSlots.Resolve(FlatSkinRuntime.Current, Kind);
+        var slot = holdSlots.Body;
+        if (slot == null || slot.UsesUnsupported || slot.UsesImages) return false;
+        bodyOptions ??= new SkinInputs.BodyOptions();
+        var options = bodyOptions;
+        options.Length = double.NaN;
+        options.Top = BodyTop / BodySizeMultiplier;
+        options.Bottom = BodyBottom / BodySizeMultiplier;
+        options.Progress = BodyProgress;
+        options.T = BodyTime;
+        options.HoldDuration = Note.Model.Duration;
+        options.Appear = EnterProgress;
+        var context = SkinHeadContext();
+        context.BodyDirection = BodyFlipY ? FlatDirection.Down : FlatDirection.Up;
+        SkinPainterInstance.DrawBodySlot(slot, options, context, new SkinSinks(b));
+        return true;
     }
 
     protected override Action<FlatMeshBuilder, float> CaptureExitBody()
     {
         if (BodySizeMultiplier == 0) return null;
-        var palette = Palette;
-        var top = BodyTop / BodySizeMultiplier;
-        var bottom = BodyBottom / BodySizeMultiplier;
-        var duration = Note.Model.Duration;
-        return (b, p) => rail.Draw(b, palette, top, bottom, 0, 0, duration, p);
+        // Detached exits ride the skin body slot too (offline semantics: the
+        // collapse window samples from progress, the conveyor stays frozen).
+        // Without the slot the detached body simply doesn't draw.
+        holdSlots.Resolve(FlatSkinRuntime.Current, Kind);
+        var slot = holdSlots.Body;
+        if (slot == null || slot.UsesUnsupported || slot.UsesImages) return null;
+        var painter = SkinPainterInstance;
+        var context = FlatSkinRuntime.HeadContextOf(Note, Family, SkinHeadContext().Palettes, ApproachSeconds);
+        context.BodyDirection = BodyFlipY ? FlatDirection.Down : FlatDirection.Up;
+        var options = new SkinInputs.BodyOptions
+        {
+            Top = BodyTop / BodySizeMultiplier,
+            Bottom = BodyBottom / BodySizeMultiplier,
+            Progress = 0,
+            T = 0,
+        };
+        return (b, p) =>
+        {
+            options.Appear = p;
+            painter.DrawBodySlot(slot, options, context, new SkinSinks(b));
+        };
     }
 }

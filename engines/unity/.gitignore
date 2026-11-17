@@ -128,3 +128,10 @@ flutter_plugin/example/android/build/
 /Tools/FlatParity/bin/
 /Tools/FlatParity/obj/
 /Tools/FlatParity/golden.json
+
+# SkinProbe dev tool (build outputs + generated golden fixture)
+/Tools/SkinProbe/golden-skin.json
+/Tools/SkinProbe/bin/
+/Tools/SkinProbe/obj/
+skin-perf-report.json
+skin-results.xml

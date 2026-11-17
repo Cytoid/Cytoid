@@ -62,6 +62,9 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: GameFx
+    uniqueID: 974632185
+    locked: 0
   - name: GameMain
     uniqueID: 1548518063
     locked: 0

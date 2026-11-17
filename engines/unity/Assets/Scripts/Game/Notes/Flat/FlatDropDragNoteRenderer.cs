@@ -1,8 +1,8 @@
 using UnityEngine;
 
 // Flat drop drag: the capsule visuals draw from the compiled skin's slots in
-// FlatNoteRendererBase (DrawSkinHead — drops have no exit, the enter slot covers
-// them). Same falling/size behavior as FlatDropClickNoteRenderer — SYNC-WARNING:
+// FlatNoteRendererBase. Same exit ride (ComputeRideLocalOffset + ExitClockScale)
+// and falling/size behavior as FlatDropClickNoteRenderer — SYNC-WARNING:
 // the offset plumbing deliberately mirrors the Classic drop renderer pair
 // (DropClickNoteRenderer / DropDragNoteRenderer), which also keep two parallel
 // implementations instead of a shared base.
@@ -19,10 +19,12 @@ public class FlatDropDragNoteRenderer : FlatNoteRendererBase
         if (DisplayNoteId) noteIdBaseLocal = NoteId.transform.localPosition;
     }
 
+    protected override double ExitClockScale => DropNoteOffset.ExitClockScale(Note);
+
     protected override void Render()
     {
         base.Render();
-        var localOffset = DropNoteOffset.ComputeLocalOffset(Note);
+        var localOffset = DropNoteOffset.ComputeRideLocalOffset(Note);
         HeadMesh.transform.localPosition = meshBaseLocal + localOffset;
         // The ID rides the falling capsule like DropDragNoteRenderer.
         if (DisplayNoteId) DropNoteOffset.ApplyToChild(NoteId.transform, noteIdBaseLocal, localOffset);

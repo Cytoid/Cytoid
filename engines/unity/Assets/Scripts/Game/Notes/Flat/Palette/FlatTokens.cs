@@ -101,6 +101,8 @@ public static class FlatTokens
             public static readonly ExitCurve HoldHead = new ExitCurve(0.3, 1, 1, 3);
             public static readonly ExitCurve HoldBody = new ExitCurve(0.15, 0.8, 0.8, 3);
             public static readonly ExitCurve DragChild = new ExitCurve(0.15, 1, 1, 1);
+            // drops: the exit fade IS the miss (no miss clip); see SkinTimingTokens.ExitDrop.
+            public static readonly ExitCurve Drop = new ExitCurve(0.15, 1, 1, 1);
         }
         public const double HoldPress = 0.2;
         public const double HoldLoop = 0.6;

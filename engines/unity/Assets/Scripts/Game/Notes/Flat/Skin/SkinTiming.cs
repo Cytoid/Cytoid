@@ -84,6 +84,17 @@ public static class SkinTimingTokens
         public static readonly SkinExitCurve ExitTap = new SkinExitCurve(0.3, 0.8, 1, 3);
         public static readonly SkinExitCurve ExitHoldHead = new SkinExitCurve(0.3, 1, 1, 3);
         public static readonly SkinExitCurve ExitDragChild = new SkinExitCurve(0.15, 1, 1, 1);
+        // Drops: the exit fade IS the miss — no separate miss clip. The note rides
+        // past the line at its approach speed while the opacity runs 1 → 0 linearly,
+        // always inside the 0.2 s drop miss window (cytoid-design tokens.ts
+        // noteTiming.exit.drop).
+        public static readonly SkinExitCurve ExitDrop = new SkinExitCurve(0.15, 1, 1, 1);
+
+        /// <summary>noteTiming.exit.drop.travel — how far past the line (fraction of the
+        /// board height) the ride may sweep before the note is fully gone. When the
+        /// approach speed would outrun it, the exit clock compresses so the fade
+        /// completes exactly at the cap (the position clamps there too).</summary>
+        public const double ExitDropTravel = 0.2;
         public const double HoldPress = 0.2;
         public const double HoldLoop = 1;
 
@@ -188,6 +199,7 @@ public static class SkinTimingTokens
 
     public static SkinExitCurve ExitCurve(NoteKind kind)
     {
+        if (kind == NoteKind.DropClick || kind == NoteKind.DropDrag) return Note.ExitDrop;
         if (kind == NoteKind.Hold || kind == NoteKind.LongHold) return Note.ExitHoldHead;
         return kind == NoteKind.DragChild || kind == NoteKind.ClickDragChild ? Note.ExitDragChild : Note.ExitTap;
     }
@@ -212,8 +224,9 @@ public static class SkinSlots
                 Add($"clear:{SkinTimingTokens.GradeKey(grade)}", $"clear-{SkinTimingTokens.GradeKey(grade)}",
                     SkinClipMode.Once, SkinTimingTokens.Note.Clear(grade));
             Add("miss", "miss", SkinClipMode.Once, SkinTimingTokens.Note.Clear(SkinGrade.Miss));
-            if (!drop)
-                Add("exit", "exit", SkinClipMode.Once, SkinTimingTokens.ExitCurve(kind).Duration);
+            // Every kind exits now — drops ride their fade past the line (the fade
+            // IS the miss), so no `if (!drop)` carve-out anymore.
+            Add("exit", "exit", SkinClipMode.Once, SkinTimingTokens.ExitCurve(kind).Duration);
             if (kind == NoteKind.DragHead || kind == NoteKind.ClickDragHead)
             {
                 Add("active", "active", SkinClipMode.Loop, SkinTimingTokens.Note.ActiveLoop);

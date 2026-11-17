@@ -5,7 +5,9 @@ using UnityEngine;
 // judgement offset, early hold release). Only the drawing survives collection;
 // drawing callbacks read captured values, never the pooled Note/Model. Gameplay's
 // lifetime is unchanged. The head capture is always the skin's exit slot (the slot
-// owns fade and size); the body keeps the engine's HoldBody exit envelope.
+// owns fade and size); the body keeps the engine's HoldBody exit envelope. The
+// head clock may run compressed (clockScale — a drop's ride fades on a shortened
+// clock so it lands exactly on its travel cap); the body clock never does.
 public sealed class FlatNoteExitVisual : MonoBehaviour
 {
     private readonly FlatMeshBuilder builder = new FlatMeshBuilder();
@@ -15,6 +17,7 @@ public sealed class FlatNoteExitVisual : MonoBehaviour
     private Action<FlatMeshBuilder, float, float> drawHead;
     private Action<FlatMeshBuilder, float> drawBody;
     private ExitCurve headCurve;
+    private double clockScale;
     private double hitTime;
     private double approach;
     private float spawnedAt;
@@ -24,7 +27,8 @@ public sealed class FlatNoteExitVisual : MonoBehaviour
 
     internal static void Play(Note note, float worldScale, int sortingOrder, int bodySortingLayer, ExitCurve curve,
         float maxOpacity, Action<FlatMeshBuilder, float, float> drawHead,
-        Action<FlatMeshBuilder, float> drawBody, double exitAnchor, Quaternion localRotation)
+        Action<FlatMeshBuilder, float> drawBody, double exitAnchor, Quaternion localRotation,
+        double clockScale = 1)
     {
         var go = new GameObject("FlatNoteExitVisual");
         go.transform.SetParent(note.transform.parent, false);
@@ -43,6 +47,7 @@ public sealed class FlatNoteExitVisual : MonoBehaviour
         visual.maxOpacity = maxOpacity;
         visual.opacityMultiplier = note.Game.Config.GlobalNoteOpacityMultiplier * note.Model.Override.OpacityMultiplier;
         visual.headCurve = curve;
+        visual.clockScale = clockScale > 1e-9 ? clockScale : 1;
         visual.drawHead = drawHead;
         visual.drawBody = drawBody;
         visual.head = FlatNoteMesh.Create(go.transform, "Head", false, sortingOrder);
@@ -63,8 +68,9 @@ public sealed class FlatNoteExitVisual : MonoBehaviour
     private void Update()
     {
         // The head may become transparent before its curve ends. The curve's
-        // duration drives the cutoff (the slot owns the fade track itself).
-        if (game == null || game.Time < spawnedAt || game.Time - hitTime >= headCurve.Duration)
+        // duration drives the cutoff (the slot owns the fade track itself); the
+        // compressed clock reaches it proportionally earlier.
+        if (game == null || game.Time < spawnedAt || game.Time - hitTime >= headCurve.Duration / clockScale)
         {
             Destroy(gameObject);
             return;
@@ -75,13 +81,15 @@ public sealed class FlatNoteExitVisual : MonoBehaviour
     private void Render()
     {
         var t = game.Time - hitTime;
-        // A miss rides its captured exit anchor, including ahead-of-time judgement:
-        // negative t holds p = 1 and alpha = 1, exactly like effects.ts.
-        var p = (float) FlatEase.ExitRewind(t, approach);
+        // The head rides the (possibly compressed) exit clock: a miss rides its
+        // captured exit anchor, including ahead-of-time judgement — negative t
+        // holds p = 1 and alpha = 1, exactly like effects.ts.
+        var headT = t * clockScale;
+        var p = (float) FlatEase.ExitRewind(headT, approach);
         var opacityProgress = (float) FlatEase.Clamp01(1 + t / Math.Max(1e-6, approach));
         var opacity = (t < 0 ? Mathf.Clamp(opacityProgress * 2, 0, maxOpacity) : maxOpacity) * opacityMultiplier;
         var visible = !game.State.Mods.Contains(Mod.HideNotes);
-        var headAlpha = (float) FlatEase.ExitAlpha(t, headCurve);
+        var headAlpha = (float) FlatEase.ExitAlpha(headT, headCurve);
         head.SetVisible(visible && headAlpha > 0);
         builder.Reset();
         drawHead(builder, p, 1f);

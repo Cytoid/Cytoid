@@ -40,14 +40,21 @@ public abstract class FlatNoteRendererBase : NoteRenderer
     protected bool Missed { get; private set; }
     protected bool ClearedSuccessfully => Note.IsCleared && !Missed;
     protected virtual bool CanExit => true;
-    protected bool UsesExit => Kind != NoteKind.DropClick && Kind != NoteKind.DropDrag;
-    protected virtual bool Exiting => UsesExit && (Note.IsCleared ? Missed : CanExit && Game.Time > Note.Model.start_time);
+    // Drops exit too now — the exit fade IS their miss (the fade rides the note
+    // past the line; see DropNoteOffset.ComputeRideLocalOffset).
+    protected virtual bool Exiting => Note.IsCleared ? Missed : CanExit && Game.Time > Note.Model.start_time;
     protected virtual double ExitAnchor => Note.Model.start_time;
-    protected double ExitTime => (double) Game.Time - ExitAnchor;
-    protected ExitCurve HeadExitCurve => Kind == NoteKind.Hold || Kind == NoteKind.LongHold
-        ? FlatTokens.Time.Exit.HoldHead
-        : Kind == NoteKind.DragChild || Kind == NoteKind.ClickDragChild
-            ? FlatTokens.Time.Exit.DragChild : FlatTokens.Time.Exit.Tap;
+    /// <summary>Exit-clock compression: drops riding a fast fall compress their exit
+    /// clock so the fade completes exactly at the travel cap (DropNoteOffset.ExitClockScale).
+    /// 1 for every other kind.</summary>
+    protected virtual double ExitClockScale => 1;
+    protected double ExitTime => ((double) Game.Time - ExitAnchor) * ExitClockScale;
+    protected ExitCurve HeadExitCurve => Kind == NoteKind.DropClick || Kind == NoteKind.DropDrag
+        ? FlatTokens.Time.Exit.Drop
+        : Kind == NoteKind.Hold || Kind == NoteKind.LongHold
+            ? FlatTokens.Time.Exit.HoldHead
+            : Kind == NoteKind.DragChild || Kind == NoteKind.ClickDragChild
+                ? FlatTokens.Time.Exit.DragChild : FlatTokens.Time.Exit.Tap;
 
     protected virtual NoteKind Kind => KindFor(Note.Type);
     protected virtual FlatFamily Family => FamilyFor(Note.Type);
@@ -316,7 +323,7 @@ public abstract class FlatNoteRendererBase : NoteRenderer
         // Once exiting, the visual window belongs to the curve, not gameplay's miss deadline.
         var inWindow = Exiting ? FlatEase.ExitAlpha(ExitTime, HeadExitCurve) > 0 :
             Game.Time >= Note.Model.intro_time && Game.Time <= Note.Model.end_time + Note.MissThreshold;
-        HeadVisible = !Note.IsDragStackFollower && (!Note.IsCleared || Missed && UsesExit) && inWindow &&
+        HeadVisible = !Note.IsDragStackFollower && (!Note.IsCleared || Missed) && inWindow &&
                       !Game.State.Mods.Contains(Mod.HideNotes);
         HeadMesh.SetVisible(HeadVisible);
         if (additiveHeadMesh != null && !HeadVisible) additiveHeadMesh.SetVisible(false);
@@ -400,11 +407,14 @@ public abstract class FlatNoteRendererBase : NoteRenderer
     {
         base.OnClear(grade);
         Missed = grade == NoteGrade.Miss;
-        if (Missed && UsesExit)
+        if (Missed)
         {
             Render();
-            // The exit slot owns the miss visuals; the MISS label rides the
-            // judgement clock through the feedback-only FX instead.
+            // The exit slot owns the miss visuals for every design now — drops ride
+            // their fade past the line exactly like the other kinds ride their rewind
+            // (by MISS time the ride has always ended: it fits inside the 0.2 s drop
+            // miss window). The MISS label rides the judgement clock through the
+            // feedback-only FX.
             if (FlatSkinRuntime.Ready)
                 FlatClearFxPool.GetInstance(Game).PlayFeedback(Note, WorldScale);
         }
@@ -413,8 +423,7 @@ public abstract class FlatNoteRendererBase : NoteRenderer
             HeadVisible = false;
             HeadMesh.SetVisible(false);
         }
-        // Only drops retain a miss effect; all other misses ride their exit curves.
-        if ((!Missed || !UsesExit) && !Game.State.Mods.Contains(Mod.HideNotes))
+        if (!Missed && !Game.State.Mods.Contains(Mod.HideNotes))
             FlatClearFxPool.GetInstance(Game).Play(Note, grade, WorldScale,
                 TimingError(), FlickClearRotationDegrees);
     }
@@ -441,14 +450,14 @@ public abstract class FlatNoteRendererBase : NoteRenderer
         // Regular drag heads ARE the travelling indicator and render their exit
         // on the live mesh until gameplay collects the chain. Never freeze a copy.
         if (Note.Type == NoteType.DragHead) return;
-        if (!Missed || !Note.IsCleared || !UsesExit || Note.IsDragStackFollower ||
+        if (!Missed || !Note.IsCleared || Note.IsDragStackFollower ||
             FlatEase.ExitAlpha(ExitTime, HeadExitCurve) <= 0 ||
             Game.State.Mods.Contains(Mod.HideNotes)) return;
         var drawHead = CaptureSkinExitHead();
         if (drawHead == null) return;
         var maxOpacity = Note.Model.opacity == double.MinValue ? (float) Note.Chart.opacity : (float) Note.Model.opacity;
         FlatNoteExitVisual.Play(Note, WorldScale, SortingOrder, BodySortingLayerId, HeadExitCurve, maxOpacity,
-            drawHead, CaptureExitBody(), ExitAnchor, ExitLocalRotation);
+            drawHead, CaptureExitBody(), ExitAnchor, ExitLocalRotation, ExitClockScale);
     }
 
     public override void Dispose()
